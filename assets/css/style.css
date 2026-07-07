@@ -1456,3 +1456,11 @@ font-size:16px;
 }
 
 }
+@keyframes snow {
+    from {
+        transform: translateY(-20px);
+    }
+    to {
+        transform: translateY(110vh);
+    }
+}
