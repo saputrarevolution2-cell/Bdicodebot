@@ -1,7 +1,10 @@
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — TeleCod</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="components/navbar.css">
+    <link rel="stylesheet" href="components/footer.css">
 </head><body data-active="dashboard"><div id="navbar"></div><main class="tc-page"><div class="tc-title"><small>TELECOD DASHBOARD</small><h1>Selamat datang, <span id="dashName">User</span> 👋</h1><p>Kelola code, pembelian, penjualan, payment, profil, dan pengaturan akun.</p></div><div class="tc-grid"><div class="tc-card tc-stat"><span>Saldo</span><strong>Rp0</strong></div><div class="tc-card tc-stat"><span>Total Pembelian</span><strong>0</strong></div><div class="tc-card tc-stat"><span>Code Terjual</span><strong>0</strong></div><div class="tc-card tc-stat"><span>Pendapatan</span><strong>Rp0</strong></div></div><div class="tc-grid" style="margin-top:18px"><a class="tc-card" href="marketplace.html"><h3>🛒 Marketplace</h3><p style="color:#91a7c7">Cari dan beli code bot Telegram.</p></a><a class="tc-card" href="sell-buy.html"><h3>💻 Jual & Beli Code</h3><p style="color:#91a7c7">Upload code atau kelola pembelian.</p></a><a class="tc-card" href="payment.html"><h3>💳 Payment</h3><p style="color:#91a7c7">Kelola pembayaran dan saldo.</p></a><a class="tc-card" href="profile.html"><h3>👤 Profil</h3><p style="color:#91a7c7">Data akun dan Telegram.</p></a></div><div class="tc-card" style="margin-top:18px"><h3>Informasi Session</h3><p>Email: <b id="dashEmail">-</b></p><p>User ID: <code id="dashId">-</code></p><p>Provider: <span class="tc-badge" id="dashProvider">-</span></p></div></main><div id="footer"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/dashboard.js"></script>
 <script src="assets/js/global.js"></script>
+<script src="assets/js/i18n.js"></script>
 </body></html>

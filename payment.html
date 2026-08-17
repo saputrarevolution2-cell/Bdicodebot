@@ -1,7 +1,10 @@
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment — TeleCod</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="assets/css/payment.css">
     <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="components/navbar.css">
+    <link rel="stylesheet" href="components/footer.css">
 </head><body data-active="payment"><div id="navbar"></div><main class="tc-page"><div class="tc-title"><small>PAYMENT</small><h1>Pembayaran TeleCod</h1><p>Gunakan halaman ini untuk pembayaran pembelian dan pengisian saldo.</p></div><div class="tc-grid"><div class="tc-card"><span>Saldo tersedia</span><strong style="display:block;font-size:30px;margin:10px 0">Rp0</strong><button class="tc-btn primary">Tambah Saldo</button></div><div class="tc-card"><span>Transaksi sukses</span><strong style="display:block;font-size:30px;margin:10px 0">0</strong><p style="color:#91a7c7">Riwayat payment tersimpan di akun.</p></div></div><div class="tc-card" style="margin-top:18px"><h2>Buat Pembayaran</h2><div id="paymentMsg" class="tc-alert"></div><form id="paymentForm" class="tc-form"><div class="tc-field"><label>Code / Produk</label><input id="paymentProduct" placeholder="Nama produk"></div><div class="tc-field"><label>Nominal</label><input type="number" min="1000" required placeholder="Rp"></div><div class="tc-field"><label>Metode</label><select><option>QRIS</option><option>Bank Transfer</option><option>E-Wallet</option></select></div><button class="tc-btn primary">Lanjut Pembayaran</button></form></div></main><div id="footer"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/payment.js"></script>
 <script src="assets/js/global.js"></script>
+<script src="assets/js/i18n.js"></script>
 </body></html>
