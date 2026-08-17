@@ -1,0 +1,7 @@
+/* TeleCod Navbar - shared component */
+.telecod-navbar{position:sticky;top:0;z-index:1000;backdrop-filter:blur(18px);background:rgba(3,12,35,.88);border-bottom:1px solid rgba(0,174,255,.25)}
+.nav-container{max-width:1280px;margin:auto;min-height:64px;padding:0 20px;display:flex;align-items:center;gap:28px}
+.nav-logo{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-size:20px}.nav-logo span{color:#19aaff}.nav-logo b{font-weight:800}
+.nav-links{display:flex;align-items:center;gap:20px;flex:1}.nav-links a{color:#d8e7ff;text-decoration:none;font-size:13px}.nav-links a:hover,.nav-links a.active{color:#fff}
+.nav-menu-btn{display:none;background:none;border:0;color:#fff;font-size:24px}
+@media(max-width:800px){.nav-links{display:none;position:absolute;left:0;right:0;top:64px;padding:15px 20px;background:#061431;flex-direction:column;align-items:flex-start}.nav-links.show{display:flex}.nav-menu-btn{display:block;margin-left:auto}}
