@@ -1,1 +1,0 @@
-/* Footer is markup-driven; page logic stays page-specific. */
