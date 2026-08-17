@@ -1,5 +1,0 @@
-TeleCod Full Web V3
-Branding: TeleCod only.
-Flow: Index -> Login/Register -> Dashboard -> Marketplace -> Jual & Beli -> Payment -> Profil -> Pengaturan.
-Shared application navbar/footer are rendered from assets/js/components.js and styled by assets/css/components.css.
-Authentication supports email/password, Google OAuth, and Telegram OIDC via Supabase Custom Provider.
