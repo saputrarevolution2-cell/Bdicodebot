@@ -1,0 +1,1 @@
+(async()=>{if(!await protectPage())return;document.querySelectorAll('.tc-switch').forEach(s=>{const k='tc_'+s.dataset.key;s.classList.toggle('on',localStorage.getItem(k)!=='0');s.onclick=()=>{s.classList.toggle('on');localStorage.setItem(k,s.classList.contains('on')?'1':'0')}})})();

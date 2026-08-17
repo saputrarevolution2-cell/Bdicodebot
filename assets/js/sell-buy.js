@@ -1,0 +1,1 @@
+(async()=>{if(!await protectPage())return;document.getElementById('sellForm').onsubmit=e=>{e.preventDefault();document.getElementById('sellMsg').textContent='Draft code tersimpan di tampilan. Hubungkan tabel products/storage untuk publikasi nyata.';document.getElementById('sellMsg').style.display='block'}})();
