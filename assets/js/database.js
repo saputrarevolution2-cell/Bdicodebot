@@ -1,5 +1,5 @@
 // =====================================================
-// TELECOD - SUPABASE
+// TELECOD - SUPABASE DATABASE
 // =====================================================
 
 const SUPABASE_URL =
@@ -8,92 +8,82 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGJnZmZtcW9yemJjZnZuYmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NTEzOTIsImV4cCI6MjEwMjUyNzM5Mn0.W9tWYiPmYOC9wsruJMypH_Kg0dQpw_klCbACS6PYp48";
 
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-    );
+
+// =====================================================
+// SUPABASE CLIENT
+// =====================================================
+
+const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            storage: window.localStorage
+        }
+    }
+);
 
 
 // =====================================================
-// CURRENT USER
+// GET CURRENT SESSION
+// =====================================================
+
+async function getCurrentSession() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        console.error(
+            "Session error:",
+            error
+        );
+
+        return null;
+    }
+
+    return data.session || null;
+}
+
+
+// =====================================================
+// GET CURRENT USER
 // =====================================================
 
 async function getCurrentUser() {
 
     const {
-        data: { user },
+        data,
         error
-    } = await supabaseClient.auth.getUser();
+    } = await supabase.auth.getUser();
 
     if (error) {
-        console.error(error);
+        return null;
+    }
+
+    return data.user || null;
+}
+
+
+// =====================================================
+// GET CURRENT PROFILE
+// =====================================================
+
+async function getCurrentProfile() {
+
+    const user =
+        await getCurrentUser();
+
+    if (!user) {
         return null;
     }
 
     return user;
-}
-
-
-// =====================================================
-// REGISTER
-// =====================================================
-
-async function registerUser(
-    email,
-    password,
-    username,
-    fullName,
-    telegramId
-) {
-
-    const {
-        data,
-        error
-    } = await supabaseClient.auth.signUp({
-
-        email,
-        password,
-
-        options: {
-            data: {
-                username: username,
-                full_name: fullName,
-                telegram_id: telegramId
-            }
-        }
-
-    });
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
-}
-
-
-// =====================================================
-// LOGIN
-// =====================================================
-
-async function loginUser(email, password) {
-
-    const {
-        data,
-        error
-    } = await supabaseClient.auth.signInWithPassword({
-
-        email,
-        password
-
-    });
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
 }
 
 
@@ -103,12 +93,44 @@ async function loginUser(email, password) {
 
 async function logoutUser() {
 
-    const { error } =
-        await supabaseClient.auth.signOut();
+    const {
+        error
+    } = await supabase.auth.signOut();
 
     if (error) {
-        throw error;
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        return false;
     }
 
-    window.location.href = "index.html";
+    return true;
 }
+
+
+// =====================================================
+// AUTH STATE LISTENER
+// =====================================================
+
+supabase.auth.onAuthStateChange(
+    (event, session) => {
+
+        console.log(
+            "AUTH EVENT:",
+            event
+        );
+
+        if (session) {
+
+            console.log(
+                "USER:",
+                session.user.email
+            );
+
+        }
+
+    }
+);
