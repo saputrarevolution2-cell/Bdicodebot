@@ -293,8 +293,8 @@ registerForm?.addEventListener(
 
 const loginForm=document.getElementById("loginForm");
 
-loginForm?.addEventListener("submit",async event=>{
-    event.preventDefault();
+loginForm?.addEventListener("submit",async e=>{
+    e.preventDefault();
 
     const email=document.getElementById("email")?.value.trim().toLowerCase();
     const password=document.getElementById("password")?.value;
@@ -308,34 +308,23 @@ loginForm?.addEventListener("submit",async event=>{
     setLoading(button,true);
 
     try{
-        if(typeof supabase==="undefined"){
-            throw new Error("Supabase client tidak ditemukan.");
+        console.log("Supabase:",supabase);
+
+        if(!supabase||!supabase.auth){
+            throw new Error("Supabase Auth tidak tersedia.");
         }
 
-        const {data,error}=await supabase.auth.signInWithPassword({
+        const result=await supabase.auth.signInWithPassword({
             email:email,
             password:password
         });
 
-        console.log("SUPABASE LOGIN:",{data,error});
+        console.log("LOGIN RESULT:",result);
+
+        const {data,error}=result;
 
         if(error){
-            const msg=(error.message||"").toLowerCase();
-
-            if(msg.includes("email not confirmed")){
-                showMessage(
-                    "Email kamu belum dikonfirmasi.\n\n"+
-                    "Silakan buka email kamu dan klik Confirm your email address."
-                );
-                return;
-            }
-
-            if(msg.includes("invalid login credentials")){
-                showMessage(
-                    "Email atau password salah."
-                );
-                return;
-            }
+            console.error("SUPABASE AUTH ERROR:",error);
 
             showMessage(
                 "Login gagal:\n\n"+error.message
@@ -343,29 +332,41 @@ loginForm?.addEventListener("submit",async event=>{
             return;
         }
 
-        if(!data||!data.session){
+        if(!data?.session){
             showMessage(
-                "Login gagal: session Supabase tidak ditemukan."
+                "Login gagal: session tidak ditemukan."
             );
             return;
         }
 
-        localStorage.setItem("telecod_logged_in","true");
+        localStorage.setItem(
+            "telecod_logged_in",
+            "true"
+        );
 
-        console.log("LOGIN BERHASIL:",data.user);
+        console.log(
+            "LOGIN BERHASIL:",
+            data.user
+        );
 
-        window.location.replace("dashboard.html");
+        window.location.href="dashboard.html";
 
     }catch(error){
-        console.error("LOGIN EXCEPTION:",error);
+
+        console.error(
+            "LOGIN EXCEPTION:",
+            error
+        );
 
         showMessage(
-            "Terjadi kesalahan saat login:\n\n"+
+            "Supabase Auth Error:\n\n"+
             (error?.message||String(error))
         );
 
     }finally{
+
         setLoading(button,false);
+
     }
 });
 
