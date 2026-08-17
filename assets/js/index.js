@@ -1,11 +1,925 @@
-// TeleCod page core
-const SUPABASE_URL="https://qrhbgffmqorzbcfvnbkk.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxcmhiZ2ZmbXFvcnpiY2Z2bmJrayIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg2OTUxMzkyLCJleHAiOjIxMDI1MjczOTJ9.W9tWYiPmYOC9wsruJMypH_Kg0dQpw_klCbACS6PYp48";
-if(!window.telecodSupabase&&window.supabase)window.telecodSupabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
-async function tcSession(){if(!window.telecodSupabase)return null;const {data}=await window.telecodSupabase.auth.getSession();return data?.session||null}
-async function protectPage(){const s=await tcSession();if(!s){location.replace('login.html');return null}return s}
-function tcApplyPageLanguage(dict){const lang=localStorage.getItem('telecod_lang')||'id';document.documentElement.lang=lang;const d=dict[lang]||dict.id;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(d[k]!=null)el.textContent=d[k]});document.querySelectorAll('[data-lang-label]').forEach(el=>el.textContent=lang==='id'?'ID':'EN')}
-function tcToggleLanguage(dict){const lang=(localStorage.getItem('telecod_lang')||'id')==='id'?'en':'id';localStorage.setItem('telecod_lang',lang);tcApplyPageLanguage(dict);window.dispatchEvent(new Event('telecod:language'))}
-document.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('img').forEach(img=>{if(!img.loading)img.loading='lazy'}));
-const INDEX_LANG={id:{home:'Beranda',marketplace:'Marketplace',sell:'Jual Code',categories:'Kategori',about:'Tentang',faq:'FAQ',login:'Masuk',register:'Daftar',eyebrow:'Telegram Bot Code Marketplace',hero1:'Temukan & Jual',heroDesc:'Marketplace modern untuk membeli, menjual, dan mengembangkan code bot Telegram. Cepat, aman, dan terpercaya.',safe:'Aman',fast:'Cepat',trusted:'Terpercaya',explore:'Jelajahi Marketplace',sellNow:'Jual Code Sekarang',codeSold:'Code Tersedia',activeSeller:'Seller Aktif',transactions:'Transaksi',members:'Member',popular:'Populer',new:'Terbaru',premium:'Premium',payment:'Payment',popularCode:'Code Populer',communityPick:'Code terbaik pilihan komunitas',viewAll:'Lihat Semua',detail:'Lihat Detail',statsTitle:'Statistik TeleCod',statsDesc:'Bergabung dengan ribuan developer lain',telegramBot:'Telegram Bot, Unlimited Possibilities!',joinText:'Mulai sekarang dan bangun bot impianmu.',startNow:'Mulai Sekarang',whyTitle:'Kenapa Pilih TeleCod?',whyDesc:'Keunggulan yang membuat kami berbeda',safeTrusted:'Aman & Terpercaya',safeDesc:'Transaksi dilindungi sistem escrow yang aman.',fastProcess:'Proses Cepat',fastDesc:'Pembelian & download instan setelah pembayaran.',quality:'Quality Code',qualityDesc:'Code berkualitas dari seller terpercaya.',telegramReady:'Telegram Ready',telegramDesc:'Kompatibel dengan platform Telegram.',howTitle:'Cara Kerja',howDesc:'Total, cepat, dan sederhana',findCode:'Cari Code',findDesc:'Temukan code sesuai kebutuhan.',buy:'Beli',buyDesc:'Lakukan pembayaran dengan metode tersedia.',download:'Download',downloadDesc:'Dapatkan code setelah transaksi berhasil.',deploy:'Deploy',deployDesc:'Jalankan & kembangkan bot Telegrammu.',adultTitle:'Code 18+',adultSub:'Kategori khusus konten dewasa',adultDesc:'Berisi bot untuk kebutuhan konten 18+. Hanya untuk pengguna yang sudah berusia 18+.',adultEnter:'Masuk Kategori 18+',reviewsTitle:'Apa Kata Mereka?',reviewsDesc:'Testimoni dari pengguna TeleCod',joinCommunity:'Bergabung dengan komunitas kami',joinCommunityDesc:'Diskusi, update, dan tips seputar bot Telegram.',joinTelegram:'Join Telegram',haveCode:'Punya Code Bot?',sellStart:'Jual sekarang dan mulai menghasilkan!',sellCode:'Jual Code',viewMarket:'Lihat Marketplace',footerDesc:'Marketplace modern untuk membeli, menjual, dan mengembangkan code bot Telegram.',help:'Bantuan',newsletter:'Dapatkan update terbaru.'},en:{home:'Home',marketplace:'Marketplace',sell:'Sell Code',categories:'Categories',about:'About',faq:'FAQ',login:'Login',register:'Register',eyebrow:'Telegram Bot Code Marketplace',hero1:'Find & Sell',heroDesc:'A modern marketplace to buy, sell, and build Telegram bot code. Fast, secure, and trusted.',safe:'Secure',fast:'Fast',trusted:'Trusted',explore:'Explore Marketplace',sellNow:'Sell Code Now',codeSold:'Code Available',activeSeller:'Active Sellers',transactions:'Transactions',members:'Members',popular:'Popular',new:'Newest',premium:'Premium',payment:'Payment',popularCode:'Popular Code',communityPick:'Best code chosen by the community',viewAll:'View All',detail:'View Details',statsTitle:'TeleCod Statistics',statsDesc:'Join thousands of other developers',telegramBot:'Telegram Bot, Unlimited Possibilities!',joinText:'Start now and build your dream bot.',startNow:'Start Now',whyTitle:'Why Choose TeleCod?',whyDesc:'Advantages that make us different',safeTrusted:'Safe & Trusted',safeDesc:'Transactions are protected by a secure escrow system.',fastProcess:'Fast Process',fastDesc:'Instant purchase & download after payment.',quality:'Quality Code',qualityDesc:'Quality code from trusted sellers.',telegramReady:'Telegram Ready',telegramDesc:'Compatible with the Telegram platform.',howTitle:'How It Works',howDesc:'Simple, fast, and straightforward',findCode:'Find Code',findDesc:'Find code that fits your needs.',buy:'Buy',buyDesc:'Pay using an available payment method.',download:'Download',downloadDesc:'Get the code after the transaction succeeds.',deploy:'Deploy',deployDesc:'Run and develop your Telegram bot.',adultTitle:'18+ Code',adultSub:'Special adult content category',adultDesc:'Contains bots for 18+ content. For users aged 18 and above only.',adultEnter:'Enter 18+ Category',reviewsTitle:'What They Say',reviewsDesc:'Testimonials from TeleCod users',joinCommunity:'Join our community',joinCommunityDesc:'Discussions, updates, and Telegram bot tips.',joinTelegram:'Join Telegram',haveCode:'Have Bot Code?',sellStart:'Sell now and start earning!',sellCode:'Sell Code',viewMarket:'View Marketplace',footerDesc:'A modern marketplace to buy, sell, and build Telegram bot code.',help:'Help',newsletter:'Get the latest updates.'}};
-document.addEventListener('DOMContentLoaded',()=>{tcApplyPageLanguage(INDEX_LANG);window.addEventListener('telecod:language',()=>tcApplyPageLanguage(INDEX_LANG));document.getElementById('langBtn')?.addEventListener('click',()=>tcToggleLanguage(INDEX_LANG));document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.filter;document.querySelectorAll('.product-card').forEach(c=>c.style.display=f==='all'||(c.dataset.tags||'').split(' ').includes(f)?'':'none')}));});
+/* =====================================================
+   TELECOD - INDEX.JS
+===================================================== */
+
+"use strict";
+
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const authModal = document.getElementById("authModal");
+
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+
+const pasteContent = document.getElementById("pasteContent");
+const saleFields = document.getElementById("saleFields");
+
+const publicTab = document.getElementById("publicTab");
+const saleTab = document.getElementById("saleTab");
+
+
+/* =====================================================
+   AUTH MODAL
+===================================================== */
+
+function openAuth(type = "login") {
+
+    if (!authModal) {
+        return;
+    }
+
+    authModal.classList.add("active");
+
+    if (type === "register") {
+
+        if (loginForm) {
+            loginForm.style.display = "none";
+        }
+
+        if (registerForm) {
+            registerForm.style.display = "block";
+        }
+
+    } else {
+
+        if (loginForm) {
+            loginForm.style.display = "block";
+        }
+
+        if (registerForm) {
+            registerForm.style.display = "none";
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   CLOSE AUTH
+===================================================== */
+
+function closeAuth() {
+
+    if (!authModal) {
+        return;
+    }
+
+    authModal.classList.remove("active");
+
+}
+
+
+/* =====================================================
+   CLOSE MODAL CLICK OUTSIDE
+===================================================== */
+
+if (authModal) {
+
+    authModal.addEventListener("click", function (event) {
+
+        if (event.target === authModal) {
+
+            closeAuth();
+
+        }
+
+    });
+
+}
+
+
+/* =====================================================
+   ESC CLOSE MODAL
+===================================================== */
+
+document.addEventListener("keydown", function (event) {
+
+    if (event.key === "Escape") {
+
+        closeAuth();
+
+    }
+
+});
+
+
+/* =====================================================
+   PASTELINK MODE
+===================================================== */
+
+let pasteMode = "public";
+
+
+function setPasteMode(mode) {
+
+    pasteMode = mode;
+
+    if (!saleFields || !publicTab || !saleTab) {
+        return;
+    }
+
+
+    if (mode === "sale") {
+
+        saleFields.style.display = "block";
+
+        publicTab.classList.remove("btn-primary");
+        publicTab.classList.add("btn-outline");
+
+        saleTab.classList.remove("btn-outline");
+        saleTab.classList.add("btn-primary");
+
+    } else {
+
+        saleFields.style.display = "none";
+
+        publicTab.classList.remove("btn-outline");
+        publicTab.classList.add("btn-primary");
+
+        saleTab.classList.remove("btn-primary");
+        saleTab.classList.add("btn-outline");
+
+    }
+
+}
+
+
+/* =====================================================
+   CREATE PASTELINK
+===================================================== */
+
+function createPaste() {
+
+    if (!pasteContent) {
+        return;
+    }
+
+
+    const content = pasteContent.value.trim();
+
+
+    /* EMPTY */
+
+    if (!content) {
+
+        showToast(
+            "Silakan masukkan teks, code atau link terlebih dahulu.",
+            "error"
+        );
+
+        pasteContent.focus();
+
+        return;
+
+    }
+
+
+    /* SELL MODE */
+
+    if (pasteMode === "sale") {
+
+        /*
+         * Untuk menjual PasteLink,
+         * user wajib login.
+         */
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    /*
+     * PUBLIC MODE
+     *
+     * Sementara demo.
+     * Nanti diganti API backend.
+     */
+
+    showToast(
+        "PasteLink sedang dibuat...",
+        "success"
+    );
+
+
+    setTimeout(function () {
+
+        /*
+         * Contoh hasil.
+         *
+         * Nanti:
+         *
+         * fetch("/api/paste/create")
+         */
+
+        const fakeCode =
+            generatePasteCode();
+
+        const fakeUrl =
+            window.location.origin +
+            "/p/" +
+            fakeCode;
+
+
+        showPasteResult(fakeUrl);
+
+    }, 700);
+
+}
+
+
+/* =====================================================
+   GENERATE PASTE CODE
+===================================================== */
+
+function generatePasteCode() {
+
+    const chars =
+        "abcdefghijklmnopqrstuvwxyz0123456789";
+
+    let result = "";
+
+    for (let i = 0; i < 8; i++) {
+
+        result +=
+            chars.charAt(
+                Math.floor(
+                    Math.random() * chars.length
+                )
+            );
+
+    }
+
+    return result;
+
+}
+
+
+/* =====================================================
+   SHOW PASTE RESULT
+===================================================== */
+
+function showPasteResult(url) {
+
+    const box =
+        document.querySelector(".paste-box");
+
+    if (!box) {
+        return;
+    }
+
+
+    let result =
+        document.getElementById("pasteResult");
+
+
+    if (!result) {
+
+        result =
+            document.createElement("div");
+
+        result.id =
+            "pasteResult";
+
+        result.style.marginTop =
+            "15px";
+
+        result.style.padding =
+            "13px";
+
+        result.style.borderRadius =
+            "12px";
+
+        result.style.background =
+            "#ecfdf3";
+
+        result.style.color =
+            "#087443";
+
+        result.style.fontSize =
+            "13px";
+
+        box.appendChild(result);
+
+    }
+
+
+    result.innerHTML = `
+
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin-bottom:7px;
+            font-weight:800;
+        ">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            PasteLink berhasil dibuat
+
+        </div>
+
+        <div style="
+            display:flex;
+            gap:7px;
+        ">
+
+            <input
+                id="generatedPasteUrl"
+                value="${url}"
+                readonly
+                style="
+                    flex:1;
+                    min-width:0;
+                    border:1px solid #d1fae5;
+                    border-radius:9px;
+                    padding:9px;
+                    background:#fff;
+                "
+            >
+
+            <button
+                class="btn btn-primary"
+                onclick="copyPasteLink()"
+            >
+
+                <i class="fa-solid fa-copy"></i>
+
+                Copy
+
+            </button>
+
+        </div>
+    `;
+
+}
+
+
+/* =====================================================
+   COPY PASTELINK
+===================================================== */
+
+async function copyPasteLink() {
+
+    const input =
+        document.getElementById(
+            "generatedPasteUrl"
+        );
+
+
+    if (!input) {
+        return;
+    }
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            input.value
+        );
+
+        showToast(
+            "PasteLink berhasil disalin.",
+            "success"
+        );
+
+    } catch (error) {
+
+        input.select();
+
+        document.execCommand("copy");
+
+        showToast(
+            "PasteLink berhasil disalin.",
+            "success"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   CLEAR PASTELINK
+===================================================== */
+
+function clearPaste() {
+
+    if (pasteContent) {
+
+        pasteContent.value = "";
+
+        pasteContent.focus();
+
+    }
+
+
+    const pasteResult =
+        document.getElementById(
+            "pasteResult"
+        );
+
+
+    if (pasteResult) {
+
+        pasteResult.remove();
+
+    }
+
+
+    const pastePrice =
+        document.getElementById(
+            "pastePrice"
+        );
+
+
+    const pastePassword =
+        document.getElementById(
+            "pastePassword"
+        );
+
+
+    if (pastePrice) {
+
+        pastePrice.value = "";
+
+    }
+
+
+    if (pastePassword) {
+
+        pastePassword.value = "";
+
+    }
+
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+function showToast(message, type = "success") {
+
+    let toast =
+        document.getElementById(
+            "telecodToast"
+        );
+
+
+    if (!toast) {
+
+        toast =
+            document.createElement("div");
+
+        toast.id =
+            "telecodToast";
+
+        toast.style.position =
+            "fixed";
+
+        toast.style.right =
+            "20px";
+
+        toast.style.bottom =
+            "20px";
+
+        toast.style.zIndex =
+            "99999";
+
+        toast.style.maxWidth =
+            "calc(100vw - 40px)";
+
+        toast.style.padding =
+            "14px 17px";
+
+        toast.style.borderRadius =
+            "13px";
+
+        toast.style.color =
+            "#fff";
+
+        toast.style.fontSize =
+            "13px";
+
+        toast.style.fontWeight =
+            "700";
+
+        toast.style.boxShadow =
+            "0 12px 30px rgba(0,0,0,.18)";
+
+        document.body.appendChild(toast);
+
+    }
+
+
+    toast.style.background =
+        type === "error"
+            ? "#ef4444"
+            : "#12b76a";
+
+
+    toast.innerHTML = `
+
+        <i class="${
+            type === "error"
+                ? "fa-solid fa-circle-exclamation"
+                : "fa-solid fa-circle-check"
+        }"></i>
+
+        ${message}
+
+    `;
+
+
+    toast.style.opacity = "1";
+
+
+    clearTimeout(
+        window.telecodToastTimer
+    );
+
+
+    window.telecodToastTimer =
+        setTimeout(function () {
+
+            toast.style.opacity =
+                "0";
+
+        }, 3000);
+
+}
+
+
+/* =====================================================
+   LOGIN DEMO
+===================================================== */
+
+if (loginForm) {
+
+    const loginButton =
+        loginForm.querySelector(
+            ".form-submit"
+        );
+
+
+    if (loginButton) {
+
+        loginButton.addEventListener(
+            "click",
+            function () {
+
+                const inputs =
+                    loginForm.querySelectorAll(
+                        "input"
+                    );
+
+
+                const email =
+                    inputs[0]?.value.trim();
+
+                const password =
+                    inputs[1]?.value;
+
+
+                if (!email) {
+
+                    showToast(
+                        "Masukkan email Anda.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                if (!password) {
+
+                    showToast(
+                        "Masukkan password Anda.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * BACKEND NANTI:
+                 *
+                 * fetch("/api/auth/login", {
+                 *     method: "POST",
+                 *     headers: {
+                 *         "Content-Type":
+                 *             "application/json"
+                 *     },
+                 *     body: JSON.stringify({
+                 *         email,
+                 *         password
+                 *     })
+                 * })
+                 */
+
+
+                showToast(
+                    "Login demo berhasil diproses.",
+                    "success"
+                );
+
+
+                setTimeout(function () {
+
+                    closeAuth();
+
+                }, 900);
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   REGISTER DEMO
+===================================================== */
+
+if (registerForm) {
+
+    const registerButton =
+        registerForm.querySelector(
+            ".form-submit"
+        );
+
+
+    if (registerButton) {
+
+        registerButton.addEventListener(
+            "click",
+            function () {
+
+                const inputs =
+                    registerForm.querySelectorAll(
+                        "input"
+                    );
+
+
+                const name =
+                    inputs[0]?.value.trim();
+
+                const email =
+                    inputs[1]?.value.trim();
+
+                const password =
+                    inputs[2]?.value;
+
+
+                if (!name) {
+
+                    showToast(
+                        "Masukkan nama Anda.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                if (!email) {
+
+                    showToast(
+                        "Masukkan email Anda.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                if (!password) {
+
+                    showToast(
+                        "Masukkan password Anda.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                if (password.length < 8) {
+
+                    showToast(
+                        "Password minimal 8 karakter.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * BACKEND NANTI:
+                 *
+                 * fetch("/api/auth/register", {
+                 *     method: "POST",
+                 *     headers: {
+                 *         "Content-Type":
+                 *             "application/json"
+                 *     },
+                 *     body: JSON.stringify({
+                 *         name,
+                 *         email,
+                 *         password
+                 *     })
+                 * })
+                 */
+
+
+                showToast(
+                    "Akun berhasil diproses.",
+                    "success"
+                );
+
+
+                setTimeout(function () {
+
+                    openAuth("login");
+
+                }, 900);
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   PRODUCT BUY BUTTON
+===================================================== */
+
+document
+    .querySelectorAll(".product-card .btn")
+    .forEach(function (button) {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                const card =
+                    button.closest(
+                        ".product-card"
+                    );
+
+
+                if (!card) {
+                    return;
+                }
+
+
+                const title =
+                    card.querySelector(
+                        "h3"
+                    )?.textContent.trim();
+
+
+                /*
+                 * NANTI:
+                 *
+                 * window.location.href =
+                 * "/product/" + productId;
+                 */
+
+
+                showToast(
+                    `Membuka ${title || "produk"}...`,
+                    "success"
+                );
+
+            }
+        );
+
+    });
+
+
+/* =====================================================
+   PAYMENT BUTTON
+===================================================== */
+
+const paymentButton =
+    document.querySelector(
+        ".payment-button"
+    );
+
+
+if (paymentButton) {
+
+    paymentButton.addEventListener(
+        "click",
+        function () {
+
+            /*
+             * NANTI:
+             *
+             * fetch("/api/payment/create")
+             *
+             * Kemudian redirect
+             * ke halaman payment.
+             */
+
+            showToast(
+                "Menghubungkan ke payment gateway...",
+                "success"
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   SMOOTH NAVIGATION
+===================================================== */
+
+document
+    .querySelectorAll(
+        'a[href^="#"]'
+    )
+    .forEach(function (link) {
+
+        link.addEventListener(
+            "click",
+            function (event) {
+
+                const targetId =
+                    link.getAttribute(
+                        "href"
+                    );
+
+
+                if (
+                    !targetId ||
+                    targetId === "#"
+                ) {
+
+                    return;
+
+                }
+
+
+                const target =
+                    document.querySelector(
+                        targetId
+                    );
+
+
+                if (!target) {
+                    return;
+                }
+
+
+                event.preventDefault();
+
+
+                target.scrollIntoView({
+
+                    behavior:"smooth",
+
+                    block:"start"
+
+                });
+
+            }
+        );
+
+    });
+
+
+/* =====================================================
+   INITIAL STATE
+===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        setPasteMode("public");
+
+    }
+);
