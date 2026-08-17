@@ -1,3 +1,7 @@
+// =====================================================
+// TELECOD - SUPABASE
+// =====================================================
+
 const SUPABASE_URL =
     "https://qrhbgffmqorzbcfvnbkk.supabase.co";
 
@@ -11,9 +15,9 @@ const supabaseClient =
     );
 
 
-// ===============================
-// GET CURRENT USER
-// ===============================
+// =====================================================
+// CURRENT USER
+// =====================================================
 
 async function getCurrentUser() {
 
@@ -31,15 +35,16 @@ async function getCurrentUser() {
 }
 
 
-// ===============================
+// =====================================================
 // REGISTER
-// ===============================
+// =====================================================
 
 async function registerUser(
     email,
     password,
     username,
-    fullName
+    fullName,
+    telegramId
 ) {
 
     const {
@@ -53,7 +58,8 @@ async function registerUser(
         options: {
             data: {
                 username: username,
-                full_name: fullName
+                full_name: fullName,
+                telegram_id: telegramId
             }
         }
 
@@ -67,9 +73,9 @@ async function registerUser(
 }
 
 
-// ===============================
+// =====================================================
 // LOGIN
-// ===============================
+// =====================================================
 
 async function loginUser(email, password) {
 
@@ -91,9 +97,9 @@ async function loginUser(email, password) {
 }
 
 
-// ===============================
+// =====================================================
 // LOGOUT
-// ===============================
+// =====================================================
 
 async function logoutUser() {
 
