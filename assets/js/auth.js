@@ -291,147 +291,83 @@ registerForm?.addEventListener(
 // LOGIN
 // =====================================================
 
-const loginForm =
-    document.getElementById("loginForm");
+const loginForm=document.getElementById("loginForm");
 
+loginForm?.addEventListener("submit",async event=>{
+    event.preventDefault();
 
-loginForm?.addEventListener(
-    "submit",
-    async event => {
+    const email=document.getElementById("email")?.value.trim().toLowerCase();
+    const password=document.getElementById("password")?.value;
 
-        event.preventDefault();
+    if(!email||!password){
+        showMessage("Email dan password wajib diisi.");
+        return;
+    }
 
+    const button=loginForm.querySelector(".auth-submit");
+    setLoading(button,true);
 
-        const email =
-            document
-                .getElementById("email")
-                ?.value
-                .trim()
-                .toLowerCase();
+    try{
+        if(typeof supabase==="undefined"){
+            throw new Error("Supabase client tidak ditemukan.");
+        }
 
-        const password =
-            document
-                .getElementById("password")
-                ?.value;
+        const {data,error}=await supabase.auth.signInWithPassword({
+            email:email,
+            password:password
+        });
 
+        console.log("SUPABASE LOGIN:",{data,error});
 
-        if (!email || !password) {
+        if(error){
+            const msg=(error.message||"").toLowerCase();
+
+            if(msg.includes("email not confirmed")){
+                showMessage(
+                    "Email kamu belum dikonfirmasi.\n\n"+
+                    "Silakan buka email kamu dan klik Confirm your email address."
+                );
+                return;
+            }
+
+            if(msg.includes("invalid login credentials")){
+                showMessage(
+                    "Email atau password salah."
+                );
+                return;
+            }
 
             showMessage(
-                "Email dan password wajib diisi."
+                "Login gagal:\n\n"+error.message
             );
-
             return;
         }
 
-
-        const button =
-            loginForm.querySelector(
-                ".auth-submit"
-            );
-
-        setLoading(button, true);
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabase.auth
-                .signInWithPassword({
-
-                    email,
-                    password
-
-                });
-
-
-            if (error) {
-
-                console.error(
-                    "LOGIN ERROR:",
-                    error
-                );
-
-
-                const msg =
-                    error.message.toLowerCase();
-
-
-                if (
-                    msg.includes(
-                        "email not confirmed"
-                    )
-                ) {
-
-                    showMessage(
-                        "Email kamu belum dikonfirmasi.\n\n" +
-                        "Silakan buka email dan klik " +
-                        "\"Confirm your email address\"."
-                    );
-
-                    return;
-                }
-
-
-                showMessage(
-                    error.message
-                );
-
-                return;
-            }
-
-
-            if (!data?.session) {
-
-                showMessage(
-                    "Login gagal. Session tidak ditemukan."
-                );
-
-                return;
-            }
-
-
-            console.log(
-                "LOGIN SUCCESS:",
-                data.user
-            );
-
-
-            // SESSION SUPABASE SUDAH TERSIMPAN
-            localStorage.setItem(
-                "telecod_logged_in",
-                "true"
-            );
-
-
-            // REDIRECT
-
-            window.location.replace(
-                "dashboard.html"
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "LOGIN EXCEPTION:",
-                error
-            );
-
+        if(!data||!data.session){
             showMessage(
-                "Terjadi kesalahan saat login."
+                "Login gagal: session Supabase tidak ditemukan."
             );
-
-        } finally {
-
-            setLoading(button, false);
-
+            return;
         }
 
+        localStorage.setItem("telecod_logged_in","true");
+
+        console.log("LOGIN BERHASIL:",data.user);
+
+        window.location.replace("dashboard.html");
+
+    }catch(error){
+        console.error("LOGIN EXCEPTION:",error);
+
+        showMessage(
+            "Terjadi kesalahan saat login:\n\n"+
+            (error?.message||String(error))
+        );
+
+    }finally{
+        setLoading(button,false);
     }
-);
+});
 
 
 // =====================================================
