@@ -1,57 +1,283 @@
-/* =====================================================
-   TELECOD - INDEX.JS
-===================================================== */
-
 "use strict";
 
-
 /* =====================================================
-   DOM
+   TELECOD INDEX JS
 ===================================================== */
 
-const authModal = document.getElementById("authModal");
-
-const loginForm = document.getElementById("loginForm");
-const registerForm = document.getElementById("registerForm");
-
-const pasteContent = document.getElementById("pasteContent");
-const saleFields = document.getElementById("saleFields");
-
-const publicTab = document.getElementById("publicTab");
-const saleTab = document.getElementById("saleTab");
+let pasteMode = "public";
 
 
 /* =====================================================
-   AUTH MODAL
+   DOM READY
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    initAuth();
+
+    initPaste();
+
+    initProducts();
+
+    initPayment();
+
+    initSmoothScroll();
+
+});
+
+
+/* =====================================================
+   AUTH
+===================================================== */
+
+function initAuth() {
+
+    const modal = document.getElementById("authModal");
+
+    if (!modal) return;
+
+
+    modal.addEventListener("click", (event) => {
+
+        if (event.target === modal) {
+
+            closeAuth();
+
+        }
+
+    });
+
+
+    document.addEventListener("keydown", (event) => {
+
+        if (event.key === "Escape") {
+
+            closeAuth();
+
+        }
+
+    });
+
+
+    const loginForm =
+        document.getElementById("loginForm");
+
+    const registerForm =
+        document.getElementById("registerForm");
+
+
+    /* LOGIN */
+
+    if (loginForm) {
+
+        const button =
+            loginForm.querySelector(".form-submit");
+
+
+        button?.addEventListener("click", () => {
+
+            const inputs =
+                loginForm.querySelectorAll("input");
+
+
+            const email =
+                inputs[0]?.value.trim();
+
+            const password =
+                inputs[1]?.value;
+
+
+            if (!email) {
+
+                showToast(
+                    "Email wajib diisi.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (!validateEmail(email)) {
+
+                showToast(
+                    "Format email tidak valid.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (!password) {
+
+                showToast(
+                    "Password wajib diisi.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * NANTI HUBUNGKAN KE BACKEND:
+             *
+             * POST /api/auth/login
+             */
+
+            showToast(
+                "Login sedang diproses...",
+                "success"
+            );
+
+        });
+
+    }
+
+
+    /* REGISTER */
+
+    if (registerForm) {
+
+        const button =
+            registerForm.querySelector(".form-submit");
+
+
+        button?.addEventListener("click", () => {
+
+            const inputs =
+                registerForm.querySelectorAll("input");
+
+
+            const name =
+                inputs[0]?.value.trim();
+
+            const email =
+                inputs[1]?.value.trim();
+
+            const password =
+                inputs[2]?.value;
+
+
+            if (!name) {
+
+                showToast(
+                    "Nama wajib diisi.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (!email) {
+
+                showToast(
+                    "Email wajib diisi.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (!validateEmail(email)) {
+
+                showToast(
+                    "Format email tidak valid.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (!password) {
+
+                showToast(
+                    "Password wajib diisi.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (password.length < 8) {
+
+                showToast(
+                    "Password minimal 8 karakter.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * NANTI HUBUNGKAN KE BACKEND:
+             *
+             * POST /api/auth/register
+             */
+
+            showToast(
+                "Registrasi sedang diproses...",
+                "success"
+            );
+
+        });
+
+    }
+
+}
+
+
+/* =====================================================
+   OPEN AUTH
 ===================================================== */
 
 function openAuth(type = "login") {
 
-    if (!authModal) {
-        return;
-    }
+    const modal =
+        document.getElementById("authModal");
 
-    authModal.classList.add("active");
+    const login =
+        document.getElementById("loginForm");
+
+    const register =
+        document.getElementById("registerForm");
+
+
+    if (!modal) return;
+
+
+    modal.classList.add("active");
+
 
     if (type === "register") {
 
-        if (loginForm) {
-            loginForm.style.display = "none";
-        }
+        if (login)
+            login.style.display = "none";
 
-        if (registerForm) {
-            registerForm.style.display = "block";
-        }
+        if (register)
+            register.style.display = "block";
 
     } else {
 
-        if (loginForm) {
-            loginForm.style.display = "block";
-        }
+        if (login)
+            login.style.display = "block";
 
-        if (registerForm) {
-            registerForm.style.display = "none";
-        }
+        if (register)
+            register.style.display = "none";
 
     }
 
@@ -64,84 +290,102 @@ function openAuth(type = "login") {
 
 function closeAuth() {
 
-    if (!authModal) {
-        return;
-    }
-
-    authModal.classList.remove("active");
-
-}
+    const modal =
+        document.getElementById("authModal");
 
 
-/* =====================================================
-   CLOSE MODAL CLICK OUTSIDE
-===================================================== */
+    if (!modal) return;
 
-if (authModal) {
 
-    authModal.addEventListener("click", function (event) {
-
-        if (event.target === authModal) {
-
-            closeAuth();
-
-        }
-
-    });
+    modal.classList.remove("active");
 
 }
 
 
 /* =====================================================
-   ESC CLOSE MODAL
+   PASTELINK
 ===================================================== */
 
-document.addEventListener("keydown", function (event) {
+function initPaste() {
 
-    if (event.key === "Escape") {
+    setPasteMode("public");
 
-        closeAuth();
-
-    }
-
-});
+}
 
 
 /* =====================================================
-   PASTELINK MODE
+   SET PASTE MODE
 ===================================================== */
-
-let pasteMode = "public";
-
 
 function setPasteMode(mode) {
 
     pasteMode = mode;
 
-    if (!saleFields || !publicTab || !saleTab) {
+
+    const saleFields =
+        document.getElementById("saleFields");
+
+    const publicTab =
+        document.getElementById("publicTab");
+
+    const saleTab =
+        document.getElementById("saleTab");
+
+
+    if (!saleFields ||
+        !publicTab ||
+        !saleTab) {
+
         return;
+
     }
 
 
     if (mode === "sale") {
 
-        saleFields.style.display = "block";
+        saleFields.style.display =
+            "block";
 
-        publicTab.classList.remove("btn-primary");
-        publicTab.classList.add("btn-outline");
 
-        saleTab.classList.remove("btn-outline");
-        saleTab.classList.add("btn-primary");
+        publicTab.classList.remove(
+            "btn-primary"
+        );
+
+        publicTab.classList.add(
+            "btn-outline"
+        );
+
+
+        saleTab.classList.remove(
+            "btn-outline"
+        );
+
+        saleTab.classList.add(
+            "btn-primary"
+        );
 
     } else {
 
-        saleFields.style.display = "none";
+        saleFields.style.display =
+            "none";
 
-        publicTab.classList.remove("btn-outline");
-        publicTab.classList.add("btn-primary");
 
-        saleTab.classList.remove("btn-primary");
-        saleTab.classList.add("btn-outline");
+        publicTab.classList.remove(
+            "btn-outline"
+        );
+
+        publicTab.classList.add(
+            "btn-primary"
+        );
+
+
+        saleTab.classList.remove(
+            "btn-primary"
+        );
+
+        saleTab.classList.add(
+            "btn-outline"
+        );
 
     }
 
@@ -149,45 +393,32 @@ function setPasteMode(mode) {
 
 
 /* =====================================================
-   CREATE PASTELINK
+   CREATE PASTE
 ===================================================== */
 
 function createPaste() {
 
-    if (!pasteContent) {
-        return;
-    }
+    const textarea =
+        document.getElementById(
+            "pasteContent"
+        );
 
 
-    const content = pasteContent.value.trim();
+    if (!textarea) return;
 
 
-    /* EMPTY */
+    const content =
+        textarea.value.trim();
+
 
     if (!content) {
 
         showToast(
-            "Silakan masukkan teks, code atau link terlebih dahulu.",
+            "Masukkan teks, code atau link terlebih dahulu.",
             "error"
         );
 
-        pasteContent.focus();
-
-        return;
-
-    }
-
-
-    /* SELL MODE */
-
-    if (pasteMode === "sale") {
-
-        /*
-         * Untuk menjual PasteLink,
-         * user wajib login.
-         */
-
-        openAuth("login");
+        textarea.focus();
 
         return;
 
@@ -195,40 +426,52 @@ function createPaste() {
 
 
     /*
-     * PUBLIC MODE
+     * MODE JUAL
      *
-     * Sementara demo.
-     * Nanti diganti API backend.
+     * Harus login terlebih dahulu.
      */
 
-    showToast(
-        "PasteLink sedang dibuat...",
-        "success"
-    );
+    if (pasteMode === "sale") {
+
+        showToast(
+            "Login diperlukan untuk menjual PasteLink.",
+            "error"
+        );
 
 
-    setTimeout(function () {
+        setTimeout(() => {
 
-        /*
-         * Contoh hasil.
-         *
-         * Nanti:
-         *
-         * fetch("/api/paste/create")
-         */
+            openAuth("login");
 
-        const fakeCode =
-            generatePasteCode();
-
-        const fakeUrl =
-            window.location.origin +
-            "/p/" +
-            fakeCode;
+        }, 500);
 
 
-        showPasteResult(fakeUrl);
+        return;
 
-    }, 700);
+    }
+
+
+    /*
+     * MODE PUBLIC
+     *
+     * Untuk sementara membuat kode demo.
+     *
+     * NANTI:
+     *
+     * POST /api/paste/create
+     */
+
+    const code =
+        generatePasteCode();
+
+
+    const url =
+        window.location.origin +
+        "/p/" +
+        code;
+
+
+    showPasteResult(url);
 
 }
 
@@ -242,20 +485,28 @@ function generatePasteCode() {
     const chars =
         "abcdefghijklmnopqrstuvwxyz0123456789";
 
-    let result = "";
 
-    for (let i = 0; i < 8; i++) {
+    let code = "";
 
-        result +=
-            chars.charAt(
+
+    for (
+        let i = 0;
+        i < 8;
+        i++
+    ) {
+
+        code +=
+            chars[
                 Math.floor(
-                    Math.random() * chars.length
+                    Math.random() *
+                    chars.length
                 )
-            );
+            ];
 
     }
 
-    return result;
+
+    return code;
 
 }
 
@@ -267,15 +518,18 @@ function generatePasteCode() {
 function showPasteResult(url) {
 
     const box =
-        document.querySelector(".paste-box");
+        document.querySelector(
+            ".paste-box"
+        );
 
-    if (!box) {
-        return;
-    }
+
+    if (!box) return;
 
 
     let result =
-        document.getElementById("pasteResult");
+        document.getElementById(
+            "pasteResult"
+        );
 
 
     if (!result) {
@@ -290,19 +544,16 @@ function showPasteResult(url) {
             "15px";
 
         result.style.padding =
-            "13px";
+            "14px";
 
         result.style.borderRadius =
-            "12px";
+            "14px";
 
         result.style.background =
             "#ecfdf3";
 
         result.style.color =
             "#087443";
-
-        result.style.fontSize =
-            "13px";
 
         box.appendChild(result);
 
@@ -315,8 +566,8 @@ function showPasteResult(url) {
             display:flex;
             align-items:center;
             gap:8px;
-            margin-bottom:7px;
             font-weight:800;
+            margin-bottom:8px;
         ">
 
             <i class="fa-solid fa-circle-check"></i>
@@ -325,9 +576,10 @@ function showPasteResult(url) {
 
         </div>
 
+
         <div style="
             display:flex;
-            gap:7px;
+            gap:8px;
         ">
 
             <input
@@ -337,14 +589,15 @@ function showPasteResult(url) {
                 style="
                     flex:1;
                     min-width:0;
+                    padding:10px;
                     border:1px solid #d1fae5;
-                    border-radius:9px;
-                    padding:9px;
-                    background:#fff;
+                    border-radius:10px;
                 "
             >
 
+
             <button
+                type="button"
                 class="btn btn-primary"
                 onclick="copyPasteLink()"
             >
@@ -356,13 +609,14 @@ function showPasteResult(url) {
             </button>
 
         </div>
+
     `;
 
 }
 
 
 /* =====================================================
-   COPY PASTELINK
+   COPY PASTE LINK
 ===================================================== */
 
 async function copyPasteLink() {
@@ -373,9 +627,7 @@ async function copyPasteLink() {
         );
 
 
-    if (!input) {
-        return;
-    }
+    if (!input) return;
 
 
     try {
@@ -384,16 +636,21 @@ async function copyPasteLink() {
             input.value
         );
 
+
         showToast(
             "PasteLink berhasil disalin.",
             "success"
         );
 
+
     } catch (error) {
 
         input.select();
 
-        document.execCommand("copy");
+        document.execCommand(
+            "copy"
+        );
+
 
         showToast(
             "PasteLink berhasil disalin.",
@@ -406,57 +663,203 @@ async function copyPasteLink() {
 
 
 /* =====================================================
-   CLEAR PASTELINK
+   CLEAR PASTE
 ===================================================== */
 
 function clearPaste() {
 
-    if (pasteContent) {
-
-        pasteContent.value = "";
-
-        pasteContent.focus();
-
-    }
-
-
-    const pasteResult =
+    const textarea =
         document.getElementById(
-            "pasteResult"
+            "pasteContent"
         );
 
 
-    if (pasteResult) {
-
-        pasteResult.remove();
-
-    }
-
-
-    const pastePrice =
+    const price =
         document.getElementById(
             "pastePrice"
         );
 
 
-    const pastePassword =
+    const password =
         document.getElementById(
             "pastePassword"
         );
 
 
-    if (pastePrice) {
-
-        pastePrice.value = "";
-
-    }
+    if (textarea)
+        textarea.value = "";
 
 
-    if (pastePassword) {
+    if (price)
+        price.value = "";
 
-        pastePassword.value = "";
 
-    }
+    if (password)
+        password.value = "";
+
+
+    const result =
+        document.getElementById(
+            "pasteResult"
+        );
+
+
+    if (result)
+        result.remove();
+
+
+    if (textarea)
+        textarea.focus();
+
+}
+
+
+/* =====================================================
+   PRODUCTS
+===================================================== */
+
+function initProducts() {
+
+    document
+        .querySelectorAll(
+            ".product-card .btn"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const card =
+                        button.closest(
+                            ".product-card"
+                        );
+
+
+                    const title =
+                        card
+                        ?.querySelector("h3")
+                        ?.textContent
+                        .trim();
+
+
+                    showToast(
+                        `Membuka ${title || "produk"}...`,
+                        "success"
+                    );
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =====================================================
+   PAYMENT
+===================================================== */
+
+function initPayment() {
+
+    const button =
+        document.querySelector(
+            ".payment-button"
+        );
+
+
+    if (!button) return;
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            /*
+             * NANTI:
+             *
+             * POST /api/payment/create
+             *
+             * kemudian redirect
+             * ke payment gateway.
+             */
+
+            showToast(
+                "Menghubungkan ke pembayaran...",
+                "success"
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   SMOOTH SCROLL
+===================================================== */
+
+function initSmoothScroll() {
+
+    document
+        .querySelectorAll(
+            'a[href^="#"]'
+        )
+        .forEach(link => {
+
+            link.addEventListener(
+                "click",
+                event => {
+
+                    const id =
+                        link.getAttribute(
+                            "href"
+                        );
+
+
+                    if (
+                        !id ||
+                        id === "#"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const target =
+                        document.querySelector(
+                            id
+                        );
+
+
+                    if (!target) return;
+
+
+                    event.preventDefault();
+
+
+                    target.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =====================================================
+   EMAIL VALIDATION
+===================================================== */
+
+function validateEmail(email) {
+
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        .test(email);
 
 }
 
@@ -465,7 +868,10 @@ function clearPaste() {
    TOAST
 ===================================================== */
 
-function showToast(message, type = "success") {
+function showToast(
+    message,
+    type = "success"
+) {
 
     let toast =
         document.getElementById(
@@ -476,10 +882,14 @@ function showToast(message, type = "success") {
     if (!toast) {
 
         toast =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         toast.id =
             "telecodToast";
+
 
         toast.style.position =
             "fixed";
@@ -493,11 +903,8 @@ function showToast(message, type = "success") {
         toast.style.zIndex =
             "99999";
 
-        toast.style.maxWidth =
-            "calc(100vw - 40px)";
-
         toast.style.padding =
-            "14px 17px";
+            "13px 17px";
 
         toast.style.borderRadius =
             "13px";
@@ -512,9 +919,15 @@ function showToast(message, type = "success") {
             "700";
 
         toast.style.boxShadow =
-            "0 12px 30px rgba(0,0,0,.18)";
+            "0 12px 30px rgba(0,0,0,.2)";
 
-        document.body.appendChild(toast);
+        toast.style.transition =
+            "opacity .25s ease";
+
+
+        document.body.appendChild(
+            toast
+        );
 
     }
 
@@ -538,7 +951,8 @@ function showToast(message, type = "success") {
     `;
 
 
-    toast.style.opacity = "1";
+    toast.style.opacity =
+        "1";
 
 
     clearTimeout(
@@ -547,7 +961,7 @@ function showToast(message, type = "success") {
 
 
     window.telecodToastTimer =
-        setTimeout(function () {
+        setTimeout(() => {
 
             toast.style.opacity =
                 "0";
@@ -558,368 +972,24 @@ function showToast(message, type = "success") {
 
 
 /* =====================================================
-   LOGIN DEMO
+   GLOBAL
+   Karena HTML menggunakan onclick=""
 ===================================================== */
 
-if (loginForm) {
+window.openAuth =
+    openAuth;
 
-    const loginButton =
-        loginForm.querySelector(
-            ".form-submit"
-        );
+window.closeAuth =
+    closeAuth;
 
+window.setPasteMode =
+    setPasteMode;
 
-    if (loginButton) {
+window.createPaste =
+    createPaste;
 
-        loginButton.addEventListener(
-            "click",
-            function () {
+window.clearPaste =
+    clearPaste;
 
-                const inputs =
-                    loginForm.querySelectorAll(
-                        "input"
-                    );
-
-
-                const email =
-                    inputs[0]?.value.trim();
-
-                const password =
-                    inputs[1]?.value;
-
-
-                if (!email) {
-
-                    showToast(
-                        "Masukkan email Anda.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                if (!password) {
-
-                    showToast(
-                        "Masukkan password Anda.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                /*
-                 * BACKEND NANTI:
-                 *
-                 * fetch("/api/auth/login", {
-                 *     method: "POST",
-                 *     headers: {
-                 *         "Content-Type":
-                 *             "application/json"
-                 *     },
-                 *     body: JSON.stringify({
-                 *         email,
-                 *         password
-                 *     })
-                 * })
-                 */
-
-
-                showToast(
-                    "Login demo berhasil diproses.",
-                    "success"
-                );
-
-
-                setTimeout(function () {
-
-                    closeAuth();
-
-                }, 900);
-
-            }
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   REGISTER DEMO
-===================================================== */
-
-if (registerForm) {
-
-    const registerButton =
-        registerForm.querySelector(
-            ".form-submit"
-        );
-
-
-    if (registerButton) {
-
-        registerButton.addEventListener(
-            "click",
-            function () {
-
-                const inputs =
-                    registerForm.querySelectorAll(
-                        "input"
-                    );
-
-
-                const name =
-                    inputs[0]?.value.trim();
-
-                const email =
-                    inputs[1]?.value.trim();
-
-                const password =
-                    inputs[2]?.value;
-
-
-                if (!name) {
-
-                    showToast(
-                        "Masukkan nama Anda.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                if (!email) {
-
-                    showToast(
-                        "Masukkan email Anda.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                if (!password) {
-
-                    showToast(
-                        "Masukkan password Anda.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                if (password.length < 8) {
-
-                    showToast(
-                        "Password minimal 8 karakter.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                /*
-                 * BACKEND NANTI:
-                 *
-                 * fetch("/api/auth/register", {
-                 *     method: "POST",
-                 *     headers: {
-                 *         "Content-Type":
-                 *             "application/json"
-                 *     },
-                 *     body: JSON.stringify({
-                 *         name,
-                 *         email,
-                 *         password
-                 *     })
-                 * })
-                 */
-
-
-                showToast(
-                    "Akun berhasil diproses.",
-                    "success"
-                );
-
-
-                setTimeout(function () {
-
-                    openAuth("login");
-
-                }, 900);
-
-            }
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   PRODUCT BUY BUTTON
-===================================================== */
-
-document
-    .querySelectorAll(".product-card .btn")
-    .forEach(function (button) {
-
-        button.addEventListener(
-            "click",
-            function () {
-
-                const card =
-                    button.closest(
-                        ".product-card"
-                    );
-
-
-                if (!card) {
-                    return;
-                }
-
-
-                const title =
-                    card.querySelector(
-                        "h3"
-                    )?.textContent.trim();
-
-
-                /*
-                 * NANTI:
-                 *
-                 * window.location.href =
-                 * "/product/" + productId;
-                 */
-
-
-                showToast(
-                    `Membuka ${title || "produk"}...`,
-                    "success"
-                );
-
-            }
-        );
-
-    });
-
-
-/* =====================================================
-   PAYMENT BUTTON
-===================================================== */
-
-const paymentButton =
-    document.querySelector(
-        ".payment-button"
-    );
-
-
-if (paymentButton) {
-
-    paymentButton.addEventListener(
-        "click",
-        function () {
-
-            /*
-             * NANTI:
-             *
-             * fetch("/api/payment/create")
-             *
-             * Kemudian redirect
-             * ke halaman payment.
-             */
-
-            showToast(
-                "Menghubungkan ke payment gateway...",
-                "success"
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   SMOOTH NAVIGATION
-===================================================== */
-
-document
-    .querySelectorAll(
-        'a[href^="#"]'
-    )
-    .forEach(function (link) {
-
-        link.addEventListener(
-            "click",
-            function (event) {
-
-                const targetId =
-                    link.getAttribute(
-                        "href"
-                    );
-
-
-                if (
-                    !targetId ||
-                    targetId === "#"
-                ) {
-
-                    return;
-
-                }
-
-
-                const target =
-                    document.querySelector(
-                        targetId
-                    );
-
-
-                if (!target) {
-                    return;
-                }
-
-
-                event.preventDefault();
-
-
-                target.scrollIntoView({
-
-                    behavior:"smooth",
-
-                    block:"start"
-
-                });
-
-            }
-        );
-
-    });
-
-
-/* =====================================================
-   INITIAL STATE
-===================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        setPasteMode("public");
-
-    }
-);
+window.copyPasteLink =
+    copyPasteLink;
