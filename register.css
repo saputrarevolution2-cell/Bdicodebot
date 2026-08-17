@@ -1,0 +1,4 @@
+
+.auth-card{position:relative}.auth-card:before{content:"";position:absolute;width:120px;height:120px;right:-35px;top:-35px;border-radius:50%;background:#65e1ff0b;filter:blur(10px);pointer-events:none}
+.auth-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.back-link{font-size:11px;color:#7f95aa}.back-link:hover{color:#65e1ff}
+.form-note{text-align:center;color:#71859a;font-size:12px}.form-note a{color:var(--cyan);font-weight:800}

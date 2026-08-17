@@ -222,3 +222,234 @@ grant execute on function public.create_order(uuid) to authenticated;
 grant execute on function public.complete_paid_order(uuid,text) to service_role;
 
 -- IMPORTANT: Never expose service_role/secret keys in frontend.
+
+-- ============================================================
+-- TELECOD FINAL ADMIN / PAYMENT / WITHDRAWAL HARDENING
+-- ============================================================
+alter table public.profiles add column if not exists role text not null default 'user';
+alter table public.profiles add column if not exists status text not null default 'active';
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check check (role in ('user','admin','suspended'));
+alter table public.profiles drop constraint if exists profiles_status_check;
+alter table public.profiles add constraint profiles_status_check check (status in ('active','suspended'));
+
+create table if not exists public.payment_settings (
+  id integer primary key check (id=1),
+  enabled boolean not null default false,
+  provider text not null default 'manual',
+  mode text not null default 'manual' check (mode in ('manual','api')),
+  merchant_id text,
+  api_endpoint text,
+  qr_image_url text,
+  instructions text,
+  currency text not null default 'IDR',
+  updated_at timestamptz not null default now()
+);
+insert into public.payment_settings(id) values(1) on conflict(id) do nothing;
+
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path=public
+as $$ select exists(select 1 from public.profiles where id=auth.uid() and role='admin' and status='active') $$;
+
+grant execute on function public.is_admin() to anon, authenticated;
+
+-- Admin can see/manage operational data, but secrets are never stored in this table.
+drop policy if exists profiles_admin_read on public.profiles;
+create policy profiles_admin_read on public.profiles for select using (true);
+
+drop policy if exists products_admin_all on public.products;
+create policy products_admin_all on public.products for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists pastes_admin_all on public.pastes;
+create policy pastes_admin_all on public.pastes for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists orders_admin_read on public.orders;
+create policy orders_admin_read on public.orders for select using (public.is_admin() or buyer_id=auth.uid() or seller_id=auth.uid());
+
+drop policy if exists access_admin_read on public.product_access;
+create policy access_admin_read on public.product_access for select using (public.is_admin() or buyer_id=auth.uid());
+
+drop policy if exists tx_admin_read on public.transactions;
+create policy tx_admin_read on public.transactions for select using (public.is_admin() or user_id=auth.uid());
+
+drop policy if exists withdrawal_admin_all on public.withdrawals;
+create policy withdrawal_admin_all on public.withdrawals for all using (public.is_admin() or user_id=auth.uid()) with check (public.is_admin() or user_id=auth.uid());
+
+drop policy if exists payment_settings_public_read on public.payment_settings;
+create policy payment_settings_public_read on public.payment_settings for select using (enabled=true or public.is_admin());
+drop policy if exists payment_settings_admin_write on public.payment_settings;
+create policy payment_settings_admin_write on public.payment_settings for all using (public.is_admin()) with check (public.is_admin());
+
+grant select on public.payment_settings to anon, authenticated;
+grant insert,update,delete on public.payment_settings to authenticated;
+
+create or replace function public.request_withdrawal(
+  p_amount bigint,
+  p_method text,
+  p_account_name text,
+  p_account_number text
+) returns public.withdrawals
+language plpgsql security definer set search_path=public
+as $$
+declare v_user uuid:=auth.uid(); v_balance bigint; v_pending boolean; w public.withdrawals;
+begin
+  if v_user is null then raise exception 'Authentication required'; end if;
+  if p_amount < 10000 then raise exception 'Minimum withdrawal is Rp10.000'; end if;
+  if coalesce(trim(p_method),'')='' or coalesce(trim(p_account_name),'')='' or coalesce(trim(p_account_number),'')='' then raise exception 'Withdrawal account is incomplete'; end if;
+  select balance into v_balance from public.profiles where id=v_user for update;
+  if v_balance is null then raise exception 'Profile not found'; end if;
+  select exists(select 1 from public.withdrawals where user_id=v_user and status in ('pending','processing')) into v_pending;
+  if v_pending then raise exception 'A withdrawal is already in progress'; end if;
+  if v_balance < p_amount then raise exception 'Insufficient balance'; end if;
+  update public.profiles set balance=balance-p_amount where id=v_user;
+  insert into public.withdrawals(user_id,amount,method,account_name,account_number,status)
+  values(v_user,p_amount,trim(p_method),trim(p_account_name),trim(p_account_number),'pending') returning * into w;
+  insert into public.transactions(user_id,type,amount,description) values(v_user,'withdrawal',-p_amount,'Withdrawal request');
+  return w;
+end $$;
+
+grant execute on function public.request_withdrawal(bigint,text,text,text) to authenticated;
+
+create or replace function public.admin_update_withdrawal(
+  p_withdrawal_id uuid,
+  p_status text,
+  p_note text default null
+) returns public.withdrawals
+language plpgsql security definer set search_path=public
+as $$
+declare w public.withdrawals; v_old text;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  if p_status not in ('processing','paid','rejected') then raise exception 'Invalid withdrawal status'; end if;
+  select * into w from public.withdrawals where id=p_withdrawal_id for update;
+  if not found then raise exception 'Withdrawal not found'; end if;
+  v_old:=w.status;
+  if v_old in ('paid','rejected') then raise exception 'Withdrawal already finalized'; end if;
+  if p_status='rejected' then
+    update public.profiles set balance=balance+w.amount where id=w.user_id;
+    insert into public.transactions(user_id,type,amount,description) values(w.user_id,'adjustment',w.amount,coalesce(p_note,'Withdrawal rejected - balance returned'));
+  end if;
+  update public.withdrawals set status=p_status,note=p_note,processed_at=case when p_status in ('paid','rejected') then now() else processed_at end where id=w.id returning * into w;
+  return w;
+end $$;
+
+grant execute on function public.admin_update_withdrawal(uuid,text,text) to authenticated;
+
+create or replace function public.admin_set_member_role(p_user_id uuid,p_role text)
+returns public.profiles language plpgsql security definer set search_path=public
+as $$
+declare p public.profiles;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  if p_role not in ('user','admin','suspended') then raise exception 'Invalid role'; end if;
+  if p_user_id=auth.uid() and p_role<>'admin' then raise exception 'You cannot remove your own admin role'; end if;
+  update public.profiles set role=p_role,status=case when p_role='suspended' then 'suspended' else 'active' end where id=p_user_id returning * into p;
+  if not found then raise exception 'Member not found'; end if;
+  return p;
+end $$;
+grant execute on function public.admin_set_member_role(uuid,text) to authenticated;
+
+create or replace function public.admin_adjust_balance(p_user_id uuid,p_amount bigint,p_description text default 'Admin balance adjustment')
+returns public.profiles language plpgsql security definer set search_path=public
+as $$
+declare p public.profiles;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  if p_amount=0 then raise exception 'Adjustment cannot be zero'; end if;
+  update public.profiles set balance=balance+p_amount where id=p_user_id and balance+p_amount>=0 returning * into p;
+  if not found then raise exception 'Member not found or balance would become negative'; end if;
+  insert into public.transactions(user_id,type,amount,description) values(p_user_id,'adjustment',p_amount,p_description);
+  return p;
+end $$;
+grant execute on function public.admin_adjust_balance(uuid,bigint,text) to authenticated;
+
+-- Safe order creation: never trust amount/seller from the browser.
+revoke insert on public.orders from authenticated;
+revoke update,delete on public.orders from authenticated;
+grant execute on function public.create_order(uuid) to authenticated;
+
+-- Product access must only be exposed after a verified payment.
+create or replace function public.complete_paid_order(p_order_id uuid, p_payment_reference text default null)
+returns public.orders
+language plpgsql security definer set search_path = public
+as $$
+declare o public.orders; p public.products;
+begin
+  select * into o from public.orders where id=p_order_id for update;
+  if not found then raise exception 'Order not found'; end if;
+  if o.status='paid' then return o; end if;
+  if o.status not in ('pending','expired') then raise exception 'Order cannot be paid'; end if;
+  select * into p from public.products where id=o.product_id;
+  if not found then raise exception 'Product not found'; end if;
+  update public.orders set status='paid',payment_reference=coalesce(p_payment_reference,payment_reference),paid_at=now() where id=o.id returning * into o;
+  update public.profiles set balance=balance+o.amount where id=o.seller_id;
+  insert into public.product_access(order_id,product_id,buyer_id,delivery_url) values(o.id,o.product_id,o.buyer_id,p.delivery_url) on conflict(order_id) do update set delivery_url=excluded.delivery_url;
+  insert into public.transactions(user_id,order_id,type,amount,description) values(o.seller_id,o.id,'sale',o.amount,'Product sale') on conflict do nothing;
+  insert into public.transactions(user_id,order_id,type,amount,description) values(o.buyer_id,o.id,'purchase',-o.amount,'Product purchase') on conflict do nothing;
+  return o;
+end $$;
+grant execute on function public.complete_paid_order(uuid,text) to service_role;
+
+-- Admin may edit payment/content operational data through RLS, while API secrets stay in Edge Function secrets.
+
+create or replace function public.admin_mark_order_paid(p_order_id uuid,p_payment_reference text default null)
+returns public.orders language plpgsql security definer set search_path=public
+as $$
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  return public.complete_paid_order(p_order_id,p_payment_reference);
+end $$;
+grant execute on function public.admin_mark_order_paid(uuid,text) to authenticated;
+
+create or replace function public.admin_cancel_order(p_order_id uuid)
+returns public.orders language plpgsql security definer set search_path=public
+as $$
+declare o public.orders;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  select * into o from public.orders where id=p_order_id for update;
+  if not found then raise exception 'Order not found'; end if;
+  if o.status='paid' then raise exception 'Paid order cannot be cancelled from this action'; end if;
+  update public.orders set status='cancelled' where id=o.id returning * into o;
+  return o;
+end $$;
+grant execute on function public.admin_cancel_order(uuid) to authenticated;
+
+-- Bootstrap admin: after creating your account, replace the UUID below and run once.
+-- update public.profiles set role='admin' where id='YOUR-AUTH-USER-UUID';
+
+-- Supabase Edge Function payment contract (generic provider adapter):
+-- create-payment receives { order_id }, verifies the authenticated buyer owns the order,
+-- reads payment_settings, calls your provider using Edge Function secrets, then updates
+-- orders.payment_url/payment_reference. Never put API keys in assets/config.js.
+-- payment-webhook receives a provider webhook, verifies PAYMENT_WEBHOOK_SECRET,
+-- then calls complete_paid_order(order_id, reference).
+
+-- Privacy hardening: member balances are private. Public pages do not need the profiles table.
+drop policy if exists profiles_select_public on public.profiles;
+drop policy if exists profiles_admin_read on public.profiles;
+drop policy if exists profiles_select_own_or_admin on public.profiles;
+create policy profiles_select_own_or_admin on public.profiles for select using (auth.uid()=id or public.is_admin());
+revoke select on public.profiles from anon;
+grant select on public.profiles to authenticated;
+
+-- PasteLink privacy hardening: raw paste rows are not public-readable because they contain content/password.
+drop policy if exists pastes_public_read on public.pastes;
+drop policy if exists pastes_select_own_or_admin on public.pastes;
+create policy pastes_select_own_or_admin on public.pastes for select using (owner_id=auth.uid() or public.is_admin());
+revoke select on public.pastes from anon;
+grant select on public.pastes to authenticated;
+
+create or replace function public.get_paste(p_slug text,p_password text default null)
+returns table(title text,content text,visibility text)
+language plpgsql security definer set search_path=public
+as $$
+declare p public.pastes;
+begin
+  select * into p from public.pastes where slug=p_slug;
+  if not found then raise exception 'Paste not found'; end if;
+  if p.visibility='private' and p.owner_id<>auth.uid() then raise exception 'Private paste'; end if;
+  if p.password is not null and p.password<>coalesce(p_password,'') then raise exception 'Password required or invalid password'; end if;
+  return query select p.title,p.content,p.visibility;
+end $$;
+grant execute on function public.get_paste(text,text) to anon, authenticated;
