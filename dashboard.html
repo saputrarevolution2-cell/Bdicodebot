@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Dashboard — TeleCod</title>
+
+    <meta
+        name="description"
+        content="Dashboard TeleCod"
+    >
+
+    <!-- FONT -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- FONT AWESOME -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+    <!-- DASHBOARD COMPONENT -->
+    <link
+        rel="stylesheet"
+        href="assets/css/dashboard-components.css"
+    >
+
+    <!-- DASHBOARD STYLE -->
+    <link
+        rel="stylesheet"
+        href="assets/css/dashboard.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- BACKGROUND -->
+
+<div class="background-grid"></div>
+<div class="stars"></div>
+
+<div class="bg-glow glow-blue"></div>
+<div class="bg-glow glow-purple"></div>
+<div class="bg-glow glow-pink"></div>
+
+
+<!-- =====================================================
+     NAVBAR COMPONENT
+===================================================== -->
+
+<div id="navbar"></div>
+
+
+<!-- =====================================================
+     MAIN DASHBOARD
+===================================================== -->
+
+<main class="dashboard-page">
+
+
+    <!-- HEADER -->
+
+    <section class="dashboard-header">
+
+        <div>
+
+            <span class="dashboard-eyebrow">
+                <i class="fa-solid fa-chart-line"></i>
+                TELECOD DASHBOARD
+            </span>
+
+            <h1>
+                Selamat datang,
+                <span id="dashboardName">
+                    User
+                </span> 👋
+            </h1>
+
+            <p>
+                Kelola akun, code, penjualan,
+                dan aktivitas TeleCod kamu.
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-actions">
+
+            <a
+                href="marketplace.html"
+                class="dashboard-btn secondary"
+            >
+                <i class="fa-solid fa-store"></i>
+                Marketplace
+            </a>
+
+            <a
+                href="sell.html"
+                class="dashboard-btn primary"
+            >
+                <i class="fa-solid fa-plus"></i>
+                Jual Code
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         BALANCE
+    ================================================= -->
+
+    <section class="dashboard-balance">
+
+        <div class="balance-card">
+
+            <div class="balance-info">
+
+                <span>
+                    <i class="fa-solid fa-wallet"></i>
+                    Saldo
+                </span>
+
+                <strong id="userBalance">
+                    Rp0
+                </strong>
+
+                <small>
+                    Saldo tersedia
+                </small>
+
+            </div>
+
+            <div class="balance-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+
+        </div>
+
+
+        <div class="balance-card">
+
+            <div class="balance-info">
+
+                <span>
+                    <i class="fa-solid fa-chart-line"></i>
+                    Pendapatan
+                </span>
+
+                <strong id="userEarnings">
+                    Rp0
+                </strong>
+
+                <small>
+                    Total pendapatan
+                </small>
+
+            </div>
+
+            <div class="balance-icon">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+            </div>
+
+        </div>
+
+
+        <div class="balance-card">
+
+            <div class="balance-info">
+
+                <span>
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    Pembelian
+                </span>
+
+                <strong id="userPurchases">
+                    0
+                </strong>
+
+                <small>
+                    Code dibeli
+                </small>
+
+            </div>
+
+            <div class="balance-icon">
+                <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+
+        </div>
+
+
+        <div class="balance-card">
+
+            <div class="balance-info">
+
+                <span>
+                    <i class="fa-solid fa-code"></i>
+                    Code Saya
+                </span>
+
+                <strong id="userCodes">
+                    0
+                </strong>
+
+                <small>
+                    Code terjual
+                </small>
+
+            </div>
+
+            <div class="balance-icon">
+                <i class="fa-solid fa-code"></i>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         QUICK MENU
+    ================================================= -->
+
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span>
+                    QUICK ACCESS
+                </span>
+
+                <h2>
+                    Menu Cepat
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="quick-grid">
+
+
+            <a
+                href="marketplace.html"
+                class="quick-card"
+            >
+
+                <div class="quick-icon blue">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+
+                <div>
+
+                    <h3>
+                        Marketplace
+                    </h3>
+
+                    <p>
+                        Cari dan beli code bot.
+                    </p>
+
+                </div>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </a>
+
+
+
+            <a
+                href="sell.html"
+                class="quick-card"
+            >
+
+                <div class="quick-icon purple">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+
+                <div>
+
+                    <h3>
+                        Jual Code
+                    </h3>
+
+                    <p>
+                        Jual code bot kamu.
+                    </p>
+
+                </div>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </a>
+
+
+
+            <a
+                href="purchases.html"
+                class="quick-card"
+            >
+
+                <div class="quick-icon cyan">
+                    <i class="fa-solid fa-download"></i>
+                </div>
+
+                <div>
+
+                    <h3>
+                        Pembelian Saya
+                    </h3>
+
+                    <p>
+                        Lihat code yang dibeli.
+                    </p>
+
+                </div>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </a>
+
+
+
+            <a
+                href="profile.html"
+                class="quick-card"
+            >
+
+                <div class="quick-icon yellow">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+
+                <div>
+
+                    <h3>
+                        Profil
+                    </h3>
+
+                    <p>
+                        Kelola akun TeleCod.
+                    </p>
+
+                </div>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STATISTICS
+    ================================================= -->
+
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span>
+                    ACCOUNT OVERVIEW
+                </span>
+
+                <h2>
+                    Statistik Akun
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Views
+                    </span>
+
+                    <strong id="totalViews">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-arrow-pointer"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Clicks
+                    </span>
+
+                    <strong id="totalClicks">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        Pendapatan Bulan Ini
+                    </span>
+
+                    <strong id="monthlyEarnings">
+                        Rp0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Withdraw
+                    </span>
+
+                    <strong id="withdrawCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         RECENT ACTIVITY
+    ================================================= -->
+
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span>
+                    ACTIVITY
+                </span>
+
+                <h2>
+                    Aktivitas Terbaru
+                </h2>
+
+            </div>
+
+            <a href="#">
+                Lihat Semua
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+        </div>
+
+
+        <div
+            class="activity-container"
+            id="recentActivity"
+        >
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+
+                <h3>
+                    Belum ada aktivitas
+                </h3>
+
+                <p>
+                    Aktivitas akun kamu akan muncul
+                    di sini.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         SELLER CTA
+    ================================================= -->
+
+    <section class="dashboard-cta">
+
+        <div>
+
+            <span>
+                <i class="fa-solid fa-code"></i>
+                DEVELOPER?
+            </span>
+
+            <h2>
+                Punya code bot?
+                <strong>Jual di TeleCod.</strong>
+            </h2>
+
+            <p>
+                Upload code kamu dan mulai
+                mendapatkan penghasilan.
+            </p>
+
+        </div>
+
+
+        <a
+            href="sell.html"
+            class="dashboard-btn primary"
+        >
+
+            <i class="fa-solid fa-upload"></i>
+
+            Mulai Jual Code
+
+            <i class="fa-solid fa-arrow-right"></i>
+
+        </a>
+
+    </section>
+
+
+</main>
+
+
+
+<!-- =====================================================
+     FOOTER COMPONENT
+===================================================== -->
+
+<div id="footer"></div>
+
+
+
+<!-- =====================================================
+     SUPABASE
+===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="assets/js/database.js"></script>
+
+
+<!-- =====================================================
+     DASHBOARD COMPONENT
+===================================================== -->
+
+<script src="assets/js/dashboard-components.js"></script>
+
+
+<!-- =====================================================
+     DASHBOARD LOGIC
+===================================================== -->
+
+<script src="assets/js/dashboard.js"></script>
+
+
+</body>
+</html>
