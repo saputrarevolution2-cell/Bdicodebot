@@ -1,7 +1,3 @@
-// =====================================================
-// TELECOD - SUPABASE DATABASE
-// =====================================================
-
 const SUPABASE_URL =
     "https://qrhbgffmqorzbcfvnbkk.supabase.co";
 
@@ -15,9 +11,9 @@ const supabaseClient =
     );
 
 
-// =====================================================
-// AUTH
-// =====================================================
+// ===============================
+// GET CURRENT USER
+// ===============================
 
 async function getCurrentUser() {
 
@@ -27,7 +23,7 @@ async function getCurrentUser() {
     } = await supabaseClient.auth.getUser();
 
     if (error) {
-        console.error("Get user error:", error);
+        console.error(error);
         return null;
     }
 
@@ -35,14 +31,32 @@ async function getCurrentUser() {
 }
 
 
-async function signUp(email, password) {
+// ===============================
+// REGISTER
+// ===============================
+
+async function registerUser(
+    email,
+    password,
+    username,
+    fullName
+) {
 
     const {
         data,
         error
     } = await supabaseClient.auth.signUp({
+
         email,
-        password
+        password,
+
+        options: {
+            data: {
+                username: username,
+                full_name: fullName
+            }
+        }
+
     });
 
     if (error) {
@@ -53,14 +67,20 @@ async function signUp(email, password) {
 }
 
 
-async function signIn(email, password) {
+// ===============================
+// LOGIN
+// ===============================
+
+async function loginUser(email, password) {
 
     const {
         data,
         error
     } = await supabaseClient.auth.signInWithPassword({
+
         email,
         password
+
     });
 
     if (error) {
@@ -71,7 +91,11 @@ async function signIn(email, password) {
 }
 
 
-async function signOut() {
+// ===============================
+// LOGOUT
+// ===============================
+
+async function logoutUser() {
 
     const { error } =
         await supabaseClient.auth.signOut();
@@ -79,4 +103,6 @@ async function signOut() {
     if (error) {
         throw error;
     }
+
+    window.location.href = "index.html";
 }
