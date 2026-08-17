@@ -1,0 +1,4 @@
+/* TeleCod Footer - shared component */
+.telecod-footer{margin-top:60px;background:#030d24;border-top:1px solid rgba(0,174,255,.2);color:#d8e7ff}
+.footer-container{max-width:1280px;margin:auto;padding:42px 20px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px}.footer-container h4{color:#fff;margin:0 0 14px}.footer-container a{display:block;color:#9fb6d7;text-decoration:none;margin:9px 0;font-size:13px}.footer-container p{color:#9fb6d7;font-size:13px}.footer-logo{font-size:24px;font-weight:800;color:#fff}.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding:16px 20px;text-align:center;color:#7f98bb;font-size:12px}
+@media(max-width:700px){.footer-container{grid-template-columns:1fr 1fr}}
