@@ -1,0 +1,86 @@
+
+/* =========================================================
+   TELECOD PREMIUM DESIGN SYSTEM
+   Responsive: Android / iOS / Desktop
+   ========================================================= */
+:root{
+  --tc-bg:#050914;
+  --tc-bg-soft:#091225;
+  --tc-panel:rgba(13,24,48,.78);
+  --tc-panel-2:rgba(18,32,61,.9);
+  --tc-line:rgba(148,184,255,.14);
+  --tc-text:#f5f8ff;
+  --tc-muted:#94a8c8;
+  --tc-primary:#20a8ff;
+  --tc-primary-2:#5967ff;
+  --tc-success:#31d69a;
+  --tc-danger:#ff617d;
+  --tc-radius:20px;
+  --tc-shadow:0 24px 70px rgba(0,0,0,.32);
+  --tc-max:1280px;
+  --tc-space:clamp(16px,2.4vw,32px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-width:320px;
+  color:var(--tc-text);
+  background:
+    radial-gradient(circle at 10% 0%,rgba(32,168,255,.13),transparent 30%),
+    radial-gradient(circle at 90% 10%,rgba(89,103,255,.12),transparent 28%),
+    var(--tc-bg);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img,svg,video{max-width:100%;height:auto}
+button,input,select,textarea{font:inherit}
+button,a{touch-action:manipulation}
+a{color:inherit}
+.container,.page-container,.dashboard-container{
+  width:min(calc(100% - 32px),var(--tc-max));
+  margin-inline:auto;
+}
+main{min-height:calc(100vh - 160px)}
+section{width:100%}
+.card,.panel,.stat-card,.quick-card,.balance-card,.activity-container,.auth-card{
+  border:1px solid var(--tc-line);
+  background:linear-gradient(145deg,rgba(17,31,60,.82),rgba(7,16,34,.86));
+  box-shadow:var(--tc-shadow);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border-radius:var(--tc-radius);
+}
+button,.btn,.dashboard-btn{
+  min-height:44px;
+  border-radius:12px;
+  transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease;
+}
+button:hover,.btn:hover,.dashboard-btn:hover{transform:translateY(-1px)}
+button:active,.btn:active,.dashboard-btn:active{transform:translateY(0)}
+input,select,textarea{
+  width:100%;
+  border:1px solid rgba(148,184,255,.18);
+  background:rgba(3,10,24,.62);
+  color:var(--tc-text);
+  border-radius:12px;
+  outline:none;
+  padding:12px 14px;
+  transition:border-color .18s,box-shadow .18s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:rgba(32,168,255,.7);
+  box-shadow:0 0 0 4px rgba(32,168,255,.1);
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#050914}
+::-webkit-scrollbar-thumb{background:#23385f;border-radius:99px}
+@media(max-width:700px){
+  .container,.page-container,.dashboard-container{width:min(calc(100% - 22px),var(--tc-max))}
+  main{min-height:calc(100vh - 130px)}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
