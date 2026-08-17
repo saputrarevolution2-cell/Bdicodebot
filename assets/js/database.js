@@ -6,11 +6,28 @@ const SUPABASE_URL =
     "https://qrhbgffmqorzbcfvnbkk.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGJnZmZtcW9yemJjZnZuYmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NTEzOTIsImV4cCI6MjEwMjUyNzM5Mn0.W9tWYiPmYOC9wsruJMypH_Kg0dQpw_klCbACS6PYp48";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxcmhiZ2ZmbXFvcnpiY2Z2bmJrayIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg2OTUxMzkyLCJleHAiOjIxMDI1MjczOTJ9.W9tWYiPmYOC9wsruJMypH_Kg0dQpw_klCbACS6PYp48";
 
 
 // =====================================================
-// SUPABASE CLIENT
+// CHECK SUPABASE LIBRARY
+// =====================================================
+
+if (!window.supabase) {
+
+    console.error(
+        "Supabase JS belum dimuat."
+    );
+
+    throw new Error(
+        "Supabase library belum tersedia."
+    );
+
+}
+
+
+// =====================================================
+// CREATE CLIENT
 // =====================================================
 
 const supabase = window.supabase.createClient(
@@ -28,62 +45,78 @@ const supabase = window.supabase.createClient(
 
 
 // =====================================================
-// GET CURRENT SESSION
+// GET SESSION
 // =====================================================
 
 async function getCurrentSession() {
 
-    const {
-        data,
-        error
-    } = await supabase.auth.getSession();
+    try {
 
-    if (error) {
+        const {
+            data,
+            error
+        } = await supabase.auth.getSession();
+
+        if (error) {
+
+            console.error(
+                "GET SESSION ERROR:",
+                error
+            );
+
+            return null;
+        }
+
+        return data?.session || null;
+
+    } catch (error) {
+
         console.error(
-            "Session error:",
+            "SESSION EXCEPTION:",
             error
         );
 
         return null;
     }
 
-    return data.session || null;
 }
 
 
 // =====================================================
-// GET CURRENT USER
+// GET USER
 // =====================================================
 
 async function getCurrentUser() {
 
-    const {
-        data,
-        error
-    } = await supabase.auth.getUser();
+    try {
 
-    if (error) {
+        const {
+            data,
+            error
+        } = await supabase.auth.getUser();
+
+        if (error) {
+
+            console.error(
+                "GET USER ERROR:",
+                error
+            );
+
+            return null;
+        }
+
+        return data?.user || null;
+
+    } catch (error) {
+
+        console.error(
+            "USER EXCEPTION:",
+            error
+        );
+
         return null;
     }
 
-    return data.user || null;
-}
-
-
-// =====================================================
-// GET CURRENT PROFILE
-// =====================================================
-
-async function getCurrentProfile() {
-
-    const user =
-        await getCurrentUser();
-
-    if (!user) {
-        return null;
-    }
-
-    return user;
 }
 
 
@@ -93,44 +126,53 @@ async function getCurrentProfile() {
 
 async function logoutUser() {
 
-    const {
-        error
-    } = await supabase.auth.signOut();
+    try {
 
-    if (error) {
+        const {
+            error
+        } = await supabase.auth.signOut();
+
+        if (error) {
+
+            console.error(
+                "LOGOUT ERROR:",
+                error
+            );
+
+            return false;
+        }
+
+        localStorage.removeItem(
+            "telecod_logged_in"
+        );
+
+        return true;
+
+    } catch (error) {
 
         console.error(
-            "Logout error:",
+            "LOGOUT EXCEPTION:",
             error
         );
 
         return false;
     }
 
-    return true;
 }
 
 
 // =====================================================
-// AUTH STATE LISTENER
+// AUTH STATE
 // =====================================================
 
 supabase.auth.onAuthStateChange(
     (event, session) => {
 
         console.log(
-            "AUTH EVENT:",
-            event
+            "TELECOD AUTH:",
+            event,
+            session?.user?.email || null
         );
-
-        if (session) {
-
-            console.log(
-                "USER:",
-                session.user.email
-            );
-
-        }
 
     }
 );
