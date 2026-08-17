@@ -1,68 +1,1482 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TeleCod — Telegram Bot Code Marketplace</title>
-<meta name="description" content="TeleCod marketplace code bot Telegram.">
-<link rel="icon" href="favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="assets/css/index.css">
-<link rel="stylesheet" href="components/navbar.css">
-<link rel="stylesheet" href="components/footer.css">
+    <title>Telecod - Code Media Telegram</title>
+
+    <meta
+        name="description"
+        content="Telecod - Marketplace code media Telegram, PasteLink dan Payment Link."
+    >
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div class="orb orb1"></div><div class="orb orb2"></div>
 
-<div id="navbar"></div>
+<!-- =====================================================
+     NAVBAR
+===================================================== -->
 
-<main id="home">
-<section class="hero section">
-<div class="hero-copy">
-<span class="eyebrow"><i class="fa-solid fa-crown"></i><span data-i18n="eyebrow">Telegram Bot Code Marketplace</span></span>
-<h1><span data-i18n="hero1">Temukan &amp; Jual</span><br><b>Code Bot Telegram</b></h1>
-<p data-i18n="heroDesc">Marketplace modern untuk membeli, menjual, dan mengembangkan code bot Telegram. Cepat, aman, dan terpercaya.</p>
-<div class="trust-row"><span><i class="fa-solid fa-shield-halved"></i><b data-i18n="safe">Aman</b></span><span><i class="fa-solid fa-bolt"></i><b data-i18n="fast">Cepat</b></span><span><i class="fa-regular fa-circle-check"></i><b data-i18n="trusted">Terpercaya</b></span></div>
-<div class="hero-actions"><a href="#marketplace" class="btn primary"><i class="fa-solid fa-paper-plane"></i><span data-i18n="explore">Jelajahi Marketplace</span></a><a href="sell-buy.html" class="btn secondary"><i class="fa-solid fa-rocket"></i><span data-i18n="sellNow">Jual Code Sekarang</span><i class="fa-solid fa-arrow-right"></i></a></div>
-<div class="hero-stats"><div><b>12.5K+</b><small data-i18n="codeSold">Code Tersedia</small></div><div><b>2.8K+</b><small data-i18n="activeSeller">Seller Aktif</small></div><div><b>45.7K+</b><small data-i18n="transactions">Transaksi</small></div><div><b>28.9K+</b><small data-i18n="members">Member</small></div></div>
+<header class="navbar">
+
+    <div class="container nav-inner">
+
+        <a href="#" class="logo">
+            <i class="fa-brands fa-telegram"></i>
+
+            <span>
+                Tele<span>cod</span>
+            </span>
+        </a>
+
+        <nav class="nav-menu">
+
+            <a href="#marketplace">
+                Marketplace
+            </a>
+
+            <a href="#features">
+                Fitur
+            </a>
+
+            <a href="#pastelink">
+                PasteLink
+            </a>
+
+            <a href="#payment">
+                Payment
+            </a>
+
+        </nav>
+
+        <div class="nav-auth">
+
+            <button
+                class="btn btn-outline"
+                onclick="openAuth('login')"
+            >
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                Login
+            </button>
+
+            <button
+                class="btn btn-primary"
+                onclick="openAuth('register')"
+            >
+                <i class="fa-solid fa-user-plus"></i>
+
+                Register
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     HERO
+===================================================== -->
+
+<section class="hero">
+
+    <div class="container hero-grid">
+
+        <div class="hero-content">
+
+            <div class="hero-badge">
+
+                <i class="fa-brands fa-telegram"></i>
+
+                EKOSISTEM DIGITAL TELEGRAM
+
+            </div>
+
+            <h1>
+
+                Punya Code Media Telegram?
+
+                <span>
+                    Jadikan Cuan di Telecod.
+                </span>
+
+            </h1>
+
+            <p>
+
+                Temukan, jual, beli, dan bagikan code media Telegram
+                dalam satu tempat.
+
+                Ada code gratis, code premium, code viral,
+                PasteLink sampai Payment Link.
+
+            </p>
+
+            <div class="hero-buttons">
+
+                <a
+                    href="#marketplace"
+                    class="btn btn-primary btn-large"
+                >
+                    <i class="fa-solid fa-store"></i>
+
+                    Jelajahi Code
+                </a>
+
+                <a
+                    href="#pastelink"
+                    class="btn btn-dark btn-large"
+                >
+                    <i class="fa-solid fa-link"></i>
+
+                    Buat PasteLink
+                </a>
+
+                <a
+                    href="#payment"
+                    class="btn btn-outline btn-large"
+                >
+                    <i class="fa-solid fa-gem"></i>
+
+                    Channel VIP
+                </a>
+
+            </div>
+
+            <div class="hero-info">
+
+                <span>
+                    <i class="fa-solid fa-circle-check"></i>
+                    PasteLink tanpa login
+                </span>
+
+                <span>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Jual code wajib akun
+                </span>
+
+                <span>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Payment Link
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- HERO IMAGE -->
+
+        <div class="hero-image">
+
+            <!-- Ganti URL ini dengan gambar anime Anda -->
+
+            <img
+                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=85"
+                alt="Anime programmer menggunakan komputer"
+            >
+
+            <div class="telegram-icon">
+
+                <i class="fa-brands fa-telegram"></i>
+
+            </div>
+
+            <div class="image-label">
+
+                <span>
+
+                    <i class="fa-solid fa-code"></i>
+
+                    Code Media Telegram
+
+                </span>
+
+                <strong>
+                    TELECOD
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- STATS -->
+
+    <div class="container stats">
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-code"></i>
+
+            <strong>
+                1K+
+            </strong>
+
+            <span>
+                Code tersedia
+            </span>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-fire"></i>
+
+            <strong>
+                Viral
+            </strong>
+
+            <span>
+                Code populer
+            </span>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-link"></i>
+
+            <strong>
+                24/7
+            </strong>
+
+            <span>
+                PasteLink
+            </span>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-share-nodes"></i>
+
+            <strong>
+                Multi
+            </strong>
+
+            <span>
+                Platform sharing
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     18+
+===================================================== -->
+
+<section class="age-section">
+
+    <div class="container">
+
+        <div class="age-box">
+
+            <div class="age-left">
+
+                <div class="age-number">
+                    18+
+                </div>
+
+                <div>
+
+                    <h3>
+                        Informasi Pengguna Dewasa
+                    </h3>
+
+                    <p>
+
+                        Telecod merupakan platform code media dan
+                        produk digital. Pengguna wajib mematuhi hukum,
+                        hak cipta dan aturan platform yang berlaku.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <a
+                href="#footer"
+                class="btn btn-outline"
+            >
+                Baca Aturan
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     FEATURES
+===================================================== -->
+
+<section
+    class="section"
+    id="features"
+>
+
+    <div class="container">
+
+        <div class="section-title">
+
+            <span>
+                KENAPA TELECOD?
+            </span>
+
+            <h2>
+                Satu tempat untuk code,
+                link dan cuan.
+            </h2>
+
+            <p>
+
+                Semua kebutuhan code media Telegram,
+                PasteLink dan Payment Link dalam satu platform.
+
+            </p>
+
+        </div>
+
+
+        <div class="feature-grid">
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+
+                    <i class="fa-solid fa-fire"></i>
+
+                </div>
+
+                <h3>
+                    Code Viral
+                </h3>
+
+                <p>
+
+                    Cari code media Telegram yang
+                    sedang banyak dicari pengguna.
+
+                </p>
+
+                <ul>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Code populer
+                    </li>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Code gratis
+                    </li>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Code premium
+                    </li>
+
+                </ul>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+
+                    <i class="fa-solid fa-sack-dollar"></i>
+
+                </div>
+
+                <h3>
+                    Jual Code
+                </h3>
+
+                <p>
+
+                    Punya code sendiri?
+                    Jual melalui marketplace Telecod.
+
+                </p>
+
+                <ul>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Buat listing
+                    </li>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Tentukan harga
+                    </li>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Dapatkan cuan
+                    </li>
+
+                </ul>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+
+                    <i class="fa-solid fa-link"></i>
+
+                </div>
+
+                <h3>
+                    PasteLink
+                </h3>
+
+                <p>
+
+                    Buat PasteLink tanpa harus
+                    membuat akun terlebih dahulu.
+
+                </p>
+
+                <ul>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Public Paste
+                    </li>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Password protection
+                    </li>
+
+                    <li>
+                        <i class="fa-solid fa-check"></i>
+                        Bisa dijual
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MARKETPLACE
+===================================================== -->
+
+<section
+    class="section marketplace"
+    id="marketplace"
+>
+
+    <div class="container">
+
+        <div class="section-title">
+
+            <span>
+                MARKETPLACE
+            </span>
+
+            <h2>
+                Code Telegram yang sedang dicari
+            </h2>
+
+            <p>
+                Temukan berbagai code media Telegram
+                gratis maupun premium.
+            </p>
+
+        </div>
+
+
+        <div class="product-grid">
+
+
+            <!-- PRODUCT 1 -->
+
+            <div class="product-card">
+
+                <div class="product-image">
+
+                    <i class="fa-brands fa-telegram"></i>
+
+                    <span class="product-hot">
+                        TERLARIS
+                    </span>
+
+                </div>
+
+                <div class="product-content">
+
+                    <h3>
+                        Telegram Media Code #001
+                    </h3>
+
+                    <p>
+                        <i class="fa-solid fa-layer-group"></i>
+
+                        120 Media · Popular
+                    </p>
+
+                    <div class="product-bottom">
+
+                        <strong>
+                            Rp 25.000
+                        </strong>
+
+                        <button class="btn btn-primary">
+                            Beli
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT 2 -->
+
+            <div class="product-card">
+
+                <div class="product-image">
+
+                    <i class="fa-solid fa-photo-film"></i>
+
+                    <span class="product-hot">
+                        POPULER
+                    </span>
+
+                </div>
+
+                <div class="product-content">
+
+                    <h3>
+                        Media Collection Viral
+                    </h3>
+
+                    <p>
+                        <i class="fa-solid fa-layer-group"></i>
+
+                        250 Media · Premium
+                    </p>
+
+                    <div class="product-bottom">
+
+                        <strong>
+                            Rp 35.000
+                        </strong>
+
+                        <button class="btn btn-primary">
+                            Beli
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT 3 -->
+
+            <div class="product-card">
+
+                <div class="product-image">
+
+                    <i class="fa-solid fa-gift"></i>
+
+                    <span class="product-free">
+                        GRATIS
+                    </span>
+
+                </div>
+
+                <div class="product-content">
+
+                    <h3>
+                        Free Telegram Code
+                    </h3>
+
+                    <p>
+                        <i class="fa-solid fa-layer-group"></i>
+
+                        80 Media · Free
+                    </p>
+
+                    <div class="product-bottom">
+
+                        <strong>
+                            FREE
+                        </strong>
+
+                        <button class="btn btn-dark">
+                            Ambil
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="center-button">
+
+            <button class="btn btn-primary btn-large">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                Cari Semua Code
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     PASTELINK
+===================================================== -->
+
+<section
+    class="section pastelink-section"
+    id="pastelink"
+>
+
+    <div class="container paste-grid">
+
+
+        <div class="paste-info">
+
+            <span class="section-label">
+                PASTELINK
+            </span>
+
+            <h2>
+                Buat PasteLink
+                tanpa harus daftar.
+            </h2>
+
+            <p>
+
+                Tempelkan teks, code atau link Anda.
+                Buat link public atau gunakan password
+                untuk membatasi akses.
+
+            </p>
+
+
+            <ul class="paste-features">
+
+                <li>
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Buat PasteLink tanpa login.
+
+                </li>
+
+                <li>
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Public atau password.
+
+                </li>
+
+                <li>
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Mode jual wajib login.
+
+                </li>
+
+                <li>
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Bisa dibagikan ke semua media.
+
+                </li>
+
+            </ul>
+
+        </div>
+
+
+        <!-- PASTE BOX -->
+
+        <div class="paste-box">
+
+            <div class="paste-tabs">
+
+                <button
+                    id="publicTab"
+                    class="btn btn-primary"
+                    onclick="setPasteMode('public')"
+                >
+
+                    <i class="fa-solid fa-globe"></i>
+
+                    Public
+
+                </button>
+
+
+                <button
+                    id="saleTab"
+                    class="btn btn-outline"
+                    onclick="setPasteMode('sale')"
+                >
+
+                    <i class="fa-solid fa-tag"></i>
+
+                    Jual
+
+                </button>
+
+            </div>
+
+
+            <textarea
+                id="pasteContent"
+                placeholder="Tempel teks, code atau link Anda..."
+            ></textarea>
+
+
+            <div
+                id="saleFields"
+                class="sale-fields"
+            >
+
+                <label>
+                    Harga
+                </label>
+
+                <input
+                    id="pastePrice"
+                    type="number"
+                    placeholder="Contoh: 25000"
+                >
+
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    id="pastePassword"
+                    type="password"
+                    placeholder="Password akses"
+                >
+
+            </div>
+
+
+            <div class="paste-buttons">
+
+                <button
+                    class="btn btn-primary"
+                    onclick="createPaste()"
+                >
+
+                    <i class="fa-solid fa-link"></i>
+
+                    Buat PasteLink
+
+                </button>
+
+
+                <button
+                    class="btn btn-outline"
+                    onclick="clearPaste()"
+                >
+
+                    <i class="fa-solid fa-eraser"></i>
+
+                    Bersihkan
+
+                </button>
+
+            </div>
+
+
+            <small>
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                PasteLink public dapat dibuat tanpa login.
+                Mode jual membutuhkan akun.
+
+            </small>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     PAYMENT
+===================================================== -->
+
+<section
+    class="section payment-section"
+    id="payment"
+>
+
+    <div class="container payment-grid">
+
+
+        <div>
+
+            <span class="section-label white">
+                PAYMENT LINK
+            </span>
+
+            <h2>
+                Bagikan payment link
+                ke mana saja.
+            </h2>
+
+            <p>
+
+                Cocok untuk Telegram, YouTube,
+                Facebook, X/Twitter dan berbagai
+                platform lainnya.
+
+            </p>
+
+
+            <ul class="payment-list">
+
+                <li>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Payment Link shareable
+                </li>
+
+                <li>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Pembayaran otomatis
+                </li>
+
+                <li>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Status transaksi
+                </li>
+
+                <li>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Akses produk setelah pembayaran
+                </li>
+
+            </ul>
+
+
+            <a
+                href="#"
+                class="btn btn-primary btn-large"
+            >
+
+                <i class="fa-brands fa-telegram"></i>
+
+                Gabung Channel VIP
+
+            </a>
+
+        </div>
+
+
+        <!-- PAYMENT CARD -->
+
+        <div class="payment-card">
+
+            <h3>
+
+                <i class="fa-solid fa-credit-card"></i>
+
+                Payment Link
+
+            </h3>
+
+            <p>
+                Contoh tampilan transaksi.
+            </p>
+
+
+            <div class="payment-row">
+
+                <span>
+                    Produk
+                </span>
+
+                <strong>
+                    Telegram Code Premium
+                </strong>
+
+            </div>
+
+
+            <div class="payment-row">
+
+                <span>
+                    Harga
+                </span>
+
+                <strong>
+                    Rp 25.000
+                </strong>
+
+            </div>
+
+
+            <div class="payment-row">
+
+                <span>
+                    Status
+                </span>
+
+                <span class="status-pending">
+                    MENUNGGU
+                </span>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary payment-button"
+            >
+
+                <i class="fa-solid fa-lock"></i>
+
+                Lanjut Pembayaran
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer id="footer">
+
+    <div class="container footer-grid">
+
+
+        <div class="footer-brand">
+
+            <a
+                href="#"
+                class="logo footer-logo"
+            >
+
+                <i class="fa-brands fa-telegram"></i>
+
+                Tele<span>cod</span>
+
+            </a>
+
+            <p>
+
+                Marketplace code media Telegram,
+                PasteLink dan Payment Link
+                untuk produk digital.
+
+            </p>
+
+
+            <div class="social-icons">
+
+                <a href="#">
+                    <i class="fa-brands fa-telegram"></i>
+                </a>
+
+                <a href="#">
+                    <i class="fa-brands fa-youtube"></i>
+                </a>
+
+                <a href="#">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </a>
+
+                <a href="#">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <h4>
+                Platform
+            </h4>
+
+            <a href="#marketplace">
+                Marketplace
+            </a>
+
+            <a href="#pastelink">
+                PasteLink
+            </a>
+
+            <a href="#payment">
+                Payment Link
+            </a>
+
+            <a href="#">
+                Channel VIP
+            </a>
+
+        </div>
+
+
+        <div>
+
+            <h4>
+                Akun
+            </h4>
+
+            <a
+                href="#"
+                onclick="openAuth('login');return false"
+            >
+                Login
+            </a>
+
+            <a
+                href="#"
+                onclick="openAuth('register');return false"
+            >
+                Register
+            </a>
+
+            <a href="#">
+                Dashboard
+            </a>
+
+            <a href="#">
+                Penjualan
+            </a>
+
+        </div>
+
+
+        <div>
+
+            <h4>
+                Informasi
+            </h4>
+
+            <a href="#">
+                Syarat & Ketentuan
+            </a>
+
+            <a href="#">
+                Privasi
+            </a>
+
+            <a href="#">
+                Aturan Konten
+            </a>
+
+            <a href="#">
+                Bantuan
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="container copyright">
+
+        <span>
+            © 2026 Telecod. All rights reserved.
+        </span>
+
+        <span>
+            telecod.biz.id
+        </span>
+
+    </div>
+
+</footer>
+
+
+<!-- =====================================================
+     LOGIN / REGISTER MODAL
+===================================================== -->
+
+<div
+    class="modal"
+    id="authModal"
+>
+
+    <div class="modal-card">
+
+        <button
+            class="modal-close"
+            onclick="closeAuth()"
+        >
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+
+        <!-- LOGIN -->
+
+        <div id="loginForm">
+
+            <h2>
+                Login
+            </h2>
+
+            <p>
+                Masuk ke akun Telecod Anda.
+            </p>
+
+
+            <div class="form-group">
+
+                <label>
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    placeholder="nama@email.com"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    placeholder="••••••••"
+                >
+
+            </div>
+
+
+            <button
+                class="btn btn-primary form-submit"
+            >
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                Login
+
+            </button>
+
+
+            <div class="form-switch">
+
+                Belum punya akun?
+
+                <button onclick="openAuth('register')">
+                    Daftar sekarang
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- REGISTER -->
+
+        <div
+            id="registerForm"
+            style="display:none"
+        >
+
+            <h2>
+                Register
+            </h2>
+
+            <p>
+                Buat akun Telecod sekarang.
+            </p>
+
+
+            <div class="form-group">
+
+                <label>
+                    Nama
+                </label>
+
+                <input
+                    type="text"
+                    placeholder="Nama Anda"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    placeholder="nama@email.com"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    placeholder="Minimal 8 karakter"
+                >
+
+            </div>
+
+
+            <button
+                class="btn btn-primary form-submit"
+            >
+
+                <i class="fa-solid fa-user-plus"></i>
+
+                Buat Akun
+
+            </button>
+
+
+            <div class="form-switch">
+
+                Sudah punya akun?
+
+                <button onclick="openAuth('login')">
+                    Login
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
-<div class="hero-art"><div class="art-glow"></div><img src="assets/img/hero.jpg" alt="TeleCod"><div class="code-float"><span>&lt;Bot Telegram&gt;</span><b>/start</b><b>/deploy</b><b>/success</b><em>Let's Build Together</em></div><div class="earn-float">Build<br><b>Sell</b><br>Earn<br><small>Repeat!</small></div></div>
-</section>
 
-<section class="category-strip section" id="categories">
-<button class="category active" data-filter="all"><i class="fa-solid fa-fire"></i><span data-i18n="popular">Populer</span></button><button class="category" data-filter="new"><i class="fa-solid fa-circle-plus"></i><span data-i18n="new">Terbaru</span></button><button class="category" data-filter="premium"><i class="fa-solid fa-gem"></i><span data-i18n="premium">Premium</span></button><button class="category" data-filter="payment"><i class="fa-solid fa-credit-card"></i><span data-i18n="payment">Payment</span></button><button class="category" data-filter="file"><i class="fa-solid fa-folder-open"></i><span>File Bot</span></button><button class="category" data-filter="game"><i class="fa-solid fa-gamepad"></i><span>Game Bot</span></button><button class="category" data-filter="utility"><i class="fa-solid fa-robot"></i><span>Utility</span></button><button class="category" data-filter="group"><i class="fa-solid fa-users"></i><span>Group</span></button><button class="category" data-filter="channel"><i class="fa-solid fa-chart-column"></i><span>Channel</span></button><button class="category danger" data-filter="adult"><i class="fa-solid fa-18"></i><span>18+</span></button>
-</section>
 
-<section class="market section" id="marketplace">
-<div class="section-head"><div><span class="mini-title"><i class="fa-solid fa-fire"></i> <span data-i18n="popularCode">Code Populer</span></span><h2 data-i18n="communityPick">Code terbaik pilihan komunitas</h2></div><a href="marketplace.html" class="outline-btn" data-i18n="viewAll">Lihat Semua <i class="fa-solid fa-arrow-right"></i></a></div>
-<div class="product-grid">
-<article class="product-card" data-tags="all payment premium"><div class="product-img img1"></div><div class="product-body"><div class="product-top"><h3>Payment Bot Pro</h3><span class="badge premium">Premium</span></div><p>Bot pembayaran otomatis untuk Telegram.</p><div class="rating">★ 4.9 <small>(120)</small></div><div class="price">Rp75.000 <del>Rp100.000</del></div><div class="card-actions"><a href="payment.html" class="detail-btn" data-i18n="detail">Lihat Detail</a><span class="telegram-round"><i class="fa-brands fa-telegram"></i></span></div></div></article>
-<article class="product-card" data-tags="all file new"><div class="product-img img2"></div><div class="product-body"><div class="product-top"><h3>File Manager Bot</h3><span class="badge">File Bot</span></div><p>Bot manajemen file &amp; storage.</p><div class="rating">★ 4.8 <small>(96)</small></div><div class="price">Rp55.000 <del>Rp80.000</del></div><div class="card-actions"><a href="payment.html" class="detail-btn" data-i18n="detail">Lihat Detail</a><span class="telegram-round"><i class="fa-brands fa-telegram"></i></span></div></div></article>
-<article class="product-card" data-tags="all premium"><div class="product-img img3"></div><div class="product-body"><div class="product-top"><h3>Store Telegram</h3><span class="badge premium">Premium</span></div><p>Bot toko online di Telegram.</p><div class="rating">★ 5.0 <small>(76)</small></div><div class="price">Rp95.000 <del>Rp150.000</del></div><div class="card-actions"><a href="payment.html" class="detail-btn" data-i18n="detail">Lihat Detail</a><span class="telegram-round"><i class="fa-brands fa-telegram"></i></span></div></div></article>
-<article class="product-card" data-tags="all utility new"><div class="product-img img4"></div><div class="product-body"><div class="product-top"><h3>Multi Purpose Bot</h3><span class="badge">Utility</span></div><p>Bot serbaguna full fitur.</p><div class="rating">★ 4.7 <small>(84)</small></div><div class="price">Rp60.000 <del>Rp100.000</del></div><div class="card-actions"><a href="payment.html" class="detail-btn" data-i18n="detail">Lihat Detail</a><span class="telegram-round"><i class="fa-brands fa-telegram"></i></span></div></div></article>
-<article class="product-card" data-tags="all new"><div class="product-img img5"></div><div class="product-body"><div class="product-top"><h3>AI Assistant Bot</h3><span class="badge">AI</span></div><p>Bot dengan AI ChatGPT.</p><div class="rating">★ 4.9 <small>(112)</small></div><div class="price">Rp85.000 <del>Rp130.000</del></div><div class="card-actions"><a href="payment.html" class="detail-btn" data-i18n="detail">Lihat Detail</a><span class="telegram-round"><i class="fa-brands fa-telegram"></i></span></div></div></article>
-</div>
-</section>
+<script>
 
-<section class="stats-section section"><div class="section-head compact"><div><span class="mini-title"><i class="fa-solid fa-shield"></i> <span data-i18n="statsTitle">Statistik TeleCod</span></span><h2 data-i18n="statsDesc">Bergabung dengan ribuan developer lain</h2></div></div><div class="stats-row"><div class="big-stat"><i class="fa-solid fa-code"></i><b>12,500+</b><small data-i18n="codeSold">Code Tersedia</small></div><div class="big-stat"><i class="fa-solid fa-users"></i><b>2,800+</b><small data-i18n="activeSeller">Seller Aktif</small></div><div class="big-stat"><i class="fa-solid fa-cart-shopping"></i><b>45,700+</b><small data-i18n="transactions">Transaksi</small></div><div class="big-stat"><i class="fa-solid fa-user-group"></i><b>28,900+</b><small data-i18n="members">Member</small></div><div class="join-card"><i class="fa-brands fa-telegram"></i><div><b data-i18n="telegramBot">Telegram Bot,<br>Unlimited Possibilities!</b><small data-i18n="joinText">Mulai sekarang dan bangun bot impianmu.</small></div><a href="register.html" class="btn primary" data-i18n="startNow">Mulai Sekarang</a></div></div></section>
+const authModal = document.getElementById("authModal");
 
-<section class="why section" id="about"><div class="section-head compact"><div><span class="mini-title"><i class="fa-solid fa-shield-heart"></i> <span data-i18n="whyTitle">Kenapa Pilih TeleCod?</span></span><h2 data-i18n="whyDesc">Keunggulan yang membuat kami berbeda</h2></div></div><div class="why-layout"><div class="why-grid"><div class="why-card"><i class="fa-solid fa-shield-halved"></i><b data-i18n="safeTrusted">Aman &amp; Terpercaya</b><p data-i18n="safeDesc">Transaksi dilindungi sistem escrow yang aman.</p></div><div class="why-card"><i class="fa-solid fa-bolt"></i><b data-i18n="fastProcess">Proses Cepat</b><p data-i18n="fastDesc">Pembelian &amp; download instan setelah pembayaran.</p></div><div class="why-card"><i class="fa-solid fa-star"></i><b data-i18n="quality">Quality Code</b><p data-i18n="qualityDesc">Code berkualitas dari seller terpercaya.</p></div><div class="why-card"><i class="fa-brands fa-telegram"></i><b data-i18n="telegramReady">Telegram Ready</b><p data-i18n="telegramDesc">Kompatibel dengan platform Telegram.</p></div></div><div class="quote-card"><img src="assets/img/cta.jpg" alt=""><div><b>"Code your dreams,<br>make it real."</b><small>— TeleCod</small></div></div></div></section>
 
-<section class="how section"><div class="section-head compact"><div><span class="mini-title"><i class="fa-solid fa-compass"></i> <span data-i18n="howTitle">Cara Kerja</span></span><h2 data-i18n="howDesc">Total, cepat, dan sederhana</h2></div></div><div class="steps"><div class="step"><i class="fa-solid fa-magnifying-glass"></i><b>1. <span data-i18n="findCode">Cari Code</span></b><p data-i18n="findDesc">Temukan code sesuai kebutuhan.</p></div><div class="step"><i class="fa-solid fa-credit-card"></i><b>2. <span data-i18n="buy">Beli</span></b><p data-i18n="buyDesc">Lakukan pembayaran dengan metode tersedia.</p></div><div class="step"><i class="fa-solid fa-download"></i><b>3. <span data-i18n="download">Download</span></b><p data-i18n="downloadDesc">Dapatkan code setelah transaksi berhasil.</p></div><div class="step"><i class="fa-brands fa-telegram"></i><b>4. <span data-i18n="deploy">Deploy</span></b><p data-i18n="deployDesc">Jalankan &amp; kembangkan bot Telegrammu.</p></div></div></section>
+/* =========================
+   AUTH
+========================= */
 
-<section class="adult-banner section"><div class="adult-art"><img src="assets/img/adult.jpg" alt=""></div><div class="adult-copy"><span class="age">18+</span><h2 data-i18n="adultTitle">Code 18+</h2><b data-i18n="adultSub">Kategori khusus konten dewasa</b><p data-i18n="adultDesc">Berisi bot untuk kebutuhan konten 18+. Hanya untuk pengguna yang sudah berusia 18+.</p><a href="login.html" class="btn adult-btn"><i class="fa-solid fa-lock"></i><span data-i18n="adultEnter">Masuk Kategori 18+</span></a></div><div class="adult-items"><span>Anime Adult</span><span>NSFW Bot</span><span>Private Content</span><span>Herbal Bot</span><span>Adult Game</span></div></section>
+function openAuth(type){
 
-<section class="reviews section"><div class="section-head compact"><div><span class="mini-title">⭐ <span data-i18n="reviewsTitle">Apa Kata Mereka?</span></span><h2 data-i18n="reviewsDesc">Testimoni dari pengguna TeleCod</h2></div></div><div class="review-grid"><div class="review"><div class="avatar">R</div><b>RizkyDev <em>Seller</em></b><div class="stars">★★★★★</div><p>"Platform terbaik untuk jual code bot. Proses cepat dan pembelian aman!"</p></div><div class="review"><div class="avatar">M</div><b>MayaChan <em>Buyer</em></b><div class="stars">★★★★★</div><p>"Code berkualitas dan supportnya responsif. Recommended!"</p></div><div class="review"><div class="avatar">B</div><b>BotCreator <em>Seller</em></b><div class="stars">★★★★★</div><p>"TeleCod membantu saya menghasilkan penghasilan tambahan."</p></div><div class="join-community"><i class="fa-brands fa-telegram"></i><b data-i18n="joinCommunity">Bergabung dengan<br>komunitas kami</b><p data-i18n="joinCommunityDesc">Diskusi, update, dan tips seputar bot Telegram.</p><a class="btn primary" href="https://t.me/" target="_blank"><i class="fa-brands fa-telegram"></i> <span data-i18n="joinTelegram">Join Telegram</span></a></div></div></section>
+    authModal.classList.add("active");
 
-<section class="bottom-cta"><div><h2 data-i18n="haveCode">Punya Code Bot?</h2><p data-i18n="sellStart">Jual sekarang dan mulai menghasilkan!</p></div><a href="sell-buy.html" class="btn pink"><i class="fa-solid fa-paper-plane"></i><span data-i18n="sellCode">Jual Code</span></a><a href="#marketplace" class="btn primary"><i class="fa-solid fa-paper-plane"></i><span data-i18n="viewMarket">Lihat Marketplace</span></a></section>
-</main>
+    document.getElementById("loginForm").style.display =
+        type === "login" ? "block" : "none";
 
-<div id="footer"></div>
+    document.getElementById("registerForm").style.display =
+        type === "register" ? "block" : "none";
 
-<script src="components/navbar.js"></script>
-<script src="components/footer.js"></script>
-<script src="assets/js/index.js"></script>
+}
+
+
+function closeAuth(){
+
+    authModal.classList.remove("active");
+
+}
+
+
+authModal.addEventListener("click", function(e){
+
+    if(e.target === authModal){
+
+        closeAuth();
+
+    }
+
+});
+
+
+/* =========================
+   PASTELINK MODE
+========================= */
+
+function setPasteMode(mode){
+
+    const saleFields =
+        document.getElementById("saleFields");
+
+    const publicTab =
+        document.getElementById("publicTab");
+
+    const saleTab =
+        document.getElementById("saleTab");
+
+
+    if(mode === "sale"){
+
+        saleFields.style.display = "block";
+
+        publicTab.className =
+            "btn btn-outline";
+
+        saleTab.className =
+            "btn btn-primary";
+
+    }else{
+
+        saleFields.style.display = "none";
+
+        publicTab.className =
+            "btn btn-primary";
+
+        saleTab.className =
+            "btn btn-outline";
+
+    }
+
+}
+
+
+/* =========================
+   CREATE PASTE
+========================= */
+
+function createPaste(){
+
+    const content =
+        document
+        .getElementById("pasteContent")
+        .value
+        .trim();
+
+
+    if(!content){
+
+        alert(
+            "Silakan masukkan teks, code atau link terlebih dahulu."
+        );
+
+        return;
+
+    }
+
+
+    const saleFields =
+        document.getElementById("saleFields");
+
+
+    const saleMode =
+        saleFields.style.display === "block";
+
+
+    if(saleMode){
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    alert(
+        "PasteLink berhasil diproses. Hubungkan fungsi ini dengan backend Telecod."
+    );
+
+}
+
+
+/* =========================
+   CLEAR
+========================= */
+
+function clearPaste(){
+
+    document
+        .getElementById("pasteContent")
+        .value = "";
+
+}
+
+</script>
+
 </body>
 </html>
