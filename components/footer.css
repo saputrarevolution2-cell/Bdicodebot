@@ -1,4 +1,6 @@
-/* TeleCod Footer - shared component */
-.telecod-footer{margin-top:60px;background:#030d24;border-top:1px solid rgba(0,174,255,.2);color:#d8e7ff}
-.footer-container{max-width:1280px;margin:auto;padding:42px 20px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px}.footer-container h4{color:#fff;margin:0 0 14px}.footer-container a{display:block;color:#9fb6d7;text-decoration:none;margin:9px 0;font-size:13px}.footer-container p{color:#9fb6d7;font-size:13px}.footer-logo{font-size:24px;font-weight:800;color:#fff}.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding:16px 20px;text-align:center;color:#7f98bb;font-size:12px}
-@media(max-width:700px){.footer-container{grid-template-columns:1fr 1fr}}
+
+.tc-footer{margin-top:70px;border-top:1px solid rgba(157,190,255,.1);background:linear-gradient(180deg,#071126,#030712)}
+.tc-footer-grid{width:min(calc(100% - 32px),1280px);margin:auto;padding:48px 0 36px;display:grid;grid-template-columns:2fr repeat(3,1fr);gap:34px}
+.tc-footer h4{margin:0 0 13px}.tc-footer p,.tc-footer a{color:#8fa3c2;font-size:13px}.tc-footer a{display:block;text-decoration:none;margin:9px 0}.tc-footer a:hover{color:#fff}.tc-footer-brand{font-size:24px}
+.tc-footer-bottom{text-align:center;border-top:1px solid rgba(157,190,255,.08);padding:17px;color:#7185a4;font-size:12px}
+@media(max-width:720px){.tc-footer-grid{grid-template-columns:1fr 1fr;padding:36px 0}}@media(max-width:430px){.tc-footer-grid{grid-template-columns:1fr}}

@@ -1,2 +1,1 @@
-/* TeleCod Footer - shared component */
-(function(){})();
+/* Footer is markup-driven; page logic stays page-specific. */
