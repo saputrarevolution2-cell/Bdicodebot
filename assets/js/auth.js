@@ -1,6 +1,5 @@
 // =====================================================
 // TELECOD AUTH SYSTEM
-// Supabase Auth
 // =====================================================
 
 
@@ -19,9 +18,8 @@ function setLoading(button, loading) {
 
     if (loading) {
 
-        if (!button.dataset.originalText) {
-            button.dataset.originalText = button.innerHTML;
-        }
+        button.dataset.originalText =
+            button.innerHTML;
 
         button.disabled = true;
 
@@ -39,22 +37,9 @@ function setLoading(button, loading) {
             button.innerHTML =
                 button.dataset.originalText;
 
-            delete button.dataset.originalText;
         }
 
     }
-}
-
-
-// =====================================================
-// CHECK SUPABASE
-// =====================================================
-
-if (typeof supabase === "undefined") {
-
-    console.error(
-        "Supabase belum tersedia. Pastikan CDN Supabase dimuat sebelum auth.js."
-    );
 
 }
 
@@ -84,19 +69,15 @@ document
 
                 input.type = "text";
 
-                if (icon) {
-                    icon.className =
-                        "fa-solid fa-eye-slash";
-                }
+                icon.className =
+                    "fa-solid fa-eye-slash";
 
             } else {
 
                 input.type = "password";
 
-                if (icon) {
-                    icon.className =
-                        "fa-solid fa-eye";
-                }
+                icon.className =
+                    "fa-solid fa-eye";
 
             }
 
@@ -119,23 +100,8 @@ registerForm?.addEventListener(
 
         event.preventDefault();
 
-        if (typeof supabase === "undefined") {
-            showMessage(
-                "Supabase belum siap. Refresh halaman dan coba lagi."
-            );
-            return;
-        }
-
-
-        // ---------------------------------------------
-        // INPUT
-        // ---------------------------------------------
-
         const name =
-            document
-                .getElementById("name")
-                ?.value
-                .trim();
+            document.getElementById("name")?.value.trim();
 
         const username =
             document
@@ -158,9 +124,7 @@ registerForm?.addEventListener(
                 .toLowerCase();
 
         const password =
-            document
-                .getElementById("password")
-                ?.value;
+            document.getElementById("password")?.value;
 
         const confirmPassword =
             document
@@ -168,9 +132,7 @@ registerForm?.addEventListener(
                 ?.value;
 
 
-        // ---------------------------------------------
         // VALIDATION
-        // ---------------------------------------------
 
         if (
             !name ||
@@ -229,10 +191,6 @@ registerForm?.addEventListener(
 
         try {
 
-            // -----------------------------------------
-            // REGISTER SUPABASE
-            // -----------------------------------------
-
             const {
                 data,
                 error
@@ -245,7 +203,7 @@ registerForm?.addEventListener(
                 options: {
 
                     emailRedirectTo:
-                        `${window.location.origin}/login.html`,
+                        "https://telecod.biz.id/login.html",
 
                     data: {
 
@@ -253,7 +211,8 @@ registerForm?.addEventListener(
 
                         username,
 
-                        telegram_id: telegramId
+                        telegram_id:
+                            telegramId
 
                     }
 
@@ -283,18 +242,15 @@ registerForm?.addEventListener(
             );
 
 
-            // -----------------------------------------
-            // EMAIL CONFIRMATION
-            // -----------------------------------------
+            // EMAIL CONFIRMATION AKTIF
 
             if (!data.session) {
 
                 showMessage(
                     "Akun berhasil dibuat!\n\n" +
-                    "Kami telah mengirim email konfirmasi.\n\n" +
-                    "Silakan buka email kamu lalu klik " +
+                    "Silakan cek email kamu dan klik " +
                     "\"Confirm your email address\".\n\n" +
-                    "Setelah selesai, kembali ke halaman Login."
+                    "Setelah dikonfirmasi, silakan login."
                 );
 
                 window.location.href =
@@ -304,17 +260,11 @@ registerForm?.addEventListener(
             }
 
 
-            // -----------------------------------------
-            // SESSION LANGSUNG ADA
-            // -----------------------------------------
-
-            localStorage.setItem(
-                "telecod_logged_in",
-                "true"
-            );
+            // CONFIRMATION DIMATIKAN
 
             window.location.href =
                 "dashboard.html";
+
 
         } catch (error) {
 
@@ -324,16 +274,12 @@ registerForm?.addEventListener(
             );
 
             showMessage(
-                error?.message ||
                 "Terjadi kesalahan saat membuat akun."
             );
 
         } finally {
 
-            setLoading(
-                button,
-                false
-            );
+            setLoading(button, false);
 
         }
 
@@ -355,35 +301,18 @@ loginForm?.addEventListener(
 
         event.preventDefault();
 
-        if (typeof supabase === "undefined") {
-
-            showMessage(
-                "Supabase belum siap. Refresh halaman dan coba lagi."
-            );
-
-            return;
-        }
-
-
-        const emailInput =
-            document.getElementById("email");
-
-        const passwordInput =
-            document.getElementById("password");
-
-
-        if (!emailInput || !passwordInput) {
-            return;
-        }
-
 
         const email =
-            emailInput.value
+            document
+                .getElementById("email")
+                ?.value
                 .trim()
                 .toLowerCase();
 
         const password =
-            passwordInput.value;
+            document
+                .getElementById("password")
+                ?.value;
 
 
         if (!email || !password) {
@@ -406,25 +335,17 @@ loginForm?.addEventListener(
 
         try {
 
-            // -----------------------------------------
-            // LOGIN
-            // -----------------------------------------
-
             const {
                 data,
                 error
-            } = await supabase.auth.signInWithPassword({
+            } = await supabase.auth
+                .signInWithPassword({
 
-                email,
+                    email,
+                    password
 
-                password
+                });
 
-            });
-
-
-            // -----------------------------------------
-            // ERROR
-            // -----------------------------------------
 
             if (error) {
 
@@ -433,34 +354,21 @@ loginForm?.addEventListener(
                     error
                 );
 
-                const errorMessage =
-                    error.message?.toLowerCase() || "";
+
+                const msg =
+                    error.message.toLowerCase();
 
 
                 if (
-                    errorMessage.includes(
+                    msg.includes(
                         "email not confirmed"
                     )
                 ) {
 
                     showMessage(
                         "Email kamu belum dikonfirmasi.\n\n" +
-                        "Silakan buka email dari Supabase " +
-                        "dan klik \"Confirm your email address\"."
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    errorMessage.includes(
-                        "invalid login credentials"
-                    )
-                ) {
-
-                    showMessage(
-                        "Email atau password salah."
+                        "Silakan buka email dan klik " +
+                        "\"Confirm your email address\"."
                     );
 
                     return;
@@ -468,22 +376,17 @@ loginForm?.addEventListener(
 
 
                 showMessage(
-                    error.message ||
-                    "Login gagal."
+                    error.message
                 );
 
                 return;
             }
 
 
-            // -----------------------------------------
-            // CHECK SESSION
-            // -----------------------------------------
-
             if (!data?.session) {
 
                 showMessage(
-                    "Login berhasil tetapi session tidak ditemukan."
+                    "Login gagal. Session tidak ditemukan."
                 );
 
                 return;
@@ -496,51 +399,19 @@ loginForm?.addEventListener(
             );
 
 
-            // -----------------------------------------
-            // SAVE STATUS
-            // -----------------------------------------
-
+            // SESSION SUPABASE SUDAH TERSIMPAN
             localStorage.setItem(
                 "telecod_logged_in",
                 "true"
             );
 
 
-            // -----------------------------------------
-            // VERIFY SESSION
-            // -----------------------------------------
-
-            const {
-                data: sessionData,
-                error: sessionError
-            } = await supabase.auth.getSession();
-
-
-            if (
-                sessionError ||
-                !sessionData?.session
-            ) {
-
-                console.error(
-                    "SESSION ERROR:",
-                    sessionError
-                );
-
-                showMessage(
-                    "Session belum berhasil disimpan."
-                );
-
-                return;
-            }
-
-
-            // -----------------------------------------
             // REDIRECT
-            // -----------------------------------------
 
             window.location.replace(
                 "dashboard.html"
             );
+
 
         } catch (error) {
 
@@ -550,16 +421,12 @@ loginForm?.addEventListener(
             );
 
             showMessage(
-                error?.message ||
                 "Terjadi kesalahan saat login."
             );
 
         } finally {
 
-            setLoading(
-                button,
-                false
-            );
+            setLoading(button, false);
 
         }
 
@@ -577,44 +444,27 @@ document
 
         button.addEventListener(
             "click",
-            async event => {
-
-                event.preventDefault();
-
-
-                if (typeof supabase === "undefined") {
-
-                    showMessage(
-                        "Supabase belum siap."
-                    );
-
-                    return;
-                }
-
-
-                setLoading(
-                    button,
-                    true
-                );
-
+            async () => {
 
                 try {
 
                     const {
                         error
                     } =
-                        await supabase.auth.signInWithOAuth({
+                        await supabase.auth
+                            .signInWithOAuth({
 
-                            provider: "google",
+                                provider:
+                                    "google",
 
-                            options: {
+                                options: {
 
-                                redirectTo:
-                                    `${window.location.origin}/dashboard.html`
+                                    redirectTo:
+                                        "https://telecod.biz.id/dashboard.html"
 
-                            }
+                                }
 
-                        });
+                            });
 
 
                     if (error) {
@@ -628,11 +478,6 @@ document
                             error.message
                         );
 
-                        setLoading(
-                            button,
-                            false
-                        );
-
                     }
 
                 } catch (error) {
@@ -643,13 +488,7 @@ document
                     );
 
                     showMessage(
-                        error?.message ||
                         "Google Login gagal."
-                    );
-
-                    setLoading(
-                        button,
-                        false
                     );
 
                 }
@@ -658,50 +497,6 @@ document
         );
 
     });
-
-
-// =====================================================
-// CHECK AUTH
-// =====================================================
-
-async function checkAuth() {
-
-    if (typeof supabase === "undefined") {
-        return null;
-    }
-
-    try {
-
-        const {
-            data,
-            error
-        } = await supabase.auth.getSession();
-
-
-        if (error) {
-
-            console.error(
-                "CHECK AUTH ERROR:",
-                error
-            );
-
-            return null;
-        }
-
-
-        return data?.session || null;
-
-    } catch (error) {
-
-        console.error(
-            "CHECK AUTH EXCEPTION:",
-            error
-        );
-
-        return null;
-    }
-
-}
 
 
 // =====================================================
@@ -716,55 +511,13 @@ document
             "click",
             async () => {
 
-                if (
-                    typeof supabase ===
-                    "undefined"
-                ) {
-                    return;
-                }
+                const success =
+                    await logoutUser();
 
-
-                try {
-
-                    const {
-                        error
-                    } =
-                        await supabase.auth.signOut();
-
-
-                    if (error) {
-
-                        console.error(
-                            "LOGOUT ERROR:",
-                            error
-                        );
-
-                        showMessage(
-                            error.message
-                        );
-
-                        return;
-                    }
-
-
-                    localStorage.removeItem(
-                        "telecod_logged_in"
-                    );
-
+                if (success) {
 
                     window.location.replace(
                         "index.html"
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "LOGOUT EXCEPTION:",
-                        error
-                    );
-
-                    showMessage(
-                        "Gagal keluar dari akun."
                     );
 
                 }
