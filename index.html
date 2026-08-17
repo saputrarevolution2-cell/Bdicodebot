@@ -10,30 +10,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
     <link rel="stylesheet" href="assets/css/index.css">
-    <link rel="stylesheet" href="assets/css/global.css">
-    <link rel="stylesheet" href="components/navbar.css">
-    <link rel="stylesheet" href="components/footer.css">
+<link rel="stylesheet" href="components/navbar.css">
+<link rel="stylesheet" href="components/footer.css">
 </head>
 <body>
 <div class="orb orb1"></div><div class="orb orb2"></div>
 
-<header class="site-nav">
-<a class="brand" href="index.html"><span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span><b>Tele</b><strong>Cod</strong><small>Telegram Bot Code Marketplace</small></span></a>
-<nav class="desktop-nav">
-<a class="active" href="#home" data-i18n="home">Beranda</a><a href="#marketplace" data-i18n="marketplace">Marketplace</a><a href="sell-buy.html" data-i18n="sell">Jual Code</a><a href="#categories" data-i18n="categories">Kategori</a><a href="#about" data-i18n="about">Tentang</a><a href="#about" data-i18n="faq">FAQ</a>
-</nav>
-<div class="nav-right">
-<div class="search-mini"><i class="fa-solid fa-magnifying-glass"></i><input id="navSearch" data-i18n-placeholder="search" placeholder="Cari code, bot, atau seller..."></div>
-<button class="icon-btn" id="themeBtn"><i class="fa-regular fa-moon"></i></button>
-<div class="lang-wrap"><button class="lang-btn" id="langBtn"><span id="langFlag">🇮🇩</span><span id="langLabel">ID</span><i class="fa-solid fa-chevron-down"></i></button><div class="lang-menu" id="langMenu"><button data-lang="id">🇮🇩 Indonesia</button><button data-lang="en">🇬🇧 English</button></div></div>
-<a href="login.html" class="nav-login" data-i18n="login">Masuk</a><a href="register.html" class="nav-register" data-i18n="register">Daftar</a>
-</div>
-<button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
-</header>
-<div class="mobile-menu" id="mobileMenu">
-<a href="#home" data-i18n="home">Beranda</a><a href="#marketplace" data-i18n="marketplace">Marketplace</a><a href="sell-buy.html" data-i18n="sell">Jual Code</a><a href="#categories" data-i18n="categories">Kategori</a><a href="#about" data-i18n="about">Tentang</a><a href="#about" data-i18n="faq">FAQ</a>
-<div class="mobile-actions"><a href="login.html" class="nav-login" data-i18n="login">Masuk</a><a href="register.html" class="nav-register" data-i18n="register">Daftar</a></div>
-</div>
+<div id="navbar"></div>
 
 <main id="home">
 <section class="hero section">
@@ -76,11 +59,10 @@
 <section class="bottom-cta"><div><h2 data-i18n="haveCode">Punya Code Bot?</h2><p data-i18n="sellStart">Jual sekarang dan mulai menghasilkan!</p></div><a href="sell-buy.html" class="btn pink"><i class="fa-solid fa-paper-plane"></i><span data-i18n="sellCode">Jual Code</span></a><a href="#marketplace" class="btn primary"><i class="fa-solid fa-paper-plane"></i><span data-i18n="viewMarket">Lihat Marketplace</span></a></section>
 </main>
 
-<footer class="site-footer"><div class="footer-grid"><div class="footer-brand"><a class="brand" href="index.html"><span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span><b>Tele</b><strong>Cod</strong><small>Telegram Bot Code Marketplace</small></span></a><p data-i18n="footerDesc">Marketplace modern untuk membeli, menjual, dan mengembangkan code bot Telegram.</p><div class="socials"><a href="https://t.me/" target="_blank"><i class="fa-brands fa-telegram"></i></a><a href="#"><i class="fa-brands fa-youtube"></i></a><a href="#"><i class="fa-brands fa-discord"></i></a><a href="#"><i class="fa-brands fa-x-twitter"></i></a></div></div><div><h4 data-i18n="marketplace">Marketplace</h4><a href="#marketplace">Semua Code</a><a href="#categories">Populer</a><a href="#categories">Terbaru</a><a href="#categories">Premium</a><a href="#categories">18+</a></div><div><h4>Seller</h4><a href="sell-buy.html">Jual Code</a><a href="sell-buy.html">Panduan</a><a href="dashboard.html">Pendapatan</a><a href="profile.html">Verifikasi</a></div><div><h4 data-i18n="help">Bantuan</h4><a href="#about">FAQ</a><a href="settings.html">Contact</a><a href="#about">Report Code</a><a href="https://t.me/" target="_blank">Community</a></div><div><h4>Legal</h4><a href="#about">Terms of Service</a><a href="#about">Privacy Policy</a><a href="#about">Refund Policy</a><a href="#categories">18+ Policy</a></div><div><h4>Newsletter</h4><p data-i18n="newsletter">Dapatkan update terbaru.</p><div class="newsletter"><input placeholder="Email kamu"><button><i class="fa-solid fa-paper-plane"></i></button></div><div class="footer-lang"><button id="footerLang">🇮🇩 ID</button></div></div></div><div class="copyright">© 2026 TeleCod. All Rights Reserved. <span>Made with ❤️ for Telegram Community</span></div></footer>
-<button class="floating-telegram" onclick="window.open('https://t.me/','_blank')"><i class="fa-brands fa-telegram"></i></button>
+<div id="footer"></div>
 
+<script src="components/navbar.js"></script>
+<script src="components/footer.js"></script>
 <script src="assets/js/index.js"></script>
-<script src="assets/js/global.js"></script>
-<script src="assets/js/i18n.js"></script>
 </body>
 </html>
