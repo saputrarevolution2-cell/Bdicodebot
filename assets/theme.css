@@ -1,0 +1,44 @@
+/* TELECOD FINAL THEME OVERRIDES */
+html[data-theme="light"] .order-product,
+html[data-theme="light"] .product-detail,
+html[data-theme="light"] .legal-card,
+html[data-theme="light"] .seller-card,
+html[data-theme="light"] .checkout-card{
+  background:linear-gradient(145deg,#ffffff,#f5faff);
+  border-color:#d8e4ed;
+  box-shadow:0 24px 70px #174b6b10;
+}
+html[data-theme="light"] .product-detail .visual{
+  background:radial-gradient(circle at 50% 20%,#d5f1ff,#f3faff 70%);
+}
+html[data-theme="light"] .meta-chip{color:#60758a}
+html[data-theme="light"] .pay-box{background:#effaff;border-color:#bfe8f7}
+html[data-theme="light"] .pay-box p,
+html[data-theme="light"] .notice{color:#63778b}
+html[data-theme="light"] .notice{background:#f1f6fa}
+html[data-theme="light"] .muted{color:#64788c}
+html[data-theme="light"] .admin-shell{color:var(--text)}
+html[data-theme="light"] .admin-card,
+html[data-theme="light"] .stat{
+  background:#ffffff;
+  border-color:#d8e4ed;
+  box-shadow:0 20px 55px #174b6b0c;
+}
+html[data-theme="light"] .admin-head p,
+html[data-theme="light"] .admin-card .muted{color:#63778b}
+html[data-theme="light"] .tab{
+  background:#ffffff;
+  color:#536a80;
+  border-color:#d5e2eb;
+}
+html[data-theme="light"] .tab.active,
+html[data-theme="light"] .tab:hover{background:#eaf8ff;color:#0879b8;border-color:#a9e0f3}
+html[data-theme="light"] .health-list div{background:#f8fbfd;border-color:#dce7ef}
+html[data-theme="light"] .admin-card code{background:#f1f6fa;color:#3f5870;border-color:#d9e5ed}
+html[data-theme="light"] .secure{background:#eafaff;color:#0879a9;border-color:#aee1f1}
+html[data-theme="light"] .form-grid input,
+html[data-theme="light"] .form-grid select,
+html[data-theme="light"] .form-grid textarea{background:#fff!important;color:#102033!important;border-color:#cfdeea!important}
+html[data-theme="light"] .market-head p,
+html[data-theme="light"] .order-product p,
+html[data-theme="light"] .product-info .description{color:#617488}
