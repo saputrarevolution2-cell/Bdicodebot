@@ -1,3 +1,42 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login — TeleCod</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login — TeleCod</title>
+<meta name="description" content="Login ke TeleCod dengan email, username, Google, atau Telegram.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="assets/base.css"><link rel="stylesheet" href="login.css"></head><body data-title-id="Login — TeleCod" data-title-en="Login — TeleCod"><main class="auth-page"><div class="auth-card"><div class="auth-top"><a class="brand" href="index.html"><span class="brandmark"><i class="fa-brands fa-telegram"></i></span><span>Tele<span>Cod</span></span></a><button class="lang" data-lang-toggle data-lang-label>ID / EN">ID / EN</button></div><h1 data-i18n="title">Selamat datang kembali.</h1><p data-i18n="desc">Login untuk mengelola produk dan pembelianmu.</p><div id="msg"></div><form class="form" id="form"><label data-i18n="email">Email</label><input id="email" type="email" required autocomplete="email" data-i18n-placeholder="emailPlaceholder"><label data-i18n="password">Password</label><input id="password" type="password" required autocomplete="current-password" data-i18n-placeholder="passwordPlaceholder"><button class="btn primary" type="submit"><span data-i18n="submit">Login</span><i class="fa-solid fa-arrow-right"></i></button></form><p class="form-note"><span data-i18n="noAccount">Belum punya akun?</span> <a href="register.html" data-i18n="register">Daftar</a></p></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/config.js"></script><script src="assets/core.js"></script><script src="login.js"></script></body></html>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="assets/base.css"><link rel="stylesheet" href="login.css">
+<link rel="stylesheet" href="assets/theme.css"></head>
+<body data-title-id="Login — TeleCod" data-title-en="Login — TeleCod">
+<main class="auth-page">
+<div class="auth-card">
+  <div class="auth-top">
+    <a class="brand" href="index.html"><span class="brandmark"><i class="fa-brands fa-telegram"></i></span><span>Tele<span>Cod</span></span></a>
+    <button class="lang" data-lang-toggle data-lang-label>ID / EN">ID / EN</button>
+  </div>
+  <h1 data-i18n="title">Selamat datang kembali 👋</h1>
+  <p data-i18n="desc">Login dengan email, username, Google, atau akun Telegram kamu.</p>
+  <div id="msg"></div>
+  <div class="social-auth">
+    <button class="btn google-btn" id="googleLogin"><i class="fa-brands fa-google"></i><span data-i18n="google">Lanjut dengan Google</span></button>
+    <div class="telegram-login-box">
+      <div class="social-label"><i class="fa-brands fa-telegram"></i><span data-i18n="telegram">Login dengan Telegram</span></div>
+      <div id="telegramLogin"></div>
+    </div>
+  </div>
+  <div class="or"><span data-i18n="or">atau login manual</span></div>
+  <form class="form" id="form">
+    <label data-i18n="identifier">Email / Username Telegram</label>
+    <input id="identifier" required autocomplete="username" data-i18n-placeholder="identifierPlaceholder">
+    <label data-i18n="password">Password</label>
+    <input id="password" type="password" required autocomplete="current-password" data-i18n-placeholder="passwordPlaceholder">
+    <button class="btn primary" type="submit"><span data-i18n="submit">Login</span><i class="fa-solid fa-arrow-right"></i></button>
+  </form>
+  <p class="form-note"><span data-i18n="noAccount">Belum punya akun?</span> <a href="register.html" data-i18n="register">Daftar</a></p>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/config.js"></script><script src="assets/core.js"></script><script src="login.js"></script>
+</body></html>

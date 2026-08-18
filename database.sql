@@ -10,7 +10,10 @@ create table if not exists public.profiles (
   bio text,
   balance bigint not null default 0 check (balance >= 0),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  auth_email text unique,
+  telegram_id bigint unique,
+  telegram_username text
 );
 
 create table if not exists public.products (
@@ -109,18 +112,44 @@ create trigger orders_updated_at before update on public.orders for each row exe
 
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
-declare u text;
+declare
+  u text;
+  display text;
 begin
-  u := coalesce(new.raw_user_meta_data->>'username','user_'||substr(replace(new.id::text,'-',''),1,10));
-  if exists(select 1 from public.profiles where username=u) then u := u||'_'||substr(replace(new.id::text,'-',''),1,6); end if;
-  insert into public.profiles(id,username,display_name)
-  values(new.id,u,coalesce(new.raw_user_meta_data->>'display_name',split_part(new.email,'@',1)))
-  on conflict(id) do nothing;
+  u := coalesce(nullif(new.raw_user_meta_data->>'username',''),'user_'||substr(replace(new.id::text,'-',''),1,10));
+  u := lower(regexp_replace(u,'[^a-zA-Z0-9_]','','g'));
+  if length(u)<3 then u := 'user_'||substr(replace(new.id::text,'-',''),1,10); end if;
+  if exists(select 1 from public.profiles where username=u and id<>new.id) then
+    u := u||'_'||substr(replace(new.id::text,'-',''),1,6);
+  end if;
+  display := coalesce(nullif(new.raw_user_meta_data->>'display_name',''),nullif(new.raw_user_meta_data->>'full_name',''),split_part(coalesce(new.email,''),'@',1),'TeleCod User');
+  insert into public.profiles(id,username,display_name,auth_email,telegram_id,telegram_username)
+  values(new.id,u,display,new.email,nullif(new.raw_user_meta_data->>'telegram_id','')::bigint,nullif(new.raw_user_meta_data->>'telegram_username',''))
+  on conflict(id) do update set
+    display_name=coalesce(excluded.display_name,profiles.display_name),
+    auth_email=coalesce(excluded.auth_email,profiles.auth_email),
+    telegram_id=coalesce(excluded.telegram_id,profiles.telegram_id),
+    telegram_username=coalesce(excluded.telegram_username,profiles.telegram_username);
   return new;
 end $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+
+-- Resolve a username to its Auth email so username/password login can work.
+-- The frontend only needs the matching auth email; password verification remains inside Supabase Auth.
+create or replace function public.resolve_username_login(p_username text)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select auth_email from public.profiles
+  where lower(username)=lower(trim(leading '@' from p_username))
+  limit 1;
+$$;
+
+grant execute on function public.resolve_username_login(text) to anon, authenticated;
 
 -- Secure order creation: price/seller are read from product, not trusted from browser.
 create or replace function public.create_order(p_product_id uuid)
@@ -211,8 +240,6 @@ create policy withdrawal_owner_insert on public.withdrawals for insert with chec
 
 grant select on public.products to anon, authenticated;
 grant select,insert,update,delete on public.products to authenticated;
-grant select on public.profiles to anon, authenticated;
-grant update on public.profiles to authenticated;
 grant select,insert,update,delete on public.pastes to anon, authenticated;
 grant select on public.orders to authenticated;
 grant select on public.product_access to authenticated;
@@ -228,6 +255,12 @@ grant execute on function public.complete_paid_order(uuid,text) to service_role;
 -- ============================================================
 alter table public.profiles add column if not exists role text not null default 'user';
 alter table public.profiles add column if not exists status text not null default 'active';
+-- Keep login-only identity fields out of normal browser SELECT privileges.
+revoke select on public.profiles from anon, authenticated;
+grant select(id,username,display_name,avatar_url,bio,balance,created_at,updated_at,role,status) on public.profiles to anon, authenticated;
+revoke select(auth_email,telegram_id,telegram_username) on public.profiles from anon, authenticated;
+grant update on public.profiles to authenticated;
+
 alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles add constraint profiles_role_check check (role in ('user','admin','suspended'));
 alter table public.profiles drop constraint if exists profiles_status_check;
