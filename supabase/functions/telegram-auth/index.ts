@@ -68,9 +68,12 @@ Deno.serve(async(req)=>{
     });
 
     const telegramId=Number(tg.id);
-    const username=safeUsername(String(tg.username||""),telegramId);
+    let username=safeUsername(String(tg.username||""),telegramId);
     const email=`tg_${telegramId}@telegram.telecod.local`;
     let userId:string|null=null;
+
+    const existingProfile=await admin.from("profiles").select("id,username").eq("telegram_id",telegramId).maybeSingle();
+    if(existingProfile.data?.username) username=existingProfile.data.username;
 
     // Find an existing Auth user by the synthetic Telegram email.
     for(let page=1;page<=20;page++){
@@ -82,6 +85,8 @@ Deno.serve(async(req)=>{
     }
 
     if(!userId){
+      const conflict=await admin.from("profiles").select("id").eq("username",username).maybeSingle();
+      if(conflict.data && conflict.data.id!==userId) username=`${username.slice(0,23)}_${telegramId}`.slice(0,32);
       const created=await admin.auth.admin.createUser({
         email,
         email_confirm:true,
