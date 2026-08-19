@@ -18,7 +18,7 @@ en:{
 const sb=supabase.createClient(TELECOD_CONFIG.SUPABASE_URL,TELECOD_CONFIG.SUPABASE_ANON_KEY);
 
 function nextPage(){return new URLSearchParams(location.search).get("next")||"dashboard.html";}
-function showError(text){document.getElementById("msg").innerHTML=`<div class="error">${tcEscape(text)}</div>`;}
+function showError(text){const t=String(text||"");let title="Login gagal";if(/invalid login credentials|invalid/i.test(t))title="Username atau password salah";if(/email not confirmed/i.test(t))title="Email belum dikonfirmasi";if(/user not found|not registered/i.test(t))title="Akun belum terdaftar";tcToast(t,"error",title);document.getElementById("msg").innerHTML="";}
 
 async function loginTelegram(user){
   const msg=document.getElementById("msg");msg.innerHTML="";
@@ -69,3 +69,5 @@ document.addEventListener("DOMContentLoaded",()=>{
     location.href=nextPage();
   });
 });
+async function forgotPassword(){const identifier=document.getElementById('identifier').value.trim();if(!identifier){tcToast('Masukkan email atau username Telegram terlebih dahulu','error','Lupa kata sandi');return}let email=identifier;if(!identifier.includes('@')){const {data,error}=await sb.rpc('resolve_username_login',{p_username:identifier.replace(/^@/,'')});if(error||!data){tcToast('Username belum terdaftar. Silakan registrasi terlebih dahulu.','error','Akun belum terdaftar');return}email=data}const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/login.html'});if(error){tcToast(error.message,'error','Reset password gagal');return}tcToast(identifier.includes('@')?'Link reset dikirim ke email/Gmail akun.':'Permintaan reset dikirim ke email akun. Jika perlu bantuan Telegram, hubungi admin.','success','Reset password dikirim')}
+document.addEventListener('DOMContentLoaded',()=>document.getElementById('forgotBtn')?.addEventListener('click',forgotPassword));

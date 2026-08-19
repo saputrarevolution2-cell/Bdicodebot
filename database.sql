@@ -504,3 +504,232 @@ revoke all on function public.admin_delete_paste(uuid) from anon;
 -- After creating your real account, run exactly once with your own UUID:
 -- update public.profiles set role='admin',status='active' where id='YOUR-AUTH-USER-UUID';
 -- Then remove this line from your operational notes; never expose admin UUIDs publicly.
+
+-- ============================================================
+-- TELECOD MARKETPLACE V2 — moderation, categories, settlement H+1
+-- ============================================================
+alter table public.profiles add column if not exists pending_balance bigint not null default 0 check (pending_balance >= 0);
+alter table public.products add column if not exists asset_type text not null default 'code';
+alter table public.products add column if not exists bot_username text;
+alter table public.products add column if not exists bot_approval_status text not null default 'not_required';
+alter table public.products add column if not exists channel_type text;
+alter table public.products add column if not exists code_content text;
+alter table public.products add column if not exists setup_instructions text;
+alter table public.products add column if not exists settlement_days integer not null default 1;
+
+alter table public.products drop constraint if exists products_asset_type_check;
+alter table public.products add constraint products_asset_type_check check (asset_type in ('code','bot_18','bot_drama','bot_jav','channel_vip','channel_free','media','template','other'));
+alter table public.products drop constraint if exists products_bot_approval_check;
+alter table public.products add constraint products_bot_approval_check check (bot_approval_status in ('not_required','pending','approved','rejected','banned'));
+
+create table if not exists public.bot_registry (
+  id uuid primary key default gen_random_uuid(),
+  bot_username text unique not null,
+  display_name text,
+  telegram_id bigint,
+  status text not null default 'approved' check(status in ('approved','banned','review')),
+  notes text,
+  approved_by uuid references public.profiles(id) on delete set null,
+  approved_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists bot_registry_username_idx on public.bot_registry(lower(bot_username));
+
+create table if not exists public.settlements (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid unique not null references public.orders(id) on delete cascade,
+  seller_id uuid not null references public.profiles(id) on delete cascade,
+  gross_amount bigint not null,
+  platform_fee bigint not null,
+  net_amount bigint not null,
+  status text not null default 'pending' check(status in ('pending','available','reversed')),
+  available_at timestamptz not null,
+  released_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists settlements_seller_status_idx on public.settlements(seller_id,status,available_at);
+
+create table if not exists public.withdrawal_methods (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  method text not null,
+  account_name text not null,
+  account_number text not null,
+  is_default boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.bot_is_approved(p_username text)
+returns boolean language sql stable security definer set search_path=public
+as $$ select exists(select 1 from public.bot_registry where lower(ltrim(p_username,'@'))=lower(ltrim(bot_username,'@')) and status='approved') $$;
+grant execute on function public.bot_is_approved(text) to anon,authenticated;
+
+create or replace function public.settle_due_sales(p_user_id uuid default auth.uid())
+returns bigint language plpgsql security definer set search_path=public as $$
+declare released bigint:=0; r record;
+begin
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  if p_user_id<>auth.uid() and not public.is_admin() then raise exception 'Forbidden'; end if;
+  for r in select * from public.settlements where seller_id=p_user_id and status='pending' and available_at<=now() for update loop
+    update public.profiles set balance=balance+r.net_amount, pending_balance=greatest(0,pending_balance-r.net_amount) where id=r.seller_id;
+    update public.settlements set status='available',released_at=now() where id=r.id;
+    insert into public.transactions(user_id,order_id,type,amount,description) values(r.seller_id,r.order_id,'sale',r.net_amount,'Sale settlement H+1 released');
+    released:=released+r.net_amount;
+  end loop;
+  return released;
+end $$;
+grant execute on function public.settle_due_sales(uuid) to authenticated;
+
+create or replace function public.admin_settle_all()
+returns bigint language plpgsql security definer set search_path=public as $$
+declare total bigint:=0; r record;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  for r in select seller_id from public.settlements where status='pending' and available_at<=now() group by seller_id loop
+    total:=total+public.settle_due_sales(r.seller_id);
+  end loop;
+  return total;
+end $$;
+grant execute on function public.admin_settle_all() to authenticated;
+
+-- Replace payment completion so sellers receive 80% after H+1, never instantly.
+create or replace function public.complete_paid_order(p_order_id uuid,p_payment_reference text default null)
+returns public.orders language plpgsql security definer set search_path=public as $$
+declare o public.orders; p public.products; fee bigint; net bigint;
+begin
+  select * into o from public.orders where id=p_order_id for update;
+  if not found then raise exception 'Order not found'; end if;
+  if o.status='paid' then return o; end if;
+  if o.status<>'pending' then raise exception 'Order cannot be paid'; end if;
+  select * into p from public.products where id=o.product_id and status='published';
+  if not found then raise exception 'Product is no longer available'; end if;
+  fee:=floor(o.amount*0.20); net:=o.amount-fee;
+  update public.orders set status='paid',payment_reference=coalesce(p_payment_reference,payment_reference),paid_at=now() where id=o.id returning * into o;
+  update public.profiles set pending_balance=pending_balance+net where id=o.seller_id;
+  insert into public.settlements(order_id,seller_id,gross_amount,platform_fee,net_amount,available_at)
+  values(o.id,o.seller_id,o.amount,fee,net,now()+interval '1 day') on conflict(order_id) do nothing;
+  insert into public.product_access(order_id,product_id,buyer_id,delivery_url) values(o.id,o.product_id,o.buyer_id,p.delivery_url) on conflict(order_id) do update set delivery_url=excluded.delivery_url,delivered_at=now();
+  insert into public.transactions(user_id,order_id,type,amount,description) values(o.buyer_id,o.id,'purchase',-o.amount,'Product purchase') on conflict(order_id,type) do nothing;
+  return o;
+end $$;
+revoke all on function public.complete_paid_order(uuid,text) from public,anon,authenticated;
+grant execute on function public.complete_paid_order(uuid,text) to service_role;
+
+create or replace function public.create_market_product(
+ p_title text,p_slug text,p_category text,p_description text,p_price bigint,p_delivery_type text,p_delivery_url text,p_thumbnail_url text,
+ p_asset_type text,p_bot_username text,p_channel_type text,p_code_content text,p_setup_instructions text
+) returns public.products language plpgsql security definer set search_path=public as $$
+declare v_user uuid:=auth.uid(); r public.products; approval text:='not_required'; st text:='published';
+begin
+ if v_user is null then raise exception 'Authentication required'; end if;
+ if p_asset_type like 'bot_%' then
+   if nullif(trim(p_bot_username),'') is null then raise exception 'Bot username wajib diisi'; end if;
+   if public.bot_is_approved(p_bot_username) then approval:='approved'; st:='published'; else approval:='pending'; st:='draft'; end if;
+ end if;
+ insert into public.products(seller_id,title,slug,category,description,price,delivery_type,delivery_url,thumbnail_url,status,asset_type,bot_username,bot_approval_status,channel_type,code_content,setup_instructions)
+ values(v_user,trim(p_title),lower(trim(p_slug)),trim(p_category),coalesce(p_description,''),p_price,p_delivery_type,nullif(p_delivery_url,''),nullif(p_thumbnail_url,''),st,p_asset_type,nullif(trim(p_bot_username),''),approval,nullif(trim(p_channel_type),''),nullif(p_code_content,''),nullif(p_setup_instructions,'')) returning * into r;
+ return r;
+end $$;
+grant execute on function public.create_market_product(text,text,text,text,bigint,text,text,text,text,text,text,text,text) to authenticated;
+
+create or replace function public.admin_set_bot_status(p_bot_id uuid,p_status text,p_notes text default null)
+returns public.bot_registry language plpgsql security definer set search_path=public as $$
+declare r public.bot_registry;
+begin
+ if not public.is_admin() then raise exception 'Admin access required'; end if;
+ if p_status not in ('approved','banned','review') then raise exception 'Invalid bot status'; end if;
+ update public.bot_registry set status=p_status,notes=p_notes,approved_by=case when p_status='approved' then auth.uid() else approved_by end,approved_at=case when p_status='approved' then now() else approved_at end,updated_at=now() where id=p_bot_id returning * into r;
+ if not found then raise exception 'Bot not found'; end if;
+ if p_status='approved' then update public.products set status='published',bot_approval_status='approved' where lower(ltrim(bot_username,'@'))=lower(ltrim(r.bot_username,'@')) and bot_approval_status='pending';
+ elsif p_status='banned' then update public.products set status='archived',bot_approval_status='banned' where lower(ltrim(bot_username,'@'))=lower(ltrim(r.bot_username,'@'));
+ end if;
+ return r;
+end $$;
+grant execute on function public.admin_set_bot_status(uuid,text,text) to authenticated;
+
+create or replace function public.admin_register_bot(p_username text,p_display_name text default null,p_telegram_id bigint default null,p_status text default 'approved',p_notes text default null)
+returns public.bot_registry language plpgsql security definer set search_path=public as $$
+declare r public.bot_registry;
+begin
+ if not public.is_admin() then raise exception 'Admin access required'; end if;
+ insert into public.bot_registry(bot_username,display_name,telegram_id,status,notes,approved_by,approved_at) values(ltrim(trim(p_username),'@'),p_display_name,p_telegram_id,p_status,p_notes,case when p_status='approved' then auth.uid() end,case when p_status='approved' then now() end)
+ on conflict(bot_username) do update set display_name=excluded.display_name,telegram_id=excluded.telegram_id,status=excluded.status,notes=excluded.notes,approved_by=excluded.approved_by,approved_at=excluded.approved_at,updated_at=now() returning * into r;
+ return r;
+end $$;
+grant execute on function public.admin_register_bot(text,text,bigint,text,text) to authenticated;
+
+-- Public product browsing must not expose delivery/code fields.
+revoke select on public.products from anon,authenticated;
+grant select(id,title,slug,category,description,price,thumbnail_url,delivery_type,status,created_at,updated_at,seller_id,asset_type,bot_username,bot_approval_status,channel_type) on public.products to anon,authenticated;
+grant select on public.bot_registry to authenticated;
+revoke all on public.bot_registry from anon;
+grant select(id,bot_username,display_name,telegram_id,status,notes,approved_by,approved_at,created_at,updated_at) on public.bot_registry to authenticated;
+alter table public.bot_registry enable row level security;
+drop policy if exists bot_admin_all on public.bot_registry;
+create policy bot_admin_all on public.bot_registry for all using(public.is_admin()) with check(public.is_admin());
+
+-- User-facing product detail helper exposes safe data only.
+create or replace function public.get_product_by_slug(p_slug text)
+returns table(id uuid,title text,slug text,category text,description text,price bigint,thumbnail_url text,delivery_type text,status text,seller_id uuid,asset_type text,bot_username text,bot_approval_status text,channel_type text)
+language sql stable security definer set search_path=public as $$ select id,title,slug,category,description,price,thumbnail_url,delivery_type,status,seller_id,asset_type,bot_username,bot_approval_status,channel_type from public.products where slug=trim(p_slug) and status='published' limit 1 $$;
+grant execute on function public.get_product_by_slug(text) to anon,authenticated;
+
+-- Creator settlement summary.
+create or replace function public.creator_stats()
+returns json language plpgsql security definer set search_path=public as $$
+declare uid uuid:=auth.uid(); out json;
+begin
+ if uid is null then raise exception 'Authentication required'; end if;
+ perform public.settle_due_sales(uid);
+ select json_build_object(
+   'products',(select count(*) from public.products where seller_id=uid),
+   'published',(select count(*) from public.products where seller_id=uid and status='published'),
+   'sales',(select count(*) from public.orders where seller_id=uid and status='paid'),
+   'gross',(select coalesce(sum(amount),0) from public.orders where seller_id=uid and status='paid'),
+   'available',(select balance from public.profiles where id=uid),
+   'pending',(select pending_balance from public.profiles where id=uid),
+   'withdrawals',(select coalesce(sum(amount),0) from public.withdrawals where user_id=uid and status in ('pending','processing','paid'))
+ ) into out;
+ return out;
+end $$;
+grant execute on function public.creator_stats() to authenticated;
+create or replace function public.get_paid_delivery(p_order_id uuid)
+returns table(title text,code_content text,setup_instructions text,delivery_url text,delivered_at timestamptz)
+language plpgsql security definer set search_path=public as $$
+declare uid uuid:=auth.uid();
+begin
+ if uid is null then raise exception 'Authentication required'; end if;
+ return query select p.title,p.code_content,p.setup_instructions,a.delivery_url,a.delivered_at from public.product_access a join public.products p on p.id=a.product_id join public.orders o on o.id=a.order_id where a.order_id=p_order_id and o.buyer_id=uid and o.status='paid';
+end $$;
+grant execute on function public.get_paid_delivery(uuid) to authenticated;
+alter table public.withdrawals add column if not exists fee bigint not null default 2500;
+alter table public.withdrawals add column if not exists payout_amount bigint;
+create or replace function public.request_withdrawal(p_amount bigint,p_method text,p_account_name text,p_account_number text)
+returns public.withdrawals language plpgsql security definer set search_path=public as $$
+declare v_user uuid:=auth.uid(); v_balance bigint; v_pending boolean; w public.withdrawals; v_fee bigint;
+begin
+ if v_user is null then raise exception 'Authentication required'; end if;
+ if exists(select 1 from public.profiles where id=v_user and status='suspended') then raise exception 'Account suspended'; end if;
+ if p_amount<10000 then raise exception 'Minimum withdrawal is Rp10.000'; end if;
+ if lower(trim(p_method)) not in ('manual','instant','bank','dana','gopay','ovo','shopeepay') then raise exception 'Invalid withdrawal method'; end if;
+ v_fee:=case when lower(trim(p_method))='instant' then 10000 else 2500 end;
+ if coalesce(trim(p_account_name),'')='' or coalesce(trim(p_account_number),'')='' then raise exception 'Withdrawal account is incomplete'; end if;
+ select balance into v_balance from public.profiles where id=v_user for update;
+ select exists(select 1 from public.withdrawals where user_id=v_user and status in ('pending','processing')) into v_pending;
+ if v_pending then raise exception 'A withdrawal is already in progress'; end if;
+ if v_balance < p_amount+v_fee then raise exception 'Saldo tidak cukup untuk nominal + fee withdraw'; end if;
+ update public.profiles set balance=balance-p_amount-v_fee where id=v_user;
+ insert into public.withdrawals(user_id,amount,fee,payout_amount,method,account_name,account_number) values(v_user,p_amount,v_fee,p_amount,trim(p_method),trim(p_account_name),trim(p_account_number)) returning * into w;
+ insert into public.transactions(user_id,type,amount,description) values(v_user,'withdrawal',-(p_amount+v_fee),'Withdrawal request + fee');
+ return w;
+end $$;
+update public.payment_settings set provider='bayargg',mode='api' where id=1 and (provider is null or provider='manual');
+
+-- Helpful view for admin settlement monitoring.
+create or replace view public.creator_settlement_queue as
+select s.id,s.order_id,s.seller_id,p.username,s.gross_amount,s.platform_fee,s.net_amount,s.status,s.available_at,s.released_at
+from public.settlements s join public.profiles p on p.id=s.seller_id;
+revoke all on public.creator_settlement_queue from anon,authenticated;
+revoke select on public.profiles from authenticated;
+grant select(id,username,display_name,avatar_url,bio,balance,pending_balance,created_at,updated_at,role,status) on public.profiles to authenticated;

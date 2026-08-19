@@ -38,3 +38,7 @@ function renderProducts(items){
 }
 window.addEventListener("telecod:language",()=>{loadHome()});
 document.addEventListener("DOMContentLoaded",loadHome);
+
+
+async function quickPaste(){const title=document.getElementById('quickPasteTitle').value.trim()||'PasteLink';const content=document.getElementById('quickPasteContent').value.trim();if(!content){tcToast?.('Isi PasteLink terlebih dahulu','error');return}const {data,error}=await sb.rpc('create_paste',{p_title:title,p_slug:('p'+crypto.randomUUID().replaceAll('-','')).slice(0,18),p_content:content,p_visibility:'public',p_password:null});if(error){location.href='login.html?next='+encodeURIComponent('index.html');return}location.href='paste-view.html?slug='+encodeURIComponent(data.slug)}
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('quickPasteCreate')?.addEventListener('click',quickPaste)});
