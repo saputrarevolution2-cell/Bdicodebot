@@ -119,3 +119,11 @@ Dark → Light → Dark
 - Telegram Bot Token TIDAK boleh berada di frontend.
 - Payment secret tetap hanya di Edge Function.
 - Paste content selalu di-escape; URL dibuat clickable tanpa `innerHTML` dari raw content.
+
+
+## Premium UI update
+- Global light/dark theme persists locally.
+- Shared navigation/footer is injected on app pages.
+- Password fields have show/hide controls.
+- Admin has a global refresh action and self-demotion protection.
+- Never expose Supabase service-role, Telegram bot token, payment secrets, or webhook secrets in frontend config.
