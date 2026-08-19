@@ -42,3 +42,10 @@ html[data-theme="light"] .form-grid textarea{background:#fff!important;color:#10
 html[data-theme="light"] .market-head p,
 html[data-theme="light"] .order-product p,
 html[data-theme="light"] .product-info .description{color:#617488}
+
+html[data-theme="light"] .icon-btn{background:#fff!important;border-color:#d5e2ec!important;color:#19344b!important;box-shadow:0 8px 24px rgba(23,75,107,.07)!important}
+html[data-theme="light"] .mobile-nav{background:rgba(255,255,255,.96)!important;border-color:#d6e3ec!important}
+html[data-theme="light"] .mobile-nav a{color:#28445b!important}
+html[data-theme="light"] .tc-link{color:#0678b4}
+html[data-theme="light"] .tc-footer-bottom{border-color:#dbe5ed;color:#718397}
+html[data-theme="light"] footer.tc-shared-footer{background:#f7fbfe}
