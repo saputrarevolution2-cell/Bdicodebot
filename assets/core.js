@@ -65,6 +65,8 @@
     applyTheme(window.TC_THEME);
   };
 
+  window.tcToast = function(message,type="info",title="TeleCod"){let stack=document.querySelector('.toast-stack');if(!stack){stack=document.createElement('div');stack.className='toast-stack';document.body.appendChild(stack)}const el=document.createElement('div');el.className='tc-toast '+type;const icon=type==='error'?'fa-circle-exclamation':type==='success'?'fa-circle-check':'fa-circle-info';el.innerHTML=`<i class="fa-solid ${icon}"></i><div><b>${tcEscape(title)}</b><span>${tcEscape(message)}</span></div>`;stack.appendChild(el);setTimeout(()=>el.remove(),4200)};
+
   window.tcEscape = function(value) {
     return String(value ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
   };
