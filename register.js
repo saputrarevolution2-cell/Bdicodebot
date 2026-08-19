@@ -5,7 +5,7 @@ id:{
  name:"Nama",namePlaceholder:"Nama lengkap",username:"Username Telegram / Username",usernamePlaceholder:"contoh: telecod_creator",
  email:"Gmail / Email",emailPlaceholder:"Alamat email",password:"Password",passwordPlaceholder:"Minimal 8 karakter",
  submit:"Buat Akun",hasAccount:"Sudah punya akun?",login:"Login",
- success:"Akun berhasil dibuat. Jika konfirmasi email aktif, cek inbox sebelum login."
+ success:"Akun berhasil dibuat. Jika konfirmasi email aktif, cek inbox sebelum login.",usernameTaken:"Username sudah digunakan atau tidak valid."
 },
 en:{
  title:"Create your account 🚀",desc:"Register with email, Google, or Telegram and start creating PasteLinks and selling digital assets.",
@@ -13,7 +13,7 @@ en:{
  name:"Name",namePlaceholder:"Your name",username:"Telegram Username / Username",usernamePlaceholder:"example: telecod_creator",
  email:"Gmail / Email",emailPlaceholder:"Email address",password:"Password",passwordPlaceholder:"Minimum 8 characters",
  submit:"Create Account",hasAccount:"Already have an account?",login:"Login",
- success:"Account created. If email confirmation is enabled, check your inbox before logging in."
+ success:"Account created. If email confirmation is enabled, check your inbox before logging in.",usernameTaken:"Username is unavailable or invalid."
 }};
 const sb=supabase.createClient(TELECOD_CONFIG.SUPABASE_URL,TELECOD_CONFIG.SUPABASE_ANON_KEY);
 
@@ -50,8 +50,8 @@ document.addEventListener("DOMContentLoaded",()=>{
  document.getElementById("form").addEventListener("submit",async e=>{
   e.preventDefault();
   const username=document.getElementById("username").value.trim().replace(/^@/,"");
-  const {data:exists}=await sb.from("profiles").select("id").eq("username",username).maybeSingle();
-  if(exists){document.getElementById("msg").innerHTML=`<div class="error">Username sudah digunakan.</div>`;return;}
+  const {data:available,error:availabilityError}=await sb.rpc("username_available",{p_username:username});
+  if(availabilityError||available!==true){document.getElementById("msg").innerHTML=`<div class="error">${tcT("usernameTaken")}</div>`;return;}
   const {error}=await sb.auth.signUp({
    email:document.getElementById("email").value.trim(),
    password:document.getElementById("password").value,

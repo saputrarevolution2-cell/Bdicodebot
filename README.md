@@ -1,129 +1,159 @@
-# TeleCod Premium — Final Light/Dark + Auth + Smart PasteLink
+# TeleCod — Production Premium
 
-Versi ini sudah dipoles untuk:
-- 🌙 Dark mode + ☀️ Light mode global, tersimpan di localStorage.
-- 🌐 ID / EN.
-- 🎨 Premium responsive UI, Font Awesome, emoji, micro-animation mascot.
-- 🛍️ Marketplace, creator, dashboard, admin, checkout tetap dipertahankan.
-- 📝 PasteLink public / unlisted / private.
-- 🔗 `https://...` dan `www....` di isi PasteLink otomatis menjadi link clickable saat dilihat.
-- 🔐 Login/register Email + Username + Google/Gmail + Telegram.
-- 📱 Telegram Login Widget diverifikasi server-side lewat Supabase Edge Function.
-- 👤 Username Telegram disimpan pada profile.
-- 🔒 Secret Telegram Bot Token hanya di Supabase Edge Function secret.
+TeleCod is a premium bilingual digital marketplace + PasteLink workspace for creators.
 
-## 1. Jalankan database
+## Included
 
-Buka Supabase SQL Editor dan jalankan seluruh `database.sql`.
+- Premium responsive UI for desktop, tablet and mobile
+- Dark / Light theme persisted in `localStorage`
+- Indonesian / English language switch across the app shell and page content
+- Font Awesome icon system
+- Supabase Auth: email/password, Google OAuth and Telegram Login
+- Marketplace: products, checkout, product access and seller balance
+- PasteLink: public / unlisted / private + server-side password hashing
+- Admin: payment configuration, orders, withdrawals, products, PasteLinks and members
+- Production-oriented PostgreSQL schema with RLS and security RPCs
+- No demo products, fake members, fake orders or fake balances are seeded
+- Payment secrets remain in Supabase Edge Function secrets
+- Webhook signature validation + payment amount/currency validation
 
-SQL ini menambahkan:
-- `profiles.auth_email`
-- `profiles.telegram_id`
-- `profiles.telegram_username`
-- fungsi `resolve_username_login()`
-- trigger profile untuk user baru
-- privilege column-level supaya field login-only tidak ikut SELECT biasa.
+## 1. Database
 
-## 2. Google / Gmail OAuth
+Run the complete `database.sql` in the Supabase SQL Editor.
 
-Di Supabase Dashboard:
-Authentication → Providers → Google → Enable.
+The migration is designed to be re-runnable and adds missing columns/tables where possible. Existing plaintext PasteLink passwords are migrated to bcrypt-style hashes and the plaintext column is removed.
 
-Isi Client ID dan Client Secret dari Google Cloud Console.
+### First admin
 
-Tambahkan redirect URL:
-`https://DOMAIN-KAMU/dashboard.html`
+Create your real account first. Then run this once with your own Supabase Auth user UUID:
 
-Untuk development tambahkan domain localhost sesuai URL yang kamu gunakan.
+```sql
+update public.profiles
+set role='admin', status='active'
+where id='YOUR-AUTH-USER-UUID';
+```
 
-## 3. Telegram Login
+No fake/admin account is created automatically.
 
-Project menggunakan Telegram Bot:
-`ZyxFidxBot`
+## 2. Frontend configuration
 
-Pastikan bot yang digunakan benar-benar bot yang kamu kontrol.
+Edit `assets/config.js` only for public values:
 
-Di BotFather, konfigurasi domain website pada Telegram Login sesuai domain production kamu.
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `TELEGRAM_BOT_USERNAME`
+- Telegram auth function path
 
-Jangan taruh Bot Token di `assets/config.js`.
+Never place:
 
-Set secret Supabase Edge Function:
+- Supabase service-role key
+- Telegram bot token
+- Payment API secret/key
+- Webhook secret
 
-`TELEGRAM_BOT_TOKEN=TOKEN_BOT_KAMU`
+inside frontend files.
 
-Deploy function:
-`supabase/functions/telegram-auth/index.ts`
+## 3. Google OAuth
 
-Set environment:
-`SUPABASE_URL`
-`SUPABASE_SERVICE_ROLE_KEY`
+Enable Google in Supabase Authentication → Providers.
 
-Kedua variable Supabase tersebut tersedia otomatis pada Edge Functions pada konfigurasi standar Supabase. Jangan expose service role key ke frontend.
+Use your real production callback/redirect URL according to the Supabase project configuration.
 
-## 4. URL frontend
+## 4. Telegram Login
 
-`assets/config.js` berisi:
-- Supabase URL
-- Supabase anon key
-- Telegram bot username
-- path function Telegram auth
+Deploy:
 
-Kalau bot/domain berubah, cukup ubah:
-`TELEGRAM_BOT_USERNAME`
+- `supabase/functions/telegram-auth`
 
-## 5. Username login
+Set Edge Function secrets:
 
-Login menerima:
-- email + password
-- username + password
-- Google
-- Telegram
+- `TELEGRAM_BOT_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-Username tanpa password tidak aman untuk dijadikan metode autentikasi mandiri. Karena itu username Telegram dipakai sebagai identifier login hanya untuk akun yang memang mempunyai password.
+Configure the production domain in Telegram BotFather.
 
-Login Telegram menggunakan Telegram Login Widget sehingga identitas Telegram diverifikasi melalui signature Telegram di server.
+## 5. Payment
 
-## 6. PasteLink Smart URL
+The checkout supports:
 
-Contoh isi:
+### Manual QRIS
 
-https://google.com
-www.example.com
-https://telegram.org
+Configure from Admin → Payment:
 
-Saat PasteLink dibuka, URL tersebut tampil sebagai anchor yang:
-- bisa diklik
-- membuka tab baru
-- memakai `noopener noreferrer nofollow`
-- tidak mengeksekusi HTML dari user
+- provider name
+- QR image URL
+- payment instructions
+- enabled mode
 
-Isi selain URL tetap ditampilkan sebagai plain text yang aman.
+The payment is intentionally **not** auto-marked as paid by the browser. An admin must verify the payment and mark the order paid through the protected admin RPC.
 
-## 7. Theme
+### API / Automatic
 
-Tombol ☀️ / 🌙 muncul otomatis di navbar/auth header.
+Deploy:
 
-Pilihan disimpan:
-`localStorage.telecod_theme`
+- `supabase/functions/create-payment`
+- `supabase/functions/payment-webhook`
 
-Default:
-`dark`
+Configure public provider settings in Admin → Payment. Put provider secrets only in Edge Function secrets.
 
-User dapat pindah:
-Dark → Light → Dark
+Required secrets for the generic adapter:
 
-## 8. Catatan keamanan
+- `PAYMENT_API_KEY`
+- `PAYMENT_WEBHOOK_SECRET`
+- optional `PAYMENT_API_ENDPOINT`
+- optional `APP_ORIGIN`
 
-- Supabase anon key boleh berada di frontend.
-- Supabase service role key TIDAK boleh berada di frontend.
-- Telegram Bot Token TIDAK boleh berada di frontend.
-- Payment secret tetap hanya di Edge Function.
-- Paste content selalu di-escape; URL dibuat clickable tanpa `innerHTML` dari raw content.
+The generic `create-payment` adapter expects the provider to return one of:
 
+- `payment_url`
+- `checkout_url`
+- `invoice_url`
 
-## Premium UI update
-- Global light/dark theme persists locally.
-- Shared navigation/footer is injected on app pages.
-- Password fields have show/hide controls.
-- Admin has a global refresh action and self-demotion protection.
-- Never expose Supabase service-role, Telegram bot token, payment secrets, or webhook secrets in frontend config.
+and optionally:
+
+- `reference`
+- `invoice_id`
+
+For a specific provider, map its request/response format inside `create-payment/index.ts` rather than exposing the secret to the browser.
+
+The webhook requires `PAYMENT_WEBHOOK_SECRET` and accepts either:
+
+- `x-webhook-signature: sha256=<HMAC-SHA256(raw-body)>`
+- legacy `x-webhook-secret` equal to the configured secret
+
+The webhook also verifies the order amount and IDR currency when those fields are supplied by the provider.
+
+## 6. Security model
+
+- RLS is enabled on all application tables.
+- User balance cannot be directly edited from the browser.
+- Withdrawal creation is only through `request_withdrawal()`.
+- Direct order insertion is revoked; orders are created by `create_order()`.
+- Paid order completion is service-role only.
+- Admin role changes and balance adjustments use protected RPCs.
+- Raw PasteLink content is not public-readable from the table.
+- PasteLink passwords are hashed server-side.
+- Public users cannot read private member profile data.
+
+## 7. Deployment
+
+This package is static frontend + Supabase backend.
+
+Deploy the project root to your static host and deploy the Supabase Edge Functions separately.
+
+Before production, verify:
+
+1. Supabase URL/key
+2. Google OAuth
+3. Telegram BotFather domain
+4. Edge Function secrets
+5. Payment provider credentials
+6. Payment webhook URL
+7. First admin role
+8. RLS policies
+9. Production domain HTTPS
+
+## 8. Important
+
+This package contains **real database logic, not dummy marketplace data**. You still need to connect your real payment provider credentials and your real Supabase project configuration before live transactions can run.
