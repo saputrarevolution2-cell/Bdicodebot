@@ -365,3 +365,17 @@ html[data-theme="light"] .cta-art span{color:#0099d8}
 @media(max-width:620px){.theme-toggle{width:38px;height:38px}}
 
 .tc-link{color:var(--cyan);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;word-break:break-all}.tc-link:hover{opacity:.8}
+
+
+/* === PREMIUM GLOBAL UI === */
+.topbar{box-shadow:0 12px 40px rgba(0,0,0,.12)}
+.desktop-nav i{opacity:.72;margin-right:5px}
+.tc-shared-footer{margin-top:70px;padding:55px 0 0;border-top:1px solid var(--line-soft);background:linear-gradient(180deg,transparent,rgba(0,0,0,.10));}
+.tc-footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:34px;padding-bottom:34px}.tc-footer-grid>div{display:grid;align-content:start;gap:10px}.tc-footer-grid .brand{margin-bottom:4px}.tc-footer-grid p{color:var(--muted);line-height:1.7;max-width:360px;font-size:13px}.tc-footer-grid b{font-size:12px;letter-spacing:.08em;text-transform:uppercase}.tc-footer-grid a:not(.brand){color:var(--muted);font-size:13px;font-weight:650;transition:.2s}.tc-footer-grid a:not(.brand):hover{color:var(--cyan);transform:translateX(2px)}.tc-footer-bottom{padding:20px 0 28px;border-top:1px solid var(--line-soft);color:var(--muted-2);font-size:11px}.tc-footer-bottom span{opacity:.7}.password-wrap{position:relative;width:100%}.password-wrap input{width:100%!important;padding-right:48px!important}.password-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}.password-toggle:hover{background:rgba(255,255,255,.07);color:var(--text)}
+.auth-card{box-shadow:0 35px 100px rgba(0,0,0,.28),0 0 0 1px rgba(101,225,255,.04)}
+.btn{box-shadow:0 7px 20px rgba(0,0,0,.08)}
+.btn.primary:hover{box-shadow:0 15px 38px rgba(34,158,217,.28)}
+@media(max-width:850px){.desktop-nav.tc-shared-links{display:none}.menu{display:block}.tc-footer-grid{grid-template-columns:1fr 1fr}.tc-shared-footer{margin-top:45px}}
+@media(max-width:520px){.tc-footer-grid{grid-template-columns:1fr}.tc-footer-grid p{max-width:none}.nav{gap:10px}.brand{font-size:19px}.brandmark{width:34px;height:34px}}
+html[data-theme="light"] .tc-shared-footer{background:linear-gradient(180deg,transparent,#f4f9fc)}
+html[data-theme="light"] .password-toggle:hover{background:#edf4f8}

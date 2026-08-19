@@ -94,7 +94,49 @@
     applyTheme(window.TC_THEME);
   }
 
+  function ensureSharedShell(){
+    const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+    const isAuth=['login.html','register.html'].includes(path);
+    const top=document.querySelector('.topbar');
+    if(top){
+      const nav=top.querySelector('.nav');
+      if(nav && !nav.querySelector('.tc-shared-links')){
+        const links=document.createElement('nav');
+        links.className='desktop-nav tc-shared-links';
+        links.innerHTML=`<a href="index.html"><i class="fa-solid fa-house"></i> Home</a><a href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="paste.html"><i class="fa-solid fa-paste"></i> PasteLink</a><a href="seller.html"><i class="fa-solid fa-wand-magic-sparkles"></i> Create</a>`;
+        nav.insertBefore(links,nav.querySelector('.nav-actions'));
+        const menu=document.createElement('button'); menu.className='menu'; menu.type='button'; menu.dataset.menu=''; menu.innerHTML='<i class="fa-solid fa-bars"></i>'; nav.insertBefore(menu,nav.querySelector('.nav-actions'));
+        const mobile=document.createElement('div'); mobile.className='mobile-nav tc-mobile-links'; mobile.dataset.mobileNav=''; mobile.innerHTML=`<a href="index.html">Home</a><a href="marketplace.html">Marketplace</a><a href="paste.html">PasteLink</a><a href="seller.html">Create</a><a href="dashboard.html">Dashboard</a>`; top.parentElement.appendChild(mobile);
+      }
+    }
+    if(!document.querySelector('footer.tc-shared-footer')){
+      const footer=document.createElement('footer'); footer.className='tc-shared-footer';
+      footer.innerHTML=`<div class="wrap tc-footer-grid"><div><a class="brand" href="index.html"><span class="brandmark"><i class="fa-brands fa-telegram"></i></span><span>Tele<span>Cod</span></span></a><p>Premium digital workspace for creators, PasteLinks and digital products.</p></div><div><b>Explore</b><a href="marketplace.html">Marketplace</a><a href="paste.html">PasteLink</a><a href="seller.html">Create Product</a></div><div><b>Account</b><a href="dashboard.html">Dashboard</a><a href="login.html">Login</a><a href="register.html">Register</a></div><div><b>Legal</b><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></div></div><div class="wrap tc-footer-bottom">© 2026 TeleCod <span>• Built for creators</span></div>`;
+      document.body.appendChild(footer);
+    }
+    if(!document.querySelector('.password-toggle')){
+      document.querySelectorAll('input[type="password"]').forEach(input=>{
+        const wrap=document.createElement('div'); wrap.className='password-wrap'; input.parentNode.insertBefore(wrap,input); wrap.appendChild(input);
+        const btn=document.createElement('button'); btn.type='button'; btn.className='password-toggle'; btn.setAttribute('aria-label','Show password'); btn.innerHTML='<i class="fa-solid fa-eye"></i>';
+        btn.onclick=()=>{ const hidden=input.type==='password'; input.type=hidden?'text':'password'; btn.innerHTML=hidden?'<i class="fa-solid fa-eye-slash"></i>':'<i class="fa-solid fa-eye"></i>'; btn.setAttribute('aria-label',hidden?'Hide password':'Show password'); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+  async function enhanceSessionNav(){
+    if(!window.supabase || !window.TELECOD_CONFIG) return;
+    try{
+      const client=window.supabase.createClient(TELECOD_CONFIG.SUPABASE_URL,TELECOD_CONFIG.SUPABASE_ANON_KEY);
+      const {data}=await client.auth.getUser();
+      const actions=document.querySelector('.nav-actions');
+      if(actions && data?.user && !actions.querySelector('.tc-account-link')){
+        const a=document.createElement('a'); a.className='btn ghost tc-account-link'; a.href='dashboard.html'; a.innerHTML='<i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>'; actions.insertBefore(a,actions.firstChild);
+      }
+    }catch(_e){}
+  }
+
   window.tcInitUI=function(){
+    ensureSharedShell();
     addThemeButton();
     document.querySelectorAll("[data-lang-toggle]").forEach(btn=>{
       if(btn.dataset.bound==="1")return;
@@ -111,6 +153,7 @@
 
   document.addEventListener("DOMContentLoaded",()=>{
     tcInitUI();
+    enhanceSessionNav();
     tcSetLang(window.TC_LANG);
     applyTheme(window.TC_THEME);
   });
