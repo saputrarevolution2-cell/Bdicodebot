@@ -1,1 +1,0 @@
-.market-head{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:30px}.market-head h1{font:900 clamp(35px,5vw,58px)/1.05 Poppins;letter-spacing:-.05em;margin:12px 0}.market-head p{max-width:650px;color:var(--muted);line-height:1.75}@media(max-width:650px){.market-head{display:block}.market-head .btn{margin-top:15px}}
