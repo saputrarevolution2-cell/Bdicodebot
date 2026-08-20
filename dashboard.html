@@ -1,1 +1,49 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — TeleCod</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="assets/base.css"><link rel="stylesheet" href="assets/theme.css"><link rel="stylesheet" href="premium.css"></head><body data-title-id="Dashboard — TeleCod" data-title-en="Dashboard — TeleCod"><header class="topbar"><div class="wrap nav"><a class="brand" href="index.html"><span class="brandmark"><i class="fa-brands fa-telegram"></i></span><span>Tele<span>Cod</span></span></a><div class="nav-actions"><button class="lang" data-lang-toggle data-lang-label>ID / EN">ID / EN</button><button class="btn ghost" id="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div></div></header><main class="section"><div class="wrap dashboard-premium"><aside class="card side-card"><div class="kicker">TELECOD CREATOR</div><h3 id="sideName">Account</h3><a class="active" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a><a href="seller.html"><i class="fa-solid fa-plus"></i> Create Payment Link</a><a href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="paste.html"><i class="fa-solid fa-paste"></i> PasteLink</a><a href="profile.html"><i class="fa-solid fa-user"></i> Profile</a><a id="adminLink" href="admin.html" style="display:none"><i class="fa-solid fa-shield-halved"></i> Admin</a></aside><section><div class="section-head"><div><span class="kicker">DASHBOARD</span><h1 id="hello">Dashboard</h1><p class="muted">Semua pendapatan, code, order, pending approval dan withdraw ada di sini.</p></div><a class="btn primary" href="seller.html"><i class="fa-solid fa-plus"></i> Create Payment Link</a></div><div class="dash-stats"><div class="card dash-stat"><span class="muted">Available Balance</span><b id="balance">Rp0</b><small class="muted">Bisa WD sekarang</small></div><div class="card dash-stat"><span class="muted">Pending Balance</span><b id="pending">Rp0</b><small class="muted">Settlement H+1</small></div><div class="card dash-stat"><span class="muted">Total Earnings</span><b id="earnings">Rp0</b><small class="muted">Net setelah fee 20%</small></div><div class="card dash-stat"><span class="muted">Total Sales</span><b id="sales">0</b><small class="muted">Order paid</small></div></div><div class="dashboard-grid-premium"><div class="card section-card"><div class="section-head"><div><span class="kicker">ACTIVITY</span><h2>Penjualan Terbaru</h2></div><span class="badge green" id="role">Creator</span></div><div class="table-wrap"><table class="premium-table"><thead><tr><th>Product</th><th>Gross</th><th>Net</th><th>Status</th><th>Date</th></tr></thead><tbody id="salesRows"></tbody></table></div></div><div class="card section-card"><div class="section-head"><div><span class="kicker">NOTIFICATIONS</span><h2>Notifikasi</h2></div></div><div id="notifications"></div></div></div><div class="dashboard-grid-premium"><div class="card section-card"><div class="section-head"><div><span class="kicker">MY LISTINGS</span><h2>Code & Channel Saya</h2></div><a class="btn ghost" href="seller.html">Tambah</a></div><div class="table-wrap"><table class="premium-table"><thead><tr><th>Title</th><th>Type</th><th>Price</th><th>Approval</th></tr></thead><tbody id="productRows"></tbody></table></div></div><div class="card section-card"><div class="section-head"><div><span class="kicker">WITHDRAW</span><h2>Tarik Saldo</h2></div></div><div class="notice" style="margin-bottom:12px">Manual fee Rp2.500 • Instant fee Rp10.000</div><form id="withdrawForm" class="form"><input id="wAmount" type="number" min="10000" step="1000" placeholder="Jumlah withdraw" required><select id="wMethod"><option value="manual">WD Manual — Fee Rp2.500</option><option value="instant">WD Instant — Fee Rp10.000</option></select><input id="wName" placeholder="Nama pemilik rekening / e-wallet" required><input id="wNumber" placeholder="Nomor rekening / e-wallet" required><button class="btn primary" type="submit">Request Withdraw</button></form><div id="wMsg" style="margin-top:10px"></div></div></div><div class="card section-card" style="margin-top:16px"><div class="section-head"><div><span class="kicker">SUMMARY</span><h2>Ringkasan Lengkap</h2></div></div><div class="stats-strip"><div class="stat-mini"><span>My Code</span><b id="codeCount">0</b></div><div class="stat-mini"><span>My Channels</span><b id="channelCount">0</b></div><div class="stat-mini"><span>Purchases</span><b id="purchaseCount">0</b></div><div class="stat-mini"><span>PasteLinks</span><b id="pasteCount">0</b></div></div></div></section></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/config.js"></script><script src="assets/core.js"></script><script src="dashboard.js"></script></body></html>
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TeleCod Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/config-compat.js"></script>
+</head><body>
+<div class="app">
+<header class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Menu"><i class="fa-solid fa-bars"></i></button><a class="brand" href="dashboard.html">TELE<span>COD</span></a>
+  <div class="top-actions"><button class="icon-btn" id="themeBtn" title="Theme"><i class="fa-solid fa-circle-half-stroke"></i></button><button class="icon-btn" id="langBtn">ID</button><button class="icon-btn" id="notifBtn"><i class="fa-regular fa-bell"></i></button><button class="avatar-btn" id="userBtn"><span class="avatar" id="avatar">U</span><span class="top-user-name" id="topUser">User</span> ▾</button></div>
+</header>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <div class="nav-section" data-i18n="main">Main</div>
+  <a class="nav-item" data-page="dashboard" href="dashboard.html?page=dashboard"><span class="ico"><i class="fa-solid fa-house"></i></span><span data-i18n="dashboard">Dashboard</span></a>
+  <a class="nav-item" data-page="marketplace" href="dashboard.html?page=marketplace"><span class="ico"><i class="fa-solid fa-cart-shopping"></i></span><span data-i18n="marketplace">Marketplace</span></a>
+  <div class="nav-section" data-i18n="creator">Creator</div>
+  <button class="nav-parent" data-toggle="channel"><span class="ico"><i class="fa-solid fa-bullhorn"></i></span><span data-i18n="channel">Channel</span><span class="chev">⌄</span></button>
+  <div class="submenu" id="submenu-channel">
+    <a class="create-link" href="dashboard.html?page=create-channel">＋ <span data-i18n="createChannel">Buat / Tambah Channel</span></a>
+    <a href="dashboard.html?page=channel-free" data-page="channel-free">Free</a>
+    <a href="dashboard.html?page=channel-paid" data-page="channel-paid">Paid</a>
+  </div>
+  <button class="nav-parent" data-toggle="code"><span class="ico"><i class="fa-solid fa-code"></i></span><span data-i18n="code">Code</span><span class="chev">⌄</span></button>
+  <div class="submenu" id="submenu-code">
+    <a class="create-link" href="dashboard.html?page=create-code">＋ <span data-i18n="createCode">Buat / Tambah Code</span></a>
+    <a href="dashboard.html?page=code-free" data-page="code-free">Free</a>
+    <a href="dashboard.html?page=code-paid" data-page="code-paid">Paid</a>
+  </div>
+  <div class="nav-section" data-i18n="account">Account</div>
+  <a class="nav-item" data-page="purchases" href="dashboard.html?page=purchases"><span class="ico"><i class="fa-solid fa-receipt"></i></span><span data-i18n="purchases">My Purchases</span></a>
+  <a class="nav-item" data-page="payment" href="dashboard.html?page=payment"><span class="ico"><i class="fa-solid fa-credit-card"></i></span><span data-i18n="payment">Payment</span></a>
+  <a class="nav-item" data-page="profile" href="dashboard.html?page=profile"><span class="ico"><i class="fa-solid fa-user"></i></span><span data-i18n="profile">Profile</span></a>
+  <a class="nav-item" data-page="settings" href="dashboard.html?page=settings"><span class="ico"><i class="fa-solid fa-gear"></i></span><span data-i18n="settings">Pengaturan</span></a>
+  <div style="height:20px"></div><a class="nav-item" id="logoutBtn" href="#"><span class="ico"><i class="fa-solid fa-right-from-bracket"></i></span><span data-i18n="logout">Log Out</span></a>
+</aside>
+<main class="main"><div class="container" id="content"></div></main>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="modal"><div class="modal" id="modalBody"></div></div>
+</div>
+<script src="js/dashboard.js"></script>
+</body></html>

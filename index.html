@@ -140,14 +140,176 @@
   </form>
 </div></div>
 
-<!-- Auth -->
-<div id="authModal" class="modal"><div class="auth-modal"><button id="closeAuth" class="close-auth">×</button><div class="auth-tabs"><button id="tabLogin" class="selected" data-i18n="login">Login</button><button id="tabRegister" data-i18n="register">Register</button></div>
-<form id="authForm"><input id="authEmail" type="email" placeholder="Email" required><input id="authPassword" type="password" placeholder="Password" minlength="6" required><button class="purple-btn" id="authSubmit" data-i18n="login">Login</button><small id="authMessage"></small></form></div></div>
+<!-- Authentication -->
+<div id="authModal" class="modal auth-overlay" aria-hidden="true">
+  <div class="auth-modal auth-shell">
+    <button id="closeAuth" class="close-auth" type="button" aria-label="Close">×</button>
 
-<div id="toast" class="toast"></div>
+    <div class="auth-brand">
+      <div class="auth-logo"><i class="fa-solid fa-play"></i></div>
+      <div>
+        <strong>TELE<span>COD</span></strong>
+        <small data-i18n="authWelcome">Aman, cepat & mudah.</small>
+      </div>
+    </div>
+
+    <div class="auth-tabs" role="tablist">
+      <button id="tabLogin" class="selected" type="button" data-i18n="login">Login</button>
+      <button id="tabRegister" type="button" data-i18n="register">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="loginPanel" class="auth-panel">
+      <div class="auth-title">
+        <h2 data-i18n="loginTitle">Masuk ke TeleCod</h2>
+        <p data-i18n="loginSub">Gunakan username Telegram dan kata sandi kamu.</p>
+      </div>
+
+      <form id="loginForm" class="auth-form" novalidate>
+        <label class="auth-field">
+          <span data-i18n="usernameTelegram">Username Telegram</span>
+          <div class="field-wrap">
+            <i class="fa-brands fa-telegram"></i>
+            <input id="loginUsername" autocomplete="username" maxlength="32" required
+              placeholder="@username" data-i18n-placeholder="usernamePlaceholder">
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span data-i18n="password">Kata sandi</span>
+          <div class="field-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required
+              placeholder="Masukkan kata sandi" data-i18n-placeholder="passwordPlaceholder">
+            <button type="button" class="eye-btn" data-password-toggle="loginPassword" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </label>
+
+        <div class="auth-row">
+          <label class="check-line">
+            <input id="loginTerms" type="checkbox">
+            <span data-i18n="agreeTerms">Saya menyetujui Ketentuan & Kebijakan TeleCod</span>
+          </label>
+          <button id="forgotBtn" type="button" class="forgot-btn" data-i18n="forgotPassword">Lupa kata sandi?</button>
+        </div>
+
+        <button id="loginSubmit" class="purple-btn auth-submit" type="submit">
+          <i class="fa-solid fa-right-to-bracket"></i><span data-i18n="login">Masuk</span>
+        </button>
+      </form>
+
+      <div class="auth-or"><span data-i18n="orContinue">Atau masuk dengan</span></div>
+      <button id="telegramLoginBtn" class="telegram-auth-btn" type="button">
+        <i class="fa-brands fa-telegram"></i><span data-i18n="continueTelegram">Telegram</span>
+      </button>
+      <p class="auth-switch"><span data-i18n="noAccount">Belum punya akun?</span> <button type="button" id="switchRegister" data-i18n="registerNow">Daftar sekarang</button></p>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="registerPanel" class="auth-panel hidden">
+      <div class="auth-title">
+        <h2 data-i18n="registerTitle">Buat akun TeleCod</h2>
+        <p data-i18n="registerSub">Daftar dengan data Telegram kamu.</p>
+      </div>
+
+      <form id="registerForm" class="auth-form" novalidate>
+        <label class="auth-field">
+          <span data-i18n="usernameTelegram">Username Telegram</span>
+          <div class="field-wrap">
+            <i class="fa-brands fa-telegram"></i>
+            <input id="registerUsername" autocomplete="username" maxlength="32" required
+              placeholder="@username" data-i18n-placeholder="usernamePlaceholder">
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span data-i18n="telegramNumber">No Telegram</span>
+          <div class="field-wrap">
+            <i class="fa-solid fa-phone"></i>
+            <input id="registerPhone" type="tel" autocomplete="tel" maxlength="20" required
+              placeholder="+62xxxxxxxxxx" data-i18n-placeholder="telegramNumberPlaceholder">
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span data-i18n="password">Kata sandi</span>
+          <div class="field-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required
+              placeholder="Minimal 6 karakter" data-i18n-placeholder="passwordMinPlaceholder">
+            <button type="button" class="eye-btn" data-password-toggle="registerPassword"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span data-i18n="confirmPassword">Konfirmasi kata sandi</span>
+          <div class="field-wrap">
+            <i class="fa-solid fa-shield-halved"></i>
+            <input id="registerConfirm" type="password" autocomplete="new-password" minlength="6" required
+              placeholder="Ulangi kata sandi" data-i18n-placeholder="confirmPasswordPlaceholder">
+            <button type="button" class="eye-btn" data-password-toggle="registerConfirm"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </label>
+
+        <label class="check-line register-terms">
+          <input id="registerTerms" type="checkbox" required>
+          <span data-i18n="agreeTerms">Saya menyetujui Ketentuan & Kebijakan TeleCod</span>
+        </label>
+
+        <button id="registerSubmit" class="purple-btn auth-submit" type="submit">
+          <i class="fa-solid fa-user-plus"></i><span data-i18n="register">Daftar</span>
+        </button>
+      </form>
+
+      <div class="auth-or"><span data-i18n="orRegisterWith">Atau daftar dengan</span></div>
+      <button id="telegramRegisterBtn" class="telegram-auth-btn" type="button">
+        <i class="fa-brands fa-telegram"></i><span data-i18n="continueTelegram">Telegram</span>
+      </button>
+      <p class="auth-switch"><span data-i18n="hasAccount">Sudah punya akun?</span> <button type="button" id="switchLogin" data-i18n="loginNow">Masuk sekarang</button></p>
+    </section>
+  </div>
+</div>
+
+<!-- Forgot password -->
+<div id="forgotModal" class="modal auth-overlay">
+  <div class="auth-modal recovery-modal">
+    <button id="closeForgot" class="close-auth" type="button">×</button>
+    <div class="auth-brand">
+      <div class="auth-logo"><i class="fa-solid fa-key"></i></div>
+      <div><strong data-i18n="forgotTitle">Lupa kata sandi?</strong><small data-i18n="forgotSub">Gunakan Telegram untuk memulihkan akses.</small></div>
+    </div>
+    <div class="recovery-box">
+      <i class="fa-brands fa-telegram"></i>
+      <div>
+        <b data-i18n="recoveryTelegramTitle">Pemulihan aman melalui Telegram</b>
+        <p data-i18n="recoveryTelegramText">Masuk dengan Telegram untuk memverifikasi akun. Setelah berhasil, kamu dapat melanjutkan pemulihan akun.</p>
+      </div>
+    </div>
+    <button id="telegramRecoveryBtn" class="telegram-auth-btn" type="button"><i class="fa-brands fa-telegram"></i><span data-i18n="recoverWithTelegram">Pulihkan dengan Telegram</span></button>
+    <button id="backToLogin" class="auth-secondary-btn" type="button" data-i18n="backToLogin">Kembali ke Login</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 <script src="js/config.js"></script>
+<script src="js/config-compat.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
+
+<script>
+document.addEventListener("DOMContentLoaded",async()=>{
+ try{
+   if(window.supabase && window.TELECOD_SUPABASE_URL && !String(window.TELECOD_SUPABASE_URL).includes("YOUR_")){
+     const c=window.supabase.createClient(window.TELECOD_SUPABASE_URL,window.TELECOD_SUPABASE_ANON_KEY);
+     const {data}=await c.auth.getSession();
+     if(data.session){
+       const b=document.querySelector('[data-dashboard-link]');
+       if(b)b.href='dashboard.html';
+     }
+   }
+ }catch(e){}
+});
+</script>

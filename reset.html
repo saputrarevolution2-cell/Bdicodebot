@@ -1,1 +1,43 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset Password — TeleCod</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="assets/base.css"><link rel="stylesheet" href="assets/theme.css"><link rel="stylesheet" href="premium.css"></head><body><main class="auth-layout"><div class="auth-card auth-card-premium"><a class="brand" href="index.html"><span class="brandmark"><i class="fa-brands fa-telegram"></i></span><span>Tele<span>Cod</span></span></a><h1>Reset Password</h1><p class="muted">Masukkan password baru untuk akunmu.</p><form id="f" class="form"><input id="p1" type="password" minlength="8" placeholder="Password baru" required><input id="p2" type="password" minlength="8" placeholder="Ulangi password" required><button class="btn primary" type="submit">Simpan Password</button></form></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/config.js"></script><script src="assets/core.js"></script><script>const sb=supabase.createClient(TELECOD_CONFIG.SUPABASE_URL,TELECOD_CONFIG.SUPABASE_ANON_KEY);document.getElementById('f').onsubmit=async e=>{e.preventDefault();if(p1.value!==p2.value)return tcToast('Reset','Password tidak sama.','error');const {error}=await sb.auth.updateUser({password:p1.value});if(error)return tcToast('Reset',error.message,'error');tcToast('Reset','Password berhasil diubah.','success');setTimeout(()=>location.href='login.html',800)}</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reset Password • TeleCod</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="reset-page">
+  <section class="reset-card">
+    <a class="reset-brand" href="index.html">TELE<span>COD</span></a>
+    <div class="reset-icon">🔐</div>
+    <h1 data-r="title">Buat kata sandi baru</h1>
+    <p data-r="sub">Masukkan kata sandi baru untuk akun TeleCod kamu.</p>
+    <form id="resetForm">
+      <label>
+        <span data-r="password">Kata sandi baru</span>
+        <div class="reset-input">
+          <input id="newPassword" type="password" minlength="6" autocomplete="new-password" required>
+          <button type="button" data-toggle="newPassword">👁</button>
+        </div>
+      </label>
+      <label>
+        <span data-r="confirm">Konfirmasi kata sandi</span>
+        <div class="reset-input">
+          <input id="confirmPassword" type="password" minlength="6" autocomplete="new-password" required>
+          <button type="button" data-toggle="confirmPassword">👁</button>
+        </div>
+      </label>
+      <button class="purple-btn reset-submit" type="submit" data-r="save">Simpan Kata Sandi</button>
+    </form>
+    <div id="resetToast" class="reset-toast" role="status" aria-live="polite"></div>
+    <a class="reset-back" href="index.html" data-r="back">Kembali ke TeleCod</a>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/reset.js"></script>
+</body>
+</html>
