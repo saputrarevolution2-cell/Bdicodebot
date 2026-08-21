@@ -9,5 +9,10 @@ fi
 supabase db push --project-ref "$PROJECT_REF"
 supabase functions deploy username-auth --project-ref "$PROJECT_REF" --no-verify-jwt
 supabase functions deploy telegram-login --project-ref "$PROJECT_REF" --no-verify-jwt
+supabase functions deploy marketplace --project-ref "$PROJECT_REF" --no-verify-jwt
+supabase functions deploy payment-create --project-ref "$PROJECT_REF" --no-verify-jwt
+supabase functions deploy payment-status --project-ref "$PROJECT_REF" --no-verify-jwt
+supabase functions deploy payment-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+supabase functions deploy withdrawal-admin --project-ref "$PROJECT_REF" --no-verify-jwt
 
 echo "Done."

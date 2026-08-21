@@ -159,3 +159,46 @@ Jangan masukkan API key DompetX ke frontend.
 
 Untuk deployment GitHub → Cloudflare Pages, lihat `README-CLOUDFLARE.md`.
 Build output directory: `.` dan build command dikosongkan.
+
+
+## Marketplace / Wallet Final Fix (2026-08-22)
+
+Jalankan `supabase/final_marketplace_wallet_migration.sql` pada database lama setelah `schema.sql`.
+
+Tambahan final:
+- Tombol Telegram Login/Register menggunakan Telegram Login Widget + Edge Function dan Supabase session.
+- Add Code dan Add Channel di index aktif.
+- FREE dapat ditambahkan tanpa login.
+- PAID wajib login/register sebelum submit.
+- Code memiliki field Bot. Bot yang ada di `Approved Bots` admin langsung published; bot lain masuk `pending` sampai admin publish.
+- Channel/Group memiliki Free atau VIP/Paid; harga hanya muncul untuk Paid.
+- Produk published tampil di index dan dashboard Marketplace.
+- Paid product dapat dibeli tanpa login. QRIS dibuat melalui DompetX dan akses diberikan setelah pembayaran terverifikasi.
+- Penjualan creator masuk `pending_balance` dan menjadi saldo tersedia setelah H+1.
+- WD otomatis: minimal Rp50.000 + fee Rp5.000, sehingga saldo minimal Rp55.000; request mendapat ticket dan antrean.
+- WD instant: Rp50.000/Rp100.000/Rp150.000/Rp200.000/Rp250.000, fee Rp15.000, limit nominal Rp500.000/hari.
+- Admin dapat mengelola Approved Bots dan memproses antrean WD.
+- Payout bank/e-wallet/crypto tetap membutuhkan provider payout/aksi admin; project ini tidak mengarang endpoint payout DompetX yang belum diberikan.
+
+Deploy ulang:
+```bash
+supabase db push
+supabase functions deploy marketplace --no-verify-jwt
+supabase functions deploy payment-create --no-verify-jwt
+supabase functions deploy payment-status --no-verify-jwt
+supabase functions deploy telegram-login --no-verify-jwt
+```
+
+Pastikan secrets:
+```bash
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+supabase secrets set TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
+supabase secrets set TELECOD_SITE_URL=https://domain-kamu.com
+supabase secrets set DOMPETX_API_KEY=YOUR_DOMPETX_API_KEY
+supabase secrets set DOMPETX_API_BASE=https://api.dompetx.com
+supabase secrets set DOMPETX_PAYMENT_METHOD=QRIS
+```
+
+Domain `https://domain-kamu.com` juga harus diizinkan pada Supabase Auth Redirect URLs dan domain Telegram Login Widget harus didaftarkan di BotFather.
+
+Untuk settlement H+1, panggil `select public.release_matured_sales();` secara berkala dengan scheduler Supabase/pg_cron jika tersedia. Dashboard juga menjalankannya saat halaman Wallet dibuka.
