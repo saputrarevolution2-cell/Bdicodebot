@@ -18,6 +18,7 @@
     products: [],
     pastes: [],
     withdrawals: [],
+    bots: [],
     payments: [],
     transactions: []
   };
@@ -187,7 +188,7 @@
 
   async function render() {
     const map = {
-      overview, users, products, pastes, payments, transactions, withdrawals
+      overview, users, products, pastes, payments, transactions, withdrawals, bots
     };
     return (map[state.page] || overview)();
   }
@@ -316,6 +317,48 @@
     });
   }
 
+  async function bots() {
+    state.bots = await rpc("admin_bots");
+    content.innerHTML = `
+      ${title("Approved Bots","Bot yang ada di daftar ini dapat langsung publish saat user menambahkan Code.")}
+      <div class="panel">
+        <div class="panel-head">
+          <b>Tambah / aktifkan Bot</b>
+          <button id="addBot" class="btn primary"><i class="fa-solid fa-plus"></i> Tambah Bot</button>
+        </div>
+        <div class="table-wrap"><table class="admin-table">
+          <thead><tr><th>Bot</th><th>Bot ID</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody>${state.bots.map(b => `<tr>
+            <td><b>@${esc(b.bot_username)}</b></td>
+            <td>${esc(b.bot_id || "-")}</td>
+            <td>${esc(b.display_name || "-")}</td>
+            <td><span class="pill ${b.is_active?"ok":"bad"}">${b.is_active?"ACTIVE":"OFF"}</span></td>
+            <td><button class="btn danger" data-bot-delete="${b.id}">Hapus</button></td>
+          </tr>`).join("") || `<tr><td colspan="5" class="empty">Belum ada bot.</td></tr>`}</tbody>
+        </table></div>
+      </div>`;
+    $("#addBot").onclick = async () => {
+      const username = prompt("Username bot Telegram, contoh: mybot");
+      if (!username) return;
+      const botId = prompt("Bot ID (opsional)", "") || null;
+      const displayName = prompt("Nama bot (opsional)", "") || null;
+      try {
+        await rpc("admin_upsert_bot", {
+          p_username: username.replace(/^@/,"").trim(),
+          p_bot_id: botId ? Number(botId) : null,
+          p_display_name: displayName
+        });
+        toast("Bot berhasil ditambahkan.","success");
+        await bots();
+      } catch(e) { toast(e.message || "Gagal menambah bot.","error"); }
+    };
+    $$("[data-bot-delete]").forEach(b => b.onclick = async () => {
+      if (!confirm("Hapus bot dari daftar approved?")) return;
+      try { await rpc("admin_delete_bot",{p_id:b.dataset.botDelete}); toast("Bot dihapus.","success"); await bots(); }
+      catch(e){ toast(e.message || "Gagal.","error"); }
+    });
+  }
+
   async function pastes() {
     state.pastes = await rpc("admin_pastes",{p_limit:500,p_offset:0});
     content.innerHTML = `
@@ -368,10 +411,15 @@
     content.innerHTML = `
       ${title("Withdrawals","Proses request withdraw sampai selesai.")}
       <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Account</th><th>Status</th><th>Aksi</th></tr></thead>
+      <thead><tr><th>User</th><th>Ticket</th><th>Mode</th><th>Nominal</th><th>Fee</th><th>Total</th><th>Method</th><th>Account</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${state.withdrawals.map(w => `<tr>
         <td>@${esc(w.username||"-")}<br><span class="muted">TG ${esc(w.telegram_id||"-")}</span></td>
-        <td>${money(w.amount)}</td><td>${esc(w.method)}</td>
+        <td><code>${esc(w.ticket||"-")}</code></td>
+        <td>${esc(w.withdrawal_mode||"auto")}</td>
+        <td>${money(w.requested_amount??w.amount)}</td>
+        <td>${money(w.fee||0)}</td>
+        <td>${money(w.total_debit??w.amount)}</td>
+        <td>${esc(w.method)}</td>
         <td>${esc(w.account_name)}<br><code>${esc(w.account_number)}</code></td>
         <td><span class="pill ${w.status==="paid"?"ok":w.status==="failed"||w.status==="cancelled"?"bad":"warn"}">${esc(w.status)}</span></td>
         <td><div class="actions">
@@ -379,7 +427,7 @@
           <button class="btn success" data-w="${w.id}" data-s="paid">Paid</button>
           <button class="btn danger" data-w="${w.id}" data-s="failed">Failed/Return</button>
         </div></td>
-      </tr>`).join("") || `<tr><td colspan="6" class="empty">Tidak ada withdrawal.</td></tr>`}</tbody></table></div></div>`;
+      </tr>`).join("") || `<tr><td colspan="10" class="empty">Tidak ada withdrawal.</td></tr>`}</tbody></table></div></div>`;
     $$("[data-w]").forEach(b => b.onclick = async () => {
       const note = prompt("Catatan admin (opsional)","") || null;
       try { await rpc("admin_process_withdrawal",{p_id:b.dataset.w,p_status:b.dataset.s,p_note:note}); toast("Status withdraw diperbarui.","success"); await withdrawals(); }

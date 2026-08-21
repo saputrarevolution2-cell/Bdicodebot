@@ -1752,7 +1752,11 @@ on("#loginForm", "submit", async event => {
     document.documentElement.dataset.authenticated="true";
     closeAuth();
     toast(T[lang].loginSuccess,"success");
-    setTimeout(()=>{ location.href="dashboard.html"; },450);
+    setTimeout(()=>{
+      const pending=localStorage.getItem("telecod_pending_market_create");
+      if(pending){ location.href="index.html#marketItems"; }
+      else { location.href="dashboard.html"; }
+    },450);
   } catch (error) {
     console.error(
       "Login error:",
@@ -2014,7 +2018,11 @@ on("#registerForm", "submit", async event => {
     document.documentElement.dataset.authenticated="true";
     closeAuth();
     toast(T[lang].registerSuccess,"success");
-    setTimeout(()=>{ location.href="dashboard.html"; },450);
+    setTimeout(()=>{
+      const pending=localStorage.getItem("telecod_pending_market_create");
+      if(pending){ location.href="index.html#marketItems"; }
+      else { location.href="dashboard.html"; }
+    },450);
   } catch (error) {
     console.error(
       "Registration error:",
@@ -2611,161 +2619,50 @@ function marketMatches(item){
    FREE MODAL
    ========================================================= */
 
-function openMarketplaceFreeModal(item){
+async function openMarketplaceFreeModal(item){
   if(!item)return;
-
   const isEN=typeof lang!=="undefined"&&lang==="en";
   const title=item.title||"TeleCod Item";
-  const description=item.description||
-    (isEN
-      ?"Free item from TeleCod Marketplace."
-      :"Item gratis dari TeleCod Marketplace.");
-
   const category=marketCategoryValue(item);
   const telegram=String(item.telegram_channel||"").trim();
 
-  /* DATABASE ASLI: delivery_url */
-  const delivery=String(item.delivery_url||"").trim();
-
-  /* content bisa digunakan sebagai fallback */
-  const content=String(item.content||"").trim();
-
-  const destination=delivery||content;
-
   const modal=document.createElement("div");
-
   modal.className="modal open show telecod-market-modal";
-
   modal.innerHTML=`
     <div class="auth-modal market-detail-modal">
       <button type="button" class="close-auth market-modal-close" aria-label="Close">×</button>
-
       <div class="auth-brand">
-        <div class="auth-logo">
-          <i class="${
-            category==="channel"
-              ?"fa-solid fa-bullhorn"
-              :"fa-solid fa-code"
-          }"></i>
-        </div>
-
-        <div>
-          <strong>${escapeHTML(title)}</strong>
-          <small>TeleCod Marketplace</small>
-        </div>
+        <div class="auth-logo"><i class="${category==="channel"?"fa-solid fa-bullhorn":"fa-solid fa-code"}"></i></div>
+        <div><strong>${escapeHTML(title)}</strong><small>TeleCod Marketplace</small></div>
       </div>
-
       <div class="market-detail-content">
-
-        <div class="market-detail-badges">
-          <span class="market-badge free">
-            ${isEN?"FREE":"GRATIS"}
-          </span>
-
-          <span class="market-badge">
-            ${escapeHTML(category.toUpperCase())}
-          </span>
-        </div>
-
-        ${
-          item.thumbnail_url
-            ?`
-              <img
-                class="market-detail-image"
-                src="${escapeAttribute(item.thumbnail_url)}"
-                alt="${escapeAttribute(title)}"
-                onerror="this.style.display='none'"
-              >
-            `
-            :""
-        }
-
+        <div class="market-detail-badges"><span class="market-badge free">${isEN?"FREE":"GRATIS"}</span><span class="market-badge">${escapeHTML(category.toUpperCase())}</span></div>
+        ${item.thumbnail_url?`<img class="market-detail-image" src="${escapeAttribute(item.thumbnail_url)}" alt="${escapeAttribute(title)}" onerror="this.style.display='none'">`:""}
         <h2>${escapeHTML(title)}</h2>
-
-        <p>${escapeHTML(description)}</p>
-
-        ${
-          telegram
-            ?`
-              <div class="market-detail-info">
-                <i class="fa-brands fa-telegram"></i>
-                <span>${escapeHTML(telegram)}</span>
-              </div>
-            `
-            :""
-        }
-
-        <div class="market-detail-actions">
-
-          ${
-            telegram
-              ?`
-                <a
-                  class="purple-btn"
-                  href="${
-                    escapeAttribute(
-                      telegram.startsWith("http")
-                        ?telegram
-                        :`https://t.me/${telegram.replace(/^@/,"")}`
-                    )
-                  }"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <i class="fa-brands fa-telegram"></i>
-                  ${isEN?"Open Telegram":"Buka Telegram"}
-                </a>
-              `
-              :""
-          }
-
-          ${
-            destination
-              ?`
-                <a
-                  class="purple-btn"
-                  href="${escapeAttribute(destination)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                  ${isEN?"Open":"Buka"}
-                </a>
-              `
-              :""
-          }
-
-        </div>
-
-        ${
-          !telegram&&!destination
-            ?`
-              <div class="market-no-link">
-                <i class="fa-solid fa-circle-info"></i>
-                ${
-                  isEN
-                    ?"This item has no delivery link yet."
-                    :"Item ini belum memiliki link delivery."
-                }
-              </div>
-            `
-            :""
-        }
-
+        <p>${escapeHTML(item.description||"")}</p>
+        <div id="freeAccessBody"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
       </div>
-    </div>
-  `;
-
+    </div>`;
   document.body.appendChild(modal);
-
   const close=()=>modal.remove();
+  modal.querySelector(".market-modal-close")?.addEventListener("click",close);
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});
 
-  modal.querySelector(".market-modal-close")
-    ?.addEventListener("click",close);
-
-  modal.addEventListener("click",e=>{
-    if(e.target===modal)close();
-  });
+  const body=modal.querySelector("#freeAccessBody");
+  try{
+    const access=await marketplaceCall({action:"free_access",product_id:item.id},false);
+    if(access.type==="channel"){
+      const href=String(access.telegram_channel||"");
+      body.innerHTML=href?`<a class="purple-btn" target="_blank" rel="noopener noreferrer" href="${escapeAttribute(href)}"><i class="fa-brands fa-telegram"></i> ${isEN?"Open Telegram":"Buka Telegram"}</a>`:"<p>Link Telegram belum tersedia.</p>";
+    }else{
+      body.innerHTML=`<textarea readonly style="width:100%;min-height:260px">${escapeHTML(access.content||"")}</textarea><button class="purple-btn" id="copyFreeCode"><i class="fa-regular fa-copy"></i> ${isEN?"Copy Code":"Salin Code"}</button>`;
+      body.querySelector("#copyFreeCode")?.addEventListener("click",async()=>{
+        await navigator.clipboard.writeText(access.content||"");toast(isEN?"Copied.":"Code disalin.","success");
+      });
+    }
+  }catch(err){
+    body.innerHTML=`<div class="market-no-link">${escapeHTML(err.message||"Gagal memuat item.")}</div>`;
+  }
 }
 
 /* =========================================================
@@ -2782,10 +2679,8 @@ function openMarketplaceItem(item){
     return;
   }
 
-  if(item.slug){
-    location.href=`p.html?slug=${encodeURIComponent(item.slug)}`;
-    return;
-  }
+  openMarketplacePaidModal(item);
+  return;
 
   if(typeof toast==="function"){
     toast(
@@ -3000,31 +2895,27 @@ async function loadMarketplace(){
       data,
       error:dbError
     }=await sup
-      .from("products")
+      .from("marketplace_public")
       .select(`
         id,
-        seller_id,
+        creator_id,
+        creator_username,
         title,
         slug,
         category,
         description,
         price,
         thumbnail_url,
-        delivery_type,
-        delivery_url,
         status,
         created_at,
         updated_at,
-        creator_id,
         type,
         access_type,
-        content,
         telegram_channel,
         is_channel,
         views,
         sales_count
       `)
-      .eq("status","published")
       .order("created_at",{ascending:false})
       .limit(100);
 
@@ -3078,10 +2969,233 @@ function selectMarketplaceCategory(category){
 }
 
 /* =========================================================
+   INDEX MARKETPLACE — CREATE / GUEST CHECKOUT
+   ========================================================= */
+
+function marketplaceFunctionUrl(){
+  return String(
+    window.TELECOD_CONFIG?.MARKETPLACE_FUNCTION_URL ||
+    window.TELECOD_MARKETPLACE_FUNCTION_URL || ""
+  ).trim();
+}
+
+async function marketplaceCall(body, requireAuth=false){
+  const fn=marketplaceFunctionUrl();
+  if(!fn)throw new Error("Marketplace function belum dikonfigurasi.");
+  const headers={"Content-Type":"application/json","Accept":"application/json"};
+  if(requireAuth){
+    const {data:{session}}=await sup.auth.getSession();
+    if(!session?.access_token)throw new Error("Login/register diperlukan.");
+    headers.Authorization=`Bearer ${session.access_token}`;
+  }else{
+    try{
+      const {data:{session}}=await sup.auth.getSession();
+      if(session?.access_token)headers.Authorization=`Bearer ${session.access_token}`;
+    }catch(_){}
+  }
+  const r=await fetch(fn,{method:"POST",headers,body:JSON.stringify(body)});
+  const out=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(out.error||out.message||`Marketplace error (${r.status})`);
+  return out;
+}
+
+function closeDynamicModal(m){try{m?.remove()}catch(_){}}
+
+function openMarketplaceCreateModal(type){
+  const isCode=type==="code";
+  const modal=document.createElement("div");
+  modal.className="modal open show telecod-market-create-modal";
+  modal.innerHTML=`
+    <div class="auth-modal market-detail-modal" style="max-width:620px">
+      <button type="button" class="close-auth market-create-close">×</button>
+      <div class="auth-brand">
+        <div class="auth-logo"><i class="fa-solid ${isCode?"fa-code":"fa-brands fa-telegram"}"></i></div>
+        <div><strong>${isCode?"Tambah Code":"Tambah Channel / Group"}</strong><small>Marketplace TeleCod</small></div>
+      </div>
+      <form id="marketCreateForm" class="auth-form">
+        <label class="auth-field"><span>Judul ${isCode?"code":"channel/group"}</span>
+          <input id="mcTitle" required maxlength="120" placeholder="${isCode?"Judul code":"Nama channel/group"}">
+        </label>
+        ${isCode?`
+          <label class="auth-field"><span>Code</span>
+            <textarea id="mcContent" required rows="9" placeholder="Paste code bot di sini..."></textarea>
+          </label>
+          <label class="auth-field"><span>Bot</span>
+            <input id="mcBot" maxlength="64" placeholder="@namabot">
+            <small class="field-help">Jika Bot ada di daftar Approved Bots admin, langsung publish. Jika belum ada, status menunggu admin.</small>
+          </label>
+        `:`
+          <label class="auth-field"><span>Jenis Channel/Group Telegram</span>
+            <select id="mcChannelType">
+              <option value="free">Free</option>
+              <option value="paid">VIP / Paid</option>
+            </select>
+          </label>
+          <label class="auth-field" id="mcPriceWrap" style="display:none"><span>Harga</span>
+            <input id="mcPrice" type="number" min="1" step="1000" placeholder="50000">
+          </label>
+          <label class="auth-field"><span>Link Channel/Group</span>
+            <input id="mcTelegram" required placeholder="https://t.me/channel">
+          </label>
+        `}
+        ${isCode?`
+          <label class="auth-field"><span>Free / Paid</span>
+            <select id="mcAccess"><option value="free">Free</option><option value="paid">Paid</option></select>
+          </label>
+          <label class="auth-field" id="mcCodePriceWrap" style="display:none"><span>Harga</span>
+            <input id="mcCodePrice" type="number" min="1" step="1000" placeholder="50000">
+          </label>
+        `:``}
+        <label class="auth-field"><span>Deskripsi (opsional)</span><textarea id="mcDesc" rows="3" placeholder="Keterangan produk"></textarea></label>
+        <div class="actions" style="display:flex;gap:10px">
+          <button type="button" class="auth-secondary-btn" id="mcCancel">Batal</button>
+          <button class="purple-btn auth-submit" type="submit"><i class="fa-solid fa-plus"></i> Add / Tambahkan</button>
+        </div>
+      </form>
+    </div>`;
+  document.body.appendChild(modal);
+  const close=()=>closeDynamicModal(modal);
+  modal.querySelector(".market-create-close").onclick=close;
+  modal.querySelector("#mcCancel").onclick=close;
+  modal.onclick=e=>{if(e.target===modal)close()};
+
+  const access=modal.querySelector("#mcAccess");
+  const channelType=modal.querySelector("#mcChannelType");
+  const sync=()=>{
+    const paid=isCode?access.value==="paid":channelType.value==="paid";
+    const wrap=modal.querySelector(isCode?"#mcCodePriceWrap":"#mcPriceWrap");
+    if(wrap)wrap.style.display=paid?"block":"none";
+  };
+  access?.addEventListener("change",sync);
+  channelType?.addEventListener("change",sync);
+  sync();
+
+  modal.querySelector("#marketCreateForm").onsubmit=async e=>{
+    e.preventDefault();
+    const chosenAccess=isCode?access.value:channelType.value;
+    if(chosenAccess==="paid"){
+      const ok=await refreshAuthHint();
+      if(!ok){
+        localStorage.setItem("telecod_pending_market_create",type);
+        close();
+        openAuth("login");
+        toast("Produk PAID wajib login/register terlebih dahulu.","warning");
+        return;
+      }
+    }
+    const price=isCode
+      ?Number(modal.querySelector("#mcCodePrice")?.value||0)
+      :Number(modal.querySelector("#mcPrice")?.value||0);
+    if(chosenAccess==="paid"&&price<=0)return toast("Harga PAID wajib diisi.","error");
+    const btn=modal.querySelector('button[type="submit"]');
+    btn.disabled=true;
+    try{
+      const out=await marketplaceCall({
+        action:"create_product",
+        type,
+        access_type:chosenAccess,
+        title:modal.querySelector("#mcTitle").value.trim(),
+        content:isCode?modal.querySelector("#mcContent").value:null,
+        bot_username:isCode?modal.querySelector("#mcBot").value.trim():null,
+        telegram_channel:!isCode?modal.querySelector("#mcTelegram").value.trim():null,
+        price,
+        description:modal.querySelector("#mcDesc").value.trim()
+      },chosenAccess==="paid");
+      localStorage.removeItem("telecod_pending_market_create");
+      close();
+      if(out.status==="published"){
+        toast("Berhasil ditambahkan ke Marketplace.","success");
+      }else{
+        toast("Berhasil dikirim. Menunggu konfirmasi admin karena Bot belum terdaftar.","warning");
+      }
+      await loadMarketplace();
+    }catch(err){
+      toast(err.message||"Gagal menambahkan produk.","error");
+    }finally{btn.disabled=false}
+  };
+}
+
+async function openMarketplacePaidModal(item){
+  const modal=document.createElement("div");
+  modal.className="modal open show telecod-market-paid-modal";
+  modal.innerHTML=`
+    <div class="auth-modal market-detail-modal" style="max-width:520px">
+      <button class="close-auth" id="paidClose">×</button>
+      <div class="auth-brand"><div class="auth-logo"><i class="fa-solid fa-qrcode"></i></div>
+        <div><strong>${escapeHTML(item.title||"Pembelian")}</strong><small>Bayar melalui DompetX QRIS</small></div></div>
+      <div id="paidCheckout" style="text-align:center;padding:10px">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:30px"></i><p>Membuat QR pembayaran...</p>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const close=()=>closeDynamicModal(modal);
+  modal.querySelector("#paidClose").onclick=close;
+  modal.onclick=e=>{if(e.target===modal)close()};
+  const box=modal.querySelector("#paidCheckout");
+  try{
+    const pay=await fetch(String(window.TELECOD_CONFIG?.PAYMENT_CREATE_FUNCTION_URL||""),{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"purchase",product_id:item.id})
+    });
+    const payment=await pay.json().catch(()=>({}));
+    if(!pay.ok)throw new Error(payment.error||"Gagal membuat pembayaran DompetX.");
+    box.innerHTML=`
+      <div class="payment-qr"><img src="${escapeAttribute(payment.qr_url)}" alt="QRIS DompetX" style="max-width:280px;width:100%;border-radius:16px"></div>
+      <h3>${formatMarketPrice(item)}</h3>
+      <p>Scan QRIS dengan aplikasi pembayaran. Status akan dicek otomatis.</p>
+      <div id="paidStatus" class="market-no-link">Menunggu pembayaran...</div>
+      <button class="purple-btn" id="paidCheck"><i class="fa-solid fa-rotate"></i> Cek Pembayaran</button>`;
+    const statusEl=box.querySelector("#paidStatus");
+    const guestToken=payment.guest_token||"";
+    let stopped=false;
+    const check=async()=>{
+      if(stopped)return;
+      const fn=String(window.TELECOD_CONFIG?.PAYMENT_STATUS_FUNCTION_URL||"");
+      const headers={"Content-Type":"application/json"};
+      const {data:{session}}=await sup.auth.getSession();
+      if(session?.access_token)headers.Authorization=`Bearer ${session.access_token}`;
+      const r=await fetch(fn,{method:"POST",headers,body:JSON.stringify({payment_id:payment.payment_id,guest_token:guestToken})});
+      const st=await r.json().catch(()=>({}));
+      if(st.status==="paid"){
+        statusEl.textContent="Pembayaran berhasil. Mengambil produk...";
+        stopped=true;
+        const access=await marketplaceCall({action:"guest_access",guest_token:guestToken},false);
+        box.innerHTML=`<h3>Pembayaran Berhasil ✓</h3>
+          ${access.type==="channel"
+            ?`<a class="purple-btn" target="_blank" rel="noopener" href="${escapeAttribute(access.telegram_channel||"#")}"><i class="fa-brands fa-telegram"></i> Buka Channel / Group</a>`
+            :`<textarea readonly style="width:100%;min-height:260px">${escapeHTML(access.content||"")}</textarea><button class="purple-btn" id="copyGuestCode">Salin Code</button>`}
+          <p class="market-no-link">Simpan halaman ini sampai selesai menggunakan produk.</p>`;
+        box.querySelector("#copyGuestCode")?.addEventListener("click",async()=>{await navigator.clipboard.writeText(access.content||"");toast("Code disalin.","success")});
+        return;
+      }
+      if(["failed","expired","cancelled"].includes(st.status)){
+        statusEl.textContent="Pembayaran gagal/kedaluwarsa.";
+        stopped=true;return;
+      }
+      if(!stopped)setTimeout(check,4000);
+    };
+    box.querySelector("#paidCheck").onclick=check;
+    check();
+  }catch(err){
+    box.innerHTML=`<div class="market-no-link"><i class="fa-solid fa-circle-xmark"></i><p>${escapeHTML(err.message||"Gagal membuat pembayaran.")}</p></div>`;
+  }
+}
+
+/* =========================================================
    INDEX BUTTONS
    ========================================================= */
 
 function setupIndexButtons(){
+
+  on("#addCodeBtn","click",async()=>{
+    await refreshAuthHint();
+    openMarketplaceCreateModal("code");
+  });
+
+  on("#addChannelBtn","click",async()=>{
+    await refreshAuthHint();
+    openMarketplaceCreateModal("channel");
+  });
 
   /* PASTELINK */
 
@@ -3225,7 +3339,12 @@ function setupIndexButtons(){
 
   /* MARKETPLACE */
 
-  loadMarketplace();
+  loadMarketplace().then(()=>{
+    const pending=localStorage.getItem("telecod_pending_market_create");
+    if(pending && isLoggedIn()){
+      setTimeout(()=>openMarketplaceCreateModal(pending),250);
+    }
+  });
 }
 
 /* =========================================================
