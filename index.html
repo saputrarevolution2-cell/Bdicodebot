@@ -66,58 +66,1093 @@
   </div>
 </section>
 
+<!-- =========================
+     MARKETPLACE PROMO
+========================= -->
 <section id="market" class="section promo">
-  <div class="promo-image"></div><div class="promo-copy"><b data-i18n="promoKicker">Web Telegram All Code & Channel & Group 18+</b><h2 data-i18n="promoTitle">Semua Lengkap Ada Disini!</h2><p data-i18n="promoText">Temukan ribuan code bot Telegram, channel premium, group 18+, drama, jav dan masih banyak lagi. Ada yang GRATIS dan ada juga yang PAID dengan kualitas terbaik!</p><div><a href="#categories" class="purple-btn"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="marketplace">Marketplace</span></a><button id="registerTop" class="blue-btn"><i class="fa-solid fa-key"></i> <span data-i18n="loginRegister">Login / Register</span></button></div></div>
-</section>
+  <div class="promo-image"></div>
 
-<section class="section">
-  <div class="heading"><span>✦</span><h2 data-i18n="why">Kenapa TeleCod?</h2><span>✦</span></div>
-  <div class="grid five">
-    <article class="visual-card"><img src="assets/feature-1.jpg"><h3 data-i18n="f1">Payment Otomatis</h3><p data-i18n="f1p">Punya code bot atau link VIP? Buat di sini dan dapatkan pembayaran otomatis.</p></article>
-    <article class="visual-card"><img src="assets/feature-2.jpg"><h3 data-i18n="f2">Tambah Banyak Code</h3><p data-i18n="f2p">Semakin banyak code atau link VIP yang kamu tambah, semakin besar cuan kamu!</p></article>
-    <article class="visual-card"><img src="assets/feature-3.jpg"><h3 data-i18n="f3">Marketplace Lengkap</h3><p data-i18n="f3p">Jual dan beli code bot, channel, group, drama, jav dan media viral lainnya.</p></article>
-    <article class="visual-card"><img src="assets/feature-4.jpg"><h3 data-i18n="f4">Aman & Terpercaya</h3><p data-i18n="f4p">Sistem aman, anti scam, transaksi transparan dan terpercaya.</p></article>
-    <article class="visual-card"><img src="assets/feature-5.jpg"><h3 data-i18n="f5">Support 24/7</h3><p data-i18n="f5p">Tim support siap membantu kamu kapan saja jika ada kendala.</p></article>
-  </div>
-</section>
+  <div class="promo-copy">
+    <span class="promo-badge">
+      <i class="fa-brands fa-telegram"></i>
+      <span data-i18n="promoKicker">
+        Telegram Code & Channel Marketplace
+      </span>
+    </span>
 
-<section id="categories" class="section">
-  <div class="heading"><h2 data-i18n="categories">Kategori Marketplace Populer</h2></div>
-  <div class="category-layout">
-    <div class="category-grid">
-      <a class="category" href="#"><img src="assets/cat-1.jpg"><b>CODE BOT 18+</b></a>
-      <a class="category" href="#"><img src="assets/cat-2.jpg"><b>CODE BOT DRAMA</b></a>
-      <a class="category" href="#"><img src="assets/cat-3.jpg"><b>CODE BOT JAV</b></a>
-      <a class="category" href="#"><img src="assets/cat-4.jpg"><b>BOT UTAMA</b></a>
+    <h2 data-i18n="promoTitle">
+      Semua Code & Channel Ada di Sini!
+    </h2>
+
+    <p data-i18n="promoText">
+      Temukan code bot, channel, group, tools, dan berbagai produk Telegram
+      dari creator terpercaya. Tersedia pilihan GRATIS maupun PAID.
+    </p>
+
+    <div class="promo-actions">
+      <a href="#marketItems" class="purple-btn">
+        <i class="fa-solid fa-store"></i>
+        <span data-i18n="marketplace">Marketplace</span>
+      </a>
+
+      <button id="registerTop" class="blue-btn" type="button">
+        <i class="fa-solid fa-user-plus"></i>
+        <span data-i18n="loginRegister">Login / Register</span>
+      </button>
     </div>
-    <aside class="spotlight"><img src="assets/spotlight-art.jpg"><div><b data-i18n="mainMarket">Marketplace Utama Kami</b><h3>@mktplbot</h3><p data-i18n="marketText">Semua marketplace lengkap dan ribuan media viral sudah tersedia di bot utama kami di Telegram!</p><a href="https://t.me/mktplbot" target="_blank" class="purple-btn"><i class="fa-brands fa-telegram"></i> <span data-i18n="openBot">Buka @mktplbot</span></a></div></aside>
   </div>
 </section>
 
-<section class="section stats" id="stats">
-  <div><i class="fa-solid fa-users"></i><b id="statUsers">125,839+</b><small data-i18n="users">Pengguna Terdaftar</small></div>
-  <div><i class="fa-solid fa-robot"></i><b id="statPastes">8,542+</b><small data-i18n="codes">Code Bot Tersedia</small></div>
-  <div><i class="fa-solid fa-cube"></i><b id="statViews">3,215+</b><small data-i18n="transactions">Transaksi Berhasil</small></div>
-  <div><i class="fa-solid fa-coins"></i><b>Rp 2.4M+</b><small data-i18n="payments">Total Pembayaran</small></div>
+
+<!-- =========================
+     LIVE MARKETPLACE
+========================= -->
+<section id="marketItems" class="section marketplace-live">
+
+  <div class="heading">
+    <span>✦</span>
+
+    <div>
+      <h2 data-i18n="latestMarketplace">
+        Code & Channel Terbaru
+      </h2>
+
+      <p class="section-subtitle" data-i18n="latestMarketplaceSub">
+        Produk terbaru dari creator TeleCod.
+      </p>
+    </div>
+
+    <span>✦</span>
+  </div>
+
+
+  <!-- FILTER -->
+  <div class="market-filter" role="tablist">
+
+    <button
+      class="market-filter-btn active"
+      type="button"
+      data-filter="all"
+    >
+      <i class="fa-solid fa-layer-group"></i>
+      <span data-i18n="all">Semua</span>
+    </button>
+
+    <button
+      class="market-filter-btn"
+      type="button"
+      data-filter="free"
+    >
+      <i class="fa-solid fa-gift"></i>
+      <span data-i18n="free">Free</span>
+    </button>
+
+    <button
+      class="market-filter-btn"
+      type="button"
+      data-filter="paid"
+    >
+      <i class="fa-solid fa-crown"></i>
+      <span data-i18n="paid">Paid</span>
+    </button>
+
+    <button
+      class="market-filter-btn"
+      type="button"
+      data-filter="code"
+    >
+      <i class="fa-solid fa-code"></i>
+      <span data-i18n="code">Code</span>
+    </button>
+
+    <button
+      class="market-filter-btn"
+      type="button"
+      data-filter="channel"
+    >
+      <i class="fa-brands fa-telegram"></i>
+      <span data-i18n="channel">Channel</span>
+    </button>
+
+  </div>
+
+
+  <!-- SEARCH -->
+  <div class="market-search">
+
+    <div class="market-search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+
+      <input
+        id="marketSearch"
+        type="search"
+        autocomplete="off"
+        placeholder="Cari code, channel, bot..."
+        data-i18n-placeholder="marketSearchPlaceholder"
+      >
+
+      <button
+        id="clearMarketSearch"
+        type="button"
+        aria-label="Clear search"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <select id="marketSort" aria-label="Sort marketplace">
+      <option value="latest">Terbaru</option>
+      <option value="popular">Populer</option>
+      <option value="price_low">Harga Terendah</option>
+      <option value="price_high">Harga Tertinggi</option>
+    </select>
+
+  </div>
+
+
+  <!-- LIVE ITEMS -->
+  <div
+    id="marketItemsGrid"
+    class="market-items-grid"
+    aria-live="polite"
+  >
+
+    <!-- Loading -->
+    <div class="market-loading">
+      <div class="market-loading-icon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+      </div>
+
+      <strong data-i18n="loadingMarketplace">
+        Memuat marketplace...
+      </strong>
+
+      <span data-i18n="loadingMarketplaceSub">
+        Mengambil produk terbaru.
+      </span>
+    </div>
+
+  </div>
+
+
+  <!-- EMPTY STATE -->
+  <div id="marketEmpty" class="market-empty hidden">
+
+    <div class="market-empty-icon">
+      <i class="fa-solid fa-box-open"></i>
+    </div>
+
+    <h3 data-i18n="marketEmptyTitle">
+      Produk belum tersedia
+    </h3>
+
+    <p data-i18n="marketEmptyText">
+      Belum ada produk yang sesuai dengan pencarian kamu.
+    </p>
+
+    <button
+      id="resetMarketFilter"
+      type="button"
+      class="blue-btn"
+    >
+      <i class="fa-solid fa-rotate-left"></i>
+      <span data-i18n="resetFilter">Reset Filter</span>
+    </button>
+
+  </div>
+
+
+  <!-- ERROR STATE -->
+  <div id="marketError" class="market-error hidden">
+
+    <i class="fa-solid fa-triangle-exclamation"></i>
+
+    <div>
+      <strong data-i18n="marketErrorTitle">
+        Marketplace tidak dapat dimuat
+      </strong>
+
+      <p data-i18n="marketErrorText">
+        Silakan coba beberapa saat lagi.
+      </p>
+    </div>
+
+    <button
+      id="retryMarket"
+      type="button"
+      class="purple-btn"
+    >
+      <i class="fa-solid fa-rotate-right"></i>
+      <span data-i18n="retry">Coba Lagi</span>
+    </button>
+
+  </div>
+
+
+  <!-- MORE -->
+  <div class="market-more">
+
+    <a href="#categories" class="purple-btn">
+      <i class="fa-solid fa-store"></i>
+
+      <span data-i18n="viewMarketplace">
+        Lihat Semua Marketplace
+      </span>
+    </a>
+
+  </div>
+
 </section>
 
-<section id="features" class="section">
-  <div class="heading"><span>✦</span><h2 data-i18n="featured">Fitur Unggulan TeleCod</h2><span>✦</span></div>
+
+<!-- =========================
+     WHY TELECOD
+========================= -->
+<section id="whyTelecod" class="section">
+
+  <div class="heading">
+    <span>✦</span>
+
+    <h2 data-i18n="why">
+      Kenapa TeleCod?
+    </h2>
+
+    <span>✦</span>
+  </div>
+
   <div class="grid five">
-    <article class="visual-card mini"><img src="assets/mini-1.jpg"><h3 data-i18n="m1">Buat Pastelink Gratis</h3><p data-i18n="m1p">Buat pastelink tanpa login, cepat, mudah dan gratis selamanya.</p></article>
-    <article class="visual-card mini"><img src="assets/mini-2.jpg"><h3 data-i18n="m2">Monetisasi Code</h3><p data-i18n="m2p">Ubah code atau bot link VIP kamu menjadi sumber penghasilan otomatis.</p></article>
-    <article class="visual-card mini"><img src="assets/mini-3.jpg"><h3 data-i18n="m3">Dashboard Lengkap</h3><p data-i18n="m3p">Pantau semua statistik, penghasilan dan transaksi secara real-time.</p></article>
-    <article class="visual-card mini"><img src="assets/mini-4.jpg"><h3 data-i18n="m4">Withdraw Mudah</h3><p data-i18n="m4p">Tarik saldo kapan saja ke bank, e-wallet atau crypto.</p></article>
-    <article class="visual-card mini"><img src="assets/mini-5.jpg"><h3 data-i18n="m5">Multi Bahasa</h3><p data-i18n="m5p">Tersedia dalam bahasa Indonesia & English.</p></article>
+
+    <article class="visual-card">
+      <img
+        src="assets/feature-1.jpg"
+        alt="Payment otomatis"
+        loading="lazy"
+      >
+
+      <h3 data-i18n="f1">
+        Payment Otomatis
+      </h3>
+
+      <p data-i18n="f1p">
+        Pembayaran produk PAID diproses secara otomatis
+        dengan sistem yang aman.
+      </p>
+    </article>
+
+
+    <article class="visual-card">
+      <img
+        src="assets/feature-2.jpg"
+        alt="Tambah banyak code"
+        loading="lazy"
+      >
+
+      <h3 data-i18n="f2">
+        Tambah Banyak Code
+      </h3>
+
+      <p data-i18n="f2p">
+        Creator dapat menambahkan banyak code,
+        channel maupun produk digital.
+      </p>
+    </article>
+
+
+    <article class="visual-card">
+      <img
+        src="assets/feature-3.jpg"
+        alt="Marketplace lengkap"
+        loading="lazy"
+      >
+
+      <h3 data-i18n="f3">
+        Marketplace Lengkap
+      </h3>
+
+      <p data-i18n="f3p">
+        Temukan berbagai produk Telegram dalam
+        satu marketplace.
+      </p>
+    </article>
+
+
+    <article class="visual-card">
+      <img
+        src="assets/feature-4.jpg"
+        alt="Aman dan terpercaya"
+        loading="lazy"
+      >
+
+      <h3 data-i18n="f4">
+        Aman & Terpercaya
+      </h3>
+
+      <p data-i18n="f4p">
+        Data dan transaksi dikelola menggunakan sistem
+        backend dan database.
+      </p>
+    </article>
+
+
+    <article class="visual-card">
+      <img
+        src="assets/feature-5.jpg"
+        alt="Support"
+        loading="lazy"
+      >
+
+      <h3 data-i18n="f5">
+        Support 24/7
+      </h3>
+
+      <p data-i18n="f5p">
+        Dapatkan bantuan ketika mengalami kendala
+        menggunakan TeleCod.
+      </p>
+    </article>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     CATEGORIES
+========================= -->
+<section id="categories" class="section">
+
+  <div class="heading">
+    <h2 data-i18n="categories">
+      Kategori Marketplace
+    </h2>
+  </div>
+
+
+  <div class="category-layout">
+
+    <div class="category-grid">
+
+      <a
+        class="category"
+        href="#marketItems"
+        data-category="code"
+      >
+        <img
+          src="assets/cat-1.jpg"
+          alt="Code Bot"
+          loading="lazy"
+        >
+
+        <b>CODE BOT</b>
+
+        <span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </span>
+      </a>
+
+
+      <a
+        class="category"
+        href="#marketItems"
+        data-category="channel"
+      >
+        <img
+          src="assets/cat-2.jpg"
+          alt="Telegram Channel"
+          loading="lazy"
+        >
+
+        <b>TELEGRAM CHANNEL</b>
+
+        <span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </span>
+      </a>
+
+
+      <a
+        class="category"
+        href="#marketItems"
+        data-category="free"
+      >
+        <img
+          src="assets/cat-3.jpg"
+          alt="Free"
+          loading="lazy"
+        >
+
+        <b>FREE</b>
+
+        <span>
+          <i class="fa-solid fa-gift"></i>
+        </span>
+      </a>
+
+
+      <a
+        class="category"
+        href="#marketItems"
+        data-category="paid"
+      >
+        <img
+          src="assets/cat-4.jpg"
+          alt="Premium"
+          loading="lazy"
+        >
+
+        <b>PREMIUM / PAID</b>
+
+        <span>
+          <i class="fa-solid fa-crown"></i>
+        </span>
+      </a>
+
+    </div>
+
+
+    <aside class="spotlight">
+
+      <img
+        src="assets/spotlight-art.jpg"
+        alt="TeleCod Marketplace"
+        loading="lazy"
+      >
+
+      <div>
+
+        <span class="spotlight-label">
+          <i class="fa-solid fa-fire"></i>
+          Marketplace Utama
+        </span>
+
+        <h3>@mktplbot</h3>
+
+        <p data-i18n="marketText">
+          Marketplace Telegram utama untuk menemukan
+          berbagai code dan channel dari creator TeleCod.
+        </p>
+
+        <a
+          href="https://t.me/mktplbot"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="purple-btn"
+        >
+          <i class="fa-brands fa-telegram"></i>
+
+          <span data-i18n="openBot">
+            Buka @mktplbot
+          </span>
+        </a>
+
+      </div>
+
+    </aside>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     LIVE STATS
+========================= -->
+<section class="section stats" id="stats">
+
+  <div class="stat-card">
+
+    <i class="fa-solid fa-users"></i>
+
+    <b id="statUsers">
+      —
+    </b>
+
+    <small data-i18n="users">
+      Pengguna Terdaftar
+    </small>
+
+  </div>
+
+
+  <div class="stat-card">
+
+    <i class="fa-solid fa-robot"></i>
+
+    <b id="statPastes">
+      —
+    </b>
+
+    <small data-i18n="codes">
+      Code & Channel
+    </small>
+
+  </div>
+
+
+  <div class="stat-card">
+
+    <i class="fa-solid fa-receipt"></i>
+
+    <b id="statViews">
+      —
+    </b>
+
+    <small data-i18n="transactions">
+      Transaksi Berhasil
+    </small>
+
+  </div>
+
+
+  <div class="stat-card">
+
+    <i class="fa-solid fa-coins"></i>
+
+    <b id="statPayments">
+      —
+    </b>
+
+    <small data-i18n="payments">
+      Total Pembayaran
+    </small>
+
+  </div>
+
+</section>
+
+<!-- =========================================================
+     FEATURES
+========================================================= -->
+<section id="features" class="section features-section">
+
+  <div class="heading">
+    <span>✦</span>
+
+    <div>
+      <h2 data-i18n="featured">
+        Fitur Unggulan TeleCod
+      </h2>
+
+      <p class="section-subtitle" data-i18n="featuredSub">
+        Semua kebutuhan Telegram kamu dalam satu platform.
+      </p>
+    </div>
+
+    <span>✦</span>
+  </div>
+
+
+  <div class="grid five">
+
+    <!-- FEATURE 1 -->
+    <article class="visual-card mini feature-card">
+
+      <div class="feature-image">
+        <img
+          src="assets/mini-1.jpg"
+          alt="PasteLink Gratis"
+          loading="lazy"
+        >
+
+        <span class="feature-icon">
+          <i class="fa-solid fa-link"></i>
+        </span>
+      </div>
+
+      <div class="feature-content">
+
+        <span class="feature-number">01</span>
+
+        <h3 data-i18n="m1">
+          Buat PasteLink Gratis
+        </h3>
+
+        <p data-i18n="m1p">
+          Buat PasteLink tanpa login dengan cepat,
+          mudah dan gratis.
+        </p>
+
+        <button
+          type="button"
+          class="feature-action"
+          id="featurePasteBtn"
+        >
+          <span data-i18n="tryNow">
+            Coba Sekarang
+          </span>
+
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </div>
+    </article>
+
+
+    <!-- FEATURE 2 -->
+    <article class="visual-card mini feature-card">
+
+      <div class="feature-image">
+        <img
+          src="assets/mini-2.jpg"
+          alt="Monetisasi Code"
+          loading="lazy"
+        >
+
+        <span class="feature-icon">
+          <i class="fa-solid fa-coins"></i>
+        </span>
+      </div>
+
+      <div class="feature-content">
+
+        <span class="feature-number">02</span>
+
+        <h3 data-i18n="m2">
+          Monetisasi Code
+        </h3>
+
+        <p data-i18n="m2p">
+          Jual code bot, channel atau produk digital
+          dan dapatkan penghasilan.
+        </p>
+
+        <button
+          type="button"
+          class="feature-action"
+          id="featureSellBtn"
+        >
+          <span data-i18n="startSelling">
+            Mulai Jual
+          </span>
+
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </div>
+    </article>
+
+
+    <!-- FEATURE 3 -->
+    <article class="visual-card mini feature-card">
+
+      <div class="feature-image">
+        <img
+          src="assets/mini-3.jpg"
+          alt="Dashboard TeleCod"
+          loading="lazy"
+        >
+
+        <span class="feature-icon">
+          <i class="fa-solid fa-chart-line"></i>
+        </span>
+      </div>
+
+      <div class="feature-content">
+
+        <span class="feature-number">03</span>
+
+        <h3 data-i18n="m3">
+          Dashboard Lengkap
+        </h3>
+
+        <p data-i18n="m3p">
+          Pantau produk, penjualan, saldo, transaksi
+          dan statistik secara real-time.
+        </p>
+
+        <button
+          type="button"
+          class="feature-action"
+          id="featureDashboardBtn"
+        >
+          <span data-i18n="openDashboard">
+            Buka Dashboard
+          </span>
+
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </div>
+    </article>
+
+
+    <!-- FEATURE 4 -->
+    <article class="visual-card mini feature-card">
+
+      <div class="feature-image">
+        <img
+          src="assets/mini-4.jpg"
+          alt="Withdraw TeleCod"
+          loading="lazy"
+        >
+
+        <span class="feature-icon">
+          <i class="fa-solid fa-wallet"></i>
+        </span>
+      </div>
+
+      <div class="feature-content">
+
+        <span class="feature-number">04</span>
+
+        <h3 data-i18n="m4">
+          Withdraw Mudah
+        </h3>
+
+        <p data-i18n="m4p">
+          Tarik saldo hasil penjualan melalui metode
+          pembayaran yang tersedia.
+        </p>
+
+        <button
+          type="button"
+          class="feature-action"
+          id="featureWithdrawBtn"
+        >
+          <span data-i18n="withdraw">
+            Withdraw
+          </span>
+
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </div>
+    </article>
+
+
+    <!-- FEATURE 5 -->
+    <article class="visual-card mini feature-card">
+
+      <div class="feature-image">
+        <img
+          src="assets/mini-5.jpg"
+          alt="Multi Bahasa"
+          loading="lazy"
+        >
+
+        <span class="feature-icon">
+          <i class="fa-solid fa-language"></i>
+        </span>
+      </div>
+
+      <div class="feature-content">
+
+        <span class="feature-number">05</span>
+
+        <h3 data-i18n="m5">
+          Multi Bahasa
+        </h3>
+
+        <p data-i18n="m5p">
+          Gunakan TeleCod dalam Bahasa Indonesia
+          maupun English.
+        </p>
+
+        <button
+          type="button"
+          class="feature-action"
+          id="featureLanguageBtn"
+        >
+          <span data-i18n="changeLanguage">
+            Ganti Bahasa
+          </span>
+
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </div>
+    </article>
+
   </div>
 </section>
 
+
+<!-- =========================================================
+     HOW TELECOD WORKS
+========================================================= -->
 <section id="how" class="section how">
-  <div class="how-image"></div><div><b data-i18n="howKicker">Mudah, cepat, tanpa ribet</b><h2 data-i18n="howTitle">Cara Kerja PasteLink</h2><div class="steps"><div><strong>1</strong><span><b data-i18n="s1">Tempel Link</b><small data-i18n="s1p">Masukkan URL Telegram atau tujuan.</small></span></div><div><strong>2</strong><span><b data-i18n="s2">Buat Pastelink</b><small data-i18n="s2p">Atur judul, URL custom dan konten.</small></span></div><div><strong>3</strong><span><b data-i18n="s3">Bagikan</b><small data-i18n="s3p">Salin dan bagikan link kamu.</small></span></div></div></div>
+
+  <div class="how-image">
+    <div class="how-image-overlay"></div>
+
+    <div class="how-floating-card">
+      <i class="fa-brands fa-telegram"></i>
+
+      <div>
+        <strong>TeleCod</strong>
+        <small data-i18n="telegramConnected">
+          Terhubung dengan Telegram
+        </small>
+      </div>
+
+      <span>
+        <i class="fa-solid fa-circle-check"></i>
+      </span>
+    </div>
+  </div>
+
+
+  <div class="how-content">
+
+    <span class="how-kicker">
+      <i class="fa-solid fa-bolt"></i>
+
+      <span data-i18n="howKicker">
+        Mudah, cepat, tanpa ribet
+      </span>
+    </span>
+
+    <h2 data-i18n="howTitle">
+      Cara Kerja TeleCod
+    </h2>
+
+    <p class="how-description" data-i18n="howDescription">
+      Buat PasteLink, temukan produk marketplace,
+      atau jual code Telegram kamu dalam beberapa langkah.
+    </p>
+
+
+    <div class="steps">
+
+      <!-- STEP 1 -->
+      <div class="step">
+
+        <strong class="step-number">
+          01
+        </strong>
+
+        <div class="step-icon">
+          <i class="fa-solid fa-link"></i>
+        </div>
+
+        <span>
+          <b data-i18n="s1">
+            Tempel Link
+          </b>
+
+          <small data-i18n="s1p">
+            Masukkan URL Telegram atau link tujuan.
+          </small>
+        </span>
+
+      </div>
+
+
+      <!-- STEP 2 -->
+      <div class="step">
+
+        <strong class="step-number">
+          02
+        </strong>
+
+        <div class="step-icon">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+
+        <span>
+          <b data-i18n="s2">
+            Buat PasteLink
+          </b>
+
+          <small data-i18n="s2p">
+            Tambahkan judul, konten, URL custom
+            dan pengaturan lainnya.
+          </small>
+        </span>
+
+      </div>
+
+
+      <!-- STEP 3 -->
+      <div class="step">
+
+        <strong class="step-number">
+          03
+        </strong>
+
+        <div class="step-icon">
+          <i class="fa-solid fa-store"></i>
+        </div>
+
+        <span>
+          <b data-i18n="s3">
+            Pilih Marketplace
+          </b>
+
+          <small data-i18n="s3p">
+            Temukan code atau channel FREE maupun PAID.
+          </small>
+        </span>
+
+      </div>
+
+
+      <!-- STEP 4 -->
+      <div class="step">
+
+        <strong class="step-number">
+          04
+        </strong>
+
+        <div class="step-icon">
+          <i class="fa-solid fa-share-nodes"></i>
+        </div>
+
+        <span>
+          <b data-i18n="s4">
+            Bagikan
+          </b>
+
+          <small data-i18n="s4p">
+            Salin link dan bagikan ke Telegram,
+            WhatsApp atau media sosial lainnya.
+          </small>
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
 </section>
 
+
+<!-- =========================================================
+     FINAL CTA / AUTH
+========================================================= -->
 <section id="auth" class="section cta">
-  <div><b data-i18n="ctaKicker">Mulai Sekarang</b><h2 data-i18n="ctaTitle">Gabung Sekarang Juga!</h2><p data-i18n="ctaText">Raih peluang cuan tanpa batas di TeleCod! Buat, jual, dan dapatkan penghasilan dari setiap code bot atau link VIP yang kamu miliki!</p><div><button id="loginCta" class="blue-btn"><i class="fa-solid fa-key"></i> <span data-i18n="login">Login</span></button><button id="registerCta" class="purple-btn"><i class="fa-solid fa-pen-to-square"></i> <span data-i18n="register">Register</span></button></div></div><div class="cta-image"></div>
+
+  <div class="cta-content">
+
+    <span class="cta-kicker">
+      <i class="fa-solid fa-rocket"></i>
+
+      <span data-i18n="ctaKicker">
+        Mulai Sekarang
+      </span>
+    </span>
+
+    <h2 data-i18n="ctaTitle">
+      Gabung TeleCod Sekarang!
+    </h2>
+
+    <p data-i18n="ctaText">
+      Buat PasteLink gratis, temukan code dan channel
+      terbaik, atau mulai menjual produk digital kamu
+      di marketplace TeleCod.
+    </p>
+
+
+    <div class="cta-actions">
+
+      <button
+        id="loginCta"
+        class="blue-btn"
+        type="button"
+      >
+        <i class="fa-solid fa-right-to-bracket"></i>
+
+        <span data-i18n="login">
+          Login
+        </span>
+      </button>
+
+
+      <button
+        id="registerCta"
+        class="purple-btn"
+        type="button"
+      >
+        <i class="fa-solid fa-user-plus"></i>
+
+        <span data-i18n="register">
+          Register
+        </span>
+      </button>
+
+    </div>
+
+
+    <div class="cta-trust">
+
+      <span>
+        <i class="fa-solid fa-shield-halved"></i>
+        <span data-i18n="secure">
+          Sistem Aman
+        </span>
+      </span>
+
+      <span>
+        <i class="fa-solid fa-bolt"></i>
+        <span data-i18n="fast">
+          Proses Cepat
+        </span>
+      </span>
+
+      <span>
+        <i class="fa-solid fa-headset"></i>
+        <span data-i18n="support">
+          Support
+        </span>
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div class="cta-image">
+
+    <div class="cta-glow"></div>
+
+    <div class="cta-device">
+
+      <div class="cta-device-top">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div class="cta-device-content">
+
+        <div class="cta-telegram-icon">
+          <i class="fa-brands fa-telegram"></i>
+        </div>
+
+        <strong>
+          TELE<span>COD</span>
+        </strong>
+
+        <small data-i18n="ctaDevice">
+          Telegram Marketplace
+        </small>
+
+        <div class="cta-device-line"></div>
+
+        <div class="cta-device-stats">
+          <span>
+            <b>FREE</b>
+            <small>Code</small>
+          </span>
+
+          <span>
+            <b>PAID</b>
+            <small>Premium</small>
+          </span>
+
+          <span>
+            <b>24/7</b>
+            <small>Support</small>
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
 </section>
 </main>
 
