@@ -2046,25 +2046,34 @@ on("#registerForm", "submit", async event => {
    ========================================================= */
 
 function getTelegramConfig() {
-  return {
-    bot:
-      String(
-        window.TELECOD_TELEGRAM_BOT_USERNAME ||
-        ""
-      ).trim(),
+  const config = window.TELECOD_CONFIG || {};
 
-    callback:
-      String(
-        window.TELECOD_TELEGRAM_AUTH_FUNCTION_URL ||
-        ""
-      ).trim()
+  return {
+    bot: String(
+      window.TELECOD_TELEGRAM_BOT_USERNAME ||
+      config.TELEGRAM_BOT_USERNAME ||
+      ""
+    ).trim(),
+
+    callback: String(
+      window.TELECOD_TELEGRAM_AUTH_FUNCTION_URL ||
+      config.TELEGRAM_AUTH_FUNCTION_URL ||
+      ""
+    ).trim(),
+
+    siteUrl: String(
+      window.TELECOD_SITE_URL ||
+      config.SITE_URL ||
+      location.origin
+    ).trim()
   };
 }
 
 function startTelegramAuth(mode = "login") {
   const {
     bot,
-    callback
+    callback,
+    siteUrl
   } = getTelegramConfig();
 
   if (
@@ -2085,13 +2094,12 @@ function startTelegramAuth(mode = "login") {
   const cleanBot =
     bot.replace(/^@/, "");
 
-  const authUrl =
-    callback +
-    (callback.includes("?")
-      ? "&"
-      : "?") +
-    "mode=" +
-    encodeURIComponent(mode);
+  const params = new URLSearchParams({
+    mode,
+    redirect: siteUrl || location.origin
+  });
+
+  const authUrl = `${callback}${callback.includes("?") ? "&" : "?"}${params.toString()}`;
 
   const modal =
     document.createElement("div");
