@@ -1579,8 +1579,9 @@ footer {
   overflow-y: auto;
 }
 
-.modal.show,
-.modal.active {
+ .modal.show,
+.modal.active,
+.modal.open {
   display: flex;
 }
 
