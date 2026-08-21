@@ -1,7 +1,6 @@
 /* =========================================================
    TELECOD — FRONTEND CORE
-   FULL FIXED / HARDENED VERSION
-   Version: 2026.08.21
+   Full fixed / hardened version
    ========================================================= */
 
 "use strict";
@@ -12,645 +11,333 @@
 
 const T = {
   id: {
-    home: "Beranda",
-    marketplace: "Marketplace",
-    features: "Fitur",
-    how: "Cara Kerja",
-    about: "Tentang",
-    contact: "Kontak",
-    login: "Login",
-    register: "Register",
-
-    eyebrow: "PasteLink Telegram All Code & Channel",
-    hero: "PasteLink Telegram All Code & Channel<br>Semua Ada Disini!",
-
-    pasteTitle: "Buat Pastelink",
-    pasteSub:
-      "Tempel link kamu disini, semua orang bisa membuat tanpa login!",
-    urlPlaceholder: "Tempel link kamu disini...",
-    create: "Buat Link",
-    urlHelp:
-      "Mendukung link dengan http://, https:// dan www. Contoh: https://t.me/channel atau www.example.com",
-    fullEditor: "Buka editor Pastelink lengkap",
-
-    success: "Link Kamu Berhasil Dibuat!",
-    copy: "Salin",
-    share: "Bagikan:",
-
-    promoKicker: "Web Telegram All Code & Channel & Group 18+",
-    promoTitle: "Semua Lengkap Ada Disini!",
-    promoText:
-      "Temukan ribuan code bot Telegram, channel premium, group 18+, drama, jav dan masih banyak lagi. Ada yang GRATIS dan ada juga yang PAID dengan kualitas terbaik!",
-    loginRegister: "Login / Register",
-
-    why: "Kenapa TeleCod?",
-
-    f1: "Payment Otomatis",
-    f1p:
-      "Punya code bot atau link VIP? Buat di sini dan dapatkan pembayaran otomatis.",
-
-    f2: "Tambah Banyak Code",
-    f2p:
-      "Semakin banyak code atau link VIP yang kamu tambah, semakin besar cuan kamu!",
-
-    f3: "Marketplace Lengkap",
-    f3p:
-      "Jual dan beli code bot, channel, group, drama, jav dan media viral lainnya.",
-
-    f4: "Aman & Terpercaya",
-    f4p:
-      "Sistem aman, anti scam, transaksi transparan dan terpercaya.",
+    home:"Beranda",
+    marketplace:"Marketplace",
+    features:"Fitur",
+    how:"Cara Kerja",
+    about:"Tentang",
+    contact:"Kontak",
+    login:"Login",
+    register:"Register",
 
-    f5: "Support 24/7",
-    f5p:
-      "Tim support siap membantu kamu kapan saja jika ada kendala.",
+    eyebrow:"PasteLink Telegram All Code & Channel",
+    hero:"PasteLink Telegram All Code & Channel<br>Semua Ada Disini!",
 
-    categories: "Kategori Marketplace Populer",
-    mainMarket: "Marketplace Utama Kami",
-    marketText:
-      "Semua marketplace lengkap dan ribuan media viral sudah tersedia di bot utama kami di Telegram!",
-    openBot: "Buka @mktplbot",
-
-    users: "Pengguna Terdaftar",
-    codes: "Code Bot Tersedia",
-    transactions: "Transaksi Berhasil",
-    payments: "Total Pembayaran",
+    pasteTitle:"Buat Pastelink",
+    pasteSub:"Tempel link kamu disini, semua orang bisa membuat tanpa login!",
+    urlPlaceholder:"Tempel link kamu disini...",
+    create:"Buat Link",
+    urlHelp:"Mendukung link dengan http:// dan www. Contoh: https://t.me/channel atau www.example.com",
+    fullEditor:"Buka editor Pastelink lengkap",
 
-    featured: "Fitur Unggulan TeleCod",
+    success:"Link Kamu Berhasil Dibuat!",
+    copy:"Salin",
+    share:"Bagikan:",
 
-    m1: "Buat Pastelink Gratis",
-    m1p:
-      "Buat pastelink tanpa login, cepat, mudah dan gratis selamanya.",
+    promoKicker:"Web Telegram All Code & Channel & Group 18+",
+    promoTitle:"Semua Lengkap Ada Disini!",
+    promoText:"Temukan ribuan code bot Telegram, channel premium, group 18+, drama, jav dan masih banyak lagi. Ada yang GRATIS dan ada juga yang PAID dengan kualitas terbaik!",
+    loginRegister:"Login / Register",
 
-    m2: "Monetisasi Code",
-    m2p:
-      "Ubah code atau bot link VIP kamu menjadi sumber penghasilan otomatis.",
+    why:"Kenapa TeleCod?",
 
-    m3: "Dashboard Lengkap",
-    m3p:
-      "Pantau semua statistik, penghasilan dan transaksi secara real-time.",
+    f1:"Payment Otomatis",
+    f1p:"Punya code bot atau link VIP? Buat di sini dan dapatkan pembayaran otomatis.",
 
-    m4: "Withdraw Mudah",
-    m4p:
-      "Tarik saldo kapan saja ke bank, e-wallet atau crypto.",
+    f2:"Tambah Banyak Code",
+    f2p:"Semakin banyak code atau link VIP yang kamu tambah, semakin besar cuan kamu!",
 
-    m5: "Multi Bahasa",
-    m5p:
-      "Tersedia dalam bahasa Indonesia & English.",
+    f3:"Marketplace Lengkap",
+    f3p:"Jual dan beli code bot, channel, group, drama, jav dan media viral lainnya.",
 
-    howKicker: "Mudah, cepat, tanpa ribet",
-    howTitle: "Cara Kerja PasteLink",
+    f4:"Aman & Terpercaya",
+    f4p:"Sistem aman, anti scam, transaksi transparan dan terpercaya.",
 
-    s1: "Tempel Link",
-    s1p: "Masukkan URL Telegram atau tujuan.",
+    f5:"Support 24/7",
+    f5p:"Tim support siap membantu kamu kapan saja jika ada kendala.",
 
-    s2: "Buat Pastelink",
-    s2p: "Atur judul, URL custom dan konten.",
+    categories:"Kategori Marketplace Populer",
+    mainMarket:"Marketplace Utama Kami",
+    marketText:"Semua marketplace lengkap dan ribuan media viral sudah tersedia di bot utama kami di Telegram!",
+    openBot:"Buka @mktplbot",
 
-    s3: "Bagikan",
-    s3p: "Salin dan bagikan link kamu.",
+    users:"Pengguna Terdaftar",
+    codes:"Code Bot Tersedia",
+    transactions:"Transaksi Berhasil",
+    payments:"Total Pembayaran",
 
-    ctaKicker: "Mulai Sekarang",
-    ctaTitle: "Gabung Sekarang Juga!",
-    ctaText:
-      "Raih peluang cuan tanpa batas di TeleCod! Buat, jual, dan dapatkan penghasilan dari setiap code bot atau link VIP yang kamu miliki!",
+    featured:"Fitur Unggulan TeleCod",
 
-    footer:
-      "Platform untuk mendapatkan & menjual code bot, channel & group Telegram.",
-    nav: "Navigasi",
-    legal: "Legal",
-    terms: "Syarat & Ketentuan",
-    privacy: "Kebijakan Privasi",
-    social: "Social Media",
-    rights: "All rights reserved.",
+    m1:"Buat Pastelink Gratis",
+    m1p:"Buat pastelink tanpa login, cepat, mudah dan gratis selamanya.",
 
-    editorTitle: "Buat Pastelink",
-    editorSub:
-      "Editor lengkap untuk text, code, gambar dan link.",
+    m2:"Monetisasi Code",
+    m2p:"Ubah code atau bot link VIP kamu menjadi sumber penghasilan otomatis.",
 
-    authWelcome: "Aman, cepat & mudah.",
+    m3:"Dashboard Lengkap",
+    m3p:"Pantau semua statistik, penghasilan dan transaksi secara real-time.",
 
-    loginTitle: "Masuk ke TeleCod",
-    loginSub:
-      "Gunakan username Telegram dan kata sandi kamu.",
+    m4:"Withdraw Mudah",
+    m4p:"Tarik saldo kapan saja ke bank, e-wallet atau crypto.",
 
-    usernameTelegram: "Username Telegram",
-    usernamePlaceholder: "@username",
+    m5:"Multi Bahasa",
+    m5p:"Tersedia dalam bahasa Indonesia & English.",
 
-    password: "Kata sandi",
-    passwordPlaceholder: "Masukkan kata sandi",
-    passwordMinPlaceholder: "Minimal 6 karakter",
+    howKicker:"Mudah, cepat, tanpa ribet",
+    howTitle:"Cara Kerja PasteLink",
 
-    confirmPassword: "Konfirmasi kata sandi",
-    confirmPasswordPlaceholder: "Ulangi kata sandi",
+    s1:"Tempel Link",
+    s1p:"Masukkan URL Telegram atau tujuan.",
 
-    telegramNumber: "No Telegram",
-    telegramNumberPlaceholder: "+62xxxxxxxxxx",
+    s2:"Buat Pastelink",
+    s2p:"Atur judul, URL custom dan konten.",
 
-    agreeTerms:
-      "Saya menyetujui Ketentuan & Kebijakan TeleCod",
+    s3:"Bagikan",
+    s3p:"Salin dan bagikan link kamu.",
 
-    forgotPassword: "Lupa kata sandi?",
+    ctaKicker:"Mulai Sekarang",
+    ctaTitle:"Gabung Sekarang Juga!",
+    ctaText:"Raih peluang cuan tanpa batas di TeleCod! Buat, jual, dan dapatkan penghasilan dari setiap code bot atau link VIP yang kamu miliki!",
 
-    orContinue: "Atau masuk dengan",
-    orRegisterWith: "Atau daftar dengan",
+    footer:"Platform untuk mendapatkan & menjual code bot, channel & group Telegram.",
+    nav:"Navigasi",
+    legal:"Legal",
+    terms:"Syarat & Ketentuan",
+    privacy:"Kebijakan Privasi",
+    social:"Social Media",
+    rights:"All rights reserved.",
 
-    continueTelegram: "Telegram",
+    editorTitle:"Buat Pastelink",
+    editorSub:"Editor lengkap untuk text, code, gambar dan link.",
 
-    noAccount: "Belum punya akun?",
-    registerNow: "Daftar sekarang",
+    authWelcome:"Aman, cepat & mudah.",
 
-    hasAccount: "Sudah punya akun?",
-    loginNow: "Masuk sekarang",
+    loginTitle:"Masuk ke TeleCod",
+    loginSub:"Gunakan username Telegram dan kata sandi kamu.",
 
-    registerTitle: "Buat akun TeleCod",
-    registerSub:
-      "Daftar dengan data Telegram kamu.",
+    usernameTelegram:"Username Telegram",
+    usernamePlaceholder:"@username",
 
-    forgotTitle: "Lupa kata sandi?",
-    forgotSub:
-      "Gunakan Telegram untuk memulihkan akses.",
+    password:"Kata sandi",
+    passwordPlaceholder:"Masukkan kata sandi",
+    passwordMinPlaceholder:"Minimal 6 karakter",
 
-    recoveryTelegramTitle:
-      "Pemulihan aman melalui Telegram",
+    confirmPassword:"Konfirmasi kata sandi",
+    confirmPasswordPlaceholder:"Ulangi kata sandi",
 
-    recoveryTelegramText:
-      "Masuk dengan Telegram untuk memverifikasi akun. Setelah berhasil, kamu dapat melanjutkan pemulihan akun.",
+    telegramNumber:"No Telegram",
+    telegramNumberPlaceholder:"+62xxxxxxxxxx",
 
-    recoverWithTelegram:
-      "Pulihkan dengan Telegram",
+    agreeTerms:"Saya menyetujui Ketentuan & Kebijakan TeleCod",
 
-    backToLogin: "Kembali ke Login",
+    forgotPassword:"Lupa kata sandi?",
 
-    termsRequired:
-      "Kamu harus menyetujui Ketentuan & Kebijakan TeleCod.",
+    orContinue:"Atau masuk dengan",
+    orRegisterWith:"Atau daftar dengan",
 
-    invalidUsername:
-      "Username Telegram harus 3–32 karakter.",
+    continueTelegram:"Telegram",
 
-    invalidPhone:
-      "Nomor Telegram tidak valid.",
+    noAccount:"Belum punya akun?",
+    registerNow:"Daftar sekarang",
 
-    passwordMismatch:
-      "Konfirmasi kata sandi tidak cocok.",
+    hasAccount:"Sudah punya akun?",
+    loginNow:"Masuk sekarang",
 
-    passwordShort:
-      "Kata sandi minimal 6 karakter.",
+    registerTitle:"Buat akun TeleCod",
+    registerSub:"Daftar dengan data Telegram kamu.",
 
-    invalidUrl:
-      "URL tidak valid. Gunakan http:// atau https://.",
+    forgotTitle:"Lupa kata sandi?",
+    forgotSub:"Gunakan Telegram untuk memulihkan akses.",
 
-    contentEmpty:
-      "Konten belum diisi.",
+    recoveryTelegramTitle:"Pemulihan aman melalui Telegram",
+    recoveryTelegramText:"Masuk dengan Telegram untuk memverifikasi akun. Setelah berhasil, kamu dapat melanjutkan pemulihan akun.",
 
-    slugInvalid:
-      "URL custom hanya boleh berisi huruf, angka, dan tanda hubung.",
+    recoverWithTelegram:"Pulihkan dengan Telegram",
+    backToLogin:"Kembali ke Login",
 
-    authConfig:
-      "Supabase belum dikonfigurasi.",
+    termsRequired:"Kamu harus menyetujui Ketentuan & Kebijakan TeleCod.",
+    invalidUsername:"Username Telegram harus 3–32 karakter.",
+    invalidPhone:"Nomor Telegram tidak valid.",
+    passwordMismatch:"Konfirmasi kata sandi tidak cocok.",
+    passwordShort:"Kata sandi minimal 6 karakter.",
 
-    loginSuccess:
-      "Login berhasil.",
+    authConfig:"Supabase belum dikonfigurasi.",
+    loginSuccess:"Login berhasil.",
+    registerSuccess:"Registrasi berhasil.",
 
-    registerSuccess:
-      "Registrasi berhasil.",
+    telegramConfig:"Login Telegram belum dikonfigurasi. Isi TELECOD_TELEGRAM_BOT_USERNAME dan deploy Edge Function Telegram.",
 
-    telegramConfig:
-      "Login Telegram belum dikonfigurasi. Isi TELECOD_TELEGRAM_BOT_USERNAME dan TELECOD_TELEGRAM_AUTH_FUNCTION_URL.",
+    telegramStart:"Membuka autentikasi Telegram...",
 
-    telegramStart:
-      "Membuka autentikasi Telegram...",
+    forgotInfo:"Untuk keamanan, pemulihan dilakukan melalui verifikasi Telegram.",
 
-    forgotInfo:
-      "Untuk keamanan, pemulihan dilakukan melalui verifikasi Telegram.",
-
-    authError:
-      "Terjadi kesalahan autentikasi.",
-
-    dbNote:
-      "Data akan disimpan ke Supabase Database setelah konfigurasi.",
-
-    saving:
-      "Menyimpan...",
-
-    processing:
-      "Memproses...",
-
-    registering:
-      "Mendaftarkan...",
-
-    copied:
-      "Link disalin.",
-
-    copyFailed:
-      "Gagal menyalin link.",
-
-    saveFailed:
-      "Gagal menyimpan Pastelink.",
-
-    invalidImage:
-      "File harus berupa gambar.",
-
-    imageTooLarge:
-      "Ukuran gambar maksimal 5 MB.",
-
-    imageReadFailed:
-      "Gagal membaca gambar.",
-
-    accountBanned:
-      "Akun kamu diblokir admin.",
-
-    sessionNotFound:
-      "Session login tidak ditemukan.",
-
-    duplicateSlug:
-      "Slug sudah digunakan. Silakan gunakan URL custom lain.",
-
-    registrationNeedsConfirmation:
-      "Registrasi berhasil. Silakan cek email konfirmasi jika diminta.",
-
-    telegramContinue:
-      "Lanjutkan dengan Telegram",
-
-    telegramRecover:
-      "Pulihkan dengan Telegram",
-
-    telegramDescription:
-      "Klik tombol Telegram di bawah untuk memverifikasi akun.",
-
-    telegramRecoveryDescription:
-      "Verifikasi akun melalui Telegram untuk melanjutkan pemulihan.",
-
-    telegramBotFatherNote:
-      "Domain website harus sudah didaftarkan di BotFather."
+    authError:"Terjadi kesalahan autentikasi.",
+    dbNote:"Data akan disimpan ke Supabase Database setelah konfigurasi."
   },
 
   en: {
-    home: "Home",
-    marketplace: "Marketplace",
-    features: "Features",
-    how: "How It Works",
-    about: "About",
-    contact: "Contact",
-    login: "Login",
-    register: "Register",
+    home:"Home",
+    marketplace:"Marketplace",
+    features:"Features",
+    how:"How It Works",
+    about:"About",
+    contact:"Contact",
+    login:"Login",
+    register:"Register",
 
-    eyebrow: "Telegram PasteLink for All Code & Channels",
-    hero:
-      "Telegram PasteLink for All Code & Channels<br>Everything Is Here!",
+    eyebrow:"Telegram PasteLink for All Code & Channels",
+    hero:"Telegram PasteLink for All Code & Channels<br>Everything Is Here!",
 
-    pasteTitle: "Create Pastelink",
-    pasteSub:
-      "Paste your link here. Anyone can create one without logging in!",
-    urlPlaceholder: "Paste your link here...",
-    create: "Create Link",
-    urlHelp:
-      "Supports http://, https:// and www. Example: https://t.me/channel or www.example.com",
-    fullEditor: "Open full Pastelink editor",
+    pasteTitle:"Create Pastelink",
+    pasteSub:"Paste your link here. Anyone can create one without logging in!",
+    urlPlaceholder:"Paste your link here...",
+    create:"Create Link",
+    urlHelp:"Supports http:// and www. Example: https://t.me/channel or www.example.com",
+    fullEditor:"Open full Pastelink editor",
 
-    success: "Your Link Was Created!",
-    copy: "Copy",
-    share: "Share:",
+    success:"Your Link Was Created!",
+    copy:"Copy",
+    share:"Share:",
 
-    promoKicker:
-      "Telegram Web for Code, Channels & 18+ Groups",
+    promoKicker:"Telegram Web for Code, Channels & 18+ Groups",
+    promoTitle:"Everything You Need Is Here!",
+    promoText:"Discover thousands of Telegram bot codes, premium channels, 18+ groups, drama, JAV and much more. FREE and PAID content with quality options!",
+    loginRegister:"Login / Register",
 
-    promoTitle:
-      "Everything You Need Is Here!",
+    why:"Why TeleCod?",
 
-    promoText:
-      "Discover thousands of Telegram bot codes, premium channels, 18+ groups, drama, JAV and much more. FREE and PAID content with quality options!",
+    f1:"Automatic Payments",
+    f1p:"Have a bot code or VIP link? Create it here and receive automatic payments.",
 
-    loginRegister:
-      "Login / Register",
+    f2:"Add More Codes",
+    f2p:"The more code or VIP links you add, the more you can earn!",
 
-    why: "Why TeleCod?",
+    f3:"Complete Marketplace",
+    f3p:"Buy and sell bot codes, channels, groups, drama, JAV and viral media.",
 
-    f1: "Automatic Payments",
-    f1p:
-      "Have a bot code or VIP link? Create it here and receive automatic payments.",
+    f4:"Safe & Trusted",
+    f4p:"Secure system, anti-scam protection, transparent and trusted transactions.",
 
-    f2: "Add More Codes",
-    f2p:
-      "The more code or VIP links you add, the more you can earn!",
+    f5:"24/7 Support",
+    f5p:"Our support team is ready to help whenever you have an issue.",
 
-    f3: "Complete Marketplace",
-    f3p:
-      "Buy and sell bot codes, channels, groups, drama, JAV and viral media.",
+    categories:"Popular Marketplace Categories",
+    mainMarket:"Our Main Marketplace",
+    marketText:"Thousands of marketplace items and viral media are available through our main Telegram bot!",
+    openBot:"Open @mktplbot",
 
-    f4: "Safe & Trusted",
-    f4p:
-      "Secure system, anti-scam protection, transparent and trusted transactions.",
+    users:"Registered Users",
+    codes:"Bot Codes Available",
+    transactions:"Successful Transactions",
+    payments:"Total Payments",
 
-    f5: "24/7 Support",
-    f5p:
-      "Our support team is ready to help whenever you have an issue.",
+    featured:"TeleCod Featured Features",
 
-    categories:
-      "Popular Marketplace Categories",
+    m1:"Free Pastelink",
+    m1p:"Create a pastelink without logging in — fast, easy and free forever.",
 
-    mainMarket:
-      "Our Main Marketplace",
+    m2:"Code Monetization",
+    m2p:"Turn your code or VIP bot links into an automatic income stream.",
 
-    marketText:
-      "Thousands of marketplace items and viral media are available through our main Telegram bot!",
+    m3:"Complete Dashboard",
+    m3p:"Monitor statistics, earnings and transactions in real time.",
 
-    openBot:
-      "Open @mktplbot",
+    m4:"Easy Withdrawals",
+    m4p:"Withdraw anytime to a bank, e-wallet or crypto.",
 
-    users:
-      "Registered Users",
+    m5:"Multi Language",
+    m5p:"Available in Indonesian & English.",
 
-    codes:
-      "Bot Codes Available",
+    howKicker:"Easy, fast and simple",
+    howTitle:"How PasteLink Works",
 
-    transactions:
-      "Successful Transactions",
+    s1:"Paste a Link",
+    s1p:"Enter a Telegram or destination URL.",
 
-    payments:
-      "Total Payments",
+    s2:"Create Pastelink",
+    s2p:"Set title, custom URL and content.",
 
-    featured:
-      "TeleCod Featured Features",
+    s3:"Share It",
+    s3p:"Copy and share your link.",
 
-    m1:
-      "Free Pastelink",
+    ctaKicker:"Start Now",
+    ctaTitle:"Join Us Today!",
+    ctaText:"Unlock unlimited earning opportunities on TeleCod. Create, sell and earn from every bot code or VIP link you own!",
 
-    m1p:
-      "Create a pastelink without logging in — fast, easy and free forever.",
+    footer:"A platform for discovering and selling Telegram bot codes, channels and groups.",
+    nav:"Navigation",
+    legal:"Legal",
+    terms:"Terms & Conditions",
+    privacy:"Privacy Policy",
+    social:"Social Media",
+    rights:"All rights reserved.",
 
-    m2:
-      "Code Monetization",
+    editorTitle:"Create Pastelink",
+    editorSub:"Full editor for text, code, images and links.",
 
-    m2p:
-      "Turn your code or VIP bot links into an automatic income stream.",
+    authWelcome:"Secure, fast & easy.",
 
-    m3:
-      "Complete Dashboard",
+    loginTitle:"Sign in to TeleCod",
+    loginSub:"Use your Telegram username and password.",
 
-    m3p:
-      "Monitor statistics, earnings and transactions in real time.",
+    usernameTelegram:"Telegram Username",
+    usernamePlaceholder:"@username",
 
-    m4:
-      "Easy Withdrawals",
+    password:"Password",
+    passwordPlaceholder:"Enter your password",
+    passwordMinPlaceholder:"At least 6 characters",
 
-    m4p:
-      "Withdraw anytime to a bank, e-wallet or crypto.",
+    confirmPassword:"Confirm password",
+    confirmPasswordPlaceholder:"Repeat your password",
 
-    m5:
-      "Multi Language",
+    telegramNumber:"Telegram Number",
+    telegramNumberPlaceholder:"+62xxxxxxxxxx",
 
-    m5p:
-      "Available in Indonesian & English.",
+    agreeTerms:"I agree to TeleCod Terms & Policies",
 
-    howKicker:
-      "Easy, fast and simple",
+    forgotPassword:"Forgot password?",
 
-    howTitle:
-      "How PasteLink Works",
+    orContinue:"Or continue with",
+    orRegisterWith:"Or register with",
 
-    s1:
-      "Paste a Link",
+    continueTelegram:"Telegram",
 
-    s1p:
-      "Enter a Telegram or destination URL.",
+    noAccount:"Don't have an account?",
+    registerNow:"Register now",
 
-    s2:
-      "Create Pastelink",
+    hasAccount:"Already have an account?",
+    loginNow:"Sign in now",
 
-    s2p:
-      "Set title, custom URL and content.",
+    registerTitle:"Create your TeleCod account",
+    registerSub:"Register using your Telegram details.",
 
-    s3:
-      "Share It",
+    forgotTitle:"Forgot password?",
+    forgotSub:"Use Telegram to recover your access.",
 
-    s3p:
-      "Copy and share your link.",
+    recoveryTelegramTitle:"Secure recovery via Telegram",
+    recoveryTelegramText:"Sign in with Telegram to verify your account. After verification, you can continue account recovery.",
 
-    ctaKicker:
-      "Start Now",
+    recoverWithTelegram:"Recover with Telegram",
+    backToLogin:"Back to Login",
 
-    ctaTitle:
-      "Join Us Today!",
+    termsRequired:"You must agree to the TeleCod Terms & Policies.",
+    invalidUsername:"Telegram username must be 3–32 characters.",
+    invalidPhone:"Invalid Telegram number.",
+    passwordMismatch:"Passwords do not match.",
+    passwordShort:"Password must be at least 6 characters.",
 
-    ctaText:
-      "Unlock unlimited earning opportunities on TeleCod. Create, sell and earn from every bot code or VIP link you own!",
+    authConfig:"Supabase is not configured.",
+    loginSuccess:"Login successful.",
+    registerSuccess:"Registration successful.",
 
-    footer:
-      "A platform for discovering and selling Telegram bot codes, channels and groups.",
+    telegramConfig:"Telegram Login is not configured. Set TELECOD_TELEGRAM_BOT_USERNAME and deploy the Telegram Edge Function.",
 
-    nav:
-      "Navigation",
+    telegramStart:"Opening Telegram authentication...",
 
-    legal:
-      "Legal",
+    forgotInfo:"For security, recovery requires Telegram verification.",
 
-    terms:
-      "Terms & Conditions",
-
-    privacy:
-      "Privacy Policy",
-
-    social:
-      "Social Media",
-
-    rights:
-      "All rights reserved.",
-
-    editorTitle:
-      "Create Pastelink",
-
-    editorSub:
-      "Full editor for text, code, images and links.",
-
-    authWelcome:
-      "Secure, fast & easy.",
-
-    loginTitle:
-      "Sign in to TeleCod",
-
-    loginSub:
-      "Use your Telegram username and password.",
-
-    usernameTelegram:
-      "Telegram Username",
-
-    usernamePlaceholder:
-      "@username",
-
-    password:
-      "Password",
-
-    passwordPlaceholder:
-      "Enter your password",
-
-    passwordMinPlaceholder:
-      "At least 6 characters",
-
-    confirmPassword:
-      "Confirm password",
-
-    confirmPasswordPlaceholder:
-      "Repeat your password",
-
-    telegramNumber:
-      "Telegram Number",
-
-    telegramNumberPlaceholder:
-      "+62xxxxxxxxxx",
-
-    agreeTerms:
-      "I agree to TeleCod Terms & Policies",
-
-    forgotPassword:
-      "Forgot password?",
-
-    orContinue:
-      "Or continue with",
-
-    orRegisterWith:
-      "Or register with",
-
-    continueTelegram:
-      "Telegram",
-
-    noAccount:
-      "Don't have an account?",
-
-    registerNow:
-      "Register now",
-
-    hasAccount:
-      "Already have an account?",
-
-    loginNow:
-      "Sign in now",
-
-    registerTitle:
-      "Create your TeleCod account",
-
-    registerSub:
-      "Register using your Telegram details.",
-
-    forgotTitle:
-      "Forgot password?",
-
-    forgotSub:
-      "Use Telegram to recover your access.",
-
-    recoveryTelegramTitle:
-      "Secure recovery via Telegram",
-
-    recoveryTelegramText:
-      "Sign in with Telegram to verify your account. After verification, you can continue account recovery.",
-
-    recoverWithTelegram:
-      "Recover with Telegram",
-
-    backToLogin:
-      "Back to Login",
-
-    termsRequired:
-      "You must agree to the TeleCod Terms & Policies.",
-
-    invalidUsername:
-      "Telegram username must be 3–32 characters.",
-
-    invalidPhone:
-      "Invalid Telegram number.",
-
-    passwordMismatch:
-      "Passwords do not match.",
-
-    passwordShort:
-      "Password must be at least 6 characters.",
-
-    invalidUrl:
-      "Invalid URL. Use http:// or https://.",
-
-    contentEmpty:
-      "Content is empty.",
-
-    slugInvalid:
-      "Custom URL may only contain letters, numbers and hyphens.",
-
-    authConfig:
-      "Supabase is not configured.",
-
-    loginSuccess:
-      "Login successful.",
-
-    registerSuccess:
-      "Registration successful.",
-
-    telegramConfig:
-      "Telegram Login is not configured. Set TELECOD_TELEGRAM_BOT_USERNAME and TELECOD_TELEGRAM_AUTH_FUNCTION_URL.",
-
-    telegramStart:
-      "Opening Telegram authentication...",
-
-    forgotInfo:
-      "For security, recovery requires Telegram verification.",
-
-    authError:
-      "Authentication error.",
-
-    dbNote:
-      "Data will be stored in Supabase after configuration.",
-
-    saving:
-      "Saving...",
-
-    processing:
-      "Processing...",
-
-    registering:
-      "Creating account...",
-
-    copied:
-      "Link copied.",
-
-    copyFailed:
-      "Failed to copy link.",
-
-    saveFailed:
-      "Failed to save Pastelink.",
-
-    invalidImage:
-      "File must be an image.",
-
-    imageTooLarge:
-      "Maximum image size is 5 MB.",
-
-    imageReadFailed:
-      "Failed to read image.",
-
-    accountBanned:
-      "Your account has been blocked by an administrator.",
-
-    sessionNotFound:
-      "Login session was not created.",
-
-    duplicateSlug:
-      "That slug is already used. Please choose another custom URL.",
-
-    registrationNeedsConfirmation:
-      "Registration successful. Check your confirmation email if required.",
-
-    telegramContinue:
-      "Continue with Telegram",
-
-    telegramRecover:
-      "Recover with Telegram",
-
-    telegramDescription:
-      "Click the Telegram button below to verify your account.",
-
-    telegramRecoveryDescription:
-      "Verify your account through Telegram to continue recovery.",
-
-    telegramBotFatherNote:
-      "The website domain must be registered in BotFather."
+    authError:"Authentication error.",
+    dbNote:"Data will be stored in Supabase after configuration."
   }
 };
 
@@ -665,36 +352,19 @@ let authMode = "login";
 let sup = null;
 
 try {
-  const storedLang =
-    localStorage.getItem("telecod_lang");
-
-  const storedTheme =
-    localStorage.getItem("telecod_theme");
-
-  if (storedLang) lang = storedLang;
-  if (storedTheme) theme = storedTheme;
+  lang = localStorage.getItem("telecod_lang") || "id";
+  theme = localStorage.getItem("telecod_theme") || "dark";
 } catch (_) {}
 
-if (!T[lang]) {
-  lang = "id";
-}
-
-if (!["dark", "light"].includes(theme)) {
-  theme = "dark";
-}
+if (!T[lang]) lang = "id";
+if (!["dark", "light"].includes(theme)) theme = "dark";
 
 
 /* =========================================================
    DOM HELPERS
    ========================================================= */
 
-const $ = selector => {
-  try {
-    return document.querySelector(selector);
-  } catch (_) {
-    return null;
-  }
-};
+const $ = selector => document.querySelector(selector);
 
 const $$ = selector => {
   try {
@@ -705,40 +375,23 @@ const $$ = selector => {
 };
 
 function on(selector, event, handler) {
-  const element = $(selector);
-
-  if (!element) return false;
-
-  element.addEventListener(event, handler);
-
-  return true;
+  const el = $(selector);
+  if (el) el.addEventListener(event, handler);
 }
 
 function setText(selector, value) {
-  const element = $(selector);
-
-  if (element) {
-    element.textContent = String(value ?? "");
-  }
+  const el = $(selector);
+  if (el) el.textContent = value;
 }
 
 function setHTML(selector, value) {
-  const element = $(selector);
-
-  if (element) {
-    element.innerHTML = String(value ?? "");
-  }
+  const el = $(selector);
+  if (el) el.innerHTML = value;
 }
 
 function toggle(selector, className, state) {
-  const element = $(selector);
-
-  if (element) {
-    element.classList.toggle(
-      className,
-      Boolean(state)
-    );
-  }
+  const el = $(selector);
+  if (el) el.classList.toggle(className, Boolean(state));
 }
 
 
@@ -749,55 +402,33 @@ function toggle(selector, className, state) {
 function tr() {
   document.documentElement.lang = lang;
 
-  $$("[data-i18n]").forEach(element => {
-    const key =
-      element.dataset.i18n;
-
-    const value =
-      T[lang]?.[key];
+  $$("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    const value = T[lang]?.[key];
 
     if (value != null) {
-      /*
-        Translation strings are controlled
-        internally by this application.
-        They are not user input.
-      */
-      element.innerHTML = value;
+      el.innerHTML = value;
     }
   });
 
-  $$("[data-i18n-placeholder]").forEach(
-    element => {
-      const key =
-        element.dataset.i18nPlaceholder;
+  $$("[data-i18n-placeholder]").forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    const value = T[lang]?.[key];
 
-      const value =
-        T[lang]?.[key];
-
-      if (value != null) {
-        element.setAttribute(
-          "placeholder",
-          value
-        );
-      }
+    if (value != null) {
+      el.setAttribute("placeholder", value);
     }
-  );
+  });
 
-  const langBtn =
-    $("#langBtn");
+  const langBtn = $("#langBtn");
 
   if (langBtn) {
     langBtn.innerHTML =
-      lang === "id"
-        ? "🇮🇩 ID⌄"
-        : "🇬🇧 EN⌄";
+      (lang === "id" ? "🇮🇩 ID" : "🇬🇧 EN") + "⌄";
   }
 
   try {
-    localStorage.setItem(
-      "telecod_lang",
-      lang
-    );
+    localStorage.setItem("telecod_lang", lang);
   } catch (_) {}
 }
 
@@ -812,21 +443,15 @@ function setTheme() {
     theme === "light"
   );
 
-  const themeBtn =
-    $("#themeBtn");
+  const themeBtn = $("#themeBtn");
 
   if (themeBtn) {
     themeBtn.innerHTML =
-      theme === "light"
-        ? "🌙"
-        : "☀️";
+      theme === "light" ? "🌙" : "☀️";
   }
 
   try {
-    localStorage.setItem(
-      "telecod_theme",
-      theme
-    );
+    localStorage.setItem("telecod_theme", theme);
   } catch (_) {}
 }
 
@@ -835,45 +460,26 @@ function setTheme() {
    TOAST
    ========================================================= */
 
-function toast(
-  message,
-  type = "success"
-) {
-  const element =
-    $("#toast");
+function toast(message, type = "success") {
+  const t = $("#toast");
 
-  if (!element) {
-    console.log(
-      `[TeleCod ${type}]`,
-      message
-    );
-
+  if (!t) {
+    console.log(`[TeleCod ${type}]`, message);
     return;
   }
 
-  const safeMessage =
-    String(message || "");
-
-  element.className =
-    `toast ${type}`;
-
-  element.textContent =
-    safeMessage;
+  t.className = `toast ${type}`;
+  t.textContent = String(message || "");
 
   requestAnimationFrame(() => {
-    element.classList.add("show");
+    t.classList.add("show");
   });
 
-  clearTimeout(
-    window.__telecodToastTimer
-  );
+  clearTimeout(window.__telecodToastTimer);
 
-  window.__telecodToastTimer =
-    setTimeout(() => {
-      element.classList.remove(
-        "show"
-      );
-    }, 3200);
+  window.__telecodToastTimer = setTimeout(() => {
+    t.classList.remove("show");
+  }, 3200);
 }
 
 
@@ -885,10 +491,7 @@ function initBasicUI() {
   tr();
   setTheme();
 
-  setText(
-    "#year",
-    new Date().getFullYear()
-  );
+  setText("#year", new Date().getFullYear());
 }
 
 initBasicUI();
@@ -898,108 +501,41 @@ initBasicUI();
    NAVIGATION
    ========================================================= */
 
-on(
-  "#langBtn",
-  "click",
-  event => {
-    event.stopPropagation();
-
-    $("#langMenu")
-      ?.classList.toggle("open");
-  }
-);
-
-$$("[data-lang]").forEach(
-  button => {
-    button.addEventListener(
-      "click",
-      () => {
-        const selected =
-          button.dataset.lang;
-
-        if (!T[selected]) {
-          return;
-        }
-
-        lang = selected;
-
-        tr();
-
-        $("#langMenu")
-          ?.classList.remove("open");
-      }
-    );
-  }
-);
-
-on(
-  "#themeBtn",
-  "click",
-  () => {
-    theme =
-      theme === "dark"
-        ? "light"
-        : "dark";
-
-    setTheme();
-  }
-);
-
-on(
-  "#menuBtn",
-  "click",
-  () => {
-    $("#navLinks")
-      ?.classList.toggle("mobile");
-  }
-);
-
-$$(
-  "#navLinks a"
-).forEach(anchor => {
-  anchor.addEventListener(
-    "click",
-    () => {
-      $("#navLinks")
-        ?.classList.remove("mobile");
-    }
-  );
+on("#langBtn", "click", () => {
+  $("#langMenu")?.classList.toggle("open");
 });
 
-on(
-  "#hidePaste",
-  "click",
-  () => {
-    $(".paste-card")
-      ?.classList.add("hidden");
-  }
-);
+$$("[data-lang]").forEach(button => {
+  button.addEventListener("click", () => {
+    const selected = button.dataset.lang;
 
+    if (!T[selected]) return;
 
-/* =========================================================
-   CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
-   ========================================================= */
+    lang = selected;
+    tr();
 
-document.addEventListener(
-  "click",
-  event => {
-    const langMenu =
-      $("#langMenu");
+    $("#langMenu")?.classList.remove("open");
+  });
+});
 
-    const langButton =
-      $("#langBtn");
+on("#themeBtn", "click", () => {
+  theme = theme === "dark" ? "light" : "dark";
+  setTheme();
+});
 
-    if (
-      langMenu &&
-      !langMenu.contains(event.target) &&
-      !langButton?.contains(event.target)
-    ) {
-      langMenu.classList.remove(
-        "open"
-      );
-    }
-  }
-);
+on("#menuBtn", "click", () => {
+  $("#navLinks")?.classList.toggle("mobile");
+});
+
+$$("#navLinks a").forEach(a => {
+  a.addEventListener("click", () => {
+    $("#navLinks")?.classList.remove("mobile");
+  });
+});
+
+on("#hidePaste", "click", () => {
+  $(".paste-card")?.classList.add("hidden");
+});
 
 
 /* =========================================================
@@ -1007,12 +543,9 @@ document.addEventListener(
    ========================================================= */
 
 function isConfiguredValue(value) {
-  const x =
-    String(value || "").trim();
+  const x = String(value || "").trim();
 
-  if (!x) {
-    return false;
-  }
+  if (!x) return false;
 
   if (
     /YOUR[_-]?/i.test(x) ||
@@ -1028,63 +561,44 @@ function isConfiguredValue(value) {
 }
 
 function getSupabaseConfig() {
-  const url =
-    String(
-      window.TELECOD_SUPABASE_URL ||
-      ""
-    ).trim();
+  const url = String(
+    window.TELECOD_SUPABASE_URL || ""
+  ).trim();
 
-  const key =
-    String(
-      window.TELECOD_SUPABASE_ANON_KEY ||
-      ""
-    ).trim();
+  const key = String(
+    window.TELECOD_SUPABASE_ANON_KEY || ""
+  ).trim();
 
-  return {
-    url,
-    key
-  };
+  return { url, key };
 }
 
 function sbReady() {
-  const {
-    url,
-    key
-  } = getSupabaseConfig();
+  const { url, key } = getSupabaseConfig();
 
   return Boolean(
     window.supabase &&
     isConfiguredValue(url) &&
     isConfiguredValue(key) &&
-    /^https:\/\//i.test(url)
+    /^https?:\/\//i.test(url)
   );
 }
 
 function initSupabase() {
   if (!sbReady()) {
     sup = null;
-
     return null;
   }
 
   try {
-    const {
-      url,
-      key
-    } = getSupabaseConfig();
+    const { url, key } = getSupabaseConfig();
 
-    sup =
-      window.supabase.createClient(
-        url,
-        key,
-        {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true
-          }
-        }
-      );
+    sup = window.supabase.createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
 
     return sup;
   } catch (error) {
@@ -1094,7 +608,6 @@ function initSupabase() {
     );
 
     sup = null;
-
     return null;
   }
 }
@@ -1107,63 +620,14 @@ initSupabase();
    ========================================================= */
 
 function normalizeUrl(value) {
-  let raw =
-    String(value || "")
-      .trim();
+  const raw = String(value || "").trim();
 
-  if (!raw) {
-    return null;
-  }
-
-  /*
-    Support:
-      https://example.com
-      http://example.com
-      www.example.com
-      example.com
-  */
-
-  if (
-    /^www\./i.test(raw) ||
-    /^[a-z0-9.-]+\.[a-z]{2,}(?:[/:?#].*)?$/i.test(
-      raw
-    )
-  ) {
-    raw =
-      "https://" +
-      raw;
-  }
+  if (!raw) return null;
 
   try {
-    const url =
-      new URL(raw);
+    const url = new URL(raw);
 
-    if (
-      !["http:", "https:"].includes(
-        url.protocol
-      )
-    ) {
-      return null;
-    }
-
-    /*
-      Prevent credentials inside links.
-      Example:
-      https://user:password@example.com
-    */
-
-    if (
-      url.username ||
-      url.password
-    ) {
-      return null;
-    }
-
-    /*
-      Host must exist.
-    */
-
-    if (!url.hostname) {
+    if (!["http:", "https:"].includes(url.protocol)) {
       return null;
     }
 
@@ -1180,51 +644,25 @@ function normalizeUrl(value) {
 
 function slugify(value) {
   return String(value || "")
-    .trim()
     .toLowerCase()
     .normalize("NFKD")
-    .replace(
-      /[\u0300-\u036f]/g,
-      ""
-    )
-    .replace(
-      /[^a-z0-9]+/g,
-      "-"
-    )
-    .replace(
-      /^-+|-+$/g,
-      ""
-    )
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .slice(0, 55);
 }
 
 function randomSlug() {
-  try {
-    if (
-      globalThis.crypto &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto
-        .randomUUID()
-        .replace(/-/g, "")
-        .slice(0, 12);
-    }
-  } catch (_) {}
-
-  const randomPart =
-    Math.random()
-      .toString(36)
-      .slice(2, 10);
-
-  const timePart =
-    Date.now()
-      .toString(36)
-      .slice(-4);
+  if (crypto?.randomUUID) {
+    return crypto
+      .randomUUID()
+      .replace(/-/g, "")
+      .slice(0, 12);
+  }
 
   return (
-    randomPart +
-    timePart
+    Math.random().toString(36).slice(2, 10) +
+    Date.now().toString(36).slice(-4)
   );
 }
 
@@ -1233,214 +671,22 @@ function randomSlug() {
    RESULT
    ========================================================= */
 
-function buildPastelinkUrl(slug) {
-  const safeSlug =
-    encodeURIComponent(
-      String(slug || "")
-    );
-
-  return `${location.origin}/p/${safeSlug}`;
-}
-
 function showResult(slug) {
-  const url =
-    buildPastelinkUrl(slug);
+  const url = `${location.origin}/p/${encodeURIComponent(slug)}`;
 
-  const createdUrl =
-    $("#createdUrl");
+  const createdUrl = $("#createdUrl");
 
   if (createdUrl) {
     createdUrl.value = url;
   }
 
-  $("#success")
-    ?.classList.remove("hidden");
+  $("#success")?.classList.remove("hidden");
+  $(".paste-card")?.classList.add("hidden");
 
-  $(".paste-card")
-    ?.classList.add("hidden");
-
-  $("#success")
-    ?.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-}
-
-
-/* =========================================================
-   SAFE USER CONTENT HELPERS
-   ========================================================= */
-
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-}
-
-function escapeAttribute(value) {
-  return escapeHTML(value);
-}
-
-function sanitizeHTML(html) {
-  const raw =
-    String(html || "");
-
-  if (!raw) {
-    return "";
-  }
-
-  /*
-    Preferred:
-    DOMPurify loaded globally.
-  */
-
-  if (
-    window.DOMPurify &&
-    typeof window.DOMPurify.sanitize ===
-      "function"
-  ) {
-    return window.DOMPurify.sanitize(
-      raw,
-      {
-        USE_PROFILES: {
-          html: true
-        },
-
-        FORBID_TAGS: [
-          "script",
-          "iframe",
-          "object",
-          "embed",
-          "form",
-          "input",
-          "button",
-          "textarea",
-          "select",
-          "style",
-          "meta",
-          "link"
-        ],
-
-        FORBID_ATTR: [
-          "onerror",
-          "onload",
-          "onclick",
-          "onmouseover",
-          "onmouseenter",
-          "onmouseleave",
-          "onfocus",
-          "onblur"
-        ]
-      }
-    );
-  }
-
-  /*
-    Secure fallback.
-
-    Instead of trusting arbitrary HTML when
-    DOMPurify is unavailable, parse it and remove
-    dangerous nodes/attributes.
-  */
-
-  try {
-    const template =
-      document.createElement(
-        "template"
-      );
-
-    template.innerHTML = raw;
-
-    const dangerousTags = [
-      "SCRIPT",
-      "IFRAME",
-      "OBJECT",
-      "EMBED",
-      "FORM",
-      "INPUT",
-      "BUTTON",
-      "TEXTAREA",
-      "SELECT",
-      "STYLE",
-      "META",
-      "LINK"
-    ];
-
-    template.content
-      .querySelectorAll("*")
-      .forEach(element => {
-        if (
-          dangerousTags.includes(
-            element.tagName
-          )
-        ) {
-          element.remove();
-
-          return;
-        }
-
-        [...element.attributes]
-          .forEach(attribute => {
-            const name =
-              attribute.name.toLowerCase();
-
-            const value =
-              attribute.value.trim();
-
-            if (
-              name.startsWith("on") ||
-              name === "srcdoc"
-            ) {
-              element.removeAttribute(
-                attribute.name
-              );
-
-              return;
-            }
-
-            if (
-              ["href", "src"].includes(
-                name
-              )
-            ) {
-              if (
-                /^(javascript|vbscript|data):/i.test(
-                  value
-                )
-              ) {
-                element.removeAttribute(
-                  attribute.name
-                );
-              }
-            }
-          });
-      });
-
-    return (
-      template.innerHTML ||
-      ""
-    );
-  } catch (_) {
-    return escapeHTML(raw);
-  }
+  $("#success")?.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 }
 
 
@@ -1449,67 +695,39 @@ function sanitizeHTML(html) {
    ========================================================= */
 
 async function saveQuick(url) {
-  const cleanUrl =
-    normalizeUrl(url);
+  const cleanUrl = normalizeUrl(url);
 
   if (!cleanUrl) {
     throw new Error(
-      T[lang].invalidUrl
+      lang === "id"
+        ? "URL tidak valid."
+        : "Invalid URL."
     );
   }
 
-  const slug =
-    randomSlug();
-
-  const safeHref =
-    escapeAttribute(cleanUrl);
-
   const payload = {
-    slug,
-
-    title:
-      "Telegram Link",
-
-    destination_url:
-      cleanUrl,
-
+    slug: randomSlug(),
+    title: "Telegram Link",
+    destination_url: cleanUrl,
     content_html:
-      `<p><a href="${safeHref}" target="_blank" rel="nofollow noopener noreferrer">${escapeHTML(cleanUrl)}</a></p>`,
-
-    visibility:
-      "public"
+      `<p><a href="${escapeAttribute(cleanUrl)}" rel="nofollow noopener noreferrer">${escapeHTML(cleanUrl)}</a></p>`,
+    visibility: "public"
   };
 
+  /* Production */
   if (sup) {
-    const {
-      data,
-      error
-    } = await sup
+    const { data, error } = await sup
       .from("pastelinks")
       .insert(payload)
       .select("slug")
       .single();
 
-    if (error) {
-      throw error;
-    }
-
-    if (!data?.slug) {
-      throw new Error(
-        T[lang].saveFailed
-      );
-    }
+    if (error) throw error;
 
     return data.slug;
   }
 
-  /*
-    Demo fallback.
-
-    This MUST NOT be considered production
-    persistence.
-  */
-
+  /* Demo fallback only */
   try {
     localStorage.setItem(
       "telecod_demo_last",
@@ -1517,249 +735,116 @@ async function saveQuick(url) {
     );
   } catch (_) {}
 
-  return slug;
+  return payload.slug;
 }
 
-on(
-  "#quickForm",
-  "submit",
-  async event => {
-    event.preventDefault();
+on("#quickForm", "submit", async event => {
+  event.preventDefault();
 
-    const input =
-      $("#quickUrl");
+  const input = $("#quickUrl");
 
-    if (!input) {
-      return;
-    }
+  if (!input) return;
 
-    const url =
-      normalizeUrl(
-        input.value
-      );
+  const url = normalizeUrl(input.value);
 
-    if (!url) {
-      toast(
-        T[lang].invalidUrl,
-        "warning"
-      );
-
-      return;
-    }
-
-    const button =
-      event.submitter ||
-      $("#quickForm button[type='submit']");
-
-    const original =
-      button?.innerHTML;
-
-    try {
-      if (button) {
-        button.disabled = true;
-
-        button.innerHTML =
-          T[lang].saving;
-      }
-
-      const slug =
-        await saveQuick(url);
-
-      showResult(slug);
-
-      input.value = "";
-    } catch (error) {
-      console.error(
-        "Quick Pastelink error:",
-        error
-      );
-
-      let message =
-        error?.message ||
-        T[lang].saveFailed;
-
-      if (
-        /duplicate|unique/i.test(
-          message
-        )
-      ) {
-        message =
-          T[lang].duplicateSlug;
-      }
-
-      toast(
-        message,
-        "error"
-      );
-    } finally {
-      if (button) {
-        button.disabled = false;
-
-        if (
-          original != null
-        ) {
-          button.innerHTML =
-            original;
-        }
-      }
-    }
+  if (!url) {
+    toast(
+      lang === "id"
+        ? "Masukkan URL http:// atau https:// yang valid."
+        : "Enter a valid http:// or https:// URL.",
+      "warning"
+    );
+    return;
   }
-);
+
+  try {
+    const slug = await saveQuick(url);
+
+    showResult(slug);
+
+    input.value = "";
+  } catch (error) {
+    console.error(error);
+
+    toast(
+      error?.message ||
+      (lang === "id"
+        ? "Gagal menyimpan Pastelink."
+        : "Failed to save Pastelink."),
+      "error"
+    );
+  }
+});
 
 
 /* =========================================================
    COPY / SHARE
    ========================================================= */
 
-async function copyText(value) {
-  const text =
-    String(value || "");
+on("#copyUrl", "click", async () => {
+  const input = $("#createdUrl");
 
-  if (!text) {
-    return false;
-  }
-
-  if (
-    navigator.clipboard &&
-    window.isSecureContext
-  ) {
-    try {
-      await navigator.clipboard.writeText(
-        text
-      );
-
-      return true;
-    } catch (_) {}
-  }
+  if (!input?.value) return;
 
   try {
-    const textarea =
-      document.createElement(
-        "textarea"
-      );
-
-    textarea.value = text;
-
-    textarea.setAttribute(
-      "readonly",
-      ""
-    );
-
-    textarea.style.position =
-      "fixed";
-
-    textarea.style.opacity =
-      "0";
-
-    document.body.appendChild(
-      textarea
-    );
-
-    textarea.select();
-
-    textarea.setSelectionRange(
-      0,
-      textarea.value.length
-    );
-
-    const success =
-      document.execCommand(
-        "copy"
-      );
-
-    textarea.remove();
-
-    return success;
-  } catch (_) {
-    return false;
-  }
-}
-
-on(
-  "#copyUrl",
-  "click",
-  async () => {
-    const input =
-      $("#createdUrl");
-
-    if (!input?.value) {
-      return;
-    }
-
-    const success =
-      await copyText(
-        input.value
-      );
+    await navigator.clipboard.writeText(input.value);
 
     toast(
-      success
-        ? T[lang].copied
-        : T[lang].copyFailed,
-      success
-        ? "success"
-        : "error"
+      lang === "id"
+        ? "Link disalin"
+        : "Link copied"
     );
+  } catch (_) {
+    try {
+      input.select();
+      document.execCommand("copy");
+
+      toast(
+        lang === "id"
+          ? "Link disalin"
+          : "Link copied"
+      );
+    } catch (_) {
+      toast(
+        lang === "id"
+          ? "Gagal menyalin link."
+          : "Failed to copy link.",
+        "error"
+      );
+    }
   }
-);
+});
 
-$$("[data-share]").forEach(
-  button => {
-    button.addEventListener(
-      "click",
-      () => {
-        const input =
-          $("#createdUrl");
+$$("[data-share]").forEach(button => {
+  button.addEventListener("click", () => {
+    const input = $("#createdUrl");
 
-        if (!input?.value) {
-          return;
-        }
+    if (!input?.value) return;
 
-        const encodedUrl =
-          encodeURIComponent(
-            input.value
-          );
+    const url = encodeURIComponent(input.value);
 
-        const shareMap = {
-          tg:
-            `https://t.me/share/url?url=${encodedUrl}`,
+    const shareMap = {
+      tg: `https://t.me/share/url?url=${url}`,
+      fb: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      wa: `https://wa.me/?text=${url}`,
+      x: `https://x.com/intent/post?url=${url}`
+    };
 
-          fb:
-            `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    const target = shareMap[button.dataset.share];
 
-          wa:
-            `https://wa.me/?text=${encodedUrl}`,
+    if (!target) return;
 
-          x:
-            `https://x.com/intent/post?url=${encodedUrl}`
-        };
-
-        const target =
-          shareMap[
-            button.dataset.share
-          ];
-
-        if (!target) {
-          return;
-        }
-
-        window.open(
-          target,
-          "_blank",
-          "noopener,noreferrer"
-        );
-      }
+    window.open(
+      target,
+      "_blank",
+      "noopener,noreferrer"
     );
-  }
-);
+  });
+});
 
-on(
-  "#closeSuccess",
-  "click",
-  () => {
-    $("#success")
-      ?.classList.add("hidden");
-  }
-);
+on("#closeSuccess", "click", () => {
+  $("#success")?.classList.add("hidden");
+});
 
 
 /* =========================================================
@@ -1767,68 +852,38 @@ on(
    ========================================================= */
 
 function openEditor() {
-  $("#editorModal")
-    ?.classList.add("open");
-
-  count();
+  $("#editorModal")?.classList.add("open");
 }
 
 function closeEditor() {
-  $("#editorModal")
-    ?.classList.remove("open");
+  $("#editorModal")?.classList.remove("open");
 }
 
-on(
-  "#openEditor",
-  "click",
-  openEditor
-);
+on("#openEditor", "click", openEditor);
+on("#closeEditor", "click", closeEditor);
 
-on(
-  "#closeEditor",
-  "click",
-  closeEditor
-);
-
-on(
-  "#editorModal",
-  "click",
-  event => {
-    if (
-      event.target?.id ===
-      "editorModal"
-    ) {
-      closeEditor();
-    }
+on("#editorModal", "click", event => {
+  if (event.target?.id === "editorModal") {
+    closeEditor();
   }
-);
+});
 
 function editorElement() {
   return $("#editor");
 }
 
 function count() {
-  const editor =
-    editorElement();
+  const editor = editorElement();
 
-  if (!editor) {
-    return;
-  }
+  if (!editor) return;
 
-  const text =
-    editor.innerText
-      .trim();
+  const text = editor.innerText.trim();
 
-  const words =
-    text
-      ? text
-          .split(/\s+/)
-          .filter(Boolean)
-          .length
-      : 0;
+  const words = text
+    ? text.split(/\s+/).filter(Boolean).length
+    : 0;
 
-  const chars =
-    text.length;
+  const chars = text.length;
 
   setText(
     "#count",
@@ -1836,305 +891,195 @@ function count() {
   );
 }
 
-function execEditorCommand(
-  command,
-  value = null
-) {
-  const editor =
-    editorElement();
+function execEditorCommand(command, value = null) {
+  const editor = editorElement();
 
-  if (!editor) {
-    return false;
-  }
+  if (!editor) return;
 
   editor.focus();
 
   try {
-    const result =
-      document.execCommand(
-        command,
-        false,
-        value
-      );
-
-    count();
-
-    return result;
+    document.execCommand(
+      command,
+      false,
+      value
+    );
   } catch (error) {
     console.warn(
       "Editor command failed:",
       command,
       error
     );
-
-    return false;
   }
+
+  count();
 }
 
-$$(
-  "#toolbar [data-cmd]"
-).forEach(
-  button => {
-    button.addEventListener(
-      "click",
-      () => {
-        execEditorCommand(
-          button.dataset.cmd
-        );
-      }
-    );
-  }
-);
-
-$$(
-  "#toolbar [data-block]"
-).forEach(
-  button => {
-    button.addEventListener(
-      "click",
-      () => {
-        const block =
-          button.dataset.block;
-
-        const allowed = [
-          "P",
-          "H1",
-          "H2",
-          "H3",
-          "BLOCKQUOTE",
-          "PRE"
-        ];
-
-        const safeBlock =
-          allowed.includes(
-            String(block)
-              .toUpperCase()
-          )
-            ? String(block)
-            : "P";
-
-        execEditorCommand(
-          "formatBlock",
-          safeBlock
-        );
-      }
-    );
-  }
-);
-
-on(
-  "#linkBtn",
-  "click",
-  () => {
-    const url =
-      prompt(
-        lang === "id"
-          ? "URL"
-          : "URL",
-        "https://"
-      );
-
-    if (!url) {
-      return;
-    }
-
-    const cleanUrl =
-      normalizeUrl(url);
-
-    if (!cleanUrl) {
-      toast(
-        T[lang].invalidUrl,
-        "warning"
-      );
-
-      return;
-    }
-
+$$('#toolbar [data-cmd]').forEach(button => {
+  button.addEventListener("click", () => {
     execEditorCommand(
-      "createLink",
-      cleanUrl
+      button.dataset.cmd
     );
-  }
-);
+  });
+});
 
-on(
-  "#codeBtn",
-  "click",
-  () => {
-    const selected =
-      window
-        .getSelection()
-        ?.toString() ||
-      "code";
-
-    const safe =
-      escapeHTML(
-        selected
-      );
-
+$$('#toolbar [data-block]').forEach(button => {
+  button.addEventListener("click", () => {
     execEditorCommand(
-      "insertHTML",
-      `<pre><code>${safe}</code></pre>`
+      "formatBlock",
+      button.dataset.block
     );
-  }
-);
+  });
+});
 
-on(
-  "#clearBtn",
-  "click",
-  () => {
-    const editor =
-      editorElement();
+on("#linkBtn", "click", () => {
+  const url = prompt(
+    lang === "id" ? "URL" : "URL",
+    "https://"
+  );
 
-    if (!editor) {
-      return;
-    }
+  if (!url) return;
 
-    editor.innerHTML = "";
+  const cleanUrl = normalizeUrl(url);
 
-    count();
-  }
-);
-
-on(
-  "#imgBtn",
-  "click",
-  () => {
-    $("#imgFile")?.click();
-  }
-);
-
-function insertImageFile(
-  file,
-  altText = "Image"
-) {
-  if (!file) {
+  if (!cleanUrl) {
+    toast(
+      lang === "id"
+        ? "URL tidak valid."
+        : "Invalid URL.",
+      "warning"
+    );
     return;
   }
 
-  const maxSize =
-    5 * 1024 * 1024;
+  execEditorCommand(
+    "createLink",
+    cleanUrl
+  );
+});
 
-  if (
-    file.size > maxSize
-  ) {
+on("#codeBtn", "click", () => {
+  const selected =
+    window.getSelection()?.toString() ||
+    "code";
+
+  const safe = escapeHTML(selected);
+
+  execEditorCommand(
+    "insertHTML",
+    `<pre><code>${safe}</code></pre>`
+  );
+});
+
+on("#clearBtn", "click", () => {
+  const editor = editorElement();
+
+  if (!editor) return;
+
+  editor.innerHTML = "";
+  count();
+});
+
+on("#imgBtn", "click", () => {
+  $("#imgFile")?.click();
+});
+
+on("#imgFile", "change", event => {
+  const file = event.target?.files?.[0];
+
+  if (!file) return;
+
+  const maxSize = 5 * 1024 * 1024;
+
+  if (file.size > maxSize) {
     toast(
-      T[lang].imageTooLarge,
+      lang === "id"
+        ? "Ukuran gambar maksimal 5 MB."
+        : "Maximum image size is 5 MB.",
       "warning"
     );
 
+    event.target.value = "";
     return;
   }
 
-  if (
-    !file.type.startsWith(
-      "image/"
-    )
-  ) {
+  if (!file.type.startsWith("image/")) {
     toast(
-      T[lang].invalidImage,
+      lang === "id"
+        ? "File harus berupa gambar."
+        : "File must be an image.",
       "warning"
     );
 
+    event.target.value = "";
     return;
   }
 
-  const reader =
-    new FileReader();
+  const reader = new FileReader();
 
   reader.onload = () => {
-    const src =
-      String(
-        reader.result || ""
-      );
-
-    /*
-      FileReader data URLs are generated
-      locally by the browser. The type was
-      already checked above.
-    */
+    const src = String(reader.result || "");
 
     execEditorCommand(
       "insertHTML",
-      `<img src="${escapeAttribute(src)}" alt="${escapeAttribute(altText)}">`
+      `<img src="${escapeAttribute(src)}" alt="${escapeAttribute(file.name)}">`
     );
   };
 
   reader.onerror = () => {
     toast(
-      T[lang].imageReadFailed,
+      lang === "id"
+        ? "Gagal membaca gambar."
+        : "Failed to read image.",
       "error"
     );
   };
 
-  reader.readAsDataURL(
-    file
+  reader.readAsDataURL(file);
+});
+
+on("#editor", "input", count);
+
+on("#editor", "paste", event => {
+  const items = [
+    ...(event.clipboardData?.items || [])
+  ];
+
+  const imageItem = items.find(
+    item => item.type.startsWith("image/")
   );
-}
 
-on(
-  "#imgFile",
-  "change",
-  event => {
-    const file =
-      event.target
-        ?.files?.[0];
+  if (!imageItem) return;
 
-    if (!file) {
-      return;
-    }
+  event.preventDefault();
 
-    insertImageFile(
-      file,
-      file.name
+  const file = imageItem.getAsFile();
+
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast(
+      lang === "id"
+        ? "Ukuran gambar maksimal 5 MB."
+        : "Maximum image size is 5 MB.",
+      "warning"
     );
-
-    event.target.value = "";
+    return;
   }
-);
 
-on(
-  "#editor",
-  "input",
-  count
-);
+  const reader = new FileReader();
 
-on(
-  "#editor",
-  "paste",
-  event => {
-    const items = [
-      ...(event.clipboardData
-        ?.items || [])
-    ];
+  reader.onload = () => {
+    const src = String(reader.result || "");
 
-    const imageItem =
-      items.find(
-        item =>
-          item.type.startsWith(
-            "image/"
-          )
-      );
-
-    if (!imageItem) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const file =
-      imageItem.getAsFile();
-
-    if (!file) {
-      return;
-    }
-
-    insertImageFile(
-      file,
-      "Pasted image"
+    execEditorCommand(
+      "insertHTML",
+      `<img src="${escapeAttribute(src)}" alt="Pasted image">`
     );
-  }
-);
+  };
+
+  reader.readAsDataURL(file);
+});
 
 
 /* =========================================================
@@ -2142,107 +1087,50 @@ on(
    ========================================================= */
 
 async function getCurrentUser() {
-  if (!sup?.auth) {
-    return null;
-  }
+  if (!sup) return null;
 
   try {
     const {
       data,
       error
-    } =
-      await sup.auth.getUser();
+    } = await sup.auth.getUser();
 
     if (error) {
-      console.warn(
-        "getCurrentUser:",
-        error
-      );
-
+      console.warn(error);
       return null;
     }
 
     return data?.user || null;
   } catch (error) {
-    console.warn(
-      "getCurrentUser:",
-      error
-    );
-
+    console.warn(error);
     return null;
   }
 }
 
 function getEditorHTML() {
-  const editor =
-    $("#editor");
+  const editor = $("#editor");
 
-  if (!editor) {
-    return "";
-  }
+  if (!editor) return "";
 
-  const raw =
-    editor.innerHTML.trim();
+  const raw = editor.innerHTML.trim();
 
-  if (!raw) {
-    return "";
-  }
+  if (!raw) return "";
 
-  return sanitizeHTML(
-    raw
-  );
-}
-
-function normalizeTags(value) {
-  return String(value || "")
-    .split(",")
-    .map(item =>
-      item
-        .trim()
-        .toLowerCase()
-    )
-    .filter(Boolean)
-    .slice(0, 20)
-    .filter(tag =>
-      /^[a-z0-9_-]{1,40}$/i.test(
-        tag
-      )
+  if (window.DOMPurify) {
+    return window.DOMPurify.sanitize(
+      raw,
+      {
+        USE_PROFILES: {
+          html: true
+        }
+      }
     );
-}
-
-function getExpirationDate(
-  value
-) {
-  const expirationMap = {
-    "1h":
-      60 * 60 * 1000,
-
-    "1d":
-      24 * 60 * 60 * 1000,
-
-    "7d":
-      7 * 24 * 60 * 60 * 1000,
-
-    "30d":
-      30 * 24 * 60 * 60 * 1000
-  };
-
-  const duration =
-    expirationMap[value];
-
-  if (!duration) {
-    return null;
   }
 
-  return new Date(
-    Date.now() +
-      duration
-  ).toISOString();
+  return raw;
 }
 
-async function createPastelink(
-  payload
-) {
+async function createPastelink(payload) {
   if (!sup) {
     try {
       localStorage.setItem(
@@ -2257,312 +1145,211 @@ async function createPastelink(
   const {
     data,
     error
-  } =
-    await sup
-      .from("pastelinks")
-      .insert(payload)
-      .select("slug")
-      .single();
+  } = await sup
+    .from("pastelinks")
+    .insert(payload)
+    .select("slug")
+    .single();
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
-  return (
-    data?.slug ||
-    payload.slug
-  );
+  return data?.slug || payload.slug;
 }
 
-on(
-  "#pasteForm",
-  "submit",
-  async event => {
-    event.preventDefault();
+on("#pasteForm", "submit", async event => {
+  event.preventDefault();
 
-    const html =
-      getEditorHTML();
+  const html = getEditorHTML();
 
-    if (!html) {
-      toast(
-        T[lang].contentEmpty,
-        "warning"
-      );
+  if (!html) {
+    toast(
+      lang === "id"
+        ? "Konten belum diisi."
+        : "Content is empty.",
+      "warning"
+    );
+    return;
+  }
 
-      return;
+  const rawSlug =
+    $("#slug")?.value?.trim() || "";
+
+  const slug =
+    slugify(rawSlug) ||
+    randomSlug();
+
+  const expiration =
+    $("#expiration")?.value || "";
+
+  let expiresAt = null;
+
+  const expirationMap = {
+    "1h": 60 * 60 * 1000,
+    "1d": 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "30d": 30 * 24 * 60 * 60 * 1000
+  };
+
+  if (expirationMap[expiration]) {
+    expiresAt =
+      new Date(
+        Date.now() +
+        expirationMap[expiration]
+      ).toISOString();
+  }
+
+  const user = await getCurrentUser();
+
+  const title =
+    $("#pasteTitle")?.value?.trim() ||
+    "Untitled";
+
+  const authorName =
+    $("#pasteAuthor")?.value?.trim() ||
+    null;
+
+  const description =
+    $("#pasteDescription")?.value?.trim() ||
+    null;
+
+  const tags = String(
+    $("#pasteTags")?.value || ""
+  )
+    .split(",")
+    .map(value =>
+      value.trim().toLowerCase()
+    )
+    .filter(Boolean)
+    .slice(0, 20);
+
+  const visibility =
+    $("#visibility")?.value ||
+    "public";
+
+  const syntax =
+    $("#syntax")?.value ||
+    "plain";
+
+  const payload = {
+    slug,
+    title,
+    author_name: authorName,
+    description,
+    tags,
+    content_html: html,
+    visibility,
+    expires_at: expiresAt,
+    syntax,
+
+    allow_comments:
+      $("#allowComments")?.checked !== false,
+
+    allow_download:
+      $("#allowDownload")?.checked !== false,
+
+    show_raw:
+      $("#showRaw")?.checked !== false,
+
+    publish_timeline:
+      $("#timeline")?.checked === true,
+
+    anonymous:
+      $("#anonymous")?.checked === true,
+
+    user_id:
+      user?.id || null
+  };
+
+  const submitButton =
+    event.submitter ||
+    $("#pasteForm button[type='submit']");
+
+  const originalText =
+    submitButton?.innerHTML;
+
+  try {
+    if (submitButton) {
+      submitButton.disabled = true;
+
+      submitButton.innerHTML =
+        lang === "id"
+          ? "Menyimpan..."
+          : "Saving...";
     }
 
-    const rawSlug =
-      $("#slug")
-        ?.value
-        ?.trim() || "";
+    const savedSlug =
+      await createPastelink(payload);
 
-    const slug =
-      slugify(rawSlug) ||
-      randomSlug();
+    closeEditor();
+    showResult(savedSlug);
 
-    /*
-      If the user explicitly entered a slug
-      but slugify removed everything, reject it.
-    */
+    toast(
+      lang === "id"
+        ? "Pastelink berhasil disimpan."
+        : "Pastelink saved.",
+      "success"
+    );
+  } catch (error) {
+    console.error(
+      "Pastelink save error:",
+      error
+    );
+
+    let message =
+      error?.message ||
+      (lang === "id"
+        ? "Gagal menyimpan Pastelink."
+        : "Failed to save Pastelink.");
 
     if (
-      rawSlug &&
-      !slug
+      /duplicate|unique/i.test(message)
     ) {
-      toast(
-        T[lang].slugInvalid,
-        "warning"
-      );
-
-      return;
+      message =
+        lang === "id"
+          ? "Slug sudah digunakan. Silakan gunakan URL custom lain."
+          : "That slug is already used. Please choose another custom URL.";
     }
 
-    const expiration =
-      $("#expiration")
-        ?.value || "";
+    toast(message, "error");
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
 
-    const expiresAt =
-      getExpirationDate(
-        expiration
-      );
-
-    const user =
-      await getCurrentUser();
-
-    const title =
-      $("#pasteTitle")
-        ?.value
-        ?.trim()
-        ?.slice(0, 200) ||
-      "Untitled";
-
-    const authorName =
-      $("#pasteAuthor")
-        ?.value
-        ?.trim()
-        ?.slice(0, 100) ||
-      null;
-
-    const description =
-      $("#pasteDescription")
-        ?.value
-        ?.trim()
-        ?.slice(0, 1000) ||
-      null;
-
-    const tags =
-      normalizeTags(
-        $("#pasteTags")
-          ?.value
-      );
-
-    const visibility =
-      ["public", "unlisted", "private"]
-        .includes(
-          $("#visibility")
-            ?.value
-        )
-        ? $("#visibility").value
-        : "public";
-
-    const allowedSyntax = [
-      "plain",
-      "javascript",
-      "typescript",
-      "html",
-      "css",
-      "json",
-      "python",
-      "php",
-      "sql",
-      "bash",
-      "markdown"
-    ];
-
-    const requestedSyntax =
-      $("#syntax")
-        ?.value ||
-      "plain";
-
-    const syntax =
-      allowedSyntax.includes(
-        requestedSyntax
-      )
-        ? requestedSyntax
-        : "plain";
-
-    const payload = {
-      slug,
-
-      title,
-
-      author_name:
-        authorName,
-
-      description,
-
-      tags,
-
-      content_html:
-        html,
-
-      visibility,
-
-      expires_at:
-        expiresAt,
-
-      syntax,
-
-      allow_comments:
-        $("#allowComments")
-          ?.checked !== false,
-
-      allow_download:
-        $("#allowDownload")
-          ?.checked !== false,
-
-      show_raw:
-        $("#showRaw")
-          ?.checked !== false,
-
-      publish_timeline:
-        $("#timeline")
-          ?.checked === true,
-
-      anonymous:
-        $("#anonymous")
-          ?.checked === true,
-
-      user_id:
-        user?.id || null
-    };
-
-    const submitButton =
-      event.submitter ||
-      $(
-        "#pasteForm button[type='submit']"
-      );
-
-    const originalText =
-      submitButton
-        ?.innerHTML;
-
-    try {
-      if (submitButton) {
-        submitButton.disabled =
-          true;
-
+      if (originalText != null) {
         submitButton.innerHTML =
-          T[lang].saving;
-      }
-
-      const savedSlug =
-        await createPastelink(
-          payload
-        );
-
-      closeEditor();
-
-      showResult(
-        savedSlug
-      );
-
-      toast(
-        lang === "id"
-          ? "Pastelink berhasil disimpan."
-          : "Pastelink saved.",
-        "success"
-      );
-    } catch (error) {
-      console.error(
-        "Pastelink save error:",
-        error
-      );
-
-      let message =
-        error?.message ||
-        T[lang].saveFailed;
-
-      if (
-        /duplicate|unique/i.test(
-          message
-        )
-      ) {
-        message =
-          T[lang].duplicateSlug;
-      }
-
-      toast(
-        message,
-        "error"
-      );
-    } finally {
-      if (submitButton) {
-        submitButton.disabled =
-          false;
-
-        if (
-          originalText != null
-        ) {
-          submitButton.innerHTML =
-            originalText;
-        }
+          originalText;
       }
     }
   }
-);
+});
 
 
 /* =========================================================
    AUTH HELPERS
    ========================================================= */
 
-function normalizeUsername(
-  value
-) {
+function normalizeUsername(value) {
   return String(value || "")
     .trim()
     .replace(/^@+/, "")
     .toLowerCase();
 }
 
-function validUsername(
-  value
-) {
+function validUsername(value) {
   return /^[a-z0-9_]{3,32}$/.test(
     normalizeUsername(value)
   );
 }
 
-function normalizePhone(
-  value
-) {
-  return String(value || "")
-    .trim()
-    .replace(/[^\d+]/g, "");
-}
-
-function validPhone(
-  value
-) {
-  const phone =
-    normalizePhone(
-      value
-    );
-
-  return /^\+?[0-9]{7,15}$/.test(
-    phone
+function validPhone(value) {
+  return /^\+?[0-9\s().-]{7,20}$/.test(
+    String(value || "").trim()
   );
 }
 
-function syntheticEmail(
-  username
-) {
+function syntheticEmail(username) {
   return (
-    normalizeUsername(
-      username
-    ) +
+    normalizeUsername(username) +
     "@telecod.local"
   );
 }
@@ -2585,61 +1372,35 @@ async function ensureSupabase() {
    AUTH MODALS
    ========================================================= */
 
-function openAuth(
-  mode = "login"
-) {
+function openAuth(mode = "login") {
   authMode = mode;
 
-  const modal =
-    $("#authModal");
+  const modal = $("#authModal");
 
-  if (!modal) {
-    return;
-  }
+  if (!modal) return;
 
-  modal.classList.add(
-    "open"
-  );
-
+  modal.classList.add("open");
   modal.setAttribute(
     "aria-hidden",
     "false"
   );
 
-  setAuthMode(
-    mode
-  );
+  setAuthMode(mode);
 }
 
 function closeAuth() {
-  const modal =
-    $("#authModal");
+  const modal = $("#authModal");
 
-  if (!modal) {
-    return;
-  }
+  if (!modal) return;
 
-  modal.classList.remove(
-    "open"
-  );
-
+  modal.classList.remove("open");
   modal.setAttribute(
     "aria-hidden",
     "true"
   );
 }
 
-function setAuthMode(
-  mode
-) {
-  if (
-    !["login", "register"].includes(
-      mode
-    )
-  ) {
-    mode = "login";
-  }
-
+function setAuthMode(mode) {
   authMode = mode;
 
   toggle(
@@ -2670,13 +1431,11 @@ function setAuthMode(
 function openRecovery() {
   closeAuth();
 
-  $("#forgotModal")
-    ?.classList.add("open");
+  $("#forgotModal")?.classList.add("open");
 }
 
 function closeRecovery() {
-  $("#forgotModal")
-    ?.classList.remove("open");
+  $("#forgotModal")?.classList.remove("open");
 }
 
 
@@ -2684,145 +1443,77 @@ function closeRecovery() {
    AUTH BUTTONS
    ========================================================= */
 
-[
-  "#loginTop",
-  "#loginCta"
-].forEach(
+["#loginTop", "#loginCta"].forEach(
   selector => {
-    on(
-      selector,
-      "click",
-      () =>
-        openAuth("login")
+    on(selector, "click", () =>
+      openAuth("login")
     );
   }
 );
 
-[
-  "#registerTop",
-  "#registerCta"
-].forEach(
+["#registerTop", "#registerCta"].forEach(
   selector => {
-    on(
-      selector,
-      "click",
-      () =>
-        openAuth("register")
+    on(selector, "click", () =>
+      openAuth("register")
     );
   }
 );
 
-on(
-  "#tabLogin",
-  "click",
-  () =>
-    setAuthMode("login")
+on("#tabLogin", "click", () =>
+  setAuthMode("login")
 );
 
-on(
-  "#tabRegister",
-  "click",
-  () =>
-    setAuthMode("register")
+on("#tabRegister", "click", () =>
+  setAuthMode("register")
 );
 
-on(
-  "#switchRegister",
-  "click",
-  () =>
-    setAuthMode("register")
+on("#switchRegister", "click", () =>
+  setAuthMode("register")
 );
 
-on(
-  "#switchLogin",
-  "click",
-  () =>
-    setAuthMode("login")
+on("#switchLogin", "click", () =>
+  setAuthMode("login")
 );
 
-on(
-  "#forgotPassword",
-  "click",
-  openRecovery
-);
+on("#closeAuth", "click", closeAuth);
+on("#closeForgot", "click", closeRecovery);
 
-on(
-  "#closeAuth",
-  "click",
-  closeAuth
-);
+on("#backToLogin", "click", () => {
+  closeRecovery();
+  openAuth("login");
+});
 
-on(
-  "#closeForgot",
-  "click",
-  closeRecovery
-);
+on("#authModal", "click", event => {
+  if (event.target?.id === "authModal") {
+    closeAuth();
+  }
+});
 
-on(
-  "#backToLogin",
-  "click",
-  () => {
+on("#forgotModal", "click", event => {
+  if (event.target?.id === "forgotModal") {
     closeRecovery();
-    openAuth("login");
   }
-);
-
-on(
-  "#authModal",
-  "click",
-  event => {
-    if (
-      event.target?.id ===
-      "authModal"
-    ) {
-      closeAuth();
-    }
-  }
-);
-
-on(
-  "#forgotModal",
-  "click",
-  event => {
-    if (
-      event.target?.id ===
-      "forgotModal"
-    ) {
-      closeRecovery();
-    }
-  }
-);
+});
 
 
 /* =========================================================
    PASSWORD TOGGLE
    ========================================================= */
 
-$$(
-  "[data-password-toggle]"
-).forEach(
+$$("[data-password-toggle]").forEach(
   button => {
     button.addEventListener(
       "click",
       () => {
         const id =
-          button.dataset
-            .passwordToggle;
+          button.dataset.passwordToggle;
 
-        if (!id) {
-          return;
-        }
+        const input = $("#" + id);
 
-        const input =
-          $("#" + id);
-
-        if (!input) {
-          return;
-        }
+        if (!input) return;
 
         const visible =
-          input.type ===
-          "text";
+          input.type === "text";
 
         input.type =
           visible
@@ -2843,9 +1534,7 @@ $$(
    TERMS
    ========================================================= */
 
-function requireTerms(
-  checked
-) {
+function requireTerms(checked) {
   if (!checked) {
     toast(
       T[lang].termsRequired,
@@ -2863,428 +1552,291 @@ function requireTerms(
    LOGIN
    ========================================================= */
 
-on(
-  "#loginForm",
-  "submit",
-  async event => {
-    event.preventDefault();
+on("#loginForm", "submit", async event => {
+  event.preventDefault();
 
-    const username =
-      normalizeUsername(
-        $("#loginUsername")
-          ?.value
-      );
+  const username =
+    normalizeUsername(
+      $("#loginUsername")?.value
+    );
 
-    const password =
-      $("#loginPassword")
-        ?.value || "";
+  const password =
+    $("#loginPassword")?.value || "";
 
-    if (
-      !validUsername(
-        username
-      )
-    ) {
-      toast(
-        T[lang].invalidUsername,
-        "error"
-      );
+  if (!validUsername(username)) {
+    toast(
+      T[lang].invalidUsername,
+      "error"
+    );
+    return;
+  }
 
-      return;
+  if (password.length < 6) {
+    toast(
+      T[lang].passwordShort,
+      "error"
+    );
+    return;
+  }
+
+  if (
+    !requireTerms(
+      $("#loginTerms")?.checked
+    )
+  ) {
+    return;
+  }
+
+  if (!(await ensureSupabase())) {
+    return;
+  }
+
+  const submit =
+    event.submitter ||
+    $("#loginForm button[type='submit']");
+
+  const original =
+    submit?.innerHTML;
+
+  try {
+    if (submit) {
+      submit.disabled = true;
+      submit.innerHTML =
+        lang === "id"
+          ? "Memproses..."
+          : "Signing in...";
     }
 
-    if (
-      password.length < 6
-    ) {
-      toast(
-        T[lang].passwordShort,
-        "error"
-      );
+    const {
+      data,
+      error
+    } = await sup.auth.signInWithPassword({
+      email: syntheticEmail(username),
+      password
+    });
 
-      return;
+    if (error) throw error;
+
+    if (!data?.user) {
+      throw new Error(
+        lang === "id"
+          ? "Session login tidak ditemukan."
+          : "Login session was not created."
+      );
     }
 
-    if (
-      !requireTerms(
-        $("#loginTerms")
-          ?.checked
-      )
-    ) {
-      return;
-    }
+    const profile =
+      await sup
+        .from("profiles")
+        .select("is_banned")
+        .eq("id", data.user.id)
+        .maybeSingle();
 
     if (
-      !(await ensureSupabase())
+      profile.data?.is_banned === true
     ) {
-      return;
+      await sup.auth.signOut();
+
+      throw new Error(
+        lang === "id"
+          ? "Akun kamu diblokir admin."
+          : "Your account has been blocked by an administrator."
+      );
     }
 
-    const submit =
-      event.submitter ||
-      $(
-        "#loginForm button[type='submit']"
-      );
+    await sup
+      .from("profiles")
+      .update({
+        last_login_at:
+          new Date().toISOString(),
 
-    const original =
-      submit?.innerHTML;
+        terms_accepted_at:
+          new Date().toISOString()
+      })
+      .eq("id", data.user.id);
 
-    try {
-      if (submit) {
-        submit.disabled =
-          true;
+    localStorage.setItem("telecod_session_hint","1");
+    document.documentElement.dataset.authenticated="true";
+    closeAuth();
+    toast(T[lang].loginSuccess,"success");
+    setTimeout(()=>{ location.href="dashboard.html"; },450);
+  } catch (error) {
+    console.error(
+      "Login error:",
+      error
+    );
 
-        submit.innerHTML =
-          T[lang].processing;
-      }
+    toast(
+      error?.message ||
+      T[lang].authError,
+      "error"
+    );
+  } finally {
+    if (submit) {
+      submit.disabled = false;
 
-      const {
-        data,
-        error
-      } =
-        await sup.auth
-          .signInWithPassword({
-            email:
-              syntheticEmail(
-                username
-              ),
-
-            password
-          });
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.user) {
-        throw new Error(
-          T[lang].sessionNotFound
-        );
-      }
-
-      const profile =
-        await sup
-          .from("profiles")
-          .select(
-            "is_banned"
-          )
-          .eq(
-            "id",
-            data.user.id
-          )
-          .maybeSingle();
-
-      if (
-        profile.error
-      ) {
-        console.warn(
-          "Profile lookup:",
-          profile.error
-        );
-      }
-
-      if (
-        profile.data
-          ?.is_banned === true
-      ) {
-        await sup.auth.signOut();
-
-        throw new Error(
-          T[lang].accountBanned
-        );
-      }
-
-      const now =
-        new Date().toISOString();
-
-      const profileUpdate =
-        await sup
-          .from("profiles")
-          .update({
-            last_login_at:
-              now,
-
-            terms_accepted_at:
-              now
-          })
-          .eq(
-            "id",
-            data.user.id
-          );
-
-      if (
-        profileUpdate.error
-      ) {
-        console.warn(
-          "Profile update:",
-          profileUpdate.error
-        );
-      }
-
-      document.body.classList.add(
-        "logged-in"
-      );
-
-      closeAuth();
-
-      toast(
-        T[lang].loginSuccess,
-        "success"
-      );
-    } catch (error) {
-      console.error(
-        "Login error:",
-        error
-      );
-
-      toast(
-        error?.message ||
-        T[lang].authError,
-        "error"
-      );
-    } finally {
-      if (submit) {
-        submit.disabled =
-          false;
-
-        if (
-          original != null
-        ) {
-          submit.innerHTML =
-            original;
-        }
+      if (original != null) {
+        submit.innerHTML = original;
       }
     }
   }
-);
+});
 
 
 /* =========================================================
    REGISTER
    ========================================================= */
 
-on(
-  "#registerForm",
-  "submit",
-  async event => {
-    event.preventDefault();
+on("#registerForm", "submit", async event => {
+  event.preventDefault();
 
-    const username =
-      normalizeUsername(
-        $("#registerUsername")
-          ?.value
-      );
+  const username =
+    normalizeUsername(
+      $("#registerUsername")?.value
+    );
 
-    const phone =
-      normalizePhone(
-        $("#registerPhone")
-          ?.value
-      );
+  const phone =
+    $("#registerPhone")?.value?.trim() ||
+    "";
 
-    const password =
-      $("#registerPassword")
-        ?.value || "";
+  const password =
+    $("#registerPassword")?.value ||
+    "";
 
-    const confirm =
-      $("#registerConfirm")
-        ?.value || "";
+  const confirm =
+    $("#registerConfirm")?.value ||
+    "";
 
-    if (
-      !validUsername(
-        username
-      )
-    ) {
-      toast(
-        T[lang].invalidUsername,
-        "error"
-      );
+  if (!validUsername(username)) {
+    toast(
+      T[lang].invalidUsername,
+      "error"
+    );
+    return;
+  }
 
-      return;
+  if (!validPhone(phone)) {
+    toast(
+      T[lang].invalidPhone,
+      "error"
+    );
+    return;
+  }
+
+  if (password.length < 6) {
+    toast(
+      T[lang].passwordShort,
+      "error"
+    );
+    return;
+  }
+
+  if (password !== confirm) {
+    toast(
+      T[lang].passwordMismatch,
+      "error"
+    );
+    return;
+  }
+
+  if (
+    !requireTerms(
+      $("#registerTerms")?.checked
+    )
+  ) {
+    return;
+  }
+
+  if (!(await ensureSupabase())) {
+    return;
+  }
+
+  const submit =
+    event.submitter ||
+    $("#registerForm button[type='submit']");
+
+  const original =
+    submit?.innerHTML;
+
+  try {
+    if (submit) {
+      submit.disabled = true;
+
+      submit.innerHTML =
+        lang === "id"
+          ? "Mendaftarkan..."
+          : "Creating account...";
     }
 
-    if (
-      !validPhone(
-        phone
-      )
-    ) {
-      toast(
-        T[lang].invalidPhone,
-        "error"
-      );
+    const functionUrl =
+      String(
+        window.TELECOD_USERNAME_AUTH_FUNCTION_URL ||
+        ""
+      ).trim();
 
-      return;
-    }
+    /*
+      Preferred production flow:
+      Edge Function handles username registration.
+    */
 
     if (
-      password.length < 6
+      functionUrl &&
+      isConfiguredValue(functionUrl) &&
+      /^https?:\/\//i.test(functionUrl)
     ) {
-      toast(
-        T[lang].passwordShort,
-        "error"
-      );
+      const response =
+        await fetch(functionUrl, {
+          method: "POST",
 
-      return;
-    }
+          headers: {
+            "Content-Type":
+              "application/json",
 
-    if (
-      password !==
-      confirm
-    ) {
-      toast(
-        T[lang].passwordMismatch,
-        "error"
-      );
+            "Accept":
+              "application/json"
+          },
 
-      return;
-    }
+          body: JSON.stringify({
+            action: "register",
+            username,
+            telegram_number: phone,
+            password,
+            terms_accepted: true
+          })
+        });
 
-    if (
-      !requireTerms(
-        $("#registerTerms")
-          ?.checked
-      )
-    ) {
-      return;
-    }
+      let result = {};
 
-    if (
-      !(await ensureSupabase())
-    ) {
-      return;
-    }
+      try {
+        result =
+          await response.json();
+      } catch (_) {}
 
-    const submit =
-      event.submitter ||
-      $(
-        "#registerForm button[type='submit']"
-      );
-
-    const original =
-      submit?.innerHTML;
-
-    try {
-      if (submit) {
-        submit.disabled =
-          true;
-
-        submit.innerHTML =
-          T[lang].registering;
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+          result?.message ||
+          T[lang].authError
+        );
       }
-
-      const functionUrl =
-        String(
-          window
-            .TELECOD_USERNAME_AUTH_FUNCTION_URL ||
-          ""
-        ).trim();
 
       /*
-        Preferred production registration.
-
-        IMPORTANT:
-        The Edge Function must validate:
-          - username
-          - phone
-          - password
-          - terms
-          - duplicate username
-          - rate limiting
-          - server-side profile creation
+        If Edge Function returns email,
+        create/login session.
       */
 
-      if (
-        functionUrl &&
-        isConfiguredValue(
-          functionUrl
-        ) &&
-        /^https:\/\//i.test(
-          functionUrl
-        )
-      ) {
-        const response =
-          await fetch(
-            functionUrl,
-            {
-              method: "POST",
+      if (result?.email) {
+        const login =
+          await sup.auth.signInWithPassword({
+            email: result.email,
+            password
+          });
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-
-                Accept:
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  action:
-                    "register",
-
-                  username,
-
-                  telegram_number:
-                    phone,
-
-                  password,
-
-                  terms_accepted:
-                    true
-                })
-            }
-          );
-
-        let result = {};
-
-        try {
-          result =
-            await response.json();
-        } catch (_) {}
-
-        if (!response.ok) {
-          throw new Error(
-            result?.error ||
-            result?.message ||
-            T[lang].authError
-          );
+        if (login.error) {
+          throw login.error;
         }
-
-        /*
-          Edge Function may return
-          a real Supabase auth email.
-        */
-
-        if (
-          result?.email
-        ) {
-          const login =
-            await sup.auth
-              .signInWithPassword({
-                email:
-                  result.email,
-
-                password
-              });
-
-          if (login.error) {
-            throw login.error;
-          }
-        }
-
-        /*
-          If Edge Function says registration
-          succeeded but doesn't return an
-          authenticated session, just report
-          success instead of inventing one.
-        */
-
-        closeAuth();
-
-        toast(
-          T[lang].registerSuccess,
-          "success"
-        );
-
-        return;
       }
-
+    } else {
       /*
         Fallback Supabase Auth flow.
       */
@@ -3292,138 +1844,101 @@ on(
       const {
         data,
         error
-      } =
-        await sup.auth
-          .signUp({
-            email:
-              syntheticEmail(
-                username
-              ),
+      } = await sup.auth.signUp({
+        email:
+          syntheticEmail(username),
 
-            password,
+        password,
 
-            options: {
-              data: {
-                username,
+        options: {
+          data: {
+            username,
+            telegram_username:
+              username,
+            telegram_number:
+              phone,
+            terms_accepted:
+              true
+          }
+        }
+      });
 
-                telegram_username:
-                  username,
-
-                telegram_number:
-                  phone,
-
-                terms_accepted:
-                  true
-              }
-            }
-          });
-
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.user) {
-        const profile =
-          await sup
-            .from("profiles")
-            .upsert(
-              {
-                id:
-                  data.user.id,
-
+        const {
+          error: profileError
+        } = await sup
+          .from("profiles")
+          .upsert(
+            {
+              id: data.user.id,
+              username,
+              telegram_username:
                 username,
+              telegram_number:
+                phone,
+              terms_accepted_at:
+                new Date().toISOString()
+            },
+            {
+              onConflict: "id"
+            }
+          );
 
-                telegram_username:
-                  username,
-
-                telegram_number:
-                  phone,
-
-                terms_accepted_at:
-                  new Date().toISOString()
-              },
-              {
-                onConflict:
-                  "id"
-              }
-            );
-
-        if (
-          profile.error
-        ) {
+        if (profileError) {
           console.warn(
             "Profile creation warning:",
-            profile.error
+            profileError
           );
         }
       }
 
       /*
-        Supabase may require email confirmation.
+        If email confirmation is enabled,
+        Supabase may not create an active session.
       */
 
       if (!data?.session) {
         toast(
-          T[lang]
-            .registrationNeedsConfirmation,
+          lang === "id"
+            ? "Registrasi berhasil. Silakan cek email konfirmasi jika diminta."
+            : "Registration successful. Check your confirmation email if required.",
           "info"
         );
 
         closeAuth();
-
         return;
       }
+    }
 
-      document.body.classList.add(
-        "logged-in"
-      );
+    localStorage.setItem("telecod_session_hint","1");
+    document.documentElement.dataset.authenticated="true";
+    closeAuth();
+    toast(T[lang].registerSuccess,"success");
+    setTimeout(()=>{ location.href="dashboard.html"; },450);
+  } catch (error) {
+    console.error(
+      "Registration error:",
+      error
+    );
 
-      closeAuth();
+    toast(
+      error?.message ||
+      T[lang].authError,
+      "error"
+    );
+  } finally {
+    if (submit) {
+      submit.disabled = false;
 
-      toast(
-        T[lang].registerSuccess,
-        "success"
-      );
-    } catch (error) {
-      console.error(
-        "Registration error:",
-        error
-      );
-
-      let message =
-        error?.message ||
-        T[lang].authError;
-
-      if (
-        /already registered|already exists|duplicate|unique/i.test(
-          message
-        )
-      ) {
-        message =
-          lang === "id"
-            ? "Username atau akun tersebut sudah terdaftar."
-            : "That username or account is already registered.";
-      }
-
-      toast(
-        message,
-        "error"
-      );
-    } finally {
-      if (submit) {
-        submit.disabled =
-          false;
-
-        if (
-          original != null
-        ) {
-          submit.innerHTML =
-            original;
-        }
+      if (original != null) {
+        submit.innerHTML =
+          original;
       }
     }
   }
-);
+});
 
 
 /* =========================================================
@@ -3434,60 +1949,30 @@ function getTelegramConfig() {
   return {
     bot:
       String(
-        window
-          .TELECOD_TELEGRAM_BOT_USERNAME ||
+        window.TELECOD_TELEGRAM_BOT_USERNAME ||
         ""
       ).trim(),
 
     callback:
       String(
-        window
-          .TELECOD_TELEGRAM_AUTH_FUNCTION_URL ||
+        window.TELECOD_TELEGRAM_AUTH_FUNCTION_URL ||
         ""
       ).trim()
   };
 }
 
-function validHttpsUrl(
-  value
-) {
-  try {
-    const url =
-      new URL(
-        String(value || "")
-      );
-
-    return (
-      url.protocol ===
-      "https:" &&
-      Boolean(url.hostname)
-    );
-  } catch (_) {
-    return false;
-  }
-}
-
-function startTelegramAuth(
-  mode = "login"
-) {
+function startTelegramAuth(mode = "login") {
   const {
     bot,
     callback
-  } =
-    getTelegramConfig();
+  } = getTelegramConfig();
 
   if (
     !bot ||
     !callback ||
-    !isConfiguredValue(
-      bot
-    ) ||
-    !isConfiguredValue(
-      callback
-    ) ||
-    !validHttpsUrl(
-      callback
-    )
+    !isConfiguredValue(bot) ||
+    !isConfiguredValue(callback) ||
+    !/^https?:\/\//i.test(callback)
   ) {
     toast(
       T[lang].telegramConfig,
@@ -3498,66 +1983,52 @@ function startTelegramAuth(
   }
 
   const cleanBot =
-    bot
-      .replace(
-        /^@/,
-        ""
-      )
-      .trim();
-
-  if (
-    !/^[a-zA-Z0-9_]{5,64}$/.test(
-      cleanBot
-    )
-  ) {
-    toast(
-      T[lang].telegramConfig,
-      "warning"
-    );
-
-    return;
-  }
+    bot.replace(/^@/, "");
 
   const authUrl =
     callback +
-    (
-      callback.includes("?")
-        ? "&"
-        : "?"
-    ) +
+    (callback.includes("?")
+      ? "&"
+      : "?") +
     "mode=" +
-    encodeURIComponent(
-      mode
-    );
+    encodeURIComponent(mode);
 
   const modal =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
   modal.className =
     "telegram-widget-modal";
 
-  const isRecovery =
-    mode === "recovery";
-
   const title =
-    isRecovery
-      ? T[lang]
-          .telegramRecover
-      : T[lang]
-          .telegramContinue;
+    mode === "recovery"
+      ? (
+          lang === "id"
+            ? "Pulihkan dengan Telegram"
+            : "Recover with Telegram"
+        )
+      : (
+          lang === "id"
+            ? "Masuk dengan Telegram"
+            : "Continue with Telegram"
+        );
 
   const description =
-    isRecovery
-      ? T[lang]
-          .telegramRecoveryDescription
-      : T[lang]
-          .telegramDescription;
+    mode === "recovery"
+      ? (
+          lang === "id"
+            ? "Verifikasi akun melalui Telegram untuk melanjutkan pemulihan."
+            : "Verify your account through Telegram to continue recovery."
+        )
+      : (
+          lang === "id"
+            ? "Klik tombol Telegram di bawah untuk memverifikasi akun."
+            : "Click the Telegram button below to verify your account."
+        );
 
   const note =
-    T[lang]
-      .telegramBotFatherNote;
+    lang === "id"
+      ? "Domain website harus sudah didaftarkan di BotFather."
+      : "The website domain must be registered in BotFather.";
 
   modal.innerHTML = `
     <div class="telegram-widget-card">
@@ -3585,38 +2056,28 @@ function startTelegramAuth(
     </div>
   `;
 
-  document.body.appendChild(
-    modal
-  );
+  document.body.appendChild(modal);
 
-  const closeButton =
-    modal.querySelector(
+  modal
+    .querySelector(
       ".telegram-widget-close"
+    )
+    ?.addEventListener(
+      "click",
+      () => modal.remove()
     );
-
-  closeButton?.addEventListener(
-    "click",
-    () => {
-      modal.remove();
-    }
-  );
 
   modal.addEventListener(
     "click",
     event => {
-      if (
-        event.target ===
-        modal
-      ) {
+      if (event.target === modal) {
         modal.remove();
       }
     }
   );
 
   const script =
-    document.createElement(
-      "script"
-    );
+    document.createElement("script");
 
   script.src =
     "https://telegram.org/js/telegram-widget.js?22";
@@ -3635,47 +2096,24 @@ function startTelegramAuth(
   script.dataset.authUrl =
     authUrl;
 
-  /*
-    Keep this only if the bot/auth flow
-    actually requires write access.
-  */
-
   script.dataset.requestAccess =
     "write";
 
-  const container =
-    modal.querySelector(
-      "#telegramWidget"
-    );
-
-  if (container) {
-    container.appendChild(
-      script
-    );
-  }
-
-  toast(
-    T[lang].telegramStart,
-    "info"
-  );
+  modal
+    .querySelector("#telegramWidget")
+    ?.appendChild(script);
 }
 
 on(
   "#telegramLoginBtn",
   "click",
-  () =>
-    startTelegramAuth(
-      "login"
-    )
+  () => startTelegramAuth("login")
 );
 
 on(
   "#telegramRegisterBtn",
   "click",
-  () =>
-    startTelegramAuth(
-      "register"
-    )
+  () => startTelegramAuth("register")
 );
 
 on(
@@ -3683,10 +2121,7 @@ on(
   "click",
   () => {
     closeRecovery();
-
-    startTelegramAuth(
-      "recovery"
-    );
+    startTelegramAuth("recovery");
   }
 );
 
@@ -3695,77 +2130,27 @@ on(
    SUPABASE AUTH STATE
    ========================================================= */
 
-function applyAuthSession(
-  session
-) {
-  document.body.classList.toggle(
-    "logged-in",
-    Boolean(
-      session?.user
-    )
-  );
-}
-
 function initAuthListener() {
-  if (!sup?.auth) {
-    return;
-  }
+  if (!sup?.auth) return;
 
-  try {
-    sup.auth.getSession()
-      .then(
-        ({
-          data,
-          error
-        }) => {
-          if (error) {
-            console.warn(
-              "Initial auth session:",
-              error
-            );
-
-            return;
-          }
-
-          applyAuthSession(
-            data?.session
-          );
-        }
-      )
-      .catch(
-        error => {
-          console.warn(
-            "Initial auth session:",
-            error
-          );
-        }
-      );
-
-    sup.auth.onAuthStateChange(
-      (
-        event,
-        session
-      ) => {
-        applyAuthSession(
-          session
-        );
-
-        if (
-          event ===
-          "SIGNED_OUT"
-        ) {
-          document.body.classList.remove(
-            "logged-in"
-          );
-        }
+  sup.auth.onAuthStateChange(
+    (event, session) => {
+      if (
+        event === "SIGNED_IN" &&
+        session?.user
+      ) {
+        document.body.classList.add("logged-in");
+        document.documentElement.dataset.authenticated="true";
+        try{ localStorage.setItem("telecod_session_hint","1"); }catch(_){}
       }
-    );
-  } catch (error) {
-    console.warn(
-      "Auth listener failed:",
-      error
-    );
-  }
+
+      if (event === "SIGNED_OUT") {
+        document.body.classList.remove("logged-in");
+        document.documentElement.dataset.authenticated="false";
+        try{ localStorage.removeItem("telecod_session_hint"); }catch(_){}
+      }
+    }
+  );
 }
 
 initAuthListener();
@@ -3775,86 +2160,47 @@ initAuthListener();
    PUBLIC STATS
    ========================================================= */
 
-function formatStat(
-  value
-) {
-  const number =
-    Number(value);
-
-  if (
-    !Number.isFinite(
-      number
-    )
-  ) {
-    return "0+";
-  }
-
-  return (
-    number.toLocaleString() +
-    "+"
-  );
-}
-
 async function stats() {
-  if (!sup) {
-    return;
-  }
+  if (!sup) return;
 
   try {
     const {
       data,
       error
-    } =
-      await sup
-        .from(
-          "telecod_public_stats"
-        )
-        .select("*")
-        .maybeSingle();
+    } = await sup
+      .from("telecod_public_stats")
+      .select("*")
+      .maybeSingle();
 
-    if (
-      !error &&
-      data
-    ) {
-      if (
-        $("#statUsers")
-      ) {
-        $("#statUsers")
-          .textContent =
-          formatStat(
-            data.users
-          );
+    if (!error && data) {
+      if ($("#statUsers")) {
+        $("#statUsers").textContent =
+          Number(
+            data.users || 0
+          ).toLocaleString() + "+";
       }
 
-      if (
-        $("#statPastes")
-      ) {
-        $("#statPastes")
-          .textContent =
-          formatStat(
-            data.pastes
-          );
+      if ($("#statPastes")) {
+        $("#statPastes").textContent =
+          Number(
+            data.pastes || 0
+          ).toLocaleString() + "+";
       }
 
-      if (
-        $("#statViews")
-      ) {
-        $("#statViews")
-          .textContent =
-          formatStat(
-            data.views ??
-            data.transactions
-          );
+      if ($("#statViews")) {
+        $("#statViews").textContent =
+          Number(
+            data.views ||
+            data.transactions ||
+            0
+          ).toLocaleString() + "+";
       }
 
-      if (
-        $("#statPayments")
-      ) {
-        $("#statPayments")
-          .textContent =
-          formatStat(
-            data.payments
-          );
+      if ($("#statPayments")) {
+        $("#statPayments").textContent =
+          Number(
+            data.payments || 0
+          ).toLocaleString() + "+";
       }
 
       return;
@@ -3862,36 +2208,27 @@ async function stats() {
 
     /*
       Fallback:
-      count actual pastelinks.
+      At least display actual Pastelink count.
     */
 
     const {
       count,
-      error:
-        countError
-    } =
-      await sup
-        .from("pastelinks")
-        .select(
-          "*",
-          {
-            count:
-              "exact",
-            head:
-              true
-          }
-        );
+      error: countError
+    } = await sup
+      .from("pastelinks")
+      .select("*", {
+        count: "exact",
+        head: true
+      });
 
     if (
       !countError &&
       count != null &&
       $("#statPastes")
     ) {
-      $("#statPastes")
-        .textContent =
-        formatStat(
-          count
-        );
+      $("#statPastes").textContent =
+        Number(count).toLocaleString() +
+        "+";
     }
   } catch (error) {
     console.warn(
@@ -3903,54 +2240,57 @@ async function stats() {
 
 
 /* =========================================================
-   KEYBOARD / UX
+   SECURITY HELPERS
    ========================================================= */
 
-function closeAllOverlays() {
-  $("#authModal")
-    ?.classList.remove(
-      "open"
-    );
-
-  $("#forgotModal")
-    ?.classList.remove(
-      "open"
-    );
-
-  $("#editorModal")
-    ?.classList.remove(
-      "open"
-    );
-
-  document
-    .querySelectorAll(
-      ".telegram-widget-modal"
-    )
-    .forEach(
-      element =>
-        element.remove()
-    );
-
-  $("#langMenu")
-    ?.classList.remove(
-      "open"
-    );
-
-  $("#navLinks")
-    ?.classList.remove(
-      "mobile"
-    );
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
+
+function escapeAttribute(value) {
+  return escapeHTML(value);
+}
+
+
+/* =========================================================
+   KEYBOARD / UX
+   ========================================================= */
 
 document.addEventListener(
   "keydown",
   event => {
-    if (
-      event.key ===
-      "Escape"
-    ) {
-      closeAllOverlays();
-    }
+    if (event.key !== "Escape") return;
+
+    $("#authModal")?.classList.remove(
+      "open"
+    );
+
+    $("#forgotModal")?.classList.remove(
+      "open"
+    );
+
+    $("#editorModal")?.classList.remove(
+      "open"
+    );
+
+    document
+      .querySelectorAll(
+        ".telegram-widget-modal"
+      )
+      .forEach(el => el.remove());
+
+    $("#langMenu")?.classList.remove(
+      "open"
+    );
+
+    $("#navLinks")?.classList.remove(
+      "mobile"
+    );
   }
 );
 
@@ -3973,52 +2313,213 @@ stats();
    DEBUG / VERSION
    ========================================================= */
 
-window.TeleCod =
-  Object.freeze({
-    version:
-      "2026.08.21-hardened",
-
-    language:
-      () => lang,
-
-    theme:
-      () => theme,
-
-    supabaseReady:
-      () => Boolean(sup),
-
-    authMode:
-      () => authMode
-  });
-
-
-/* =========================================================
-   AUTH BUTTON DEBUG
-   ========================================================= */
-
-document.addEventListener(
-  "click",
-  event => {
-    const element =
-      event.target?.closest?.(
-        "#loginTop, #loginCta, #registerTop, #registerCta"
-      );
-
-    if (element) {
-      console.info(
-        "TeleCod auth button:",
-        element.id
-      );
-    }
-  }
-);
-
-
-/* =========================================================
-   FINAL INIT LOG
-   ========================================================= */
+window.TeleCod = Object.freeze({
+  version: "2026.08.21",
+  language: () => lang,
+  theme: () => theme,
+  supabaseReady: () => Boolean(sup)
+});
 
 console.info(
-  "%cTeleCod frontend initialized — hardened 2026.08.21",
+  "%cTeleCod frontend initialized",
   "font-weight:700"
 );
+
+
+/* =========================================================
+   INDEX INTERACTIONS / MARKETPLACE
+   ========================================================= */
+
+let marketplaceData = [];
+let marketplaceFilter = "all";
+
+function goTo(selector){
+  const el = document.querySelector(selector);
+  if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function isLoggedIn(){
+  return !!document.documentElement.dataset.authenticated ||
+         !!document.body.classList.contains("logged-in") ||
+         !!localStorage.getItem("telecod_session_hint");
+}
+
+async function refreshAuthHint(){
+  try{
+    const session = (await sup?.auth?.getSession())?.data?.session;
+    if(session){
+      localStorage.setItem("telecod_session_hint","1");
+      document.documentElement.dataset.authenticated="true";
+    }else{
+      localStorage.removeItem("telecod_session_hint");
+      document.documentElement.dataset.authenticated="false";
+    }
+    return !!session;
+  }catch(_){ return false; }
+}
+
+function routeProtected(target="dashboard.html"){
+  refreshAuthHint().then(ok=>{
+    if(ok) location.href=target;
+    else openAuth("login");
+  });
+}
+
+function marketCategoryValue(item){
+  const type=String(item?.type||"").toLowerCase();
+  if(type==="channel") return "channel";
+  if(type==="code") return "code";
+  return "all";
+}
+
+function marketAccessValue(item){
+  const access=String(item?.access_type||"").toLowerCase();
+  return access==="free" || Number(item?.price||0)<=0 ? "free" : "paid";
+}
+
+function marketMatches(item){
+  const filter=marketplaceFilter;
+  if(filter!=="all" && filter!==marketCategoryValue(item) && filter!==marketAccessValue(item)) return false;
+  const q=String($("#marketSearch")?.value||"").trim().toLowerCase();
+  if(!q) return true;
+  return [
+    item?.title,item?.description,item?.category,item?.telegram_channel
+  ].some(v=>String(v||"").toLowerCase().includes(q));
+}
+
+function renderMarketplace(){
+  const grid=$("#marketItemsGrid"), empty=$("#marketEmpty"), error=$("#marketError");
+  if(!grid) return;
+  const sort=$("#marketSort")?.value||"latest";
+  let items=marketplaceData.filter(marketMatches);
+
+  items.sort((a,b)=>{
+    if(sort==="popular") return Number(b.sales_count||0)-Number(a.sales_count||0);
+    if(sort==="price_low") return Number(a.price||0)-Number(b.price||0);
+    if(sort==="price_high") return Number(b.price||0)-Number(a.price||0);
+    return new Date(b.created_at||0)-new Date(a.created_at||0);
+  });
+
+  error?.classList.add("hidden");
+  grid.innerHTML="";
+  if(!items.length){
+    empty?.classList.remove("hidden");
+    return;
+  }
+  empty?.classList.add("hidden");
+
+  items.slice(0,12).forEach(item=>{
+    const card=document.createElement("article");
+    card.className="market-item";
+    const paid=marketAccessValue(item)==="paid";
+    const price=paid ? `Rp ${Number(item.price||0).toLocaleString("id-ID")}` : "GRATIS";
+    card.innerHTML=`
+      <div class="market-item-image">
+        <img src="${escapeAttribute(item.thumbnail_url||"assets/reference.jpg")}" alt="">
+      </div>
+      <div class="market-item-body">
+        <small>${escapeHTML(String(item.type||"product").toUpperCase())} · ${paid?"PAID":"FREE"}</small>
+        <h3>${escapeHTML(item.title||"Untitled")}</h3>
+        <p>${escapeHTML(item.description||"Produk TeleCod")}</p>
+        <div class="market-item-foot"><b>${price}</b><button type="button" class="purple-btn market-open">Lihat</button></div>
+      </div>`;
+    card.querySelector(".market-open").addEventListener("click",()=>{
+      if(item.slug) location.href=`p.html?slug=${encodeURIComponent(item.slug)}`;
+      else routeProtected("dashboard.html");
+    });
+    grid.appendChild(card);
+  });
+}
+
+async function loadMarketplace(){
+  const grid=$("#marketItemsGrid"), error=$("#marketError");
+  if(!grid || !sup) return;
+  grid.innerHTML=`<div class="market-loading"><div class="market-loading-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><strong>Memuat marketplace...</strong><span>Mengambil produk terbaru.</span></div>`;
+  try{
+    const {data,error:dbError}=await sup.from("products")
+      .select("id,type,title,slug,description,category,access_type,price,thumbnail_url,telegram_channel,sales_count,views,created_at,status")
+      .eq("status","published")
+      .order("created_at",{ascending:false})
+      .limit(50);
+    if(dbError) throw dbError;
+    marketplaceData=Array.isArray(data)?data:[];
+    renderMarketplace();
+  }catch(err){
+    console.warn("Marketplace load error:",err);
+    marketplaceData=[];
+    grid.innerHTML="";
+    error?.classList.remove("hidden");
+    $("#marketEmpty")?.classList.add("hidden");
+  }
+}
+
+function setupIndexButtons(){
+  on("#featurePasteBtn","click",()=>openEditor());
+  on("#featureSellBtn","click",()=>routeProtected("dashboard.html"));
+  on("#featureDashboardBtn","click",()=>routeProtected("dashboard.html"));
+  on("#featureWithdrawBtn","click",()=>routeProtected("dashboard.html"));
+  on("#featureLanguageBtn","click",()=>{
+    lang=lang==="id"?"en":"id";
+    try{localStorage.setItem("telecod_lang",lang);}catch(_){}
+    tr();
+  });
+
+  $$("[data-category]").forEach(el=>{
+    el.addEventListener("click",()=>{
+      marketplaceFilter=el.dataset.category||"all";
+      $$(".market-filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.filter===marketplaceFilter));
+      renderMarketplace();
+    });
+  });
+
+  $$(".market-filter-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      marketplaceFilter=btn.dataset.filter||"all";
+      $$(".market-filter-btn").forEach(b=>b.classList.toggle("active",b===btn));
+      renderMarketplace();
+    });
+  });
+
+  on("#marketSearch","input",renderMarketplace);
+  on("#clearMarketSearch","click",()=>{
+    const input=$("#marketSearch");
+    if(input) input.value="";
+    renderMarketplace();
+    input?.focus();
+  });
+  on("#marketSort","change",renderMarketplace);
+  on("#resetMarketFilter","click",()=>{
+    marketplaceFilter="all";
+    if($("#marketSearch")) $("#marketSearch").value="";
+    if($("#marketSort")) $("#marketSort").value="latest";
+    $$(".market-filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));
+    renderMarketplace();
+  });
+  on("#retryMarket","click",loadMarketplace);
+
+  $$("#navLinks a").forEach(link=>{
+    link.addEventListener("click",()=>{
+      const href=link.getAttribute("href")||"";
+      if(href.startsWith("#")) setTimeout(()=>goTo(href),0);
+    });
+  });
+
+  $$('footer a[href="#"]').forEach(link=>{
+    link.addEventListener("click",e=>{
+      e.preventDefault();
+      toast(lang==="id"?"Halaman tersebut belum tersedia.":"That page is not available yet.","info");
+    });
+  });
+
+  const year=$("#year");
+  if(year) year.textContent=new Date().getFullYear();
+
+  refreshAuthHint();
+  loadMarketplace();
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",setupIndexButtons,{once:true});
+}else{
+  setupIndexButtons();
+}
