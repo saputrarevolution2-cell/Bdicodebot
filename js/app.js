@@ -2434,197 +2434,1375 @@ console.info(
 
 /* =========================================================
    INDEX INTERACTIONS / MARKETPLACE
+   TELECOD — MARKETPLACE V2
    ========================================================= */
 
 let marketplaceData = [];
 let marketplaceFilter = "all";
+let marketplaceLoading = false;
 
-function goTo(selector){
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function goTo(selector) {
   const el = document.querySelector(selector);
-  if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+
+  if (!el) return;
+
+  el.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
-function isLoggedIn(){
-  return document.documentElement.dataset.authenticated === "true" ||
-         document.body.classList.contains("logged-in");
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+
+function isLoggedIn() {
+  return (
+    document.documentElement.dataset.authenticated === "true" ||
+    document.body.classList.contains("logged-in")
+  );
 }
 
-async function refreshAuthHint(){
-  try{
-    const session = (await sup?.auth?.getSession())?.data?.session;
-    if(session){
-      localStorage.setItem("telecod_session_hint","1");
-      document.documentElement.dataset.authenticated="true";
-    }else{
-      localStorage.removeItem("telecod_session_hint");
-      document.documentElement.dataset.authenticated="false";
+async function refreshAuthHint() {
+  try {
+    if (!sup?.auth) {
+      document.documentElement.dataset.authenticated = "false";
+      return false;
     }
-    return !!session;
-  }catch(_){ return false; }
+
+    const result = await sup.auth.getSession();
+    const session = result?.data?.session;
+
+    if (session?.user) {
+      try {
+        localStorage.setItem(
+          "telecod_session_hint",
+          "1"
+        );
+      } catch (_) {}
+
+      document.documentElement.dataset.authenticated =
+        "true";
+
+      document.body.classList.add("logged-in");
+
+      return true;
+    }
+
+    try {
+      localStorage.removeItem(
+        "telecod_session_hint"
+      );
+    } catch (_) {}
+
+    document.documentElement.dataset.authenticated =
+      "false";
+
+    document.body.classList.remove("logged-in");
+
+    return false;
+  } catch (error) {
+    console.warn(
+      "Auth hint error:",
+      error
+    );
+
+    return false;
+  }
 }
 
-function routeProtected(target="dashboard.html"){
-  refreshAuthHint().then(ok=>{
-    if(ok) location.href=target;
-    else openAuth("login");
+
+function routeProtected(
+  target = "dashboard.html"
+) {
+  refreshAuthHint().then(ok => {
+    if (ok) {
+      location.href = target;
+    } else {
+      openAuth("login");
+    }
   });
 }
 
-function marketCategoryValue(item){
-  const type=String(item?.type||"").toLowerCase();
-  if(type==="channel") return "channel";
-  if(type==="code") return "code";
-  return "all";
+
+/* =========================================================
+   MARKETPLACE TYPE
+   ========================================================= */
+
+function marketCategoryValue(item) {
+  const type = String(
+    item?.type || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  /*
+   * Semua kemungkinan penamaan dari admin panel
+   * dibuat kompatibel.
+   */
+
+  if (
+    [
+      "channel",
+      "channels",
+      "telegram_channel",
+      "telegram-channel"
+    ].includes(type)
+  ) {
+    return "channel";
+  }
+
+  if (
+    [
+      "code",
+      "codes",
+      "bot",
+      "bot_code",
+      "bot-code",
+      "telegram_bot",
+      "telegram-code"
+    ].includes(type)
+  ) {
+    return "code";
+  }
+
+  return type || "other";
 }
 
-function marketAccessValue(item){
-  const access=String(item?.access_type||"").toLowerCase();
-  return access==="free" || Number(item?.price||0)<=0 ? "free" : "paid";
+
+/* =========================================================
+   MARKETPLACE ACCESS
+   ========================================================= */
+
+function marketAccessValue(item) {
+  const access = String(
+    item?.access_type || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const price = Number(
+    item?.price || 0
+  );
+
+  if (
+    access === "free" ||
+    access === "gratis" ||
+    access === "public" ||
+    price <= 0
+  ) {
+    return "free";
+  }
+
+  return "paid";
 }
 
-function marketMatches(item){
-  const filter=marketplaceFilter;
-  if(filter!=="all" && filter!==marketCategoryValue(item) && filter!==marketAccessValue(item)) return false;
-  const q=String($("#marketSearch")?.value||"").trim().toLowerCase();
-  if(!q) return true;
+
+/* =========================================================
+   MARKETPLACE FILTER
+   ========================================================= */
+
+function marketMatches(item) {
+  const filter =
+    marketplaceFilter;
+
+  const category =
+    marketCategoryValue(item);
+
+  const access =
+    marketAccessValue(item);
+
+  /*
+   * Filter kategori
+   */
+
+  if (
+    filter !== "all" &&
+    filter !== category &&
+    filter !== access
+  ) {
+    return false;
+  }
+
+  /*
+   * Search
+   */
+
+  const query = String(
+    $("#marketSearch")?.value || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!query) {
+    return true;
+  }
+
   return [
-    item?.title,item?.description,item?.category,item?.telegram_channel
-  ].some(v=>String(v||"").toLowerCase().includes(q));
+    item?.title,
+    item?.description,
+    item?.category,
+    item?.telegram_channel,
+    item?.slug
+  ].some(value =>
+    String(value || "")
+      .toLowerCase()
+      .includes(query)
+  );
 }
 
-function renderMarketplace(){
-  const grid=$("#marketItemsGrid"), empty=$("#marketEmpty"), error=$("#marketError");
-  if(!grid) return;
-  const sort=$("#marketSort")?.value||"latest";
-  let items=marketplaceData.filter(marketMatches);
 
-  items.sort((a,b)=>{
-    if(sort==="popular") return Number(b.sales_count||0)-Number(a.sales_count||0);
-    if(sort==="price_low") return Number(a.price||0)-Number(b.price||0);
-    if(sort==="price_high") return Number(b.price||0)-Number(a.price||0);
-    return new Date(b.created_at||0)-new Date(a.created_at||0);
-  });
+/* =========================================================
+   MARKETPLACE PRICE
+   ========================================================= */
 
-  error?.classList.add("hidden");
-  grid.innerHTML="";
-  if(!items.length){
-    empty?.classList.remove("hidden");
+function formatMarketPrice(item) {
+  const access =
+    marketAccessValue(item);
+
+  if (access === "free") {
+    return lang === "id"
+      ? "GRATIS"
+      : "FREE";
+  }
+
+  return `Rp ${Number(
+    item?.price || 0
+  ).toLocaleString("id-ID")}`;
+}
+
+
+/* =========================================================
+   MARKETPLACE DETAIL MODAL
+   ========================================================= */
+
+function openMarketplaceFreeModal(item) {
+  if (!item) return;
+
+  const title =
+    item.title ||
+    "TeleCod Item";
+
+  const description =
+    item.description ||
+    (
+      lang === "id"
+        ? "Item gratis dari marketplace TeleCod."
+        : "Free item from TeleCod marketplace."
+    );
+
+  const category =
+    marketCategoryValue(item);
+
+  const telegram =
+    String(
+      item.telegram_channel || ""
+    ).trim();
+
+  const destination =
+    String(
+      item.destination_url ||
+      item.target_url ||
+      item.download_url ||
+      item.url ||
+      ""
+    ).trim();
+
+  const modal =
+    document.createElement("div");
+
+  modal.className =
+    "modal open show telecod-market-modal";
+
+  modal.innerHTML = `
+    <div class="auth-modal market-detail-modal">
+
+      <button
+        type="button"
+        class="close-auth market-modal-close"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <div class="auth-brand">
+
+        <div class="auth-logo">
+          <i class="${
+            category === "channel"
+              ? "fa-solid fa-bullhorn"
+              : "fa-solid fa-code"
+          }"></i>
+        </div>
+
+        <div>
+          <strong>
+            ${escapeHTML(title)}
+          </strong>
+
+          <small>
+            TeleCod Marketplace
+          </small>
+        </div>
+
+      </div>
+
+      <div class="market-detail-content">
+
+        <div class="market-detail-badges">
+
+          <span class="market-badge free">
+            ${
+              lang === "id"
+                ? "GRATIS"
+                : "FREE"
+            }
+          </span>
+
+          <span class="market-badge">
+            ${escapeHTML(
+              category.toUpperCase()
+            )}
+          </span>
+
+        </div>
+
+        ${
+          item.thumbnail_url
+            ? `
+              <img
+                class="market-detail-image"
+                src="${escapeAttribute(
+                  item.thumbnail_url
+                )}"
+                alt="${escapeAttribute(
+                  title
+                )}"
+              >
+            `
+            : ""
+        }
+
+        <h2>
+          ${escapeHTML(title)}
+        </h2>
+
+        <p>
+          ${escapeHTML(
+            description
+          )}
+        </p>
+
+        ${
+          telegram
+            ? `
+              <div class="market-detail-info">
+                <i class="fa-brands fa-telegram"></i>
+                <span>
+                  ${escapeHTML(
+                    telegram
+                  )}
+                </span>
+              </div>
+            `
+            : ""
+        }
+
+        <div class="market-detail-actions">
+
+          ${
+            telegram
+              ? `
+                <a
+                  class="purple-btn"
+                  href="${escapeAttribute(
+                    telegram.startsWith("http")
+                      ? telegram
+                      : `https://t.me/${telegram.replace(/^@/, "")}`
+                  )}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <i class="fa-brands fa-telegram"></i>
+                  ${
+                    lang === "id"
+                      ? "Buka Telegram"
+                      : "Open Telegram"
+                  }
+                </a>
+              `
+              : ""
+          }
+
+          ${
+            destination
+              ? `
+                <a
+                  class="purple-btn"
+                  href="${escapeAttribute(
+                    destination
+                  )}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  ${
+                    lang === "id"
+                      ? "Buka"
+                      : "Open"
+                  }
+                </a>
+              `
+              : ""
+          }
+
+        </div>
+
+        ${
+          !telegram && !destination
+            ? `
+              <div class="market-no-link">
+                <i class="fa-solid fa-circle-info"></i>
+                ${
+                  lang === "id"
+                    ? "Item ini belum memiliki link tujuan. Silakan hubungi admin."
+                    : "This item has no destination link yet. Please contact admin."
+                }
+              </div>
+            `
+            : ""
+        }
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(
+    modal
+  );
+
+  const close = () => {
+    modal.remove();
+  };
+
+  modal
+    .querySelector(
+      ".market-modal-close"
+    )
+    ?.addEventListener(
+      "click",
+      close
+    );
+
+  modal.addEventListener(
+    "click",
+    event => {
+      if (
+        event.target === modal
+      ) {
+        close();
+      }
+    }
+  );
+}
+
+
+/* =========================================================
+   MARKETPLACE PAID
+   ========================================================= */
+
+function openMarketplaceItem(item) {
+  if (!item) return;
+
+  const access =
+    marketAccessValue(item);
+
+  /*
+   * FREE
+   *
+   * Tidak perlu login.
+   * Langsung tampilkan hasil.
+   */
+
+  if (access === "free") {
+    openMarketplaceFreeModal(
+      item
+    );
+
     return;
   }
-  empty?.classList.add("hidden");
 
-  items.slice(0,12).forEach(item=>{
-    const card=document.createElement("article");
-    card.className="market-item";
-    const paid=marketAccessValue(item)==="paid";
-    const price=paid ? `Rp ${Number(item.price||0).toLocaleString("id-ID")}` : "GRATIS";
-    card.innerHTML=`
-      <div class="market-item-image">
-        <img src="${escapeAttribute(item.thumbnail_url||"assets/reference.jpg")}" alt="">
-      </div>
-      <div class="market-item-body">
-        <small>${escapeHTML(String(item.type||"product").toUpperCase())} · ${paid?"PAID":"FREE"}</small>
-        <h3>${escapeHTML(item.title||"Untitled")}</h3>
-        <p>${escapeHTML(item.description||"Produk TeleCod")}</p>
-        <div class="market-item-foot"><b>${price}</b><button type="button" class="purple-btn market-open">Lihat</button></div>
-      </div>`;
-    card.querySelector(".market-open").addEventListener("click",()=>{
-      if(item.slug) location.href=`p.html?slug=${encodeURIComponent(item.slug)}`;
-      else routeProtected("dashboard.html");
-    });
-    grid.appendChild(card);
-  });
+  /*
+   * PAID
+   *
+   * Arahkan ke halaman product.
+   */
+
+  if (item.slug) {
+    location.href =
+      `p.html?slug=${encodeURIComponent(
+        item.slug
+      )}`;
+
+    return;
+  }
+
+  /*
+   * Jika product belum mempunyai
+   * slug yang valid.
+   */
+
+  toast(
+    lang === "id"
+      ? "Produk belum memiliki halaman pembayaran."
+      : "This product does not have a payment page yet.",
+    "warning"
+  );
 }
 
-async function loadMarketplace(){
-  const grid=$("#marketItemsGrid"), error=$("#marketError");
-  if(!grid || !sup) return;
-  grid.innerHTML=`<div class="market-loading"><div class="market-loading-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><strong>Memuat marketplace...</strong><span>Mengambil produk terbaru.</span></div>`;
-  try{
-    const {data,error:dbError}=await sup.from("products")
-      .select("id,type,title,slug,description,category,access_type,price,thumbnail_url,telegram_channel,sales_count,views,created_at,status")
-      .eq("status","published")
-      .order("created_at",{ascending:false})
-      .limit(50);
-    if(dbError) throw dbError;
-    marketplaceData=Array.isArray(data)?data:[];
+
+/* =========================================================
+   MARKETPLACE CARD
+   ========================================================= */
+
+function createMarketplaceCard(
+  item
+) {
+  const card =
+    document.createElement(
+      "article"
+    );
+
+  card.className =
+    "market-item";
+
+  const category =
+    marketCategoryValue(item);
+
+  const access =
+    marketAccessValue(item);
+
+  const paid =
+    access === "paid";
+
+  const price =
+    formatMarketPrice(item);
+
+  const icon =
+    category === "channel"
+      ? "fa-bullhorn"
+      : category === "code"
+        ? "fa-code"
+        : "fa-box";
+
+  const buttonText =
+    paid
+      ? (
+          lang === "id"
+            ? "Lihat"
+            : "View"
+        )
+      : (
+          lang === "id"
+            ? "Buka Gratis"
+            : "Open Free"
+        );
+
+  const thumbnail =
+    item.thumbnail_url ||
+    "assets/reference.jpg";
+
+  card.innerHTML = `
+    <div class="market-item-image">
+
+      <img
+        src="${escapeAttribute(
+          thumbnail
+        )}"
+        alt="${escapeAttribute(
+          item.title ||
+          "TeleCod"
+        )}"
+        loading="lazy"
+        onerror="this.src='assets/reference.jpg'"
+      >
+
+      <span class="market-item-type">
+        <i class="fa-solid ${icon}"></i>
+        ${escapeHTML(
+          category.toUpperCase()
+        )}
+      </span>
+
+      <span class="market-item-access ${
+        paid
+          ? "paid"
+          : "free"
+      }">
+        ${
+          paid
+            ? "PAID"
+            : "FREE"
+        }
+      </span>
+
+    </div>
+
+    <div class="market-item-body">
+
+      <small>
+        ${
+          category === "channel"
+            ? (
+                lang === "id"
+                  ? "Telegram Channel"
+                  : "Telegram Channel"
+              )
+            : category === "code"
+              ? (
+                  lang === "id"
+                    ? "Telegram Bot Code"
+                    : "Telegram Bot Code"
+                )
+              : "TeleCod Marketplace"
+        }
+      </small>
+
+      <h3>
+        ${escapeHTML(
+          item.title ||
+          "Untitled"
+        )}
+      </h3>
+
+      <p>
+        ${escapeHTML(
+          item.description ||
+          (
+            lang === "id"
+              ? "Produk TeleCod"
+              : "TeleCod product"
+          )
+        )}
+      </p>
+
+      <div class="market-item-foot">
+
+        <b>
+          ${price}
+        </b>
+
+        <button
+          type="button"
+          class="purple-btn market-open"
+        >
+          ${
+            paid
+              ? '<i class="fa-solid fa-eye"></i>'
+              : '<i class="fa-solid fa-unlock"></i>'
+          }
+
+          ${buttonText}
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  card
+    .querySelector(
+      ".market-open"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        openMarketplaceItem(
+          item
+        );
+      }
+    );
+
+  return card;
+}
+
+
+/* =========================================================
+   RENDER MARKETPLACE
+   ========================================================= */
+
+function renderMarketplace() {
+  const grid =
+    $("#marketItemsGrid");
+
+  const empty =
+    $("#marketEmpty");
+
+  const error =
+    $("#marketError");
+
+  if (!grid) return;
+
+  const sort =
+    $("#marketSort")?.value ||
+    "latest";
+
+  let items =
+    marketplaceData.filter(
+      marketMatches
+    );
+
+  /*
+   * Sorting
+   */
+
+  items.sort(
+    (a, b) => {
+
+      if (
+        sort === "popular"
+      ) {
+        return (
+          Number(
+            b.sales_count || 0
+          ) -
+          Number(
+            a.sales_count || 0
+          )
+        );
+      }
+
+      if (
+        sort === "price_low"
+      ) {
+        return (
+          Number(
+            a.price || 0
+          ) -
+          Number(
+            b.price || 0
+          )
+        );
+      }
+
+      if (
+        sort === "price_high"
+      ) {
+        return (
+          Number(
+            b.price || 0
+          ) -
+          Number(
+            a.price || 0
+          )
+        );
+      }
+
+      return (
+        new Date(
+          b.created_at || 0
+        ) -
+        new Date(
+          a.created_at || 0
+        )
+      );
+    }
+  );
+
+  error?.classList.add(
+    "hidden"
+  );
+
+  grid.innerHTML = "";
+
+  if (!items.length) {
+
+    empty?.classList.remove(
+      "hidden"
+    );
+
+    return;
+  }
+
+  empty?.classList.add(
+    "hidden"
+  );
+
+  /*
+   * Render maximum 12.
+   */
+
+  items
+    .slice(0, 12)
+    .forEach(item => {
+      grid.appendChild(
+        createMarketplaceCard(
+          item
+        )
+      );
+    });
+}
+
+
+/* =========================================================
+   LOAD MARKETPLACE FROM SUPABASE
+   ========================================================= */
+
+async function loadMarketplace() {
+  const grid =
+    $("#marketItemsGrid");
+
+  const error =
+    $("#marketError");
+
+  if (!grid) return;
+
+  if (!sup) {
+
+    grid.innerHTML = "";
+
+    $("#marketEmpty")
+      ?.classList.remove(
+        "hidden"
+      );
+
+    return;
+  }
+
+  if (marketplaceLoading) {
+    return;
+  }
+
+  marketplaceLoading = true;
+
+  grid.innerHTML = `
+    <div class="market-loading">
+
+      <div class="market-loading-icon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+      </div>
+
+      <strong>
+        ${
+          lang === "id"
+            ? "Memuat marketplace..."
+            : "Loading marketplace..."
+        }
+      </strong>
+
+      <span>
+        ${
+          lang === "id"
+            ? "Mengambil Code & Channel yang tersedia."
+            : "Loading available Codes & Channels."
+        }
+      </span>
+
+    </div>
+  `;
+
+  try {
+
+    /*
+     * HANYA ambil product yang:
+     *
+     * status = published
+     *
+     * Jadi produk yang belum disetujui/
+     * belum dipublish admin tidak muncul.
+     */
+
+    const {
+      data,
+      error: dbError
+    } = await sup
+      .from("products")
+      .select(`
+        id,
+        type,
+        title,
+        slug,
+        description,
+        category,
+        access_type,
+        price,
+        thumbnail_url,
+        telegram_channel,
+        destination_url,
+        target_url,
+        download_url,
+        url,
+        sales_count,
+        views,
+        created_at,
+        status
+      `)
+      .eq(
+        "status",
+        "published"
+      )
+      .in(
+        "type",
+        [
+          "code",
+          "channel",
+          "bot",
+          "telegram_channel",
+          "telegram_bot"
+        ]
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      )
+      .limit(100);
+
+    if (dbError) {
+      throw dbError;
+    }
+
+    marketplaceData =
+      Array.isArray(data)
+        ? data
+        : [];
+
     renderMarketplace();
-  }catch(err){
-    console.warn("Marketplace load error:",err);
-    marketplaceData=[];
-    grid.innerHTML="";
-    error?.classList.remove("hidden");
-    $("#marketEmpty")?.classList.add("hidden");
+
+  } catch (err) {
+
+    console.error(
+      "Marketplace load error:",
+      err
+    );
+
+    marketplaceData = [];
+
+    grid.innerHTML = "";
+
+    error?.classList.remove(
+      "hidden"
+    );
+
+    $("#marketEmpty")
+      ?.classList.add(
+        "hidden"
+      );
+
+  } finally {
+
+    marketplaceLoading =
+      false;
   }
 }
 
-function setupIndexButtons(){
-  on("#featurePasteBtn","click",()=>openEditor());
-  on("#featureSellBtn","click",()=>routeProtected("dashboard.html"));
-  on("#featureDashboardBtn","click",()=>routeProtected("dashboard.html"));
-  on("#featureWithdrawBtn","click",()=>routeProtected("dashboard.html"));
-  on("#featureLanguageBtn","click",()=>{
-    lang=lang==="id"?"en":"id";
-    try{localStorage.setItem("telecod_lang",lang);}catch(_){}
-    tr();
-  });
 
-  $$("[data-category]").forEach(el=>{
-    el.addEventListener("click",()=>{
-      marketplaceFilter=el.dataset.category||"all";
-      $$(".market-filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.filter===marketplaceFilter));
+/* =========================================================
+   MARKETPLACE CATEGORY BUTTONS
+   ========================================================= */
+
+function selectMarketplaceCategory(
+  category
+) {
+  marketplaceFilter =
+    category || "all";
+
+  /*
+   * Update active button.
+   */
+
+  $$(".market-filter-btn")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.filter ===
+          marketplaceFilter
+      );
+
+    });
+
+  /*
+   * Scroll marketplace.
+   */
+
+  goTo("#marketplace");
+
+  /*
+   * Render immediately.
+   */
+
+  renderMarketplace();
+}
+
+
+/* =========================================================
+   INDEX BUTTONS
+   ========================================================= */
+
+function setupIndexButtons() {
+
+  /*
+   * Pastelink
+   */
+
+  on(
+    "#featurePasteBtn",
+    "click",
+    () => {
+      openEditor();
+    }
+  );
+
+
+  /*
+   * Add / Sell Code
+   *
+   * Tetap protected karena fitur
+   * upload / jual membutuhkan akun.
+   */
+
+  on(
+    "#featureSellBtn",
+    "click",
+    () => {
+      routeProtected(
+        "dashboard.html"
+      );
+    }
+  );
+
+
+  /*
+   * Dashboard
+   */
+
+  on(
+    "#featureDashboardBtn",
+    "click",
+    () => {
+      routeProtected(
+        "dashboard.html"
+      );
+    }
+  );
+
+
+  /*
+   * Withdraw
+   */
+
+  on(
+    "#featureWithdrawBtn",
+    "click",
+    () => {
+      routeProtected(
+        "dashboard.html"
+      );
+    }
+  );
+
+
+  /*
+   * Multi language
+   */
+
+  on(
+    "#featureLanguageBtn",
+    "click",
+    () => {
+
+      lang =
+        lang === "id"
+          ? "en"
+          : "id";
+
+      try {
+        localStorage.setItem(
+          "telecod_lang",
+          lang
+        );
+      } catch (_) {}
+
+      tr();
+
+      /*
+       * Re-render marketplace
+       * supaya FREE/OPEN ikut berubah.
+       */
+
       renderMarketplace();
-    });
-  });
+    }
+  );
 
-  $$(".market-filter-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      marketplaceFilter=btn.dataset.filter||"all";
-      $$(".market-filter-btn").forEach(b=>b.classList.toggle("active",b===btn));
+
+  /* =======================================================
+     CATEGORY BUTTON
+     ======================================================= */
+
+  $$("[data-category]")
+    .forEach(el => {
+
+      el.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          const category =
+            el.dataset.category ||
+            "all";
+
+          selectMarketplaceCategory(
+            category
+          );
+        }
+      );
+
+    });
+
+
+  /* =======================================================
+     MARKET FILTER BUTTON
+     ======================================================= */
+
+  $$(".market-filter-btn")
+    .forEach(btn => {
+
+      btn.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          const filter =
+            btn.dataset.filter ||
+            "all";
+
+          selectMarketplaceCategory(
+            filter
+          );
+
+        }
+      );
+
+    });
+
+
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+
+  on(
+    "#marketSearch",
+    "input",
+    () => {
       renderMarketplace();
+    }
+  );
+
+
+  on(
+    "#clearMarketSearch",
+    "click",
+    () => {
+
+      const input =
+        $("#marketSearch");
+
+      if (input) {
+        input.value = "";
+      }
+
+      renderMarketplace();
+
+      input?.focus();
+    }
+  );
+
+
+  /* =======================================================
+     SORT
+     ======================================================= */
+
+  on(
+    "#marketSort",
+    "change",
+    () => {
+      renderMarketplace();
+    }
+  );
+
+
+  /* =======================================================
+     RESET
+     ======================================================= */
+
+  on(
+    "#resetMarketFilter",
+    "click",
+    () => {
+
+      marketplaceFilter =
+        "all";
+
+      if (
+        $("#marketSearch")
+      ) {
+        $("#marketSearch").value =
+          "";
+      }
+
+      if (
+        $("#marketSort")
+      ) {
+        $("#marketSort").value =
+          "latest";
+      }
+
+      $$(".market-filter-btn")
+        .forEach(btn => {
+
+          btn.classList.toggle(
+            "active",
+            btn.dataset.filter ===
+              "all"
+          );
+
+        });
+
+      renderMarketplace();
+
+    }
+  );
+
+
+  /* =======================================================
+     RETRY
+     ======================================================= */
+
+  on(
+    "#retryMarket",
+    "click",
+    () => {
+      loadMarketplace();
+    }
+  );
+
+
+  /* =======================================================
+     NAVIGATION
+     ======================================================= */
+
+  $$("#navLinks a")
+    .forEach(link => {
+
+      link.addEventListener(
+        "click",
+        () => {
+
+          const href =
+            link.getAttribute(
+              "href"
+            ) || "";
+
+          if (
+            href.startsWith("#")
+          ) {
+
+            setTimeout(
+              () => {
+                goTo(href);
+              },
+              0
+            );
+
+          }
+
+        }
+      );
+
     });
+
+
+  /* =======================================================
+     FOOTER
+     ======================================================= */
+
+  $$(
+    'footer a[href="#"]'
+  ).forEach(link => {
+
+    link.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        toast(
+          lang === "id"
+            ? "Halaman tersebut belum tersedia."
+            : "That page is not available yet.",
+          "info"
+        );
+
+      }
+    );
+
   });
 
-  on("#marketSearch","input",renderMarketplace);
-  on("#clearMarketSearch","click",()=>{
-    const input=$("#marketSearch");
-    if(input) input.value="";
-    renderMarketplace();
-    input?.focus();
-  });
-  on("#marketSort","change",renderMarketplace);
-  on("#resetMarketFilter","click",()=>{
-    marketplaceFilter="all";
-    if($("#marketSearch")) $("#marketSearch").value="";
-    if($("#marketSort")) $("#marketSort").value="latest";
-    $$(".market-filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));
-    renderMarketplace();
-  });
-  on("#retryMarket","click",loadMarketplace);
 
-  $$("#navLinks a").forEach(link=>{
-    link.addEventListener("click",()=>{
-      const href=link.getAttribute("href")||"";
-      if(href.startsWith("#")) setTimeout(()=>goTo(href),0);
-    });
-  });
+  /* =======================================================
+     YEAR
+     ======================================================= */
 
-  $$('footer a[href="#"]').forEach(link=>{
-    link.addEventListener("click",e=>{
-      e.preventDefault();
-      toast(lang==="id"?"Halaman tersebut belum tersedia.":"That page is not available yet.","info");
-    });
-  });
+  const year =
+    $("#year");
 
-  const year=$("#year");
-  if(year) year.textContent=new Date().getFullYear();
+  if (year) {
+    year.textContent =
+      new Date()
+        .getFullYear();
+  }
+
+
+  /* =======================================================
+     AUTH + MARKETPLACE
+     ======================================================= */
 
   refreshAuthHint();
+
   loadMarketplace();
 }
 
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",setupIndexButtons,{once:true});
-}else{
+
+/* =========================================================
+   DOM READY
+   ========================================================= */
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    setupIndexButtons,
+    {
+      once: true
+    }
+  );
+
+} else {
+
   setupIndexButtons();
+
 }
