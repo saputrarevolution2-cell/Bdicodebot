@@ -58,16 +58,10 @@ async function verifyTelegram(data: Record<string,string>) {
 
 const telegramEmail=(id:string)=>`telegram_${id}@telecod.local`;
 
-async function findProfile(telegramId:string, username:string){
-  const byId = await admin.from("profiles").select("*").eq("telegram_id",telegramId).maybeSingle();
-  if(byId.data) return byId.data;
-
-  if(username){
-    const byUsername = await admin.from("profiles").select("*")
-      .eq("username",username.toLowerCase()).maybeSingle();
-    if(byUsername.data) return byUsername.data;
-  }
-  return null;
+async function findProfile(telegramId:string){
+  const byId = await admin.from("profiles").select("*")
+    .eq("telegram_id",telegramId).maybeSingle();
+  return byId.data || null;
 }
 
 async function getUserById(id:string){
@@ -92,7 +86,7 @@ Deno.serve(async req=>{
     const lastName=data.last_name||"";
     const displayName=[firstName,lastName].filter(Boolean).join(" ") || username || `Telegram ${telegramId}`;
 
-    let profile=await findProfile(telegramId,username);
+    let profile=await findProfile(telegramId);
     let user=null;
 
     if(profile?.id){
@@ -101,6 +95,11 @@ Deno.serve(async req=>{
     } else {
       const email=telegramEmail(telegramId);
       const randomPassword=crypto.randomUUID()+"Aa9!";
+      const {data:usernameTaken}=username
+        ? await admin.from("profiles").select("id,telegram_id").eq("username",username).maybeSingle()
+        : {data:null};
+      if(usernameTaken?.id) return response("Username Telegram sudah digunakan. Login dengan username/password atau gunakan username Telegram lain.",409);
+
       const created=await admin.auth.admin.createUser({
         email,
         password:randomPassword,
