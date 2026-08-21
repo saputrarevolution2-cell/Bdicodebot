@@ -2639,3 +2639,65 @@ select:focus-visible,
   }
 }
 
+/* =========================================================
+   CLICK / POINTER FIX
+========================================================= */
+
+/* Background dan overlay tidak boleh menangkap klik */
+.hero-image,
+.hero-overlay {
+  pointer-events: none;
+}
+
+/* Semua konten hero tetap bisa diklik */
+.hero-content,
+.hero-content button,
+.hero-content a,
+.hero-content input,
+.hero-content textarea,
+.hero-content select {
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+/* Header harus selalu berada di atas seluruh halaman */
+.header {
+  z-index: 10000;
+}
+
+/* Navigation dan tombol header */
+.nav,
+#navLinks,
+.nav-tools,
+.nav-tools button,
+.nav-tools a {
+  position: relative;
+  z-index: 10001;
+  pointer-events: auto;
+}
+
+/* Modal harus berada paling atas */
+.modal {
+  z-index: 20000;
+}
+
+.modal *,
+.modal button,
+.modal input,
+.modal select,
+.modal textarea,
+.modal a {
+  pointer-events: auto;
+}
+
+/* Toast jangan sampai menghalangi klik di belakangnya */
+.toast {
+  pointer-events: none;
+}
+
+/* Tetapi kalau toast punya tombol, tombolnya tetap bisa diklik */
+.toast button,
+.toast a {
+  pointer-events: auto;
+}
