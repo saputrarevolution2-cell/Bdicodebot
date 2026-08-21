@@ -2328,3 +2328,18 @@ console.info(
   "%cTeleCod frontend initialized",
   "font-weight:700"
 );
+
+
+// =========================================================
+// TEST LOGIN / REGISTER CLICK
+// =========================================================
+
+document.addEventListener("click", (e) => {
+  const el = e.target.closest(
+    "#loginTop, #loginCta, #registerTop, #registerCta"
+  );
+
+  if (el) {
+    console.log("AUTH BUTTON DIKLIK:", el.id);
+  }
+});
