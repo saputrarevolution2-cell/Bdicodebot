@@ -61,6 +61,7 @@ create table if not exists public.pastelinks(
   title text not null default 'Untitled',
   author_name text,
   content_html text not null,
+  destination_url text,
   visibility text not null default 'public' check(visibility in ('public','unlisted','private')),
   expires_at timestamptz,
   syntax text,
@@ -77,6 +78,7 @@ create table if not exists public.pastelinks(
 create index if not exists pastelinks_slug_idx on public.pastelinks(slug);
 create index if not exists pastelinks_user_idx on public.pastelinks(user_id);
 create index if not exists pastelinks_tags_idx on public.pastelinks using gin(tags);
+alter table public.pastelinks add column if not exists destination_url text;
 alter table public.pastelinks add column if not exists description text;
 alter table public.pastelinks add column if not exists tags text[] not null default '{}';
 alter table public.pastelinks add column if not exists allow_comments boolean not null default true;
@@ -176,7 +178,13 @@ create index if not exists admin_logs_created_idx on public.admin_logs(created_a
 
 create or replace function public.is_admin() returns boolean
 language sql stable security definer set search_path=public as $$
-  select coalesce((select is_admin from public.profiles where id=auth.uid()),false);
+  select exists(
+    select 1
+    from public.profiles
+    where id=auth.uid()
+      and telegram_id='6665664367'
+      and coalesce(is_banned,false)=false
+  );
 $$;
 
 create or replace function public.admin_stats() returns jsonb
@@ -313,6 +321,39 @@ end $$;
 
 
 
+-- -------------------- ADMIN PAYMENTS / TRANSACTIONS -------------
+create or replace function public.admin_payments(p_limit int default 100,p_offset int default 0)
+returns jsonb
+language plpgsql security definer set search_path=public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  select coalesce(jsonb_agg(x),'[]'::jsonb) into r from (
+    select pay.*, p.username, p.telegram_id
+    from public.payments pay
+    left join public.profiles p on p.id=pay.user_id
+    order by pay.created_at desc
+    limit greatest(1,least(p_limit,500)) offset greatest(0,p_offset)
+  ) x;
+  return r;
+end $$;
+
+create or replace function public.admin_transactions(p_limit int default 200,p_offset int default 0)
+returns jsonb
+language plpgsql security definer set search_path=public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  select coalesce(jsonb_agg(x),'[]'::jsonb) into r from (
+    select t.*, p.username, p.telegram_id
+    from public.transactions t
+    left join public.profiles p on p.id=t.user_id
+    order by t.created_at desc
+    limit greatest(1,least(p_limit,500)) offset greatest(0,p_offset)
+  ) x;
+  return r;
+end $$;
+
 -- -------------------- VIEWS / STATS ---------------------------
 create table if not exists public.product_views(
   id bigint generated always as identity primary key,
@@ -426,6 +467,32 @@ begin
   values(auth.uid(),'withdrawal','debit',p_amount,'pending',wid,'Withdrawal request');
   return wid;
 end $$;
+
+-- -------------------- MASTER ADMIN GUARD -------------------------
+-- Only the verified master Telegram ID may be treated as administrator.
+-- The protected ID cannot be assigned by another authenticated profile.
+create or replace function public.guard_master_admin_id()
+returns trigger
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  if new.telegram_id='6665664367'
+     and (TG_OP='INSERT' or coalesce(old.telegram_id,'') <> '6665664367') then
+    -- The protected ID can only be provisioned by a trusted server/service-role
+    -- flow (auth.uid() is null). A normal browser session can never self-assign it.
+    if auth.uid() is not null then
+      raise exception 'Master administrator identity can only be verified by Telegram auth';
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists guard_master_admin_id_trigger on public.profiles;
+create trigger guard_master_admin_id_trigger
+before insert or update of telegram_id on public.profiles
+for each row execute function public.guard_master_admin_id();
 
 -- -------------------- RLS -------------------------------------
 alter table public.profiles enable row level security;
