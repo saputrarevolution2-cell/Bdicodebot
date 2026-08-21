@@ -2728,3 +2728,46 @@ body{background:
   .paste-card{width:100%;padding:14px}
   .success-body{gap:7px}
 }
+
+/* =========================================================
+   TELECOD PRODUCTION RESPONSIVE / PASTELINK POLISH
+========================================================= */
+button,a,input,select,textarea{touch-action:manipulation}
+button:disabled{opacity:.55!important;cursor:not-allowed!important;transform:none!important}
+.paste-card{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1)!important;border-radius:24px!important;background:linear-gradient(145deg,rgba(21,27,58,.94),rgba(10,14,32,.96))!important;box-shadow:0 25px 80px rgba(0,0,0,.28)!important;padding:20px!important}
+.paste-card:before{content:"";position:absolute;width:190px;height:190px;right:-100px;top:-120px;border-radius:50%;background:rgba(139,92,246,.18);filter:blur(5px);pointer-events:none}
+.paste-title{position:relative;display:flex;align-items:center;gap:12px!important}.paste-title>div{min-width:0;flex:1}.paste-title h3{font-size:18px!important;margin:0 0 3px}.paste-title p{margin:0!important;color:#a7b0c8!important;line-height:1.5}
+.paste-title .paste-icon{width:42px!important;height:42px!important;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#7c3aed,#2563eb)!important;color:#fff!important;flex:none}
+#quickForm{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin-top:16px}
+#quickUrl{width:100%;min-width:0;height:48px!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:13px!important;background:#080d20!important;color:#fff!important;padding:0 14px!important;outline:none!important}
+#quickUrl:focus{border-color:#8b5cf6!important;box-shadow:0 0 0 3px rgba(139,92,246,.14)}
+#quickForm .purple-btn{min-height:48px!important;border-radius:13px!important;padding:0 18px!important;white-space:nowrap}
+.paste-card>small{display:block;margin-top:10px;color:#7f8ba7!important;line-height:1.5}
+.editor-link{width:100%;margin-top:12px!important;min-height:42px!important;border:1px solid rgba(139,92,246,.25)!important;border-radius:11px!important;background:rgba(139,92,246,.08)!important;color:#c4b5fd!important}
+.success{border:1px solid rgba(34,197,94,.25)!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(15,52,35,.95),rgba(8,24,24,.95))!important;box-shadow:0 20px 70px rgba(0,0,0,.25)!important}
+.success-body{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important;align-items:center}
+.success-body input{min-width:0!important;width:100%!important}
+#editorModal .editor-modal{width:min(960px,calc(100vw - 24px))!important;max-height:calc(100vh - 24px)!important;overflow:auto!important;border-radius:22px!important}
+#editor{min-height:300px!important}
+#toolbar{position:sticky;top:0;z-index:3;display:flex;flex-wrap:wrap;gap:5px!important;padding:9px!important}
+#toolbar button{min-width:36px!important;height:36px!important;border-radius:9px!important}
+.editor-meta{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;gap:9px!important}
+.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media(max-width:760px){
+  #quickForm{grid-template-columns:1fr}
+  #quickForm .purple-btn{width:100%}
+  .paste-card{padding:16px!important;border-radius:19px!important}
+  .paste-title{align-items:flex-start}.paste-title h3{font-size:16px!important}
+  .paste-title p{font-size:11px!important}
+  .success-body{grid-template-columns:1fr!important}
+  #copyUrl{width:100%;min-height:44px}
+  #editorModal .editor-modal{width:calc(100vw - 12px)!important;max-height:calc(100vh - 12px)!important;border-radius:18px!important}
+  .editor-meta,.form-grid{grid-template-columns:1fr!important}
+  #toolbar{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  #toolbar::-webkit-scrollbar{display:none}
+  #editor{min-height:230px!important}
+}
+@media(max-width:430px){
+  .paste-title .paste-icon{width:38px!important;height:38px!important}
+  .success-body{gap:6px!important}
+}
