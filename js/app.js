@@ -442,6 +442,7 @@ function setTheme() {
     "light",
     theme === "light"
   );
+  document.documentElement.dataset.theme = theme;
 
   const themeBtn = $("#themeBtn");
 
@@ -537,6 +538,62 @@ on("#hidePaste", "click", () => {
   $(".paste-card")?.classList.add("hidden");
 });
 
+// Prevent dead buttons/links on the landing page.
+$$('a[href="#"]').forEach(link => {
+  link.addEventListener("click", event => {
+    event.preventDefault();
+    const text = (link.textContent || "").trim();
+    if (/telegram/i.test(text) || link.querySelector(".fa-telegram")) {
+      window.open("https://t.me/mktplbot", "_blank", "noopener");
+      return;
+    }
+    toast(
+      lang === "id"
+        ? `${text || "Fitur"} akan segera tersedia.`
+        : `${text || "This feature"} will be available soon.`,
+      "info"
+    );
+  });
+});
+
+
+/* =========================================================
+   LANDING PAGE LINKS / ACTIONS
+   ========================================================= */
+
+function openInfoModal(title, body){
+  const modal = document.createElement("div");
+  modal.className = "modal open show";
+  modal.innerHTML = `
+    <div class="auth-modal">
+      <button type="button" class="close-auth" aria-label="Close">×</button>
+      <div class="auth-brand"><div class="auth-logo"><i class="fa-solid fa-circle-info"></i></div><div><strong>${escapeHTML(title)}</strong><small>TeleCod</small></div></div>
+      <p style="color:var(--muted);line-height:1.8;font-size:13px">${escapeHTML(body)}</p>
+      <button type="button" class="purple-btn" style="width:100%;margin-top:15px">OK</button>
+    </div>`;
+  document.body.appendChild(modal);
+  const close=()=>modal.remove();
+  modal.querySelector(".close-auth")?.addEventListener("click",close);
+  modal.querySelector(".purple-btn")?.addEventListener("click",close);
+  modal.addEventListener("click",e=>{if(e.target===modal)close();});
+}
+
+$$('footer a[href="#"]').forEach(link=>{
+  link.addEventListener("click",e=>{
+    e.preventDefault();
+    const text=(link.textContent||"").trim();
+    if(/syarat|terms/i.test(text)) openInfoModal(lang==="id"?"Syarat & Ketentuan":"Terms & Conditions", lang==="id"?"Gunakan TeleCod secara bertanggung jawab. Produk dan konten yang melanggar hukum atau hak pihak lain dapat dihapus.":"Use TeleCod responsibly. Illegal or infringing content may be removed.");
+    else if(/privasi|privacy/i.test(text)) openInfoModal(lang==="id"?"Kebijakan Privasi":"Privacy Policy", lang==="id"?"TeleCod hanya menggunakan data yang diperlukan untuk akun, keamanan, transaksi dan fitur platform.":"TeleCod uses only the data needed for accounts, security, transactions and platform features.");
+    else if(/dmca/i.test(text)) openInfoModal("DMCA", lang==="id"?"Jika kamu pemilik hak dan menemukan konten yang melanggar, hubungi admin TeleCod untuk proses penanganan.":"If you are a rights holder and find infringing content, contact TeleCod admin for review.");
+  });
+});
+
+$$('.socials a').forEach((link,i)=>{
+  const urls=["https://t.me/mktplbot","https://www.youtube.com/","https://www.facebook.com/","https://www.instagram.com/"];
+  link.href=urls[i]||urls[0];
+  link.target="_blank";
+  link.rel="noopener noreferrer";
+});
 
 /* =========================================================
    SUPABASE
@@ -722,17 +779,15 @@ async function saveQuick(url) {
       .select("slug")
       .single();
 
-    if (error) throw error;
+    if (!error) return data.slug;
 
-    return data.slug;
+    console.warn("Pastelink database save failed; using local fallback:", error.message);
   }
 
-  /* Demo fallback only */
+  /* Local fallback so the landing page remains usable during setup. */
   try {
-    localStorage.setItem(
-      "telecod_demo_last",
-      JSON.stringify(payload)
-    );
+    localStorage.setItem(`telecod_demo_${payload.slug}`, JSON.stringify(payload));
+    localStorage.setItem("telecod_demo_last", JSON.stringify(payload));
   } catch (_) {}
 
   return payload.slug;
@@ -852,11 +907,11 @@ on("#closeSuccess", "click", () => {
    ========================================================= */
 
 function openEditor() {
-  $("#editorModal")?.classList.add("open");
+  $("#editorModal")?.classList.add("open", "show");
 }
 
 function closeEditor() {
-  $("#editorModal")?.classList.remove("open");
+  $("#editorModal")?.classList.remove("open", "show");
 }
 
 on("#openEditor", "click", openEditor);
@@ -1379,7 +1434,7 @@ function openAuth(mode = "login") {
 
   if (!modal) return;
 
-  modal.classList.add("open");
+  modal.classList.add("open", "show");
   modal.setAttribute(
     "aria-hidden",
     "false"
@@ -1393,7 +1448,7 @@ function closeAuth() {
 
   if (!modal) return;
 
-  modal.classList.remove("open");
+  modal.classList.remove("open", "show");
   modal.setAttribute(
     "aria-hidden",
     "true"
@@ -1431,11 +1486,11 @@ function setAuthMode(mode) {
 function openRecovery() {
   closeAuth();
 
-  $("#forgotModal")?.classList.add("open");
+  $("#forgotModal")?.classList.add("open", "show");
 }
 
 function closeRecovery() {
-  $("#forgotModal")?.classList.remove("open");
+  $("#forgotModal")?.classList.remove("open", "show");
 }
 
 
@@ -1579,14 +1634,7 @@ on("#loginForm", "submit", async event => {
     return;
   }
 
-  if (
-    !requireTerms(
-      $("#loginTerms")?.checked
-    )
-  ) {
-    return;
-  }
-
+  // Terms are required when registering, not on every login.
   if (!(await ensureSupabase())) {
     return;
   }
@@ -1607,15 +1655,62 @@ on("#loginForm", "submit", async event => {
           : "Signing in...";
     }
 
-    const {
-      data,
-      error
-    } = await sup.auth.signInWithPassword({
-      email: syntheticEmail(username),
-      password
-    });
+    const functionUrl = String(
+      window.TELECOD_USERNAME_AUTH_FUNCTION_URL || ""
+    ).trim();
 
-    if (error) throw error;
+    let data = null;
+
+    // Use the username-auth Edge Function first. This avoids exposing or
+    // depending on the synthetic email implementation in the browser.
+    if (functionUrl && /^https?:\/\//i.test(functionUrl)) {
+      const response = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          action: "login",
+          username,
+          password,
+          terms_accepted: true
+        })
+      });
+
+      let result = {};
+      try { result = await response.json(); } catch (_) {}
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+          result?.message ||
+          `Login gagal (${response.status})`
+        );
+      }
+
+      if (result?.access_token && result?.refresh_token) {
+        const sessionResult = await sup.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token
+        });
+        if (sessionResult.error) throw sessionResult.error;
+        data = sessionResult.data;
+      } else {
+        throw new Error(
+          lang === "id"
+            ? "Server login tidak mengembalikan session."
+            : "Login server did not return a session."
+        );
+      }
+    } else {
+      const result = await sup.auth.signInWithPassword({
+        email: syntheticEmail(username),
+        password
+      });
+      if (result.error) throw result.error;
+      data = result.data;
+    }
 
     if (!data?.user) {
       throw new Error(
@@ -1820,21 +1915,26 @@ on("#registerForm", "submit", async event => {
         );
       }
 
-      /*
-        If Edge Function returns email,
-        create/login session.
-      */
-
-      if (result?.email) {
-        const login =
-          await sup.auth.signInWithPassword({
-            email: result.email,
-            password
-          });
-
-        if (login.error) {
-          throw login.error;
-        }
+      // Edge Function may already return a live Supabase session.
+      if (result?.access_token && result?.refresh_token) {
+        const sessionResult = await sup.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token
+        });
+        if (sessionResult.error) throw sessionResult.error;
+      } else if (result?.email) {
+        // Backward compatibility with the previous function response.
+        const login = await sup.auth.signInWithPassword({
+          email: result.email,
+          password
+        });
+        if (login.error) throw login.error;
+      } else if (result?.session_required) {
+        throw new Error(
+          lang === "id"
+            ? "Akun berhasil dibuat, tetapi session belum dibuat. Deploy ulang Edge Function username-auth."
+            : "Account created, but no session was created. Redeploy the username-auth Edge Function."
+        );
       }
     } else {
       /*
@@ -2267,15 +2367,15 @@ document.addEventListener(
     if (event.key !== "Escape") return;
 
     $("#authModal")?.classList.remove(
-      "open"
+      "open", "show"
     );
 
     $("#forgotModal")?.classList.remove(
-      "open"
+      "open", "show"
     );
 
     $("#editorModal")?.classList.remove(
-      "open"
+      "open", "show"
     );
 
     document
@@ -2339,9 +2439,8 @@ function goTo(selector){
 }
 
 function isLoggedIn(){
-  return !!document.documentElement.dataset.authenticated ||
-         !!document.body.classList.contains("logged-in") ||
-         !!localStorage.getItem("telecod_session_hint");
+  return document.documentElement.dataset.authenticated === "true" ||
+         document.body.classList.contains("logged-in");
 }
 
 async function refreshAuthHint(){
