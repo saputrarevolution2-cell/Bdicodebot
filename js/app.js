@@ -753,43 +753,44 @@ function showResult(slug) {
 
 async function saveQuick(url) {
   const cleanUrl = normalizeUrl(url);
-
   if (!cleanUrl) {
-    throw new Error(
-      lang === "id"
-        ? "URL tidak valid."
-        : "Invalid URL."
-    );
+    throw new Error(lang === "id" ? "URL tidak valid." : "Invalid URL.");
   }
 
-  const payload = {
+  const makePayload = () => ({
     slug: randomSlug(),
     title: "Telegram Link",
     destination_url: cleanUrl,
     content_html:
-      `<p><a href="${escapeAttribute(cleanUrl)}" rel="nofollow noopener noreferrer">${escapeHTML(cleanUrl)}</a></p>`,
-    visibility: "public"
-  };
+      `<p class="quick-link"><a href="${escapeAttribute(cleanUrl)}" target="_blank" rel="nofollow noopener noreferrer">${escapeHTML(cleanUrl)}</a></p>`,
+    visibility: "public",
+    anonymous: true,
+    publish_timeline: false
+  });
 
-  /* Production */
   if (sup) {
-    const { data, error } = await sup
-      .from("pastelinks")
-      .insert(payload)
-      .select("slug")
-      .single();
+    let lastError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const payload = makePayload();
+      const { data, error } = await sup
+        .from("pastelinks")
+        .insert(payload)
+        .select("slug")
+        .single();
 
-    if (!error) return data.slug;
-
-    console.warn("Pastelink database save failed; using local fallback:", error.message);
+      if (!error && data?.slug) return data.slug;
+      lastError = error;
+      if (!/duplicate|unique/i.test(error?.message || "")) break;
+    }
+    throw lastError || new Error(lang === "id" ? "Gagal menyimpan Pastelink." : "Failed to save Pastelink.");
   }
 
-  /* Local fallback so the landing page remains usable during setup. */
+  // Local preview is used only when Supabase has not been configured yet.
+  const payload = makePayload();
   try {
     localStorage.setItem(`telecod_demo_${payload.slug}`, JSON.stringify(payload));
     localStorage.setItem("telecod_demo_last", JSON.stringify(payload));
   } catch (_) {}
-
   return payload.slug;
 }
 
@@ -1188,27 +1189,24 @@ function getEditorHTML() {
 async function createPastelink(payload) {
   if (!sup) {
     try {
-      localStorage.setItem(
-        `telecod_demo_${payload.slug}`,
-        JSON.stringify(payload)
-      );
+      localStorage.setItem(`telecod_demo_${payload.slug}`, JSON.stringify(payload));
     } catch (_) {}
-
     return payload.slug;
   }
 
-  const {
-    data,
-    error
-  } = await sup
-    .from("pastelinks")
-    .insert(payload)
-    .select("slug")
-    .single();
+  let current = { ...payload };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await sup
+      .from("pastelinks")
+      .insert(current)
+      .select("slug")
+      .single();
 
-  if (error) throw error;
-
-  return data?.slug || payload.slug;
+    if (!error && data?.slug) return data.slug;
+    if (!/duplicate|unique/i.test(error?.message || "")) throw error;
+    current = { ...current, slug: randomSlug() };
+  }
+  throw new Error(lang === "id" ? "Tidak bisa membuat URL unik." : "Unable to create a unique URL.");
 }
 
 on("#pasteForm", "submit", async event => {

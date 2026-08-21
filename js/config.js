@@ -9,6 +9,8 @@ window.TELECOD_CONFIG={
 
   TELEGRAM_BOT_USERNAME:"mktplbot",
 
+  ADMIN_TELEGRAM_ID:"6665664367",
+
   TELEGRAM_AUTH_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/telegram-login",
 
   USERNAME_AUTH_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/username-auth",
