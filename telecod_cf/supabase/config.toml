@@ -1,0 +1,22 @@
+project_id = "telecod"
+
+[functions.username-auth]
+verify_jwt = false
+
+[functions.telegram-login]
+verify_jwt = false
+
+[functions.marketplace]
+verify_jwt = true
+
+[functions.payment-create]
+verify_jwt = true
+
+[functions.payment-status]
+verify_jwt = true
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.withdrawal-admin]
+verify_jwt = false
