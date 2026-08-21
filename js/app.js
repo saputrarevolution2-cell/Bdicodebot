@@ -2432,67 +2432,28 @@ console.info(
 );
 
 
-/* TELECOD — INDEX / MARKETPLACE V2 — FIXED */
-"use strict";
+/* =========================================================
+   TELECOD — INDEX MARKETPLACE V2 FIXED
+   DATABASE: products
+   ========================================================= */
 
 let marketplaceData=[];
 let marketplaceFilter="all";
 let marketplaceLoading=false;
-let indexInitialized=false;
 
-/* HELPERS */
-const $=s=>document.querySelector(s);
-const $$=s=>Array.from(document.querySelectorAll(s));
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
 
-function on(selector,event,handler){
-  const el=$(selector);
-  if(!el)return;
-  el.addEventListener(event,handler);
-}
-
-function safeText(v){
-  return v==null?"":String(v);
-}
-
-function escapeHTML(v){
-  return safeText(v)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function escapeAttribute(v){
-  return escapeHTML(v);
-}
-
-function showToast(message,type="info"){
-  if(typeof toast==="function"){
-    toast(message,type);
-    return;
-  }
-  console.log(`[${type}] ${message}`);
-}
-
-/* NAVIGATION */
 function goTo(selector){
-  const el=$(selector);
-  if(!el)return false;
+  const el=document.querySelector(selector);
+  if(!el)return;
   el.scrollIntoView({behavior:"smooth",block:"start"});
-  return true;
 }
 
-/* AUTH */
-function getSupabase(){
-  try{
-    if(typeof sup!=="undefined"&&sup?.auth)return sup;
-  }catch(e){}
-  try{
-    if(typeof window.sup!=="undefined"&&window.sup?.auth)return window.sup;
-  }catch(e){}
-  return null;
-}
+/* =========================================================
+   AUTH
+   ========================================================= */
 
 function isLoggedIn(){
   return document.documentElement.dataset.authenticated==="true"||
@@ -2500,55 +2461,61 @@ function isLoggedIn(){
 }
 
 async function refreshAuthHint(){
-  const client=getSupabase();
+  try{
+    if(!window.sup||!sup.auth){
+      document.documentElement.dataset.authenticated="false";
+      return false;
+    }
 
-  if(!client?.auth){
+    const {data}=await sup.auth.getSession();
+    const session=data?.session;
+
+    if(session?.user){
+      document.documentElement.dataset.authenticated="true";
+      document.body.classList.add("logged-in");
+
+      try{
+        localStorage.setItem("telecod_session_hint","1");
+      }catch(_){}
+
+      return true;
+    }
+
     document.documentElement.dataset.authenticated="false";
     document.body.classList.remove("logged-in");
-    return false;
-  }
-
-  try{
-    const {data,error}=await client.auth.getSession();
-    if(error)throw error;
-
-    const session=data?.session;
-    const logged=!!session?.user;
-
-    document.documentElement.dataset.authenticated=logged?"true":"false";
-    document.body.classList.toggle("logged-in",logged);
 
     try{
-      if(logged)localStorage.setItem("telecod_session_hint","1");
-      else localStorage.removeItem("telecod_session_hint");
-    }catch(e){}
+      localStorage.removeItem("telecod_session_hint");
+    }catch(_){}
 
-    return logged;
-  }catch(error){
-    console.warn("Auth check:",error);
+    return false;
+  }catch(err){
+    console.warn("Auth error:",err);
+    document.documentElement.dataset.authenticated="false";
     return false;
   }
 }
 
-async function routeProtected(target="dashboard.html"){
-  const logged=await refreshAuthHint();
-
-  if(logged){
-    window.location.href=target;
-    return;
-  }
-
-  if(typeof openAuth==="function"){
-    openAuth("login");
-    return;
-  }
-
-  window.location.href="login.html";
+function routeProtected(target="dashboard.html"){
+  refreshAuthHint().then(ok=>{
+    if(ok){
+      location.href=target;
+    }else if(typeof openAuth==="function"){
+      openAuth("login");
+    }else{
+      location.href="login.html";
+    }
+  });
 }
 
-/* MARKETPLACE TYPE */
+/* =========================================================
+   MARKET CATEGORY
+   ========================================================= */
+
 function marketCategoryValue(item){
-  const type=safeText(item?.type).trim().toLowerCase();
+  const type=String(item?.type||item?.category||"")
+    .trim()
+    .toLowerCase();
 
   if([
     "channel",
@@ -2567,12 +2534,20 @@ function marketCategoryValue(item){
     "telegram-code"
   ].includes(type))return"code";
 
+  if(item?.is_channel===true)return"channel";
+
   return type||"other";
 }
 
-/* MARKETPLACE ACCESS */
+/* =========================================================
+   ACCESS
+   ========================================================= */
+
 function marketAccessValue(item){
-  const access=safeText(item?.access_type).trim().toLowerCase();
+  const access=String(item?.access_type||"")
+    .trim()
+    .toLowerCase();
+
   const price=Number(item?.price||0);
 
   if(
@@ -2585,7 +2560,24 @@ function marketAccessValue(item){
   return"paid";
 }
 
-/* MARKETPLACE FILTER */
+/* =========================================================
+   PRICE
+   ========================================================= */
+
+function formatMarketPrice(item){
+  if(marketAccessValue(item)==="free"){
+    return typeof lang!=="undefined"&&lang==="en"
+      ?"FREE"
+      :"GRATIS";
+  }
+
+  return`Rp ${Number(item?.price||0).toLocaleString("id-ID")}`;
+}
+
+/* =========================================================
+   FILTER
+   ========================================================= */
+
 function marketMatches(item){
   const filter=marketplaceFilter;
   const category=marketCategoryValue(item);
@@ -2597,8 +2589,9 @@ function marketMatches(item){
     filter!==access
   )return false;
 
-  const input=$("#marketSearch");
-  const query=safeText(input?.value).trim().toLowerCase();
+  const query=String(
+    document.querySelector("#marketSearch")?.value||""
+  ).trim().toLowerCase();
 
   if(!query)return true;
 
@@ -2606,153 +2599,179 @@ function marketMatches(item){
     item?.title,
     item?.description,
     item?.category,
+    item?.type,
     item?.telegram_channel,
-    item?.slug,
-    item?.type
-  ].some(v=>safeText(v).toLowerCase().includes(query));
+    item?.slug
+  ].some(value=>
+    String(value||"").toLowerCase().includes(query)
+  );
 }
 
-/* PRICE */
-function formatMarketPrice(item){
-  if(marketAccessValue(item)==="free"){
-    return typeof lang!=="undefined"&&lang==="en"?"FREE":"GRATIS";
-  }
+/* =========================================================
+   FREE MODAL
+   ========================================================= */
 
-  return`Rp ${Number(item?.price||0).toLocaleString("id-ID")}`;
-}
-
-/* URL */
-function normalizeTelegramUrl(value){
-  let url=safeText(value).trim();
-  if(!url)return"";
-
-  if(/^https?:\/\//i.test(url))return url;
-
-  return`https://t.me/${url.replace(/^@/,"").replace(/^\/+/,"")}`;
-}
-
-function validUrl(value){
-  const url=safeText(value).trim();
-  if(!url)return"";
-
-  try{
-    const parsed=new URL(url,window.location.href);
-
-    if(
-      parsed.protocol!=="http:"&&
-      parsed.protocol!=="https:"
-    )return"";
-
-    return parsed.href;
-  }catch(e){
-    return"";
-  }
-}
-
-/* FREE MODAL */
 function openMarketplaceFreeModal(item){
   if(!item)return;
 
-  const isID=typeof lang==="undefined"||lang==="id";
+  const isEN=typeof lang!=="undefined"&&lang==="en";
   const title=item.title||"TeleCod Item";
   const description=item.description||
-    (isID?"Item gratis dari marketplace TeleCod.":"Free item from TeleCod marketplace.");
+    (isEN
+      ?"Free item from TeleCod Marketplace."
+      :"Item gratis dari TeleCod Marketplace.");
 
   const category=marketCategoryValue(item);
-  const telegram=normalizeTelegramUrl(item.telegram_channel);
+  const telegram=String(item.telegram_channel||"").trim();
 
-  const destination=validUrl(
-    item.destination_url||
-    item.target_url||
-    item.download_url||
-    item.url
-  );
+  /* DATABASE ASLI: delivery_url */
+  const delivery=String(item.delivery_url||"").trim();
+
+  /* content bisa digunakan sebagai fallback */
+  const content=String(item.content||"").trim();
+
+  const destination=delivery||content;
 
   const modal=document.createElement("div");
+
   modal.className="modal open show telecod-market-modal";
-  modal.setAttribute("role","dialog");
-  modal.setAttribute("aria-modal","true");
 
   modal.innerHTML=`
     <div class="auth-modal market-detail-modal">
       <button type="button" class="close-auth market-modal-close" aria-label="Close">×</button>
+
       <div class="auth-brand">
         <div class="auth-logo">
-          <i class="${category==="channel"?"fa-solid fa-bullhorn":"fa-solid fa-code"}"></i>
+          <i class="${
+            category==="channel"
+              ?"fa-solid fa-bullhorn"
+              :"fa-solid fa-code"
+          }"></i>
         </div>
+
         <div>
           <strong>${escapeHTML(title)}</strong>
           <small>TeleCod Marketplace</small>
         </div>
       </div>
+
       <div class="market-detail-content">
+
         <div class="market-detail-badges">
-          <span class="market-badge free">${isID?"GRATIS":"FREE"}</span>
-          <span class="market-badge">${escapeHTML(category.toUpperCase())}</span>
+          <span class="market-badge free">
+            ${isEN?"FREE":"GRATIS"}
+          </span>
+
+          <span class="market-badge">
+            ${escapeHTML(category.toUpperCase())}
+          </span>
         </div>
+
         ${
-          item.thumbnail_url?
-          `<img class="market-detail-image" src="${escapeAttribute(item.thumbnail_url)}" alt="${escapeAttribute(title)}" onerror="this.remove()">`
-          :""
+          item.thumbnail_url
+            ?`
+              <img
+                class="market-detail-image"
+                src="${escapeAttribute(item.thumbnail_url)}"
+                alt="${escapeAttribute(title)}"
+                onerror="this.style.display='none'"
+              >
+            `
+            :""
         }
+
         <h2>${escapeHTML(title)}</h2>
+
         <p>${escapeHTML(description)}</p>
+
         ${
-          item.telegram_channel?
-          `<div class="market-detail-info">
-            <i class="fa-brands fa-telegram"></i>
-            <span>${escapeHTML(item.telegram_channel)}</span>
-          </div>`:""
+          telegram
+            ?`
+              <div class="market-detail-info">
+                <i class="fa-brands fa-telegram"></i>
+                <span>${escapeHTML(telegram)}</span>
+              </div>
+            `
+            :""
         }
+
         <div class="market-detail-actions">
+
           ${
-            telegram?
-            `<a class="purple-btn" href="${escapeAttribute(telegram)}" target="_blank" rel="noopener noreferrer">
-              <i class="fa-brands fa-telegram"></i>${isID?"Buka Telegram":"Open Telegram"}
-            </a>`:""
+            telegram
+              ?`
+                <a
+                  class="purple-btn"
+                  href="${
+                    escapeAttribute(
+                      telegram.startsWith("http")
+                        ?telegram
+                        :`https://t.me/${telegram.replace(/^@/,"")}`
+                    )
+                  }"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <i class="fa-brands fa-telegram"></i>
+                  ${isEN?"Open Telegram":"Buka Telegram"}
+                </a>
+              `
+              :""
           }
+
           ${
-            destination?
-            `<a class="purple-btn" href="${escapeAttribute(destination)}" target="_blank" rel="noopener noreferrer">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i>${isID?"Buka":"Open"}
-            </a>`:""
+            destination
+              ?`
+                <a
+                  class="purple-btn"
+                  href="${escapeAttribute(destination)}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  ${isEN?"Open":"Buka"}
+                </a>
+              `
+              :""
           }
+
         </div>
+
         ${
-          !telegram&&!destination?
-          `<div class="market-no-link">
-            <i class="fa-solid fa-circle-info"></i>
-            ${isID?"Item ini belum memiliki link tujuan. Silakan hubungi admin.":"This item has no destination link yet. Please contact admin."}
-          </div>`:""
+          !telegram&&!destination
+            ?`
+              <div class="market-no-link">
+                <i class="fa-solid fa-circle-info"></i>
+                ${
+                  isEN
+                    ?"This item has no delivery link yet."
+                    :"Item ini belum memiliki link delivery."
+                }
+              </div>
+            `
+            :""
         }
+
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  const close=()=>{
-    modal.classList.remove("show","open");
-    setTimeout(()=>modal.remove(),150);
-  };
+  const close=()=>modal.remove();
 
-  modal.querySelector(".market-modal-close")?.addEventListener("click",close);
+  modal.querySelector(".market-modal-close")
+    ?.addEventListener("click",close);
 
   modal.addEventListener("click",e=>{
     if(e.target===modal)close();
   });
-
-  const esc=e=>{
-    if(e.key==="Escape"){
-      close();
-      document.removeEventListener("keydown",esc);
-    }
-  };
-
-  document.addEventListener("keydown",esc);
 }
 
-/* OPEN ITEM */
+/* =========================================================
+   OPEN PRODUCT
+   ========================================================= */
+
 function openMarketplaceItem(item){
   if(!item)return;
 
@@ -2764,99 +2783,132 @@ function openMarketplaceItem(item){
   }
 
   if(item.slug){
-    window.location.href=`p.html?slug=${encodeURIComponent(item.slug)}`;
+    location.href=`p.html?slug=${encodeURIComponent(item.slug)}`;
     return;
   }
 
-  if(item.id){
-    window.location.href=`p.html?id=${encodeURIComponent(item.id)}`;
-    return;
+  if(typeof toast==="function"){
+    toast(
+      typeof lang!=="undefined"&&lang==="en"
+        ?"This product does not have a payment page yet."
+        :"Produk belum memiliki halaman pembayaran.",
+      "warning"
+    );
   }
-
-  showToast(
-    typeof lang!=="undefined"&&lang==="en"
-      ?"This product does not have a payment page yet."
-      :"Produk belum memiliki halaman pembayaran.",
-    "warning"
-  );
 }
 
-/* CARD */
+/* =========================================================
+   CARD
+   ========================================================= */
+
 function createMarketplaceCard(item){
   const card=document.createElement("article");
   card.className="market-item";
 
   const category=marketCategoryValue(item);
-  const paid=marketAccessValue(item)==="paid";
-  const isID=typeof lang==="undefined"||lang==="id";
+  const access=marketAccessValue(item);
+  const paid=access==="paid";
+
+  const price=formatMarketPrice(item);
 
   const icon=
-    category==="channel"?"fa-bullhorn":
-    category==="code"?"fa-code":
-    "fa-box";
+    category==="channel"
+      ?"fa-bullhorn"
+      :category==="code"
+        ?"fa-code"
+        :"fa-box";
 
-  const thumbnail=
-    validUrl(item.thumbnail_url)||
-    "assets/reference.jpg";
+  const isEN=typeof lang!=="undefined"&&lang==="en";
+
+  const buttonText=paid
+    ?(isEN?"View":"Lihat")
+    :(isEN?"Open Free":"Buka Gratis");
+
+  const thumbnail=item.thumbnail_url||"assets/reference.jpg";
 
   card.innerHTML=`
     <div class="market-item-image">
+
       <img
         src="${escapeAttribute(thumbnail)}"
         alt="${escapeAttribute(item.title||"TeleCod")}"
         loading="lazy"
-        onerror="this.onerror=null;this.src='assets/reference.jpg'"
+        onerror="this.src='assets/reference.jpg'"
       >
+
       <span class="market-item-type">
         <i class="fa-solid ${icon}"></i>
         ${escapeHTML(category.toUpperCase())}
       </span>
+
       <span class="market-item-access ${paid?"paid":"free"}">
         ${paid?"PAID":"FREE"}
       </span>
+
     </div>
+
     <div class="market-item-body">
+
       <small>
         ${
           category==="channel"
-            ?"Telegram Channel":
-          category==="code"
-            ?"Telegram Bot Code":
-          "TeleCod Marketplace"
+            ?"Telegram Channel"
+            :category==="code"
+              ?"Telegram Bot Code"
+              :"TeleCod Marketplace"
         }
       </small>
-      <h3>${escapeHTML(item.title||"Untitled")}</h3>
-      <p>${escapeHTML(
-        item.description||
-        (isID?"Produk TeleCod":"TeleCod product")
-      )}</p>
+
+      <h3>
+        ${escapeHTML(item.title||"Untitled")}
+      </h3>
+
+      <p>
+        ${escapeHTML(
+          item.description||
+          (isEN?"TeleCod product":"Produk TeleCod")
+        )}
+      </p>
+
       <div class="market-item-foot">
-        <b>${formatMarketPrice(item)}</b>
-        <button type="button" class="purple-btn market-open">
-          <i class="fa-solid ${paid?"fa-eye":"fa-unlock"}"></i>
-          ${paid?(isID?"Lihat":"View"):(isID?"Buka Gratis":"Open Free")}
+
+        <b>${price}</b>
+
+        <button
+          type="button"
+          class="purple-btn market-open"
+        >
+          <i class="fa-solid ${
+            paid?"fa-eye":"fa-unlock"
+          }"></i>
+          ${buttonText}
         </button>
+
       </div>
+
     </div>
   `;
 
-  card.querySelector(".market-open")?.addEventListener(
-    "click",
-    ()=>openMarketplaceItem(item)
-  );
+  card.querySelector(".market-open")
+    ?.addEventListener("click",()=>{
+      openMarketplaceItem(item);
+    });
 
   return card;
 }
 
-/* RENDER */
+/* =========================================================
+   RENDER
+   ========================================================= */
+
 function renderMarketplace(){
-  const grid=$("#marketItemsGrid");
-  const empty=$("#marketEmpty");
-  const error=$("#marketError");
+  const grid=document.querySelector("#marketItemsGrid");
+  const empty=document.querySelector("#marketEmpty");
+  const error=document.querySelector("#marketError");
 
   if(!grid)return;
 
-  const sort=$("#marketSort")?.value||"latest";
+  const sort=document.querySelector("#marketSort")?.value||"latest";
 
   let items=marketplaceData.filter(marketMatches);
 
@@ -2877,6 +2929,7 @@ function renderMarketplace(){
   });
 
   error?.classList.add("hidden");
+
   grid.innerHTML="";
 
   if(!items.length){
@@ -2891,21 +2944,20 @@ function renderMarketplace(){
   });
 }
 
-/* LOAD */
+/* =========================================================
+   LOAD MARKETPLACE
+   ========================================================= */
+
 async function loadMarketplace(){
-  const grid=$("#marketItemsGrid");
-  const error=$("#marketError");
-  const empty=$("#marketEmpty");
+  const grid=document.querySelector("#marketItemsGrid");
+  const error=document.querySelector("#marketError");
+  const empty=document.querySelector("#marketEmpty");
 
   if(!grid)return;
 
-  const client=getSupabase();
-
-  if(!client){
-    marketplaceData=[];
+  if(!window.sup){
     grid.innerHTML="";
     empty?.classList.remove("hidden");
-    console.warn("Supabase client tidak ditemukan.");
     return;
   }
 
@@ -2918,50 +2970,61 @@ async function loadMarketplace(){
       <div class="market-loading-icon">
         <i class="fa-solid fa-spinner fa-spin"></i>
       </div>
-      <strong>${
-        typeof lang!=="undefined"&&lang==="en"
-          ?"Loading marketplace..."
-          :"Memuat marketplace..."
-      }</strong>
-      <span>${
-        typeof lang!=="undefined"&&lang==="en"
-          ?"Loading available Codes & Channels."
-          :"Mengambil Code & Channel yang tersedia."
-      }</span>
+
+      <strong>
+        ${
+          typeof lang!=="undefined"&&lang==="en"
+            ?"Loading marketplace..."
+            :"Memuat marketplace..."
+        }
+      </strong>
+
+      <span>
+        ${
+          typeof lang!=="undefined"&&lang==="en"
+            ?"Loading available Codes & Channels."
+            :"Mengambil Code & Channel yang tersedia."
+        }
+      </span>
     </div>
   `;
 
   try{
-    const {data,error:dbError}=await client
+
+    /*
+     * PENTING:
+     * Ini 100% sesuai kolom tabel products kamu.
+     */
+
+    const{
+      data,
+      error:dbError
+    }=await sup
       .from("products")
       .select(`
         id,
-        type,
+        seller_id,
         title,
         slug,
-        description,
         category,
-        access_type,
+        description,
         price,
         thumbnail_url,
-        telegram_channel,
-        destination_url,
-        target_url,
-        download_url,
-        url,
-        sales_count,
-        views,
+        delivery_type,
+        delivery_url,
+        status,
         created_at,
-        status
+        updated_at,
+        creator_id,
+        type,
+        access_type,
+        content,
+        telegram_channel,
+        is_channel,
+        views,
+        sales_count
       `)
       .eq("status","published")
-      .in("type",[
-        "code",
-        "channel",
-        "bot",
-        "telegram_channel",
-        "telegram_bot"
-      ])
       .order("created_at",{ascending:false})
       .limit(100);
 
@@ -2969,10 +3032,19 @@ async function loadMarketplace(){
 
     marketplaceData=Array.isArray(data)?data:[];
 
+    console.log(
+      "TeleCod Marketplace loaded:",
+      marketplaceData.length
+    );
+
     renderMarketplace();
 
   }catch(err){
-    console.error("Marketplace error:",err);
+
+    console.error(
+      "Marketplace load error:",
+      err
+    );
 
     marketplaceData=[];
 
@@ -2986,192 +3058,180 @@ async function loadMarketplace(){
   }
 }
 
-/* FILTER */
+/* =========================================================
+   CATEGORY
+   ========================================================= */
+
 function selectMarketplaceCategory(category){
   marketplaceFilter=category||"all";
 
-  $$(".market-filter-btn").forEach(btn=>{
-    btn.classList.toggle(
-      "active",
-      btn.dataset.filter===marketplaceFilter
-    );
-  });
+  document.querySelectorAll(".market-filter-btn")
+    .forEach(button=>{
+      button.classList.toggle(
+        "active",
+        button.dataset.filter===marketplaceFilter
+      );
+    });
 
   renderMarketplace();
   goTo("#marketplace");
 }
 
-/* BUTTONS */
+/* =========================================================
+   INDEX BUTTONS
+   ========================================================= */
+
 function setupIndexButtons(){
-  if(indexInitialized)return;
-  indexInitialized=true;
 
   /* PASTELINK */
-  on("#featurePasteBtn","click",e=>{
-    e.preventDefault();
 
-    if(typeof openEditor==="function"){
-      openEditor();
-    }else{
-      goTo("#pastelink");
-      showToast(
-        typeof lang!=="undefined"&&lang==="en"
-          ?"Pastelink editor is not loaded."
-          :"Editor Pastelink belum dimuat.",
-        "warning"
-      );
-    }
-  });
-
-  /* SELL CODE */
-  on("#featureSellBtn","click",e=>{
-    e.preventDefault();
-    routeProtected("dashboard.html");
-  });
-
-  /* DASHBOARD */
-  on("#featureDashboardBtn","click",e=>{
-    e.preventDefault();
-    routeProtected("dashboard.html");
-  });
-
-  /* WITHDRAW */
-  on("#featureWithdrawBtn","click",e=>{
-    e.preventDefault();
-    routeProtected("dashboard.html");
-  });
-
-  /* LANGUAGE */
-  on("#featureLanguageBtn","click",e=>{
-    e.preventDefault();
-
-    if(typeof lang==="undefined"){
-      window.lang="id";
-    }
-
-    lang=lang==="id"?"en":"id";
-
-    try{
-      localStorage.setItem("telecod_lang",lang);
-    }catch(err){}
-
-    if(typeof tr==="function"){
-      tr();
-    }
-
-    renderMarketplace();
-  });
-
-  /* CATEGORY */
-  $$("[data-category]").forEach(el=>{
-    el.addEventListener("click",e=>{
-      e.preventDefault();
-      selectMarketplaceCategory(
-        el.dataset.category||"all"
-      );
-    });
-  });
-
-  /* MARKET FILTER */
-  $$(".market-filter-btn").forEach(btn=>{
-    btn.addEventListener("click",e=>{
-      e.preventDefault();
-      selectMarketplaceCategory(
-        btn.dataset.filter||"all"
-      );
-    });
-  });
-
-  /* SEARCH */
-  on("#marketSearch","input",()=>{
-    renderMarketplace();
-  });
-
-  /* CLEAR SEARCH */
-  on("#clearMarketSearch","click",e=>{
-    e.preventDefault();
-
-    const input=$("#marketSearch");
-
-    if(input)input.value="";
-
-    renderMarketplace();
-    input?.focus();
-  });
-
-  /* SORT */
-  on("#marketSort","change",()=>{
-    renderMarketplace();
-  });
-
-  /* RESET */
-  on("#resetMarketFilter","click",e=>{
-    e.preventDefault();
-
-    marketplaceFilter="all";
-
-    const search=$("#marketSearch");
-    const sort=$("#marketSort");
-
-    if(search)search.value="";
-    if(sort)sort.value="latest";
-
-    $$(".market-filter-btn").forEach(btn=>{
-      btn.classList.toggle(
-        "active",
-        btn.dataset.filter==="all"
-      );
-    });
-
-    renderMarketplace();
-  });
-
-  /* RETRY */
-  on("#retryMarket","click",e=>{
-    e.preventDefault();
-    loadMarketplace();
-  });
-
-  /* NAV */
-  $$("#navLinks a").forEach(link=>{
-    link.addEventListener("click",()=>{
-      const href=link.getAttribute("href")||"";
-
-      if(href.startsWith("#")){
-        setTimeout(()=>goTo(href),10);
+  if(typeof on==="function"){
+    on("#featurePasteBtn","click",()=>{
+      if(typeof openEditor==="function"){
+        openEditor();
       }
     });
-  });
+
+    on("#featureSellBtn","click",()=>{
+      routeProtected("dashboard.html");
+    });
+
+    on("#featureDashboardBtn","click",()=>{
+      routeProtected("dashboard.html");
+    });
+
+    on("#featureWithdrawBtn","click",()=>{
+      routeProtected("dashboard.html");
+    });
+
+    on("#featureLanguageBtn","click",()=>{
+      if(typeof lang==="undefined")return;
+
+      lang=lang==="id"?"en":"id";
+
+      try{
+        localStorage.setItem("telecod_lang",lang);
+      }catch(_){}
+
+      if(typeof tr==="function")tr();
+
+      renderMarketplace();
+    });
+
+    on("#marketSearch","input",renderMarketplace);
+
+    on("#clearMarketSearch","click",()=>{
+      const input=document.querySelector("#marketSearch");
+
+      if(input)input.value="";
+
+      renderMarketplace();
+      input?.focus();
+    });
+
+    on("#marketSort","change",renderMarketplace);
+
+    on("#resetMarketFilter","click",()=>{
+      marketplaceFilter="all";
+
+      const input=document.querySelector("#marketSearch");
+      const sort=document.querySelector("#marketSort");
+
+      if(input)input.value="";
+      if(sort)sort.value="latest";
+
+      document.querySelectorAll(".market-filter-btn")
+        .forEach(btn=>{
+          btn.classList.toggle(
+            "active",
+            btn.dataset.filter==="all"
+          );
+        });
+
+      renderMarketplace();
+    });
+
+    on("#retryMarket","click",loadMarketplace);
+  }
+
+  /* CATEGORY */
+
+  document.querySelectorAll("[data-category]")
+    .forEach(el=>{
+      el.addEventListener("click",event=>{
+        event.preventDefault();
+
+        selectMarketplaceCategory(
+          el.dataset.category||"all"
+        );
+      });
+    });
+
+  /* FILTER */
+
+  document.querySelectorAll(".market-filter-btn")
+    .forEach(btn=>{
+      btn.addEventListener("click",event=>{
+        event.preventDefault();
+
+        selectMarketplaceCategory(
+          btn.dataset.filter||"all"
+        );
+      });
+    });
+
+  /* NAV */
+
+  document.querySelectorAll("#navLinks a")
+    .forEach(link=>{
+      link.addEventListener("click",()=>{
+        const href=link.getAttribute("href")||"";
+
+        if(href.startsWith("#")){
+          setTimeout(()=>goTo(href),0);
+        }
+      });
+    });
 
   /* FOOTER */
-  $$('footer a[href="#"]').forEach(link=>{
-    link.addEventListener("click",e=>{
-      e.preventDefault();
 
-      showToast(
-        typeof lang!=="undefined"&&lang==="en"
-          ?"That page is not available yet."
-          :"Halaman tersebut belum tersedia.",
-        "info"
-      );
+  document.querySelectorAll('footer a[href="#"]')
+    .forEach(link=>{
+      link.addEventListener("click",event=>{
+        event.preventDefault();
+
+        if(typeof toast==="function"){
+          toast(
+            typeof lang!=="undefined"&&lang==="en"
+              ?"That page is not available yet."
+              :"Halaman tersebut belum tersedia.",
+            "info"
+          );
+        }
+      });
     });
-  });
 
   /* YEAR */
-  const year=$("#year");
+
+  const year=document.querySelector("#year");
 
   if(year){
     year.textContent=new Date().getFullYear();
   }
 
   /* AUTH */
+
   refreshAuthHint();
 
   /* MARKETPLACE */
+
   loadMarketplace();
 }
 
-/* DOM READY */
+/* =========================================================
+   DOM READY
+   ========================================================= */
+
 if(document.readyState==="loading"){
   document.addEventListener(
     "DOMContentLoaded",
