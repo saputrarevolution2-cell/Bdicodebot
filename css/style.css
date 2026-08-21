@@ -2771,3 +2771,673 @@ button:disabled{opacity:.55!important;cursor:not-allowed!important;transform:non
   .paste-title .paste-icon{width:38px!important;height:38px!important}
   .success-body{gap:6px!important}
 }
+
+/* =========================================================
+   TELECOD — LIVE MARKETPLACE
+   PREMIUM / RESPONSIVE / ANDROID + DESKTOP
+========================================================= */
+
+/* =========================
+   MARKETPLACE SECTION
+========================= */
+
+.marketplace-live {
+  position: relative;
+}
+
+/* =========================
+   CREATE BOX
+========================= */
+
+.market-create-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 24px;
+  padding: 20px;
+  overflow: hidden;
+
+  border: 1px solid rgba(118, 87, 255, .20);
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(118, 87, 255, .16),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(18, 24, 55, .96),
+      rgba(10, 14, 35, .96)
+    );
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .20);
+}
+
+.market-create-box::before {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  top: -120px;
+  right: 20%;
+  border-radius: 50%;
+  background: rgba(47, 140, 255, .10);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.market-create-info {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.market-create-icon {
+  flex: 0 0 auto;
+  width: 50px;
+  height: 50px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(118, 87, 255, .25),
+      rgba(47, 140, 255, .18)
+    );
+
+  border: 1px solid rgba(118, 87, 255, .22);
+
+  color: #bcaaff;
+  font-size: 20px;
+}
+
+.market-create-info strong {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.market-create-info p {
+  max-width: 570px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+/* =========================
+   CREATE ACTIONS
+========================= */
+
+.market-create-actions {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(170px, 1fr));
+  gap: 10px;
+
+  flex: 0 0 auto;
+}
+
+.market-add-btn {
+  min-width: 175px;
+  min-height: 64px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 9px 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, .035);
+
+  color: var(--text);
+
+  text-align: left;
+
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    background .2s ease,
+    box-shadow .2s ease;
+}
+
+.market-add-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(118, 87, 255, .40);
+  background: rgba(118, 87, 255, .10);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+}
+
+.market-add-btn:active {
+  transform: translateY(0);
+}
+
+.market-add-icon {
+  flex: 0 0 auto;
+
+  width: 39px;
+  height: 39px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 11px;
+
+  font-size: 15px;
+}
+
+.market-add-btn.code .market-add-icon {
+  background: rgba(118, 87, 255, .14);
+  color: #b9a5ff;
+}
+
+.market-add-btn.channel .market-add-icon {
+  background: rgba(34, 158, 217, .13);
+  color: #35baff;
+}
+
+.market-add-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.market-add-text strong,
+.market-add-text small {
+  display: block;
+}
+
+.market-add-text strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.market-add-text small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.market-add-btn > .fa-plus {
+  flex: 0 0 auto;
+
+  width: 25px;
+  height: 25px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 7px;
+
+  background: rgba(255, 255, 255, .06);
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+/* =========================
+   FILTER IMPROVEMENT
+========================= */
+
+.marketplace-live .market-filter {
+  margin-bottom: 14px;
+}
+
+.marketplace-live .market-filter-btn {
+  transition:
+    background .2s ease,
+    border-color .2s ease,
+    color .2s ease,
+    transform .2s ease;
+}
+
+.marketplace-live .market-filter-btn:hover {
+  transform: translateY(-1px);
+}
+
+.marketplace-live .market-filter-btn.active {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(118, 87, 255, .20),
+      rgba(47, 140, 255, .10)
+    );
+
+  border-color: rgba(118, 87, 255, .42);
+
+  box-shadow:
+    0 7px 22px rgba(118, 87, 255, .10);
+}
+
+/* =========================
+   SEARCH
+========================= */
+
+.marketplace-live .market-search {
+  margin-bottom: 18px;
+}
+
+.marketplace-live .market-search-box {
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+.marketplace-live .market-search-box:focus-within {
+  border-color: rgba(118, 87, 255, .45);
+
+  box-shadow:
+    0 0 0 3px rgba(118, 87, 255, .08);
+}
+
+.marketplace-live #marketSort {
+  cursor: pointer;
+}
+
+.marketplace-live #marketSort:focus {
+  border-color: rgba(118, 87, 255, .45);
+}
+
+/* =========================
+   ACCESS INFORMATION
+========================= */
+
+.market-access-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.market-access-item {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 13px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, .025);
+}
+
+.market-access-icon {
+  flex: 0 0 auto;
+
+  width: 35px;
+  height: 35px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+
+  font-size: 13px;
+}
+
+.market-access-icon.free {
+  background: rgba(34, 211, 166, .10);
+  color: #49dfb9;
+}
+
+.market-access-icon.paid {
+  background: rgba(255, 200, 87, .10);
+  color: #ffc857;
+}
+
+.market-access-icon.secure {
+  background: rgba(47, 140, 255, .10);
+  color: #49a4ff;
+}
+
+.market-access-item div {
+  min-width: 0;
+}
+
+.market-access-item strong {
+  display: block;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.market-access-item small {
+  display: block;
+  margin-top: 2px;
+
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+/* =========================
+   LIVE GRID
+========================= */
+
+#marketItemsGrid {
+  position: relative;
+  min-height: 180px;
+}
+
+#marketItemsGrid:empty {
+  display: none;
+}
+
+/* =========================
+   LOADING
+========================= */
+
+#marketItemsGrid .market-loading {
+  min-height: 220px;
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, .02);
+}
+
+.market-loading-icon {
+  box-shadow:
+    0 10px 30px rgba(118, 87, 255, .12);
+}
+
+.market-loading strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.market-loading span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.marketplace-live .market-empty {
+  margin-top: 18px;
+  padding: 45px 20px;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(118, 87, 255, .08),
+      transparent 45%
+    ),
+    rgba(255, 255, 255, .02);
+}
+
+.market-empty-icon {
+  width: 55px;
+  height: 55px;
+
+  display: grid;
+  place-items: center;
+
+  margin: auto;
+
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, .04);
+}
+
+/* =========================
+   ERROR
+========================= */
+
+.marketplace-live .market-error {
+  margin-top: 18px;
+
+  border-color: rgba(255, 200, 87, .18);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 200, 87, .06),
+      rgba(255, 255, 255, .02)
+    );
+}
+
+/* =========================
+   MORE BUTTON
+========================= */
+
+.marketplace-live .market-more {
+  margin-top: 30px;
+}
+
+#viewMarketplaceBtn {
+  min-width: 210px;
+}
+
+/* =========================
+   DYNAMIC CARD POLISH
+========================= */
+
+.marketplace-live .market-card,
+.marketplace-live .market-item {
+  position: relative;
+  overflow: hidden;
+
+  transition:
+    transform .22s ease,
+    border-color .22s ease,
+    box-shadow .22s ease;
+}
+
+.marketplace-live .market-card:hover,
+.marketplace-live .market-item:hover {
+  transform: translateY(-5px);
+
+  border-color:
+    rgba(118, 87, 255, .38);
+
+  box-shadow:
+    0 20px 55px rgba(0, 0, 0, .25);
+}
+
+.marketplace-live .market-card img,
+.marketplace-live .market-item-image img {
+  transition: transform .35s ease;
+}
+
+.marketplace-live .market-card:hover img,
+.marketplace-live .market-item:hover
+.market-item-image img {
+  transform: scale(1.04);
+}
+
+/* =========================
+   LIGHT MODE
+========================= */
+
+html[data-theme="light"] .market-create-box,
+body.light .market-create-box {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(118, 87, 255, .08),
+      transparent 35%
+    ),
+    #ffffff;
+
+  border-color: rgba(24, 31, 55, .10);
+}
+
+html[data-theme="light"] .market-add-btn,
+body.light .market-add-btn {
+  background: rgba(20, 30, 60, .025);
+}
+
+html[data-theme="light"] .market-add-btn:hover,
+body.light .market-add-btn:hover {
+  background: rgba(118, 87, 255, .06);
+}
+
+html[data-theme="light"] .market-access-item,
+body.light .market-access-item {
+  background: rgba(20, 30, 60, .025);
+}
+
+html[data-theme="light"] .market-loading,
+body.light .market-loading {
+  background: rgba(20, 30, 60, .02);
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1000px) {
+
+  .market-create-box {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .market-create-info {
+    width: 100%;
+  }
+
+  .market-create-actions {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .market-add-btn {
+    width: 100%;
+  }
+
+  .market-access-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+
+  .market-create-box {
+    padding: 15px;
+    gap: 15px;
+    border-radius: 18px;
+  }
+
+  .market-create-info {
+    align-items: flex-start;
+  }
+
+  .market-create-icon {
+    width: 43px;
+    height: 43px;
+    border-radius: 12px;
+    font-size: 17px;
+  }
+
+  .market-create-info strong {
+    font-size: 13px;
+  }
+
+  .market-create-info p {
+    font-size: 10px;
+  }
+
+  .market-create-actions {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .market-add-btn {
+    min-width: 0;
+    min-height: 58px;
+  }
+
+  .market-access-info {
+    gap: 8px;
+  }
+
+  .market-access-item {
+    padding: 10px;
+  }
+
+  .market-search {
+    grid-template-columns: 1fr !important;
+  }
+
+  .market-more .purple-btn {
+    width: 100%;
+  }
+}
+
+/* =========================
+   SMALL PHONE
+========================= */
+
+@media (max-width: 430px) {
+
+  .market-create-box {
+    padding: 13px;
+  }
+
+  .market-create-info {
+    gap: 10px;
+  }
+
+  .market-create-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .market-create-info strong {
+    font-size: 12px;
+  }
+
+  .market-create-info p {
+    font-size: 9px;
+  }
+
+  .market-add-btn {
+    min-height: 55px;
+    padding: 8px 10px;
+  }
+
+  .market-add-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .market-access-item {
+    padding: 9px;
+  }
+
+  .market-access-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .market-access-item small {
+    font-size: 8px;
+  }
+}
