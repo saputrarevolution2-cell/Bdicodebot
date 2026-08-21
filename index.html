@@ -109,6 +109,7 @@
 ========================= -->
 <section id="marketItems" class="section marketplace-live">
 
+  <!-- MARKETPLACE HEADER -->
   <div class="heading">
     <span>✦</span>
 
@@ -118,7 +119,7 @@
       </h2>
 
       <p class="section-subtitle" data-i18n="latestMarketplaceSub">
-        Produk terbaru dari creator TeleCod.
+        Temukan code bot dan channel Telegram dari creator TeleCod.
       </p>
     </div>
 
@@ -126,49 +127,148 @@
   </div>
 
 
-  <!-- FILTER -->
-  <div class="market-filter" role="tablist">
+  <!-- =========================
+       SELL / ADD ACTIONS
+  ========================= -->
+  <div class="market-create-box">
+
+    <div class="market-create-info">
+      <div class="market-create-icon">
+        <i class="fa-solid fa-store"></i>
+      </div>
+
+      <div>
+        <strong data-i18n="marketCreateTitle">
+          Punya Code atau Channel?
+        </strong>
+
+        <p data-i18n="marketCreateText">
+          Tambahkan produk FREE tanpa login atau jual produk PAID
+          setelah login/register.
+        </p>
+      </div>
+    </div>
+
+
+    <div class="market-create-actions">
+
+      <!-- ADD CODE -->
+      <button
+        id="addCodeBtn"
+        class="market-add-btn code"
+        type="button"
+        data-market-create="code"
+      >
+        <span class="market-add-icon">
+          <i class="fa-solid fa-code"></i>
+        </span>
+
+        <span class="market-add-text">
+          <strong data-i18n="addCode">
+            Tambah Code
+          </strong>
+
+          <small data-i18n="addCodeSub">
+            Free / Paid
+          </small>
+        </span>
+
+        <i class="fa-solid fa-plus"></i>
+      </button>
+
+
+      <!-- ADD CHANNEL -->
+      <button
+        id="addChannelBtn"
+        class="market-add-btn channel"
+        type="button"
+        data-market-create="channel"
+      >
+        <span class="market-add-icon">
+          <i class="fa-brands fa-telegram"></i>
+        </span>
+
+        <span class="market-add-text">
+          <strong data-i18n="addChannel">
+            Tambah Channel
+          </strong>
+
+          <small data-i18n="addChannelSub">
+            Free / Paid
+          </small>
+        </span>
+
+        <i class="fa-solid fa-plus"></i>
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       FILTER
+  ========================= -->
+  <div
+    class="market-filter"
+    role="tablist"
+    aria-label="Marketplace filter"
+  >
 
     <button
       class="market-filter-btn active"
       type="button"
       data-filter="all"
+      role="tab"
+      aria-selected="true"
     >
       <i class="fa-solid fa-layer-group"></i>
       <span data-i18n="all">Semua</span>
     </button>
 
+
     <button
       class="market-filter-btn"
       type="button"
       data-filter="free"
+      role="tab"
+      aria-selected="false"
     >
       <i class="fa-solid fa-gift"></i>
       <span data-i18n="free">Free</span>
     </button>
 
+
     <button
       class="market-filter-btn"
       type="button"
       data-filter="paid"
+      role="tab"
+      aria-selected="false"
     >
       <i class="fa-solid fa-crown"></i>
       <span data-i18n="paid">Paid</span>
     </button>
 
+
     <button
       class="market-filter-btn"
       type="button"
       data-filter="code"
+      role="tab"
+      aria-selected="false"
     >
       <i class="fa-solid fa-code"></i>
       <span data-i18n="code">Code</span>
     </button>
 
+
     <button
       class="market-filter-btn"
       type="button"
       data-filter="channel"
+      role="tab"
+      aria-selected="false"
     >
       <i class="fa-brands fa-telegram"></i>
       <span data-i18n="channel">Channel</span>
@@ -177,18 +277,23 @@
   </div>
 
 
-  <!-- SEARCH -->
+  <!-- =========================
+       SEARCH + SORT
+  ========================= -->
   <div class="market-search">
 
     <div class="market-search-box">
+
       <i class="fa-solid fa-magnifying-glass"></i>
 
       <input
         id="marketSearch"
         type="search"
         autocomplete="off"
+        spellcheck="false"
         placeholder="Cari code, channel, bot..."
         data-i18n-placeholder="marketSearchPlaceholder"
+        aria-label="Cari marketplace"
       >
 
       <button
@@ -198,9 +303,14 @@
       >
         <i class="fa-solid fa-xmark"></i>
       </button>
+
     </div>
 
-    <select id="marketSort" aria-label="Sort marketplace">
+
+    <select
+      id="marketSort"
+      aria-label="Sort marketplace"
+    >
       <option value="latest">Terbaru</option>
       <option value="popular">Populer</option>
       <option value="price_low">Harga Terendah</option>
@@ -210,7 +320,67 @@
   </div>
 
 
-  <!-- LIVE ITEMS -->
+  <!-- =========================
+       MARKETPLACE INFORMATION
+  ========================= -->
+  <div class="market-access-info">
+
+    <div class="market-access-item">
+      <span class="market-access-icon free">
+        <i class="fa-solid fa-gift"></i>
+      </span>
+
+      <div>
+        <strong data-i18n="freeAccessTitle">
+          Free
+        </strong>
+
+        <small data-i18n="freeAccessText">
+          Bisa dibuat dan diambil tanpa login.
+        </small>
+      </div>
+    </div>
+
+
+    <div class="market-access-item">
+      <span class="market-access-icon paid">
+        <i class="fa-solid fa-crown"></i>
+      </span>
+
+      <div>
+        <strong data-i18n="paidAccessTitle">
+          Paid
+        </strong>
+
+        <small data-i18n="paidAccessText">
+          Creator wajib login untuk menjual.
+        </small>
+      </div>
+    </div>
+
+
+    <div class="market-access-item">
+      <span class="market-access-icon secure">
+        <i class="fa-solid fa-shield-halved"></i>
+      </span>
+
+      <div>
+        <strong data-i18n="guestPurchaseTitle">
+          Guest Purchase
+        </strong>
+
+        <small data-i18n="guestPurchaseText">
+          Pembeli tidak wajib memiliki akun.
+        </small>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       LIVE ITEMS
+  ========================= -->
   <div
     id="marketItemsGrid"
     class="market-items-grid"
@@ -219,6 +389,7 @@
 
     <!-- Loading -->
     <div class="market-loading">
+
       <div class="market-loading-icon">
         <i class="fa-solid fa-spinner fa-spin"></i>
       </div>
@@ -230,13 +401,19 @@
       <span data-i18n="loadingMarketplaceSub">
         Mengambil produk terbaru.
       </span>
+
     </div>
 
   </div>
 
 
-  <!-- EMPTY STATE -->
-  <div id="marketEmpty" class="market-empty hidden">
+  <!-- =========================
+       EMPTY STATE
+  ========================= -->
+  <div
+    id="marketEmpty"
+    class="market-empty hidden"
+  >
 
     <div class="market-empty-icon">
       <i class="fa-solid fa-box-open"></i>
@@ -256,14 +433,22 @@
       class="blue-btn"
     >
       <i class="fa-solid fa-rotate-left"></i>
-      <span data-i18n="resetFilter">Reset Filter</span>
+
+      <span data-i18n="resetFilter">
+        Reset Filter
+      </span>
     </button>
 
   </div>
 
 
-  <!-- ERROR STATE -->
-  <div id="marketError" class="market-error hidden">
+  <!-- =========================
+       ERROR STATE
+  ========================= -->
+  <div
+    id="marketError"
+    class="market-error hidden"
+  >
 
     <i class="fa-solid fa-triangle-exclamation"></i>
 
@@ -283,16 +468,25 @@
       class="purple-btn"
     >
       <i class="fa-solid fa-rotate-right"></i>
-      <span data-i18n="retry">Coba Lagi</span>
+
+      <span data-i18n="retry">
+        Coba Lagi
+      </span>
     </button>
 
   </div>
 
 
-  <!-- MORE -->
+  <!-- =========================
+       MORE
+  ========================= -->
   <div class="market-more">
 
-    <a href="#marketItems" class="purple-btn">
+    <a
+      href="#marketItems"
+      class="purple-btn"
+      id="viewMarketplaceBtn"
+    >
       <i class="fa-solid fa-store"></i>
 
       <span data-i18n="viewMarketplace">
