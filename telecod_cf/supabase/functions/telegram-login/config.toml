@@ -1,0 +1,2 @@
+[functions.telegram-login]
+verify_jwt = false
