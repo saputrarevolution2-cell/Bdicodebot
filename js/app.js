@@ -3012,44 +3012,89 @@ function openMarketplaceCreateModal(type){
         <div class="auth-logo"><i class="fa-solid ${isCode?"fa-code":"fa-brands fa-telegram"}"></i></div>
         <div><strong>${isCode?"Tambah Code":"Tambah Channel / Group"}</strong><small>Marketplace TeleCod</small></div>
       </div>
-      <form id="marketCreateForm" class="auth-form">
-        <label class="auth-field"><span>Judul ${isCode?"code":"channel/group"}</span>
-          <input id="mcTitle" required maxlength="120" placeholder="${isCode?"Judul code":"Nama channel/group"}">
+      <div class="market-form-intro">
+        <div class="market-form-badge"><i class="fa-solid ${isCode?"fa-wand-magic-sparkles":"fa-paper-plane"}"></i></div>
+        <div>
+          <b>${isCode?"Publish Code Bot":"Publish Channel / Group"}</b>
+          <span>${isCode?"Isi detail code bot kamu dengan rapi.":"Tambahkan channel atau group Telegram kamu ke marketplace."}</span>
+        </div>
+      </div>
+      <form id="marketCreateForm" class="auth-form market-create-form">
+        <label class="auth-field market-field">
+          <span><i class="fa-solid fa-heading"></i> Judul ${isCode?"Code":"Channel / Group"}</span>
+          <div class="field-wrap">
+            <i class="fa-solid fa-pen"></i>
+            <input id="mcTitle" required maxlength="120" placeholder="${isCode?"Contoh: Bot Telegram Premium":"Contoh: Channel Premium"}">
+          </div>
         </label>
         ${isCode?`
-          <label class="auth-field"><span>Code</span>
-            <textarea id="mcContent" required rows="9" placeholder="Paste code bot di sini..."></textarea>
+          <label class="auth-field market-field">
+            <span><i class="fa-solid fa-code"></i> Source Code</span>
+            <textarea id="mcContent" required rows="10" placeholder="Tempel source code bot Telegram di sini..."></textarea>
+            <small class="field-help"><i class="fa-solid fa-circle-info"></i> Jangan masukkan token bot, password, API key, atau secret ke dalam code.</small>
           </label>
-          <label class="auth-field"><span>Bot</span>
-            <input id="mcBot" maxlength="64" placeholder="@namabot">
-            <small class="field-help">Jika Bot ada di daftar Approved Bots admin, langsung publish. Jika belum ada, status menunggu admin.</small>
+          <label class="auth-field market-field">
+            <span><i class="fa-brands fa-telegram"></i> Username Bot <em>opsional</em></span>
+            <div class="field-wrap">
+              <i class="fa-brands fa-telegram"></i>
+              <input id="mcBot" maxlength="64" placeholder="@namabot">
+            </div>
+            <small class="field-help"><i class="fa-solid fa-shield-halved"></i> Bot yang sudah Approved dapat langsung dipublish. Bot lain akan menunggu review admin.</small>
           </label>
         `:`
-          <label class="auth-field"><span>Jenis Channel/Group Telegram</span>
-            <select id="mcChannelType">
-              <option value="free">Free</option>
-              <option value="paid">VIP / Paid</option>
-            </select>
+          <label class="auth-field market-field">
+            <span><i class="fa-solid fa-layer-group"></i> Akses Channel / Group</span>
+            <div class="field-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <select id="mcChannelType">
+                <option value="free">Free — Gratis</option>
+                <option value="paid">VIP / Paid — Berbayar</option>
+              </select>
+            </div>
           </label>
-          <label class="auth-field" id="mcPriceWrap" style="display:none"><span>Harga</span>
-            <input id="mcPrice" type="number" min="1" step="1000" placeholder="50000">
+          <label class="auth-field market-field" id="mcPriceWrap" style="display:none">
+            <span><i class="fa-solid fa-tag"></i> Harga</span>
+            <div class="field-wrap">
+              <i class="fa-solid fa-rupiah-sign"></i>
+              <input id="mcPrice" type="number" min="1" step="1000" placeholder="50000">
+            </div>
           </label>
-          <label class="auth-field"><span>Link Channel/Group</span>
-            <input id="mcTelegram" required placeholder="https://t.me/channel">
+          <label class="auth-field market-field">
+            <span><i class="fa-solid fa-link"></i> Link Channel / Group</span>
+            <div class="field-wrap">
+              <i class="fa-solid fa-link"></i>
+              <input id="mcTelegram" required placeholder="https://t.me/channel">
+            </div>
           </label>
         `}
         ${isCode?`
-          <label class="auth-field"><span>Free / Paid</span>
-            <select id="mcAccess"><option value="free">Free</option><option value="paid">Paid</option></select>
-          </label>
-          <label class="auth-field" id="mcCodePriceWrap" style="display:none"><span>Harga</span>
-            <input id="mcCodePrice" type="number" min="1" step="1000" placeholder="50000">
-          </label>
+          <div class="market-access-grid">
+            <label class="auth-field market-field">
+              <span><i class="fa-solid fa-unlock"></i> Akses</span>
+              <div class="field-wrap">
+                <i class="fa-solid fa-ticket"></i>
+                <select id="mcAccess"><option value="free">Free — Gratis</option><option value="paid">Paid — Berbayar</option></select>
+              </div>
+            </label>
+            <label class="auth-field market-field" id="mcCodePriceWrap" style="display:none">
+              <span><i class="fa-solid fa-tag"></i> Harga</span>
+              <div class="field-wrap">
+                <i class="fa-solid fa-rupiah-sign"></i>
+                <input id="mcCodePrice" type="number" min="1" step="1000" placeholder="50000">
+              </div>
+            </label>
+          </div>
         `:``}
-        <label class="auth-field"><span>Deskripsi (opsional)</span><textarea id="mcDesc" rows="3" placeholder="Keterangan produk"></textarea></label>
-        <div class="actions" style="display:flex;gap:10px">
-          <button type="button" class="auth-secondary-btn" id="mcCancel">Batal</button>
-          <button class="purple-btn auth-submit" type="submit"><i class="fa-solid fa-plus"></i> Add / Tambahkan</button>
+        <label class="auth-field market-field">
+          <span><i class="fa-solid fa-align-left"></i> Deskripsi <em>opsional</em></span>
+          <textarea id="mcDesc" rows="3" maxlength="1000" placeholder="Jelaskan isi atau keunggulan produk kamu..."></textarea>
+        </label>
+        <div class="market-form-footer">
+          <div class="market-form-note"><i class="fa-solid fa-shield-halved"></i><span>Data kamu diproses secara aman.</span></div>
+          <div class="actions market-form-actions">
+            <button type="button" class="auth-secondary-btn" id="mcCancel"><i class="fa-solid fa-xmark"></i> Batal</button>
+            <button class="purple-btn auth-submit" type="submit"><i class="fa-solid fa-plus"></i> Tambahkan</button>
+          </div>
         </div>
       </form>
     </div>`;
