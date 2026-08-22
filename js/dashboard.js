@@ -67,26 +67,279 @@ async function renderMarketplace(filter={}){setActive('marketplace');$('#content
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 function bindCards(){$$('[data-detail]').forEach(b=>b.onclick=()=>openProduct(b.dataset.detail));$$('[data-buy]').forEach(b=>b.onclick=()=>purchase(b.dataset.buy));$$('[data-edit]').forEach(b=>b.onclick=()=>editProduct(b.dataset.edit));$$('[data-delete]').forEach(b=>b.onclick=()=>deleteProduct(b.dataset.delete))}
 async function renderProducts(filter){const type=filter.startsWith('channel')?'channel':'code',access=filter.endsWith('free')?'free':'paid';setActive(filter);const data=await queryProducts({type,access_type:access});const mine=data.filter(p=>p.creator_id===state.user.id);$('#content').innerHTML=`<div class="page-head"><div><div class="eyebrow">${type.toUpperCase()}</div><h1 class="page-title">${type==='channel'?(access==='free'?tr('channelFree'):tr('channelPaid')):(access==='free'?tr('codeFree'):tr('codePaid'))}</h1></div><a class="btn btn-primary" href="dashboard.html?page=${type==='channel'?'create-channel':'create-code'}"><i class="fa-solid fa-plus"></i> ${type==='channel'?tr('createChannel'):tr('createCode')}</a></div><div class="grid product-grid">${data.length?data.map(p=>productCard(p,true)).join(''):`<div class="empty" style="grid-column:1/-1"><i class="fa-solid ${type==='channel'?'fa-bullhorn':'fa-code'} big"></i><br>${tr('empty')}</div>`}</div>`;bindCards()}
-async function renderCreate(type,editId=null){setActive(type==='channel'?'channel':'code');let p=null;if(editId){const r=await sup.from('products').select('*').eq('id',editId).eq('creator_id',state.user.id).single();p=r.data}const isChannel=type==='channel';$('#content').innerHTML=`<div class="page-head"><div><div class="eyebrow">CREATOR</div><h1 class="page-title">${editId?tr('edit'):' '+(isChannel?tr('channelTitle'):tr('codeTitle'))}</h1></div></div><form id="productForm" class="card"><div class="grid form-grid"><div class="form-group"><label class="form-label">${tr('name')}</label><input class="input" id="fTitle" value="${escape(p?.title||'')}" required></div><div class="form-group"><label class="form-label">${tr('category')}</label><input class="input" id="fCategory" value="${escape(p?.category||'')}"></div><div class="form-group full"><label class="form-label">${tr('description')}</label><textarea class="textarea" id="fDesc" rows="4">${escape(p?.description||'')}</textarea></div><div class="form-group"><label class="form-label">${tr('type')}</label><select class="select" id="fAccess"><option value="free" ${p?.access_type==='free'?'selected':''}>Free</option><option value="paid" ${p?.access_type==='paid'?'selected':''}>Paid</option></select></div><div class="form-group"><label class="form-label">${tr('price')}</label><input class="input" id="fPrice" type="number" min="0" value="${Number(p?.price||0)}"></div><div class="form-group"><label class="form-label">${tr('image')}</label><input class="input" id="fImage" value="${escape(p?.thumbnail_url||'')}" placeholder="https://..."></div>${isChannel?`<div class="form-group full"><label class="form-label">${tr('telegram')}</label><input class="input" id="fTelegram" value="${escape(p?.telegram_channel||'')}" placeholder="https://t.me/channel"></div>`:`<div class="form-group full"><label class="form-label">${tr('content')}</label><textarea class="textarea code-area" id="fContent" rows="10">${escape(p?.content||'')}</textarea></div>`}</div><div class="actions"><a class="btn btn-secondary" href="dashboard.html?page=${type}-${p?.access_type||'free'}">${tr('cancel')}</a><button class="btn btn-primary"><i class="fa-solid fa-cloud-arrow-up"></i> ${editId?tr('update'):tr('publish')}</button></div></form>`;const sync=()=>{$('#fPrice').disabled=$('#fAccess').value==='free';if($('#fAccess').value==='free')$('#fPrice').value=0};$('#fAccess').onchange=sync;sync();$('#productForm').onsubmit=async e=>{e.preventDefault();const access=$('#fAccess').value,price=Number($('#fPrice').value||0);if(access==='paid'&&price<=0)return toast(tr('minPrice'),'error');const payload={title:$('#fTitle').value.trim(),description:$('#fDesc').value.trim(),type,access_type:access,price,thumbnail_url:$('#fImage').value.trim()||null,category:$('#fCategory').value.trim()||null,status:'published',content:isChannel?null:$('#fContent').value,telegram_channel:isChannel?$('#fTelegram').value.trim():null,is_channel:isChannel};let r;
-if(editId){
-  r=await sup.from('products').update(payload).eq('id',editId).eq('creator_id',state.user.id);
-  if(r.error)toast(r.error.message,'error');
-  else{toast(tr('productUpdated'),'success');setTimeout(()=>location.href=`dashboard.html?page=${type}-${access}`,350)}
-}else{
-  try{
-    const {data:{session}}=await sup.auth.getSession();
-    const fn=String(C.MARKETPLACE_FUNCTION_URL||'');
-    const response=await fetch(fn,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({
-      action:'create_product',type,access_type:access,title:payload.title,description:payload.description,
-      price,thumbnail_url:payload.thumbnail_url,category:payload.category,content:payload.content,
-      telegram_channel:payload.telegram_channel
-    })});
-    const out=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(out.error||'Gagal membuat produk');
-    toast(out.status==='published'?tr('published'):'Produk dibuat dan menunggu admin.','success');
-    setTimeout(()=>location.href=`dashboard.html?page=${type}-${access}`,350);
-  }catch(e){toast(e.message||tr('error'),'error')}
-}}}
+async async function renderCreate(type,editId=null){
+  setActive(type==='channel'?'channel':'code');
+  let p=null;
+  if(editId){
+    const r=await sup.from('products').select('*').eq('id',editId).eq('creator_id',state.user.id).single();
+    p=r.data;
+  }
+
+  const isChannel=type==='channel';
+  const title=editId?tr('edit'):(isChannel?tr('channelTitle'):tr('codeTitle'));
+  const icon=isChannel?'fa-brands fa-telegram':'fa-solid fa-code';
+  const accent=isChannel?'channel':'code';
+
+  $('#content').innerHTML=`
+    <div class="creator-create-page ${accent}-create-page">
+
+      <div class="creator-create-hero">
+        <div class="creator-create-hero-icon ${accent}">
+          <i class="${icon}"></i>
+        </div>
+        <div class="creator-create-hero-copy">
+          <div class="eyebrow">CREATOR • ${isChannel?'CHANNEL':'CODE'}</div>
+          <h1 class="page-title">${title}</h1>
+          <p class="page-sub">
+            ${isChannel
+              ? 'Tambahkan channel Telegram kamu ke marketplace dengan tampilan profesional.'
+              : 'Tambahkan source code atau bot code dengan informasi lengkap dan rapi.'}
+          </p>
+        </div>
+        <div class="creator-create-badge">
+          <i class="fa-solid fa-shield-halved"></i>
+          Marketplace
+        </div>
+      </div>
+
+      <form id="productForm" class="creator-form">
+
+        <div class="creator-form-main">
+
+          <section class="create-section">
+            <div class="create-section-head">
+              <div class="create-section-icon"><i class="fa-solid fa-circle-info"></i></div>
+              <div>
+                <h2>Informasi Produk</h2>
+                <p>Isi informasi dasar yang akan dilihat pembeli.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="fTitle">Nama Produk <span>*</span></label>
+                <div class="input-wrap">
+                  <i class="fa-solid ${isChannel?'fa-bullhorn':'fa-tag'}"></i>
+                  <input class="input" id="fTitle" value="${escape(p?.title||'')}" placeholder="${isChannel?'Contoh: Channel Premium Indonesia':'Contoh: Bot Telegram Auto Reply'}" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="fCategory">Kategori</label>
+                <div class="input-wrap">
+                  <i class="fa-solid fa-folder"></i>
+                  <input class="input" id="fCategory" value="${escape(p?.category||'')}" placeholder="Contoh: Bot, Tools, Education">
+                </div>
+              </div>
+
+              <div class="form-group full">
+                <label class="form-label" for="fDesc">Deskripsi</label>
+                <textarea class="textarea" id="fDesc" rows="5" placeholder="Jelaskan isi, fitur, manfaat, dan informasi penting produk...">${escape(p?.description||'')}</textarea>
+                <small class="field-help">Deskripsi yang jelas membuat pembeli lebih mudah memahami produk.</small>
+              </div>
+            </div>
+          </section>
+
+          <section class="create-section">
+            <div class="create-section-head">
+              <div class="create-section-icon"><i class="fa-solid fa-tags"></i></div>
+              <div>
+                <h2>Harga & Akses</h2>
+                <p>Tentukan apakah produk tersedia gratis atau berbayar.</p>
+              </div>
+            </div>
+
+            <div class="access-choice">
+              <label class="access-card free-choice">
+                <input type="radio" name="accessType" value="free" ${!p||p?.access_type==='free'?'checked':''}>
+                <span class="access-card-icon"><i class="fa-solid fa-gift"></i></span>
+                <span class="access-card-copy">
+                  <strong>Free</strong>
+                  <small>Pembeli dapat mengakses tanpa pembayaran.</small>
+                </span>
+                <span class="access-check"><i class="fa-solid fa-check"></i></span>
+              </label>
+
+              <label class="access-card paid-choice">
+                <input type="radio" name="accessType" value="paid" ${p?.access_type==='paid'?'checked':''}>
+                <span class="access-card-icon"><i class="fa-solid fa-crown"></i></span>
+                <span class="access-card-copy">
+                  <strong>Paid</strong>
+                  <small>Pembeli harus membayar sebelum mendapatkan akses.</small>
+                </span>
+                <span class="access-check"><i class="fa-solid fa-check"></i></span>
+              </label>
+            </div>
+
+            <div class="price-field" id="priceField">
+              <label class="form-label" for="fPrice">Harga Produk <span>*</span></label>
+              <div class="price-input-wrap">
+                <span>Rp</span>
+                <input class="input" id="fPrice" type="number" min="0" value="${Number(p?.price||0)}" placeholder="10000">
+              </div>
+              <small class="field-help">Minimum harga produk Paid adalah Rp 1.</small>
+            </div>
+          </section>
+
+          <section class="create-section">
+            <div class="create-section-head">
+              <div class="create-section-icon"><i class="fa-solid fa-image"></i></div>
+              <div>
+                <h2>Media</h2>
+                <p>Opsional. Gunakan thumbnail agar produk terlihat lebih menarik.</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="fImage">Thumbnail URL</label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-link"></i>
+                <input class="input" id="fImage" value="${escape(p?.thumbnail_url||'')}" placeholder="https://contoh.com/thumbnail.jpg">
+              </div>
+            </div>
+          </section>
+
+          ${isChannel?`
+          <section class="create-section">
+            <div class="create-section-head">
+              <div class="create-section-icon channel"><i class="fa-brands fa-telegram"></i></div>
+              <div>
+                <h2>Telegram Channel</h2>
+                <p>Masukkan link channel yang akan diberikan kepada pembeli.</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="fTelegram">Link Channel <span>*</span></label>
+              <div class="input-wrap telegram-input">
+                <i class="fa-brands fa-telegram"></i>
+                <input class="input" id="fTelegram" value="${escape(p?.telegram_channel||'')}" placeholder="https://t.me/namachannel" required>
+              </div>
+              <small class="field-help">Pastikan bot/admin marketplace memiliki akses yang diperlukan sesuai sistem channel kamu.</small>
+            </div>
+          </section>
+          `:`
+          <section class="create-section code-content-section">
+            <div class="create-section-head">
+              <div class="create-section-icon code"><i class="fa-solid fa-code"></i></div>
+              <div>
+                <h2>Source Code</h2>
+                <p>Masukkan source code atau konten yang akan diterima pembeli.</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="fContent">Content / Code <span>*</span></label>
+              <textarea class="textarea code-area" id="fContent" rows="16" placeholder="# Tempel source code di sini...">${escape(p?.content||'')}</textarea>
+              <small class="field-help">Jangan masukkan password, API key, token bot, atau data rahasia ke dalam produk.</small>
+            </div>
+          </section>
+          `}
+
+          <div class="creator-form-actions">
+            <a class="btn btn-secondary" href="dashboard.html?page=${type}-${p?.access_type||'free'}">
+              <i class="fa-solid fa-arrow-left"></i> ${tr('cancel')}
+            </a>
+            <button class="btn btn-primary creator-publish-btn" type="submit">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              ${editId?tr('update'):tr('publish')}
+            </button>
+          </div>
+
+        </div>
+
+        <aside class="creator-form-side">
+          <div class="create-preview-card">
+            <div class="preview-top">
+              <span class="preview-label">PREVIEW</span>
+              <span class="preview-status" id="previewStatus"><i class="fa-solid fa-gift"></i> Free</span>
+            </div>
+            <div class="preview-icon ${accent}" id="previewIcon"><i class="${icon}"></i></div>
+            <h3 id="previewTitle">${escape(p?.title||'Nama produk')}</h3>
+            <p id="previewDesc">${escape(p?.description||'Deskripsi produk akan tampil di sini.')}</p>
+            <div class="preview-meta">
+              <span><i class="fa-solid fa-layer-group"></i> ${isChannel?'Channel':'Code'}</span>
+              <strong id="previewPrice">Free</strong>
+            </div>
+          </div>
+
+          <div class="create-tips">
+            <h3><i class="fa-solid fa-lightbulb"></i> Tips</h3>
+            <ul>
+              <li>Gunakan nama produk yang singkat dan jelas.</li>
+              <li>Jelaskan fitur atau isi produk secara lengkap.</li>
+              <li>Pastikan link Telegram atau code dapat digunakan.</li>
+              <li>Jangan membagikan credential atau token rahasia.</li>
+            </ul>
+          </div>
+        </aside>
+      </form>
+    </div>`;
+
+  const syncAccess=()=>{
+    const access=$('input[name="accessType"]:checked')?.value||'free';
+    const paid=access==='paid';
+    $('#fPrice').disabled=!paid;
+    if(!paid)$('#fPrice').value=0;
+    $('#priceField').classList.toggle('disabled',!paid);
+    $$('.access-card').forEach(x=>x.classList.toggle('selected',x.querySelector('input')?.checked));
+    $('#previewStatus').innerHTML=paid
+      ? '<i class="fa-solid fa-crown"></i> Paid'
+      : '<i class="fa-solid fa-gift"></i> Free';
+    $('#previewStatus').className='preview-status '+(paid?'paid':'free');
+    $('#previewPrice').textContent=paid?money($('#fPrice').value||0):'Free';
+  };
+
+  $$('input[name="accessType"]').forEach(x=>x.onchange=syncAccess);
+  $('#fPrice').oninput=syncAccess;
+  $('#fTitle').oninput=()=>$('#previewTitle').textContent=$('#fTitle').value.trim()||'Nama produk';
+  $('#fDesc').oninput=()=>$('#previewDesc').textContent=$('#fDesc').value.trim()||'Deskripsi produk akan tampil di sini.';
+  syncAccess();
+
+  $('#productForm').onsubmit=async e=>{
+    e.preventDefault();
+    const access=$('input[name="accessType"]:checked')?.value||'free';
+    const price=Number($('#fPrice').value||0);
+
+    if(!$('#fTitle').value.trim())return toast(tr('required'),'error');
+    if(access==='paid'&&price<=0)return toast(tr('minPrice'),'error');
+    if(isChannel&&!$('#fTelegram').value.trim())return toast('Link channel wajib diisi.','error');
+    if(!isChannel&&!$('#fContent').value.trim())return toast('Content / Code wajib diisi.','error');
+
+    const payload={
+      title:$('#fTitle').value.trim(),
+      description:$('#fDesc').value.trim(),
+      type,access_type:access,price,
+      thumbnail_url:$('#fImage').value.trim()||null,
+      category:$('#fCategory').value.trim()||null,
+      status:'published',
+      content:isChannel?null:$('#fContent').value,
+      telegram_channel:isChannel?$('#fTelegram').value.trim():null,
+      is_channel:isChannel
+    };
+
+    let r;
+    if(editId){
+      r=await sup.from('products').update(payload).eq('id',editId).eq('creator_id',state.user.id);
+      if(r.error)toast(r.error.message,'error');
+      else{toast(tr('productUpdated'),'success');setTimeout(()=>location.href=`dashboard.html?page=${type}-${access}`,350)}
+    }else{
+      try{
+        const {data:{session}}=await sup.auth.getSession();
+        const fn=String(C.MARKETPLACE_FUNCTION_URL||'');
+        const response=await fetch(fn,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({
+          action:'create_product',type,access_type:access,title:payload.title,description:payload.description,
+          price,thumbnail_url:payload.thumbnail_url,category:payload.category,content:payload.content,
+          telegram_channel:payload.telegram_channel
+        })});
+        const out=await response.json().catch(()=>({}));
+        if(!response.ok)throw new Error(out.error||'Gagal membuat produk');
+        toast(out.status==='published'?tr('published'):'Produk dibuat dan menunggu admin.','success');
+        setTimeout(()=>location.href=`dashboard.html?page=${type}-${access}`,350);
+      }catch(e){toast(e.message||tr('error'),'error')}
+    }
+  };
+}
 async function editProduct(id){const {data:p}=await sup.from('products').select('type').eq('id',id).eq('creator_id',state.user.id).single();if(p)renderCreate(p.type,id)}
 async function deleteProduct(id){if(!confirm(tr('confirmDelete')))return;const {error}=await sup.from('products').delete().eq('id',id).eq('creator_id',state.user.id);if(error)toast(error.message,'error');else{toast(tr('productDeleted'),'success');render()}}
 async function renderPurchases(){setActive('purchases');const {data}=await sup.from('purchases').select('id,amount,status,created_at,paid_at,products(id,title,type,access_type)').eq('buyer_id',state.user.id).order('created_at',{ascending:false});$('#content').innerHTML=`<div class="page-head"><div><div class="eyebrow">ACCOUNT</div><h1 class="page-title">${tr('purchasesTitle')}</h1></div></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>${tr('date')}</th><th>Product</th><th>${tr('type')}</th><th>${tr('amount')}</th><th>${tr('status')}</th><th>${tr('access')}</th></tr></thead><tbody>${data?.length?data.map(x=>`<tr><td>${new Date(x.created_at).toLocaleDateString()}</td><td>${escape(x.products?.title||'-')}</td><td>${escape(x.products?.type||'-')}</td><td>${money(x.amount)}</td><td><span class="pill ${x.status==='paid'?'ok':'pending'}">${escape(x.status)}</span></td><td>${x.status==='paid'?`<button class="btn btn-secondary" data-detail="${x.products?.id}"><i class="fa-solid fa-eye"></i> ${tr('open')}</button>`:'—'}</td></tr>`).join(''):`<tr><td colspan="6">${tr('noPurchases')}</td></tr>`}</tbody></table></div></div>`;bindCards()}
