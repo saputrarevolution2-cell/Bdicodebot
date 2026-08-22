@@ -53,3 +53,15 @@ against the TeleCod Supabase project. The schema includes:
 ## Production rule
 
 When Supabase is configured, Pastelink creation is database-only. The localStorage preview is only used when Supabase configuration is absent, so a production deployment cannot silently report a fake database save.
+
+## Admin Login Fix
+
+Master admin Telegram ID: `6665664367`.
+
+After deploying both the frontend and the updated `telegram-login` Edge Function, open:
+`https://YOUR-DOMAIN/admin`
+
+Click **Login / Verifikasi dengan Telegram** and use the Telegram account whose ID is `6665664367`. After Telegram verification, the magic-link session now returns to `/admin` instead of the homepage.
+
+Redeploy the function after updating this file:
+`supabase functions deploy telegram-login --no-verify-jwt`
