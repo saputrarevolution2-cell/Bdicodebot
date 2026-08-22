@@ -3441,3 +3441,93 @@ body.light .market-loading {
     font-size: 8px;
   }
 }
+
+/* =========================================================
+   MARKETPLACE ADD CODE / CHANNEL — AUTH STYLE
+========================================================= */
+.telecod-market-create-modal{
+  padding:18px;
+  background:rgba(4,7,20,.78);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.telecod-market-create-modal .auth-modal{
+  width:min(620px,100%);
+  padding:25px;
+  border:1px solid rgba(151,129,255,.22);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(118,87,255,.15),transparent 32%),
+    radial-gradient(circle at 0% 100%,rgba(47,140,255,.08),transparent 30%),
+    #0d1230;
+}
+.telecod-market-create-modal .auth-brand{margin-bottom:16px}
+.telecod-market-create-modal .auth-brand strong{font-size:18px}
+.telecod-market-create-modal .auth-brand small{font-size:10px}
+.market-form-intro{
+  display:flex;align-items:center;gap:12px;
+  margin:0 0 18px;padding:12px 13px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;background:rgba(255,255,255,.035);
+}
+.market-form-badge{
+  width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;
+  border-radius:11px;color:#c6b8ff;
+  background:linear-gradient(135deg,rgba(118,87,255,.2),rgba(47,140,255,.15));
+}
+.market-form-intro b{display:block;font-size:12px;color:#fff}
+.market-form-intro span{display:block;margin-top:2px;color:var(--muted);font-size:10px;line-height:1.45}
+.market-create-form{gap:12px}
+.market-field>span{
+  display:flex;align-items:center;gap:6px;
+}
+.market-field>span i{color:#a994ff;font-size:10px}
+.market-field>span em{
+  margin-left:3px;color:var(--muted-2);font-size:9px;font-style:normal;font-weight:500;
+}
+.market-field .field-wrap{margin-top:0}
+.market-field input,.market-field select,.market-field textarea{
+  font-family:inherit;
+}
+.market-field select{
+  width:100%;height:45px;padding:0 13px 0 39px;
+  border:1px solid var(--border);border-radius:11px;outline:0;
+  background:rgba(255,255,255,.04);color:#fff;
+}
+.market-field select:focus,.market-field textarea:focus{
+  border-color:rgba(118,87,255,.65);
+  box-shadow:0 0 0 3px rgba(118,87,255,.08);
+}
+.market-field textarea{
+  width:100%;padding:12px 13px;resize:vertical;min-height:74px;
+  border:1px solid var(--border);border-radius:11px;outline:0;
+  background:rgba(255,255,255,.04);color:#fff;line-height:1.55;
+}
+.market-field textarea:focus{border-color:rgba(118,87,255,.65)}
+.market-field textarea::placeholder,.market-field input::placeholder{color:#727995}
+.market-field .field-help{
+  display:block;margin-top:6px;color:var(--muted-2);font-size:9px;line-height:1.45;
+}
+.market-field .field-help i{margin-right:4px;color:#8e7bff}
+.market-access-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+.market-form-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:3px;padding-top:13px;border-top:1px solid rgba(255,255,255,.07);
+}
+.market-form-note{
+  display:flex;align-items:center;gap:7px;color:var(--muted-2);font-size:9px;
+}
+.market-form-note i{color:#7fd4b0}
+.market-form-actions{display:flex;gap:9px}
+.market-form-actions .auth-submit{width:auto;margin:0}
+.market-form-actions .auth-secondary-btn{min-width:92px}
+@media (max-width:600px){
+  .telecod-market-create-modal{padding:8px}
+  .telecod-market-create-modal .auth-modal{padding:19px;border-radius:20px}
+  .market-access-grid{grid-template-columns:1fr}
+  .market-form-footer{align-items:stretch;flex-direction:column}
+  .market-form-note{order:2}
+  .market-form-actions{width:100%}
+  .market-form-actions button{flex:1}
+}
