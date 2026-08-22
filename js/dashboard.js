@@ -67,7 +67,7 @@ async function renderMarketplace(filter={}){setActive('marketplace');$('#content
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 function bindCards(){$$('[data-detail]').forEach(b=>b.onclick=()=>openProduct(b.dataset.detail));$$('[data-buy]').forEach(b=>b.onclick=()=>purchase(b.dataset.buy));$$('[data-edit]').forEach(b=>b.onclick=()=>editProduct(b.dataset.edit));$$('[data-delete]').forEach(b=>b.onclick=()=>deleteProduct(b.dataset.delete))}
 async function renderProducts(filter){const type=filter.startsWith('channel')?'channel':'code',access=filter.endsWith('free')?'free':'paid';setActive(filter);const data=await queryProducts({type,access_type:access});const mine=data.filter(p=>p.creator_id===state.user.id);$('#content').innerHTML=`<div class="page-head"><div><div class="eyebrow">${type.toUpperCase()}</div><h1 class="page-title">${type==='channel'?(access==='free'?tr('channelFree'):tr('channelPaid')):(access==='free'?tr('codeFree'):tr('codePaid'))}</h1></div><a class="btn btn-primary" href="dashboard.html?page=${type==='channel'?'create-channel':'create-code'}"><i class="fa-solid fa-plus"></i> ${type==='channel'?tr('createChannel'):tr('createCode')}</a></div><div class="grid product-grid">${data.length?data.map(p=>productCard(p,true)).join(''):`<div class="empty" style="grid-column:1/-1"><i class="fa-solid ${type==='channel'?'fa-bullhorn':'fa-code'} big"></i><br>${tr('empty')}</div>`}</div>`;bindCards()}
-async async function renderCreate(type,editId=null){
+async function renderCreate(type,editId=null){
   setActive(type==='channel'?'channel':'code');
   let p=null;
   if(editId){
