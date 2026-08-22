@@ -49,13 +49,13 @@
         <h1>Master Administrator</h1>
         <p>Panel ini hanya menerima Telegram ID master yang terdaftar di database.</p>
         <label>Telegram ID Master
-          <input id="adminIdInput" inputmode="numeric" maxlength="20" placeholder="6665664367" autocomplete="off">
+          <input id="adminIdInput" inputmode="numeric" maxlength="20" value="${MASTER_ADMIN_ID}" placeholder="${MASTER_ADMIN_ID}" autocomplete="off">
         </label>
-        <button id="verifyAdminId" class="btn primary" type="button">
-          <i class="fa-solid fa-lock-open"></i> Verifikasi Akses
-        </button>
         <button id="telegramAdminLogin" class="btn telegram" type="button">
-          <i class="fa-brands fa-telegram"></i> Login / Verifikasi dengan Telegram
+          <i class="fa-brands fa-telegram"></i> Login dengan Telegram
+        </button>
+        <button id="verifyAdminId" class="btn" type="button">
+          <i class="fa-solid fa-shield-halved"></i> Cek ID & Session
         </button>
         ${message ? `<div class="gate-error">${esc(message)}</div>` : ""}
         <small>Telegram ID yang diketik di sini bukan password. Akses tetap diverifikasi oleh Supabase session + database.</small>
@@ -438,6 +438,17 @@
   function showError(e) {
     console.error(e);
     if (content) content.innerHTML = `<div class="panel empty"><i class="fa-solid fa-triangle-exclamation"></i><h2>Admin error</h2><p>${esc(e?.message || "Unknown error")}</p></div>`;
+  }
+
+  // Re-check immediately after Supabase completes the Telegram magic-link callback.
+  // This makes /admin recover cleanly even when the callback finishes after page load.
+  if (sup) {
+    sup.auth.onAuthStateChange((event, session) => {
+      if (!session?.user) return;
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+        ensureMasterSession().catch(showError);
+      }
+    });
   }
 
   ensureMasterSession().catch(showError);
