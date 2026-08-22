@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const secretKey =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+  Deno.env.get("SERVICE_ROLE_KEY") ||
   (() => {
     try {
       const keys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}");
