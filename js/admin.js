@@ -132,7 +132,7 @@
     script.dataset.authUrl =
       `${callback}${callback.includes("?") ? "&" : "?"}${new URLSearchParams({
         mode: "admin",
-        redirect: location.href
+        redirect: `${location.origin}/admin`
       })}`;
     modal.querySelector("#adminTelegramWidget").appendChild(script);
   }
