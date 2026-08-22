@@ -1,7 +1,4 @@
-/admin /admin.html 200
-# Pretty routes
-/dashboard /dashboard.html 200
+# TeleCod public redirects
 /reset /reset.html 200
 /paste /index.html?editor=1 200
-# Public PasteLink
 /p/* /p.html?slug=:splat 200
