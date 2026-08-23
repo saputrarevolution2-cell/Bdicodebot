@@ -24,7 +24,7 @@ function layoutReady(){
 }
 async function loadUser(){if(!sup){toast(tr('config'),'warning');return true}const {data,error}=await sup.auth.getUser();if(error||!data.user){location.href='index.html?login=1';return false}state.user=data.user;const {data:p}=await sup.from('profiles').select('*').eq('id',state.user.id).maybeSingle();state.profile=p||{};if(state.profile.is_banned){await sup.auth.signOut();location.href='index.html?banned=1';return false}if(state.profile.is_admin)$('#adminNav').style.display='flex';await sup.rpc('ensure_wallet',{p_user:state.user.id});$('#topUser').textContent='@'+(state.profile.username||state.user.user_metadata?.username||'user');$('#avatar').textContent=initials(state.profile.username||state.user.email);return true}
 async function queryProducts(filters={}){if(!sup)return[];let q=sup.from('marketplace_public').select('*').eq('status','published').order('created_at',{ascending:false});if(filters.type)q=q.eq('type',filters.type);if(filters.access_type)q=q.eq('access_type',filters.access_type);if(filters.search)q=q.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);const {data,error}=await q.limit(100);if(error){toast(error.message,'error');return[]}return data||[]}
-function productCard(p,manage=false){const icon=p.type==='channel'?'fa-bullhorn':'fa-code';const own=state.user&&p.creator_id===state.user.id;return `<article class="card product-card"><div class="product-img">${p.thumbnail_url?`<img src="${escape(p.thumbnail_url)}" alt="">`:`<i class="fa-solid ${icon}"></i>`}</div><div class="product-body"><div class="product-type"><span class="pill">${p.type==='channel'?tr('typeChannel'):tr('typeCode')}</span><span class="pill ${p.access_type}">${p.access_type==='free'?tr('free'):tr('paid')}</span></div><div class="product-title">${escape(p.title)}</div><div class="product-desc">${escape(p.description||'')}</div><div class="creator">@${escape(p.creator_username||'creator')} · ${Number(p.views||0).toLocaleString()} views</div><div class="product-foot"><span class="price">${p.access_type==='free'?tr('free'):money(p.price)}</span><div class="actions-inline"><button class="btn btn-secondary" data-detail="${p.id}"><i class="fa-solid fa-eye"></i></button>${own&&manage?`<button class="btn btn-secondary" data-edit="${p.id}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-danger" data-delete="${p.id}"><i class="fa-solid fa-trash"></i></button>`:`<button class="btn btn-primary" data-buy="${p.id}"><i class="fa-solid ${p.access_type==='free'?'fa-download':'fa-credit-card'}"></i> ${p.access_type==='free'?tr('freeBuy'):tr('buy')}</button>`}</div></div></div></article>`}
+function productCard(p,manage=false){const icon=p.type==='channel'?'fa-bullhorn':'fa-code';const own=state.user&&p.creator_id===state.user.id;return `<article class="card product-card"><div class="product-img"><i class="fa-solid ${icon}"></i></div><div class="product-body"><div class="product-type"><span class="pill">${p.type==='channel'?tr('typeChannel'):tr('typeCode')}</span><span class="pill ${p.access_type}">${p.access_type==='free'?tr('free'):tr('paid')}</span></div><div class="product-title">${escape(p.title)}</div><div class="product-desc">${escape(p.description||'')}</div><div class="creator">@${escape(p.creator_username||'creator')} · ${Number(p.views||0).toLocaleString()} views</div><div class="product-foot"><span class="price">${p.access_type==='free'?tr('free'):money(p.price)}</span><div class="actions-inline"><button class="btn btn-secondary" data-detail="${p.id}"><i class="fa-solid fa-eye"></i></button>${own&&manage?`<button class="btn btn-secondary" data-edit="${p.id}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-danger" data-delete="${p.id}"><i class="fa-solid fa-trash"></i></button>`:`<button class="btn btn-primary" data-buy="${p.id}"><i class="fa-solid ${p.access_type==='free'?'fa-download':'fa-credit-card'}"></i> ${p.access_type==='free'?tr('freeBuy'):tr('buy')}</button>`}</div></div></div></article>`}
 async function openProduct(id){if(!sup)return;const {data:p,error}=await sup.from('products').select('*').eq('id',id).single();if(error||!p)return toast(tr('error'),'error');await sup.rpc('increment_product_view',{p_product:id,p_viewer_hash:state.user?.id||null});const {data:purchase}=state.user?await sup.from('purchases').select('status').eq('product_id',id).eq('buyer_id',state.user.id).maybeSingle():{data:null};const canAccess=p.access_type==='free'||purchase?.status==='paid'||p.creator_id===state.user.id;$('#modal').classList.add('show');$('#modalBody').innerHTML=`<div class="modal-head"><div><div class="eyebrow">${p.type.toUpperCase()}</div><h2 class="section-title">${escape(p.title)}</h2></div><button class="close" id="closeModal"><i class="fa-solid fa-xmark"></i></button></div><p class="muted">${escape(p.description||'')}</p><div class="card modal-inner"><div class="stat-label">${tr('price')}</div><div class="stat-value">${p.access_type==='free'?tr('free'):money(p.price)}</div></div><div class="actions">${canAccess?`<button class="btn btn-primary" id="accessProduct"><i class="fa-solid fa-unlock"></i> ${tr('access')}</button>`:`<button class="btn btn-primary" id="modalBuy"><i class="fa-solid fa-credit-card"></i> ${p.access_type==='free'?tr('freeBuy'):tr('pay')}</button>`}</div>`;$('#closeModal').onclick=()=>$('#modal').classList.remove('show');const b=canAccess?$('#accessProduct'):$('#modalBuy');b.onclick=()=>canAccess?showAccess(p):purchase(p.id)}
 function showAccess(p){$('#modalBody').innerHTML=`<div class="modal-head"><h2 class="section-title">${escape(p.title)}</h2><button class="close" id="closeAccess"><i class="fa-solid fa-xmark"></i></button></div>${p.type==='channel'?`<p class="muted">${escape(p.telegram_channel||'')}</p><a class="btn btn-primary" target="_blank" rel="noopener" href="${escape(p.telegram_channel||'#')}"><i class="fa-brands fa-telegram"></i> ${tr('open')}</a>`:`<textarea class="textarea code-area" readonly>${escape(p.content||tr('contentLocked'))}</textarea><button class="btn btn-secondary" id="copyContent"><i class="fa-regular fa-copy"></i> ${tr('copy')}</button>`}`;$('#closeAccess').onclick=()=>$('#modal').classList.remove('show');$('#copyContent')?.addEventListener('click',async()=>{await navigator.clipboard.writeText(p.content||'');toast(tr('copied'),'success')})}
 function openPaymentModal(p){
@@ -181,24 +181,6 @@ async function renderCreate(type,editId=null){
             </div>
           </section>
 
-          <section class="create-section">
-            <div class="create-section-head">
-              <div class="create-section-icon"><i class="fa-solid fa-image"></i></div>
-              <div>
-                <h2>Media</h2>
-                <p>Opsional. Gunakan thumbnail agar produk terlihat lebih menarik.</p>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="fImage">Thumbnail URL</label>
-              <div class="input-wrap">
-                <i class="fa-solid fa-link"></i>
-                <input class="input" id="fImage" value="${escape(p?.thumbnail_url||'')}" placeholder="https://contoh.com/thumbnail.jpg">
-              </div>
-            </div>
-          </section>
-
           ${isChannel?`
           <section class="create-section">
             <div class="create-section-head">
@@ -310,7 +292,7 @@ async function renderCreate(type,editId=null){
       title:$('#fTitle').value.trim(),
       description:$('#fDesc').value.trim(),
       type,access_type:access,price,
-      thumbnail_url:$('#fImage').value.trim()||null,
+      
       category:$('#fCategory').value.trim()||null,
       bot_username:!isChannel?$('#fBot').value.trim():null,
       status:'published',
@@ -327,17 +309,19 @@ async function renderCreate(type,editId=null){
     }else{
       try{
         const {data:{session}}=await sup.auth.getSession();
-        if(!session?.access_token)throw new Error('Silakan login/register terlebih dahulu untuk menambahkan produk.');
+        if(access==='paid' && !session?.access_token)throw new Error('Produk PAID wajib login/register terlebih dahulu.');
         const fn=String(C.MARKETPLACE_FUNCTION_URL||'').trim();
         if(!/^https?:\/\//i.test(fn))throw new Error('Marketplace Function belum dikonfigurasi.');
-        const response=await fetch(fn,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({
+        const headers={'Content-Type':'application/json'};
+        if(session?.access_token) headers.Authorization=`Bearer ${session.access_token}`;
+        const response=await fetch(fn,{method:'POST',headers,body:JSON.stringify({
           action:'create_product',type,access_type:access,title:payload.title,description:payload.description,
-          price,thumbnail_url:payload.thumbnail_url,category:payload.category,content:payload.content,
+          price,category:payload.category,content:payload.content,
           bot_username:payload.bot_username,telegram_channel:payload.telegram_channel
         })});
         const out=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(out.error||'Gagal membuat produk');
-        toast(out.status==='published'?tr('published'):'Produk dibuat dan menunggu admin.','success');
+        toast(out.status==='published'?'Produk langsung terupload.':'Produk terupload dan menunggu approval admin.','success');
         setTimeout(()=>location.href=`dashboard.html?page=${type}-${access}`,350);
       }catch(e){toast(e.message||tr('error'),'error')}
     }

@@ -1633,447 +1633,79 @@ function requireTerms(checked) {
    LOGIN
    ========================================================= */
 
-on("#loginForm", "submit", async event => {
+async function checkAuthIdentifier(inputId, stateId){
+  const input=$(inputId), stateEl=$(stateId); if(!input||!stateEl)return null;
+  const value=normalizeUsername(input.value);
+  if(!validUsername(value)){ stateEl.innerHTML=''; stateEl.className='username-state'; if(inputId==='#loginUsername') $('#loginPassword')?.setAttribute('disabled','disabled'); return null; }
+  stateEl.className='username-state pending'; stateEl.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Mengecek...';
+  const fn=String(window.TELECOD_USERNAME_AUTH_FUNCTION_URL||'').trim();
+  if(!/^https?:\/\//i.test(fn)){stateEl.innerHTML='';return null;}
+  try{
+    const r=await fetch(fn,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'check',username:value})});
+    const out=await r.json().catch(()=>({}));
+    if(out.exists){stateEl.className='username-state ok';stateEl.innerHTML=`<i class="fa-solid fa-circle-check"></i> ${lang==='id'?'Akun ditemukan':'Account found'}`; if(inputId==='#loginUsername') $('#loginPassword')?.removeAttribute('disabled');}
+    else {stateEl.className='username-state bad';stateEl.innerHTML=`<i class="fa-solid fa-circle-xmark"></i> ${lang==='id'?'Username / username Telegram belum dibuat':'Username / Telegram username has not been created'}`; if(inputId==='#loginUsername') $('#loginPassword')?.setAttribute('disabled','disabled');}
+    return out;
+  }catch(e){stateEl.className='username-state bad';stateEl.innerHTML=`<i class="fa-solid fa-circle-xmark"></i> ${lang==='id'?'Tidak dapat mengecek akun':'Unable to check account'}`; if(inputId==='#loginUsername') $('#loginPassword')?.setAttribute('disabled','disabled');return null;}
+}
+
+on('#loginUsername','input',debounce(()=>checkAuthIdentifier('#loginUsername','#loginUsernameState'),350));
+on('#registerUsername','input',debounce(()=>checkAuthIdentifier('#registerUsername','#registerUsernameState'),350));
+on('#registerTelegramUsername','input',debounce(()=>checkAuthIdentifier('#registerTelegramUsername','#registerTelegramState'),350));
+
+on('#loginForm','submit',async event=>{
   event.preventDefault();
-
-  const username =
-    normalizeUsername(
-      $("#loginUsername")?.value
-    );
-
-  const password =
-    $("#loginPassword")?.value || "";
-
-  if (!validUsername(username)) {
-    toast(
-      T[lang].invalidUsername,
-      "error"
-    );
-    return;
-  }
-
-  if (password.length < 6) {
-    toast(
-      T[lang].passwordShort,
-      "error"
-    );
-    return;
-  }
-
-  // Terms are required when registering, not on every login.
-  if (!(await ensureSupabase())) {
-    return;
-  }
-
-  const submit =
-    event.submitter ||
-    $("#loginForm button[type='submit']");
-
-  const original =
-    submit?.innerHTML;
-
-  try {
-    if (submit) {
-      submit.disabled = true;
-      submit.innerHTML =
-        lang === "id"
-          ? "Memproses..."
-          : "Signing in...";
-    }
-
-    const functionUrl = String(
-      window.TELECOD_USERNAME_AUTH_FUNCTION_URL || ""
-    ).trim();
-
-    let data = null;
-
-    // Use the username-auth Edge Function first. This avoids exposing or
-    // depending on the synthetic email implementation in the browser.
-    if (functionUrl && /^https?:\/\//i.test(functionUrl)) {
-      const response = await fetch(functionUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          action: "login",
-          username,
-          password,
-          terms_accepted: true
-        })
-      });
-
-      let result = {};
-      try { result = await response.json(); } catch (_) {}
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error ||
-          result?.message ||
-          `Login gagal (${response.status})`
-        );
-      }
-
-      if (result?.access_token && result?.refresh_token) {
-        const sessionResult = await sup.auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token
-        });
-        if (sessionResult.error) throw sessionResult.error;
-        data = sessionResult.data;
-      } else {
-        throw new Error(
-          lang === "id"
-            ? "Server login tidak mengembalikan session."
-            : "Login server did not return a session."
-        );
-      }
-    } else {
-      const result = await sup.auth.signInWithPassword({
-        email: syntheticEmail(username),
-        password
-      });
-      if (result.error) throw result.error;
-      data = result.data;
-    }
-
-    if (!data?.user) {
-      throw new Error(
-        lang === "id"
-          ? "Session login tidak ditemukan."
-          : "Login session was not created."
-      );
-    }
-
-    const profile =
-      await sup
-        .from("profiles")
-        .select("is_banned")
-        .eq("id", data.user.id)
-        .maybeSingle();
-
-    if (
-      profile.data?.is_banned === true
-    ) {
-      await sup.auth.signOut();
-
-      throw new Error(
-        lang === "id"
-          ? "Akun kamu diblokir admin."
-          : "Your account has been blocked by an administrator."
-      );
-    }
-
-    await sup
-      .from("profiles")
-      .update({
-        last_login_at:
-          new Date().toISOString(),
-
-        terms_accepted_at:
-          new Date().toISOString()
-      })
-      .eq("id", data.user.id);
-
-    localStorage.setItem("telecod_session_hint","1");
-    document.documentElement.dataset.authenticated="true";
-    closeAuth();
-    toast(T[lang].loginSuccess,"success");
-    setTimeout(()=>{
-      const pending=localStorage.getItem("telecod_pending_market_create");
-      if(pending){ location.href="index.html#marketItems"; }
-      else { location.href="dashboard.html"; }
-    },450);
-  } catch (error) {
-    console.error(
-      "Login error:",
-      error
-    );
-
-    toast(
-      error?.message ||
-      T[lang].authError,
-      "error"
-    );
-  } finally {
-    if (submit) {
-      submit.disabled = false;
-
-      if (original != null) {
-        submit.innerHTML = original;
-      }
-    }
-  }
+  const username=normalizeUsername($('#loginUsername')?.value), password=$('#loginPassword')?.value||'';
+  if(!validUsername(username))return toast(T[lang].invalidUsername,'error');
+  if(password.length<6)return toast(T[lang].passwordShort,'error');
+  if(!(await ensureSupabase()))return;
+  const submit=event.submitter||$('#loginForm button[type="submit"]'); const original=submit?.innerHTML;
+  try{
+    if(submit){submit.disabled=true;submit.innerHTML=lang==='id'?'Memproses...':'Signing in...';}
+    const fn=String(window.TELECOD_USERNAME_AUTH_FUNCTION_URL||'').trim();
+    const response=await fetch(fn,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action:'login',username,password})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result?.error||T[lang].authError);
+    const sessionResult=await sup.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
+    if(sessionResult.error)throw sessionResult.error;
+    const profile=await sup.from('profiles').select('is_banned').eq('id',sessionResult.data.user.id).maybeSingle();
+    if(profile.data?.is_banned){await sup.auth.signOut();throw new Error(lang==='id'?'Akun kamu diblokir admin.':'Your account has been blocked by an administrator.');}
+    localStorage.setItem('telecod_session_hint','1');document.documentElement.dataset.authenticated='true';closeAuth();toast(T[lang].loginSuccess,'success');
+    setTimeout(()=>location.href='dashboard.html',450);
+  }catch(error){console.error(error);toast(error?.message||T[lang].authError,'error');}
+  finally{if(submit){submit.disabled=false;if(original!=null)submit.innerHTML=original;}}
 });
-
 
 /* =========================================================
    REGISTER
    ========================================================= */
 
-on("#registerForm", "submit", async event => {
+on('#registerForm','submit',async event=>{
   event.preventDefault();
-
-  const username =
-    normalizeUsername(
-      $("#registerUsername")?.value
-    );
-
-  const phone =
-    $("#registerPhone")?.value?.trim() ||
-    "";
-
-  const password =
-    $("#registerPassword")?.value ||
-    "";
-
-  const confirm =
-    $("#registerConfirm")?.value ||
-    "";
-
-  if (!validUsername(username)) {
-    toast(
-      T[lang].invalidUsername,
-      "error"
-    );
-    return;
-  }
-
-  if (!validPhone(phone)) {
-    toast(
-      T[lang].invalidPhone,
-      "error"
-    );
-    return;
-  }
-
-  if (password.length < 6) {
-    toast(
-      T[lang].passwordShort,
-      "error"
-    );
-    return;
-  }
-
-  if (password !== confirm) {
-    toast(
-      T[lang].passwordMismatch,
-      "error"
-    );
-    return;
-  }
-
-  if (
-    !requireTerms(
-      $("#registerTerms")?.checked
-    )
-  ) {
-    return;
-  }
-
-  if (!(await ensureSupabase())) {
-    return;
-  }
-
-  const submit =
-    event.submitter ||
-    $("#registerForm button[type='submit']");
-
-  const original =
-    submit?.innerHTML;
-
-  try {
-    if (submit) {
-      submit.disabled = true;
-
-      submit.innerHTML =
-        lang === "id"
-          ? "Mendaftarkan..."
-          : "Creating account...";
-    }
-
-    const functionUrl =
-      String(
-        window.TELECOD_USERNAME_AUTH_FUNCTION_URL ||
-        ""
-      ).trim();
-
-    /*
-      Preferred production flow:
-      Edge Function handles username registration.
-    */
-
-    if (
-      functionUrl &&
-      isConfiguredValue(functionUrl) &&
-      /^https?:\/\//i.test(functionUrl)
-    ) {
-      const response =
-        await fetch(functionUrl, {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            "Accept":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            action: "register",
-            username,
-            telegram_number: phone,
-            password,
-            terms_accepted: true
-          })
-        });
-
-      let result = {};
-
-      try {
-        result =
-          await response.json();
-      } catch (_) {}
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error ||
-          result?.message ||
-          T[lang].authError
-        );
-      }
-
-      // Edge Function may already return a live Supabase session.
-      if (result?.access_token && result?.refresh_token) {
-        const sessionResult = await sup.auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token
-        });
-        if (sessionResult.error) throw sessionResult.error;
-      } else if (result?.email) {
-        // Backward compatibility with the previous function response.
-        const login = await sup.auth.signInWithPassword({
-          email: result.email,
-          password
-        });
-        if (login.error) throw login.error;
-      } else if (result?.session_required) {
-        throw new Error(
-          lang === "id"
-            ? "Akun berhasil dibuat, tetapi session belum dibuat. Deploy ulang Edge Function username-auth."
-            : "Account created, but no session was created. Redeploy the username-auth Edge Function."
-        );
-      }
-    } else {
-      /*
-        Fallback Supabase Auth flow.
-      */
-
-      const {
-        data,
-        error
-      } = await sup.auth.signUp({
-        email:
-          syntheticEmail(username),
-
-        password,
-
-        options: {
-          data: {
-            username,
-            telegram_username:
-              username,
-            telegram_number:
-              phone,
-            terms_accepted:
-              true
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.user) {
-        const {
-          error: profileError
-        } = await sup
-          .from("profiles")
-          .upsert(
-            {
-              id: data.user.id,
-              username,
-              telegram_username:
-                username,
-              telegram_number:
-                phone,
-              terms_accepted_at:
-                new Date().toISOString()
-            },
-            {
-              onConflict: "id"
-            }
-          );
-
-        if (profileError) {
-          console.warn(
-            "Profile creation warning:",
-            profileError
-          );
-        }
-      }
-
-      /*
-        If email confirmation is enabled,
-        Supabase may not create an active session.
-      */
-
-      if (!data?.session) {
-        toast(
-          lang === "id"
-            ? "Registrasi berhasil. Silakan cek email konfirmasi jika diminta."
-            : "Registration successful. Check your confirmation email if required.",
-          "info"
-        );
-
-        closeAuth();
-        return;
-      }
-    }
-
-    localStorage.setItem("telecod_session_hint","1");
-    document.documentElement.dataset.authenticated="true";
-    closeAuth();
-    toast(T[lang].registerSuccess,"success");
-    setTimeout(()=>{
-      const pending=localStorage.getItem("telecod_pending_market_create");
-      if(pending){ location.href="index.html#marketItems"; }
-      else { location.href="dashboard.html"; }
-    },450);
-  } catch (error) {
-    console.error(
-      "Registration error:",
-      error
-    );
-
-    toast(
-      error?.message ||
-      T[lang].authError,
-      "error"
-    );
-  } finally {
-    if (submit) {
-      submit.disabled = false;
-
-      if (original != null) {
-        submit.innerHTML =
-          original;
-      }
-    }
-  }
+  const username=normalizeUsername($('#registerUsername')?.value);
+  const telegramUsername=normalizeUsername($('#registerTelegramUsername')?.value);
+  const phone=$('#registerPhone')?.value?.trim()||'';
+  const password=$('#registerPassword')?.value||'';
+  const confirm=$('#registerConfirm')?.value||'';
+  if(!validUsername(username)||!validUsername(telegramUsername))return toast(T[lang].invalidUsername,'error');
+  if(password.length<6)return toast(T[lang].passwordShort,'error');
+  if(password!==confirm)return toast(T[lang].passwordMismatch,'error');
+  if(!requireTerms($('#registerTerms')?.checked))return;
+  if(!(await ensureSupabase()))return;
+  const submit=event.submitter||$('#registerForm button[type="submit"]'); const original=submit?.innerHTML;
+  try{
+    if(submit){submit.disabled=true;submit.innerHTML=lang==='id'?'Mendaftarkan...':'Creating account...';}
+    const fn=String(window.TELECOD_USERNAME_AUTH_FUNCTION_URL||'').trim();
+    const response=await fetch(fn,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action:'register',username,telegram_username:telegramUsername,telegram_number:phone,password,terms_accepted:true})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result?.error||T[lang].authError);
+    if(!result.access_token||!result.refresh_token)throw new Error(lang==='id'?'Akun dibuat tetapi session belum tersedia.':'Account created but session is not available.');
+    const sessionResult=await sup.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
+    if(sessionResult.error)throw sessionResult.error;
+    localStorage.setItem('telecod_session_hint','1');document.documentElement.dataset.authenticated='true';closeAuth();toast(T[lang].registerSuccess,'success');setTimeout(()=>location.href='dashboard.html',450);
+  }catch(error){console.error(error);toast(error?.message||T[lang].authError,'error');}
+  finally{if(submit){submit.disabled=false;if(original!=null)submit.innerHTML=original;}}
 });
-
 
 /* =========================================================
    TELEGRAM AUTH
@@ -2665,7 +2297,7 @@ async function openMarketplaceFreeModal(item){
       </div>
       <div class="market-detail-content">
         <div class="market-detail-badges"><span class="market-badge free">${isEN?"FREE":"GRATIS"}</span><span class="market-badge">${escapeHTML(category.toUpperCase())}</span></div>
-        ${item.thumbnail_url?`<img class="market-detail-image" src="${escapeAttribute(item.thumbnail_url)}" alt="${escapeAttribute(title)}" onerror="this.style.display='none'">`:""}
+        <div class="market-detail-icon"><i class="fa-solid ${category==="channel"?"fa-bullhorn":"fa-code"}"></i></div>
         <h2>${escapeHTML(title)}</h2>
         <p>${escapeHTML(item.description||"")}</p>
         <div id="freeAccessBody"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
@@ -2747,18 +2379,9 @@ function createMarketplaceCard(item){
     ?(isEN?"View":"Lihat")
     :(isEN?"Open Free":"Buka Gratis");
 
-  const thumbnail=item.thumbnail_url||"assets/reference.jpg";
-
   card.innerHTML=`
     <div class="market-item-image">
-
-      <img
-        src="${escapeAttribute(thumbnail)}"
-        alt="${escapeAttribute(item.title||"TeleCod")}"
-        loading="lazy"
-        onerror="this.src='assets/reference.jpg'"
-      >
-
+      <div class="market-icon-only"><i class="fa-solid ${icon}"></i></div>
       <span class="market-item-type">
         <i class="fa-solid ${icon}"></i>
         ${escapeHTML(category.toUpperCase())}

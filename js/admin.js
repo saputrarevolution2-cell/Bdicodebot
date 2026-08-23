@@ -54,6 +54,10 @@
         <button id="telegramAdminLogin" class="btn telegram" type="button">
           <i class="fa-brands fa-telegram"></i> Login dengan Telegram
         </button>
+        <div class="admin-login-divider">atau login username & password</div>
+        <label>Username Admin<input id="adminUsername" autocomplete="username" placeholder="username admin"></label>
+        <label>Password Admin<input id="adminPassword" type="password" autocomplete="current-password" placeholder="••••••••"></label>
+        <button id="passwordAdminLogin" class="btn primary" type="button"><i class="fa-solid fa-right-to-bracket"></i> Login Admin</button>
         <button id="verifyAdminId" class="btn" type="button">
           <i class="fa-solid fa-shield-halved"></i> Cek ID & Session
         </button>
@@ -65,6 +69,7 @@
     $("#verifyAdminId").onclick = verify;
     input?.addEventListener("keydown", e => { if (e.key === "Enter") verify(); });
     $("#telegramAdminLogin").onclick = startTelegramAdminAuth;
+    $("#passwordAdminLogin").onclick = passwordAdminLogin;
   }
 
   async function verifyMasterId(value) {
@@ -100,6 +105,21 @@
     await bootAuthorized(profile);
   }
 
+
+  async function passwordAdminLogin(){
+    if(!sup)return toast("Supabase belum dikonfigurasi.","error");
+    const username=String($("#adminUsername")?.value||"").trim().replace(/^@+/g,"").toLowerCase();
+    const password=String($("#adminPassword")?.value||"");
+    if(!username||password.length<6)return toast("Username dan password wajib diisi.","warning");
+    try{
+      const r=await sup.auth.signInWithPassword({email:`${username}@telecod.local`,password});
+      if(r.error)throw r.error;
+      const {data:profile,error}=await sup.from("profiles").select("id,telegram_id,telegram_username,username,display_name,is_admin,is_banned").eq("id",r.data.user.id).maybeSingle();
+      if(error||!profile)throw new Error("Profil admin tidak ditemukan.");
+      if(profile.is_banned||String(profile.telegram_id||"")!==MASTER_ADMIN_ID){await sup.auth.signOut();throw new Error("Akun ini bukan master administrator.");}
+      await bootAuthorized(profile);
+    }catch(e){toast(e.message||"Login admin gagal.","error");}
+  }
   function startTelegramAdminAuth() {
     const bot = String(C.TELEGRAM_BOT_USERNAME || "").replace(/^@/, "");
     const callback = String(C.TELEGRAM_AUTH_FUNCTION_URL || "");
@@ -287,7 +307,7 @@
       <thead><tr><th>Produk</th><th>Creator</th><th>Tipe</th><th>Harga</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${state.products.map(p => `<tr>
         <td><b>${esc(p.title)}</b><br><span class="muted">${esc(p.slug)}</span></td>
-        <td>@${esc(p.creator_username || "-")}</td><td>${esc(p.type)}</td>
+        <td>@${esc(p.creator_username || "-")}<br><span class="muted">Bot: ${esc(p.bot_username || "-")}</span></td><td>${esc(p.type)}</td>
         <td>${p.access_type === "free" ? "FREE" : money(p.price)}</td>
         <td><span class="pill ${p.status==="published"?"ok":p.status==="archived"?"bad":"warn"}">${esc(p.status)}</span></td>
         <td><div class="actions">
