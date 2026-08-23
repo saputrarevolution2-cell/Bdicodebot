@@ -23,7 +23,7 @@
   </span>
   <span class="logo-word"><b>TELE</b><em>COD</em></span>
 </a>
-    <button id="menuBtn" class="menu-btn"><i class="fa-solid fa-bars"></i></button>
+    <button id="menuBtn" class="menu-btn" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks"><i class="fa-solid fa-bars"></i></button>
     <nav id="navLinks">
       <a href="#home" class="active" data-i18n="home">Beranda</a>
       <a href="#market" data-i18n="marketplace">Marketplace</a>
@@ -33,12 +33,12 @@
       <a href="#contact" data-i18n="contact">Kontak</a>
     </nav>
     <div class="nav-tools">
-      <button id="langBtn" class="tool-btn">🇮🇩 <span>ID</span>⌄</button>
-      <div id="langMenu" class="dropdown">
-        <button data-lang="id">🇮🇩 Indonesia</button>
-        <button data-lang="en">🇬🇧 English</button>
+      <button id="langBtn" class="tool-btn" type="button" aria-label="Pilih bahasa" aria-expanded="false" aria-haspopup="true"><span class="lang-flag">🇮🇩</span><span class="lang-code">ID</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+      <div id="langMenu" class="dropdown" role="listbox" aria-label="Bahasa">
+        <button type="button" data-lang="id" role="option">🇮🇩 Indonesia</button>
+        <button type="button" data-lang="en" role="option">🇬🇧 English</button>
       </div>
-      <button id="themeBtn" class="round-btn" title="Theme"><i class="fa-solid fa-sun"></i></button>
+      <button id="themeBtn" class="round-btn" type="button" title="Light mode" aria-label="Aktifkan mode terang"><i class="fa-solid fa-sun" aria-hidden="true"></i></button>
       <button id="loginTop" class="login-top" data-i18n="login">Login</button>
     </div>
   </div>
