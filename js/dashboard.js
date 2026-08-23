@@ -67,7 +67,7 @@ async function renderMarketplace(filter={}){setActive('marketplace');$('#content
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 function bindCards(){$$('[data-detail]').forEach(b=>b.onclick=()=>openProduct(b.dataset.detail));$$('[data-buy]').forEach(b=>b.onclick=()=>purchase(b.dataset.buy));$$('[data-edit]').forEach(b=>b.onclick=()=>editProduct(b.dataset.edit));$$('[data-delete]').forEach(b=>b.onclick=()=>deleteProduct(b.dataset.delete))}
 async function renderProducts(filter){const type=filter.startsWith('channel')?'channel':'code',access=filter.endsWith('free')?'free':'paid';setActive(filter);const data=await queryProducts({type,access_type:access});const mine=data.filter(p=>p.creator_id===state.user.id);$('#content').innerHTML=`<div class="page-head"><div><div class="eyebrow">${type.toUpperCase()}</div><h1 class="page-title">${type==='channel'?(access==='free'?tr('channelFree'):tr('channelPaid')):(access==='free'?tr('codeFree'):tr('codePaid'))}</h1></div><a class="btn btn-primary" href="dashboard.html?page=${type==='channel'?'create-channel':'create-code'}"><i class="fa-solid fa-plus"></i> ${type==='channel'?tr('createChannel'):tr('createCode')}</a></div><div class="grid product-grid">${data.length?data.map(p=>productCard(p,true)).join(''):`<div class="empty" style="grid-column:1/-1"><i class="fa-solid ${type==='channel'?'fa-bullhorn':'fa-code'} big"></i><br>${tr('empty')}</div>`}</div>`;bindCards()}
-async async function renderCreate(type,editId=null){
+async function renderCreate(type,editId=null){
   setActive(type==='channel'?'channel':'code');
   let p=null;
   if(editId){
@@ -312,6 +312,7 @@ async async function renderCreate(type,editId=null){
       type,access_type:access,price,
       thumbnail_url:$('#fImage').value.trim()||null,
       category:$('#fCategory').value.trim()||null,
+      bot_username:!isChannel?$('#fBot').value.trim():null,
       status:'published',
       content:isChannel?null:$('#fContent').value,
       telegram_channel:isChannel?$('#fTelegram').value.trim():null,
@@ -326,11 +327,13 @@ async async function renderCreate(type,editId=null){
     }else{
       try{
         const {data:{session}}=await sup.auth.getSession();
-        const fn=String(C.MARKETPLACE_FUNCTION_URL||'');
+        if(!session?.access_token)throw new Error('Silakan login/register terlebih dahulu untuk menambahkan produk.');
+        const fn=String(C.MARKETPLACE_FUNCTION_URL||'').trim();
+        if(!/^https?:\/\//i.test(fn))throw new Error('Marketplace Function belum dikonfigurasi.');
         const response=await fetch(fn,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({
           action:'create_product',type,access_type:access,title:payload.title,description:payload.description,
           price,thumbnail_url:payload.thumbnail_url,category:payload.category,content:payload.content,
-          telegram_channel:payload.telegram_channel
+          bot_username:payload.bot_username,telegram_channel:payload.telegram_channel
         })});
         const out=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(out.error||'Gagal membuat produk');
