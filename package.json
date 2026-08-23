@@ -1,8 +1,12 @@
 {
-  "name": "telecod",
+  "name": "telecod-cloudflare-pages",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
-    "start": "python3 server.py"
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy . --project-name telecod"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
   }
 }

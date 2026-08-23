@@ -35,7 +35,8 @@ Versi final ini melanjutkan project TeleCod sebelumnya dan memperbaiki flow yang
 ## Jalankan lokal
 
 ```bash
-python3 server.py
+npm install
+npm run dev
 ```
 
 Buka `http://localhost:8080/index.html`.
