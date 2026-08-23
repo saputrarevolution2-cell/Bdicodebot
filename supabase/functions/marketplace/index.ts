@@ -31,7 +31,7 @@ Deno.serve(async req=>{
 
     if(action==="create_product"){
       const access=String(body.access_type||"free").toLowerCase();
-      if(access==="paid"&&!user)return json({error:"Login/register diperlukan untuk menambahkan produk PAID."},401);
+      if(access==="paid"&&!user)return json({error:"Login/register diperlukan untuk menambahkan produk PAID.",code:"AUTH_REQUIRED"},401);
 
       const {data,error}=await db.rpc("marketplace_submit_product",{
         p_title:String(body.title||"").trim(),
