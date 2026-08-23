@@ -45,31 +45,15 @@
     content.innerHTML = `
       <section class="admin-gate">
         <div class="gate-icon"><i class="fa-solid fa-shield-halved"></i></div>
-        <span class="gate-kicker">TELECOD ADMIN SECURITY</span>
+        <span class="gate-kicker">TELECOD ADMIN</span>
         <h1>Master Administrator</h1>
-        <p>Panel ini hanya menerima Telegram ID master yang terdaftar di database.</p>
-        <label>Telegram ID Master
-          <input id="adminIdInput" inputmode="numeric" maxlength="20" value="${MASTER_ADMIN_ID}" placeholder="${MASTER_ADMIN_ID}" autocomplete="off">
-        </label>
-        <button id="telegramAdminLogin" class="btn telegram" type="button">
-          <i class="fa-brands fa-telegram"></i> Login dengan Telegram
-        </button>
-        <div class="admin-login-divider">atau login username & password</div>
-        <label>Username Admin<input id="adminUsername" autocomplete="username" placeholder="username admin"></label>
-        <label>Password Admin<input id="adminPassword" type="password" autocomplete="current-password" placeholder="••••••••"></label>
-        <button id="passwordAdminLogin" class="btn primary" type="button"><i class="fa-solid fa-right-to-bracket"></i> Login Admin</button>
-        <button id="verifyAdminId" class="btn" type="button">
-          <i class="fa-solid fa-shield-halved"></i> Cek ID & Session
-        </button>
+        <p>Akses panel tersedia melalui URL admin resmi. Session database tetap diverifikasi sebelum data sensitif ditampilkan.</p>
         ${message ? `<div class="gate-error">${esc(message)}</div>` : ""}
-        <small>Telegram ID yang diketik di sini bukan password. Akses tetap diverifikasi oleh Supabase session + database.</small>
+        <button id="telegramAdminLogin" class="btn telegram" type="button">
+          <i class="fa-brands fa-telegram"></i> Verifikasi dengan Telegram
+        </button>
       </section>`;
-    const input = $("#adminIdInput");
-    const verify = () => verifyMasterId(input?.value);
-    $("#verifyAdminId").onclick = verify;
-    input?.addEventListener("keydown", e => { if (e.key === "Enter") verify(); });
     $("#telegramAdminLogin").onclick = startTelegramAdminAuth;
-    $("#passwordAdminLogin").onclick = passwordAdminLogin;
   }
 
   async function verifyMasterId(value) {
@@ -105,57 +89,6 @@
     await bootAuthorized(profile);
   }
 
-
-  async function passwordAdminLogin(){
-    if(!sup)return toast("Supabase belum dikonfigurasi.","error");
-    const username=String($("#adminUsername")?.value||"").trim().replace(/^@+/g,"").toLowerCase();
-    const password=String($("#adminPassword")?.value||"");
-    if(!username||password.length<6)return toast("Username dan password wajib diisi.","warning");
-    try{
-      const r=await sup.auth.signInWithPassword({email:`${username}@telecod.local`,password});
-      if(r.error)throw r.error;
-      const {data:profile,error}=await sup.from("profiles").select("id,telegram_id,telegram_username,username,display_name,is_admin,is_banned").eq("id",r.data.user.id).maybeSingle();
-      if(error||!profile)throw new Error("Profil admin tidak ditemukan.");
-      if(profile.is_banned||String(profile.telegram_id||"")!==MASTER_ADMIN_ID){await sup.auth.signOut();throw new Error("Akun ini bukan master administrator.");}
-      await bootAuthorized(profile);
-    }catch(e){toast(e.message||"Login admin gagal.","error");}
-  }
-  function startTelegramAdminAuth() {
-    const bot = String(C.TELEGRAM_BOT_USERNAME || "").replace(/^@/, "");
-    const callback = String(C.TELEGRAM_AUTH_FUNCTION_URL || "");
-    if (!bot || !/^https?:\/\//i.test(callback)) {
-      toast("Telegram Auth Function belum dikonfigurasi.", "error");
-      return;
-    }
-
-    const modal = document.createElement("div");
-    modal.className = "admin-telegram-modal";
-    modal.innerHTML = `
-      <div class="admin-telegram-card">
-        <button class="admin-modal-close" type="button">×</button>
-        <div class="gate-icon telegram"><i class="fa-brands fa-telegram"></i></div>
-        <h2>Verifikasi Telegram</h2>
-        <p>Gunakan akun Telegram yang memiliki ID <b>${MASTER_ADMIN_ID}</b>.</p>
-        <div id="adminTelegramWidget"></div>
-        <small>Telegram Login harus sudah dikonfigurasi di BotFather dan Edge Function.</small>
-      </div>`;
-    document.body.appendChild(modal);
-    modal.querySelector(".admin-modal-close").onclick = () => modal.remove();
-    modal.onclick = e => { if (e.target === modal) modal.remove(); };
-
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.async = true;
-    script.dataset.telegramLogin = bot;
-    script.dataset.size = "large";
-    script.dataset.userpic = "false";
-    script.dataset.authUrl =
-      `${callback}${callback.includes("?") ? "&" : "?"}${new URLSearchParams({
-        mode: "admin",
-        redirect: `${location.origin}/admin`
-      })}`;
-    modal.querySelector("#adminTelegramWidget").appendChild(script);
-  }
 
   async function rpc(name, args = {}) {
     if (!sup) throw new Error("Supabase belum dikonfigurasi.");
