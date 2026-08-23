@@ -1,527 +1,71 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY");
-const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
-const SITE_URL = (Deno.env.get("TELECOD_SITE_URL") || "").replace(/\/+$/, "");
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const secretKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || (() => { try { return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default; } catch { return undefined; } })();
+const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+const siteUrl = (Deno.env.get("TELECOD_SITE_URL") || "").replace(/\/$/,"");
+const admin = createClient(supabaseUrl, secretKey!);
+const MASTER_ADMIN_ID = String(Deno.env.get("ADMIN_TELEGRAM_ID") || "6665664367").replace(/\D/g,"");
+const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"GET,POST,OPTIONS"};
+const response=(body:string,status=200,headers:Record<string,string>={})=>new Response(body,{status,headers:{...cors,...headers}});
+const clean=(v:string)=>String(v||"").trim().replace(/^@+/g,"").toLowerCase();
 
-if (!SUPABASE_URL) {
-  throw new Error("SUPABASE_URL is not configured");
+async function verifyTelegram(data:Record<string,string>){
+  const received=data.hash; if(!received||!botToken)return false;
+  const checkString=Object.entries(data).filter(([k])=>k!=="hash"&&k!=="mode"&&k!=="redirect").sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}=${v}`).join("\n");
+  const enc=new TextEncoder();
+  const secret=await crypto.subtle.digest("SHA-256",enc.encode(botToken));
+  const key=await crypto.subtle.importKey("raw",secret,{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  const sig=await crypto.subtle.sign("HMAC",key,enc.encode(checkString));
+  const hex=[...new Uint8Array(sig)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  if(hex!==received)return false;
+  const age=Math.floor(Date.now()/1000)-Number(data.auth_date||0);
+  return age>=0&&age<=86400;
 }
 
-if (!SERVICE_ROLE_KEY) {
-  throw new Error("SERVICE_ROLE_KEY is not configured");
-}
+Deno.serve(async req=>{
+  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
+  try{
+    const u=new URL(req.url); const data=Object.fromEntries(u.searchParams.entries());
+    const mode=String(data.mode||"login").toLowerCase();
+    if(!(await verifyTelegram(data)))return response("Invalid Telegram authorization.",401);
+    const tgId=String(data.id); const tgUsername=clean(data.username||"");
+    const first=data.first_name||""; const last=data.last_name||""; const display=[first,last].filter(Boolean).join(" ")||tgUsername||`Telegram ${tgId}`;
 
-if (!BOT_TOKEN) {
-  throw new Error("TELEGRAM_BOT_TOKEN is not configured");
-}
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-);
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-};
-
-function jsonResponse(
-  body: unknown,
-  status = 200,
-  extraHeaders: Record<string, string> = {},
-) {
-  return new Response(
-    typeof body === "string" ? body : JSON.stringify(body),
-    {
-      status,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json; charset=utf-8",
-        ...extraHeaders,
-      },
-    },
-  );
-}
-
-/**
- * Telegram Login Widget verification
- *
- * secret_key = SHA256(bot_token)
- * data_check_string = sorted key=value pairs except hash
- * hash = HMAC-SHA256(data_check_string, secret_key)
- */
-async function verifyTelegram(
-  data: Record<string, string>,
-): Promise<boolean> {
-  const receivedHash = data.hash;
-
-  if (!receivedHash) {
-    return false;
-  }
-
-  const checkString = Object.entries(data)
-    .filter(([key]) => key !== "hash")
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const encoder = new TextEncoder();
-
-  const secretKeyBytes = await crypto.subtle.digest(
-    "SHA-256",
-    encoder.encode(BOT_TOKEN!),
-  );
-
-  const hmacKey = await crypto.subtle.importKey(
-    "raw",
-    secretKeyBytes,
-    {
-      name: "HMAC",
-      hash: "SHA-256",
-    },
-    false,
-    ["sign"],
-  );
-
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    hmacKey,
-    encoder.encode(checkString),
-  );
-
-  const calculatedHash = Array.from(
-    new Uint8Array(signature),
-  )
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (calculatedHash !== receivedHash) {
-    return false;
-  }
-
-  const authDate = Number(data.auth_date || 0);
-
-  if (!authDate) {
-    return false;
-  }
-
-  const age = Math.floor(Date.now() / 1000) - authDate;
-
-  // Reject invalid/future/stale authorization data.
-  if (age < -60 || age > 86400) {
-    return false;
-  }
-
-  return true;
-}
-
-function telegramEmail(telegramId: string) {
-  return `telegram_${telegramId}@telecod.local`;
-}
-
-async function findProfile(telegramId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("telegram_id", telegramId)
-    .maybeSingle();
-
-  if (error) {
-    console.error("findProfile:", error);
-    throw error;
-  }
-
-  return data || null;
-}
-
-async function getAuthUser(userId: string) {
-  const { data, error } =
-    await supabase.auth.admin.getUserById(userId);
-
-  if (error) {
-    throw error;
-  }
-
-  return data.user;
-}
-
-async function createTelegramUser(
-  telegramId: string,
-  username: string,
-  firstName: string,
-  lastName: string,
-) {
-  const email = telegramEmail(telegramId);
-
-  const password =
-    `${crypto.randomUUID()}Aa9!${crypto.randomUUID()}`;
-
-  const { data, error } =
-    await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        telegram_id: telegramId,
-        telegram_username: username || null,
-        username: username || `tg_${telegramId}`,
-        first_name: firstName,
-        last_name: lastName,
-        terms_accepted: true,
-      },
-    });
-
-  if (error) {
-    throw error;
-  }
-
-  return data.user;
-}
-
-async function generateMagicLink(
-  email: string,
-) {
-  if (!SITE_URL) {
-    throw new Error("TELECOD_SITE_URL is not configured");
-  }
-
-  const redirectTo = SITE_URL;
-
-  const { data, error } =
-    await supabase.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: {
-        redirectTo,
-      },
-    });
-
-  if (error) {
-    throw error;
-  }
-
-  return data.properties.action_link;
-}
-
-async function generateRecoveryLink(
-  email: string,
-) {
-  if (!SITE_URL) {
-    throw new Error("TELECOD_SITE_URL is not configured");
-  }
-
-  const { data, error } =
-    await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${SITE_URL}/reset.html`,
-      },
-    });
-
-  if (error) {
-    throw error;
-  }
-
-  return data.properties.action_link;
-}
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: corsHeaders,
-    });
-  }
-
-  try {
-    if (req.method !== "GET" && req.method !== "POST") {
-      return jsonResponse(
-        {
-          success: false,
-          error: "METHOD_NOT_ALLOWED",
-        },
-        405,
-      );
-    }
-
-    const url = new URL(req.url);
-
-    let params = new URLSearchParams(
-      url.searchParams,
-    );
-
-    // Support POST form/json as well.
-    if (req.method === "POST") {
-      const contentType =
-        req.headers.get("content-type") || "";
-
-      try {
-        if (
-          contentType.includes(
-            "application/json",
-          )
-        ) {
-          const body = await req.json();
-
-          for (const [key, value] of Object.entries(body)) {
-            if (value !== undefined && value !== null) {
-              params.set(key, String(value));
-            }
-          }
-        } else if (
-          contentType.includes(
-            "application/x-www-form-urlencoded",
-          )
-        ) {
-          const body = await req.text();
-          const form = new URLSearchParams(body);
-
-          for (const [key, value] of form.entries()) {
-            params.set(key, value);
-          }
-        }
-      } catch (error) {
-        console.error("POST body parse error:", error);
+    let profile=(await admin.from("profiles").select("*").eq("telegram_id",tgId).maybeSingle()).data;
+    if(!profile && tgUsername){
+      profile=(await admin.from("profiles").select("*").eq("telegram_username",tgUsername).maybeSingle()).data;
+      if(profile){
+        await admin.from("profiles").update({telegram_id:tgId}).eq("id",profile.id);
+        profile.telegram_id=tgId;
       }
     }
-
-    const data: Record<string, string> =
-      Object.fromEntries(params.entries());
-
-    const mode =
-      (data.mode || "login").toLowerCase();
-
-    console.log(
-      "Telegram auth request:",
-      {
-        mode,
-        telegram_id: data.id || null,
-        username: data.username || null,
-      },
-    );
-
-    // Health check.
-    // Visiting /telegram-login without Telegram data
-    // should NOT return "function not found".
-    if (!data.id && !data.hash) {
-      return jsonResponse({
-        success: true,
-        function: "telegram-login",
-        status: "online",
-      });
+    if(mode==="admin"){
+      if(tgId!==MASTER_ADMIN_ID)return response("Telegram account is not the master administrator.",403);
+      if(profile?.is_banned)return response("Administrator is blocked.",403);
     }
 
-    const valid = await verifyTelegram(data);
-
-    if (!valid) {
-      return jsonResponse(
-        {
-          success: false,
-          error: "INVALID_TELEGRAM_AUTH",
-          message:
-            "Telegram authorization tidak valid atau sudah kedaluwarsa.",
-        },
-        401,
-      );
+    let userId=profile?.id;
+    if(!profile){
+      if(mode==="login"||mode==="admin")return response("Akun TeleCod belum dibuat. Silakan Register dengan Telegram terlebih dahulu.",404);
+      const baseUsername=tgUsername || `tg_${tgId}`;
+      const taken=await admin.from("profiles").select("id").eq("username",baseUsername).maybeSingle();
+      const username=taken.data ? `tg_${tgId}` : baseUsername;
+      const email=`telegram_${tgId}@telecod.local`;
+      const randomPassword=crypto.randomUUID()+"Aa9!";
+      const created=await admin.auth.admin.createUser({email,password:randomPassword,email_confirm:true,user_metadata:{username,telegram_id:tgId,telegram_username:tgUsername,first_name:first,last_name:last,terms_accepted:true}});
+      if(created.error)throw created.error;
+      userId=created.data.user.id;
+      await admin.from("profiles").upsert({id:userId,username,telegram_id:tgId,telegram_username:tgUsername||null,display_name:display,terms_accepted_at:new Date().toISOString(),last_login_at:new Date().toISOString(),is_admin:tgId===MASTER_ADMIN_ID},{onConflict:"id"});
+    } else {
+      if(profile.is_banned)return response("This Telegram account is blocked by an administrator.",403);
+      await admin.from("profiles").update({telegram_username:tgUsername||profile.telegram_username,display_name:display,last_login_at:new Date().toISOString(),is_admin:tgId===MASTER_ADMIN_ID ? true : profile.is_admin}).eq("id",profile.id);
     }
 
-    const telegramId = String(data.id);
-
-    const username = (data.username || "")
-      .replace(/^@+/, "")
-      .trim()
-      .toLowerCase();
-
-    const firstName =
-      (data.first_name || "").trim();
-
-    const lastName =
-      (data.last_name || "").trim();
-
-    const displayName =
-      [firstName, lastName]
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      username ||
-      `Telegram ${telegramId}`;
-
-    let profile = await findProfile(
-      telegramId,
-    );
-
-    let user = null;
-
-    /**
-     * Existing Telegram account.
-     */
-    if (profile?.id) {
-      if (profile.is_banned === true) {
-        return jsonResponse(
-          {
-            success: false,
-            error: "ACCOUNT_BANNED",
-            message:
-              "Akun Telegram ini diblokir oleh administrator.",
-          },
-          403,
-        );
-      }
-
-      user = await getAuthUser(
-        String(profile.id),
-      );
-    }
-
-    /**
-     * New Telegram account.
-     */
-    if (!user) {
-      if (username) {
-        const { data: usernameTaken, error } =
-          await supabase
-            .from("profiles")
-            .select("id,telegram_id")
-            .eq("username", username)
-            .maybeSingle();
-
-        if (error) {
-          throw error;
-        }
-
-        if (
-          usernameTaken?.id &&
-          String(usernameTaken.telegram_id || "") !==
-            telegramId
-        ) {
-          return jsonResponse(
-            {
-              success: false,
-              error: "USERNAME_TAKEN",
-              message:
-                "Username Telegram sudah digunakan.",
-            },
-            409,
-          );
-        }
-      }
-
-      user = await createTelegramUser(
-        telegramId,
-        username,
-        firstName,
-        lastName,
-      );
-    }
-
-    if (!user?.id || !user.email) {
-      return jsonResponse(
-        {
-          success: false,
-          error: "USER_NOT_FOUND",
-          message:
-            "Telegram account tidak berhasil terhubung ke TeleCod.",
-        },
-        400,
-      );
-    }
-
-    const now =
-      new Date().toISOString();
-
-    /**
-     * Create/update profile.
-     */
-    const profilePayload = {
-      id: user.id,
-      username:
-        profile?.username ||
-        username ||
-        `tg_${telegramId}`,
-      telegram_id: telegramId,
-      telegram_username:
-        username ||
-        profile?.telegram_username ||
-        null,
-      display_name: displayName,
-      terms_accepted_at:
-        profile?.terms_accepted_at ||
-        now,
-      last_login_at: now,
-    };
-
-    const { error: profileError } =
-      await supabase
-        .from("profiles")
-        .upsert(
-          profilePayload,
-          {
-            onConflict: "id",
-          },
-        );
-
-    if (profileError) {
-      console.error(
-        "Profile upsert error:",
-        profileError,
-      );
-      throw profileError;
-    }
-
-    /**
-     * Recovery mode.
-     */
-    if (mode === "recovery") {
-      const actionLink =
-        await generateRecoveryLink(
-          user.email,
-        );
-
-      return Response.redirect(
-        actionLink,
-        302,
-      );
-    }
-
-    /**
-     * Normal login.
-     */
-    const actionLink =
-      await generateMagicLink(
-        user.email,
-      );
-
-    return Response.redirect(
-      actionLink,
-      302,
-    );
-  } catch (error) {
-    console.error(
-      "TELEGRAM LOGIN ERROR:",
-      error,
-    );
-
-    return jsonResponse(
-      {
-        success: false,
-        error: "TELEGRAM_AUTH_FAILED",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Telegram authentication failed.",
-      },
-      500,
-    );
-  }
+    if(!siteUrl)return response("TELECOD_SITE_URL is not configured.",500);
+    const user=await admin.auth.admin.getUserById(userId!); if(user.error)throw user.error;
+    const link=await admin.auth.admin.generateLink({type:"magiclink",email:user.data.user.email!,options:{redirectTo: data.redirect || siteUrl}});
+    if(link.error)throw link.error;
+    return Response.redirect(link.data.properties.action_link,302);
+  }catch(e){console.error(e);return response("Telegram authentication failed.",500,{"Content-Type":"text/plain"});}
 });
