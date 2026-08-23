@@ -452,8 +452,16 @@ function tr() {
 
   if (langBtn) {
     langBtn.innerHTML =
-      (lang === "id" ? "🇮🇩 ID" : "🇬🇧 EN") + "⌄";
+      `<span class="lang-flag">${lang === "id" ? "🇮🇩" : "🇬🇧"}</span><span class="lang-code">${lang === "id" ? "ID" : "EN"}</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i>`;
+    langBtn.setAttribute("aria-expanded", String($("#langMenu")?.classList.contains("show") || false));
+    langBtn.setAttribute("aria-label", lang === "id" ? "Pilih bahasa" : "Choose language");
   }
+
+  $$("[data-lang]").forEach(item => {
+    const active = item.dataset.lang === lang;
+    item.classList.toggle("active", active);
+    item.setAttribute("aria-selected", String(active));
+  });
 
   try {
     localStorage.setItem("telecod_lang", lang);
@@ -476,7 +484,14 @@ function setTheme() {
 
   if (themeBtn) {
     themeBtn.innerHTML =
-      theme === "light" ? "🌙" : "☀️";
+      theme === "light"
+        ? '<i class="fa-solid fa-moon" aria-hidden="true"></i>'
+        : '<i class="fa-solid fa-sun" aria-hidden="true"></i>';
+    themeBtn.setAttribute(
+      "aria-label",
+      theme === "light" ? "Aktifkan mode gelap" : "Aktifkan mode terang"
+    );
+    themeBtn.setAttribute("title", theme === "light" ? "Dark mode" : "Light mode");
   }
 
   try {
@@ -530,20 +545,42 @@ initBasicUI();
    NAVIGATION
    ========================================================= */
 
-on("#langBtn", "click", () => {
-  $("#langMenu")?.classList.toggle("open");
+/* =========================================================
+   NAVBAR — MOBILE / LANGUAGE / THEME
+   ========================================================= */
+
+function closeNavigationMenus(){
+  $("#langMenu")?.classList.remove("show","open");
+  $("#navLinks")?.classList.remove("show","mobile");
+  $("#menuBtn")?.setAttribute("aria-expanded","false");
+}
+
+on("#langBtn", "click", (event) => {
+  event.stopPropagation();
+  const menu = $("#langMenu");
+  if (!menu) return;
+  const willOpen = !menu.classList.contains("show");
+  menu.classList.toggle("show", willOpen);
+  menu.classList.remove("open");
+  $("#langBtn")?.setAttribute("aria-expanded", String(willOpen));
 });
 
 $$("[data-lang]").forEach(button => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
     const selected = button.dataset.lang;
-
     if (!T[selected]) return;
 
     lang = selected;
     tr();
 
-    $("#langMenu")?.classList.remove("open");
+    $$("#langMenu [data-lang]").forEach(item => {
+      item.classList.toggle("active", item.dataset.lang === lang);
+      item.setAttribute("aria-selected", String(item.dataset.lang === lang));
+    });
+
+    $("#langMenu")?.classList.remove("show","open");
+    $("#langBtn")?.setAttribute("aria-expanded","false");
   });
 });
 
@@ -552,15 +589,64 @@ on("#themeBtn", "click", () => {
   setTheme();
 });
 
-on("#menuBtn", "click", () => {
-  $("#navLinks")?.classList.toggle("mobile");
+on("#menuBtn", "click", (event) => {
+  event.stopPropagation();
+  const nav = $("#navLinks");
+  if (!nav) return;
+  const willOpen = !nav.classList.contains("show");
+  nav.classList.toggle("show", willOpen);
+  nav.classList.remove("mobile");
+  $("#menuBtn")?.setAttribute("aria-expanded", String(willOpen));
 });
 
 $$("#navLinks a").forEach(a => {
   a.addEventListener("click", () => {
-    $("#navLinks")?.classList.remove("mobile");
+    closeNavigationMenus();
   });
 });
+
+/* Close dropdowns when the user taps/clicks elsewhere. */
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".nav-tools")) {
+    $("#langMenu")?.classList.remove("show","open");
+    $("#langBtn")?.setAttribute("aria-expanded","false");
+  }
+  if (!event.target.closest(".nav")) {
+    closeNavigationMenus();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeNavigationMenus();
+});
+
+/* Active section follows the user's scroll position. */
+(function initActiveNavbar(){
+  const links = $$('#navLinks a[href^="#"]');
+  const sections = links
+    .map(link => document.querySelector(link.getAttribute("href")))
+    .filter(Boolean);
+
+  if (!links.length || !sections.length || !("IntersectionObserver" in window)) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    const visible = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+    if (!visible) return;
+    links.forEach(link => {
+      const active = link.getAttribute("href") === `#${visible.target.id}`;
+      link.classList.toggle("active", active);
+      link.setAttribute("aria-current", active ? "page" : "false");
+    });
+  }, {
+    rootMargin: "-35% 0px -55% 0px",
+    threshold: [0, .2, .5, .8]
+  });
+
+  sections.forEach(section => observer.observe(section));
+})();
 
 on("#hidePaste", "click", () => {
   $(".paste-card")?.classList.add("hidden");
