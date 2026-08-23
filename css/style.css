@@ -4339,3 +4339,26 @@ body.light .market-filter{
     transition-duration:.01ms !important;
   }
 }
+
+/* =========================================================
+   TELECOD PRO POLISH — ABOUT / FOOTER / MARKETPLACE
+========================================================= */
+.about-detail{padding-top:60px;padding-bottom:80px}
+.about-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.about-detail-card{padding:28px;border:1px solid var(--border);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border-radius:24px;box-shadow:var(--shadow-soft)}
+.about-detail-card h3{margin:16px 0 8px;font-family:"Poppins",sans-serif}
+.about-detail-card p{color:var(--muted);font-size:14px;line-height:1.8}
+.about-icon{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--blue));color:#fff;font-size:20px}
+.site-footer{margin-top:40px;border-top:1px solid var(--border);background:rgba(5,7,20,.55);padding:55px 20px 22px}
+.footer-inner{width:min(1200px,100%);margin:auto;display:grid;grid-template-columns:1.5fr 1fr 1fr .8fr;gap:38px}
+.footer-inner p{color:var(--muted);max-width:390px;margin-top:16px;line-height:1.8}
+.footer-links,.footer-social{display:flex;flex-direction:column;gap:10px}
+.footer-links b,.footer-social b{margin-bottom:7px}
+.footer-links a{color:var(--muted);transition:.2s}
+.footer-links a:hover{color:var(--text)}
+.footer-social .socials{display:flex;gap:10px;margin-top:6px}
+.footer-social .socials a{width:42px;height:42px;border:1px solid var(--border);border-radius:13px;display:grid;place-items:center;background:var(--surface)}
+.footer-social .socials a:hover{transform:translateY(-2px);border-color:var(--primary)}
+.copyright{width:min(1200px,100%);margin:35px auto 0;padding-top:18px;border-top:1px solid var(--border);color:var(--muted-2);font-size:12px}
+@media(max-width:900px){.about-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-inner{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.about-detail-grid{grid-template-columns:1fr}.footer-inner{grid-template-columns:1fr}.site-footer{padding-top:40px}}
