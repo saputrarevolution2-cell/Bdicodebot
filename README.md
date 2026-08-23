@@ -203,3 +203,7 @@ supabase secrets set DOMPETX_PAYMENT_METHOD=QRIS
 Domain `https://domain-kamu.com` juga harus diizinkan pada Supabase Auth Redirect URLs dan domain Telegram Login Widget harus didaftarkan di BotFather.
 
 Untuk settlement H+1, panggil `select public.release_matured_sales();` secara berkala dengan scheduler Supabase/pg_cron jika tersedia. Dashboard juga menjalankannya saat halaman Wallet dibuka.
+
+
+## Final Auth & Marketplace
+Lihat `TELECOD_FINAL_SETUP.md` untuk setup Telegram Login, username/password auth, admin, dan aturan FREE/PAID marketplace. Untuk database lama, jalankan `supabase/telecod_final_auth_marketplace.sql` setelah schema/migration utama.

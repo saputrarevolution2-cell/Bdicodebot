@@ -1412,29 +1412,26 @@
 
       <form id="loginForm" class="auth-form" novalidate>
         <label class="auth-field">
-          <span data-i18n="usernameTelegram">Username Telegram</span>
+          <span>Username / Username Telegram</span>
           <div class="field-wrap">
             <i class="fa-brands fa-telegram"></i>
             <input id="loginUsername" autocomplete="username" maxlength="32" required
               placeholder="@username" data-i18n-placeholder="usernamePlaceholder">
-          </div>
+          <span id="loginUsernameState" class="username-state" aria-live="polite"></span></div>
         </label>
 
         <label class="auth-field">
           <span data-i18n="password">Kata sandi</span>
           <div class="field-wrap">
             <i class="fa-solid fa-lock"></i>
-            <input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required
+            <input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required disabled
               placeholder="Masukkan kata sandi" data-i18n-placeholder="passwordPlaceholder">
             <button type="button" class="eye-btn" data-password-toggle="loginPassword" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
           </div>
         </label>
 
         <div class="auth-row">
-          <label class="check-line">
-            <input id="loginTerms" type="checkbox">
-            <span data-i18n="agreeTerms">Saya menyetujui Ketentuan & Kebijakan TeleCod</span>
-          </label>
+          <span class="field-help">Masukkan password setelah akun ditemukan.</span>
           <button id="forgotBtn" type="button" class="forgot-btn" data-i18n="forgotPassword">Lupa kata sandi?</button>
         </div>
 
@@ -1459,20 +1456,28 @@
 
       <form id="registerForm" class="auth-form" novalidate>
         <label class="auth-field">
-          <span data-i18n="usernameTelegram">Username Telegram</span>
+          <span>Username TeleCod</span>
           <div class="field-wrap">
-            <i class="fa-brands fa-telegram"></i>
-            <input id="registerUsername" autocomplete="username" maxlength="32" required
-              placeholder="@username" data-i18n-placeholder="usernamePlaceholder">
+            <i class="fa-solid fa-user"></i>
+            <input id="registerUsername" autocomplete="username" maxlength="32" required placeholder="username">
           </div>
+          <span id="registerUsernameState" class="username-state" aria-live="polite"></span>
         </label>
 
         <label class="auth-field">
-          <span data-i18n="telegramNumber">No Telegram</span>
+          <span>Username Telegram</span>
+          <div class="field-wrap">
+            <i class="fa-brands fa-telegram"></i>
+            <input id="registerTelegramUsername" autocomplete="username" maxlength="32" required placeholder="@username_telegram">
+          </div>
+          <span id="registerTelegramState" class="username-state" aria-live="polite"></span>
+        </label>
+
+        <label class="auth-field">
+          <span>No. Telegram <small>(opsional)</small></span>
           <div class="field-wrap">
             <i class="fa-solid fa-phone"></i>
-            <input id="registerPhone" type="tel" autocomplete="tel" maxlength="20" required
-              placeholder="+62xxxxxxxxxx" data-i18n-placeholder="telegramNumberPlaceholder">
+            <input id="registerPhone" type="tel" autocomplete="tel" maxlength="20" placeholder="+62xxxxxxxxxx">
           </div>
         </label>
 
@@ -1480,8 +1485,7 @@
           <span data-i18n="password">Kata sandi</span>
           <div class="field-wrap">
             <i class="fa-solid fa-lock"></i>
-            <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required
-              placeholder="Minimal 6 karakter" data-i18n-placeholder="passwordMinPlaceholder">
+            <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="Minimal 6 karakter" data-i18n-placeholder="passwordMinPlaceholder">
             <button type="button" class="eye-btn" data-password-toggle="registerPassword"><i class="fa-regular fa-eye"></i></button>
           </div>
         </label>
@@ -1490,8 +1494,7 @@
           <span data-i18n="confirmPassword">Konfirmasi kata sandi</span>
           <div class="field-wrap">
             <i class="fa-solid fa-shield-halved"></i>
-            <input id="registerConfirm" type="password" autocomplete="new-password" minlength="6" required
-              placeholder="Ulangi kata sandi" data-i18n-placeholder="confirmPasswordPlaceholder">
+            <input id="registerConfirm" type="password" autocomplete="new-password" minlength="6" required placeholder="Ulangi kata sandi" data-i18n-placeholder="confirmPasswordPlaceholder">
             <button type="button" class="eye-btn" data-password-toggle="registerConfirm"><i class="fa-regular fa-eye"></i></button>
           </div>
         </label>
