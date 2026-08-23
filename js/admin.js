@@ -1,408 +1,65 @@
 (() => {
   "use strict";
-
   const C = window.TELECOD_CONFIG || {};
   const MASTER_ADMIN_ID = String(C.ADMIN_TELEGRAM_ID || "6665664367").replace(/\D/g, "");
-  const configured = !!(
-    C.SUPABASE_URL && C.SUPABASE_ANON_KEY &&
-    !/YOUR_|PROJECT\b|PUBLISHABLE|ANON[_-]?KEY/i.test(`${C.SUPABASE_URL} ${C.SUPABASE_ANON_KEY}`)
-  );
+  const configured = !!(C.SUPABASE_URL && C.SUPABASE_ANON_KEY && !/YOUR_|PROJECT\b|PUBLISHABLE|ANON[_-]?KEY/i.test(`${C.SUPABASE_URL} ${C.SUPABASE_ANON_KEY}`));
   const sup = configured && window.supabase ? window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY) : null;
-  const $ = s => document.querySelector(s);
-  const $$ = s => [...document.querySelectorAll(s)];
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const content = $("#content");
-  const state = {
-    page: "overview",
-    profile: null,
-    users: [],
-    products: [],
-    pastes: [],
-    withdrawals: [],
-    bots: [],
-    payments: [],
-    transactions: []
-  };
-
-  const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[m]));
-  const money = n => new Intl.NumberFormat("id-ID", {
-    style:"currency", currency:"IDR", maximumFractionDigits:0
-  }).format(Number(n || 0));
+  const state = {page:"overview",profile:null,users:[],products:[],pastes:[],withdrawals:[],bots:[],payments:[],transactions:[],orders:[],logs:[],stats:null};
+  const esc = s => String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+  const money = n => new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n||0));
   const date = v => v ? new Date(v).toLocaleString("id-ID") : "-";
-
-  function toast(message, type = "") {
-    const el = $("#toast");
-    if (!el) return;
-    el.textContent = message;
-    el.className = `toast show ${type}`;
-    clearTimeout(window.__adminToast);
-    window.__adminToast = setTimeout(() => el.className = "toast", 2600);
+  function toast(message,type=""){const el=$("#toast");if(!el)return;el.textContent=message;el.className=`toast show ${type}`;clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className="toast",2800)}
+  async function rpc(name,args={}){if(!sup)throw new Error("Supabase belum dikonfigurasi.");const {data,error}=await sup.rpc(name,args);if(error)throw error;return data}
+  function gate(message=""){content.innerHTML=`<section class="gate"><div class="gate-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="eyebrow">TELECOD MASTER CONTROL</div><h1>Akses Administrator</h1><p>${esc(message||"URL panel benar, tetapi data admin tetap dilindungi oleh session master administrator.")}</p><button id="telegramAdminLogin" class="btn primary"><i class="fa-brands fa-telegram"></i> Verifikasi dengan Telegram</button></section>`;$("#telegramAdminLogin").onclick=startTelegramAdminAuth}
+  function startTelegramAdminAuth(){
+    if(window.TeleCodAuth?.loginWithTelegram)return window.TeleCodAuth.loginWithTelegram();
+    if(window.Telegram?.Login?.auth){try{window.Telegram.Login.auth({bot_id:C.TELEGRAM_BOT_ID,request_access:true},u=>{if(u)location.reload()})}catch(e){toast("Telegram Login belum dikonfigurasi.","error")}}
+    else toast("Gunakan login Telegram dari halaman utama terlebih dahulu.","warning");
   }
-
-  function showGate(message = "") {
-    if (!content) return;
-    content.innerHTML = `
-      <section class="admin-gate">
-        <div class="gate-icon"><i class="fa-solid fa-shield-halved"></i></div>
-        <span class="gate-kicker">TELECOD ADMIN</span>
-        <h1>Master Administrator</h1>
-        <p>Akses panel tersedia melalui URL admin resmi. Session database tetap diverifikasi sebelum data sensitif ditampilkan.</p>
-        ${message ? `<div class="gate-error">${esc(message)}</div>` : ""}
-        <button id="telegramAdminLogin" class="btn telegram" type="button">
-          <i class="fa-brands fa-telegram"></i> Verifikasi dengan Telegram
-        </button>
-      </section>`;
-    $("#telegramAdminLogin").onclick = startTelegramAdminAuth;
+  async function ensureMasterSession(){
+    if(!sup)return gate("Supabase belum dikonfigurasi. Isi konfigurasi deployment terlebih dahulu.");
+    const {data:auth}=await sup.auth.getUser();
+    if(!auth?.user)return gate();
+    const {data:profile}=await sup.from("profiles").select("id,telegram_id,telegram_username,username,display_name,is_banned,is_admin").eq("id",auth.user.id).maybeSingle();
+    if(!profile||String(profile.telegram_id||"")!==MASTER_ADMIN_ID||profile.is_banned)return gate("Session Telegram ini bukan master administrator.");
+    state.profile=profile;$("#adminUser").textContent=`@${profile.username||profile.telegram_username||MASTER_ADMIN_ID}`;bindNav();await refreshCounters();await render();
   }
-
-  async function verifyMasterId(value) {
-    const entered = String(value || "").replace(/\D/g, "");
-    if (entered !== MASTER_ADMIN_ID) {
-      toast("Telegram ID tidak diizinkan.", "error");
-      return;
-    }
-    if (!sup) {
-      toast("Supabase belum dikonfigurasi.", "error");
-      return;
-    }
-    const { data: auth, error: authError } = await sup.auth.getUser();
-    if (authError || !auth?.user) {
-      toast("Silakan verifikasi/login dengan Telegram terlebih dahulu.", "warning");
-      startTelegramAdminAuth();
-      return;
-    }
-    const { data: profile, error } = await sup
-      .from("profiles")
-      .select("id,telegram_id,telegram_username,username,display_name,is_banned")
-      .eq("id", auth.user.id)
-      .maybeSingle();
-
-    if (error || !profile) {
-      toast("Profil Telegram tidak ditemukan.", "error");
-      return;
-    }
-    if (String(profile.telegram_id || "") !== MASTER_ADMIN_ID || profile.is_banned) {
-      toast("Session ini bukan master administrator.", "error");
-      return;
-    }
-    await bootAuthorized(profile);
+  function bindNav(){
+    $$("#sideNav button[data-page]").forEach(b=>b.onclick=async()=>{state.page=b.dataset.page;$$('#sideNav button').forEach(x=>x.classList.toggle('active',x===b));try{await render()}catch(e){showError(e)}});
+    $("#logout").onclick=async()=>{if(sup)await sup.auth.signOut();location.href="index.html"};
+    const saved=localStorage.getItem("telecod_admin_theme");if(saved==="light")document.body.classList.add("light");
+    $("#themeBtn").onclick=()=>{document.body.classList.toggle("light");localStorage.setItem("telecod_admin_theme",document.body.classList.contains("light")?"light":"dark")};
+    $("#globalSearch").oninput=()=>{if(state.page==="users")drawUsers();else if(state.page==="products")drawProducts();else if(state.page==="pastes")drawPastes();else if(state.page==="orders")drawOrders()};
   }
-
-
-  async function rpc(name, args = {}) {
-    if (!sup) throw new Error("Supabase belum dikonfigurasi.");
-    const { data, error } = await sup.rpc(name, args);
-    if (error) throw error;
-    return data;
+  async function refreshCounters(){
+    try{state.stats=await rpc("admin_stats");const s=state.stats||{};[["navUsers",s.users],["navProducts",s.products],["navPastes",s.pastes],["navPayments",s.pending_payments],["navWd",s.pending_withdrawals]].forEach(([id,v])=>{const e=$("#"+id);if(e)e.textContent=Number(v||0).toLocaleString("id-ID")})}catch(e){console.warn(e)}
   }
-
-  async function bootAuthorized(profile) {
-    state.profile = profile;
-    $("#adminUser").textContent =
-      `@${profile.username || profile.telegram_username || MASTER_ADMIN_ID}`;
-    $("#adminGate")?.remove();
-    bindNav();
-    await render();
+  const title=(ey,head,sub,right="")=>`<div class="page-head"><div><div class="eyebrow">${ey}</div><h1>${head}</h1><p>${sub}</p></div><div class="head-actions">${right}</div></div>`;
+  async function render(){return ({overview,users,products,bots,pastes,orders,payments,withdrawals,transactions,site,logs}[state.page]||overview)()}
+  async function overview(){
+    const s=state.stats||await rpc("admin_stats");state.stats=s;
+    const cards=[["Pengguna","users","fa-users",s.users],["Produk","products","fa-store",s.products],["Penjualan","sales","fa-bag-shopping",s.sales],["Pendapatan","revenue","fa-wallet",money(s.revenue)],["Pastelink","pastes","fa-link",s.pastes],["Paste Views","views","fa-eye",s.paste_views],["Banned","banned","fa-user-slash",s.banned_users],["Published","published","fa-circle-check",s.published_products],["Pending Payment","payment","fa-credit-card",s.pending_payments],["Pending WD","wd","fa-money-bill-transfer",s.pending_withdrawals]];
+    content.innerHTML=title("MASTER CONTROL","Dashboard TeleCod","Semua kontrol utama website dalam satu panel.",`<button class="btn primary" data-go="site"><i class="fa-solid fa-sliders"></i> Site Control</button><button class="btn" data-go="logs"><i class="fa-solid fa-clock-rotate-left"></i> Audit Logs</button>`)+`<div class="stats">${cards.map(c=>`<div class="stat"><div class="stat-icon"><i class="fa-solid ${c[2]}"></i></div><small>${c[0]}</small><strong>${esc(c[3])}</strong><div class="trend"><i class="fa-solid fa-circle-check"></i> Live database</div></div>`).join("")}</div><div class="grid2"><section class="panel"><div class="panel-head"><b>Aktivitas & performa</b><span>Ringkasan operasional</span></div><div class="chart">${[28,45,38,62,51,78,68,88,73,96,82,91].map((h,i)=>`<div class="bar" style="height:${h}%"><span>${i+1}</span></div>`).join("")}</div></section><section class="panel"><div class="panel-head"><b>Quick Control</b><span>Kelola cepat</span></div><div class="quick">${[["users","Users","fa-users"],["products","Marketplace","fa-store"],["bots","Approved Bot","fa-robot"],["pastes","Pastelink","fa-link"],["orders","Orders","fa-bag-shopping"],["withdrawals","Withdrawals","fa-money-bill-transfer"],["site","Site Control","fa-sliders"],["logs","Audit Logs","fa-clock-rotate-left"]].map(x=>`<button data-go="${x[0]}"><i class="fa-solid ${x[2]}"></i>${x[1]}</button>`).join("")}</div></section></div>`;
+    $$('[data-go]').forEach(b=>b.onclick=async()=>{state.page=b.dataset.go;$$('#sideNav button').forEach(x=>x.classList.toggle('active',x.dataset.page===state.page));await render()});
   }
-
-  function bindNav() {
-    $$(".admin-side button").forEach(button => {
-      button.onclick = async () => {
-        state.page = button.dataset.page;
-        $$(".admin-side button").forEach(x =>
-          x.classList.toggle("active", x === button)
-        );
-        try { await render(); }
-        catch (e) { showError(e); }
-      };
-    });
-
-    $("#logout").onclick = async () => {
-      if (sup) await sup.auth.signOut();
-      location.href = "index.html";
-    };
-  }
-
-  async function ensureMasterSession() {
-    if (!sup) return showGate("Supabase belum dikonfigurasi.");
-    const { data: auth } = await sup.auth.getUser();
-    if (!auth?.user) return showGate();
-    const { data: profile } = await sup
-      .from("profiles")
-      .select("id,telegram_id,telegram_username,username,display_name,is_banned")
-      .eq("id", auth.user.id)
-      .maybeSingle();
-    if (!profile || String(profile.telegram_id || "") !== MASTER_ADMIN_ID || profile.is_banned) {
-      return showGate("Session Telegram ini bukan master administrator.");
-    }
-    return bootAuthorized(profile);
-  }
-
-  async function render() {
-    const map = {
-      overview, users, products, pastes, payments, transactions, withdrawals, bots
-    };
-    return (map[state.page] || overview)();
-  }
-
-  function title(h, sub, right = "") {
-    return `<div class="admin-title"><div><h1>${h}</h1><p class="muted">${sub}</p></div>${right}</div>`;
-  }
-
-  async function overview() {
-    const s = await rpc("admin_stats");
-    content.innerHTML = `
-      ${title("Overview","Kontrol pusat seluruh TeleCod.")}
-      <div class="stats-grid">
-        ${[
-          ["Users",s.users],["Products",s.products],["Pastes",s.pastes],
-          ["Sales",s.sales],["Revenue",money(s.revenue)],["Paste Views",s.paste_views],
-          ["Banned",s.banned_users],["Published",s.published_products],
-          ["Pending WD",s.pending_withdrawals],["Pending Pay",s.pending_payments]
-        ].map(([a,b]) => `<div class="stat-card"><small>${a}</small><b>${esc(b)}</b></div>`).join("")}
-      </div>
-      <div class="panel quick-admin">
-        <div class="panel-head"><b>Master controls</b><span class="pill ok">TG ${MASTER_ADMIN_ID}</span></div>
-        <div class="quick-grid">
-          ${[
-            ["users","Users","fa-users"],["products","Products","fa-box"],
-            ["pastes","Pastelink","fa-paste"],["payments","Payments","fa-credit-card"],
-            ["transactions","Transactions","fa-receipt"],["withdrawals","Withdrawals","fa-money-bill-transfer"]
-          ].map(x=>`<button class="quick-action" data-go="${x[0]}"><i class="fa-solid ${x[2]}"></i><span>${x[1]}</span></button>`).join("")}
-        </div>
-      </div>`;
-    $$("[data-go]").forEach(b => b.onclick = async () => {
-      state.page = b.dataset.go;
-      $$(".admin-side button").forEach(x => x.classList.toggle("active", x.dataset.page === state.page));
-      await render();
-    });
-  }
-
-  async function users() {
-    state.users = await rpc("admin_users",{p_limit:500,p_offset:0});
-    content.innerHTML = `
-      ${title("Users","Kelola akun, Telegram ID, status ban dan saldo.",
-        `<input id="userSearch" class="search" placeholder="Cari username / Telegram ID">`)}
-      <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>User</th><th>Telegram ID</th><th>Balance</th><th>Status</th><th>Aksi</th></tr></thead>
-      <tbody id="rows"></tbody></table></div></div>`;
-    drawUsers();
-    $("#userSearch").oninput = drawUsers;
-  }
-
-  function drawUsers() {
-    const q = ($("#userSearch")?.value || "").toLowerCase();
-    const rows = state.users.filter(u =>
-      [u.username,u.telegram_username,u.telegram_id,u.display_name]
-        .join(" ").toLowerCase().includes(q)
-    );
-    $("#rows").innerHTML = rows.map(u => `
-      <tr>
-        <td><b>${esc(u.display_name || u.username || "User")}</b><br>
-          <span class="muted">@${esc(u.username || u.telegram_username || "-")}</span></td>
-        <td><code>${esc(u.telegram_id || "-")}</code></td>
-        <td>${money(u.balance)}</td>
-        <td><span class="pill ${u.is_banned ? "bad":"ok"}">${u.is_banned ? "BANNED":"ACTIVE"}</span></td>
-        <td><div class="actions">
-          <button class="btn" data-user="${u.id}" data-act="ban">${u.is_banned?"Unban":"Ban"}</button>
-          <button class="btn primary" data-user="${u.id}" data-act="balance">Adjust Saldo</button>
-        </div></td>
-      </tr>`).join("") || `<tr><td colspan="5" class="empty">Tidak ada user.</td></tr>`;
-    $$("[data-user]").forEach(b => b.onclick = () => userAction(b.dataset.user,b.dataset.act));
-  }
-
-  async function userAction(id, act) {
-    const u = state.users.find(x => x.id === id);
-    if (!u) return;
-    try {
-      if (act === "ban") {
-        await rpc("admin_set_user",{p_user:id,p_banned:!u.is_banned});
-        toast("Status user diperbarui.","success");
-      } else {
-        const amount = prompt("Nominal perubahan saldo. Contoh 50000 atau -25000");
-        if (amount === null) return;
-        const n = Number(amount);
-        if (!Number.isFinite(n) || n === 0) return toast("Nominal tidak valid.","error");
-        const reason = prompt("Alasan adjustment","Admin adjustment") || "Admin adjustment";
-        await rpc("admin_adjust_balance",{p_user:id,p_amount:n,p_reason:reason});
-        toast("Saldo diperbarui.","success");
-      }
-      await users();
-    } catch (e) { toast(e.message || "Gagal.","error"); }
-  }
-
-  async function products() {
-    state.products = await rpc("admin_products",{p_limit:500,p_offset:0});
-    content.innerHTML = `
-      ${title("Products","Moderasi dan kelola semua produk creator.")}
-      <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>Produk</th><th>Creator</th><th>Tipe</th><th>Harga</th><th>Status</th><th>Aksi</th></tr></thead>
-      <tbody>${state.products.map(p => `<tr>
-        <td><b>${esc(p.title)}</b><br><span class="muted">${esc(p.slug)}</span></td>
-        <td>@${esc(p.creator_username || "-")}<br><span class="muted">Bot: ${esc(p.bot_username || "-")}</span></td><td>${esc(p.type)}</td>
-        <td>${p.access_type === "free" ? "FREE" : money(p.price)}</td>
-        <td><span class="pill ${p.status==="published"?"ok":p.status==="archived"?"bad":"warn"}">${esc(p.status)}</span></td>
-        <td><div class="actions">
-          <button class="btn" data-p="${p.id}" data-status="published">Publish</button>
-          <button class="btn" data-p="${p.id}" data-status="draft">Draft</button>
-          <button class="btn" data-p="${p.id}" data-status="archived">Archive</button>
-          <button class="btn primary" data-price="${p.id}" data-current="${p.price}">Harga</button>
-          <button class="btn danger" data-del="${p.id}">Delete</button>
-        </div></td>
-      </tr>`).join("") || `<tr><td colspan="6" class="empty">Tidak ada produk.</td></tr>`}</tbody></table></div></div>`;
-    $$("[data-p]").forEach(b => b.onclick = async () => {
-      try { await rpc("admin_update_product",{p_id:b.dataset.p,p_status:b.dataset.status}); toast("Status produk diperbarui.","success"); await products(); }
-      catch(e){toast(e.message,"error")}
-    });
-    $$("[data-price]").forEach(b => b.onclick = async () => {
-      const price = prompt("Harga baru (0 diperbolehkan hanya untuk produk free):", b.dataset.current);
-      if (price === null) return;
-      const n = Number(price);
-      if (!Number.isFinite(n) || n < 0) return toast("Harga tidak valid.","error");
-      try { await rpc("admin_update_product",{p_id:b.dataset.price,p_status:null,p_price:n}); toast("Harga diperbarui.","success"); await products(); }
-      catch(e){toast(e.message,"error")}
-    });
-    $$("[data-del]").forEach(b => b.onclick = async () => {
-      if (!confirm("Hapus produk ini?")) return;
-      try { await rpc("admin_delete_product",{p_id:b.dataset.del}); toast("Produk dihapus.","success"); await products(); }
-      catch(e){toast(e.message,"error")}
-    });
-  }
-
-  async function bots() {
-    state.bots = await rpc("admin_bots");
-    content.innerHTML = `
-      ${title("Approved Bots","Bot yang ada di daftar ini dapat langsung publish saat user menambahkan Code.")}
-      <div class="panel">
-        <div class="panel-head">
-          <b>Tambah / aktifkan Bot</b>
-          <button id="addBot" class="btn primary"><i class="fa-solid fa-plus"></i> Tambah Bot</button>
-        </div>
-        <div class="table-wrap"><table class="admin-table">
-          <thead><tr><th>Bot</th><th>Bot ID</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>
-          <tbody>${state.bots.map(b => `<tr>
-            <td><b>@${esc(b.bot_username)}</b></td>
-            <td>${esc(b.bot_id || "-")}</td>
-            <td>${esc(b.display_name || "-")}</td>
-            <td><span class="pill ${b.is_active?"ok":"bad"}">${b.is_active?"ACTIVE":"OFF"}</span></td>
-            <td><button class="btn danger" data-bot-delete="${b.id}">Hapus</button></td>
-          </tr>`).join("") || `<tr><td colspan="5" class="empty">Belum ada bot.</td></tr>`}</tbody>
-        </table></div>
-      </div>`;
-    $("#addBot").onclick = async () => {
-      const username = prompt("Username bot Telegram, contoh: mybot");
-      if (!username) return;
-      const botId = prompt("Bot ID (opsional)", "") || null;
-      const displayName = prompt("Nama bot (opsional)", "") || null;
-      try {
-        await rpc("admin_upsert_bot", {
-          p_username: username.replace(/^@/,"").trim(),
-          p_bot_id: botId ? Number(botId) : null,
-          p_display_name: displayName
-        });
-        toast("Bot berhasil ditambahkan.","success");
-        await bots();
-      } catch(e) { toast(e.message || "Gagal menambah bot.","error"); }
-    };
-    $$("[data-bot-delete]").forEach(b => b.onclick = async () => {
-      if (!confirm("Hapus bot dari daftar approved?")) return;
-      try { await rpc("admin_delete_bot",{p_id:b.dataset.botDelete}); toast("Bot dihapus.","success"); await bots(); }
-      catch(e){ toast(e.message || "Gagal.","error"); }
-    });
-  }
-
-  async function pastes() {
-    state.pastes = await rpc("admin_pastes",{p_limit:500,p_offset:0});
-    content.innerHTML = `
-      ${title("Pastelink","Moderasi semua Pastelink yang tersimpan di database.")}
-      <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>Paste</th><th>Creator</th><th>Visibility</th><th>Views</th><th>Dibuat</th><th>Aksi</th></tr></thead>
-      <tbody>${state.pastes.map(p => `<tr>
-        <td><b>${esc(p.title)}</b><br><a href="/p/${encodeURIComponent(p.slug)}" target="_blank" rel="noopener">/p/${esc(p.slug)}</a></td>
-        <td>@${esc(p.creator_username || p.author_name || "anonymous")}</td>
-        <td>${esc(p.visibility)}</td><td>${Number(p.views||0).toLocaleString()}</td><td>${date(p.created_at)}</td>
-        <td><button class="btn danger" data-del-paste="${p.id}">Delete</button></td>
-      </tr>`).join("") || `<tr><td colspan="6" class="empty">Tidak ada paste.</td></tr>`}</tbody></table></div></div>`;
-    $$("[data-del-paste]").forEach(b => b.onclick = async () => {
-      if (!confirm("Hapus Pastelink ini?")) return;
-      try { await rpc("admin_delete_paste",{p_id:b.dataset.delPaste}); toast("Pastelink dihapus.","success"); await pastes(); }
-      catch(e){toast(e.message,"error")}
-    });
-  }
-
-  async function payments() {
-    state.payments = await rpc("admin_payments",{p_limit:500,p_offset:0});
-    content.innerHTML = `
-      ${title("Payments","Pantau semua invoice/payment yang tercatat.")}
-      <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>User</th><th>Amount</th><th>Gateway</th><th>Status</th><th>Reference</th><th>Dibuat</th></tr></thead>
-      <tbody>${state.payments.map(p => `<tr>
-        <td>@${esc(p.username||"-")}<br><span class="muted">TG ${esc(p.telegram_id||"-")}</span></td>
-        <td>${money(p.amount)}</td><td>${esc(p.provider||"-")}</td>
-        <td><span class="pill ${p.status==="paid"?"ok":p.status==="failed"?"bad":"warn"}">${esc(p.status||"-")}</span></td>
-        <td><code>${esc(p.order_id||p.provider_reference||p.id||"-")}</code></td><td>${date(p.created_at)}</td>
-      </tr>`).join("") || `<tr><td colspan="6" class="empty">Tidak ada payment.</td></tr>`}</tbody></table></div></div>`;
-  }
-
-  async function transactions() {
-    state.transactions = await rpc("admin_transactions",{p_limit:500,p_offset:0});
-    content.innerHTML = `
-      ${title("Transactions","Audit seluruh mutasi saldo dan transaksi pengguna.")}
-      <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>User</th><th>Type</th><th>Direction</th><th>Amount</th><th>Status</th><th>Reference</th><th>Dibuat</th></tr></thead>
-      <tbody>${state.transactions.map(t => `<tr>
-        <td>@${esc(t.username||"-")}<br><span class="muted">TG ${esc(t.telegram_id||"-")}</span></td>
-        <td>${esc(t.type||"-")}</td><td>${esc(t.direction||"-")}</td><td>${money(t.amount)}</td>
-        <td><span class="pill ${t.status==="success"?"ok":t.status==="failed"?"bad":"warn"}">${esc(t.status||"-")}</span></td>
-        <td><code>${esc(t.reference_id||"-")}</code></td><td>${date(t.created_at)}</td>
-      </tr>`).join("") || `<tr><td colspan="7" class="empty">Tidak ada transaksi.</td></tr>`}</tbody></table></div></div>`;
-  }
-
-  async function withdrawals() {
-    state.withdrawals = await rpc("admin_withdrawals",{p_limit:500,p_offset:0});
-    content.innerHTML = `
-      ${title("Withdrawals","Proses request withdraw sampai selesai.")}
-      <div class="panel"><div class="table-wrap"><table class="admin-table">
-      <thead><tr><th>User</th><th>Ticket</th><th>Mode</th><th>Nominal</th><th>Fee</th><th>Total</th><th>Method</th><th>Account</th><th>Status</th><th>Aksi</th></tr></thead>
-      <tbody>${state.withdrawals.map(w => `<tr>
-        <td>@${esc(w.username||"-")}<br><span class="muted">TG ${esc(w.telegram_id||"-")}</span></td>
-        <td><code>${esc(w.ticket||"-")}</code></td>
-        <td>${esc(w.withdrawal_mode||"auto")}</td>
-        <td>${money(w.requested_amount??w.amount)}</td>
-        <td>${money(w.fee||0)}</td>
-        <td>${money(w.total_debit??w.amount)}</td>
-        <td>${esc(w.method)}</td>
-        <td>${esc(w.account_name)}<br><code>${esc(w.account_number)}</code></td>
-        <td><span class="pill ${w.status==="paid"?"ok":w.status==="failed"||w.status==="cancelled"?"bad":"warn"}">${esc(w.status)}</span></td>
-        <td><div class="actions">
-          <button class="btn" data-w="${w.id}" data-s="processing">Process</button>
-          <button class="btn success" data-w="${w.id}" data-s="paid">Paid</button>
-          <button class="btn danger" data-w="${w.id}" data-s="failed">Failed/Return</button>
-        </div></td>
-      </tr>`).join("") || `<tr><td colspan="10" class="empty">Tidak ada withdrawal.</td></tr>`}</tbody></table></div></div>`;
-    $$("[data-w]").forEach(b => b.onclick = async () => {
-      const note = prompt("Catatan admin (opsional)","") || null;
-      try { await rpc("admin_process_withdrawal",{p_id:b.dataset.w,p_status:b.dataset.s,p_note:note}); toast("Status withdraw diperbarui.","success"); await withdrawals(); }
-      catch(e){toast(e.message,"error")}
-    });
-  }
-
-  function showError(e) {
-    console.error(e);
-    if (content) content.innerHTML = `<div class="panel empty"><i class="fa-solid fa-triangle-exclamation"></i><h2>Admin error</h2><p>${esc(e?.message || "Unknown error")}</p></div>`;
-  }
-
-  // Re-check immediately after Supabase completes the Telegram magic-link callback.
-  // This makes /admin recover cleanly even when the callback finishes after page load.
-  if (sup) {
-    sup.auth.onAuthStateChange((event, session) => {
-      if (!session?.user) return;
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
-        ensureMasterSession().catch(showError);
-      }
-    });
-  }
-
+  async function users(){state.users=await rpc("admin_users",{p_limit:1000,p_offset:0});content.innerHTML=title("USERS","Users & Creator","Kelola akun, status creator/admin, ban, dan saldo.",`<input id="pageSearch" class="search" placeholder="Cari username / Telegram ID...">`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Telegram</th><th>Role</th><th>Saldo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="userRows"></tbody></table></div></section>`;$("#pageSearch").oninput=drawUsers;drawUsers()}
+  function drawUsers(){const q=($("#pageSearch")?.value||$("#globalSearch")?.value||"").toLowerCase();const rows=state.users.filter(u=>[u.username,u.telegram_username,u.telegram_id,u.display_name].join(" ").toLowerCase().includes(q));$("#userRows").innerHTML=rows.map(u=>`<tr><td><b>${esc(u.display_name||u.username||"User")}</b><br><span class="muted">@${esc(u.username||u.telegram_username||"-")}</span></td><td><code>${esc(u.telegram_id||"-")}</code></td><td><span class="pill ${u.is_admin?'info':'ok'}">${u.is_admin?'ADMIN':'USER'}</span></td><td>${money(u.balance)}</td><td><span class="pill ${u.is_banned?'bad':'ok'}">${u.is_banned?'BANNED':'ACTIVE'}</span></td><td><div class="actions"><button class="btn" data-user="${u.id}" data-act="ban">${u.is_banned?'Unban':'Ban'}</button><button class="btn primary" data-user="${u.id}" data-act="balance">Saldo</button><button class="btn" data-user="${u.id}" data-act="admin">${u.is_admin?'Cabut Admin':'Jadikan Admin'}</button></div></td></tr>`).join("")||`<tr><td colspan="6" class="empty">User tidak ditemukan.</td></tr>`;$$('[data-user]').forEach(b=>b.onclick=()=>userAction(b.dataset.user,b.dataset.act))}
+  async function userAction(id,act){const u=state.users.find(x=>x.id===id);if(!u)return;try{if(act==='ban')await rpc('admin_set_user',{p_user:id,p_banned:!u.is_banned});else if(act==='admin')await rpc('admin_set_user',{p_user:id,p_admin:!u.is_admin});else{const amount=prompt('Perubahan saldo, contoh 50000 atau -25000');if(amount===null)return;const n=Number(amount);if(!Number.isFinite(n)||n===0)throw Error('Nominal tidak valid');await rpc('admin_adjust_balance',{p_user:id,p_amount:n,p_reason:prompt('Alasan','Admin adjustment')||'Admin adjustment'})}toast('Perubahan berhasil disimpan','success');await users();await refreshCounters()}catch(e){toast(e.message||'Gagal','error')}}
+  async function products(){state.products=await rpc('admin_products',{p_limit:1000,p_offset:0});content.innerHTML=title('MARKETPLACE','Marketplace Control','Moderasi produk, harga, status publish, dan hapus listing.',`<button class="btn primary" id="reloadProducts"><i class="fa-solid fa-rotate"></i> Refresh</button><input id="pageSearch" class="search" placeholder="Cari produk / creator...">`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>Produk</th><th>Creator</th><th>Tipe</th><th>Harga</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="productRows"></tbody></table></div></section>`;$("#pageSearch").oninput=drawProducts;$("#reloadProducts").onclick=products;drawProducts()}
+  function drawProducts(){const q=($("#pageSearch")?.value||$("#globalSearch")?.value||"").toLowerCase();const rows=state.products.filter(p=>[p.title,p.slug,p.creator_username,p.bot_username,p.type].join(' ').toLowerCase().includes(q));$("#productRows").innerHTML=rows.map(p=>`<tr><td><b>${esc(p.title)}</b><br><span class="muted">${esc(p.slug)}</span></td><td>@${esc(p.creator_username||'-')}<br><span class="muted">${esc(p.bot_username||'-')}</span></td><td>${esc(p.type||'-')}</td><td>${p.access_type==='free'?'FREE':money(p.price)}</td><td><span class="pill ${p.status==='published'?'ok':p.status==='archived'?'bad':'warn'}">${esc(p.status)}</span></td><td><div class="actions"><button class="btn" data-p="${p.id}" data-status="published">Publish</button><button class="btn warn" data-p="${p.id}" data-status="draft">Draft</button><button class="btn danger" data-p="${p.id}" data-status="archived">Archive</button><button class="btn primary" data-price="${p.id}" data-current="${p.price||0}">Harga</button><button class="btn danger" data-del="${p.id}">Hapus</button></div></td></tr>`).join('')||`<tr><td colspan="6" class="empty">Produk tidak ditemukan.</td></tr>`;$$('[data-p]').forEach(b=>b.onclick=async()=>{try{await rpc('admin_update_product',{p_id:b.dataset.p,p_status:b.dataset.status});toast('Status produk diperbarui','success');await products()}catch(e){toast(e.message,'error')}});$$('[data-price]').forEach(b=>b.onclick=async()=>{const v=prompt('Harga baru',b.dataset.current);if(v===null)return;try{await rpc('admin_update_product',{p_id:b.dataset.price,p_status:null,p_price:Number(v)});toast('Harga diperbarui','success');await products()}catch(e){toast(e.message,'error')}});$$('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Hapus produk ini?'))return;try{await rpc('admin_delete_product',{p_id:b.dataset.del});toast('Produk dihapus','success');await products()}catch(e){toast(e.message,'error')}})}
+  async function bots(){state.bots=await rpc('admin_bots');content.innerHTML=title('BOT DIRECTORY','Approved Bots','Kelola bot Telegram yang boleh tampil/publish di marketplace.',`<button id="addBot" class="btn primary"><i class="fa-solid fa-plus"></i> Tambah Bot</button>`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>Bot</th><th>Bot ID</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${state.bots.map(b=>`<tr><td><b>@${esc(b.bot_username)}</b></td><td>${esc(b.bot_id||'-')}</td><td>${esc(b.display_name||'-')}</td><td><span class="pill ${b.is_active?'ok':'bad'}">${b.is_active?'ACTIVE':'OFF'}</span></td><td><button class="btn danger" data-bot="${b.id}">Hapus</button></td></tr>`).join('')||`<tr><td colspan="5" class="empty">Belum ada bot.</td></tr>`}</tbody></table></div></section>`;$("#addBot").onclick=async()=>{const username=prompt('Username bot, contoh mybot');if(!username)return;try{await rpc('admin_upsert_bot',{p_username:username.replace(/^@/,'').trim(),p_bot_id:Number(prompt('Bot ID (opsional)',''))||null,p_display_name:prompt('Nama bot','')||null});toast('Bot ditambahkan','success');await bots()}catch(e){toast(e.message,'error')}};$$('[data-bot]').forEach(b=>b.onclick=async()=>{if(!confirm('Hapus bot approved?'))return;try{await rpc('admin_delete_bot',{p_id:b.dataset.bot});toast('Bot dihapus','success');await bots()}catch(e){toast(e.message,'error')}})}
+  async function pastes(){state.pastes=await rpc('admin_pastes',{p_limit:1000,p_offset:0});content.innerHTML=title('PASTELINK','Pastelink Control','Moderasi link, visibility, creator, dan statistik view.',`<input id="pageSearch" class="search" placeholder="Cari judul / slug / creator...">`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>Paste</th><th>Creator</th><th>Visibility</th><th>Views</th><th>Dibuat</th><th>Aksi</th></tr></thead><tbody id="pasteRows"></tbody></table></div></section>`;$("#pageSearch").oninput=drawPastes;drawPastes()}
+  function drawPastes(){const q=($("#pageSearch")?.value||$("#globalSearch")?.value||"").toLowerCase();const rows=state.pastes.filter(p=>[p.title,p.slug,p.creator_username,p.author_name].join(' ').toLowerCase().includes(q));$("#pasteRows").innerHTML=rows.map(p=>`<tr><td><b>${esc(p.title||'Untitled')}</b><br><a href="/p/${encodeURIComponent(p.slug)}" target="_blank">/p/${esc(p.slug)}</a></td><td>@${esc(p.creator_username||p.author_name||'anonymous')}</td><td>${esc(p.visibility||'-')}</td><td>${Number(p.views||0).toLocaleString('id-ID')}</td><td>${date(p.created_at)}</td><td><button class="btn danger" data-paste="${p.id}">Hapus</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">Pastelink tidak ditemukan.</td></tr>`;$$('[data-paste]').forEach(b=>b.onclick=async()=>{if(!confirm('Hapus Pastelink ini?'))return;try{await rpc('admin_delete_paste',{p_id:b.dataset.paste});toast('Pastelink dihapus','success');await pastes()}catch(e){toast(e.message,'error')}})}
+  async function orders(){try{const {data,error}=await sup.from('purchases').select('*').order('created_at',{ascending:false}).limit(1000);if(error)throw error;state.orders=data||[]}catch(e){state.orders=[];toast('Orders belum bisa dibaca: '+e.message,'error')}content.innerHTML=title('ORDERS','Orders & Purchases','Pantau pembelian marketplace dan status akses.',`<input id="pageSearch" class="search" placeholder="Cari order / buyer / product...">`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>Order</th><th>Buyer</th><th>Product</th><th>Amount</th><th>Status</th><th>Dibuat</th></tr></thead><tbody id="orderRows"></tbody></table></div></section>`;$("#pageSearch").oninput=drawOrders;drawOrders()}
+  function drawOrders(){const q=($("#pageSearch")?.value||$("#globalSearch")?.value||"").toLowerCase();const rows=state.orders.filter(o=>Object.values(o||{}).join(' ').toLowerCase().includes(q));$("#orderRows").innerHTML=rows.map(o=>`<tr><td><code>${esc(o.id||o.order_id||'-')}</code></td><td>${esc(o.buyer_id||o.user_id||'-')}</td><td>${esc(o.product_id||'-')}</td><td>${money(o.amount||o.price||0)}</td><td><span class="pill ${String(o.status).toLowerCase()==='paid'?'ok':'warn'}">${esc(o.status||'-')}</span></td><td>${date(o.created_at)}</td></tr>`).join('')||`<tr><td colspan="6" class="empty">Order tidak ditemukan.</td></tr>`}
+  async function payments(){state.payments=await rpc('admin_payments',{p_limit:1000,p_offset:0});content.innerHTML=title('PAYMENTS','Payment Monitor','Pantau invoice, gateway, reference, dan status pembayaran.',`<button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Amount</th><th>Gateway</th><th>Status</th><th>Reference</th><th>Dibuat</th></tr></thead><tbody>${state.payments.map(p=>`<tr><td>@${esc(p.username||'-')}<br><span class="muted">TG ${esc(p.telegram_id||'-')}</span></td><td>${money(p.amount)}</td><td>${esc(p.provider||'-')}</td><td><span class="pill ${p.status==='paid'?'ok':p.status==='failed'?'bad':'warn'}">${esc(p.status||'-')}</span></td><td><code>${esc(p.order_id||p.provider_reference||p.id||'-')}</code></td><td>${date(p.created_at)}</td></tr>`).join('')||`<tr><td colspan="6" class="empty">Tidak ada payment.</td></tr>`}</tbody></table></div></section>`}
+  async function transactions(){state.transactions=await rpc('admin_transactions',{p_limit:1000,p_offset:0});content.innerHTML=title('WALLET','Transactions','Audit mutasi saldo, komisi, pembelian, dan adjustment.',`<button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Type</th><th>Direction</th><th>Amount</th><th>Status</th><th>Reference</th><th>Dibuat</th></tr></thead><tbody>${state.transactions.map(t=>`<tr><td>@${esc(t.username||'-')}<br><span class="muted">TG ${esc(t.telegram_id||'-')}</span></td><td>${esc(t.type||'-')}</td><td>${esc(t.direction||'-')}</td><td>${money(t.amount)}</td><td><span class="pill ${t.status==='success'?'ok':t.status==='failed'?'bad':'warn'}">${esc(t.status||'-')}</span></td><td><code>${esc(t.reference_id||'-')}</code></td><td>${date(t.created_at)}</td></tr>`).join('')||`<tr><td colspan="7" class="empty">Tidak ada transaksi.</td></tr>`}</tbody></table></div></section>`}
+  async function withdrawals(){state.withdrawals=await rpc('admin_withdrawals',{p_limit:1000,p_offset:0});content.innerHTML=title('WITHDRAWAL','Withdrawal Center','Proses, bayar, atau kembalikan saldo withdrawal creator.',`<button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Ticket</th><th>Nominal</th><th>Fee</th><th>Method</th><th>Account</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${state.withdrawals.map(w=>`<tr><td>@${esc(w.username||'-')}<br><span class="muted">TG ${esc(w.telegram_id||'-')}</span></td><td><code>${esc(w.ticket||'-')}</code></td><td>${money(w.requested_amount??w.amount)}</td><td>${money(w.fee||0)}</td><td>${esc(w.method||'-')}</td><td>${esc(w.account_name||'-')}<br><code>${esc(w.account_number||'-')}</code></td><td><span class="pill ${w.status==='paid'?'ok':w.status==='failed'||w.status==='cancelled'?'bad':'warn'}">${esc(w.status||'-')}</span></td><td><div class="actions"><button class="btn" data-w="${w.id}" data-s="processing">Process</button><button class="btn success" data-w="${w.id}" data-s="paid">Paid</button><button class="btn danger" data-w="${w.id}" data-s="failed">Return</button></div></td></tr>`).join('')||`<tr><td colspan="8" class="empty">Tidak ada withdrawal.</td></tr>`}</tbody></table></div></section>`;$$('[data-w]').forEach(b=>b.onclick=async()=>{try{await rpc('admin_process_withdrawal',{p_id:b.dataset.w,p_status:b.dataset.s,p_note:prompt('Catatan admin','')||null});toast('Withdrawal diperbarui','success');await withdrawals();await refreshCounters()}catch(e){toast(e.message,'error')}})}
+  async function site(){let stats=[];try{const {data,error}=await sup.from('site_stats').select('*').order('key');if(error)throw error;stats=data||[]}catch(e){toast('Site stats belum dapat dibaca: '+e.message,'error')}content.innerHTML=title('SYSTEM','Site Control','Pusat kontrol statistik dan status platform.',`<button class="btn primary" id="refreshSite"><i class="fa-solid fa-rotate"></i> Refresh</button>`)+`<div class="mini-cards">${(stats.length?stats:[{key:'users',value:state.stats?.users||0},{key:'products',value:state.stats?.products||0},{key:'sales',value:state.stats?.sales||0}]).map(x=>`<div class="mini"><b>${Number(x.value||0).toLocaleString('id-ID')}</b><small>${esc(x.key)}</small></div>`).join('')}</div><section class="panel"><div class="panel-head"><b>Operational controls</b><span>Perubahan backend tetap melewati RLS / RPC admin.</span></div><div class="notice"><b>Admin URL:</b> <code>/admintelecode1122</code><br>Panel ini tidak menggunakan service key di browser. Semua data sensitif tetap divalidasi oleh master administrator di Supabase.</div><div class="quick"><button data-go="users"><i class="fa-solid fa-users"></i>Kelola Users</button><button data-go="products"><i class="fa-solid fa-store"></i>Kelola Marketplace</button><button data-go="pastes"><i class="fa-solid fa-link"></i>Kelola Pastelink</button><button data-go="withdrawals"><i class="fa-solid fa-money-bill-transfer"></i>Kelola Withdrawal</button><button data-go="bots"><i class="fa-solid fa-robot"></i>Kelola Bot</button><button data-go="logs"><i class="fa-solid fa-clock-rotate-left"></i>Lihat Audit</button></div></section>`;$("#refreshSite").onclick=site;$$('[data-go]').forEach(b=>b.onclick=async()=>{state.page=b.dataset.go;$$('#sideNav button').forEach(x=>x.classList.toggle('active',x.dataset.page===state.page));await render()})}
+  async function logs(){let logs=[];try{const {data,error}=await sup.from('admin_logs').select('*').order('created_at',{ascending:false}).limit(1000);if(error)throw error;logs=data||[]}catch(e){toast('Audit logs belum bisa dibaca: '+e.message,'error')}state.logs=logs;content.innerHTML=title('AUDIT','Admin Logs','Jejak tindakan administrator untuk monitoring keamanan.',`<button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>`)+`<section class="panel"><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Action</th><th>Target</th><th>Target ID</th><th>Details</th><th>Admin</th></tr></thead><tbody>${logs.map(l=>`<tr><td>${date(l.created_at)}</td><td><span class="pill info">${esc(l.action||'-')}</span></td><td>${esc(l.target_type||'-')}</td><td><code>${esc(l.target_id||'-')}</code></td><td>${esc(typeof l.details==='object'?JSON.stringify(l.details):l.details||'-')}</td><td><code>${esc(l.admin_id||'-')}</code></td></tr>`).join('')||`<tr><td colspan="6" class="empty">Belum ada log.</td></tr>`}</tbody></table></div></section>`}
+  function showError(e){console.error(e);content.innerHTML=`<section class="panel empty"><i class="fa-solid fa-triangle-exclamation"></i><h2>Admin error</h2><p>${esc(e?.message||'Unknown error')}</p><button class="btn primary" onclick="location.reload()">Muat ulang</button></section>`}
+  if(sup)sup.auth.onAuthStateChange((event,session)=>{if(session?.user&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'))ensureMasterSession().catch(showError)});
   ensureMasterSession().catch(showError);
 })();
