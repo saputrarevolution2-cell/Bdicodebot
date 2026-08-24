@@ -3063,19 +3063,27 @@ async function openMarketplacePaidModal(item){
 
 function setupIndexButtons(){
 
-  on("#addCodeBtn","click",async()=>{
-    await refreshAuthHint();
+  /* =========================================================
+     ADD CODE / ADD CHANNEL
+     Modal harus langsung terbuka.
+     Auth dicek di dalam modal saat memilih PAID.
+  ========================================================= */
+
+  on("#addCodeBtn","click",()=>{
     openMarketplaceCreateModal("code");
   });
 
-  on("#addChannelBtn","click",async()=>{
-    await refreshAuthHint();
+  on("#addChannelBtn","click",()=>{
     openMarketplaceCreateModal("channel");
   });
 
-  /* PASTELINK */
+
+  /* =========================================================
+     PASTELINK
+  ========================================================= */
 
   if(typeof on==="function"){
+
     on("#featurePasteBtn","click",()=>{
       if(typeof openEditor==="function"){
         openEditor();
@@ -3094,8 +3102,16 @@ function setupIndexButtons(){
       routeProtected("dashboard.html");
     });
 
+
+    /* =======================================================
+       LANGUAGE
+    ======================================================= */
+
     on("#featureLanguageBtn","click",()=>{
-      if(typeof lang==="undefined")return;
+
+      if(typeof lang==="undefined"){
+        return;
+      }
 
       lang=lang==="id"?"en":"id";
 
@@ -3103,105 +3119,216 @@ function setupIndexButtons(){
         localStorage.setItem("telecod_lang",lang);
       }catch(_){}
 
-      if(typeof tr==="function")tr();
+      if(typeof tr==="function"){
+        tr();
+      }
 
-      renderMarketplace();
+      if(typeof renderMarketplace==="function"){
+        renderMarketplace();
+      }
     });
 
-    on("#marketSearch","input",renderMarketplace);
+
+    /* =======================================================
+       MARKETPLACE SEARCH
+    ======================================================= */
+
+    on("#marketSearch","input",()=>{
+      if(typeof renderMarketplace==="function"){
+        renderMarketplace();
+      }
+    });
+
+
+    /* =======================================================
+       CLEAR SEARCH
+    ======================================================= */
 
     on("#clearMarketSearch","click",()=>{
+
       const input=document.querySelector("#marketSearch");
 
-      if(input)input.value="";
+      if(input){
+        input.value="";
+      }
 
-      renderMarketplace();
+      if(typeof renderMarketplace==="function"){
+        renderMarketplace();
+      }
+
       input?.focus();
     });
 
-    on("#marketSort","change",renderMarketplace);
+
+    /* =======================================================
+       MARKETPLACE SORT
+    ======================================================= */
+
+    on("#marketSort","change",()=>{
+
+      if(typeof renderMarketplace==="function"){
+        renderMarketplace();
+      }
+
+    });
+
+
+    /* =======================================================
+       RESET MARKET FILTER
+    ======================================================= */
 
     on("#resetMarketFilter","click",()=>{
+
       marketplaceFilter="all";
 
       const input=document.querySelector("#marketSearch");
       const sort=document.querySelector("#marketSort");
 
-      if(input)input.value="";
-      if(sort)sort.value="latest";
+      if(input){
+        input.value="";
+      }
 
-      document.querySelectorAll(".market-filter-btn")
+      if(sort){
+        sort.value="latest";
+      }
+
+      document
+        .querySelectorAll(".market-filter-btn")
         .forEach(btn=>{
+
           btn.classList.toggle(
             "active",
             btn.dataset.filter==="all"
           );
+
         });
 
-      renderMarketplace();
+      if(typeof renderMarketplace==="function"){
+        renderMarketplace();
+      }
+
     });
 
-    on("#retryMarket","click",loadMarketplace);
+
+    /* =======================================================
+       RETRY MARKETPLACE
+    ======================================================= */
+
+    on("#retryMarket","click",()=>{
+
+      if(typeof loadMarketplace==="function"){
+        loadMarketplace();
+      }
+
+    });
+
   }
 
-  /* CATEGORY */
 
-  document.querySelectorAll("[data-category]")
+  /* =========================================================
+     CATEGORY
+  ========================================================= */
+
+  document
+    .querySelectorAll("[data-category]")
     .forEach(el=>{
+
       el.addEventListener("click",event=>{
+
         event.preventDefault();
 
-        selectMarketplaceCategory(
-          el.dataset.category||"all"
-        );
+        if(typeof selectMarketplaceCategory==="function"){
+          selectMarketplaceCategory(
+            el.dataset.category || "all"
+          );
+        }
+
       });
+
     });
 
-  /* FILTER */
 
-  document.querySelectorAll(".market-filter-btn")
+  /* =========================================================
+     MARKETPLACE FILTER
+  ========================================================= */
+
+  document
+    .querySelectorAll(".market-filter-btn")
     .forEach(btn=>{
+
       btn.addEventListener("click",event=>{
+
         event.preventDefault();
 
-        selectMarketplaceCategory(
-          btn.dataset.filter||"all"
-        );
+        if(typeof selectMarketplaceCategory==="function"){
+          selectMarketplaceCategory(
+            btn.dataset.filter || "all"
+          );
+        }
+
       });
+
     });
 
-  /* NAV */
 
-  document.querySelectorAll("#navLinks a")
+  /* =========================================================
+     NAVIGATION
+  ========================================================= */
+
+  document
+    .querySelectorAll("#navLinks a")
     .forEach(link=>{
+
       link.addEventListener("click",()=>{
-        const href=link.getAttribute("href")||"";
+
+        const href=link.getAttribute("href") || "";
 
         if(href.startsWith("#")){
-          setTimeout(()=>goTo(href),0);
+
+          setTimeout(()=>{
+            if(typeof goTo==="function"){
+              goTo(href);
+            }
+          },0);
+
         }
+
       });
+
     });
 
-  /* FOOTER */
 
-  document.querySelectorAll('footer a[href="#"]')
+  /* =========================================================
+     FOOTER
+  ========================================================= */
+
+  document
+    .querySelectorAll('footer a[href="#"]')
     .forEach(link=>{
+
       link.addEventListener("click",event=>{
+
         event.preventDefault();
 
         if(typeof toast==="function"){
+
           toast(
-            typeof lang!=="undefined"&&lang==="en"
-              ?"That page is not available yet."
-              :"Halaman tersebut belum tersedia.",
+            typeof lang!=="undefined" && lang==="en"
+              ? "That page is not available yet."
+              : "Halaman tersebut belum tersedia.",
             "info"
           );
+
         }
+
       });
+
     });
 
-  /* YEAR */
+
+  /* =========================================================
+     YEAR
+  ========================================================= */
 
   const year=document.querySelector("#year");
 
@@ -3209,18 +3336,79 @@ function setupIndexButtons(){
     year.textContent=new Date().getFullYear();
   }
 
-  /* AUTH */
 
-  refreshAuthHint();
+  /* =========================================================
+     AUTH STATUS
+     
+     Jangan blokir tombol Add Code/Add Channel.
+     Auth hint dijalankan di background.
+  ========================================================= */
 
-  /* MARKETPLACE */
+  if(typeof refreshAuthHint==="function"){
+    Promise
+      .resolve()
+      .then(()=>refreshAuthHint())
+      .catch(error=>{
+        console.warn(
+          "refreshAuthHint failed:",
+          error
+        );
+      });
+  }
 
-  loadMarketplace().then(()=>{
-    const pending=localStorage.getItem("telecod_pending_market_create");
-    if(pending && isLoggedIn()){
-      setTimeout(()=>openMarketplaceCreateModal(pending),250);
-    }
-  });
+
+  /* =========================================================
+     MARKETPLACE
+  ========================================================= */
+
+  if(typeof loadMarketplace==="function"){
+
+    Promise
+      .resolve(loadMarketplace())
+      .then(()=>{
+
+        let pending=null;
+
+        try{
+          pending=localStorage.getItem(
+            "telecod_pending_market_create"
+          );
+        }catch(_){}
+
+        if(
+          pending &&
+          typeof isLoggedIn==="function" &&
+          isLoggedIn()
+        ){
+
+          setTimeout(()=>{
+
+            openMarketplaceCreateModal(
+              pending
+            );
+
+            try{
+              localStorage.removeItem(
+                "telecod_pending_market_create"
+              );
+            }catch(_){}
+
+          },250);
+
+        }
+
+      })
+      .catch(error=>{
+
+        console.warn(
+          "Marketplace loading failed:",
+          error
+        );
+
+      });
+
+  }
+
 }
 
 /* =========================================================
