@@ -1,0 +1,90 @@
+<svg width="900" height="720" viewBox="0 0 900 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="g1" x1="100" y1="80" x2="760" y2="650" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#18A8FF"/><stop offset=".52" stop-color="#6257FF"/><stop offset="1" stop-color="#9C6BFF"/>
+  </linearGradient>
+  <linearGradient id="g2" x1="180" y1="160" x2="650" y2="570" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#EAF8FF"/><stop offset="1" stop-color="#D9D7FF"/>
+  </linearGradient>
+  <linearGradient id="g3" x1="250" y1="370" x2="670" y2="610" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF2FF"/>
+  </linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#3D4B8F" flood-opacity=".18"/>
+  </filter>
+  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+    <feGaussianBlur stdDeviation="28"/>
+  </filter>
+</defs>
+<ellipse cx="470" cy="640" rx="300" ry="34" fill="#6C63FF" opacity=".12" filter="url(#glow)"/>
+<circle cx="485" cy="330" r="205" fill="url(#g1)" opacity=".09"/>
+<circle cx="485" cy="330" r="166" stroke="#6A63FF" stroke-opacity=".12" stroke-width="1.5"/>
+<circle cx="485" cy="330" r="205" stroke="#18A8FF" stroke-opacity=".10" stroke-width="1.5" stroke-dasharray="7 12"/>
+
+<!-- floating code tile -->
+<g transform="translate(62 160) rotate(-7 130 88)" filter="url(#shadow)">
+  <rect width="260" height="176" rx="24" fill="url(#g3)" stroke="#DDE3F7"/>
+  <rect x="20" y="22" width="220" height="28" rx="9" fill="#F4F6FC"/>
+  <circle cx="36" cy="36" r="5" fill="#18A8FF"/>
+  <circle cx="52" cy="36" r="5" fill="#6257FF"/>
+  <circle cx="68" cy="36" r="5" fill="#22C7A6"/>
+  <text x="24" y="82" font-family="monospace" font-size="15" font-weight="700" fill="#68708C">&lt;/&gt;</text>
+  <text x="58" y="82" font-family="monospace" font-size="14" fill="#1D2748">const TeleCod</text>
+  <text x="24" y="108" font-family="monospace" font-size="14" fill="#6257FF">share</text>
+  <text x="78" y="108" font-family="monospace" font-size="14" fill="#1D2748">: "bot"</text>
+  <text x="24" y="134" font-family="monospace" font-size="14" fill="#18A8FF">build</text>
+  <text x="78" y="134" font-family="monospace" font-size="14" fill="#1D2748">: "fast"</text>
+  <rect x="24" y="148" width="120" height="6" rx="3" fill="#E3E7F4"/>
+</g>
+
+<!-- telegram orb -->
+<g filter="url(#shadow)">
+  <rect x="286" y="126" width="390" height="390" rx="112" fill="url(#g1)"/>
+  <rect x="301" y="141" width="360" height="360" rx="98" fill="url(#g2)" opacity=".97"/>
+  <path d="M357 315L590 214C603 208 615 218 610 232L537 449C532 465 516 469 505 458L448 399L416 430C410 436 400 433 398 424L388 365L351 338C340 330 344 320 357 315Z" fill="white"/>
+  <path d="M388 365L570 252L454 384L448 399L416 430L420 383L388 365Z" fill="#D8E2FF"/>
+  <path d="M570 252L454 384L448 399L459 399L596 271C602 265 594 247 570 252Z" fill="#EEF4FF"/>
+</g>
+
+<!-- marketplace chips -->
+<g filter="url(#shadow)">
+  <rect x="620" y="92" width="208" height="64" rx="18" fill="white" stroke="#E1E6F4"/>
+  <circle cx="651" cy="124" r="19" fill="#E9F7FF"/>
+  <path d="M642 125C642 118 647 113 654 113C661 113 666 118 666 125C666 132 661 137 654 137C647 137 642 132 642 125Z" fill="#18A8FF"/>
+  <text x="681" y="130" font-family="Inter,Arial" font-size="15" font-weight="800" fill="#1A2342">Bot Telegram</text>
+
+  <rect x="666" y="172" width="174" height="58" rx="17" fill="white" stroke="#E1E6F4"/>
+  <circle cx="694" cy="201" r="17" fill="#F0EEFF"/>
+  <text x="684" y="207" font-family="monospace" font-size="16" font-weight="800" fill="#6257FF">&lt;/&gt;</text>
+  <text x="719" y="207" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#1A2342">Source Code</text>
+
+  <rect x="674" y="246" width="176" height="58" rx="17" fill="white" stroke="#E1E6F4"/>
+  <circle cx="703" cy="275" r="17" fill="#E8FBF6"/>
+  <path d="M696 267L710 275L696 283V267Z" fill="#22B997"/>
+  <text x="728" y="281" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#1A2342">Channel Tools</text>
+</g>
+
+<!-- base -->
+<g filter="url(#shadow)">
+  <ellipse cx="480" cy="570" rx="270" ry="62" fill="url(#g1)" opacity=".92"/>
+  <ellipse cx="480" cy="555" rx="240" ry="48" fill="white" stroke="#E0E5F4" stroke-width="2"/>
+  <ellipse cx="480" cy="550" rx="184" ry="28" fill="#F3F5FC" stroke="#DDE3F4"/>
+  <rect x="330" y="525" width="300" height="82" rx="25" fill="url(#g1)"/>
+  <rect x="342" y="537" width="276" height="58" rx="18" fill="#172348" opacity=".94"/>
+  <text x="480" y="570" text-anchor="middle" font-family="Inter,Arial" font-size="25" font-weight="900" fill="white">TELECOD</text>
+  <text x="480" y="590" text-anchor="middle" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="3" fill="#9FE8FF">CODE • SHARE • GROW</text>
+</g>
+
+<!-- small badges -->
+<g filter="url(#shadow)">
+  <rect x="95" y="478" width="150" height="54" rx="17" fill="white" stroke="#E1E6F4"/>
+  <circle cx="122" cy="505" r="15" fill="#E8FBF6"/>
+  <path d="M115 505L120 510L130 499" stroke="#22B997" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="145" y="511" font-family="Inter,Arial" font-size="13" font-weight="800" fill="#1A2342">Secure</text>
+
+  <rect x="676" y="468" width="148" height="54" rx="17" fill="white" stroke="#E1E6F4"/>
+  <circle cx="703" cy="495" r="15" fill="#EAF3FF"/>
+  <path d="M703 485L696 499H703L700 507L710 493H703L706 485H703Z" fill="#18A8FF"/>
+  <text x="725" y="501" font-family="Inter,Arial" font-size="13" font-weight="800" fill="#1A2342">Fast</text>
+</g>
+</svg>
