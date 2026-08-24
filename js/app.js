@@ -1628,8 +1628,11 @@ document.querySelectorAll(".toggle-password").forEach(btn=>{
   btn.addEventListener("click",()=>{
     const input=$("#"+btn.dataset.target);
     if(!input)return;
-    input.type=input.type==="password"?"text":"password";
-    btn.textContent=input.type==="password"?"👁":"🙈";
+    const visible=input.type==="password";
+    input.type=visible?"text":"password";
+    const icon=btn.querySelector("i");
+    if(icon) icon.className=visible?"fa-solid fa-eye-slash":"fa-solid fa-eye";
+    btn.setAttribute("aria-label",visible?"Sembunyikan kata sandi":"Tampilkan kata sandi");
   });
 });
 
