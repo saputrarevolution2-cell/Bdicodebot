@@ -1586,473 +1586,182 @@ on("#pasteForm", "submit", async event => {
 
 
 /* =========================================================
-   AUTH HELPERS
+   REGISTER / LOGIN / GMAIL AUTH
    ========================================================= */
 
-function normalizeUsername(value) {
-  return String(value || "")
-    .trim()
-    .replace(/^@+/, "")
-    .toLowerCase();
+let loginIdentifierValue = "";
+let loginUserId = null;
+
+function openAuth(mode="login") {
+  const modal=$("#authModal"); if(!modal)return;
+  modal.classList.add("open","show"); modal.setAttribute("aria-hidden","false");
+  showAuthPanel(mode);
 }
-
-function validUsername(value) {
-  return /^[a-z0-9_]{3,32}$/.test(
-    normalizeUsername(value)
-  );
+function closeAuth(){
+  const modal=$("#authModal"); if(!modal)return;
+  modal.classList.remove("open","show"); modal.setAttribute("aria-hidden","true");
 }
-
-function validPhone(value) {
-  return /^\+?[0-9\s().-]{7,20}$/.test(
-    String(value || "").trim()
-  );
-}
-
-function syntheticEmail(username) {
-  return (
-    normalizeUsername(username) +
-    "@telecod.local"
-  );
-}
-
-async function ensureSupabase() {
-  if (!sup) {
-    toast(
-      T[lang].authConfig,
-      "error"
-    );
-
-    return false;
+function showAuthPanel(mode){
+  ["loginPanel","registerPanel","forgotPanel"].forEach(id=>{const e=$("#"+id); if(e)e.hidden=true;});
+  const target=mode==="register"?"registerPanel":mode==="forgot"?"forgotPanel":"loginPanel";
+  $( "#"+target ).hidden=false;
+  if(mode==="login"){
+    $("#loginPasswordForm").hidden=true;
+    $("#identifierMessage").hidden=true;
+    $("#identifierStatus").textContent="";
+    $("#loginIdentifier").focus();
   }
-
-  return true;
 }
+function validGmail(v){ return /^[^@\s]+@gmail\.com$/i.test(v.trim()); }
 
+["#loginTop","#loginCta"].forEach(s=>on(s,"click",()=>openAuth("login")));
+["#registerTop","#registerCta"].forEach(s=>on(s,"click",()=>openAuth("register")));
+on("#closeAuth","click",closeAuth);
+on("#authModal","click",e=>{if(e.target?.id==="authModal")closeAuth();});
+on("#showLogin","click",()=>showAuthPanel("login"));
+on("#showRegister","click",()=>showAuthPanel("register"));
+on("#forgotFromRegister","click",()=>showAuthPanel("forgot"));
+on("#forgotPassword","click",()=>{$("#forgotEmail").value=validGmail(loginIdentifierValue)?loginIdentifierValue:"";showAuthPanel("forgot");});
+on("#backToLogin","click",()=>showAuthPanel("login"));
 
-/* =========================================================
-   AUTH MODALS
-   ========================================================= */
-
-function openAuth(mode = "login") {
-  authMode = mode;
-
-  const modal = $("#authModal");
-
-  if (!modal) return;
-
-  modal.classList.add("open", "show");
-  modal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
-
-  setAuthMode(mode);
-}
-
-function closeAuth() {
-  const modal = $("#authModal");
-
-  if (!modal) return;
-
-  modal.classList.remove("open", "show");
-  modal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
-}
-
-function setAuthMode(mode) {
-  authMode = mode;
-
-  toggle(
-    "#tabLogin",
-    "selected",
-    mode === "login"
-  );
-
-  toggle(
-    "#tabRegister",
-    "selected",
-    mode === "register"
-  );
-
-  toggle(
-    "#loginPanel",
-    "hidden",
-    mode !== "login"
-  );
-
-  toggle(
-    "#registerPanel",
-    "hidden",
-    mode !== "register"
-  );
-}
-
-function openRecovery() {
-  closeAuth();
-
-  $("#forgotModal")?.classList.add("open", "show");
-}
-
-function closeRecovery() {
-  $("#forgotModal")?.classList.remove("open", "show");
-}
-
-
-/* =========================================================
-   AUTH BUTTONS
-   ========================================================= */
-
-["#loginTop", "#loginCta"].forEach(
-  selector => {
-    on(selector, "click", () =>
-      openAuth("login")
-    );
-  }
-);
-
-["#registerTop", "#registerCta"].forEach(
-  selector => {
-    on(selector, "click", () =>
-      openAuth("register")
-    );
-  }
-);
-
-on("#tabLogin", "click", () =>
-  setAuthMode("login")
-);
-
-on("#tabRegister", "click", () =>
-  setAuthMode("register")
-);
-
-on("#switchRegister", "click", () =>
-  setAuthMode("register")
-);
-
-on("#switchLogin", "click", () =>
-  setAuthMode("login")
-);
-
-on("#closeAuth", "click", closeAuth);
-on("#closeForgot", "click", closeRecovery);
-
-on("#backToLogin", "click", () => {
-  closeRecovery();
-  openAuth("login");
+document.querySelectorAll(".toggle-password").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const input=$("#"+btn.dataset.target);
+    if(!input)return;
+    input.type=input.type==="password"?"text":"password";
+    btn.textContent=input.type==="password"?"👁":"🙈";
+  });
 });
 
-on("#authModal", "click", event => {
-  if (event.target?.id === "authModal") {
-    closeAuth();
-  }
-});
+async function lookupLoginIdentifier(identifier){
+  if(!sup)return {error:"Supabase belum dikonfigurasi."};
+  const value=identifier.trim();
+  if(!value)return {error:"Masukkan Gmail atau username."};
 
-on("#forgotModal", "click", event => {
-  if (event.target?.id === "forgotModal") {
-    closeRecovery();
-  }
-});
+  // Profiles are checked by username first; Gmail is resolved through auth.users
+  // only through a secure RPC when available.
+  let q=sup.from("profiles").select("id,username,display_name,is_banned").ilike("username",value).maybeSingle();
+  const {data:byUsername,error:e1}=await q;
+  if(e1)return {error:e1.message};
+  if(byUsername)return {user:byUsername,identifier:value};
 
-
-/* =========================================================
-   PASSWORD TOGGLE
-   ========================================================= */
-
-$$("[data-password-toggle]").forEach(
-  button => {
-    button.addEventListener(
-      "click",
-      () => {
-        const id =
-          button.dataset.passwordToggle;
-
-        const input = $("#" + id);
-
-        if (!input) return;
-
-        const visible =
-          input.type === "text";
-
-        input.type =
-          visible
-            ? "password"
-            : "text";
-
-        button.innerHTML =
-          visible
-            ? '<i class="fa-regular fa-eye"></i>'
-            : '<i class="fa-regular fa-eye-slash"></i>';
-      }
-    );
-  }
-);
-
-
-/* =========================================================
-   TERMS
-   ========================================================= */
-
-function requireTerms(checked) {
-  if (!checked) {
-    toast(
-      T[lang].termsRequired,
-      "warning"
-    );
-
-    return false;
-  }
-
-  return true;
+  // Secure RPC expected in the supplied SQL.
+  const {data:byEmail,error:e2}=await sup.rpc("lookup_user_by_email",{p_email:value.toLowerCase()});
+  if(e2)return {notFound:true};
+  if(byEmail?.id)return {user:byEmail,identifier:value};
+  return {notFound:true};
 }
 
-
-/* =========================================================
-   LOGIN
-   ========================================================= */
-
-async function checkAuthIdentifier(inputId, stateId){
-  const input=$(inputId), stateEl=$(stateId); if(!input||!stateEl)return null;
-  const value=normalizeUsername(input.value);
-  if(!validUsername(value)){ stateEl.innerHTML=''; stateEl.className='username-state'; if(inputId==='#loginUsername') $('#loginPassword')?.setAttribute('disabled','disabled'); return null; }
-  stateEl.className='username-state pending'; stateEl.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Mengecek...';
-  const fn=String(window.TELECOD_USERNAME_AUTH_FUNCTION_URL||'').trim();
-  if(!/^https?:\/\//i.test(fn)){stateEl.innerHTML='';return null;}
-  try{
-    const r=await fetch(fn,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'check',username:value})});
-    const out=await r.json().catch(()=>({}));
-    if(out.exists){stateEl.className='username-state ok';stateEl.innerHTML=`<i class="fa-solid fa-circle-check"></i> ${lang==='id'?'Akun ditemukan':'Account found'}`; if(inputId==='#loginUsername') $('#loginPassword')?.removeAttribute('disabled');}
-    else {stateEl.className='username-state bad';stateEl.innerHTML=`<i class="fa-solid fa-circle-xmark"></i> ${lang==='id'?'Username / username Telegram belum dibuat':'Username / Telegram username has not been created'}`; if(inputId==='#loginUsername') $('#loginPassword')?.setAttribute('disabled','disabled');}
-    return out;
-  }catch(e){stateEl.className='username-state bad';stateEl.innerHTML=`<i class="fa-solid fa-circle-xmark"></i> ${lang==='id'?'Tidak dapat mengecek akun':'Unable to check account'}`; if(inputId==='#loginUsername') $('#loginPassword')?.setAttribute('disabled','disabled');return null;}
-}
-
-on('#loginUsername','input',debounce(()=>checkAuthIdentifier('#loginUsername','#loginUsernameState'),350));
-on('#registerUsername','input',debounce(()=>checkAuthIdentifier('#registerUsername','#registerUsernameState'),350));
-on('#registerTelegramUsername','input',debounce(()=>checkAuthIdentifier('#registerTelegramUsername','#registerTelegramState'),350));
-
-on('#loginForm','submit',async event=>{
-  event.preventDefault();
-  const username=normalizeUsername($('#loginUsername')?.value), password=$('#loginPassword')?.value||'';
-  if(!validUsername(username))return toast(T[lang].invalidUsername,'error');
-  if(password.length<6)return toast(T[lang].passwordShort,'error');
-  if(!(await ensureSupabase()))return;
-  const submit=event.submitter||$('#loginForm button[type="submit"]'); const original=submit?.innerHTML;
-  try{
-    if(submit){submit.disabled=true;submit.innerHTML=lang==='id'?'Memproses...':'Signing in...';}
-    const fn=String(window.TELECOD_USERNAME_AUTH_FUNCTION_URL||'').trim();
-    const response=await fetch(fn,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action:'login',username,password})});
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(result?.error||T[lang].authError);
-    const sessionResult=await sup.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
-    if(sessionResult.error)throw sessionResult.error;
-    const profile=await sup.from('profiles').select('is_banned').eq('id',sessionResult.data.user.id).maybeSingle();
-    if(profile.data?.is_banned){await sup.auth.signOut();throw new Error(lang==='id'?'Akun kamu diblokir admin.':'Your account has been blocked by an administrator.');}
-    localStorage.setItem('telecod_session_hint','1');document.documentElement.dataset.authenticated='true';closeAuth();toast(T[lang].loginSuccess,'success');
-    setTimeout(()=>location.href='dashboard.html',450);
-  }catch(error){console.error(error);toast(error?.message||T[lang].authError,'error');}
-  finally{if(submit){submit.disabled=false;if(original!=null)submit.innerHTML=original;}}
-});
-
-/* =========================================================
-   REGISTER
-   ========================================================= */
-
-on('#registerForm','submit',async event=>{
-  event.preventDefault();
-  const username=normalizeUsername($('#registerUsername')?.value);
-  const telegramUsername=normalizeUsername($('#registerTelegramUsername')?.value);
-  const phone=$('#registerPhone')?.value?.trim()||'';
-  const password=$('#registerPassword')?.value||'';
-  const confirm=$('#registerConfirm')?.value||'';
-  if(!validUsername(username)||!validUsername(telegramUsername))return toast(T[lang].invalidUsername,'error');
-  if(password.length<6)return toast(T[lang].passwordShort,'error');
-  if(password!==confirm)return toast(T[lang].passwordMismatch,'error');
-  if(!requireTerms($('#registerTerms')?.checked))return;
-  if(!(await ensureSupabase()))return;
-  const submit=event.submitter||$('#registerForm button[type="submit"]'); const original=submit?.innerHTML;
-  try{
-    if(submit){submit.disabled=true;submit.innerHTML=lang==='id'?'Mendaftarkan...':'Creating account...';}
-    const fn=String(window.TELECOD_USERNAME_AUTH_FUNCTION_URL||'').trim();
-    const response=await fetch(fn,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action:'register',username,telegram_username:telegramUsername,telegram_number:phone,password,terms_accepted:true})});
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(result?.error||T[lang].authError);
-    if(!result.access_token||!result.refresh_token)throw new Error(lang==='id'?'Akun dibuat tetapi session belum tersedia.':'Account created but session is not available.');
-    const sessionResult=await sup.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
-    if(sessionResult.error)throw sessionResult.error;
-    localStorage.setItem('telecod_session_hint','1');document.documentElement.dataset.authenticated='true';closeAuth();toast(T[lang].registerSuccess,'success');setTimeout(()=>location.href='dashboard.html',450);
-  }catch(error){console.error(error);toast(error?.message||T[lang].authError,'error');}
-  finally{if(submit){submit.disabled=false;if(original!=null)submit.innerHTML=original;}}
-});
-
-/* =========================================================
-   TELEGRAM AUTH
-   ========================================================= */
-
-function getTelegramConfig() {
-  const config = window.TELECOD_CONFIG || {};
-
-  return {
-    bot: String(
-      window.TELECOD_TELEGRAM_BOT_USERNAME ||
-      config.TELEGRAM_BOT_USERNAME ||
-      ""
-    ).trim(),
-
-    callback: String(
-      window.TELECOD_TELEGRAM_AUTH_FUNCTION_URL ||
-      config.TELEGRAM_AUTH_FUNCTION_URL ||
-      ""
-    ).trim(),
-
-    siteUrl: String(
-      window.TELECOD_SITE_URL ||
-      config.SITE_URL ||
-      location.origin
-    ).trim()
-  };
-}
-
-function startTelegramAuth(mode = "login") {
-  const { bot, callback } = getTelegramConfig();
-
-  if (!bot || !callback || !isConfiguredValue(bot) || !isConfiguredValue(callback) || !/^https?:\/\//i.test(callback)) {
-    toast(T[lang].telegramConfig, "warning");
-    return false;
+on("#loginIdentifierForm","submit",async e=>{
+  e.preventDefault();
+  const input=$("#loginIdentifier"), status=$("#identifierStatus"), msg=$("#identifierMessage");
+  const value=input.value.trim();
+  status.textContent="⏳"; msg.hidden=true;
+  const result=await lookupLoginIdentifier(value);
+  if(result.error){status.textContent="✕";msg.hidden=false;msg.textContent=result.error;msg.className="auth-message error";return;}
+  if(result.notFound){
+    status.textContent="✕";msg.hidden=false;
+    msg.className="auth-message error";
+    msg.innerHTML='Akun tidak ada atau belum terdaftar. Silakan daftar terlebih dahulu. <button type="button" id="quickRegister">Daftar / Register</button>';
+    on("#quickRegister","click",()=>showAuthPanel("register"));
+    return;
   }
+  status.textContent="✓"; msg.hidden=false; msg.className="auth-message success";
+  msg.textContent=`Akun ditemukan. Masuk sebagai ${result.user.display_name||result.user.username||value}.`;
+  loginIdentifierValue=value;
+  loginUserId=result.user.id;
+  $("#loginWelcome").innerHTML=`✓ Masuk sebagai <strong>${esc(result.user.display_name||result.user.username||value)}</strong>`;
+  $("#loginPasswordForm").hidden=false;
+  $("#loginPassword").focus();
+});
 
-  const cleanBot = bot.replace(/^@/, "");
+on("#loginPasswordForm","submit",async e=>{
+  e.preventDefault();
+  if(!sup)return;
+  const password=$("#loginPassword").value;
+  if(!password)return;
+  let email=loginIdentifierValue.trim();
+  if(!validGmail(email)){
+    const {data}=await sup.rpc("email_for_user",{p_user_id:loginUserId});
+    email=data?.email||"";
+  }
+  if(!validGmail(email)){toast("Gmail akun tidak dapat ditemukan.","error");return;}
+  const {error}=await sup.auth.signInWithPassword({email,password});
+  if(error){toast("Kata sandi salah. Silakan cek kembali.","error");return;}
+  location.href="dashboard.html";
+});
 
-  // Remove an older widget so repeated clicks always create a fresh login.
-  document.querySelectorAll(".telegram-widget-modal").forEach(el => el.remove());
+async function registerAccount(e){
+  e.preventDefault();
+  if(!sup)return;
+  const username=$("#registerUsername").value.trim().toLowerCase();
+  const email=$("#registerEmail").value.trim().toLowerCase();
+  const password=$("#registerPassword").value;
+  const confirm=$("#registerConfirm").value;
+  if(!/^[a-z0-9_]{3,32}$/.test(username))return toast("Username 3-32 karakter: huruf, angka, underscore.","error");
+  if(!validGmail(email))return toast("Gunakan alamat Gmail yang valid.","error");
+  if(password.length<6)return toast("Kata sandi minimal 6 karakter.","error");
+  if(password!==confirm)return toast("Konfirmasi kata sandi tidak sama.","error");
 
-  const modal = document.createElement("div");
-  modal.className = "telegram-widget-modal";
-  modal.innerHTML = `
-    <div class="telegram-widget-card" role="dialog" aria-modal="true" aria-label="Telegram Login">
-      <button class="telegram-widget-close" type="button" aria-label="Close">×</button>
-      <div class="auth-logo telegram-logo"><i class="fa-brands fa-telegram"></i></div>
-      <h3>${escapeHTML(lang === "id" ? "Login dengan Telegram" : "Login with Telegram")}</h3>
-      <p>${escapeHTML(lang === "id" ? "Tekan tombol Telegram di bawah untuk melanjutkan." : "Press the Telegram button below to continue.")}</p>
-      <div id="telegramWidget" class="telegram-widget-container"></div>
-      <small>${escapeHTML(lang === "id" ? "Pastikan domain website sudah didaftarkan di BotFather." : "Make sure this website domain is registered in BotFather.")}</small>
-    </div>
-  `;
-  document.body.appendChild(modal);
+  const {data:existing}=await sup.from("profiles").select("id").ilike("username",username).maybeSingle();
+  if(existing)return toast("Username sudah digunakan.","error");
 
-  const close = () => modal.remove();
-  modal.querySelector(".telegram-widget-close")?.addEventListener("click", close);
-  modal.addEventListener("click", e => { if (e.target === modal) close(); });
+  const {data,error}=await sup.auth.signUp({
+    email,password,
+    options:{data:{username,display_name:username}}
+  });
+  if(error){
+    toast(error.message||"Pendaftaran gagal.","error"); return;
+  }
+  if(data?.session){location.href="dashboard.html";return;}
+  toast("Pendaftaran berhasil. Cek Gmail untuk verifikasi akun.","success");
+  showAuthPanel("login");
+}
 
-  // Telegram's official widget opens the Telegram authorization popup itself.
-  // Use onTelegramAuth instead of data-auth-url so the widget is not blocked by
-  // cross-origin callback/domain validation. The authenticated payload is then
-  // sent to the Supabase Edge Function with the requested auth mode.
-  window.onTelegramAuth = async function(user) {
-    try {
-      const response = await fetch(callback, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ ...user, mode })
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result?.error || (lang === "id" ? "Login Telegram gagal." : "Telegram login failed."));
+on("#registerForm","submit",registerAccount);
 
-      if (result.access_token && result.refresh_token && sup?.auth) {
-        const sessionResult = await sup.auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token
-        });
-        if (sessionResult.error) throw sessionResult.error;
-      }
+async function loginWithGoogle(){
+  if(!sup)return toast("Supabase belum dikonfigurasi.","error");
+  const {error}=await sup.auth.signInWithOAuth({
+    provider:"google",
+    options:{redirectTo:`${location.origin}/`,queryParams:{prompt:"select_account"}}
+  });
+  if(error)toast(error.message||"Login Gmail gagal.","error");
+}
+on("#googleLoginBtn","click",loginWithGoogle);
+on("#googleRegisterBtn","click",loginWithGoogle);
 
-      localStorage.setItem("telecod_session_hint", "1");
-      document.documentElement.dataset.authenticated = "true";
-      close();
+on("#forgotForm","submit",async e=>{
+  e.preventDefault();
+  const email=$("#forgotEmail").value.trim().toLowerCase();
+  if(!validGmail(email))return toast("Masukkan Gmail yang valid.","error");
+  const {error}=await sup.auth.resetPasswordForEmail(email,{redirectTo:`${location.origin}/reset-password.html`});
+  if(error)toast(error.message||"Gagal mengirim link reset.","error");
+  else toast("Link reset kata sandi sudah dikirim ke Gmail.","success");
+});
 
-      if (mode === "register") {
-        toast(T[lang].registerSuccess || (lang === "id" ? "Registrasi berhasil." : "Registration successful."), "success");
-      } else {
-        toast(T[lang].loginSuccess || (lang === "id" ? "Login berhasil." : "Login successful."), "success");
-      }
-      setTimeout(() => { location.href = "dashboard.html"; }, 450);
-    } catch (error) {
-      console.error("Telegram auth error:", error);
-      toast(error?.message || T[lang].authError, "error");
+async function finishGoogleSession(){
+  if(!sup?.auth)return;
+  const {data}=await sup.auth.getSession();
+  if(!data?.session?.user)return;
+  document.body.classList.add("logged-in");
+  document.documentElement.dataset.authenticated="true";
+  if(location.pathname.endsWith("/")||location.pathname.endsWith("/index.html")){
+    if(location.hash.includes("access_token")||location.search.includes("code=")){
+      history.replaceState({},document.title,location.pathname);
+      location.href="dashboard.html";
     }
-  };
-
-  const script = document.createElement("script");
-  script.src = "https://telegram.org/js/telegram-widget.js?22";
-  script.async = true;
-  script.dataset.telegramLogin = cleanBot;
-  script.dataset.size = "large";
-  script.dataset.userpic = "false";
-  script.dataset.onauth = "onTelegramAuth(user)";
-  // Do not set data-request-access or data-auth-url: identity login only.
-
-  const container = modal.querySelector("#telegramWidget");
-  if (!container) {
-    close();
-    return false;
   }
-  container.appendChild(script);
-  return true;
 }
-
-on(
-  "#telegramLoginBtn",
-  "click",
-  () => startTelegramAuth("login")
-);
-
-on(
-  "#telegramRegisterBtn",
-  "click",
-  () => startTelegramAuth("register")
-);
-
-on(
-  "#telegramRecoveryBtn",
-  "click",
-  () => {
-    closeRecovery();
-    startTelegramAuth("recovery");
-  }
-);
-
-
-/* =========================================================
-   SUPABASE AUTH STATE
-   ========================================================= */
-
-function initAuthListener() {
-  if (!sup?.auth) return;
-
-  sup.auth.onAuthStateChange(
-    (event, session) => {
-      if (
-        event === "SIGNED_IN" &&
-        session?.user
-      ) {
-        document.body.classList.add("logged-in");
-        document.documentElement.dataset.authenticated="true";
-        try{ localStorage.setItem("telecod_session_hint","1"); }catch(_){}
-      }
-
-      if (event === "SIGNED_OUT") {
-        document.body.classList.remove("logged-in");
-        document.documentElement.dataset.authenticated="false";
-        try{ localStorage.removeItem("telecod_session_hint"); }catch(_){}
-      }
+if(sup?.auth){
+  sup.auth.onAuthStateChange((event,session)=>{
+    if(session?.user&&event!=="SIGNED_OUT"){
+      document.body.classList.add("logged-in");
+      document.documentElement.dataset.authenticated="true";
     }
-  );
+  });
 }
-
-initAuthListener();
-
+setTimeout(finishGoogleSession,300);
 
 /* =========================================================
    PUBLIC STATS

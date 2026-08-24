@@ -3,17 +3,10 @@
 // NEVER put Supabase service-role keys, bot tokens, payment secrets, or webhook secrets here.
 
 window.TELECOD_CONFIG={
-  SUPABASE_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co",
+    ADMIN_GMAIL:"",
+SUPABASE_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co",
 
   SUPABASE_ANON_KEY:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGJnZmZtcW9yemJjZnZuYmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NTEzOTIsImV4cCI6MjEwMjUyNzM5Mn0.W9tWYiPmYOC9wsruJMypH_Kg0dQpw_klCbACS6PYp48",
-
-  TELEGRAM_BOT_USERNAME:"Mrktplsbot",
-
-  ADMIN_TELEGRAM_ID:"6665664367",
-
-  TELEGRAM_AUTH_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/telegram-login",
-
-  USERNAME_AUTH_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/username-auth",
 
   MARKETPLACE_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/marketplace",
 
