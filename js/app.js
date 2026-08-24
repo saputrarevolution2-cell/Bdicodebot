@@ -185,6 +185,49 @@ const T = {
 
     forgotInfo:"Untuk keamanan, pemulihan dilakukan melalui verifikasi Telegram.",
 
+
+    addChannel:"Tambah Channel",
+    addChannelSub:"Gratis / Berbayar",
+    addCode:"Tambah Code",
+    addCodeSub:"Gratis / Berbayar",
+    all:"Semua",
+    changeLanguage:"Ganti Bahasa",
+    channel:"Channel",
+    code:"Code",
+    ctaDevice:"Telegram Marketplace",
+    fast:"Proses Cepat",
+    featuredSub:"Semua kebutuhan Telegram kamu dalam satu platform.",
+    free:"Gratis",
+    freeAccessText:"Bisa dibuat dan diambil tanpa login.",
+    freeAccessTitle:"Gratis",
+    guestPurchaseText:"Pembeli tidak wajib memiliki akun.",
+    guestPurchaseTitle:"Pembelian Guest",
+    howDescription:"Buat PasteLink, temukan produk marketplace, atau jual code Telegram kamu dalam beberapa langkah.",
+    latestMarketplace:"Code & Channel Terbaru",
+    latestMarketplaceSub:"Temukan code bot dan channel Telegram dari creator TeleCod.",
+    loadingMarketplace:"Memuat marketplace...",
+    loadingMarketplaceSub:"Mengambil produk terbaru.",
+    marketCreateText:"Tambahkan produk GRATIS tanpa login atau jual produk BERBAYAR setelah login/register.",
+    marketCreateTitle:"Punya Code atau Channel?",
+    marketEmptyText:"Belum ada produk yang sesuai dengan pencarian kamu.",
+    marketEmptyTitle:"Produk belum tersedia",
+    marketErrorText:"Silakan coba beberapa saat lagi.",
+    marketErrorTitle:"Marketplace tidak dapat dimuat",
+    openDashboard:"Buka Dashboard",
+    paid:"Berbayar",
+    paidAccessText:"Creator wajib login untuk menjual.",
+    paidAccessTitle:"Berbayar",
+    resetFilter:"Reset Filter",
+    retry:"Coba Lagi",
+    s4:"Bagikan",
+    s4p:"Salin link dan bagikan ke Telegram, WhatsApp atau media sosial lainnya.",
+    secure:"Sistem Aman",
+    startSelling:"Mulai Jual",
+    support:"Support",
+    telegramConnected:"Terhubung dengan Telegram",
+    tryNow:"Coba Sekarang",
+    viewMarketplace:"Lihat Semua Marketplace",
+    withdraw:"Withdraw",
     authError:"Terjadi kesalahan autentikasi.",
     dbNote:"Data akan disimpan ke Supabase Database setelah konfigurasi."
   },
@@ -364,6 +407,49 @@ const T = {
 
     forgotInfo:"For security, recovery requires Telegram verification.",
 
+
+    addChannel:"Add Channel",
+    addChannelSub:"Free / Paid",
+    addCode:"Add Code",
+    addCodeSub:"Free / Paid",
+    all:"All",
+    changeLanguage:"Change Language",
+    channel:"Channel",
+    code:"Code",
+    ctaDevice:"Telegram Marketplace",
+    fast:"Fast Process",
+    featuredSub:"Everything you need for Telegram in one platform.",
+    free:"Free",
+    freeAccessText:"Can be created and accessed without login.",
+    freeAccessTitle:"Free",
+    guestPurchaseText:"Buyers do not need an account.",
+    guestPurchaseTitle:"Guest Purchase",
+    howDescription:"Create a PasteLink, discover marketplace products, or sell your Telegram code in a few simple steps.",
+    latestMarketplace:"Latest Code & Channels",
+    latestMarketplaceSub:"Discover Telegram bot codes and channels from TeleCod creators.",
+    loadingMarketplace:"Loading marketplace...",
+    loadingMarketplaceSub:"Fetching the latest products.",
+    marketCreateText:"Add FREE products without login or sell PAID products after login/register.",
+    marketCreateTitle:"Have a Code or Channel?",
+    marketEmptyText:"No products match your search.",
+    marketEmptyTitle:"No products available",
+    marketErrorText:"Please try again in a moment.",
+    marketErrorTitle:"Marketplace could not be loaded",
+    openDashboard:"Open Dashboard",
+    paid:"Paid",
+    paidAccessText:"Creators must log in to sell.",
+    paidAccessTitle:"Paid",
+    resetFilter:"Reset Filter",
+    retry:"Try Again",
+    s4:"Share",
+    s4p:"Copy the link and share it to Telegram, WhatsApp, or social media.",
+    secure:"Secure System",
+    startSelling:"Start Selling",
+    support:"Support",
+    telegramConnected:"Connected to Telegram",
+    tryNow:"Try Now",
+    viewMarketplace:"View Full Marketplace",
+    withdraw:"Withdraw",
     authError:"Authentication error.",
     dbNote:"Data will be stored in Supabase after configuration."
   }
@@ -2216,7 +2302,7 @@ function isLoggedIn(){
 
 async function refreshAuthHint(){
   try{
-    if(!window.sup||!sup.auth){
+    if(!sup||!sup.auth){
       document.documentElement.dataset.authenticated="false";
       return false;
     }
@@ -2587,7 +2673,7 @@ async function loadMarketplace(){
 
   if(!grid)return;
 
-  if(!window.sup){
+  if(!sup){
     grid.innerHTML="";
     empty?.classList.remove("hidden");
     return;
