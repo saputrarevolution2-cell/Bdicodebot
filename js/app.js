@@ -71,6 +71,10 @@ const T = {
     f5p:"Tim support siap membantu kamu kapan saja jika ada kendala.",
 
     categories:"Kategori Marketplace Populer",
+    catCode:"CODE BOT",
+    catChannel:"TELEGRAM CHANNEL",
+    catFree:"FREE",
+    catPaid:"PREMIUM / PAID",
     mainMarket:"Marketplace Utama Kami",
     marketText:"Semua marketplace lengkap dan ribuan media viral sudah tersedia di bot utama kami di Telegram!",
     openBot:"Buka @mktplbot",
@@ -293,6 +297,10 @@ const T = {
     f5p:"Our support team is ready to help whenever you have an issue.",
 
     categories:"Popular Marketplace Categories",
+    catCode:"CODE BOT",
+    catChannel:"TELEGRAM CHANNEL",
+    catFree:"FREE",
+    catPaid:"PREMIUM / PAID",
     mainMarket:"Our Main Marketplace",
     marketText:"Thousands of marketplace items and viral media are available through our main Telegram bot!",
     openBot:"Open @mktplbot",
@@ -467,7 +475,7 @@ let sup = null;
 
 try {
   lang = localStorage.getItem("telecod_lang") || "id";
-  theme = localStorage.getItem("telecod_theme") || "dark";
+  theme = localStorage.getItem("telecod_theme") || "light";
 } catch (_) {}
 
 if (!T[lang]) lang = "id";

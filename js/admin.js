@@ -12,12 +12,11 @@
   const date = v => v ? new Date(v).toLocaleString("id-ID") : "-";
   function toast(message,type=""){const el=$("#toast");if(!el)return;el.textContent=message;el.className=`toast show ${type}`;clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className="toast",2800)}
   async function rpc(name,args={}){if(!sup)throw new Error("Supabase belum dikonfigurasi.");const {data,error}=await sup.rpc(name,args);if(error)throw error;return data}
-  function gate(message=""){content.innerHTML=`<section class="gate"><div class="gate-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="eyebrow">TELECOD MASTER CONTROL</div><h1>Akses Administrator</h1><p>${esc(message||"URL panel benar, tetapi data admin tetap dilindungi oleh session master administrator.")}</p><button id="telegramAdminLogin" class="btn primary"><i class="fa-brands fa-telegram"></i> Verifikasi dengan Telegram</button></section>`;$("#telegramAdminLogin").onclick=startTelegramAdminAuth}
-  function startTelegramAdminAuth(){
-    if(window.TeleCodAuth?.loginWithTelegram)return window.TeleCodAuth.loginWithTelegram();
-    if(window.Telegram?.Login?.auth){try{window.Telegram.Login.auth({bot_id:C.TELEGRAM_BOT_ID,request_access:true},u=>{if(u)location.reload()})}catch(e){toast("Telegram Login belum dikonfigurasi.","error")}}
-    else toast("Gunakan login Telegram dari halaman utama terlebih dahulu.","warning");
+  function gate(message=""){
+    content.innerHTML=`<section class="gate admin-login-gate"><div class="gate-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="eyebrow">TELECOD MASTER CONTROL</div><h1>Admin Login</h1><p>${esc(message||"Masuk dengan akun administrator Supabase. Telegram tidak digunakan untuk login panel admin.")}</p><form id="adminLoginForm" class="admin-login-form"><input id="adminEmail" type="email" autocomplete="username" placeholder="Email administrator" required><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password administrator" required><button class="btn primary" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button></form></section>`;
+    $("#adminLoginForm").onsubmit=async e=>{e.preventDefault();if(!sup)return toast("Supabase belum dikonfigurasi.","error");const email=$("#adminEmail").value.trim();const password=$("#adminPassword").value;const {error}=await sup.auth.signInWithPassword({email,password});if(error)return toast(error.message,"error");location.reload()};
   }
+  function startTelegramAdminAuth(){}
   async function ensureMasterSession(){
     if(!sup)return gate("Supabase belum dikonfigurasi. Isi konfigurasi deployment terlebih dahulu.");
     const {data:auth}=await sup.auth.getUser();
@@ -29,7 +28,7 @@
   function bindNav(){
     $$("#sideNav button[data-page]").forEach(b=>b.onclick=async()=>{state.page=b.dataset.page;$$('#sideNav button').forEach(x=>x.classList.toggle('active',x===b));try{await render()}catch(e){showError(e)}});
     $("#logout").onclick=async()=>{if(sup)await sup.auth.signOut();location.href="../index.html"};
-    const saved=localStorage.getItem("telecod_theme")||localStorage.getItem("telecod_admin_theme")||"dark";
+    const saved=localStorage.getItem("telecod_theme")||localStorage.getItem("telecod_admin_theme")||"light";
     document.documentElement.classList.toggle("light",saved==="light");
     document.body.classList.toggle("light",saved==="light");
     const syncThemeIcon=()=>{const b=$("#themeBtn");if(b)b.innerHTML=document.documentElement.classList.contains("light")?'<i class="fa-solid fa-moon"></i>':'<i class="fa-solid fa-sun"></i>'};
