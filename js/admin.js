@@ -13,10 +13,21 @@
   function toast(message,type=""){const el=$("#toast");if(!el)return;el.textContent=message;el.className=`toast show ${type}`;clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className="toast",2800)}
   async function rpc(name,args={}){if(!sup)throw new Error("Supabase belum dikonfigurasi.");const {data,error}=await sup.rpc(name,args);if(error)throw error;return data}
   function gate(message=""){
-    content.innerHTML=`<section class="gate admin-login-gate"><div class="gate-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="eyebrow">TELECOD MASTER CONTROL</div><h1>Admin Login</h1><p>${esc(message||"Masuk dengan akun administrator Supabase. Telegram tidak digunakan untuk login panel admin.")}</p><form id="adminLoginForm" class="admin-login-form"><input id="adminEmail" type="email" autocomplete="username" placeholder="Email administrator" required><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password administrator" required><button class="btn primary" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button></form></section>`;
-    $("#adminLoginForm").onsubmit=async e=>{e.preventDefault();if(!sup)return toast("Supabase belum dikonfigurasi.","error");const email=$("#adminEmail").value.trim();const password=$("#adminPassword").value;const {error}=await sup.auth.signInWithPassword({email,password});if(error)return toast(error.message,"error");location.reload()};
+    content.innerHTML=`<section class="gate admin-login-gate"><div class="gate-icon"><i class="fa-brands fa-telegram"></i></div><div class="eyebrow">TELECOD MASTER CONTROL</div><h1>Admin Access</h1><p>${esc(message||"Panel admin tidak menggunakan password. Verifikasi hanya melalui akun Telegram master administrator.")}</p><button id="adminTelegramBtn" class="btn primary"><i class="fa-brands fa-telegram"></i> Masuk dengan Telegram</button><small style="display:block;margin-top:12px;opacity:.7">URL /admintelecode/1903 hanya sebagai kunci alamat. Hak admin tetap diverifikasi di backend.</small></section>`;
+    $("#adminTelegramBtn").onclick=startTelegramAdminAuth;
   }
-  function startTelegramAdminAuth(){}
+  function startTelegramAdminAuth(){
+    const bot=String(C.TELEGRAM_BOT_USERNAME||"").replace(/^@/,"");
+    const callback=String(C.TELEGRAM_AUTH_FUNCTION_URL||"");
+    if(!bot||!callback)return toast("Konfigurasi Telegram admin belum lengkap.","error");
+    const authUrl=`${callback}${callback.includes("?")?"&":"?"}${new URLSearchParams({mode:"admin",redirect:location.origin+"/admintelecode/1903"}).toString()}`;
+    const modal=document.createElement("div");
+    modal.style.cssText="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(0,0,0,.65);padding:20px";
+    modal.innerHTML=`<div style="max-width:420px;width:100%;padding:28px;border-radius:20px;background:#111735;color:#fff;text-align:center"><button id="aClose" style="float:right;background:none;border:0;color:#fff;font-size:24px">×</button><div style="font-size:44px;color:#229ed9"><i class="fa-brands fa-telegram"></i></div><h2>Verifikasi Admin</h2><p>Gunakan akun Telegram master administrator.</p><div id="aWidget"></div></div>`;
+    document.body.appendChild(modal);
+    modal.querySelector("#aClose").onclick=()=>modal.remove();
+    const script=document.createElement("script");script.src="https://telegram.org/js/telegram-widget.js?22";script.async=true;script.dataset.telegramLogin=bot;script.dataset.size="large";script.dataset.userpic="false";script.dataset.authUrl=authUrl;modal.querySelector("#aWidget").appendChild(script);
+  }
   async function ensureMasterSession(){
     if(!sup)return gate("Supabase belum dikonfigurasi. Isi konfigurasi deployment terlebih dahulu.");
     const {data:auth}=await sup.auth.getUser();
@@ -65,4 +76,5 @@
   function showError(e){console.error(e);content.innerHTML=`<section class="panel empty"><i class="fa-solid fa-triangle-exclamation"></i><h2>Admin error</h2><p>${esc(e?.message||'Unknown error')}</p><button class="btn primary" onclick="location.reload()">Muat ulang</button></section>`}
   if(sup)sup.auth.onAuthStateChange((event,session)=>{if(session?.user&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'))ensureMasterSession().catch(showError)});
   ensureMasterSession().catch(showError);
+  if(location.pathname==="/admintelecode/1903" || location.pathname==="/admintelecode/1903/"){ setTimeout(()=>{ if(!state.profile) startTelegramAdminAuth(); },500); }
 })();

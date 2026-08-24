@@ -2678,108 +2678,46 @@ async function loadMarketplace(){
   const grid=document.querySelector("#marketItemsGrid");
   const error=document.querySelector("#marketError");
   const empty=document.querySelector("#marketEmpty");
-
   if(!grid)return;
-
-  if(!sup){
-    grid.innerHTML="";
-    empty?.classList.remove("hidden");
-    return;
-  }
-
   if(marketplaceLoading)return;
 
   marketplaceLoading=true;
+  error?.classList.add("hidden");
+  empty?.classList.add("hidden");
+  grid.innerHTML=`<div class="market-loading"><div class="market-loading-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><strong>${lang==="en"?"Loading marketplace...":"Memuat marketplace..."}</strong><span>${lang==="en"?"Fetching the latest products.":"Mengambil produk terbaru."}</span></div>`;
 
-  grid.innerHTML=`
-    <div class="market-loading">
-      <div class="market-loading-icon">
-        <i class="fa-solid fa-spinner fa-spin"></i>
-      </div>
-
-      <strong>
-        ${
-          typeof lang!=="undefined"&&lang==="en"
-            ?"Loading marketplace..."
-            :"Memuat marketplace..."
-        }
-      </strong>
-
-      <span>
-        ${
-          typeof lang!=="undefined"&&lang==="en"
-            ?"Loading available Codes & Channels."
-            :"Mengambil Code & Channel yang tersedia."
-        }
-      </span>
-    </div>
-  `;
+  const timeout=(promise,ms=9000)=>Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error("Marketplace request timeout")),ms))]);
+  const fields="id,creator_id,type,title,slug,description,category,access_type,price,thumbnail_url,telegram_channel,is_channel,status,views,sales_count,created_at,updated_at,creator_username";
 
   try{
+    if(!sup) throw new Error("Supabase belum siap.");
 
-    /*
-     * PENTING:
-     * Ini 100% sesuai kolom tabel products kamu.
-     */
+    let data=null, dbError=null;
+    try{
+      const result=await timeout(sup.from("marketplace_public").select(fields).order("created_at",{ascending:false}).limit(100));
+      data=result.data; dbError=result.error;
+    }catch(e){ dbError=e; }
 
-    const{
-      data,
-      error:dbError
-    }=await sup
-      .from("marketplace_public")
-      .select(`
-        id,
-        creator_id,
-        creator_username,
-        title,
-        slug,
-        category,
-        description,
-        price,
-        thumbnail_url,
-        status,
-        created_at,
-        updated_at,
-        type,
-        access_type,
-        telegram_channel,
-        is_channel,
-        views,
-        sales_count
-      `)
-      .order("created_at",{ascending:false})
-      .limit(100);
-
-    if(dbError)throw dbError;
+    // Fallback for stale/missing marketplace_public view or PostgREST cache.
+    if(dbError){
+      console.warn("marketplace_public failed, using products fallback:",dbError);
+      const result=await timeout(sup.from("products").select("id,creator_id,type,title,slug,description,category,access_type,price,thumbnail_url,telegram_channel,is_channel,status,views,sales_count,created_at,updated_at,profiles(username)").eq("status","published").order("created_at",{ascending:false}).limit(100));
+      if(result.error)throw result.error;
+      data=(result.data||[]).map(x=>({...x,creator_username:x.profiles?.username||"TeleCod",profiles:undefined}));
+    }
 
     marketplaceData=Array.isArray(data)?data:[];
-
-    console.log(
-      "TeleCod Marketplace loaded:",
-      marketplaceData.length
-    );
-
     renderMarketplace();
-
   }catch(err){
-
-    console.error(
-      "Marketplace load error:",
-      err
-    );
-
+    console.error("Marketplace load error:",err);
     marketplaceData=[];
-
     grid.innerHTML="";
-
     error?.classList.remove("hidden");
     empty?.classList.add("hidden");
-
   }finally{
     marketplaceLoading=false;
   }
 }
-
 /* =========================================================
    CATEGORY
    ========================================================= */
