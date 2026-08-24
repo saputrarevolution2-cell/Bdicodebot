@@ -267,3 +267,10 @@ body{background:
   .market-create-actions{grid-template-columns:1fr!important}
   .market-add-btn{min-height:68px!important}
 }
+
+/* FINAL LIGHT MODE HARDENING */
+html[data-theme="light"] body,body.light{background:var(--bg);color:var(--text)}
+html[data-theme="light"] .sidebar,body.light .sidebar{background:var(--surface)}
+html[data-theme="light"] .topbar,body.light .topbar{background:rgba(255,255,255,.92);color:var(--text)}
+html[data-theme="light"] .card,body.light .card{background:var(--surface);color:var(--text)}
+html[data-theme="light"] .input,html[data-theme="light"] .select,html[data-theme="light"] .textarea,body.light .input,body.light .select,body.light .textarea{background:var(--surface2);color:var(--text)}

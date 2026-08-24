@@ -4362,3 +4362,59 @@ body.light .market-filter{
 .copyright{width:min(1200px,100%);margin:35px auto 0;padding-top:18px;border-top:1px solid var(--border);color:var(--muted-2);font-size:12px}
 @media(max-width:900px){.about-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-inner{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.about-detail-grid{grid-template-columns:1fr}.footer-inner{grid-template-columns:1fr}.site-footer{padding-top:40px}}
+
+
+/* =========================================================
+   FINAL LANDING VISUAL FIX — HERO + WHY + CATEGORIES
+========================================================= */
+.hero{position:relative;isolation:isolate;overflow:clip}
+.hero-art-wrap{width:100%;min-width:0;min-height:560px;overflow:visible}
+.hero-art{width:min(100%,760px);height:auto;max-height:none;object-fit:contain;object-position:center;transform-origin:center;}
+.hero-art-orbit{pointer-events:none}
+
+#whyTelecod .heading,
+#categories .heading{margin-bottom:28px}
+#whyTelecod .grid.five{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+#whyTelecod .visual-card{position:relative;min-height:235px;padding:24px 20px;border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+#whyTelecod .visual-card .feature-icon{width:54px;height:54px;margin-bottom:18px;display:grid;place-items:center;border-radius:16px;font-size:20px;background:linear-gradient(135deg,rgba(31,182,255,.18),rgba(125,92,255,.20));border:1px solid rgba(125,92,255,.24);color:#8bdcff}
+#whyTelecod .visual-card h3{padding:0;font-size:16px;line-height:1.35}
+#whyTelecod .visual-card p{padding:0;margin-top:9px;font-size:12px;line-height:1.7}
+
+#categories .category-layout{grid-template-columns:1fr;}
+#categories .category-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+#categories .category{min-height:145px;align-items:flex-end;padding:18px;border-radius:22px;background:linear-gradient(145deg,rgba(31,182,255,.09),rgba(125,92,255,.10));border-color:rgba(125,92,255,.20);box-shadow:0 18px 50px rgba(0,0,0,.14);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+#categories .category::before{content:"";position:absolute;inset:-25% -10%;background:radial-gradient(circle at 30% 25%,rgba(31,182,255,.22),transparent 32%),radial-gradient(circle at 80% 80%,rgba(125,92,255,.20),transparent 36%);pointer-events:none}
+#categories .category::after{background:linear-gradient(180deg,transparent 15%,rgba(5,9,25,.78) 100%)}
+#categories .category:hover{transform:translateY(-5px);border-color:rgba(125,92,255,.45);box-shadow:0 25px 70px rgba(49,42,130,.24)}
+#categories .category .category-icon{position:absolute;z-index:2;left:18px;top:18px;width:44px;height:44px;margin:0;border-radius:14px;background:rgba(255,255,255,.07);color:#9fdcff;border:1px solid rgba(255,255,255,.10)}
+#categories .category b{z-index:3;font-size:13px;letter-spacing:.02em}
+#categories .category > span:last-child{z-index:3;width:34px;height:34px;margin-left:auto}
+
+html[data-theme="light"] #whyTelecod .visual-card,
+body.light #whyTelecod .visual-card{background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(240,246,255,.82));}
+html[data-theme="light"] #categories .category,
+body.light #categories .category{background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(239,245,255,.90));border-color:rgba(65,105,180,.16);box-shadow:0 18px 45px rgba(55,85,130,.12)}
+
+@media(max-width:1100px){
+  #whyTelecod .grid.five{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #categories .category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero-art-wrap{min-height:430px}
+  .hero-art{width:min(100%,680px)}
+}
+@media(max-width:800px){
+  #whyTelecod .grid.five{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #whyTelecod .visual-card{min-height:205px;padding:19px 16px}
+  #categories .category-grid{gap:12px}
+  .hero-art-wrap{min-height:340px;margin-top:8px}
+  .hero-art{width:100%;max-width:620px;margin:0 auto;transform:none}
+}
+@media(max-width:560px){
+  #whyTelecod .grid.five{grid-template-columns:1fr}
+  #whyTelecod .visual-card{min-height:0;padding:18px}
+  #categories .category-grid{grid-template-columns:1fr 1fr}
+  #categories .category{min-height:125px;padding:15px}
+  #categories .category .category-icon{left:14px;top:14px;width:40px;height:40px}
+  #categories .category b{font-size:11px;max-width:78%}
+  .hero-art-wrap{min-height:270px}
+  .hero-art{width:100%;max-width:500px;margin:0 auto}
+}
