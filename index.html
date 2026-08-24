@@ -112,7 +112,7 @@
     <div class="hero-art-wrap" aria-hidden="true">
       <div class="hero-art-orbit orbit-one"></div>
       <div class="hero-art-orbit orbit-two"></div>
-      <img class="hero-art" src="assets/hero-art.png" alt="TeleCod Telegram Code Platform">
+      <img class="hero-art" src="assets/hero-art-premium.svg" alt="TeleCod Telegram Code Platform">
     </div>
   </div>
 
@@ -1396,7 +1396,7 @@
 <!-- Authentication -->
 <div id="authModal" class="modal auth-overlay" aria-hidden="true">
   <div class="auth-modal auth-shell">
-    <button id="closeAuth" class="close-auth" type="button" aria-label="Tutup">×</button>
+    <button id="closeAuth" class="close-auth" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
 
     <div class="auth-brand">
       <div class="auth-logo" aria-hidden="true"><span class="logo-code">&lt;/&gt;</span></div>
@@ -1410,21 +1410,21 @@
         <p>Buat akun TeleCod menggunakan username, Gmail, dan kata sandi.</p>
       </div>
       <form id="registerForm" autocomplete="off">
-        <label>Username
+        <label><span class="auth-label"><i class="fa-regular fa-user"></i> Username</span>
           <input id="registerUsername" required minlength="3" maxlength="32" autocomplete="username" placeholder="Buat username">
         </label>
-        <label>Gmail
+        <label><span class="auth-label"><i class="fa-regular fa-envelope"></i> Gmail</span>
           <input id="registerEmail" required type="email" autocomplete="email" placeholder="Masukkan Gmail">
         </label>
-        <label>Kata Sandi
-          <div class="password-field"><input id="registerPassword" required type="password" minlength="6" autocomplete="new-password" placeholder="Buat kata sandi"><button type="button" class="toggle-password" data-target="registerPassword">👁</button></div>
+        <label><span class="auth-label"><i class="fa-solid fa-lock"></i> Kata Sandi</span>
+          <div class="password-field"><input id="registerPassword" required type="password" minlength="6" autocomplete="new-password" placeholder="Buat kata sandi"><button type="button" class="toggle-password" data-target="registerPassword" aria-label="Tampilkan kata sandi"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div>
         </label>
-        <label>Konfirmasi Kata Sandi
-          <div class="password-field"><input id="registerConfirm" required type="password" minlength="6" autocomplete="new-password" placeholder="Konfirmasi kata sandi"><button type="button" class="toggle-password" data-target="registerConfirm">👁</button></div>
+        <label><span class="auth-label"><i class="fa-solid fa-shield-halved"></i> Konfirmasi Kata Sandi</span>
+          <div class="password-field"><input id="registerConfirm" required type="password" minlength="6" autocomplete="new-password" placeholder="Konfirmasi kata sandi"><button type="button" class="toggle-password" data-target="registerConfirm" aria-label="Tampilkan konfirmasi kata sandi"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div>
         </label>
         <button class="auth-primary" type="submit">Daftar / Register</button>
       </form>
-      <button id="googleRegisterBtn" class="google-auth-btn" type="button"><span class="google-g">G</span> Daftar dengan Gmail</button>
+      <button id="googleRegisterBtn" class="google-auth-btn" type="button"><span class="google-g"><i class="fa-brands fa-google"></i></span> Daftar dengan Gmail</button>
       <button id="forgotFromRegister" class="auth-link" type="button">Lupa kata sandi?</button>
       <p class="auth-switch">Sudah ada akun? <button id="showLogin" type="button">Masuk sekarang</button></p>
     </section>
@@ -1436,7 +1436,7 @@
         <p>Masukkan Gmail atau username untuk melanjutkan.</p>
       </div>
       <form id="loginIdentifierForm" autocomplete="off">
-        <label>Gmail / Username
+        <label><span class="auth-label"><i class="fa-solid fa-at"></i> Gmail / Username</span>
           <div id="identifierWrap" class="status-input-wrap">
             <input id="loginIdentifier" required autocomplete="username" placeholder="Masukkan Gmail / username">
             <span id="identifierStatus" class="input-status"></span>
@@ -1448,14 +1448,14 @@
 
       <form id="loginPasswordForm" autocomplete="off" hidden>
         <div id="loginWelcome" class="login-welcome"></div>
-        <label>Kata Sandi
-          <div class="password-field"><input id="loginPassword" required type="password" autocomplete="current-password" placeholder="Masukkan kata sandi"><button type="button" class="toggle-password" data-target="loginPassword">👁</button></div>
+        <label><span class="auth-label"><i class="fa-solid fa-lock"></i> Kata Sandi</span>
+          <div class="password-field"><input id="loginPassword" required type="password" autocomplete="current-password" placeholder="Masukkan kata sandi"><button type="button" class="toggle-password" data-target="loginPassword" aria-label="Tampilkan kata sandi"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div>
         </label>
         <button class="auth-primary" type="submit">Login / Masuk</button>
         <button id="forgotPassword" class="auth-link" type="button">Lupa kata sandi? Reset kata sandi</button>
       </form>
 
-      <button id="googleLoginBtn" class="google-auth-btn" type="button"><span class="google-g">G</span> Login dengan Gmail</button>
+      <button id="googleLoginBtn" class="google-auth-btn" type="button"><span class="google-g"><i class="fa-brands fa-google"></i></span> Login dengan Gmail</button>
       <p class="auth-switch">Belum punya akun? <button id="showRegister" type="button">Daftar / Register sekarang</button></p>
     </section>
 
@@ -1463,7 +1463,7 @@
     <section id="forgotPanel" class="auth-panel" hidden>
       <div class="auth-title"><h2>Reset Kata Sandi</h2><p>Masukkan Gmail untuk menerima link reset kata sandi.</p></div>
       <form id="forgotForm">
-        <label>Gmail<input id="forgotEmail" required type="email" placeholder="Masukkan Gmail"></label>
+        <label><span class="auth-label"><i class="fa-regular fa-envelope"></i> Gmail</span><input id="forgotEmail" required type="email" placeholder="Masukkan Gmail"></label>
         <button class="auth-primary" type="submit">Kirim Link Reset</button>
       </form>
       <button id="backToLogin" class="auth-link" type="button">← Kembali ke Login</button>
