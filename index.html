@@ -218,6 +218,7 @@
       <!-- ADD CODE -->
       <button
         id="addCodeBtn"
+        onclick="openMarketplaceCreateModal('code')"
         class="market-add-btn code"
         type="button"
         data-market-create="code"
@@ -243,6 +244,7 @@
       <!-- ADD CHANNEL -->
       <button
         id="addChannelBtn"
+        onclick="openMarketplaceCreateModal('channel')"
         class="market-add-btn channel"
         type="button"
         data-market-create="channel"
@@ -1450,7 +1452,7 @@
       </form>
 
       <div class="auth-or"><span data-i18n="orContinue">Atau masuk dengan</span></div>
-      <button id="telegramLoginBtn" class="telegram-auth-btn" type="button">
+      <button id="telegramLoginBtn" onclick="startTelegramAuth('login')" class="telegram-auth-btn" type="button">
         <i class="fa-brands fa-telegram"></i><span data-i18n="continueTelegram">Telegram</span>
       </button>
       <p class="auth-switch"><span data-i18n="noAccount">Belum punya akun?</span> <button type="button" id="switchRegister" data-i18n="registerNow">Daftar sekarang</button></p>
@@ -1519,7 +1521,7 @@
       </form>
 
       <div class="auth-or"><span data-i18n="orRegisterWith">Atau daftar dengan</span></div>
-      <button id="telegramRegisterBtn" class="telegram-auth-btn" type="button">
+      <button id="telegramRegisterBtn" onclick="startTelegramAuth('register')" class="telegram-auth-btn" type="button">
         <i class="fa-brands fa-telegram"></i><span data-i18n="continueTelegram">Telegram</span>
       </button>
       <p class="auth-switch"><span data-i18n="hasAccount">Sudah punya akun?</span> <button type="button" id="switchLogin" data-i18n="loginNow">Masuk sekarang</button></p>
