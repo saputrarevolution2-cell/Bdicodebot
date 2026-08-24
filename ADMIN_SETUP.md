@@ -2,7 +2,7 @@
 
 Panel admin tersedia melalui:
 
-`https://telecod.biz.id/admintelecode1122`
+`https://telecod.biz.id/admintelecode1903`
 
 `_redirects` sudah mengarahkan path tersebut ke `admin.html`.
 
@@ -30,3 +30,7 @@ Jika memakai fungsi tambahan pada versi ini, jalankan:
 `supabase/admin_control_center.sql`
 
 setelah schema utama.
+
+
+### Final admin access
+Panel URL: `https://telecod.biz.id/admintelecode1903`. The route itself is a private URL gate, while sensitive database operations still require a valid Supabase administrator session. Admin panel login uses Supabase email/password, not Telegram.
