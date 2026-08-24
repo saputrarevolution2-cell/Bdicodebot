@@ -4418,3 +4418,34 @@ body.light #categories .category{background:linear-gradient(145deg,rgba(255,255,
   .hero-art-wrap{min-height:270px}
   .hero-art{width:100%;max-width:500px;margin:0 auto}
 }
+
+/* Telegram Login widget fix */
+.telegram-auth-btn { cursor: pointer; position: relative; z-index: 5; pointer-events: auto; border: 0; }
+.telegram-widget-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,.72);
+}
+.telegram-widget-card {
+  position: relative;
+  width: min(390px, 100%);
+  padding: 28px 22px 22px;
+  border-radius: 18px;
+  text-align: center;
+  background: #071426;
+  color: #fff;
+  box-shadow: 0 20px 70px rgba(0,0,0,.55);
+}
+.telegram-widget-card p { color: #94a3b8; margin: 8px 0 18px; }
+.telegram-widget-card small { display:block; margin-top:16px; color:#7f93ad; font-size:11px; }
+.telegram-widget-container { min-height: 46px; display:flex; justify-content:center; align-items:center; }
+.telegram-widget-close {
+  position:absolute; top:10px; right:12px; width:34px; height:34px;
+  border:0; border-radius:50%; background:rgba(255,255,255,.08); color:#fff;
+  font-size:24px; line-height:1; cursor:pointer;
+}
