@@ -1916,146 +1916,90 @@ function getTelegramConfig() {
 }
 
 function startTelegramAuth(mode = "login") {
-  const {
-    bot,
-    callback,
-    siteUrl
-  } = getTelegramConfig();
+  const { bot, callback } = getTelegramConfig();
 
-  if (
-    !bot ||
-    !callback ||
-    !isConfiguredValue(bot) ||
-    !isConfiguredValue(callback) ||
-    !/^https?:\/\//i.test(callback)
-  ) {
-    toast(
-      T[lang].telegramConfig,
-      "warning"
-    );
-
-    return;
+  if (!bot || !callback || !isConfiguredValue(bot) || !isConfiguredValue(callback) || !/^https?:\/\//i.test(callback)) {
+    toast(T[lang].telegramConfig, "warning");
+    return false;
   }
 
-  const cleanBot =
-    bot.replace(/^@/, "");
+  const cleanBot = bot.replace(/^@/, "");
 
-  const params = new URLSearchParams({
-    mode,
-    redirect: siteUrl || location.origin
-  });
+  // Remove an older widget so repeated clicks always create a fresh login.
+  document.querySelectorAll(".telegram-widget-modal").forEach(el => el.remove());
 
-  const authUrl = `${callback}${callback.includes("?") ? "&" : "?"}${params.toString()}`;
-
-  const modal =
-    document.createElement("div");
-
-  modal.className =
-    "telegram-widget-modal";
-
-  const title =
-    mode === "recovery"
-      ? (
-          lang === "id"
-            ? "Pulihkan dengan Telegram"
-            : "Recover with Telegram"
-        )
-      : (
-          lang === "id"
-            ? "Masuk dengan Telegram"
-            : "Continue with Telegram"
-        );
-
-  const description =
-    mode === "recovery"
-      ? (
-          lang === "id"
-            ? "Verifikasi akun melalui Telegram untuk melanjutkan pemulihan."
-            : "Verify your account through Telegram to continue recovery."
-        )
-      : (
-          lang === "id"
-            ? "Klik tombol Telegram di bawah untuk memverifikasi akun."
-            : "Click the Telegram button below to verify your account."
-        );
-
-  const note =
-    lang === "id"
-      ? "Domain website harus sudah didaftarkan di BotFather."
-      : "The website domain must be registered in BotFather.";
-
+  const modal = document.createElement("div");
+  modal.className = "telegram-widget-modal";
   modal.innerHTML = `
-    <div class="telegram-widget-card">
-
-      <button
-        class="telegram-widget-close"
-        type="button"
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-      <div class="auth-logo telegram-logo">
-        <i class="fa-brands fa-telegram"></i>
-      </div>
-
-      <h3>${escapeHTML(title)}</h3>
-
-      <p>${escapeHTML(description)}</p>
-
-      <div id="telegramWidget"></div>
-
-      <small>${escapeHTML(note)}</small>
-
+    <div class="telegram-widget-card" role="dialog" aria-modal="true" aria-label="Telegram Login">
+      <button class="telegram-widget-close" type="button" aria-label="Close">×</button>
+      <div class="auth-logo telegram-logo"><i class="fa-brands fa-telegram"></i></div>
+      <h3>${escapeHTML(lang === "id" ? "Login dengan Telegram" : "Login with Telegram")}</h3>
+      <p>${escapeHTML(lang === "id" ? "Tekan tombol Telegram di bawah untuk melanjutkan." : "Press the Telegram button below to continue.")}</p>
+      <div id="telegramWidget" class="telegram-widget-container"></div>
+      <small>${escapeHTML(lang === "id" ? "Pastikan domain website sudah didaftarkan di BotFather." : "Make sure this website domain is registered in BotFather.")}</small>
     </div>
   `;
-
   document.body.appendChild(modal);
 
-  modal
-    .querySelector(
-      ".telegram-widget-close"
-    )
-    ?.addEventListener(
-      "click",
-      () => modal.remove()
-    );
+  const close = () => modal.remove();
+  modal.querySelector(".telegram-widget-close")?.addEventListener("click", close);
+  modal.addEventListener("click", e => { if (e.target === modal) close(); });
 
-  modal.addEventListener(
-    "click",
-    event => {
-      if (event.target === modal) {
-        modal.remove();
+  // Telegram's official widget opens the Telegram authorization popup itself.
+  // Use onTelegramAuth instead of data-auth-url so the widget is not blocked by
+  // cross-origin callback/domain validation. The authenticated payload is then
+  // sent to the Supabase Edge Function with the requested auth mode.
+  window.onTelegramAuth = async function(user) {
+    try {
+      const response = await fetch(callback, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ ...user, mode })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.error || (lang === "id" ? "Login Telegram gagal." : "Telegram login failed."));
+
+      if (result.access_token && result.refresh_token && sup?.auth) {
+        const sessionResult = await sup.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token
+        });
+        if (sessionResult.error) throw sessionResult.error;
       }
+
+      localStorage.setItem("telecod_session_hint", "1");
+      document.documentElement.dataset.authenticated = "true";
+      close();
+
+      if (mode === "register") {
+        toast(T[lang].registerSuccess || (lang === "id" ? "Registrasi berhasil." : "Registration successful."), "success");
+      } else {
+        toast(T[lang].loginSuccess || (lang === "id" ? "Login berhasil." : "Login successful."), "success");
+      }
+      setTimeout(() => { location.href = "dashboard.html"; }, 450);
+    } catch (error) {
+      console.error("Telegram auth error:", error);
+      toast(error?.message || T[lang].authError, "error");
     }
-  );
+  };
 
-  const script =
-    document.createElement("script");
-
-  script.src =
-    "https://telegram.org/js/telegram-widget.js?22";
-
+  const script = document.createElement("script");
+  script.src = "https://telegram.org/js/telegram-widget.js?22";
   script.async = true;
+  script.dataset.telegramLogin = cleanBot;
+  script.dataset.size = "large";
+  script.dataset.userpic = "false";
+  script.dataset.onauth = "onTelegramAuth(user)";
+  // Do not set data-request-access or data-auth-url: identity login only.
 
-  script.dataset.telegramLogin =
-    cleanBot;
-
-  script.dataset.size =
-    "large";
-
-  script.dataset.userpic =
-    "false";
-
-  script.dataset.authUrl =
-    authUrl;
-
-  script.dataset.requestAccess =
-    "write";
-
-  modal
-    .querySelector("#telegramWidget")
-    ?.appendChild(script);
+  const container = modal.querySelector("#telegramWidget");
+  if (!container) {
+    close();
+    return false;
+  }
+  container.appendChild(script);
+  return true;
 }
 
 on(
