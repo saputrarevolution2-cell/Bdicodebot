@@ -4449,3 +4449,34 @@ body.light #categories .category{background:linear-gradient(145deg,rgba(255,255,
   border:0; border-radius:50%; background:rgba(255,255,255,.08); color:#fff;
   font-size:24px; line-height:1; cursor:pointer;
 }
+
+/* Google / Gmail authentication */
+.google-auth-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  min-height:52px;border:1px solid rgba(255,255,255,.12);border-radius:14px;
+  background:#fff;color:#111827;font-weight:800;font-size:15px;cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.google-auth-btn:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.google-auth-btn:disabled{opacity:.65;cursor:wait;transform:none}
+.google-g{
+  display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:#fff;color:#4285f4;font-weight:900;font-size:19px;
+}
+.auth-note{margin:14px 0 0;text-align:center;opacity:.7;font-size:12px;line-height:1.5}
+
+/* Auth forms */
+.auth-panel label{display:block;margin:12px 0;font-size:13px;font-weight:700}
+.auth-panel input{width:100%;box-sizing:border-box}
+.password-field,.status-input-wrap{position:relative}
+.password-field input,.status-input-wrap input{padding-right:46px}
+.toggle-password,.input-status{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer}
+.input-status{font-size:18px}
+.auth-primary{width:100%;min-height:48px;border:0;border-radius:12px;cursor:pointer;font-weight:800;margin-top:8px}
+.auth-link{display:block;margin:12px auto;border:0;background:none;color:var(--cyan,#00eaff);cursor:pointer;font-weight:700}
+.auth-switch{text-align:center;font-size:13px;margin-top:18px}
+.auth-switch button,.auth-message button{border:0;background:none;color:var(--cyan,#00eaff);font-weight:800;cursor:pointer}
+.auth-message{margin:10px 0;padding:10px 12px;border-radius:10px;font-size:12px}
+.auth-message.success{background:rgba(0,255,157,.1);color:#00ff9d}
+.auth-message.error{background:rgba(255,85,119,.1);color:#ff7794}
+.login-welcome{margin:10px 0;padding:11px;border-radius:10px;background:rgba(0,234,255,.08);font-size:13px}
