@@ -5841,3 +5841,82 @@ html[data-theme="light"] .hero .paste-card, body.light .hero .paste-card{backgro
 html[data-theme="light"] .hero .paste-card input, body.light .hero .paste-card input{background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:rgba(255,255,255,.12)!important;}
 .auth-modal textarea{width:100%;resize:vertical;min-height:84px;border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--surface);color:var(--text);font:inherit;outline:none;}
 .market-card{cursor:pointer}.market-open-btn{width:100%;margin-top:10px}.market-card-thumb-fallback{height:100%;min-height:140px;display:grid;place-items:center;background:linear-gradient(135deg,#14213d,#0b1020);font-size:34px;color:#7dd3fc;}
+
+
+/* =========================================================
+   TELECOD PREMIUM UI SYSTEM — FINAL CLEAN THEME
+   Light/Dark are real theme tokens; hero remains dark in light mode.
+========================================================= */
+:root{
+  --page-bg:#f4f7fb;
+  --page-bg-2:#eef2f8;
+  --surface:#ffffff;
+  --surface-2:#f7f9fc;
+  --text:#101528;
+  --muted:#667085;
+  --border:rgba(16,24,40,.10);
+  --border-strong:rgba(16,24,40,.16);
+  --primary:#6d4aff;
+  --primary-2:#8b6cff;
+  --shadow:0 24px 70px rgba(16,24,40,.10);
+  --shadow-soft:0 12px 34px rgba(16,24,40,.08);
+}
+html[data-theme="dark"],html.dark{
+  --page-bg:#070a13;
+  --page-bg-2:#0b1020;
+  --surface:#101625;
+  --surface-2:#151c2d;
+  --text:#f5f7ff;
+  --muted:#9aa5bb;
+  --border:rgba(255,255,255,.09);
+  --border-strong:rgba(255,255,255,.15);
+  --shadow:0 24px 80px rgba(0,0,0,.40);
+  --shadow-soft:0 12px 40px rgba(0,0,0,.28);
+}
+html,body{background:var(--page-bg);color:var(--text);transition:background-color .25s ease,color .25s ease}
+body{background:
+ radial-gradient(900px 500px at 0% 0%,rgba(109,74,255,.08),transparent 60%),
+ radial-gradient(800px 450px at 100% 5%,rgba(39,134,255,.06),transparent 60%),
+ var(--page-bg)}
+.header{background:color-mix(in srgb,var(--page-bg) 84%,transparent);border-color:var(--border)}
+#navLinks a{color:var(--muted)}
+#navLinks a:hover,#navLinks a.active{color:var(--text)}
+.tool-btn,.round-btn,.login-top{background:var(--surface);color:var(--text);border-color:var(--border)}
+.dropdown{background:var(--surface);border-color:var(--border);box-shadow:var(--shadow-soft)}
+.dropdown button{color:var(--text)}
+.dropdown button:hover{background:rgba(109,74,255,.10)}
+.card,.paste-card,.feature-card,.market-card,.hero-stat,.promo-card,.how-card,.cta-card,.auth-panel{
+ background:var(--surface);
+ border-color:var(--border);
+ box-shadow:var(--shadow-soft);
+}
+input,textarea,select{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{
+ outline:3px solid rgba(109,74,255,.25);outline-offset:2px
+}
+/* Hero intentionally stays dark in BOTH themes as requested. */
+.hero{background:
+ radial-gradient(700px 500px at 8% 20%,rgba(109,74,255,.20),transparent 62%),
+ radial-gradient(650px 500px at 92% 20%,rgba(39,134,255,.14),transparent 60%),
+ #07091b;color:#f7f8ff;border-radius:0 0 42px 42px}
+.hero .hero-description,.hero .section-subtitle,.hero .hero-trust{color:#aab3d0}
+.hero .paste-card,.hero .hero-stat{background:rgba(17,22,52,.82);border-color:rgba(255,255,255,.10);color:#f7f8ff}
+.hero .paste-card p,.hero .paste-card small{color:#aab3d0}
+@media (max-width:900px){
+ .nav{width:min(100% - 24px,1240px);gap:10px}
+ #navLinks{display:none;position:absolute;top:calc(100% + 8px);left:12px;right:12px;padding:8px;flex-direction:column;align-items:stretch;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+ #navLinks.show{display:flex}
+ #navLinks a{padding:12px 14px}
+ .nav-tools{margin-left:auto}
+ .menu-btn{display:block;order:2}
+ .nav-tools{order:3}
+ .logo{order:1}
+}
+@media (max-width:640px){
+ .nav-tools{gap:5px}
+ .login-top{padding:0 11px}
+ .tool-btn{padding:0 9px}
+ .hero{min-height:auto;padding-top:125px;border-radius:0 0 28px 28px}
+ .section{width:min(100% - 24px,1200px);padding:72px 0}
+}
