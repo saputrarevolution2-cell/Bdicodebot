@@ -1,21 +1,29 @@
-# TeleCod Final Clean Premium
+# TeleCod Premium — Final Deployment
 
-## Included
-- Premium responsive UI with clean light/dark themes.
-- Hero remains dark in light mode, per requirement.
-- Indonesia/English language switch with persistent preference.
-- Unified theme/language storage across pages.
-- Cache-busted CSS/JS assets.
-- Hardened registration flow and database-safe Auth trigger.
-- Register uses `register-account` Edge Function with `email_confirm: true`.
-- Profile creation no longer depends on the Auth trigger's username uniqueness.
-- Wallet initialization is non-blocking.
+## What changed
+- Full visual redesign focused on a premium SaaS/fintech-style interface.
+- Responsive layouts for Android/iPhone and desktop.
+- Unified Light/Dark theme tokens across landing, Pastelink, dashboard and admin.
+- New premium Telegram/Code hero artwork (`assets/hero-art-premium.svg`).
+- New premium favicon (`assets/favicon.svg`).
+- Refined cards, forms, buttons, spacing, typography, states and mobile breakpoints.
+- Admin access changed from Google/Gmail OAuth to **username + password**.
+- Admin login verifies the account through the existing `username-auth` Edge Function and then requires `profiles.is_admin=true`.
+- Added a complete database schema and RPC set in `supabase/TELECOD_FULL_FINAL.sql`.
 
 ## Supabase
-1. Run `supabase/TELECOD_FULL_FINAL.sql`.
-2. Deploy `supabase/functions/register-account`.
-3. Ensure Edge Function secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` exist.
+1. Run `supabase/TELECOD_FULL_FINAL.sql` in the Supabase SQL Editor.
+2. Deploy the Edge Functions under `supabase/functions/`.
+3. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for server-side Edge Functions.
 4. Keep only the public anon key in `js/config.js`.
+5. Register the admin account normally, then promote it:
+   `update public.profiles set is_admin=true where username='USERNAME_ADMIN';`
 
-## Important
-After deployment, clear old browser/CDN cache once. The index assets include a version query so new CSS/JS is requested immediately.
+## Admin
+Open `/admin/`.
+Use the admin account's TeleCod username and password. Google/Gmail login is no longer required by the admin UI.
+
+## Production notes
+- Never put a Supabase service-role key, payment secret, bot token, or webhook secret in frontend files.
+- Review existing data before running schema changes on a database that already contains production tables.
+- After deployment, clear browser/CDN cache once if an older CSS/JS version remains visible.
