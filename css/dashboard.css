@@ -274,3 +274,19 @@ html[data-theme="light"] .sidebar,body.light .sidebar{background:var(--surface)}
 html[data-theme="light"] .topbar,body.light .topbar{background:rgba(255,255,255,.92);color:var(--text)}
 html[data-theme="light"] .card,body.light .card{background:var(--surface);color:var(--text)}
 html[data-theme="light"] .input,html[data-theme="light"] .select,html[data-theme="light"] .textarea,body.light .input,body.light .select,body.light .textarea{background:var(--surface2);color:var(--text)}
+
+/* TELECOD DASHBOARD PREMIUM VISUAL LAYER */
+:root{--tc-dbg:#f5f7fb;--tc-dsurface:#fff;--tc-dsurface2:#f8fafc;--tc-dtext:#101828;--tc-dmuted:#667085;--tc-dline:#e4e7ec;--tc-dprimary:#6956e8}
+html[data-theme="dark"],html.dark{--tc-dbg:#060914;--tc-dsurface:#0d1425;--tc-dsurface2:#111a2e;--tc-dtext:#f5f7ff;--tc-dmuted:#9aa8c4;--tc-dline:rgba(255,255,255,.085)}
+html[data-theme="light"],html.light{--tc-dbg:#f5f7fb;--tc-dsurface:#fff;--tc-dsurface2:#f8fafc;--tc-dtext:#101828;--tc-dmuted:#667085;--tc-dline:#e4e7ec}
+body{background:radial-gradient(800px 500px at 90% -10%,rgba(105,86,232,.11),transparent 62%),var(--tc-dbg)!important;color:var(--tc-dtext)!important}
+.sidebar,.topbar,.dashboard-card,.stat-card,.card,.modal-content,.profile-card,.product-card,.activity-card,.wallet-card{
+ background:var(--tc-dsurface)!important;color:var(--tc-dtext)!important;border-color:var(--tc-dline)!important;box-shadow:0 14px 45px rgba(16,24,40,.07)!important;
+}
+.dark .sidebar,.dark .topbar,.dark .dashboard-card,.dark .stat-card,.dark .card,.dark .modal-content,.dark .profile-card,.dark .product-card,.dark .activity-card,.dark .wallet-card{box-shadow:0 18px 60px rgba(0,0,0,.22)!important}
+input,select,textarea{background:var(--tc-dsurface2)!important;color:var(--tc-dtext)!important;border-color:var(--tc-dline)!important;border-radius:13px!important}
+.muted,.subtitle,.meta,.small{color:var(--tc-dmuted)!important}
+button{border-radius:12px}
+@media(max-width:700px){
+ .dashboard-card,.stat-card,.card{border-radius:17px!important}.content{padding:14px!important}
+}

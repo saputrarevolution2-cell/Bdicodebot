@@ -5920,3 +5920,80 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
  .hero{min-height:auto;padding-top:125px;border-radius:0 0 28px 28px}
  .section{width:min(100% - 24px,1200px);padding:72px 0}
 }
+
+/* =========================================================
+   TELECOD PREMIUM UI LAYER — 2026
+   Visual-only redesign; existing component hooks preserved.
+========================================================= */
+:root{
+  --tc-bg:#f5f7fb;--tc-bg2:#eef2f8;--tc-surface:#ffffff;--tc-surface2:#f8fafc;
+  --tc-text:#101828;--tc-muted:#667085;--tc-border:#e4e7ec;
+  --tc-primary:#6956e8;--tc-primary2:#3f8cff;--tc-accent:#16b8c8;
+  --tc-shadow:0 22px 70px rgba(16,24,40,.10);--tc-shadow-sm:0 8px 28px rgba(16,24,40,.07);
+}
+html[data-theme="dark"],html.dark{
+  --tc-bg:#060914;--tc-bg2:#0a1020;--tc-surface:#0d1425;--tc-surface2:#111a2e;
+  --tc-text:#f5f7ff;--tc-muted:#9aa8c4;--tc-border:rgba(255,255,255,.085);
+  --tc-primary:#8b73ff;--tc-primary2:#55a4ff;--tc-accent:#27d4dc;
+  --tc-shadow:0 28px 90px rgba(0,0,0,.38);--tc-shadow-sm:0 12px 38px rgba(0,0,0,.24);
+}
+html[data-theme="light"],html.light{
+  --tc-bg:#f5f7fb;--tc-bg2:#eef2f8;--tc-surface:#fff;--tc-surface2:#f8fafc;
+  --tc-text:#101828;--tc-muted:#667085;--tc-border:#e4e7ec;
+}
+body{
+  background:
+    radial-gradient(900px 500px at 8% -10%,color-mix(in srgb,var(--tc-primary) 10%,transparent),transparent 62%),
+    radial-gradient(800px 460px at 95% 8%,color-mix(in srgb,var(--tc-accent) 8%,transparent),transparent 60%),
+    var(--tc-bg)!important;color:var(--tc-text)!important;
+  transition:background .25s ease,color .25s ease;
+}
+.header{
+  background:color-mix(in srgb,var(--tc-bg) 82%,transparent)!important;
+  border-bottom:1px solid var(--tc-border)!important;backdrop-filter:blur(18px);
+}
+.logo{letter-spacing:-.03em}.logo-code{color:var(--tc-primary)!important}
+.nav-link{color:var(--tc-muted)!important}.nav-link:hover,.nav-link.active{color:var(--tc-text)!important}
+.btn,.cta,.primary,.btn-primary{
+  border-radius:13px!important;font-weight:750!important;letter-spacing:-.01em;
+  box-shadow:none!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;
+}
+.btn:hover,.cta:hover,.primary:hover,.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px color-mix(in srgb,var(--tc-primary) 22%,transparent)!important}
+.hero{position:relative}
+.hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,color-mix(in srgb,var(--tc-primary) 5%,transparent),transparent 42%);opacity:.9}
+.hero-content,.hero-main,.hero-copy{position:relative;z-index:2}
+.hero h1,.hero-title{letter-spacing:-.055em!important;line-height:1.02!important;font-weight:850!important}
+.hero h1 span,.hero-title span{background:linear-gradient(100deg,var(--tc-primary),var(--tc-primary2) 55%,var(--tc-accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-description,.hero-subtitle{color:var(--tc-muted)!important}
+.hero-art-wrap{filter:drop-shadow(0 30px 60px color-mix(in srgb,var(--tc-primary) 12%,transparent));transform:translateY(0);transition:transform .35s ease}
+.hero-art-wrap:hover{transform:translateY(-7px)}
+.hero-art-orbit{border-color:color-mix(in srgb,var(--tc-primary) 25%,transparent)!important}
+.hero-stats{background:color-mix(in srgb,var(--tc-surface) 92%,transparent)!important;border:1px solid var(--tc-border)!important;box-shadow:var(--tc-shadow-sm)!important;border-radius:22px!important}
+.hero-stat{border-color:var(--tc-border)!important}.hero-stat strong{color:var(--tc-text)!important}.hero-stat small{color:var(--tc-muted)!important}
+.section{position:relative}.section h2,.section-title{letter-spacing:-.04em!important}
+.market-card,.product-card,.feature-card,.category-card,.paste-card,.card,.glass-card,.promo-copy,.editor-panel,.modal-box{
+  background:var(--tc-surface)!important;color:var(--tc-text)!important;border:1px solid var(--tc-border)!important;
+  box-shadow:var(--tc-shadow-sm)!important;
+}
+.market-card,.product-card,.feature-card,.category-card,.paste-card,.card{border-radius:22px!important}
+.market-card:hover,.product-card:hover,.feature-card:hover,.category-card:hover{transform:translateY(-5px);box-shadow:var(--tc-shadow)!important}
+input,textarea,select{
+  background:var(--tc-surface2)!important;color:var(--tc-text)!important;border:1px solid var(--tc-border)!important;
+  border-radius:13px!important;outline:none!important;
+}
+input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--tc-muted) 70%,transparent)!important}
+input:focus,textarea:focus,select:focus{border-color:color-mix(in srgb,var(--tc-primary) 70%,var(--tc-border))!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--tc-primary) 10%,transparent)!important}
+.muted,.sub,.description,.empty-text{color:var(--tc-muted)!important}
+.modal,.overlay,.backdrop{backdrop-filter:blur(16px)!important}
+.modal-content,.modal-card{background:var(--tc-surface)!important;color:var(--tc-text)!important;border:1px solid var(--tc-border)!important;box-shadow:var(--tc-shadow)!important}
+footer{background:var(--tc-bg2)!important;border-top:1px solid var(--tc-border)!important}
+footer,footer p,footer a{color:var(--tc-muted)!important}
+@media(max-width:768px){
+  .nav{padding-inline:16px!important}.header{height:68px!important}
+  .hero{padding-top:92px!important}.hero-art-wrap{max-width:92vw!important;margin:26px auto 0!important}
+  .hero h1,.hero-title{font-size:clamp(38px,11vw,58px)!important}
+  .hero-stats{grid-template-columns:repeat(2,1fr)!important;margin-inline:12px!important;border-radius:18px!important}
+  .section{padding-inline:16px!important}.market-card,.product-card,.feature-card{border-radius:18px!important}
+  .btn,.cta{min-height:46px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
