@@ -1637,22 +1637,32 @@ document.querySelectorAll(".toggle-password").forEach(btn=>{
 });
 
 async function lookupLoginIdentifier(identifier){
-  if(!sup)return {error:"Supabase belum dikonfigurasi."};
+  if(!sup) return {error:"Supabase belum dikonfigurasi."};
   const value=identifier.trim();
-  if(!value)return {error:"Masukkan Gmail atau username."};
+  if(!value) return {error:"Masukkan Gmail atau username."};
 
-  // Profiles are checked by username first; Gmail is resolved through auth.users
-  // only through a secure RPC when available.
-  let q=sup.from("profiles").select("id,username,display_name,is_banned").ilike("username",value).maybeSingle();
-  const {data:byUsername,error:e1}=await q;
-  if(e1)return {error:e1.message};
-  if(byUsername)return {user:byUsername,identifier:value};
+  // IMPORTANT: never query public.profiles directly while the visitor is
+  // still anonymous. Username/email lookup is performed through SECURITY
+  // DEFINER RPCs so profiles remains protected by RLS.
+  if(validGmail(value)){
+    const {data,error}=await sup.rpc("lookup_user_by_email",{p_email:value.toLowerCase()});
+    if(error) return {error:error.message};
+    const user=Array.isArray(data) ? data[0] : data;
+    if(user?.id) return {user,identifier:value,email:value};
+    return {notFound:true};
+  }
 
-  // Secure RPC expected in the supplied SQL.
-  const {data:byEmail,error:e2}=await sup.rpc("lookup_user_by_email",{p_email:value.toLowerCase()});
-  if(e2)return {notFound:true};
-  if(byEmail?.id)return {user:byEmail,identifier:value};
-  return {notFound:true};
+  const {data,error}=await sup.rpc("resolve_username_login",{p_username:value});
+  if(error) return {error:error.message};
+  const email=Array.isArray(data) ? data[0] : data;
+  const resolvedEmail=typeof email === "string" ? email : email?.auth_email;
+  if(!resolvedEmail) return {notFound:true};
+
+  return {
+    user:{username:value,display_name:value,id:null},
+    identifier:value,
+    email:resolvedEmail
+  };
 }
 
 on("#loginIdentifierForm","submit",async e=>{
@@ -1672,7 +1682,8 @@ on("#loginIdentifierForm","submit",async e=>{
   status.textContent="✓"; msg.hidden=false; msg.className="auth-message success";
   msg.textContent=`Akun ditemukan. Masuk sebagai ${result.user.display_name||result.user.username||value}.`;
   loginIdentifierValue=value;
-  loginUserId=result.user.id;
+  loginUserId=result.user.id || null;
+  window.__telecodLoginEmail=result.email || (validGmail(value) ? value.toLowerCase() : "");
   $("#loginWelcome").innerHTML=`✓ Masuk sebagai <strong>${esc(result.user.display_name||result.user.username||value)}</strong>`;
   $("#loginPasswordForm").hidden=false;
   $("#loginPassword").focus();
@@ -1683,12 +1694,8 @@ on("#loginPasswordForm","submit",async e=>{
   if(!sup)return;
   const password=$("#loginPassword").value;
   if(!password)return;
-  let email=loginIdentifierValue.trim();
-  if(!validGmail(email)){
-    const {data}=await sup.rpc("email_for_user",{p_user_id:loginUserId});
-    email=data?.email||"";
-  }
-  if(!validGmail(email)){toast("Gmail akun tidak dapat ditemukan.","error");return;}
+  let email=window.__telecodLoginEmail || (validGmail(loginIdentifierValue) ? loginIdentifierValue.trim().toLowerCase() : "");
+  if(!validGmail(email)){toast("Email akun tidak dapat ditemukan.","error");return;}
   const {error}=await sup.auth.signInWithPassword({email,password});
   if(error){toast("Kata sandi salah. Silakan cek kembali.","error");return;}
   location.href="dashboard.html";
@@ -1706,8 +1713,15 @@ async function registerAccount(e){
   if(password.length<6)return toast("Kata sandi minimal 6 karakter.","error");
   if(password!==confirm)return toast("Konfirmasi kata sandi tidak sama.","error");
 
-  const {data:existing}=await sup.from("profiles").select("id").ilike("username",username).maybeSingle();
-  if(existing)return toast("Username sudah digunakan.","error");
+  // Check uniqueness through SECURITY DEFINER RPCs instead of exposing
+  // public.profiles to the anonymous browser session.
+  const {data:existingUsername,error:usernameError}=await sup.rpc("resolve_username_login",{p_username:username});
+  if(usernameError)return toast(usernameError.message||"Gagal memeriksa username.","error");
+  if(existingUsername)return toast("Username sudah digunakan.","error");
+
+  const {data:existingEmail,error:emailError}=await sup.rpc("lookup_user_by_email",{p_email:email});
+  if(emailError)return toast(emailError.message||"Gagal memeriksa Gmail.","error");
+  if((Array.isArray(existingEmail) ? existingEmail[0] : existingEmail)?.id)return toast("Gmail sudah terdaftar.","error");
 
   const {data,error}=await sup.auth.signUp({
     email,password,
