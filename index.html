@@ -94,7 +94,7 @@
           <button id="hidePaste" class="x" type="button" aria-label="Close">×</button>
         </div>
         <form id="quickForm">
-          <input id="quickUrl" required type="url" placeholder="Tempel link kamu di sini..." data-i18n-placeholder="urlPlaceholder">
+          <input id="quickUrl" required type="text" inputmode="url" placeholder="Tempel link kamu di sini..." data-i18n-placeholder="urlPlaceholder">
           <button class="purple-btn" type="submit"><i class="fa-solid fa-rocket"></i><span data-i18n="create">Buat Link</span></button>
         </form>
         <small><i class="fa-solid fa-circle-info"></i> <span data-i18n="urlHelp">Mendukung http:// dan www. Contoh: https://t.me/channel</span></small>
@@ -218,7 +218,6 @@
       <!-- ADD CODE -->
       <button
         id="addCodeBtn"
-        onclick="openMarketplaceCreateModal('code')"
         class="market-add-btn code"
         type="button"
         data-market-create="code"
@@ -244,7 +243,6 @@
       <!-- ADD CHANNEL -->
       <button
         id="addChannelBtn"
-        onclick="openMarketplaceCreateModal('channel')"
         class="market-add-btn channel"
         type="button"
         data-market-create="channel"
@@ -548,7 +546,7 @@
   <div class="market-more">
 
     <a
-      href="#marketItems"
+      href="#market"
       class="purple-btn"
       id="viewMarketplaceBtn"
     >
@@ -1091,7 +1089,7 @@
 
 
       <button
-        id="registerCta"
+        id="registerCtaBottom"
         class="purple-btn"
         type="button"
       >

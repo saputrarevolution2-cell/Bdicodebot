@@ -1,13 +1,14 @@
-# TeleCod — Register tanpa konfirmasi Gmail
+# TeleCod Register Tanpa Konfirmasi Gmail
 
-Versi ini mengubah registrasi menjadi server-side Supabase Edge Function.
+Versi final ini memakai Supabase Edge Function `register-account`.
 
-1. Deploy `supabase/functions/register-account` ke project Supabase.
-2. Pastikan Edge Function mempunyai secret `SUPABASE_SERVICE_ROLE_KEY`.
-3. Frontend sudah diarahkan ke:
-   `https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/register-account`
-4. Function membuat user dengan `email_confirm: true`, membuat profile, lalu langsung membuat session.
-5. Setelah berhasil, UI menampilkan notifikasi Registrasi Berhasil dan tombol Login/Masuk.
-6. Form password login tetap tersembunyi sampai Gmail/username ditemukan di database.
+## Alur
+1. User mengisi username, Gmail, password.
+2. Edge Function membuat user dengan `email_confirm: true`.
+3. Trigger + profile membuat data akun dan wallet.
+4. Frontend menampilkan **Registrasi Berhasil** tanpa pindah ke index.
+5. User menekan tombol **Login / Masuk** lalu login dengan Gmail/username.
 
-Catatan: jangan pernah menaruh SERVICE ROLE KEY di `js/config.js` atau frontend.
+## Deploy
+Deploy folder `supabase/functions/register-account` ke project Supabase yang sama dengan konfigurasi pada `js/config.js`.
+Pastikan `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY` tersedia sebagai secret Edge Function.
