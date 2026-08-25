@@ -1721,7 +1721,7 @@ on("#loginPasswordForm","submit",async e=>{
   if(!validGmail(email)){toast("Email akun tidak dapat ditemukan.","error");return;}
   const {error}=await sup.auth.signInWithPassword({email,password});
   if(error){toast("Kata sandi salah. Silakan cek kembali.","error");return;}
-  location.href="dashboard.html";
+  location.href="/dashboard";
 });
 
 async function registerAccount(e){
@@ -1832,7 +1832,7 @@ function openLandingProduct(id){
   const p=landingMarketState.items.find(x=>x.id===id); if(!p)return;
   const modal=document.createElement("div"); modal.className="modal open show";
   modal.innerHTML=`<div class="auth-modal"><button class="close-auth" type="button">×</button><div class="auth-title"><h2>${escapeHTML2(p.title)}</h2><p>${escapeHTML2(p.type==="channel"?"Telegram Channel":"Telegram Code")}</p></div><div class="register-success-box" style="display:block"><p>${escapeHTML2(p.description||"Tanpa deskripsi.")}</p><p><b>${p.access_type==="free"?"FREE":moneyIDR(p.price)}</b></p></div><button class="auth-primary" type="button" id="landingOpenDashboard">${p.access_type==="free"?"Ambil Gratis":"Beli Sekarang"}</button></div>`;
-  document.body.appendChild(modal); const close=()=>modal.remove(); modal.querySelector(".close-auth").onclick=close; modal.onclick=e=>{if(e.target===modal)close();}; modal.querySelector("#landingOpenDashboard").onclick=()=>{location.href="dashboard.html?page=marketplace";};
+  document.body.appendChild(modal); const close=()=>modal.remove(); modal.querySelector(".close-auth").onclick=close; modal.onclick=e=>{if(e.target===modal)close();}; modal.querySelector("#landingOpenDashboard").onclick=()=>{location.href="/dashboard?page=marketplace";};
 }
 function resetLandingMarket(){landingMarketState.filter="all";landingMarketState.search="";landingMarketState.sort="latest";const q=$("#marketSearch"),s=$("#marketSort");if(q)q.value="";if(s)s.value="latest";$$('.market-filter-btn').forEach(b=>{const active=b.dataset.filter==="all";b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});renderLandingMarket();}
 $$('.market-filter-btn').forEach(btn=>btn.addEventListener("click",()=>{landingMarketState.filter=btn.dataset.filter||"all";$$('.market-filter-btn').forEach(b=>{const active=b===btn;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});renderLandingMarket();}));
@@ -1851,6 +1851,6 @@ window.openMarketplaceCreateModal=openMarketplaceCreateModal;
 on("#addCodeBtn","click",()=>openMarketplaceCreateModal("code"));
 on("#addChannelBtn","click",()=>openMarketplaceCreateModal("channel"));
 
-on("#featurePasteBtn","click",()=>openEditor());on("#featureSellBtn","click",()=>openMarketplaceCreateModal("code"));on("#featureDashboardBtn","click",()=>location.href="dashboard.html");on("#featureWithdrawBtn","click",()=>location.href="dashboard.html?page=payment");on("#featureLanguageBtn","click",()=>$("#langBtn")?.click());
+on("#featurePasteBtn","click",()=>openEditor());on("#featureSellBtn","click",()=>openMarketplaceCreateModal("code"));on("#featureDashboardBtn","click",()=>location.href="dashboard.html");on("#featureWithdrawBtn","click",()=>location.href="/dashboard?page=payment");on("#featureLanguageBtn","click",()=>$("#langBtn")?.click());
 $$('a[href="#auth"]').forEach(a=>a.addEventListener("click",e=>{e.preventDefault();openAuth("login");}));
 setTimeout(loadLandingMarketplace,0);

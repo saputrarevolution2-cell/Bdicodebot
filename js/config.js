@@ -3,6 +3,7 @@
 // NEVER put Supabase service-role keys, bot tokens, payment secrets, or webhook secrets here.
 
 window.TELECOD_CONFIG={
+    ADMIN_TELEGRAM_ID:"6665664367",
     ADMIN_GMAIL:"",
 SUPABASE_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co",
 

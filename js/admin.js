@@ -53,9 +53,10 @@
       const {error}=await sup.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
       if(error) throw error;
       const {data:auth}=await sup.auth.getUser();
-      const {data:profile,error:pe}=await sup.from("profiles").select("id,username,display_name,avatar_url,is_banned,is_admin").eq("id",auth.user.id).maybeSingle();
+      const {data:profile,error:pe}=await sup.from("profiles").select("id,username,display_name,avatar_url,telegram_id,is_banned,is_admin").eq("id",auth.user.id).maybeSingle();
       if(pe) throw pe;
-      if(!profile?.is_admin||profile.is_banned){await sup.auth.signOut();throw new Error("Akun ini bukan administrator yang diizinkan.");}
+      const masterMatch=String(profile?.telegram_id||"").replace(/\D/g,"")===MASTER_ADMIN_ID;
+      if((!profile?.is_admin && !masterMatch)||profile.is_banned){await sup.auth.signOut();throw new Error("Akun ini bukan administrator yang diizinkan.");}
       state.profile=profile;
       location.reload();
     }catch(ex){
@@ -71,12 +72,13 @@
 
     const {data:profile}=await sup
       .from("profiles")
-      .select("id,username,display_name,avatar_url,is_banned,is_admin")
+      .select("id,username,display_name,avatar_url,telegram_id,is_banned,is_admin")
       .eq("id",auth.user.id)
       .maybeSingle();
 
-    if(!profile || !profile.is_admin || profile.is_banned) {
-      return gate("Akun Google ini bukan administrator yang diizinkan.");
+    const masterMatch=String(profile?.telegram_id||"").replace(/\D/g,"")===MASTER_ADMIN_ID;
+    if(!profile || (!profile.is_admin && !masterMatch) || profile.is_banned) {
+      return gate("Akun ini bukan administrator yang diizinkan.");
     }
 
     state.profile=profile;
