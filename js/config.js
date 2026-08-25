@@ -10,6 +10,7 @@ SUPABASE_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co",
 
   MARKETPLACE_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/marketplace",
   REGISTER_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/register-account",
+  USERNAME_AUTH_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/username-auth",
 
   PAYMENT_CREATE_FUNCTION_URL:"https://qrhbgffmqorzbcfvnbkk.supabase.co/functions/v1/payment-create",
 

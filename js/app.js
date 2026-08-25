@@ -797,7 +797,7 @@ $$('footer a[href="#"]').forEach(link=>{
 });
 
 $$('.socials a').forEach((link,i)=>{
-  const urls=["https://t.me/mktplbot","https://www.youtube.com/","https://www.facebook.com/","https://www.instagram.com/"];
+  const urls=["https://t.me/mktplbot","https://wa.me/","https://www.youtube.com/"];
   link.href=urls[i]||urls[0];
   link.target="_blank";
   link.rel="noopener noreferrer";
@@ -885,10 +885,9 @@ initSupabase();
    ========================================================= */
 
 function normalizeUrl(value) {
-  const raw = String(value || "").trim();
-
+  let raw = String(value || "").trim();
   if (!raw) return null;
-
+  if (/^www\./i.test(raw)) raw = "https://" + raw;
   try {
     const url = new URL(raw);
 
@@ -1615,7 +1614,7 @@ function showAuthPanel(mode){
 function validGmail(v){ return /^[^@\s]+@gmail\.com$/i.test(v.trim()); }
 
 ["#loginTop","#loginCta"].forEach(s=>on(s,"click",()=>openAuth("login")));
-["#registerTop","#registerCta"].forEach(s=>on(s,"click",()=>openAuth("register")));
+["#registerTop","#registerCta","#registerCtaBottom"].forEach(s=>on(s,"click",()=>openAuth("register")));
 on("#closeAuth","click",closeAuth);
 on("#authModal","click",e=>{if(e.target?.id==="authModal")closeAuth();});
 on("#showLogin","click",()=>showAuthPanel("login"));
@@ -1625,6 +1624,18 @@ on("#showRegister","click",()=>showAuthPanel("register"));
 on("#forgotFromRegister","click",()=>showAuthPanel("forgot"));
 on("#forgotPassword","click",()=>{$("#forgotEmail").value=validGmail(loginIdentifierValue)?loginIdentifierValue:"";showAuthPanel("forgot");});
 on("#backToLogin","click",()=>showAuthPanel("login"));
+on("#forgotForm","submit",async e=>{
+  e.preventDefault();
+  if(!sup)return toast("Supabase belum dikonfigurasi.","error");
+  const email=$("#forgotEmail").value.trim().toLowerCase();
+  if(!validGmail(email))return toast("Masukkan Gmail yang valid.","error");
+  const btn=$("#forgotForm button[type=submit]"); const old=btn?.innerHTML; if(btn){btn.disabled=true;btn.textContent="Mengirim...";}
+  try{const {error}=await sup.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/reset.html"});if(error)throw error;toast("Link reset berhasil dikirim ke Gmail.","success");showAuthPanel("login");}
+  catch(err){toast(err?.message||"Gagal mengirim link reset.","error");}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=old||"Kirim Link Reset";}}
+});
+
+try{const qs=new URLSearchParams(location.search);if(qs.get("editor")==="1")setTimeout(openEditor,0);if(qs.get("login")==="1")setTimeout(()=>openAuth("login"),0);if(qs.get("register")==="1")setTimeout(()=>openAuth("register"),0);}catch(_){}
 
 document.querySelectorAll(".toggle-password").forEach(btn=>{
   btn.addEventListener("click",()=>{
@@ -1650,18 +1661,19 @@ async function lookupLoginIdentifier(identifier){
     const {data,error}=await sup.rpc("lookup_user_by_email",{p_email:value.toLowerCase()});
     if(error) return {error:error.message};
     const user=Array.isArray(data) ? data[0] : data;
+    if(user?.is_banned) return {error:"Akun kamu diblokir admin."};
     if(user?.id) return {user,identifier:value,email:value};
     return {notFound:true};
   }
 
   const {data,error}=await sup.rpc("resolve_username_login",{p_username:value});
   if(error) return {error:error.message};
-  const email=Array.isArray(data) ? data[0] : data;
-  const resolvedEmail=typeof email === "string" ? email : email?.auth_email;
+  const row=Array.isArray(data) ? data[0] : data;
+  const resolvedEmail=typeof row === "string" ? row : row?.auth_email;
   if(!resolvedEmail) return {notFound:true};
-
+  if(row?.is_banned) return {error:"Akun kamu diblokir admin."};
   return {
-    user:{username:value,display_name:value,id:null},
+    user:{username:row?.username||value,display_name:row?.display_name||row?.username||value,id:row?.id||null},
     identifier:value,
     email:resolvedEmail
   };
@@ -1752,16 +1764,8 @@ async function registerAccount(e){
     const out=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(out.error||out.message||"Registrasi gagal.");
 
-    // The Edge Function creates the Auth user with email_confirm=true and
-    // immediately returns a session, so Gmail confirmation is never required.
-    if(out.access_token && out.refresh_token){
-      const {error:sessionError}=await sup.auth.setSession({
-        access_token:out.access_token,
-        refresh_token:out.refresh_token
-      });
-      if(sessionError) throw sessionError;
-    }
-
+    // Account is active immediately, but the user is intentionally NOT logged in.
+    // They must press Login / Masuk after seeing the success notification.
     $("#registerForm").reset();
     showAuthPanel("registerSuccess");
     toast("Registrasi berhasil. Akun kamu sudah aktif.","success");
@@ -1771,3 +1775,82 @@ async function registerAccount(e){
     if(submit){submit.disabled=false;submit.innerHTML=oldText||"Daftar / Register";}
   }
 }
+
+on("#registerForm","submit",registerAccount);
+
+async function googleOAuth(){
+  if(!sup)return toast("Supabase belum dikonfigurasi.","error");
+  const {error}=await sup.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}});
+  if(error)toast(error.message||"Login Google gagal.","error");
+}
+on("#googleLoginBtn","click",googleOAuth);
+on("#googleRegisterBtn","click",googleOAuth);
+
+
+/* =========================================================
+   LANDING MARKETPLACE - LIVE SUPABASE
+   ========================================================= */
+let landingMarketState={filter:"all",search:"",sort:"latest",items:[]};
+function escapeHTML2(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
+function moneyIDR(v){return new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(v||0));}
+function renderLandingMarket(){
+  const grid=$("#marketItemsGrid"),empty=$("#marketEmpty"),err=$("#marketError");
+  if(!grid)return;
+  if(err)err.classList.add("hidden");
+  let rows=[...landingMarketState.items];
+  const q=landingMarketState.search.toLowerCase();
+  if(q)rows=rows.filter(p=>[p.title,p.description,p.category,p.bot_username,p.telegram_channel].join(" ").toLowerCase().includes(q));
+  const f=landingMarketState.filter;
+  if(["free","paid","code","channel"].includes(f))rows=rows.filter(p=>f==="free"||f==="paid"?p.access_type===f:p.type===f);
+  if(landingMarketState.sort==="popular")rows.sort((a,b)=>Number(b.views||0)-Number(a.views||0));
+  else if(landingMarketState.sort==="price_low")rows.sort((a,b)=>Number(a.price||0)-Number(b.price||0));
+  else if(landingMarketState.sort==="price_high")rows.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
+  else rows.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(empty)empty.classList.toggle("hidden",rows.length!==0);
+  grid.innerHTML=rows.map(p=>{
+    const type=p.type==="channel"?"CHANNEL":"CODE";
+    const meta=p.type==="channel"?(p.telegram_channel||"Telegram Channel"):(p.bot_username?"@"+p.bot_username:"Source Code");
+    const price=p.access_type==="free"?"FREE":moneyIDR(p.price);
+    const thumb=p.thumbnail_url?`<img src="${escapeHTML2(p.thumbnail_url)}" alt="" loading="lazy">`:`<div class="market-card-thumb-fallback"><i class="fa-solid ${p.type==="channel"?"fa-bullhorn":"fa-code"}"></i></div>`;
+    return `<article class="market-card" data-open-product="${p.id}"><div class="market-card-thumb">${thumb}</div><div class="market-card-body"><div class="market-card-top"><span class="market-badge ${p.access_type}">${price}</span><span class="market-type">${type}</span></div><h3>${escapeHTML2(p.title)}</h3><p>${escapeHTML2(p.description||"Tanpa deskripsi.")}</p><div class="market-card-meta"><span><i class="fa-solid fa-eye"></i> ${Number(p.views||0)}</span><span>${escapeHTML2(meta)}</span></div><button class="purple-btn market-open-btn" type="button" data-open-product="${p.id}">Lihat Detail</button></div></article>`;
+  }).join("");
+  grid.querySelectorAll("[data-open-product]").forEach(b=>b.addEventListener("click",()=>openLandingProduct(b.dataset.openProduct)));
+}
+async function loadLandingMarketplace(){
+  const grid=$("#marketItemsGrid"),err=$("#marketError"),empty=$("#marketEmpty");
+  if(!grid)return;
+  if(!sup){grid.innerHTML='<div class="market-loading"><div class="market-loading-icon"><i class="fa-solid fa-database"></i></div><strong>Supabase belum dikonfigurasi</strong><span>Isi konfigurasi agar marketplace memuat database asli.</span></div>';return;}
+  if(empty)empty.classList.add("hidden"); if(err)err.classList.add("hidden");
+  grid.innerHTML='<div class="market-loading"><div class="market-loading-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><strong>Memuat marketplace...</strong><span>Mengambil produk terbaru.</span></div>';
+  try{
+    const {data,error}=await sup.from("products").select("id,title,description,category,type,access_type,price,thumbnail_url,bot_username,telegram_channel,views,created_at,status").eq("status","published").order("created_at",{ascending:false}).limit(100);
+    if(error)throw error;
+    landingMarketState.items=data||[]; renderLandingMarket();
+  }catch(e){console.error(e);grid.innerHTML="";if(err)err.classList.remove("hidden");}
+}
+function openLandingProduct(id){
+  const p=landingMarketState.items.find(x=>x.id===id); if(!p)return;
+  const modal=document.createElement("div"); modal.className="modal open show";
+  modal.innerHTML=`<div class="auth-modal"><button class="close-auth" type="button">×</button><div class="auth-title"><h2>${escapeHTML2(p.title)}</h2><p>${escapeHTML2(p.type==="channel"?"Telegram Channel":"Telegram Code")}</p></div><div class="register-success-box" style="display:block"><p>${escapeHTML2(p.description||"Tanpa deskripsi.")}</p><p><b>${p.access_type==="free"?"FREE":moneyIDR(p.price)}</b></p></div><button class="auth-primary" type="button" id="landingOpenDashboard">${p.access_type==="free"?"Ambil Gratis":"Beli Sekarang"}</button></div>`;
+  document.body.appendChild(modal); const close=()=>modal.remove(); modal.querySelector(".close-auth").onclick=close; modal.onclick=e=>{if(e.target===modal)close();}; modal.querySelector("#landingOpenDashboard").onclick=()=>{location.href="dashboard.html?page=marketplace";};
+}
+function resetLandingMarket(){landingMarketState.filter="all";landingMarketState.search="";landingMarketState.sort="latest";const q=$("#marketSearch"),s=$("#marketSort");if(q)q.value="";if(s)s.value="latest";$$('.market-filter-btn').forEach(b=>{const active=b.dataset.filter==="all";b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});renderLandingMarket();}
+$$('.market-filter-btn').forEach(btn=>btn.addEventListener("click",()=>{landingMarketState.filter=btn.dataset.filter||"all";$$('.market-filter-btn').forEach(b=>{const active=b===btn;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});renderLandingMarket();}));
+on("#marketSearch","input",()=>{landingMarketState.search=$("#marketSearch").value||"";renderLandingMarket();});
+on("#marketSort","change",()=>{landingMarketState.sort=$("#marketSort").value||"latest";renderLandingMarket();});
+on("#clearMarketSearch","click",()=>{landingMarketState.search="";$("#marketSearch").value="";renderLandingMarket();});
+on("#resetMarketFilter","click",resetLandingMarket); on("#retryMarket","click",loadLandingMarketplace);
+on("#viewMarketplaceBtn","click",e=>{e.preventDefault();$("#market")?.scrollIntoView({behavior:"smooth"});});
+function openMarketplaceCreateModal(type){
+  const isChannel=type==="channel"; const modal=document.createElement("div"); modal.className="modal open show";
+  modal.innerHTML=`<div class="auth-modal"><button class="close-auth" type="button">×</button><div class="auth-title"><h2>Tambah ${isChannel?"Channel":"Code"}</h2><p>Produk FREE bisa dikirim tanpa login. Produk PAID wajib login.</p></div><form id="landingCreateForm"><label><span class="auth-label">Judul</span><input id="lmTitle" required maxlength="120"></label><label><span class="auth-label">Deskripsi</span><textarea id="lmDesc" rows="3" required></textarea></label><label><span class="auth-label">Kategori</span><input id="lmCat" placeholder="Bot, Tools, Script..."></label>${isChannel?'<label><span class="auth-label">Link Channel</span><input id="lmTarget" required placeholder="https://t.me/channel"></label>':'<label><span class="auth-label">Username Bot</span><input id="lmBot" placeholder="mybot"></label><label><span class="auth-label">Isi Code</span><textarea id="lmTarget" rows="6" required></textarea></label>'}<label><span class="auth-label">Akses</span><select id="lmAccess"><option value="free">FREE</option><option value="paid">PAID</option></select></label><label id="lmPriceWrap" hidden><span class="auth-label">Harga</span><input id="lmPrice" type="number" min="1000" value="10000"></label><button class="auth-primary" type="submit">Kirim Produk</button></form></div>`;
+  document.body.appendChild(modal); const close=()=>modal.remove();modal.querySelector(".close-auth").onclick=close;modal.onclick=e=>{if(e.target===modal)close();}; const access=modal.querySelector("#lmAccess"),wrap=modal.querySelector("#lmPriceWrap");access.onchange=()=>wrap.hidden=access.value!=="paid";
+  modal.querySelector("#landingCreateForm").onsubmit=async e=>{e.preventDefault();if(!sup)return toast("Supabase belum dikonfigurasi.","error"); const accessType=access.value; const {data:{session}}=await sup.auth.getSession(); if(accessType==="paid"&&!session){toast("Silakan login terlebih dahulu untuk produk PAID.","warning");close();openAuth("login");return;} const fn=String(window.TELECOD_CONFIG?.MARKETPLACE_FUNCTION_URL||"");if(!fn)return toast("Marketplace Function belum dikonfigurasi.","error");const btn=e.currentTarget.querySelector("button[type=submit]");btn.disabled=true;try{const r=await fetch(fn,{method:"POST",headers:{"Content-Type":"application/json",...(session?{Authorization:`Bearer ${session.access_token}`}:{})},body:JSON.stringify({action:"create_product",type,access_type:accessType,title:modal.querySelector("#lmTitle").value.trim(),description:modal.querySelector("#lmDesc").value.trim(),category:modal.querySelector("#lmCat").value.trim(),price:accessType==="paid"?Number(modal.querySelector("#lmPrice").value):0,content:isChannel?null:modal.querySelector("#lmTarget").value,bot_username:isChannel?null:modal.querySelector("#lmBot").value.trim(),telegram_channel:isChannel?modal.querySelector("#lmTarget").value.trim():null})});const out=await r.json().catch(()=>({}));if(!r.ok)throw new Error(out.error||"Gagal mengirim produk.");toast(out.status==="published"?"Produk berhasil dipublish.":"Produk berhasil dikirim dan menunggu approval.","success");close();loadLandingMarketplace();}catch(err){toast(err.message||"Gagal mengirim produk.","error");}finally{btn.disabled=false;}};
+}
+window.openMarketplaceCreateModal=openMarketplaceCreateModal;
+on("#addCodeBtn","click",()=>openMarketplaceCreateModal("code"));
+on("#addChannelBtn","click",()=>openMarketplaceCreateModal("channel"));
+
+on("#featurePasteBtn","click",()=>openEditor());on("#featureSellBtn","click",()=>openMarketplaceCreateModal("code"));on("#featureDashboardBtn","click",()=>location.href="dashboard.html");on("#featureWithdrawBtn","click",()=>location.href="dashboard.html?page=payment");on("#featureLanguageBtn","click",()=>$("#langBtn")?.click());
+$$('a[href="#auth"]').forEach(a=>a.addEventListener("click",e=>{e.preventDefault();openAuth("login");}));
+setTimeout(loadLandingMarketplace,0);
