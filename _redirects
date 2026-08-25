@@ -3,8 +3,6 @@
 /paste /index.html?editor=1 200
 /p/* /p.html?slug=:splat 200
 
-/admin /admin/index.html 200
-/dashboard /dashboard.html 200
 
 /admintelecode1903 /admin/index.html 200
 /admintelecode1122 /admin/index.html 200
