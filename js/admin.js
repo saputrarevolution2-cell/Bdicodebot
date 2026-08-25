@@ -14,32 +14,54 @@
   async function rpc(name,args={}){if(!sup)throw new Error("Supabase belum dikonfigurasi.");const {data,error}=await sup.rpc(name,args);if(error)throw error;return data}
   function gate(message="") {
     content.innerHTML=`<section class="gate admin-login-gate">
-      <div class="gate-icon"><i class="fa-brands fa-google"></i></div>
-      <div class="eyebrow">TELECOD MASTER CONTROL</div>
-      <h1>Admin Access</h1>
-      <p>${esc(message||"Masuk menggunakan akun Google/Gmail yang sudah diberi hak administrator.")}</p>
-      <button id="adminGoogleBtn" class="btn primary">
-        <span class="google-g">G</span> Masuk dengan Google / Gmail
-      </button>
-      <small style="display:block;margin-top:12px;opacity:.7">Akses admin tidak lagi menggunakan Telegram.</small>
+      <div class="admin-login-brand">
+        <span class="gate-icon"><i class="fa-solid fa-shield-halved"></i></span>
+        <span><b>TELECOD</b><small>MASTER CONTROL</small></span>
+      </div>
+      <div class="eyebrow">SECURE ADMIN ACCESS</div>
+      <h1>Masuk ke Panel Admin</h1>
+      <p>${esc(message||"Gunakan akun admin TeleCod untuk mengakses Master Control.")}</p>
+      <form id="adminLoginForm" class="admin-login-form" autocomplete="on">
+        <label>Username
+          <span class="field-wrap"><i class="fa-regular fa-user"></i><input id="adminUsername" name="username" type="text" autocomplete="username" placeholder="username admin" required></span>
+        </label>
+        <label>Password
+          <span class="field-wrap"><i class="fa-solid fa-lock"></i><input id="adminPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required minlength="6"><button type="button" class="password-toggle" id="adminPasswordToggle" aria-label="Tampilkan password"><i class="fa-regular fa-eye"></i></button></span>
+        </label>
+        <button id="adminLoginBtn" class="btn primary admin-submit" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i><span>Masuk ke Master Control</span></button>
+        <div id="adminLoginError" class="admin-login-error" role="alert"></div>
+      </form>
+      <small class="admin-login-note"><i class="fa-solid fa-lock"></i> Akses dilindungi autentikasi Supabase. Jangan bagikan kredensial admin.</small>
     </section>`;
-    $("#adminGoogleBtn").onclick=startGoogleAdminAuth;
+    const form=$("#adminLoginForm"), pass=$("#adminPassword"), toggle=$("#adminPasswordToggle");
+    toggle.onclick=()=>{pass.type=pass.type==="password"?"text":"password";toggle.innerHTML=pass.type==="password"?'<i class="fa-regular fa-eye"></i>':'<i class="fa-regular fa-eye-slash"></i>'};
+    form.onsubmit=loginAdmin;
   }
 
-  async function startGoogleAdminAuth() {
-    if (!sup) return toast("Supabase belum dikonfigurasi.","error");
-    const redirectTo = `${location.origin}/admintelecode/1903`;
-    const { error } = await sup.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-        queryParams: {
-          access_type: "offline",
-          prompt: "select_account"
-        }
-      }
-    });
-    if (error) toast(error.message || "Login Google gagal.","error");
+  async function loginAdmin(e){
+    e.preventDefault();
+    const btn=$("#adminLoginBtn"), err=$("#adminLoginError");
+    const username=$("#adminUsername")?.value.trim().replace(/^@+/,"").toLowerCase();
+    const password=$("#adminPassword")?.value||"";
+    if(!username||password.length<6){err.textContent="Username dan password wajib diisi.";return}
+    if(!C.USERNAME_AUTH_FUNCTION_URL){err.textContent="URL autentikasi belum dikonfigurasi.";return}
+    btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i><span>Memverifikasi...</span>'; err.textContent="";
+    try{
+      const r=await fetch(C.USERNAME_AUTH_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",username,password})});
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok||!data.access_token||!data.refresh_token) throw new Error(data.error||"Login admin gagal.");
+      const {error}=await sup.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
+      if(error) throw error;
+      const {data:auth}=await sup.auth.getUser();
+      const {data:profile,error:pe}=await sup.from("profiles").select("id,username,display_name,avatar_url,is_banned,is_admin").eq("id",auth.user.id).maybeSingle();
+      if(pe) throw pe;
+      if(!profile?.is_admin||profile.is_banned){await sup.auth.signOut();throw new Error("Akun ini bukan administrator yang diizinkan.");}
+      state.profile=profile;
+      location.reload();
+    }catch(ex){
+      err.textContent=ex?.message||"Username atau password salah.";
+      btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket"></i><span>Masuk ke Master Control</span>';
+    }
   }
 
   async function ensureMasterSession(){
