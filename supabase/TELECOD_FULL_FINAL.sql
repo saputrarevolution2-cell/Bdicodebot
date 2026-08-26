@@ -23,6 +23,9 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table public.profiles add column if not exists withdraw_method text;
+alter table public.profiles add column if not exists withdraw_account_number text;
+alter table public.profiles add column if not exists withdraw_account_name text;
 create unique index if not exists profiles_username_unique on public.profiles(lower(username)) where username is not null;
 create unique index if not exists profiles_telegram_username_unique on public.profiles(lower(telegram_username)) where telegram_username is not null;
 create index if not exists profiles_admin_idx on public.profiles(is_admin);
