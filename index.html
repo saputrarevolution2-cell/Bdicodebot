@@ -14,7 +14,6 @@
 <link rel="stylesheet" href="css/style.css?v=20260826-premium-cyber-final">
 <link rel="stylesheet" href="css/premium-neon.css?v=20260826-premium-cyber-final">
 
-<link rel="stylesheet" href="css/final-polish.css?v=20260826-final">
 </head>
 <body>
 <header class="header">
@@ -95,12 +94,13 @@
           </div>
           <button id="hidePaste" class="x" type="button" aria-label="Close">×</button>
         </div>
+        <div class="tc-paste-capabilities"><span><i class="fa-solid fa-heading"></i> Judul</span><span><i class="fa-solid fa-align-left"></i> Deskripsi</span><span><i class="fa-solid fa-code"></i> Code</span><span><i class="fa-solid fa-link"></i> Link</span><span><i class="fa-solid fa-clock"></i> Expiry</span><span><i class="fa-solid fa-lock"></i> Privacy</span></div>
         <form id="quickForm">
-          <input id="quickUrl" required type="text" inputmode="url" placeholder="Tempel link kamu di sini..." data-i18n-placeholder="urlPlaceholder">
+          <input id="quickUrl" required type="url" inputmode="url" placeholder="https://t.me/..." data-i18n-placeholder="urlPlaceholder">
           <button class="purple-btn" type="submit"><i class="fa-solid fa-rocket"></i><span data-i18n="create">Buat Link</span></button>
         </form>
-        <small><i class="fa-solid fa-circle-info"></i> <span data-i18n="urlHelp">Mendukung http:// dan www. Contoh: https://t.me/channel</span></small>
-        <button id="openEditor" class="editor-link" type="button"><i class="fa-solid fa-pen-to-square"></i> <span data-i18n="fullEditor">Buka editor Pastelink lengkap</span></button>
+        <small><i class="fa-solid fa-circle-info"></i> PasteLink mendukung judul, creator, slug, rich text, syntax code, tags, visibility, expiration, copy/raw, dan destination URL.</small>
+        <button id="openEditor" class="editor-link" type="button"><i class="fa-solid fa-sliders"></i> <span data-i18n="fullEditor">Buka editor Pastelink lengkap</span></button>
       </div>
 
       <div id="success" class="success hidden">
@@ -111,10 +111,13 @@
       </div>
     </div>
 
-    <div class="hero-art-wrap" aria-hidden="true">
-      <div class="hero-art-orbit orbit-one"></div>
-      <div class="hero-art-orbit orbit-two"></div>
-      <img class="hero-art" src="assets/hero-art-premium.svg" alt="TeleCod Telegram Code Platform">
+    <div class="hero-art-wrap tc-no-image-visual" aria-hidden="true">
+      <div class="tc-holo-core"><i class="fa-brands fa-telegram"></i><strong>TELECOD</strong><small>SECURE MARKETPLACE</small></div>
+      <div class="tc-holo-ring ring-a"></div><div class="tc-holo-ring ring-b"></div>
+      <div class="tc-float-card tc-float-one"><i class="fa-solid fa-code"></i><span>CODE</span><b>READY</b></div>
+      <div class="tc-float-card tc-float-two"><i class="fa-solid fa-bullhorn"></i><span>CHANNEL</span><b>VERIFIED</b></div>
+      <div class="tc-float-card tc-float-three"><i class="fa-solid fa-shield-halved"></i><span>SECURITY</span><b>ACTIVE</b></div>
+      <div class="tc-scanline"></div>
     </div>
   </div>
 
@@ -1187,6 +1190,31 @@
 </section>
 </main>
 
+<!-- TELECOD GUIDE / TRUST / ADULT 18+ -->
+<section id="pastelinkGuide" class="section tc-info-section">
+  <div class="heading"><span>✦</span><div><h2>PasteLink Lengkap</h2><p class="section-subtitle">Satu ruang untuk membuat, membagikan, dan mengatur link atau informasi dengan kontrol yang jelas.</p></div><span>✦</span></div>
+  <div class="tc-info-grid">
+    <article class="tc-info-card"><i class="fa-solid fa-pen-ruler"></i><h3>Buat dengan lengkap</h3><p>Atur judul, nama creator, slug, deskripsi, isi, syntax, tag, destination URL, masa aktif, dan visibilitas tanpa perlu memakai gambar.</p></article>
+    <article class="tc-info-card"><i class="fa-solid fa-eye-slash"></i><h3>Privasi terkontrol</h3><p>Pilih Public, Unlisted, atau Private. Gunakan expiration untuk membatasi masa aktif dan jangan masukkan data rahasia seperti password, OTP, atau token.</p></article>
+    <article class="tc-info-card"><i class="fa-solid fa-shield-halved"></i><h3>Keamanan</h3><p>Konten dibersihkan sebelum ditampilkan, akses database memakai Supabase, dan tampilan dirancang agar informasi penting tetap mudah dipahami.</p></article>
+    <article class="tc-info-card"><i class="fa-solid fa-bolt"></i><h3>Cara kerja</h3><p>Isi form → pilih pengaturan → publish → dapatkan slug → bagikan link. Pemilik dapat mengatur konten sesuai fitur yang tersedia.</p></article>
+  </div>
+</section>
+<section id="adult18" class="section tc-adult-section">
+  <div class="tc-adult-banner"><div class="tc-adult-badge">18+</div><div><span class="eyebrow">ADULT COMMUNITY</span><h2>Ruang komunitas dewasa yang lebih teratur</h2><p>TeleCod dapat digunakan sebagai katalog kebutuhan komunitas 18+ yang sah dan sesuai aturan. Konten wajib untuk orang dewasa, tidak melibatkan anak di bawah umur, dan tetap mengikuti hukum serta kebijakan platform.</p></div></div>
+  <div class="tc-info-grid compact"><article class="tc-info-card"><i class="fa-solid fa-user-shield"></i><h3>18+ saja</h3><p>Pengguna bertanggung jawab memastikan usia dan kepatuhan terhadap aturan yang berlaku.</p></article><article class="tc-info-card"><i class="fa-solid fa-ban"></i><h3>Dilarang</h3><p>Tidak boleh ada konten ilegal, eksploitasi, non-konsensual, atau materi yang melibatkan anak.</p></article><article class="tc-info-card"><i class="fa-solid fa-file-contract"></i><h3>Gunakan dengan bijak</h3><p>Creator wajib memberikan deskripsi yang jujur, menjaga privasi, dan tidak menyimpan kredensial sensitif.</p></article></div>
+</section>
+<section id="securityGuide" class="section tc-info-section">
+  <div class="heading"><span>✦</span><div><h2>Keamanan, Privasi & Cara Kerja TeleCod</h2><p class="section-subtitle">Panduan singkat agar creator dan pembeli memahami alur platform.</p></div><span>✦</span></div>
+  <div class="tc-steps">
+    <div><b>01</b><i class="fa-solid fa-user-plus"></i><strong>Daftar / Login</strong><span>Gunakan akun yang valid dan jaga kredensial.</span></div>
+    <div><b>02</b><i class="fa-solid fa-store"></i><strong>Jelajahi</strong><span>Pilih Code atau Channel Free/Paid.</span></div>
+    <div><b>03</b><i class="fa-solid fa-wallet"></i><strong>Bayar</strong><span>Gunakan saldo/payment yang tersedia.</span></div>
+    <div><b>04</b><i class="fa-solid fa-lock"></i><strong>Akses</strong><span>Produk berbayar dibuka setelah transaksi berhasil.</span></div>
+    <div><b>05</b><i class="fa-solid fa-chart-line"></i><strong>Creator</strong><span>Pantau views, penjualan, saldo dan laporan.</span></div>
+  </div>
+</section>
+
 <footer id="about" class="site-footer">
   <div class="footer-inner">
     <div class="footer-brand">
@@ -1217,7 +1245,7 @@
   <div><span>telecod.biz.id/p/</span><input id="slug" placeholder="custom-url"></div>
 </div>
     <div class="rich-shell"><div id="toolbar">
-      <button type="button" data-cmd="bold"><b>B</b></button><button type="button" data-cmd="italic"><i>I</i></button><button type="button" data-cmd="underline"><u>U</u></button><i></i><button type="button" data-block="h2">H2</button><button type="button" data-block="h3">H3</button><button type="button" data-block="p">P</button><button type="button" data-cmd="insertUnorderedList">☷</button><button type="button" data-cmd="insertOrderedList">1.</button><i></i><button type="button" id="linkBtn">🔗</button><button type="button" id="codeBtn">&lt;/&gt;</button><button type="button" id="imgBtn">🖼</button><input type="file" id="imgFile" accept="image/*" hidden><button type="button" id="clearBtn">⌫</button>
+      <button type="button" data-cmd="bold"><b>B</b></button><button type="button" data-cmd="italic"><i>I</i></button><button type="button" data-cmd="underline"><u>U</u></button><i></i><button type="button" data-block="h2">H2</button><button type="button" data-block="h3">H3</button><button type="button" data-block="p">P</button><button type="button" data-cmd="insertUnorderedList">☷</button><button type="button" data-cmd="insertOrderedList">1.</button><i></i><button type="button" id="linkBtn">🔗</button><button type="button" id="codeBtn">&lt;/&gt;</button><button type="button" id="clearBtn">⌫</button>
     </div><div id="editor" class="editor" contenteditable="true" data-placeholder="Tulis atau paste konten kamu di sini..."></div><div class="editor-foot"><span id="count">0 words</span><span>HTML / Rich Text</span></div></div>
     <div class="form-grid"><label>Visibility<select id="visibility"><option value="public">Public</option><option value="unlisted">Hidden / Unlisted</option><option value="private">Private</option></select></label><label>Expiration<select id="expiration"><option value="">Never</option><option value="1h">1 hour</option><option value="1d">1 day</option><option value="7d">7 days</option><option value="30d">30 days</option></select></label><label>Syntax<select id="syntax"><option>auto</option><option>javascript</option><option>typescript</option><option>html</option><option>css</option><option>python</option><option>php</option><option>json</option><option>sql</option><option>bash</option><option>java</option><option>csharp</option></select></label><label>Description<input id="pasteDescription" placeholder="Deskripsi singkat paste"></label><label>Tags<input id="pasteTags" placeholder="code, telegram, tutorial"></label><label>Options<div style="display:flex;gap:10px;align-items:center;height:36px"><span><input id="allowComments" type="checkbox" checked> Comments</span><span><input id="allowDownload" type="checkbox" checked> Copy</span><span><input id="showRaw" type="checkbox" checked> Raw</span></div></label></div>
     <div class="checks"><label><input id="timeline" type="checkbox" checked> Publish on Timeline</label><label><input id="anonymous" type="checkbox"> Publish anonymously</label></div>
