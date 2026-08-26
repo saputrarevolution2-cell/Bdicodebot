@@ -1,5 +1,6 @@
 # TeleCod public redirects
 /reset /reset.html 200
+/dashboard /dashboard/index.html 200
 /paste /index.html?editor=1 200
 /p/* /p.html?slug=:splat 200
 
