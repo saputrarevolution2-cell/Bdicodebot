@@ -469,17 +469,14 @@ const T = {
    ========================================================= */
 
 let lang = "id";
-let theme = "dark";
 let authMode = "login";
 let sup = null;
 
 try {
   lang = localStorage.getItem("telecod_lang") || "id";
-  theme = localStorage.getItem("telecod_theme") || "light";
 } catch (_) {}
 
 if (!T[lang]) lang = "id";
-if (!["dark", "light"].includes(theme)) theme = "dark";
 
 
 /* =========================================================
@@ -568,29 +565,11 @@ function tr() {
    ========================================================= */
 
 function setTheme() {
-  document.documentElement.classList.toggle(
-    "light",
-    theme === "light"
-  );
-  document.documentElement.dataset.theme = theme;
-
-  const themeBtn = $("#themeBtn");
-
-  if (themeBtn) {
-    themeBtn.innerHTML =
-      theme === "light"
-        ? '<i class="fa-solid fa-moon" aria-hidden="true"></i>'
-        : '<i class="fa-solid fa-sun" aria-hidden="true"></i>';
-    themeBtn.setAttribute(
-      "aria-label",
-      theme === "light" ? "Aktifkan mode gelap" : "Aktifkan mode terang"
-    );
-    themeBtn.setAttribute("title", theme === "light" ? "Dark mode" : "Light mode");
-  }
-
-  try {
-    localStorage.setItem("telecod_theme", theme);
-  } catch (_) {}
+  document.documentElement.dataset.theme = "dark";
+  document.documentElement.classList.remove("light");
+  document.documentElement.classList.add("dark");
+  document.body?.classList.remove("light");
+  document.body?.classList.add("dark");
 }
 
 
@@ -678,10 +657,6 @@ $$("[data-lang]").forEach(button => {
   });
 });
 
-on("#themeBtn", "click", () => {
-  theme = theme === "dark" ? "light" : "dark";
-  setTheme();
-});
 
 on("#menuBtn", "click", (event) => {
   event.stopPropagation();

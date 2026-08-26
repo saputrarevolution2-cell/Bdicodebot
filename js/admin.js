@@ -91,13 +91,7 @@
   function bindNav(){
     $$("#sideNav button[data-page]").forEach(b=>b.onclick=async()=>{state.page=b.dataset.page;$$('#sideNav button').forEach(x=>x.classList.toggle('active',x===b));try{await render()}catch(e){showError(e)}});
     $("#logout").onclick=async()=>{if(sup)await sup.auth.signOut();location.href="../index.html"};
-    const saved=localStorage.getItem("telecod_theme")||localStorage.getItem("telecod_admin_theme")||"light";
-    document.documentElement.classList.toggle("light",saved==="light");
-    document.body.classList.toggle("light",saved==="light");
-    const syncThemeIcon=()=>{const b=$("#themeBtn");if(b)b.innerHTML=document.documentElement.classList.contains("light")?'<i class="fa-solid fa-moon"></i>':'<i class="fa-solid fa-sun"></i>'};
-    syncThemeIcon();
-    $("#themeBtn").onclick=()=>{const light=!document.documentElement.classList.contains("light");document.documentElement.classList.toggle("light",light);document.body.classList.toggle("light",light);localStorage.setItem("telecod_theme",light?"light":"dark");localStorage.setItem("telecod_admin_theme",light?"light":"dark");syncThemeIcon()};
-    $("#globalSearch").oninput=()=>{if(state.page==="users")drawUsers();else if(state.page==="products")drawProducts();else if(state.page==="pastes")drawPastes();else if(state.page==="orders")drawOrders()};
+$("#globalSearch").oninput=()=>{if(state.page==="users")drawUsers();else if(state.page==="products")drawProducts();else if(state.page==="pastes")drawPastes();else if(state.page==="orders")drawOrders()};
   }
   async function refreshCounters(){
     try{state.stats=await rpc("admin_stats");const s=state.stats||{};[["navUsers",s.users],["navProducts",s.products],["navPastes",s.pastes],["navPayments",s.pending_payments],["navWd",s.pending_withdrawals]].forEach(([id,v])=>{const e=$("#"+id);if(e)e.textContent=Number(v||0).toLocaleString("id-ID")})}catch(e){console.warn(e)}
