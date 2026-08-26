@@ -399,6 +399,69 @@ begin
   return moved;
 end $$;
 
+
+-- ---------- TELECOD ACTIVITY / NOTIFICATIONS ----------
+create table if not exists public.telecod_activity (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  actor_id uuid references public.profiles(id) on delete set null,
+  event_type text not null,
+  title text not null,
+  message text,
+  product_id uuid references public.products(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create index if not exists telecod_activity_owner_idx on public.telecod_activity(owner_id,created_at desc);
+
+alter table public.telecod_activity enable row level security;
+drop policy if exists telecod_activity_owner_select on public.telecod_activity;
+create policy telecod_activity_owner_select on public.telecod_activity for select using (owner_id=auth.uid() or is_admin());
+grant select on public.telecod_activity to authenticated;
+
+create or replace function public.telecod_log_product_activity()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  insert into public.telecod_activity(owner_id,actor_id,event_type,title,message,product_id)
+  values(new.creator_id,auth.uid(),case when new.type='code' then 'add_code' else 'add_channel' end,
+    case when new.type='code' then 'Code ditambahkan' else 'Channel ditambahkan' end,
+    coalesce(new.title,'Produk')||' berhasil ditambahkan ke marketplace.',new.id);
+  return new;
+end $$;
+drop trigger if exists products_activity_trigger on public.products;
+create trigger products_activity_trigger after insert on public.products for each row execute function public.telecod_log_product_activity();
+
+create or replace function public.telecod_log_purchase_activity()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare owner uuid; ptype text; ptitle text;
+begin
+  if new.status='paid' and (tg_op='INSERT' or old.status is distinct from new.status) then
+    select creator_id,type,title into owner,ptype,ptitle from public.products where id=new.product_id;
+    if owner is not null then
+      insert into public.telecod_activity(owner_id,actor_id,event_type,title,message,product_id)
+      values(owner,new.buyer_id,case when ptype='code' then 'buy_code' else 'join_channel' end,
+        case when ptype='code' then 'Code dibeli' else 'Member bergabung / mendapat akses' end,
+        coalesce(ptitle,'Produk')||case when ptype='code' then ' berhasil dibeli.' else ' mendapatkan akses channel.' end,new.product_id);
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists purchases_activity_trigger on public.purchases;
+create trigger purchases_activity_trigger after insert or update of status on public.purchases for each row execute function public.telecod_log_purchase_activity();
+
+-- Extend the existing view RPC so opening a code/channel creates an owner notification.
+create or replace function public.increment_product_view(p_product uuid,p_viewer_hash text default null)
+returns bigint language plpgsql security definer set search_path=public as $$
+declare v bigint; owner uuid; ptitle text; ptype text;
+begin
+  update products set views=views+1 where id=p_product and status='published' returning views,creator_id,title,type into v,owner,ptitle,ptype;
+  if owner is not null and owner is distinct from auth.uid() then
+    insert into public.telecod_activity(owner_id,actor_id,event_type,title,message,product_id)
+    values(owner,auth.uid(),'view',case when ptype='code' then 'Code dibuka' else 'Channel dibuka' end,
+      coalesce(ptitle,'Produk')||' baru saja dibuka.',p_product);
+  end if;
+  return coalesce(v,0);
+end $$;
+
 -- ---------- ADMIN STATS ----------
 create or replace function public.admin_stats()
 returns jsonb
@@ -488,7 +551,7 @@ grant execute on function public.resolve_username_login(text) to anon,authentica
 grant execute on function public.lookup_user_by_email(text) to anon,authenticated,service_role;
 grant execute on function public.marketplace_submit_product(text,text,text,bigint,text,text,text,text,text,text) to authenticated;
 grant execute on function public.complete_free_purchase(uuid) to authenticated;
-grant execute on function public.increment_product_view(uuid,text) to anon,authenticated;
+grant execute on function public.complete_free_purchase(uuid) to authenticated;
 grant execute on function public.increment_paste_view(text) to anon,authenticated;
 grant execute on function public.request_withdrawal_v2(bigint,text,text,text,text) to authenticated;
 grant execute on function public.release_matured_sales() to service_role;
