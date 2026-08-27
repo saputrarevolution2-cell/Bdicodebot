@@ -1,0 +1,37 @@
+/* TeleCod Unified UI — additive only. Existing app logic/styles remain intact. */
+:root{
+  --u-bg:#050816;--u-bg2:#081225;--u-surface:rgba(9,18,35,.78);--u-surface-2:rgba(13,27,48,.9);
+  --u-text:#f4fbff;--u-muted:#8fa8bc;--u-line:rgba(0,234,255,.18);--u-cyan:#00eaff;--u-blue:#397cff;
+  --u-shadow:0 18px 55px rgba(0,0,0,.30),0 0 30px rgba(0,234,255,.07)
+}
+html[data-theme="light"]{
+  --u-bg:#f5f8fc;--u-bg2:#eaf1f7;--u-surface:rgba(255,255,255,.88);--u-surface-2:rgba(255,255,255,.96);
+  --u-text:#0c1724;--u-muted:#5f7180;--u-line:rgba(0,126,163,.18);--u-shadow:0 16px 45px rgba(21,53,73,.11),0 0 25px rgba(0,174,214,.06)
+}
+html,body{min-height:100%}
+body{background:radial-gradient(850px 500px at 85% -10%,rgba(0,234,255,.10),transparent 60%),radial-gradient(700px 480px at -10% 80%,rgba(65,89,255,.08),transparent 60%),linear-gradient(180deg,var(--u-bg),var(--u-bg2),var(--u-bg))!important;color:var(--u-text)}
+html[data-theme="light"] body{background:radial-gradient(850px 500px at 85% -10%,rgba(0,174,214,.09),transparent 60%),linear-gradient(180deg,var(--u-bg),var(--u-bg2),var(--u-bg))!important}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:linear-gradient(rgba(0,234,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,234,255,.022) 1px,transparent 1px);background-size:42px 42px}
+html[data-theme="light"] body:before{opacity:.5}
+button,a,input,textarea,select{transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease,background-color .2s ease,color .2s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--u-cyan);outline-offset:2px}
+.u-theme-btn{width:40px;height:40px;display:inline-grid;place-items:center;flex:0 0 40px;border:1px solid var(--u-line);border-radius:12px;background:var(--u-surface);color:var(--u-text);cursor:pointer;box-shadow:0 0 18px rgba(0,234,255,.06);font-size:16px}
+.u-theme-btn:hover{transform:translateY(-1px);border-color:rgba(0,234,255,.55);box-shadow:0 0 24px rgba(0,234,255,.16)}
+.u-lang-btn{min-height:40px;padding:0 12px;border:1px solid var(--u-line);border-radius:12px;background:var(--u-surface);color:var(--u-text);font-weight:800;cursor:pointer}
+.u-controls{display:flex;align-items:center;gap:7px;z-index:20}
+/* consistent surfaces without replacing component-specific styling */
+.card,.panel,.market-card,.feature-card,.category-card,.stat-card,.table-wrap,.auth-panel,.auth-modal,.create-section,.creator-form-side,.creator-create-hero,.tc-payment-notice,.tc-money-card,.tc-profile-card,.gate{border-color:var(--u-line)!important;box-shadow:var(--u-shadow)!important}
+input,textarea,select,.input,.select,.textarea{border-color:var(--u-line)!important}
+html[data-theme="light"] .card,html[data-theme="light"] .panel,html[data-theme="light"] .market-card,html[data-theme="light"] .feature-card,html[data-theme="light"] .category-card,html[data-theme="light"] .stat-card,html[data-theme="light"] .table-wrap,html[data-theme="light"] .auth-panel,html[data-theme="light"] .auth-modal,html[data-theme="light"] .create-section,html[data-theme="light"] .creator-form-side{background:var(--u-surface-2)!important;color:var(--u-text)!important}
+html[data-theme="light"] .topbar,html[data-theme="light"] .header{background:rgba(255,255,255,.78)!important;border-color:var(--u-line)!important}
+html[data-theme="light"] .sidebar{background:rgba(248,252,255,.94)!important;border-color:var(--u-line)!important}
+html[data-theme="light"] .sidebar a,html[data-theme="light"] .sidebar button,html[data-theme="light"] .nav-item,html[data-theme="light"] .nav-parent{color:#203446}
+html[data-theme="light"] .main,html[data-theme="light"] .content{color:var(--u-text)}
+html[data-theme="light"] .muted,html[data-theme="light"] .subtitle,html[data-theme="light"] .description,html[data-theme="light"] .page-head p{color:var(--u-muted)!important}
+html[data-theme="light"] input,html[data-theme="light"] textarea,html[data-theme="light"] select,html[data-theme="light"] .input,html[data-theme="light"] .select,html[data-theme="light"] .textarea{background:#fff!important;color:#102131!important}
+html[data-theme="light"] ::placeholder{color:#8293a1!important}
+/* desktop/mobile rhythm */
+.container,.hero-grid,.section>.container{max-width:1200px}
+@media(max-width:900px){.layout{grid-template-columns:1fr!important}.creator-form{grid-template-columns:1fr!important}.form-grid{grid-template-columns:1fr!important}.u-controls{gap:5px}.u-theme-btn,.u-lang-btn{min-height:38px;height:38px}.hero-actions{flex-wrap:wrap}.hero-actions>a{min-width:0}.top-actions{gap:6px!important}}
+@media(max-width:600px){.u-theme-btn{width:38px;flex-basis:38px}.u-lang-btn{padding:0 9px}.card,.panel,.market-card,.feature-card,.category-card,.stat-card,.auth-panel{border-radius:16px!important}.container{width:min(100% - 24px,1200px)!important}.form-grid{gap:12px!important}}
+@media(min-width:901px){.layout{min-width:0}.main{min-width:0}}
