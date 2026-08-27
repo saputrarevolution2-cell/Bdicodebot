@@ -483,6 +483,29 @@ begin
   );
 end $$;
 
+-- ---------- AUTH PROFILE BOOTSTRAP ----------
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+begin
+  insert into public.profiles(id,username,display_name,terms_accepted_at,last_login_at)
+  values(
+    new.id,
+    nullif(lower(regexp_replace(coalesce(new.raw_user_meta_data->>'username',''),'[^a-zA-Z0-9_]+','','g')),''),
+    coalesce(nullif(new.raw_user_meta_data->>'display_name',''),nullif(new.raw_user_meta_data->>'username',''),split_part(coalesce(new.email,''),'@',1)),
+    now(),now()
+  )
+  on conflict(id) do update set
+    display_name=coalesce(excluded.display_name,public.profiles.display_name),
+    last_login_at=now();
+  insert into public.wallets(user_id) values(new.id) on conflict(user_id) do nothing;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+for each row execute function public.handle_new_user();
+
 -- ---------- RLS ----------
 alter table profiles enable row level security;
 alter table wallets enable row level security;
@@ -554,11 +577,12 @@ grant execute on function public.resolve_username_login(text) to anon,authentica
 grant execute on function public.lookup_user_by_email(text) to anon,authenticated,service_role;
 grant execute on function public.marketplace_submit_product(text,text,text,bigint,text,text,text,text,text,text) to authenticated;
 grant execute on function public.complete_free_purchase(uuid) to authenticated;
-grant execute on function public.complete_free_purchase(uuid) to authenticated;
 grant execute on function public.increment_paste_view(text) to anon,authenticated;
 grant execute on function public.request_withdrawal_v2(bigint,text,text,text,text) to authenticated;
 grant execute on function public.release_matured_sales() to service_role;
 grant execute on function public.admin_stats() to authenticated;
+grant execute on function public.increment_product_view(uuid,text) to anon,authenticated;
+grant execute on function public.is_admin() to authenticated;
 
 -- ---------- DEFAULT SITE STATS ----------
 insert into site_stats(key,value,label) values
