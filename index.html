@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/style.css?v=20260826-premium-cyber-final">
 <link rel="stylesheet" href="css/premium-neon.css?v=20260826-premium-cyber-final">
 
-<link rel="stylesheet" href="css/unified-neon.css?v=20260827-unified-neon"><script src="js/ui-state.js"></script><script src="js/telecod-ui.js"></script></head>
+<link rel="stylesheet" href="css/telecod-unified-fix.css?v=20260827-safe"></head>
 <body>
 <header class="header">
   <div class="nav">
@@ -34,7 +34,7 @@
       <a href="#aboutDetail" data-i18n="about">Tentang</a>
       <a href="#contact" data-i18n="contact">Kontak</a>
     </nav>
-    <div class="nav-tools"><button id="themeBtn" class="tc-theme-toggle" type="button" aria-label="Toggle theme" title="Theme"><span data-theme-icon>🌙</span></button>
+    <div class="nav-tools">
       <button id="langBtn" class="tool-btn" type="button" aria-label="Pilih bahasa" aria-expanded="false" aria-haspopup="true"><span class="lang-flag">🇮🇩</span><span class="lang-code">ID</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
       <div id="langMenu" class="dropdown" role="listbox" aria-label="Bahasa">
         <button type="button" data-lang="id" role="option">🇮🇩 Indonesia</button>
@@ -1273,5 +1273,5 @@ document.addEventListener("DOMContentLoaded",async()=>{
   }catch(e){ console.warn("Session check skipped",e); }
 });
 </script>
-</body>
+<script src="js/telecod-unified-fix.js?v=20260827-safe"></script></body>
 </html>
