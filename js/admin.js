@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  document.addEventListener('DOMContentLoaded',()=>{syncAdminLanguage(); const b=document.querySelector('#adminLang'); if(b)b.onclick=()=>{const v=localStorage.getItem('telecod_lang')==='en'?'id':'en';localStorage.setItem('telecod_lang',v);syncAdminLanguage();location.reload()};});
   const C = window.TELECOD_CONFIG || {};
   const MASTER_ADMIN_ID = String(C.ADMIN_TELEGRAM_ID || "6665664367").replace(/\D/g, "");
   const configured = !!(C.SUPABASE_URL && C.SUPABASE_ANON_KEY && !/YOUR_|PROJECT\b|PUBLISHABLE|ANON[_-]?KEY/i.test(`${C.SUPABASE_URL} ${C.SUPABASE_ANON_KEY}`));
@@ -11,6 +12,11 @@
   const money = n => new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n||0));
   const date = v => v ? new Date(v).toLocaleString("id-ID") : "-";
   function toast(message,type=""){const el=$("#toast");if(!el)return;el.textContent=message;el.className=`toast show ${type}`;clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className="toast",2800)}
+  function syncAdminLanguage(){
+    const btn=$("#adminLang"); if(btn) btn.textContent=(localStorage.getItem('telecod_lang')==='en'?'🇬🇧 EN':'🇮🇩 ID');
+    window.TeleCodUI?.translateAll?.();
+  }
+
   async function rpc(name,args={}){if(!sup)throw new Error("Supabase belum dikonfigurasi.");const {data,error}=await sup.rpc(name,args);if(error)throw error;return data}
   function gate(message="") {
     content.innerHTML=`<section class="gate admin-login-gate">

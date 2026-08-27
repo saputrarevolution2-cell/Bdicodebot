@@ -1829,3 +1829,5 @@ on("#addChannelBtn","click",()=>openMarketplaceCreateModal("channel"));
 on("#featurePasteBtn","click",()=>openEditor());on("#featureSellBtn","click",()=>openMarketplaceCreateModal("code"));on("#featureDashboardBtn","click",()=>location.href="dashboard.html");on("#featureWithdrawBtn","click",()=>location.href="/dashboard?page=payment");on("#featureLanguageBtn","click",()=>$("#langBtn")?.click());
 $$('a[href="#auth"]').forEach(a=>a.addEventListener("click",e=>{e.preventDefault();openAuth("login");}));
 setTimeout(loadLandingMarketplace,0);
+
+;document.addEventListener("DOMContentLoaded",()=>document.querySelectorAll("#themeBtn").forEach(b=>b.addEventListener("click",()=>window.TeleCodUI?.toggleTheme())));
