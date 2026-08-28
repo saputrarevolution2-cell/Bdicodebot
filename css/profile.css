@@ -1,1 +1,1 @@
-.avatar{width:80px;height:80px;border-radius:50%;border:2px solid var(--cyan);object-fit:cover;background:#0b1a2d}
+.profile-head{display:flex;align-items:center;gap:18px}.avatar{width:76px;height:76px;border-radius:24px;background:linear-gradient(135deg,#00dff5,#246bff);display:grid;place-items:center;font-size:30px;font-weight:900}
