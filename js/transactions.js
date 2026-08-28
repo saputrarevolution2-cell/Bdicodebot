@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',async()=>{let u=await TC.user();if(!u)return location.href='login.html';let {data}=await sb.from('transactions').select('*').eq('user_id',u.id).order('created_at',{ascending:false}).limit(100);content.innerHTML=TC.esc(JSON.stringify(data||[],null,2))})
