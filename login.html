@@ -48,6 +48,9 @@ document.addEventListener("DOMContentLoaded",()=>{
     catch(err){ showError(err?.message||"Login gagal."); btn.disabled=false; btn.innerHTML=old; }
   });
 
+  document.getElementById('google')?.addEventListener('click',async()=>{ try{ await Auth.google(); }catch(err){ showError(err?.message||'Login Google gagal.'); } });
+  document.getElementById('forgot')?.addEventListener('click',async(e)=>{ e.preventDefault(); const email=(currentIdentifier||identifier.value).trim(); if(!email)return; try{ const found=await Auth.lookup(email); if(!found?.auth_email) throw Error('Akun tidak ditemukan.'); const {error}=await sb.auth.resetPasswordForEmail(found.auth_email,{redirectTo:location.origin+'/reset-password.html'}); if(error)throw error; accountInfo.textContent='Link reset kata sandi sudah dikirim ke email.'; }catch(err){ showError(err?.message||'Gagal mengirim reset password.'); } });
+
   toggle?.addEventListener("click",()=>{
     password.type=password.type==="password"?"text":"password";
     toggle.innerHTML=password.type==="password"?'<i class="fa-solid fa-eye"></i>':'<i class="fa-solid fa-eye-slash"></i>';
