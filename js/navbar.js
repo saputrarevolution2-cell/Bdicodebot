@@ -1,1 +1,50 @@
-document.addEventListener("DOMContentLoaded",async()=>{const el=document.getElementById("navbar");if(!el)return;let user=null;try{user=await TC.user()}catch(e){}const name=user?.user_metadata?.username||user?.user_metadata?.full_name||user?.email?.split("@")[0]||"User";el.innerHTML=`<header class="navbar"><div class="nav-inner"><a class="brand" href="index.html"><i class="fa-solid fa-paper-plane"></i><span>TeleCod</span></a><nav class="nav-links"><a href="dashboard.html" data-page="dashboard"><i class="fa-solid fa-house"></i><span>Dashboard</span></a><a href="paste.html" data-page="paste"><i class="fa-solid fa-link"></i><span>Create Shortlink</span></a><a href="my-products.html" data-page="my-products"><i class="fa-solid fa-list"></i><span>My Links</span></a><a href="marketplace.html" data-page="marketplace"><i class="fa-solid fa-store"></i><span>Marketplace</span></a><a href="wallet.html" data-page="wallet"><i class="fa-solid fa-wallet"></i><span>Wallet</span></a><a href="withdrawals.html" data-page="withdrawals"><i class="fa-solid fa-money-bill-transfer"></i><span>Withdraw</span></a><a href="transactions.html" data-page="transactions"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Transactions</span></a><a href="profile.html" data-page="profile"><i class="fa-solid fa-user"></i><span>Profile</span></a><a href="settings.html" data-page="settings"><i class="fa-solid fa-gear"></i><span>Settings</span></a><a href="notifications.html" data-page="notifications"><i class="fa-solid fa-bell"></i><span>Notifications</span></a></nav><div class="nav-user"><div class="nav-user-row"><div class="nav-avatar"><i class="fa-solid fa-user"></i></div><div><b>${String(name).replace(/[<>&"]/g,"")}</b><small>Premium User</small></div></div><strong id="navBalance">Rp 0</strong></div></div></header><div class="top-search"><div class="top-search-box"><i class="fa-solid fa-magnifying-glass"></i><span>Search anything...</span><kbd>Ctrl /</kbd></div><div class="top-profile"><i class="fa-regular fa-bell"></i><div class="avatar"><i class="fa-solid fa-user"></i></div><span>${String(name).replace(/[<>&"]/g,"")}</span><i class="fa-solid fa-chevron-down"></i></div></div>`;const path=location.pathname.split("/").pop()||"dashboard.html";document.querySelectorAll(".nav-links a").forEach(a=>{const page=a.dataset.page;if(path===page+".html"||(path==="index.html"&&page==="dashboard"))a.classList.add("active")});try{if(user&&window.sb){const q=await sb.from("wallets").select("balance").eq("user_id",user.id).maybeSingle();if(q.data?.balance!=null){const money=typeof TC?.money==="function"?TC.money(q.data.balance):"Rp "+Number(q.data.balance).toLocaleString("id-ID");const b=document.getElementById("navBalance");if(b)b.textContent=money}}}catch(e){}});
+document.addEventListener('DOMContentLoaded', async () => {
+  const host = document.getElementById('navbar');
+  if (!host) return;
+
+  const isAdmin = location.pathname.includes('/admin/');
+  const base = isAdmin ? '../' : '';
+  let user = null;
+  try { user = await TC.user(); } catch (_) {}
+
+  const esc = (v) => TC?.esc ? TC.esc(v) : String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const name = user?.user_metadata?.username || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+
+  const links = isAdmin ? [
+    ['index.html','fa-chart-pie','Overview'],['users.html','fa-users','Users'],['products.html','fa-box','Products'],
+    ['orders.html','fa-receipt','Orders'],['payments.html','fa-credit-card','Payments'],['withdrawals.html','fa-money-bill-transfer','Withdrawals'],
+    ['transactions.html','fa-arrow-right-arrow-left','Transactions'],['pastes.html','fa-file-lines','Pastes'],['bots.html','fa-robot','Bots'],['logs.html','fa-list','Logs']
+  ] : [
+    ['dashboard.html','fa-house','Dashboard'],['paste.html','fa-link','Create'],['my-products.html','fa-list','My Links'],
+    ['marketplace.html','fa-store','Marketplace'],['wallet.html','fa-wallet','Wallet'],['withdrawals.html','fa-money-bill-transfer','Withdraw'],
+    ['transactions.html','fa-arrow-right-arrow-left','Transactions'],['profile.html','fa-user','Profile'],['settings.html','fa-gear','Settings'],['notifications.html','fa-bell','Notifications']
+  ];
+
+  host.innerHTML = `
+    <header class="navbar">
+      <div class="nav-inner">
+        <a class="brand" href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"><span class="brand-mark"><i class="fa-solid fa-paper-plane"></i></span><span>TeleCod</span></a>
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
+        <nav class="nav-links" id="navLinks">${links.map(([href,icon,label]) => `<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav>
+        <div class="nav-account">
+          <div class="nav-account-info"><div class="nav-avatar"><i class="fa-solid fa-user"></i></div><div class="nav-name"><b>${esc(name)}</b><small>${isAdmin ? 'Administrator' : 'Account'}</small></div></div>
+          <span class="nav-balance" id="navBalance">Rp 0</span>
+        </div>
+      </div>
+    </header>`;
+
+  const current = location.pathname.split('/').pop() || (isAdmin ? 'index.html' : 'dashboard.html');
+  document.querySelectorAll('#navLinks a').forEach(a => { if (a.dataset.href === current) a.classList.add('active'); });
+
+  const toggle = document.getElementById('navToggle');
+  const nav = document.getElementById('navLinks');
+  toggle?.addEventListener('click', () => nav.classList.toggle('open'));
+  nav?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+
+  if (user && window.sb && !isAdmin) {
+    try {
+      const q = await sb.from('wallets').select('balance').eq('user_id', user.id).maybeSingle();
+      if (q.data?.balance != null) document.getElementById('navBalance').textContent = TC.money(q.data.balance);
+    } catch (_) {}
+  }
+});
