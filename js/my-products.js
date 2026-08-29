@@ -55,4 +55,4 @@
   };
 })();
 
-document.addEventListener('DOMContentLoaded',async()=>{const u=await TC.user();if(!u)return location.href='login.html';try{const {data,error}=await sb.from('transactions').select('*').eq('user_id',u.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;content.innerHTML=PTUI.transactions(data||[])}catch(e){content.innerHTML=`<div class="empty">${TC.esc(e.message)}</div>`}});
+document.addEventListener('DOMContentLoaded',async()=>{const u=await TC.user();if(!u)return location.href='login.html';try{const {data,error}=await sb.from('products').select('id,title,slug,type,price,status,created_at').eq('creator_id',u.id).order('created_at',{ascending:false});if(error)throw error;content.innerHTML=PTUI.products(data||[])}catch(e){content.innerHTML=`<div class="empty">${TC.esc(e.message)}</div>`}});
