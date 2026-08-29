@@ -1,8 +1,10 @@
 @import url("global.css");
 @import url("navbar.css");
 @import url("pastele-polish.css");
-.balance{font-size:38px;font-weight:950}.fee{color:#ffd27a}.withdraw-card{border-color:rgba(0,234,255,.25)}
 .page-style-1{justify-content:space-between}
 .page-style-2{margin-top:20px}
 .page-style-3{margin-top:18px}
-.page-style-4{margin-top:25px;font-size:12px}
+.page-style-4{width:0%}
+.page-style-5{margin-top:12px}
+.page-style-6{margin-top:18px}
+.page-style-7{margin-top:25px;font-size:12px}

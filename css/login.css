@@ -1,0 +1,10 @@
+@import url("global.css");
+@import url("navbar.css");
+@import url("pastele-polish.css");
+.page-style-1{flex:1}
+.page-style-2{justify-content:center;margin-top:18px}
+.page-style-3{width:100%;margin-top:10px}
+.page-style-4{text-align:center;margin-bottom:0}
+.page-style-5{color:var(--cyan)}
+.page-style-6{color:var(--cyan)}
+.page-style-7{margin-top:25px;font-size:12px}
