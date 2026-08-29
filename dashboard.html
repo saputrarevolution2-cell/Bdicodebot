@@ -1,149 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script><script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/navbar.js"></script>
-<link rel="stylesheet" href="css/global.css">
-<link rel="stylesheet" href="css/navbar.css">
-<link rel="stylesheet" href="css/dashboard.css">
+
+
+
+
+
+
 <title>Dashboard — PasTele</title>
-<link rel="stylesheet" href="css/pastele-polish.css"></head>
-<body class="dashboard-page">
+<script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/navbar.js"></script><link href="css/dashboard.css" rel="stylesheet"/></head>
+<body class="dashboard-page app-page">
 <div id="navbar"></div>
-
 <main class="dashboard-main">
-  <div class="dash-container">
-    <section class="dash-head">
-      <div class="dash-title">
-        <div class="dash-logo"><i class="fa-solid fa-paper-plane"></i></div>
-        <div>
-          <div class="eyebrow"><i class="fa-solid fa-chart-line"></i> OVERVIEW</div>
-          <h1>Dashboard</h1>
-          <p>Welcome back, <strong id="helloName">User</strong>! <span aria-hidden="true">👋</span></p>
-        </div>
-      </div>
-      <div class="dash-controls">
-        <label class="scope-wrap">
-          <i class="fa-solid fa-filter"></i>
-          <select id="scope" class="select scope-select" aria-label="Filter statistik">
-            <option value="all">Semua</option>
-            <option value="paste">PasteLink</option>
-            <option value="code">Code</option>
-            <option value="channel">Channel</option>
-            <option value="group">Group</option>
-          </select>
-        </label>
-      </div>
-    </section>
-
-    <section class="stats-grid">
-      <button class="stat-card cyan" data-stat="created">
-        <span class="stat-icon"><i class="fa-solid fa-layer-group"></i></span>
-        <span class="stat-copy"><small>Total Pembuatan</small><strong id="created">0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Semua konten</em></span>
-      </button>
-      <button class="stat-card blue" data-stat="views">
-        <span class="stat-icon"><i class="fa-solid fa-eye"></i></span>
-        <span class="stat-copy"><small>Total View</small><strong id="views">0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Semua kunjungan</em></span>
-      </button>
-      <button class="stat-card violet" data-stat="sales">
-        <span class="stat-icon"><i class="fa-solid fa-cart-shopping"></i></span>
-        <span class="stat-copy"><small>Total Pembelian</small><strong id="sales">0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Transaksi berhasil</em></span>
-      </button>
-      <button class="stat-card pink" data-stat="revenue">
-        <span class="stat-icon"><i class="fa-solid fa-wallet"></i></span>
-        <span class="stat-copy"><small>Total Pendapatan</small><strong id="revenue">Rp0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Revenue</em></span>
-      </button>
-      <button class="stat-card green" data-stat="channels">
-        <span class="stat-icon"><i class="fa-brands fa-telegram"></i></span>
-        <span class="stat-copy"><small>Total Channel</small><strong id="channels">0</strong><em><i class="fa-solid fa-circle-check"></i> Channel aktif</em></span>
-      </button>
-    </section>
-
-    <section class="dash-columns">
-      <div class="dash-left">
-        <div class="panel activity-panel">
-          <div class="panel-head">
-            <div><h2>Activity / Notifications</h2><p>Aktivitas terbaru akunmu</p></div>
-            <button class="mini-btn" type="button" id="activityViewAll">View All</button>
-          </div>
-          <div id="activity" class="activity-list">
-            <div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div>
-          </div>
-        </div>
-
-        <div class="panel recent-panel">
-          <div class="panel-head">
-            <div><h2>Recent Links</h2><p>Konten terbaru yang kamu buat</p></div>
-            <a class="mini-btn" href="my-products.html">View All</a>
-          </div>
-          <div class="table-scroll">
-            <table class="recent-table">
-              <thead><tr><th>Link / Content</th><th>Destination</th><th>Views</th><th>Earnings</th><th>Date</th><th>Action</th></tr></thead>
-              <tbody id="recentLinks"><tr><td colspan="6" class="table-empty">Memuat data...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <aside class="dash-right">
-        <div class="panel quick-panel">
-          <div class="panel-head compact"><div><h2>Quick Actions</h2><p>Akses cepat</p></div></div>
-          <div class="quick-grid">
-            <a href="paste.html" class="quick-btn cyan"><i class="fa-solid fa-link"></i><span>Create Shortlink</span></a>
-            <a href="create-product.html" class="quick-btn green"><i class="fa-solid fa-paper-plane"></i><span>Add Channel</span></a>
-            <a href="my-products.html" class="quick-btn violet"><i class="fa-solid fa-list"></i><span>My Links</span></a>
-            <a href="marketplace.html" class="quick-btn orange"><i class="fa-solid fa-store"></i><span>Marketplace</span></a>
-          </div>
-        </div>
-
-        <div class="panel chart-panel">
-          <div class="panel-head compact">
-            <div><h2>Statistics</h2><p>Performa 30 hari</p></div>
-            <span class="period-badge">This Month</span>
-          </div>
-          <div class="chart-area">
-            <div class="y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0</span></div>
-            <div id="chart" class="chart"></div>
-          </div>
-          <div class="legend"><span><i class="legend-dot cyan-dot"></i> Views</span><span><i class="legend-dot green-dot"></i> Purchases</span></div>
-        </div>
-
-        <div class="panel interaction-panel">
-          <div class="panel-head compact"><div><h2>Interactions</h2><p>Ringkasan interaksi</p></div></div>
-          <div id="interactions" class="interaction-list"></div>
-        </div>
-
-        <div class="panel country-panel">
-          <div class="panel-head compact"><div><h2>Top Countries</h2><p>View berdasarkan negara</p></div></div>
-          <div id="countries" class="country-list">
-            <div class="country-note"><i class="fa-solid fa-earth-asia"></i><span>Geo analytics akan tersedia setelah backend menyimpan data negara.</span></div>
-          </div>
-        </div>
-      </aside>
-    </section>
-
-    <section class="dash-bottom-features">
-      <div><i class="fa-solid fa-bolt"></i><span><b>High Performance</b><small>99.9% Uptime</small></span></div>
-      <div><i class="fa-solid fa-chart-column"></i><span><b>Real-time Analytics</b><small>Track in real-time</small></span></div>
-      <div><i class="fa-solid fa-shield-halved"></i><span><b>Secure & Safe</b><small>Your data is protected</small></span></div>
-      <div><i class="fa-solid fa-headset"></i><span><b>24/7 Support</b><small>We are here to help</small></span></div>
-      <div><i class="fa-solid fa-money-bill-transfer"></i><span><b>Payout on Time</b><small>Fast & Reliable</small></span></div>
-    </section>
-  </div>
+<div class="dash-container">
+<section class="dash-head">
+<div class="dash-title">
+<div class="dash-logo"><i class="fa-solid fa-paper-plane"></i></div>
+<div>
+<div class="eyebrow"><i class="fa-solid fa-chart-line"></i> OVERVIEW</div>
+<h1>Dashboard</h1>
+<p>Welcome back, <strong id="helloName">User</strong>! <span aria-hidden="true">👋</span></p>
+</div>
+</div>
+<div class="dash-controls">
+<label class="scope-wrap">
+<i class="fa-solid fa-filter"></i>
+<select aria-label="Filter statistik" class="select scope-select" id="scope">
+<option value="all">Semua</option>
+<option value="paste">PasteLink</option>
+<option value="code">Code</option>
+<option value="channel">Channel</option>
+<option value="group">Group</option>
+</select>
+</label>
+</div>
+</section>
+<section class="stats-grid">
+<button class="stat-card cyan" data-stat="created">
+<span class="stat-icon"><i class="fa-solid fa-layer-group"></i></span>
+<span class="stat-copy"><small>Total Pembuatan</small><strong id="created">0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Semua konten</em></span>
+</button>
+<button class="stat-card blue" data-stat="views">
+<span class="stat-icon"><i class="fa-solid fa-eye"></i></span>
+<span class="stat-copy"><small>Total View</small><strong id="views">0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Semua kunjungan</em></span>
+</button>
+<button class="stat-card violet" data-stat="sales">
+<span class="stat-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+<span class="stat-copy"><small>Total Pembelian</small><strong id="sales">0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Transaksi berhasil</em></span>
+</button>
+<button class="stat-card pink" data-stat="revenue">
+<span class="stat-icon"><i class="fa-solid fa-wallet"></i></span>
+<span class="stat-copy"><small>Total Pendapatan</small><strong id="revenue">Rp0</strong><em><i class="fa-solid fa-arrow-trend-up"></i> Revenue</em></span>
+</button>
+<button class="stat-card green" data-stat="channels">
+<span class="stat-icon"><i class="fa-brands fa-telegram"></i></span>
+<span class="stat-copy"><small>Total Channel</small><strong id="channels">0</strong><em><i class="fa-solid fa-circle-check"></i> Channel aktif</em></span>
+</button>
+</section>
+<section class="dash-columns">
+<div class="dash-left">
+<div class="panel activity-panel">
+<div class="panel-head">
+<div><h2>Activity / Notifications</h2><p>Aktivitas terbaru akunmu</p></div>
+<button class="mini-btn" id="activityViewAll" type="button">View All</button>
+</div>
+<div class="activity-list" id="activity">
+<div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div>
+</div>
+</div>
+<div class="panel recent-panel">
+<div class="panel-head">
+<div><h2>Recent Links</h2><p>Konten terbaru yang kamu buat</p></div>
+<a class="mini-btn" href="my-products.html">View All</a>
+</div>
+<div class="table-scroll">
+<table class="recent-table">
+<thead><tr><th>Link / Content</th><th>Destination</th><th>Views</th><th>Earnings</th><th>Date</th><th>Action</th></tr></thead>
+<tbody id="recentLinks"><tr><td class="table-empty" colspan="6">Memuat data...</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+<aside class="dash-right">
+<div class="panel quick-panel">
+<div class="panel-head compact"><div><h2>Quick Actions</h2><p>Akses cepat</p></div></div>
+<div class="quick-grid">
+<a class="quick-btn cyan" href="paste.html"><i class="fa-solid fa-link"></i><span>Create Shortlink</span></a>
+<a class="quick-btn green" href="create-product.html"><i class="fa-solid fa-paper-plane"></i><span>Add Channel</span></a>
+<a class="quick-btn violet" href="my-products.html"><i class="fa-solid fa-list"></i><span>My Links</span></a>
+<a class="quick-btn orange" href="marketplace.html"><i class="fa-solid fa-store"></i><span>Marketplace</span></a>
+</div>
+</div>
+<div class="panel chart-panel">
+<div class="panel-head compact">
+<div><h2>Statistics</h2><p>Performa 30 hari</p></div>
+<span class="period-badge">This Month</span>
+</div>
+<div class="chart-area">
+<div class="y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0</span></div>
+<div class="chart" id="chart"></div>
+</div>
+<div class="legend"><span><i class="legend-dot cyan-dot"></i> Views</span><span><i class="legend-dot green-dot"></i> Purchases</span></div>
+</div>
+<div class="panel interaction-panel">
+<div class="panel-head compact"><div><h2>Interactions</h2><p>Ringkasan interaksi</p></div></div>
+<div class="interaction-list" id="interactions"></div>
+</div>
+<div class="panel country-panel">
+<div class="panel-head compact"><div><h2>Top Countries</h2><p>View berdasarkan negara</p></div></div>
+<div class="country-list" id="countries">
+<div class="country-note"><i class="fa-solid fa-earth-asia"></i><span>Geo analytics akan tersedia setelah backend menyimpan data negara.</span></div>
+</div>
+</div>
+</aside>
+</section>
+<section class="dash-bottom-features">
+<div><i class="fa-solid fa-bolt"></i><span><b>High Performance</b><small>99.9% Uptime</small></span></div>
+<div><i class="fa-solid fa-chart-column"></i><span><b>Real-time Analytics</b><small>Track in real-time</small></span></div>
+<div><i class="fa-solid fa-shield-halved"></i><span><b>Secure &amp; Safe</b><small>Your data is protected</small></span></div>
+<div><i class="fa-solid fa-headset"></i><span><b>24/7 Support</b><small>We are here to help</small></span></div>
+<div><i class="fa-solid fa-money-bill-transfer"></i><span><b>Payout on Time</b><small>Fast &amp; Reliable</small></span></div>
+</section>
+</div>
 </main>
-
 <footer class="footer dashboard-footer">
-  <div class="container">
-    <div>© 2026 PasTele. All rights reserved.</div>
-  </div>
+<div class="container">
+<div>© 2026 PasTele. All rights reserved.</div>
+</div>
 </footer>
 <div id="toast"></div>
-<script src="js/dashboard.js"></script>
-</body>
+
+<script src="js/dashboard.js"></script></body>
 </html>
