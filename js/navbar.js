@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   host.innerHTML = `
     <header class="navbar">
       <div class="nav-inner">
-        <a class="brand" href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"><span class="brand-mark"><i class="fa-solid fa-paper-plane"></i></span><span>TeleCod</span></a>
+        <a class="brand" href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"><span class="brand-mark"><i class="fa-solid fa-paper-plane"></i></span><span>PasTele</span></a>
         <button class="nav-toggle" id="navToggle" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
         <nav class="nav-links" id="navLinks">${links.map(([href,icon,label]) => `<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav>
         <div class="nav-account">
