@@ -1,0 +1,12 @@
+PasTele Telegram Style UI
+=========================
+Global visual language unified across user pages and admin pages.
+- Telegram-inspired sidebar navigation
+- Telegram blue (#2AABEE) and light/dark surfaces
+- Compact list rows and rounded avatars
+- Consistent cards, forms, buttons, tables and statuses
+- Responsive mobile drawer navigation
+- Persistent light/dark theme
+- Marketplace/product cards unified
+- Auth pages use the same visual system
+- Existing Supabase/API logic preserved; this is a presentation-layer overhaul.
