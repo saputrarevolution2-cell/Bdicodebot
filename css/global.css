@@ -174,3 +174,62 @@ html[data-theme="dark"]{
 html[data-theme="dark"] .input,html[data-theme="dark"] .select,html[data-theme="dark"] .textarea,
 html[data-theme="dark"] .composer{background:var(--surface);color:var(--text)}
 html[data-theme="dark"] .footer{background:var(--surface)}
+
+
+/* =========================================================
+   PasTele — Universal Premium / Responsive Final Pass
+   ========================================================= */
+:root{
+  --premium-bg:#f6f8fb;
+  --premium-surface:#ffffff;
+  --premium-line:#e4eaf0;
+  --premium-shadow:0 14px 45px rgba(23,33,43,.065);
+}
+html{min-width:320px;overflow-x:hidden}
+body{overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.container{max-width:1180px}
+.card,.panel{box-shadow:var(--premium-shadow)}
+.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.input,.select,.textarea{max-width:100%}
+img,video,iframe{max-width:100%}
+table{max-width:100%}
+
+/* Consistent premium footer across application pages */
+.footer{
+  position:relative;
+  margin-top:48px;
+  padding:42px 0 22px;
+  background:linear-gradient(180deg,#ffffff 0%,#fbfcfd 100%);
+  border-top:1px solid var(--premium-line);
+  color:var(--muted);
+}
+.footer .container{width:min(1180px,calc(100% - 32px))}
+.footer .brand{font-size:18px;font-weight:850}
+.footer .brand:hover{background:transparent}
+.footer h4{margin:2px 0 10px;color:var(--text);font-size:12px}
+.footer a{transition:color .16s ease,opacity .16s ease}
+.footer .copyright{border-top:1px solid var(--premium-line);margin-top:28px;padding-top:18px;font-size:11px}
+.footer .grid{align-items:start}
+
+@media(max-width:900px){
+  .container{width:min(100% - 28px,1180px)}
+  .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-2{grid-template-columns:1fr}
+  .section{padding:30px 0}
+  .footer{padding:36px 0 20px}
+}
+@media(max-width:600px){
+  .container,.footer .container{width:calc(100% - 24px)}
+  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
+  .row.wrap{align-items:stretch}
+  .tabs{scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .btn{min-height:42px}
+  .table-wrap{max-width:100%;-webkit-overflow-scrolling:touch}
+  .footer{margin-top:34px;padding-top:30px}
+  .footer .copyright{display:block;line-height:1.7}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
