@@ -23,8 +23,17 @@ window.Auth = {
     if (!window.sb) throw new Error("Supabase belum dikonfigurasi. Isi js/config.js dengan anon/publishable key.");
     if (!String(password || "")) throw new Error("Kata sandi wajib diisi.");
 
-    const found = await Auth.lookup(identifier);
-    if (!found?.auth_email) throw new Error("Akun tidak ditemukan.");
+    const rawIdentifier = String(identifier || "").trim();
+    let found = null;
+
+    // Email login can work even when a legacy/missing profile row exists.
+    // Username login still resolves through the protected public RPC.
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawIdentifier)) {
+      found = { auth_email: rawIdentifier.toLowerCase() };
+    } else {
+      found = await Auth.lookup(rawIdentifier);
+      if (!found?.auth_email) throw new Error("Akun tidak ditemukan.");
+    }
 
     const { data, error } = await window.sb.auth.signInWithPassword({
       email: found.auth_email,

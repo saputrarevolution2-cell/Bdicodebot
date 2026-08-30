@@ -1,11 +1,11 @@
 (()=>{
   const cfg=window.PASTELE_CONFIG||{};
   const url=String(cfg.SUPABASE_URL||'').trim().replace(/\/$/,'');
-  const key=String(cfg.SUPABASE_ANON_KEY||'').trim();
+  const key=String(cfg.SUPABASE_ANON_KEY||window.__SUPABASE_ANON_KEY__||'').trim();
   const validUrl=/^https:\/\/[^\s/]+(?:\.[^\s/]+)+$/i.test(url);
   const validKey=key.length>20 && !/YOUR_|service_role|secret/i.test(key);
   if (!validUrl) console.warn('[PasTele] Invalid SUPABASE_URL in js/config.js');
-  if (!validKey) console.warn('[PasTele] Missing/invalid anon or publishable key in js/config.js. Do not use service_role.');
+  if (!validKey) console.warn('[PasTele] Supabase key is missing. Put the anon/publishable key in js/config.js. Never use service_role.');
   window.TC_CONFIG=Object.freeze({SUPABASE_URL:url,SUPABASE_ANON_KEY:key});
   window.sb=(window.supabase&&validUrl&&validKey)?window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
   window.TC={
