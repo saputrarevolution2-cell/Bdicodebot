@@ -101,6 +101,19 @@
         );
       }
 
+      const { data: profile, error: profileError } = await sb
+        .from("profiles")
+        .select("is_banned")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("PROFILE CHECK ERROR:", profileError);
+      } else if (profile?.is_banned === true) {
+        await sb.auth.signOut();
+        throw new Error("Akun ini sedang diblokir.");
+      }
+
       // Confirm the session is actually persisted before the UI redirects.
       const sessionCheck = await sb.auth.getSession();
       if (!sessionCheck.data?.session) {

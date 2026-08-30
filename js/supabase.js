@@ -105,12 +105,57 @@
     profile: async () => {
       const u = await window.TC.user();
       if (!u || !window.sb) return null;
-      const { data } = await window.sb
+      const { data, error } = await window.sb
         .from("profiles")
         .select("*")
         .eq("id", u.id)
         .maybeSingle();
+      if (error) {
+        console.error("[PasTele][DB] profiles:", error);
+        return null;
+      }
       return data || null;
+    },
+
+    reportError: (context, error, extra = {}) => {
+      const payload = {
+        context,
+        message: String(error?.message || error || "Unknown error"),
+        code: error?.code || null,
+        details: error?.details || null,
+        hint: error?.hint || null,
+        page: location.href,
+        ...extra
+      };
+      console.error("[PasTele][BUG]", payload);
+      return payload;
+    },
+
+    dbTest: async () => {
+      if (!window.sb) throw new Error("Supabase client belum tersedia.");
+      const result = { client: true, auth: false, profiles: false, marketplace: false, errors: [] };
+      try {
+        const a = await window.sb.auth.getSession();
+        if (a.error) throw a.error;
+        result.auth = true;
+      } catch (e) {
+        result.errors.push("Auth: " + (e?.message || e));
+      }
+      try {
+        const q = await window.sb.from("profiles").select("id").limit(1);
+        if (q.error) throw q.error;
+        result.profiles = true;
+      } catch (e) {
+        result.errors.push("profiles: " + (e?.message || e));
+      }
+      try {
+        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        if (q.error) throw q.error;
+        result.marketplace = true;
+      } catch (e) {
+        result.errors.push("marketplace_public: " + (e?.message || e));
+      }
+      return result;
     }
   };
 })();
