@@ -1,307 +1,90 @@
 /* =========================================================
-   PasTele Authentication
+   PasTele Authentication — fixed
    ========================================================= */
 window.Auth = {
-  /* =======================================================
-     LOOKUP ACCOUNT
-     Bisa menggunakan:
-     - Username
-     - Gmail / Email
-     ======================================================= */
   lookup: async (identifier) => {
-    if (!window.sb) {
-      throw new Error(
-        "Supabase belum dikonfigurasi. Periksa js/config.js."
-      );
-    }
-    const value = String(identifier || "")
-      .trim()
-      .toLowerCase();
+    if (!window.sb) throw new Error("Supabase belum dikonfigurasi. Isi js/config.js dengan anon/publishable key.");
+    const value = String(identifier || "").trim().toLowerCase();
     if (!value) return null;
-    /* -----------------------------------------------------
-       JIKA INPUT ADALAH EMAIL
-       ----------------------------------------------------- */
-    if (value.includes("@")) {
-      const { data, error } = await sb
-        .from("profiles")
-        .select(`
-          id,
-          username,
-          display_name,
-          auth_email,
-          avatar_url,
-          status,
-          is_banned
-        `)
-        .eq("auth_email", value)
-        .maybeSingle();
-      if (error) {
-        console.error("LOOKUP EMAIL ERROR:", error);
-        throw error;
-      }
-      return data || null;
-    }
-    /* -----------------------------------------------------
-       JIKA INPUT ADALAH USERNAME
-       Gunakan RPC yang sudah kamu buat
-       ----------------------------------------------------- */
-    const { data, error } = await sb.rpc(
-      "resolve_username_login",
-      {
-        p_username: value
-      }
-    );
+
+    // Always use the public RPC. Direct SELECT on profiles is protected by RLS,
+    // so email/username lookup must not depend on an anonymous SELECT policy.
+    const { data, error } = await window.sb.rpc("resolve_username_login", { p_username: value });
     if (error) {
-      console.error("LOOKUP USERNAME ERROR:", error);
+      console.error("ACCOUNT LOOKUP ERROR:", error);
       throw error;
     }
-    if (Array.isArray(data)) {
-      return data[0] || null;
-    }
-    return data || null;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.auth_email) return null;
+    return { auth_email: String(row.auth_email).trim().toLowerCase() };
   },
-  /* =======================================================
-     LOGIN
-     identifier bisa username ATAU Gmail
-     ======================================================= */
+
   login: async (identifier, password) => {
-    if (!window.sb) {
-      throw new Error(
-        "Supabase belum dikonfigurasi. Periksa js/config.js."
-      );
-    }
-    if (!password) {
-      throw new Error("Kata sandi wajib diisi.");
-    }
-    /* -----------------------------------------------------
-       CARI AKUN
-       ----------------------------------------------------- */
+    if (!window.sb) throw new Error("Supabase belum dikonfigurasi. Isi js/config.js dengan anon/publishable key.");
+    if (!String(password || "")) throw new Error("Kata sandi wajib diisi.");
+
     const found = await Auth.lookup(identifier);
-    if (!found || !found.auth_email) {
-      throw new Error("Akun tidak ditemukan.");
-    }
-    const email = String(found.auth_email)
-      .trim()
-      .toLowerCase();
-    /* -----------------------------------------------------
-       CEK STATUS AKUN SEBELUM LOGIN
-       ----------------------------------------------------- */
-    if (
-      found.is_banned === true ||
-      String(found.status || "").toLowerCase() === "banned"
-    ) {
-      throw new Error(
-        "Akun ini sedang dinonaktifkan oleh admin."
-      );
-    }
-    /* -----------------------------------------------------
-       LOGIN SUPABASE
-       ----------------------------------------------------- */
-    const { data, error } =
-      await sb.auth.signInWithPassword({
-        email,
-        password
-      });
-    if (error) {
-      console.error(
-        "SUPABASE LOGIN ERROR:",
-        error
-      );
-      /* Pesan lebih ramah */
-      if (
-        error.message &&
-        error.message.toLowerCase().includes("invalid login")
-      ) {
-        throw new Error(
-          "Gmail atau kata sandi salah."
-        );
-      }
-      throw error;
-    }
-    /* -----------------------------------------------------
-       PASTIKAN SESSION ADA
-       ----------------------------------------------------- */
-    if (!data || !data.session) {
-      throw new Error(
-        "Login berhasil tetapi session belum dibuat. " +
-        "Periksa konfigurasi Email Confirmation Supabase."
-      );
-    }
-    /* -----------------------------------------------------
-       CEK PROFILE TERBARU
-       Jangan bergantung pada TC.profile()
-       ----------------------------------------------------- */
-    try {
-      const { data: profile, error: profileError } =
-        await sb
-          .from("profiles")
-          .select(`
-            id,
-            username,
-            display_name,
-            auth_email,
-            status,
-            is_banned
-          `)
-          .eq("id", data.user.id)
-          .maybeSingle();
-      if (!profileError && profile) {
-        if (
-          profile.is_banned === true ||
-          String(profile.status || "").toLowerCase() === "banned"
-        ) {
-          await sb.auth.signOut();
-          throw new Error(
-            "Akun ini sedang dinonaktifkan oleh admin."
-          );
-        }
-      }
-    } catch (profileError) {
-      /*
-       * Jangan membatalkan login hanya karena
-       * pengecekan profile gagal.
-       *
-       * Session Supabase sudah valid.
-       */
-      if (
-        profileError?.message ===
-        "Akun ini sedang dinonaktifkan oleh admin."
-      ) {
-        throw profileError;
-      }
-      console.warn(
-        "PROFILE CHECK WARNING:",
-        profileError
-      );
-    }
-    /* -----------------------------------------------------
-       LOGIN BERHASIL
-       ----------------------------------------------------- */
-    return {
-      user: data.user,
-      session: data.session,
-      profile: found
-    };
-  },
-  /* =======================================================
-     REGISTER
-     ======================================================= */
-  register: async (
-    username,
-    email,
-    password
-  ) => {
-    if (!window.sb) {
-      throw new Error(
-        "Supabase belum dikonfigurasi. Periksa js/config.js."
-      );
-    }
-    const cleanUsername =
-      String(username || "")
-        .trim()
-        .toLowerCase();
-    const cleanEmail =
-      String(email || "")
-        .trim()
-        .toLowerCase();
-    if (!cleanUsername) {
-      throw new Error(
-        "Username wajib diisi."
-      );
-    }
-    if (!cleanEmail) {
-      throw new Error(
-        "Gmail wajib diisi."
-      );
-    }
-    if (!password) {
-      throw new Error(
-        "Kata sandi wajib diisi."
-      );
-    }
-    /* -----------------------------------------------------
-       CEK USERNAME
-       ----------------------------------------------------- */
-    const {
-      data: available,
-      error: availableError
-    } = await sb.rpc(
-      "username_available",
-      {
-        p_username: cleanUsername
-      }
-    );
-    if (availableError) {
-      console.error(
-        "USERNAME CHECK ERROR:",
-        availableError
-      );
-      throw availableError;
-    }
-    if (available === false) {
-      throw new Error(
-        "Username sudah digunakan."
-      );
-    }
-    /* -----------------------------------------------------
-       CREATE SUPABASE USER
-       ----------------------------------------------------- */
-    const {
-      data,
-      error
-    } = await sb.auth.signUp({
-      email: cleanEmail,
-      password,
-      options: {
-        data: {
-          username: cleanUsername
-        }
-      }
+    if (!found?.auth_email) throw new Error("Akun tidak ditemukan.");
+
+    const { data, error } = await window.sb.auth.signInWithPassword({
+      email: found.auth_email,
+      password: String(password)
     });
     if (error) {
+      console.error("SUPABASE LOGIN ERROR:", error);
+      const msg = String(error.message || "").toLowerCase();
+      if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
+        throw new Error("Gmail/username atau kata sandi salah.");
+      }
       throw error;
     }
-    /* -----------------------------------------------------
-       SIMPAN PROFILE
-       ----------------------------------------------------- */
-    if (data?.user) {
-      const {
-        error: profileError
-      } = await sb
-        .from("profiles")
-        .upsert(
-          {
-            id: data.user.id,
-            username: cleanUsername,
-            auth_email: cleanEmail,
-            display_name: cleanUsername
-          },
-          {
-            onConflict: "id"
-          }
-        );
-      if (profileError) {
-        console.error(
-          "PROFILE CREATE ERROR:",
-          profileError
-        );
-        throw profileError;
+    if (!data?.session) throw new Error("Login belum membuat session. Jika konfirmasi email aktif, konfirmasi email terlebih dahulu.");
+
+    // Profile is created server-side by the auth trigger. Do not block login
+    // if profile RLS prevents an extra client-side read.
+    return { user: data.user, session: data.session, profile: found };
+  },
+
+  register: async (username, email, password) => {
+    if (!window.sb) throw new Error("Supabase belum dikonfigurasi. Isi js/config.js dengan anon/publishable key.");
+    const cleanUsername = String(username || "").trim().toLowerCase();
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleanPassword = String(password || "");
+    if (!/^[a-z0-9_]{3,32}$/.test(cleanUsername)) throw new Error("Username hanya boleh berisi huruf, angka, dan underscore (3–32 karakter).");
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) throw new Error("Email tidak valid.");
+    if (cleanPassword.length < 6) throw new Error("Kata sandi minimal 6 karakter.");
+
+    const { data: available, error: availableError } = await window.sb.rpc("username_available", { p_username: cleanUsername });
+    if (availableError) {
+      console.error("USERNAME CHECK ERROR:", availableError);
+      throw availableError;
+    }
+    if (available !== true) throw new Error("Username sudah digunakan.");
+
+    // The database trigger creates the profile + wallet after auth.users insert.
+    // Do NOT upsert profiles from the browser, especially when email confirmation
+    // is enabled and no authenticated session exists yet.
+    const { data, error } = await window.sb.auth.signUp({
+      email: cleanEmail,
+      password: cleanPassword,
+      options: { data: { username: cleanUsername } }
+    });
+    if (error) {
+      console.error("SUPABASE REGISTER ERROR:", error);
+      const msg = String(error.message || "").toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        throw new Error("Email sudah terdaftar.");
       }
+      throw error;
     }
     return data;
   },
-  /* =======================================================
-     GOOGLE LOGIN
-     ======================================================= */
+
   google: async () => {
-    if (!window.sb) {
-      throw new Error(
-        "Supabase belum dikonfigurasi. Periksa js/config.js."
-      );
-    }
+    if (!window.sb) throw new Error("Supabase belum dikonfigurasi. Isi js/config.js dengan anon/publishable key.");
     const {
       error
-    } = await sb.auth.signInWithOAuth({
+    } = await window.sb.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo:
