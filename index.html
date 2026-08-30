@@ -1,25 +1,179 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="#07111f" name="theme-color"/>
-<title>PasTele — Monetize your links, code &amp; Telegram</title>
-<link href="https://fonts.googleapis.com" rel="preconnect"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<meta name="description" content="PasTele — platform profesional untuk membuat, membagikan, menemukan, dan memonetisasi link, payment link, code, serta akses Telegram.">
+<title>PasTele — Link, Payment Link, Code & Telegram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<link rel="stylesheet" href="css/index.css">
+</head>
+<body class="landing-page">
+<header class="landing-header">
+  <div class="container landing-header-inner">
+    <a class="landing-brand" href="index.html" aria-label="PasTele">
+      <span class="landing-brand-mark"><i class="fa-solid fa-bolt"></i></span>
+      <span>PasTele</span>
+    </a>
+    <div class="landing-header-actions">
+      <a class="btn" href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Masuk</a>
+      <a class="btn primary" href="register.html"><i class="fa-solid fa-user-plus"></i> Mulai Gratis</a>
+    </div>
+  </div>
+</header>
 
-<script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/navbar.js"></script><link href="css/index.css" rel="stylesheet"/></head>
-<body class="landing-page app-page">
-<div id="navbar"></div>
 <main class="landing-main">
-<section class="hero"><div class="container hero-grid"><div><span class="eyebrow"><i class="fa-solid fa-circle-check"></i> Clean • Fast • Telegram-ready</span><h1>Satu tempat untuk <span>link, code &amp; channel</span> kamu.</h1><p>PasTele membantu member membuat PasteLink, membagikan code, dan memonetisasi akses ke channel atau konten digital—dengan pengalaman premium yang sederhana.</p><div class="hero-actions"><a class="btn primary" href="#paste"><i class="fa-solid fa-paper-plane"></i> Buat PasteLink</a><a class="btn" href="#marketplace"><i class="fa-solid fa-store"></i> Jelajahi Marketplace</a></div><div class="trust"><span><i class="fa-solid fa-shield-halved"></i> Kontrol akses</span><span><i class="fa-solid fa-bolt"></i> Responsif</span><span><i class="fa-solid fa-wallet"></i> Siap monetisasi</span></div></div>
-<div class="hero-card"><div class="window"><div class="window-head"><div class="dots"><i></i><i></i><i></i></div><span class="window-title">PasTele Workspace</span><span class="pill page-style-1">LIVE</span></div><div class="mini-content"><div class="mini-row"><span><i class="fa-solid fa-link"></i> PasteLink</span><b>Public</b></div><div class="mini-row"><span><i class="fa-solid fa-code"></i> Code Vault</span><b>Free / Paid</b></div><div class="mini-row"><span><i class="fa-brands fa-telegram"></i> Telegram Channel</span><b>Members</b></div><div class="mini-row"><span><i class="fa-solid fa-chart-line"></i> Monetisasi</span><b>Wallet</b></div></div></div></div></div></section>
-<section class="section" id="paste"><div class="container"><div class="section-head"><span class="eyebrow">PASTELINK</span><h2>Publish sesuatu dalam hitungan detik.</h2><p class="muted">Tulis konten, pilih judul, lalu masuk untuk menyimpan dan mengelolanya dari dashboard.</p></div><div class="card pastebox"><div class="paste-top"><span class="paste-icon"><i class="fa-solid fa-link"></i></span><div><b>Create PasteLink</b><div class="muted page-style-2">Shareable page • optional expiry • view counter</div></div></div><div class="paste-body"><input class="input page-style-3" id="title" placeholder="Judul PasteLink"/><div class="composer" contenteditable="true" id="content"></div><div class="paste-foot"><span class="muted page-style-4"><i class="fa-solid fa-lock"></i> Data tersimpan setelah login</span><span class="spacer"></span><a class="btn" href="login.html">Login</a><a class="btn primary" href="register.html">Registrasi</a><button class="btn primary" id="publish"><i class="fa-solid fa-paper-plane"></i> Publish</button></div></div></div></div></section>
-<section class="section" id="monetize"><div class="container"><div class="section-head"><span class="eyebrow">MONETISASI</span><h2>Turn your link into a digital asset.</h2><p class="muted">Buat listing Free atau Paid untuk PasteLink, code, channel, dan group. Member dapat menemukan, membeli, dan mengakses produk sesuai aturan yang kamu tetapkan.</p></div><div class="features"><article class="card feature"><i class="fa-solid fa-link"></i><h3>PasteLink</h3><p>Jual atau bagikan halaman berisi teks, resource, dokumentasi, atau link penting.</p></article><article class="card feature"><i class="fa-solid fa-code"></i><h3>Code</h3><p>Publikasikan snippet, template, source, konfigurasi, atau paket digital dengan akses Free/Paid.</p></article><article class="card feature"><i class="fa-brands fa-telegram"></i><h3>Channel Telegram</h3><p>Promosikan akses channel atau group melalui listing marketplace dan kelola delivery sesuai produk.</p></article><article class="card feature"><i class="fa-solid fa-wallet"></i><h3>Wallet &amp; transaksi</h3><p>Penjualan tercatat sebagai transaksi sehingga saldo dan riwayat dapat dikelola dari dashboard.</p></article><article class="card feature"><i class="fa-solid fa-chart-simple"></i><h3>Discovery</h3><p>Produk yang dipublikasikan dapat tampil di marketplace dan bersaing berdasarkan views serta performa.</p></article><article class="card feature"><i class="fa-solid fa-sliders"></i><h3>Kontrol produk</h3><p>Atur judul, kategori, tipe, harga, deskripsi, delivery content, dan status publikasi.</p></article></div></div></section>
-<section class="section" id="marketplace"><div class="container"><div class="section-head"><span class="eyebrow">MARKETPLACE</span><h2>Temukan karya member PasTele.</h2><p class="muted">Kategori lengkap untuk link, paste, code, channel, dan group—Free maupun Paid.</p></div><div class="marketbar"><div class="muted"><i class="fa-solid fa-layer-group"></i> Top 10 berdasarkan performa saat ini</div><a class="btn" href="marketplace.html">Lihat marketplace lengkap <i class="fa-solid fa-arrow-right"></i></a></div><div class="market-grid" id="market"></div><div class="topgrid"><div class="card topcard"><h3><i class="fa-solid fa-trophy"></i> Top Link / Paste</h3><div id="topLink"></div></div><div class="card topcard"><h3><i class="fa-solid fa-code"></i> Top Code</h3><div id="topCode"></div></div><div class="card topcard"><h3><i class="fa-brands fa-telegram"></i> Top Channel</h3><div id="topChannel"></div></div></div></div></section>
-<section class="section" id="cara-kerja"><div class="container"><div class="section-head"><span class="eyebrow">CARA KERJA</span><h2>Simple untuk creator, jelas untuk buyer.</h2><p class="muted">Dari membuat konten sampai monetisasi, setiap bagian dibuat untuk alur yang mudah dipahami.</p></div><div class="steps"><div class="card step"><span class="num">01</span><h3>Registrasi</h3><p class="muted">Buat akun dengan email dan username. Setelah login, dashboard menjadi pusat aktivitasmu.</p></div><div class="card step"><span class="num">02</span><h3>Buat konten</h3><p class="muted">Buat PasteLink atau produk marketplace. Pilih tipe, kategori, akses Free/Paid, dan detail delivery.</p></div><div class="card step"><span class="num">03</span><h3>Publikasikan</h3><p class="muted">Konten publik dapat dibagikan melalui link. Produk marketplace tampil ketika statusnya sudah dipublikasikan.</p></div><div class="card step"><span class="num">04</span><h3>Monetisasi</h3><p class="muted">Untuk produk berbayar, transaksi dan saldo dicatat oleh database sehingga creator dapat memantau performa.</p></div></div><div class="cta page-style-5"><h2>Siap membangun link yang punya nilai?</h2><p>Mulai dari satu PasteLink, lalu kembangkan menjadi katalog digital milikmu.</p><a class="btn" href="register.html"><i class="fa-solid fa-user-plus"></i> Buat akun gratis</a></div></div></section>
-</main>
-<footer class="footer"><div class="container footgrid"><div><a class="brand" href="index.html"><span class="mark"><i class="fa-brands fa-telegram"></i></span>PasTele</a><p class="muted">Platform untuk publish, share, discover, dan monetize link, code, serta channel Telegram.</p></div><div><h4>Platform</h4><a href="#paste">PasteLink</a><a href="#monetize">Monetisasi</a><a href="marketplace.html">Marketplace</a><a href="dashboard.html">Dashboard</a></div><div><h4>Creator</h4><a href="paste.html">Create Paste</a><a href="create-product.html">Create Product</a><a href="my-products.html">My Products</a><a href="wallet.html">Wallet</a></div><div><h4>Account</h4><a href="login.html">Login</a><a href="register.html">Registrasi</a><a href="settings.html">Settings</a><a href="profile.html">Profile</a></div></div><div class="container copyright"><span>© 2026 PasTele. Monetisasi Your Link And Code/Channel Telegram.</span><span><i class="fa-solid fa-shield-halved"></i> Built for responsible digital sharing.</span></div></footer>
-<div id="toast"></div>
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow"><i class="fa-solid fa-sparkles"></i> Professional digital publishing platform</span>
+      <h1>Satu platform untuk <span>link, payment link, code &amp; Telegram.</span></h1>
+      <p>PasTele membantu creator, developer, seller, dan pemilik komunitas membuat halaman digital, membagikan resource, menjual produk, mengelola akses, serta memantau transaksi dari satu workspace yang clean dan modern.</p>
+      <div class="hero-actions">
+        <a class="btn primary btn-lg" href="register.html"><i class="fa-solid fa-rocket"></i> Mulai sekarang</a>
+        <a class="btn btn-lg" href="marketplace.html"><i class="fa-solid fa-store"></i> Jelajahi Marketplace</a>
+      </div>
+      <div class="trust">
+        <span><i class="fa-solid fa-shield-halved"></i> Kontrol akses</span>
+        <span><i class="fa-solid fa-mobile-screen-button"></i> Android ready</span>
+        <span><i class="fa-solid fa-display"></i> Desktop ready</span>
+        <span><i class="fa-solid fa-wallet"></i> Siap monetisasi</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="window">
+          <div class="window-head">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="window-title">PasTele Workspace</span>
+            <span class="pill">LIVE</span>
+          </div>
+          <div class="dashboard-preview">
+            <div class="preview-kpi"><span>Total revenue</span><b>Rp 12,8 jt</b><small><i class="fa-solid fa-arrow-trend-up"></i> +24,8%</small></div>
+            <div class="preview-list">
+              <div><span class="preview-icon"><i class="fa-solid fa-link"></i></span><span><b>Payment Link</b><small>Instant checkout</small></span><strong>Aktif</strong></div>
+              <div><span class="preview-icon"><i class="fa-solid fa-code"></i></span><span><b>Code Product</b><small>Free / Paid</small></span><strong>12 item</strong></div>
+              <div><span class="preview-icon"><i class="fa-brands fa-telegram"></i></span><span><b>Telegram Access</b><small>Channel / Group</small></span><strong>1.2K</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="floating-card floating-one"><i class="fa-solid fa-circle-check"></i><span><b>Checkout confirmed</b><small>Payment berhasil diproses</small></span></div>
+      <div class="floating-card floating-two"><i class="fa-solid fa-chart-line"></i><span><b>Analytics</b><small>Monitor performa real-time</small></span></div>
+    </div>
+  </div>
+</section>
 
-<script src="js/index.js"></script></body></html>
+<section class="section intro-section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">APA ITU PASTELE?</span>
+      <h2>Semua kebutuhan digital publishing dalam satu tempat.</h2>
+      <p class="muted">Bukan sekadar halaman link. PasTele dirancang sebagai workspace untuk membuat, menjual, membagikan, dan mengelola aset digital yang terhubung dengan ekosistem Telegram.</p>
+    </div>
+    <div class="feature-grid">
+      <article class="card feature feature-large"><span class="feature-icon"><i class="fa-solid fa-link"></i></span><h3>Link &amp; Landing Page</h3><p>Buat halaman yang rapi untuk membagikan resource, profil, katalog, campaign, atau tujuan digital lainnya.</p><span class="feature-tag"><i class="fa-solid fa-arrow-up-right-from-square"></i> Shareable</span></article>
+      <article class="card feature feature-large"><span class="feature-icon"><i class="fa-solid fa-credit-card"></i></span><h3>Payment Link</h3><p>Gunakan halaman produk dan alur pembayaran untuk menawarkan item digital atau akses berbayar dengan lebih terstruktur.</p><span class="feature-tag"><i class="fa-solid fa-bolt"></i> Checkout ready</span></article>
+      <article class="card feature feature-large"><span class="feature-icon"><i class="fa-solid fa-code"></i></span><h3>Code Marketplace</h3><p>Publikasikan source code, bot, template, snippet, konfigurasi, atau paket digital dengan model Free maupun Paid.</p><span class="feature-tag"><i class="fa-solid fa-box-open"></i> Digital product</span></article>
+      <article class="card feature feature-large"><span class="feature-icon"><i class="fa-brands fa-telegram"></i></span><h3>Channel &amp; Group</h3><p>Promosikan dan kelola listing akses komunitas Telegram dengan informasi produk yang jelas bagi calon member.</p><span class="feature-tag"><i class="fa-solid fa-users"></i> Community</span></article>
+    </div>
+  </div>
+</section>
+
+<section class="section monetization-section" id="monetize">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">MONETISASI</span>
+      <h2>Ubah traffic dan karya digital menjadi aset yang bernilai.</h2>
+      <p class="muted">Bangun katalog yang mudah ditemukan, tentukan akses Free atau Paid, lalu kelola hasil penjualan melalui wallet dan riwayat transaksi.</p>
+    </div>
+    <div class="monetize-grid">
+      <article class="card monetize-card"><div class="number">01</div><i class="fa-solid fa-link"></i><h3>Monetize Link</h3><p>Gunakan link sebagai pintu menuju produk, resource, campaign, atau halaman informasi yang kamu miliki.</p></article>
+      <article class="card monetize-card"><div class="number">02</div><i class="fa-solid fa-money-check-dollar"></i><h3>Payment Link</h3><p>Siapkan penawaran berbayar dengan harga dan informasi produk yang jelas agar buyer lebih mudah melakukan checkout.</p></article>
+      <article class="card monetize-card"><div class="number">03</div><i class="fa-solid fa-file-code"></i><h3>Sell Code</h3><p>Jual bot, source code, template, automation, library, atau resource developer secara lebih profesional.</p></article>
+      <article class="card monetize-card"><div class="number">04</div><i class="fa-brands fa-telegram"></i><h3>Sell Access</h3><p>Tampilkan produk channel atau group dengan detail akses yang transparan dan mudah dipahami buyer.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="section workflow-section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">UNTUK CREATOR &amp; SELLER</span>
+      <h2>Dari ide sampai transaksi, alurnya sederhana.</h2>
+    </div>
+    <div class="steps">
+      <div class="card step"><span class="num">01</span><div class="step-icon"><i class="fa-solid fa-user-plus"></i></div><h3>Buat akun</h3><p class="muted">Registrasi dan masuk ke workspace personal untuk mengelola semua aktivitas.</p></div>
+      <div class="card step"><span class="num">02</span><div class="step-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div><h3>Buat produk</h3><p class="muted">Tentukan tipe, judul, kategori, deskripsi, harga, dan detail delivery yang diperlukan.</p></div>
+      <div class="card step"><span class="num">03</span><div class="step-icon"><i class="fa-solid fa-share-nodes"></i></div><h3>Publikasikan</h3><p class="muted">Bagikan link produk atau tampilkan di marketplace agar mudah ditemukan audience.</p></div>
+      <div class="card step"><span class="num">04</span><div class="step-icon"><i class="fa-solid fa-chart-pie"></i></div><h3>Kelola &amp; monitor</h3><p class="muted">Pantau produk, pembelian, saldo, transaksi, dan performa dari dashboard.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section marketplace-preview">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">MARKETPLACE</span>
+      <h2>Temukan produk digital dari creator PasTele.</h2>
+      <p class="muted">Jelajahi link, code, channel, dan group. Tersedia pilihan Free maupun Paid sesuai produk.</p>
+    </div>
+    <div class="marketbar"><span class="muted"><i class="fa-solid fa-chart-simple"></i> Produk populer berdasarkan performa</span><a class="btn" href="marketplace.html">Buka marketplace <i class="fa-solid fa-arrow-right"></i></a></div>
+    <div class="market-grid" id="market"></div>
+    <div class="topgrid">
+      <div class="card topcard"><h3><i class="fa-solid fa-trophy"></i> Top Link</h3><div id="topLink"></div></div>
+      <div class="card topcard"><h3><i class="fa-solid fa-code"></i> Top Code</h3><div id="topCode"></div></div>
+      <div class="card topcard"><h3><i class="fa-brands fa-telegram"></i> Top Channel</h3><div id="topChannel"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section security-section">
+  <div class="container">
+    <div class="security-panel">
+      <div><span class="eyebrow"><i class="fa-solid fa-shield-halved"></i> BUILT FOR CONTROL</span><h2>Clean di depan. Terstruktur di belakang.</h2><p>PasTele memisahkan pengalaman publik, creator workspace, marketplace, wallet, dan administrasi agar alur platform tetap rapi serta mudah dikembangkan.</p></div>
+      <div class="security-points">
+        <span><i class="fa-solid fa-lock"></i> Access control</span>
+        <span><i class="fa-solid fa-receipt"></i> Transaction history</span>
+        <span><i class="fa-solid fa-wallet"></i> Wallet management</span>
+        <span><i class="fa-solid fa-gauge-high"></i> Performance tracking</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section final-cta">
+  <div class="container">
+    <div class="cta">
+      <div><span class="eyebrow">START TODAY</span><h2>Bangun halaman digital yang terlihat profesional.</h2><p>Mulai gratis, buat produk pertama, lalu kembangkan menjadi katalog digital yang bisa kamu kelola sendiri.</p></div>
+      <div class="cta-actions"><a class="btn light btn-lg" href="register.html"><i class="fa-solid fa-rocket"></i> Buat akun gratis</a><a class="btn ghost btn-lg" href="marketplace.html"><i class="fa-solid fa-store"></i> Lihat produk</a></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer landing-footer">
+  <div class="container">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <a class="landing-brand" href="index.html"><span class="landing-brand-mark"><i class="fa-solid fa-bolt"></i></span><span>PasTele</span></a>
+        <p>Platform digital untuk publish, share, discover, dan monetize link, payment link, code, serta akses Telegram.</p>
+        <span class="footer-status"><i class="fa-solid fa-circle"></i> Platform ready</span>
+      </div>
+      <div class="footer-col"><h4>Platform</h4><a href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a><a href="wallet.html"><i class="fa-solid fa-wallet"></i> Wallet</a></div>
+      <div class="footer-col"><h4>Creator</h4><a href="paste.html"><i class="fa-solid fa-plus"></i> Create</a><a href="create-product.html"><i class="fa-solid fa-box"></i> Create Product</a><a href="my-products.html"><i class="fa-solid fa-layer-group"></i> My Products</a></div>
+      <div class="footer-col"><h4>Account</h4><a href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Login</a><a href="register.html"><i class="fa-solid fa-user-plus"></i> Registrasi</a><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></div>
+    </div>
+    <div class="copyright"><span>© 2026 PasTele. All rights reserved.</span><span><i class="fa-solid fa-shield-halved"></i> Built for responsible digital sharing.</span></div>
+  </div>
+</footer>
+<div id="toast"></div>
+<script src="js/index.js"></script>
+</body>
+</html>
