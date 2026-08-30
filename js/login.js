@@ -1,4 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
+  if (!window.sb) {
+    const msg = "Supabase belum terkonfigurasi. Isi js/config.js dengan anon/publishable key.";
+    const box = document.getElementById("loginStep1");
+    const card = box?.closest(".auth-card") || document.body;
+    const el = document.createElement("div");
+    el.className = "auth-error";
+    el.style.display = "flex";
+    el.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><span>${msg}</span>`;
+    card.prepend(el);
+  }
   const step1 = document.getElementById("loginStep1");
   const step2 = document.getElementById("loginStep2");
   const identifier = document.getElementById("identifier");
