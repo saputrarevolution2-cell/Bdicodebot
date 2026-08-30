@@ -80,6 +80,7 @@
     rendering = true;
     const d=await diagnostics();
     const cfg=window.TC_CONFIG||window.PASTELE_CONFIG||{};
+    const rt=window.__PASTELE_RUNTIME__||{};
     const dbOk=d.db.client&&d.db.auth&&d.db.profiles&&d.db.marketplace;
     body.innerHTML=`<div class="ptBugGrid">
       <div class="ptBugCard"><div class="ptBugLabel">Page</div><div class="ptBugValue">${esc(location.pathname)}</div></div>
@@ -90,7 +91,7 @@
       <div class="ptBugCard"><div class="ptBugLabel">Network Bugs</div><div class="ptBugValue ${state.network.length?'bad':'ok'}">${state.network.length}</div></div>
     </div>
     <div class="ptBugSec"><h4>Database</h4><div class="ptBugLog">${esc(JSON.stringify(d.db,null,2))}${d.authErr?'\nAuth error: '+esc(d.authErr):''}</div></div>
-    <div class="ptBugSec"><h4>Config</h4><div class="ptBugLog">${esc(cfg.SUPABASE_URL||'Missing URL')}\nKey: ${cfg.SUPABASE_ANON_KEY?'Present':'Missing'}</div></div>
+    <div class="ptBugSec"><h4>Config / Runtime</h4><div class="ptBugLog">URL: ${esc(cfg.SUPABASE_URL||'Missing URL')}\nKey: ${cfg.SUPABASE_ANON_KEY?'Present':'Missing'}\nconfig.js loaded: ${rt.configLoaded?'YES':'NO'}\nSupabase library: ${rt.supabaseLibraryLoaded?'YES':'NO'}\nURL valid: ${rt.validUrl?'YES':'NO'}\nKey valid: ${rt.validKey?'YES':'NO'}\nClient ready: ${rt.clientReady?'YES':'NO'}${rt.clientError?'\nClient error: '+esc(rt.clientError):''}</div></div>
     <div class="ptBugSec"><h4>Errors</h4><div class="ptBugLog">${state.errors.length?state.errors.map(x=>`[${esc(x.time)}] ${esc(x.msg)}`).join('\n'):'No errors captured.'}</div></div>
     <div class="ptBugSec"><h4>Network / Supabase HTTP</h4><div class="ptBugLog">${state.network.length?state.network.map(x=>`[${esc(x.time)}] ${esc(x.msg)}`).join('\n'):'No failed HTTP requests captured.'}</div></div>
     <div class="ptBugSec"><h4>Warnings</h4><div class="ptBugLog">${state.warnings.length?state.warnings.map(x=>`[${esc(x.time)}] ${esc(x.msg)}`).join('\n'):'No warnings.'}</div></div>

@@ -5,6 +5,12 @@
   "use strict";
 
   const cfg = window.PASTELE_CONFIG || {};
+  window.__PASTELE_RUNTIME__ = {
+    configLoaded: !!window.PASTELE_CONFIG,
+    supabaseLibraryLoaded: !!window.supabase,
+    configUrl: String(window.PASTELE_CONFIG?.SUPABASE_URL || ""),
+    configKeyPresent: !!String(window.PASTELE_CONFIG?.SUPABASE_ANON_KEY || "").trim()
+  };
   const url = String(cfg.SUPABASE_URL || "").trim().replace(/\/+$/, "");
   const key = String(
     cfg.SUPABASE_ANON_KEY ||
@@ -33,6 +39,8 @@
   });
 
   window.sb = null;
+  window.__PASTELE_RUNTIME__.validUrl = validUrl;
+  window.__PASTELE_RUNTIME__.validKey = validKey;
 
   if (window.supabase && validUrl && validKey) {
     try {
@@ -46,9 +54,12 @@
         }
       });
     } catch (e) {
+      window.__PASTELE_RUNTIME__.clientError = String(e?.message || e);
       console.error("[PasTele] Failed to create Supabase client:", e);
     }
   }
+
+  window.__PASTELE_RUNTIME__.clientReady = !!window.sb;
 
   window.TC = {
     configured: () => !!window.sb,
