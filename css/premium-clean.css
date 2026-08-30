@@ -55,3 +55,53 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 @media(max-width:800px){.container,.dash-container{width:calc(100% - 24px)}.auth-shell{padding:26px 12px 18px}.auth-card{padding:24px 18px!important}.hero{padding-top:38px!important}.admin-side{position:static}.dash-head{flex-direction:column;align-items:stretch}}
 @media(max-width:560px){body{font-size:14px}.auth-card h1{font-size:24px}.auth-logo{width:52px;height:52px}.card{padding:16px}.btn{min-height:44px}.landing-header-actions .btn{padding-inline:10px}.landing-header-actions .btn:first-child{font-size:0}.landing-header-actions .btn:first-child i{font-size:15px}.table{min-width:620px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* =========================================================
+   TeleCod SaaS Premium — Universal final visual system
+   ========================================================= */
+:root{
+  --saas-bg:#f7f9fc;
+  --saas-surface:#ffffff;
+  --saas-surface-soft:#f9fafb;
+  --saas-text:#101828;
+  --saas-muted:#667085;
+  --saas-line:#e4e7ec;
+  --saas-brand:#229ed9;
+  --saas-brand-2:#157fba;
+  --saas-radius:16px;
+  --saas-shadow:0 10px 32px rgba(16,24,40,.055);
+  --saas-shadow-lg:0 24px 70px rgba(16,24,40,.10)
+}
+html[data-theme="dark"]{
+  --saas-bg:#080d14;--saas-surface:#101923;--saas-surface-soft:#151f2a;--saas-text:#f5f7fa;--saas-muted:#98a2b3;--saas-line:#263442;
+  --saas-shadow:0 12px 38px rgba(0,0,0,.20);--saas-shadow-lg:0 26px 80px rgba(0,0,0,.30)
+}
+html,body{background:var(--saas-bg);color:var(--saas-text)}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
+body:before{background:radial-gradient(720px 400px at 0 -12%,rgba(34,158,217,.09),transparent 68%),radial-gradient(600px 360px at 100% 0,rgba(99,102,241,.06),transparent 68%)}
+.container,.dash-container{max-width:1200px}
+.card,.panel,.stat-card,.auth-card,.security-panel,.cta,.market-card,.product-card{border:1px solid var(--saas-line);background:var(--saas-surface);border-radius:var(--saas-radius);box-shadow:var(--saas-shadow);}
+.card:hover,.panel:hover,.stat-card:hover{border-color:color-mix(in srgb,var(--saas-brand) 22%,var(--saas-line));box-shadow:var(--saas-shadow-lg)}
+.btn{min-height:42px;padding:10px 15px;border-radius:11px;font-weight:750;letter-spacing:-.01em;border:1px solid var(--saas-line);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(16,24,40,.08)}
+.btn:active{transform:translateY(0)}
+.btn.primary,.primary{background:linear-gradient(135deg,var(--saas-brand),var(--saas-brand-2));border-color:transparent;box-shadow:0 8px 22px rgba(34,158,217,.18)}
+.input,.select,.textarea,.composer{min-height:46px;border-radius:11px;border:1px solid var(--saas-line);background:var(--saas-surface);color:var(--saas-text);box-shadow:0 1px 2px rgba(16,24,40,.02)}
+.input:focus,.select:focus,.textarea:focus,.composer:focus{outline:0;border-color:var(--saas-brand);box-shadow:0 0 0 4px rgba(34,158,217,.10)}
+.field label{font-weight:700;color:var(--saas-muted)}
+.badge,.chip,.eyebrow{border:1px solid var(--saas-line);background:var(--saas-surface-soft);color:var(--saas-muted);font-weight:800}
+.table-wrap{border:1px solid var(--saas-line)!important;border-radius:14px!important;background:var(--saas-surface)}
+.table th{background:var(--saas-surface-soft)!important;color:var(--saas-muted)!important;font-weight:800}
+.table td,.list-item{border-color:var(--saas-line)!important}
+.footer{background:var(--saas-surface)!important;border-color:var(--saas-line)!important}
+.navbar,.topbar,.app-navbar,.landing-header{background:color-mix(in srgb,var(--saas-surface) 90%,transparent)!important;border-color:var(--saas-line)!important;box-shadow:0 5px 24px rgba(16,24,40,.045)!important;backdrop-filter:blur(18px)}
+.navbar a,.topbar a{font-weight:650}
+.auth-card{box-shadow:var(--saas-shadow-lg);border-radius:20px}
+.auth-card:before{height:3px;background:linear-gradient(90deg,var(--saas-brand),#667eea,var(--saas-brand))}
+.auth-logo{border-radius:15px}
+.stat-card{transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.stat-card:hover{transform:translateY(-2px)}
+.admin-side{box-shadow:var(--saas-shadow)}
+.admin-nav a{font-weight:650}
+.modal,.dialog,.sheet{background:var(--saas-surface)!important;border-color:var(--saas-line)!important;box-shadow:var(--saas-shadow-lg)!important}
+@media(max-width:700px){.container,.dash-container{width:calc(100% - 24px)}.card,.panel{border-radius:14px}.section{padding-block:26px}.btn{min-height:44px}.input,.select,.textarea{min-height:46px}}
