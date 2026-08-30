@@ -1,7 +1,91 @@
+document.addEventListener('DOMContentLoaded', async () => {
+  const $ = id => document.getElementById(id);
 
-document.addEventListener('DOMContentLoaded',async()=>{
- const $=id=>document.getElementById(id), toast=m=>{let t=$('toast');t.textContent=m;t.className='toast';clearTimeout(window.__t);window.__t=setTimeout(()=>t.className='',3200)};
- $('publish').onclick=async()=>{const u=await TC.user();if(!u){toast('Silakan login atau registrasi terlebih dahulu.');setTimeout(()=>location.href='login.html',700);return}const title=$('title').value.trim(),content=$('content').innerHTML.trim();if(!title||!content)return toast('Isi judul dan konten terlebih dahulu.');if(!sb)return toast('Database belum dikonfigurasi.');let slug=crypto.randomUUID().replaceAll('-','').slice(0,12);const {error}=await sb.from('pastelinks').insert({user_id:u.id,slug,title,content_html:content,visibility:'public',expires_at:null,description:'',tags:[],allow_comments:true,allow_download:true,show_raw:true,anonymous:false});if(error)return toast(error.message);toast('PasteLink berhasil dibuat.');setTimeout(()=>location.href='paste-view.html?slug='+encodeURIComponent(slug),700)};
- async function market(){const box=$('market');if(!sb){box.innerHTML='<div class="card" style="grid-column:1/-1;padding:25px;text-align:center" class="muted">Hubungkan Supabase untuk menampilkan produk member secara live.</div>';return}let {data,error}=await sb.from('marketplace_public').select('*').order('views',{ascending:false}).limit(12);if(error){box.innerHTML='<div class="card" style="grid-column:1/-1;padding:25px;text-align:center;color:#718096">Marketplace siap, tetapi database belum mengembalikan data.</div>';return}data=data||[];box.innerHTML=data.slice(0,8).map(x=>{let ic=x.type==='code'?'fa-code':x.type==='channel'?'fa-broadcast-tower':x.type==='group'?'fa-users':'fa-link';return `<a class="card product" href="product.html?slug=${encodeURIComponent(x.slug||'')}"><div class="thumb"><i class="fa-solid ${ic}"></i></div><div class="pbody"><span class="pill">${TC.esc(x.access_type||'free').toUpperCase()}</span><h3>${TC.esc(x.title||'Untitled')}</h3><div class="meta"><span class="muted">${TC.esc(x.category||'General')}</span><span class="price">${x.price?TC.money(x.price):'FREE'}</span></div></div></a>`}).join('')||'<div class="card" style="grid-column:1/-1;padding:25px;text-align:center;color:#718096">Belum ada produk publik dari member.</div>';let sets=[['topLink',['link','paste','pastelink'],'topLink'],['topCode',['code'],'topCode'],['topChannel',['channel'],'topChannel']];for(const [id,types,target] of sets){let arr=data.filter(x=>types.includes(String(x.type||'').toLowerCase())).sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,10);$(target).innerHTML=arr.map((x,i)=>`<div class="topitem"><span class="rank">#${i+1}</span><span><b>${TC.esc(x.title||'Untitled')}</b><small>${Number(x.views||0).toLocaleString('id-ID')} views · ${x.price?TC.money(x.price):'FREE'}</small></span></div>`).join('')||'<div class="muted">Belum ada data.</div>'}}
- market();
+  function esc(value) {
+    if (window.TC?.esc) return TC.esc(value);
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+
+  function money(value) {
+    if (window.TC?.money) return TC.money(value);
+    return value ? `Rp ${Number(value).toLocaleString('id-ID')}` : 'FREE';
+  }
+
+  function empty(message) {
+    return `<div class="card landing-empty">${esc(message)}</div>`;
+  }
+
+  async function market() {
+    const box = $('market');
+    if (!box) return;
+
+    if (typeof sb === 'undefined' || !sb) {
+      box.innerHTML = empty('Marketplace siap. Hubungkan database untuk menampilkan produk secara live.');
+      return;
+    }
+
+    try {
+      const { data, error } = await sb
+        .from('marketplace_public')
+        .select('*')
+        .order('views', { ascending: false })
+        .limit(12);
+
+      if (error) throw error;
+
+      const items = data || [];
+      const icon = type => ({
+        code: 'fa-code',
+        channel: 'fa-broadcast-tower',
+        group: 'fa-users',
+        link: 'fa-link',
+        payment: 'fa-credit-card'
+      }[String(type || '').toLowerCase()] || 'fa-cube');
+
+      box.innerHTML = items.slice(0, 8).map(x => `
+        <a class="card product" href="product.html?slug=${encodeURIComponent(x.slug || '')}">
+          <div class="thumb"><i class="fa-solid ${icon(x.type)}"></i></div>
+          <div class="pbody">
+            <span class="pill">${esc(x.access_type || 'free').toUpperCase()}</span>
+            <h3>${esc(x.title || 'Untitled')}</h3>
+            <div class="meta">
+              <span class="muted">${esc(x.category || 'General')}</span>
+              <span class="price">${x.price ? money(x.price) : 'FREE'}</span>
+            </div>
+          </div>
+        </a>
+      `).join('') || empty('Belum ada produk publik dari member.');
+
+      const sets = [
+        ['topLink', ['link', 'paste', 'pastelink', 'payment']],
+        ['topCode', ['code']],
+        ['topChannel', ['channel']]
+      ];
+
+      for (const [target, types] of sets) {
+        const node = $(target);
+        if (!node) continue;
+
+        const arr = items
+          .filter(x => types.includes(String(x.type || '').toLowerCase()))
+          .sort((a, b) => Number(b.views || 0) - Number(a.views || 0))
+          .slice(0, 10);
+
+        node.innerHTML = arr.map((x, i) => `
+          <div class="topitem">
+            <span class="rank">#${i + 1}</span>
+            <span>
+              <b>${esc(x.title || 'Untitled')}</b>
+              <small>${Number(x.views || 0).toLocaleString('id-ID')} views · ${x.price ? money(x.price) : 'FREE'}</small>
+            </span>
+          </div>
+        `).join('') || '<div class="muted">Belum ada data.</div>';
+      }
+    } catch (error) {
+      console.error('[PasTele] Marketplace:', error);
+      box.innerHTML = empty('Marketplace belum dapat memuat data saat ini.');
+    }
+  }
+
+  market();
 });
