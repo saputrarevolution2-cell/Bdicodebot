@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
       identifier.focus();
       return;
     }
-    const btn = step1.querySelector("button[type='submit']");
+    const btn = step1.querySelector("button[type='submit'], button:not([type])");
     if (!btn) return;
     const oldHTML = btn.innerHTML;
     btn.disabled = true;
@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
       password.focus();
       return;
     }
-    const btn = step2.querySelector("button[type='submit']");
+    const btn = step2.querySelector("button[type='submit'], button:not([type])");
     if (!btn) return;
     const oldHTML = btn.innerHTML;
     btn.disabled = true;
