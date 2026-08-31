@@ -3,3 +3,7 @@
 @import url("../css/pastele-polish.css");
 @import url("../css/admin.css");
 .page-style-1{margin-top:25px;font-size:12px}
+.bot-admin-head{margin-bottom:14px}.bot-admin-head h2{margin:0 0 4px}.pt-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}.pt-toolbar .input{flex:1;min-width:170px}
+.bot-list{display:grid;gap:9px}.bot-row{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--pc-line);border-radius:14px;background:var(--pc-surface-2)}
+.bot-avatar{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(42,171,238,.10);color:var(--pc-brand);flex:0 0 40px}.bot-info{min-width:0;flex:1}.bot-info strong{display:block}.bot-info span{display:block;color:var(--pc-muted);font-size:12px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:650px){.bot-row{flex-wrap:wrap}.bot-row .pt-status{margin-left:auto}.bot-row .btn{width:100%}}
