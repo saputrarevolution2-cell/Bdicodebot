@@ -1,29 +1,10 @@
-# PasTele FULL FIX
+# PasTele FULL FIX — 2026-08-31
 
-## 1. Database
-Di Supabase SQL Editor jalankan:
-1. `supabase/FIXED-MIGRATION.sql`
-2. Jika file tersebut sudah pernah dijalankan, tetap jalankan ulang bagian FULL FIX di file tersebut (atau langsung `supabase/PASTELE-FULL-FIX.sql`).
+1. Upload the complete folder to hosting.
+2. In Supabase SQL Editor, run `supabase/schema.sql`, then `supabase/FIXED-MIGRATION.sql`, then `supabase/PASTELE-FULL-FIX.sql` if your database is being initialized from scratch.
+3. If the database already contains the previous PasTele migration, run only the latest PASTELE-FULL-FIX.sql.
+4. Set the admin user by setting `profiles.is_admin=true` or `profiles.role='admin'`. The admin can enter using the normal username/Gmail login and then open `/admin/index.html`.
+5. Configure Supabase Auth Site URL/Redirect URLs for the deployed domain.
+6. Configure `js/config.js` with the project URL and anon/publishable key.
 
-Jangan masukkan service_role/secret key ke frontend.
-
-## 2. Fitur yang diperbaiki
-- Marketplace publik mengambil semua member: Pastelink, Product/Link, Code, Channel, Group.
-- Create yang dipublish masuk marketplace.
-- Dashboard tidak lagi memakai angka/chart random; chart 30 hari berasal dari analytics_events + paid orders.
-- Interaksi Views / Like / Share / Follower memakai data database.
-- My Links dipisah Pastelink, Code, Channel/Group, dan Product.
-- Purchases dipisah per tipe dan dapat dihapus dari daftar via RPC.
-- Wallet KPI dan breakdown memakai data wallet_transactions.
-- Withdraw punya pilihan nominal instant, progress 0-50% hijau, 50-100% kuning, 100% merah, serta payment method tersimpan.
-- Transactions menggabungkan buy, sell, wallet dan withdraw.
-- Notifikasi membaca notifications + siaran admin, termasuk gambar dan baca selengkapnya.
-- Profile memuat identitas, username Telegram, WhatsApp, Gmail, konten, dan ubah password dengan hide/show.
-- Settings menyimpan bank/e-wallet ke database dan menyediakan daftar provider Indonesia/internasional.
-- Admin dapat mengatur social media dan publish announcement.
-- Navbar dan footer memiliki Log out dan social media.
-- Semua halaman mendapat footer bersama dan responsive Android/Desktop.
-- Admin guard memakai pemeriksaan server-side `assert_admin()`.
-
-## 3. Catatan
-Grafik 30 hari hanya dapat menampilkan event historis yang memang tersimpan. Total counter lama tetap dipertahankan; database tidak diisi angka palsu untuk membuat grafik terlihat ramai.
+The final frontend uses one shared footer, persistent light/dark theme, unified member marketplace, separated My Links/Purchases/Transactions sections, analytics widgets, wallet/withdraw visuals, admin social/announcement publishing, and responsive Android/desktop layouts.
