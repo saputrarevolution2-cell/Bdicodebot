@@ -6,3 +6,34 @@
 .page-style-3{color:var(--cyan)}
 .page-style-4{color:var(--cyan)}
 .page-style-5{margin-top:25px;font-size:12px}
+/* Floating registration notification */
+.pastele-toast{position:fixed;top:20px;left:50%;transform:translate(-50%,-24px) scale(.98);z-index:99999;display:flex;align-items:center;gap:10px;max-width:min(92vw,520px);padding:13px 18px;border:1px solid rgba(0,234,255,.35);border-radius:14px;background:rgba(4,7,18,.94);backdrop-filter:blur(14px);box-shadow:0 10px 35px rgba(0,0,0,.35),0 0 22px rgba(0,234,255,.12);color:#fff;font-size:14px;line-height:1.4;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease}.pastele-toast.show{opacity:1;transform:translate(-50%,0) scale(1)}.pastele-toast.success{border-color:rgba(0,255,157,.45)}.pastele-toast.error{border-color:rgba(255,75,105,.55)}.pastele-toast-icon{width:25px;height:25px;display:grid;place-items:center;flex:0 0 25px;border-radius:50%;background:rgba(0,255,157,.16);color:#00ff9d;font-weight:800}.pastele-toast.error .pastele-toast-icon{background:rgba(255,75,105,.16);color:#ff4b69}
+
+
+/* PasTele floating notifications: all auth notices stay above the UI and disappear after 5s. */
+.floating-notice, .auth-error.floating-notice, .notice.floating-notice {
+  position: fixed !important;
+  top: 18px !important;
+  left: 50% !important;
+  transform: translate(-50%, -18px) scale(.98);
+  z-index: 100000 !important;
+  width: min(92vw, 520px);
+  max-width: min(92vw, 520px);
+  margin: 0 !important;
+  box-sizing: border-box;
+  border-radius: 14px;
+  padding: 13px 16px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.35), 0 0 24px rgba(0,234,255,.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.floating-notice.show {
+  opacity: 1 !important;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.pastele-toast { top: 18px; }
+.pastele-toast.show { opacity: 1; }
