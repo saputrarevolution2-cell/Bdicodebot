@@ -253,3 +253,58 @@ grant select on public.announcements,public.site_settings to anon,authenticated;
 -- No data is modified here.
 
 commit;
+
+
+
+-- Rebuild the unified marketplace view so analytics events also provide views
+-- for Code/Channel/Group rows that do not have a native views column.
+drop view if exists public.marketplace_public;
+create view public.marketplace_public as
+select p.id,p.slug,p.title,p.type,p.access_type,p.price,p.thumbnail_url,p.description,p.content,
+       greatest(p.views,coalesce((select count(*) from analytics_events ae where ae.target_id=p.id and ae.event_type='view' and ae.target_type=p.type),0)) views,
+       p.sales_count,p.category,p.created_at,
+       coalesce(pr.display_name,pr.username,'Creator') creator_name,pr.username creator_username,coalesce(p.creator_id,p.seller_id) owner_id
+from public.products p left join public.profiles pr on pr.id=coalesce(p.creator_id,p.seller_id)
+where p.status='published'
+union all
+select pl.id,pl.slug,pl.title,'link','free',0,null,pl.description,pl.content_html,
+       greatest(pl.views,coalesce((select count(*) from analytics_events ae where ae.target_id=pl.id and ae.event_type in ('view')),0)),0,'PasteLink',pl.created_at,
+       coalesce(pr.display_name,pr.username,'Creator'),pr.username,pl.user_id
+from public.pastelinks pl left join public.profiles pr on pr.id=pl.user_id
+where pl.visibility='public' and (pl.expires_at is null or pl.expires_at>now())
+union all
+select tp.id,'code-'||replace(tp.id::text,'-',''),tp.title,'code',tp.access_type,tp.price,null,tp.description,'',
+       coalesce((select count(*) from analytics_events ae where ae.target_id=tp.id and ae.event_type='view'),0),0,'Code',tp.created_at,
+       coalesce(pr.display_name,pr.username,'Creator'),pr.username,tp.owner_id
+from public.telegram_products tp left join public.profiles pr on pr.id=tp.owner_id
+where tp.is_published=true
+union all
+select tc.id,tc.type||'-'||replace(tc.id::text,'-',''),coalesce(tc.name,'Telegram'),tc.type,tc.access_type,tc.price,null,'',coalesce(tc.telegram_channel_id,''),
+       coalesce((select count(*) from analytics_events ae where ae.target_id=tc.id and ae.event_type='view'),0),0,'Telegram',tc.created_at,
+       coalesce(pr.display_name,pr.username,'Creator'),pr.username,tc.owner_id
+from public.telegram_channels tc left join public.profiles pr on pr.id=tc.owner_id
+where tc.is_published=true;
+grant select on public.marketplace_public to anon,authenticated;
+
+-- FINAL 2026 UI/transaction hardening ---------------------------------------
+-- Ensure a wallet row exists for every profile and expose admin username login.
+insert into public.wallets(user_id) select id from public.profiles p where not exists(select 1 from public.wallets w where w.user_id=p.id);
+
+create or replace function public.get_my_content_counts()
+returns jsonb language sql security definer set search_path=public as $$
+ select jsonb_build_object(
+  'link',(select count(*) from products where coalesce(creator_id,seller_id)=auth.uid() and type in ('link','paste','pastelink'))+(select count(*) from pastelinks where user_id=auth.uid()),
+  'code',(select count(*) from telegram_products where owner_id=auth.uid()),
+  'channel',(select count(*) from telegram_channels where owner_id=auth.uid() and type='channel'),
+  'group',(select count(*) from telegram_channels where owner_id=auth.uid() and type='group')
+ );
+$$;
+grant execute on function public.get_my_content_counts() to authenticated;
+
+create or replace function public.get_public_announcements(p_limit int default 50)
+returns setof public.announcements language sql security definer set search_path=public as $$
+ select * from public.announcements where published=true order by coalesce(published_at,created_at) desc limit least(greatest(coalesce(p_limit,50),1),100);
+$$;
+grant execute on function public.get_public_announcements(int) to anon,authenticated;
+
+commit;
