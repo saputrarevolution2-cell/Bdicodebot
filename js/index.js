@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const { data, error } = await sb
         .from('marketplace_public')
         .select('*')
-        .order('views', { ascending: false })
-        .limit(12);
+        .order('created_at', { ascending: false })
+        .limit(60);
 
       if (error) throw error;
 
