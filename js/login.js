@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(window.__loginToastTimer);
     window.__loginToastTimer = setTimeout(() => {
       el.className = "";
-    }, 3000);
+    }, 5000);
   }
   // =====================================================
   // ERROR
@@ -42,19 +42,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!el) {
       el = document.createElement("div");
       el.id = "loginError";
-      el.className = "auth-error";
-      // Masukkan ke card agar selalu terlihat
-      const card =
-        step1?.closest(".auth-card") ||
-        step1?.parentElement ||
-        document.body;
-      card.prepend(el);
+      el.className = "auth-error floating-notice";
+      document.body.appendChild(el);
     }
     el.innerHTML = `
       <i class="fa-solid fa-circle-xmark"></i>
       <span>${escapeHTML(message)}</span>
     `;
     el.style.display = "flex";
+    el.classList.add("show");
+    clearTimeout(window.__loginErrorTimer);
+    window.__loginErrorTimer = setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => el.remove(), 220);
+    }, 5000);
   }
   function clearError() {
     document.getElementById("loginError")?.remove();

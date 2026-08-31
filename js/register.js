@@ -9,10 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!el) return;
     el.textContent = msg;
     el.classList.remove('hidden');
+    el.classList.add('floating-notice', 'show');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.classList.add('hidden'), 220);
+    }, 5000);
   };
 
   // Floating toast: visible on top of the page without pushing the form around.
-  const toast = (message, type = 'success', duration = 4200) => {
+  const toast = (message, type = 'success', duration = 5000) => {
     let box = document.getElementById('pastele-toast');
     if (!box) {
       box = document.createElement('div');
@@ -66,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Supabase can return a session immediately when email confirmation is disabled.
       if (data?.session) {
-        toast('Akun PasTele berhasil dibuat. Selamat datang!', 'success', 2800);
+        toast('Akun PasTele berhasil dibuat. Selamat datang!', 'success', 5000);
         submit.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
         setTimeout(() => location.replace('dashboard.html'), 900);
         return;
@@ -74,12 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // If Confirm Email is enabled in Supabase, direct login is intentionally blocked.
       // Keep the message floating and explain exactly what must be changed for direct login.
-      toast('Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele.', 'success', 6500);
+      toast('Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele.', 'success', 5000);
       show(notice, 'Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele. Jika ingin langsung masuk tanpa verifikasi email, nonaktifkan Confirm email di Supabase Auth.');
       f.reset();
     } catch (x) {
       const message = x?.message || 'Registrasi gagal.';
-      toast(message, 'error', 5200);
+      toast(message, 'error', 5000);
       show(err, message);
     } finally {
       submit.disabled = false;
