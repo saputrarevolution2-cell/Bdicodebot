@@ -24,19 +24,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     <div class="nav-account-info"><div class="nav-avatar"><i class="fa-solid fa-user"></i></div>
      <div class="nav-name"><b>${esc(name)}</b><small>${isAdmin?'Administrator':'Online'}</small></div>
     </div>
-    <button class="btn nav-theme" id="themeToggle" type="button" title="Tema"><i class="fa-solid fa-moon"></i></button>
     <span class="nav-balance" id="navBalance">Rp 0</span>
    </div>
    <nav class="nav-links" id="navLinks">${links.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav>
   </div>
  </header>
- <button class="nav-toggle" id="navToggle" type="button" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>`;
+ <div class="nav-backdrop" id="navBackdrop"></div>
+ <button class="nav-toggle" id="navToggle" type="button" aria-label="Menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>`;
  const current=location.pathname.split('/').pop()||'index.html';
  document.querySelectorAll('.nav-links a').forEach(a=>{if(a.dataset.href===current)a.classList.add('active')});
- const applyTheme=t=>{document.documentElement.dataset.theme=t;localStorage.setItem('pastele-theme',t);const i=document.querySelector('#themeToggle i');if(i)i.className=`fa-solid ${t==='dark'?'fa-sun':'fa-moon'}`};
- applyTheme(localStorage.getItem('pastele-theme')==='dark'?'dark':'light');
- document.getElementById('themeToggle')?.addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
- document.getElementById('navToggle')?.addEventListener('click',()=>document.getElementById('tgSidebar')?.classList.toggle('nav-open'));
- document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>document.getElementById('tgSidebar')?.classList.remove('nav-open')));
+ const sidebar=document.getElementById('tgSidebar'), toggle=document.getElementById('navToggle'), backdrop=document.getElementById('navBackdrop');
+ const setMenu=open=>{
+   sidebar?.classList.toggle('nav-open',open);
+   backdrop?.classList.toggle('show',open);
+   toggle?.setAttribute('aria-expanded',String(open));
+   const icon=toggle?.querySelector('i');
+   if(icon) icon.className=`fa-solid ${open?'fa-xmark':'fa-bars'}`;
+   document.body.classList.toggle('nav-menu-open',open);
+ };
+ toggle?.addEventListener('click',()=>setMenu(!sidebar?.classList.contains('nav-open')));
+ backdrop?.addEventListener('click',()=>setMenu(false));
+ document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));
+ window.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
  if(user&&window.sb){try{const{data:w}=await sb.from('wallets').select('balance,available_balance').eq('user_id',user.id).maybeSingle();const b=w?.available_balance??w?.balance??0;const e=document.getElementById('navBalance');if(e)e.textContent=TC.money(b)}catch(_){}}
 });

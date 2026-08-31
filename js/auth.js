@@ -122,6 +122,20 @@
         );
       }
 
+      // Record this successful login. IP is resolved server-side from Supabase request headers;
+      // approximate city/region/country is supplied by the browser via a public IP geolocation service.
+      try {
+        let geo={};
+        try {
+          const r=await fetch('https://ipapi.co/json/',{cache:'no-store'});
+          if(r.ok) geo=await r.json();
+        } catch(_){}
+        await sb.rpc('record_login',{
+          p_city:geo.city||null,p_region:geo.region||null,p_country:geo.country_name||null,
+          p_latitude:geo.latitude!=null?Number(geo.latitude):null,p_longitude:geo.longitude!=null?Number(geo.longitude):null,
+          p_user_agent:navigator.userAgent
+        });
+      } catch(e){ console.warn('[PasTele] Login history could not be recorded:',e); }
       return {
         user: data.user,
         session: sessionCheck.data.session
