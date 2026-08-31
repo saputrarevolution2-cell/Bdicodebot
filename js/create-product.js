@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
       access_type: access?.value,
       description: desc?.value.trim() || '',
       content: content?.value || '',
-      status: 'draft'
+      status: 'published'
     };
     if (!payload.title || !payload.slug) return TC.toast('Judul dan slug wajib diisi.');
     const { error } = await sb.from('products').insert(payload);
-    TC.toast(error ? error.message : 'Produk dibuat sebagai draft.');
+    TC.toast(error ? error.message : 'Produk berhasil dipublikasikan ke Marketplace.');
     if (!error) setTimeout(() => location.replace('my-products.html'), 700);
   });
 });

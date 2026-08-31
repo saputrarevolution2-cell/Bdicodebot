@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     </div>
     <span class="nav-balance" id="navBalance">Rp 0</span>
    </div>
-   <nav class="nav-links" id="navLinks">${links.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav>
+   <nav class="nav-links" id="navLinks">${links.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav><div class="nav-extra" id="navSocials"></div><button class="nav-logout" id="navLogout" type="button"><i class="fa-solid fa-right-from-bracket"></i><span>Log out</span></button>
   </div>
  </header>
  <div class="nav-backdrop" id="navBackdrop"></div>
@@ -46,5 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
  backdrop?.addEventListener('click',()=>setMenu(false));
  document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));
  window.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
- if(user&&window.sb){try{const{data:w}=await sb.from('wallets').select('balance,available_balance').eq('user_id',user.id).maybeSingle();const b=w?.available_balance??w?.balance??0;const e=document.getElementById('navBalance');if(e)e.textContent=TC.money(b)}catch(_){}}
+ if(user&&window.sb){try{const{data:w}=await sb.from('wallets').select('balance,available_balance').eq('user_id',user.id).maybeSingle();const b=w?.available_balance??w?.balance??0;const e=document.getElementById('navBalance');if(e)e.textContent=TC.money(b)}catch(_){}} 
+ const logoutBtn=document.getElementById('navLogout'); logoutBtn?.addEventListener('click',async()=>{try{await Auth.logout()}catch(e){TC.toast(e.message,'error')}});
+ try{const r=await sb?.rpc('get_public_site_settings');const ss=Array.isArray(r?.data?.socials)?r.data.socials:[];const ns=document.getElementById('navSocials');if(ns&&ss.length)ns.innerHTML='<small>Sosial Media</small>'+ss.slice(0,5).map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener"><i class="${esc(x.icon||'fa-solid fa-link')}"></i><span>${esc(x.name||'Social')}</span></a>`).join('')}catch(_){}
+
 });

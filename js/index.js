@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }[String(type || '').toLowerCase()] || 'fa-cube');
 
       box.innerHTML = items.slice(0, 8).map(x => `
-        <a class="card product" href="product.html?slug=${encodeURIComponent(x.slug || '')}">
+        <a class="card product" href="product.html?id=${encodeURIComponent(x.id || '')}&type=${encodeURIComponent(x.type || '')}">
           <div class="thumb"><i class="fa-solid ${icon(x.type)}"></i></div>
           <div class="pbody">
             <span class="pill">${esc(x.access_type || 'free').toUpperCase()}</span>
