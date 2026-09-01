@@ -1,31 +1,42 @@
 /* =========================================================
-   PasTele — Clean Global Footer
+   PasTele — Global Footer
+   Clean • Minimal • Responsive
    ========================================================= */
 
 .pastele-footer{
   width:100%;
-  margin-top:64px;
-  padding:42px 0 0;
+  margin-top:60px;
   background:#07111f;
   color:#dbe7f0;
   border-top:1px solid rgba(255,255,255,.07);
 }
 
-.pastele-footer .footer-grid{
+.footer-wrap{
   width:min(1180px,calc(100% - 40px));
   margin:auto;
+}
+
+/* =========================
+   TOP
+   ========================= */
+
+.footer-top{
   display:grid;
-  grid-template-columns:2fr 1fr 1fr 1fr;
-  gap:48px;
+  grid-template-columns:1.8fr 2fr;
+  gap:70px;
+  padding:42px 0 36px;
   align-items:start;
 }
 
-/* Brand */
-.pastele-footer .footer-brand-block{
-  min-width:0;
+/* =========================
+   BRAND
+   ========================= */
+
+.footer-brand{
+  max-width:420px;
 }
 
-.pastele-footer .brand{
+.footer-logo{
   display:inline-flex;
   align-items:center;
   gap:10px;
@@ -35,7 +46,7 @@
   font-weight:800;
 }
 
-.pastele-footer .brand-mark{
+.footer-logo-icon{
   width:38px;
   height:38px;
   display:grid;
@@ -43,200 +54,213 @@
   border-radius:11px;
   background:#229ed9;
   color:#fff;
-  flex:none;
+  box-shadow:0 8px 24px rgba(34,158,217,.18);
 }
 
-.pastele-footer .footer-brand-block p{
-  max-width:390px;
+.footer-brand p{
   margin:14px 0;
-  color:#8499aa;
+  color:#8498a9;
   font-size:13px;
-  line-height:1.65;
+  line-height:1.7;
 }
 
-.pastele-footer .footer-status{
+.footer-status{
   display:inline-flex;
   align-items:center;
   gap:7px;
-  color:#6fd49a;
-  font-size:12px;
+  color:#72d69b;
+  font-size:11px;
+  font-weight:600;
 }
 
-/* Columns */
-.pastele-footer .footer-column{
+.footer-status i{
+  font-size:10px;
+}
+
+/* =========================
+   LINKS
+   ========================= */
+
+.footer-links{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:32px;
+}
+
+.footer-group{
   min-width:0;
 }
 
-.pastele-footer .footer-column>b{
+.footer-group h4{
   display:flex;
   align-items:center;
   gap:8px;
-  margin-bottom:14px;
+  margin:0 0 14px;
   color:#fff;
   font-size:13px;
   font-weight:700;
 }
 
-.pastele-footer .footer-column>b i{
+.footer-group h4 i{
   color:#229ed9;
+  font-size:12px;
 }
 
-.pastele-footer .footer-column a,
-.pastele-footer .footer-column button{
-  width:max-content;
-  max-width:100%;
+.footer-group a,
+.footer-group button{
   display:flex;
   align-items:center;
   gap:9px;
-  margin:0 0 11px;
+  width:max-content;
+  margin:0 0 10px;
   padding:0;
   border:0;
-  outline:0;
   background:none;
-  color:#8ea3b3;
-  font:inherit;
-  font-size:13px;
-  line-height:1.4;
+  color:#879cab;
   text-decoration:none;
+  font:inherit;
+  font-size:12px;
   cursor:pointer;
-  transition:.2s ease;
+  transition:color .2s ease,transform .2s ease;
 }
 
-.pastele-footer .footer-column a i,
-.pastele-footer .footer-column button i{
-  width:15px;
+.footer-group a i,
+.footer-group button i{
+  width:14px;
   text-align:center;
-  color:#60788a;
+  color:#5e7587;
+  font-size:11px;
 }
 
-.pastele-footer .footer-column a:hover,
-.pastele-footer .footer-column button:hover{
+.footer-group a:hover,
+.footer-group button:hover{
   color:#fff;
   transform:translateX(2px);
 }
 
-.pastele-footer .footer-column a:hover i,
-.pastele-footer .footer-column button:hover i{
+.footer-group a:hover i,
+.footer-group button:hover i{
   color:#229ed9;
 }
 
-/* Bottom */
-.pastele-footer .footer-bottom{
-  width:min(1180px,calc(100% - 40px));
-  margin:28px auto 0;
-  padding:17px 0;
+/* =========================
+   BOTTOM
+   ========================= */
+
+.footer-bottom{
+  min-height:52px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:20px;
   border-top:1px solid rgba(255,255,255,.07);
-  color:#667d8e;
+  color:#63798a;
   font-size:11px;
 }
 
-.pastele-footer .footer-bottom span{
+.footer-secure{
   display:flex;
   align-items:center;
   gap:7px;
 }
 
-.pastele-footer .footer-bottom i{
+.footer-secure i{
   color:#229ed9;
 }
 
-/* =========================================================
-   Tablet
-   ========================================================= */
+/* =========================
+   TABLET
+   ========================= */
 
 @media(max-width:850px){
 
-  .pastele-footer .footer-grid{
-    grid-template-columns:1.6fr 1fr 1fr;
+  .footer-top{
+    grid-template-columns:1fr;
     gap:30px;
   }
 
-  .pastele-footer .footer-brand-block{
-    grid-column:1/-1;
+  .footer-brand{
+    max-width:600px;
   }
 
-  .pastele-footer .footer-brand-block p{
-    max-width:600px;
+  .footer-links{
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
   }
 }
 
-/* =========================================================
-   Mobile — tetap horizontal sebanyak mungkin
-   ========================================================= */
+/* =========================
+   MOBILE
+   ========================= */
 
 @media(max-width:600px){
 
   .pastele-footer{
     margin-top:42px;
-    padding-top:30px;
   }
 
-  .pastele-footer .footer-grid{
+  .footer-wrap{
     width:calc(100% - 28px);
-    grid-template-columns:1.25fr 1fr 1fr;
-    gap:18px;
   }
 
-  .pastele-footer .footer-brand-block{
-    grid-column:1/-1;
+  .footer-top{
+    padding:32px 0 28px;
+    gap:26px;
   }
 
-  .pastele-footer .footer-brand-block p{
-    margin:11px 0;
+  .footer-brand p{
     font-size:12px;
+    line-height:1.6;
   }
 
-  .pastele-footer .footer-column>b{
-    font-size:12px;
-    margin-bottom:11px;
+  .footer-links{
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
   }
 
-  .pastele-footer .footer-column a,
-  .pastele-footer .footer-column button{
+  .footer-group h4{
     font-size:11px;
+    margin-bottom:12px;
+  }
+
+  .footer-group a,
+  .footer-group button{
+    font-size:10px;
     gap:6px;
     margin-bottom:9px;
   }
 
-  .pastele-footer .footer-bottom{
-    width:calc(100% - 28px);
-    margin-top:22px;
-    padding:14px 0;
-    flex-direction:row;
-    align-items:center;
+  .footer-group a i,
+  .footer-group button i{
+    width:12px;
     font-size:10px;
   }
 
-  .pastele-footer .footer-bottom span:last-child{
-    text-align:right;
+  .footer-bottom{
+    min-height:auto;
+    padding:14px 0;
+    font-size:9px;
   }
 }
 
-/* =========================================================
-   Small phones
-   ========================================================= */
+/* =========================
+   SMALL PHONE
+   ========================= */
 
-@media(max-width:390px){
+@media(max-width:380px){
 
-  .pastele-footer .footer-grid{
-    grid-template-columns:1fr 1fr;
+  .footer-links{
+    gap:8px;
   }
 
-  .pastele-footer .footer-brand-block{
-    grid-column:1/-1;
+  .footer-group a,
+  .footer-group button{
+    font-size:9px;
   }
 
-  .pastele-footer .footer-bottom{
+  .footer-bottom{
     flex-direction:column;
     align-items:flex-start;
     gap:6px;
-  }
-
-  .pastele-footer .footer-bottom span:last-child{
-    text-align:left;
   }
 }
