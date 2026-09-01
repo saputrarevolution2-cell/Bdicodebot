@@ -132,3 +132,111 @@
   border-top:1px solid rgba(255,255,255,.07);
   color:#667d8e;
   font-size:11px;
+}
+
+.pastele-footer .footer-bottom span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.pastele-footer .footer-bottom i{
+  color:#229ed9;
+}
+
+/* =========================================================
+   Tablet
+   ========================================================= */
+
+@media(max-width:850px){
+
+  .pastele-footer .footer-grid{
+    grid-template-columns:1.6fr 1fr 1fr;
+    gap:30px;
+  }
+
+  .pastele-footer .footer-brand-block{
+    grid-column:1/-1;
+  }
+
+  .pastele-footer .footer-brand-block p{
+    max-width:600px;
+  }
+}
+
+/* =========================================================
+   Mobile — tetap horizontal sebanyak mungkin
+   ========================================================= */
+
+@media(max-width:600px){
+
+  .pastele-footer{
+    margin-top:42px;
+    padding-top:30px;
+  }
+
+  .pastele-footer .footer-grid{
+    width:calc(100% - 28px);
+    grid-template-columns:1.25fr 1fr 1fr;
+    gap:18px;
+  }
+
+  .pastele-footer .footer-brand-block{
+    grid-column:1/-1;
+  }
+
+  .pastele-footer .footer-brand-block p{
+    margin:11px 0;
+    font-size:12px;
+  }
+
+  .pastele-footer .footer-column>b{
+    font-size:12px;
+    margin-bottom:11px;
+  }
+
+  .pastele-footer .footer-column a,
+  .pastele-footer .footer-column button{
+    font-size:11px;
+    gap:6px;
+    margin-bottom:9px;
+  }
+
+  .pastele-footer .footer-bottom{
+    width:calc(100% - 28px);
+    margin-top:22px;
+    padding:14px 0;
+    flex-direction:row;
+    align-items:center;
+    font-size:10px;
+  }
+
+  .pastele-footer .footer-bottom span:last-child{
+    text-align:right;
+  }
+}
+
+/* =========================================================
+   Small phones
+   ========================================================= */
+
+@media(max-width:390px){
+
+  .pastele-footer .footer-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .pastele-footer .footer-brand-block{
+    grid-column:1/-1;
+  }
+
+  .pastele-footer .footer-bottom{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+
+  .pastele-footer .footer-bottom span:last-child{
+    text-align:left;
+  }
+}
