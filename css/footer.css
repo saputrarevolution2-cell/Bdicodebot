@@ -1,266 +1,197 @@
 /* =========================================================
    PasTele — Global Footer
-   Clean • Minimal • Responsive
+   CLEAN • HORIZONTAL • RESPONSIVE
    ========================================================= */
-
-.pastele-footer{
-  width:100%;
-  margin-top:60px;
-  background:#07111f;
-  color:#dbe7f0;
-  border-top:1px solid rgba(255,255,255,.07);
+#pasteleFooter.pt-footer {
+  width: 100%;
+  margin-top: 70px;
+  background: #07111b;
+  color: #d9e7f2;
+  border-top: 1px solid rgba(255,255,255,.08);
+  box-sizing: border-box;
 }
-
-.footer-wrap{
-  width:min(1180px,calc(100% - 40px));
-  margin:auto;
+#pasteleFooter .pt-footer-wrap {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
 }
-
-/* =========================
-   TOP
-   ========================= */
-
-.footer-top{
-  display:grid;
-  grid-template-columns:1.8fr 2fr;
-  gap:70px;
-  padding:42px 0 36px;
-  align-items:start;
+/* ================= TOP ================= */
+#pasteleFooter .pt-footer-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 70px;
+  padding: 48px 0 42px;
 }
-
-/* =========================
-   BRAND
-   ========================= */
-
-.footer-brand{
-  max-width:420px;
+/* ================= BRAND ================= */
+#pasteleFooter .pt-footer-brand {
+  flex: 1 1 360px;
+  min-width: 260px;
 }
-
-.footer-logo{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  color:#fff;
-  text-decoration:none;
-  font-size:20px;
-  font-weight:800;
+#pasteleFooter .pt-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 21px;
+  font-weight: 800;
 }
-
-.footer-logo-icon{
-  width:38px;
-  height:38px;
-  display:grid;
-  place-items:center;
-  border-radius:11px;
-  background:#229ed9;
-  color:#fff;
-  box-shadow:0 8px 24px rgba(34,158,217,.18);
+#pasteleFooter .pt-footer-logo-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #229ed9;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(34,158,217,.20);
 }
-
-.footer-brand p{
-  margin:14px 0;
-  color:#8498a9;
-  font-size:13px;
-  line-height:1.7;
+#pasteleFooter .pt-footer-brand p {
+  max-width: 390px;
+  margin: 16px 0;
+  color: #8ea5b7;
+  font-size: 13px;
+  line-height: 1.7;
 }
-
-.footer-status{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  color:#72d69b;
-  font-size:11px;
-  font-weight:600;
+#pasteleFooter .pt-footer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #72d69b;
+  font-size: 12px;
+  font-weight: 600;
 }
-
-.footer-status i{
-  font-size:10px;
+/* ================= LINKS ================= */
+#pasteleFooter .pt-footer-links {
+  flex: 0 1 560px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(130px, 1fr));
+  gap: 45px;
 }
-
-/* =========================
-   LINKS
-   ========================= */
-
-.footer-links{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:32px;
+#pasteleFooter .pt-footer-col {
+  min-width: 0;
 }
-
-.footer-group{
-  min-width:0;
+#pasteleFooter .pt-footer-col h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0 17px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
 }
-
-.footer-group h4{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:0 0 14px;
-  color:#fff;
-  font-size:13px;
-  font-weight:700;
+#pasteleFooter .pt-footer-col h4 i {
+  color: #229ed9;
+  font-size: 12px;
 }
-
-.footer-group h4 i{
-  color:#229ed9;
-  font-size:12px;
+#pasteleFooter .pt-footer-col a,
+#pasteleFooter .pt-footer-col button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  margin: 0 0 13px;
+  border: 0;
+  background: transparent;
+  color: #8ea5b7;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .2s ease, transform .2s ease;
 }
-
-.footer-group a,
-.footer-group button{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  width:max-content;
-  margin:0 0 10px;
-  padding:0;
-  border:0;
-  background:none;
-  color:#879cab;
-  text-decoration:none;
-  font:inherit;
-  font-size:12px;
-  cursor:pointer;
-  transition:color .2s ease,transform .2s ease;
+#pasteleFooter .pt-footer-col a i,
+#pasteleFooter .pt-footer-col button i {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
 }
-
-.footer-group a i,
-.footer-group button i{
-  width:14px;
-  text-align:center;
-  color:#5e7587;
-  font-size:11px;
+#pasteleFooter .pt-footer-col a:hover,
+#pasteleFooter .pt-footer-col button:hover {
+  color: #fff;
+  transform: translateX(2px);
 }
-
-.footer-group a:hover,
-.footer-group button:hover{
-  color:#fff;
-  transform:translateX(2px);
+/* ================= BOTTOM ================= */
+#pasteleFooter .pt-footer-bottom {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  color: #6f8799;
+  font-size: 11px;
 }
-
-.footer-group a:hover i,
-.footer-group button:hover i{
-  color:#229ed9;
+#pasteleFooter .pt-footer-bottom span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
-
-/* =========================
-   BOTTOM
-   ========================= */
-
-.footer-bottom{
-  min-height:52px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-  border-top:1px solid rgba(255,255,255,.07);
-  color:#63798a;
-  font-size:11px;
+#pasteleFooter .pt-footer-bottom i {
+  color: #72d69b;
 }
-
-.footer-secure{
-  display:flex;
-  align-items:center;
-  gap:7px;
-}
-
-.footer-secure i{
-  color:#229ed9;
-}
-
-/* =========================
+/* =========================================================
    TABLET
-   ========================= */
-
-@media(max-width:850px){
-
-  .footer-top{
-    grid-template-columns:1fr;
-    gap:30px;
+   ========================================================= */
+@media (max-width: 850px) {
+  #pasteleFooter .pt-footer-top {
+    gap: 35px;
   }
-
-  .footer-brand{
-    max-width:600px;
-  }
-
-  .footer-links{
-    grid-template-columns:repeat(3,1fr);
-    gap:24px;
+  #pasteleFooter .pt-footer-links {
+    gap: 25px;
   }
 }
-
-/* =========================
+/* =========================================================
    MOBILE
-   ========================= */
-
-@media(max-width:600px){
-
-  .pastele-footer{
-    margin-top:42px;
+   ========================================================= */
+@media (max-width: 650px) {
+  #pasteleFooter .pt-footer-wrap {
+    width: min(100% - 28px, 520px);
   }
-
-  .footer-wrap{
-    width:calc(100% - 28px);
+  #pasteleFooter .pt-footer-top {
+    display: block;
+    padding: 36px 0 30px;
   }
-
-  .footer-top{
-    padding:32px 0 28px;
-    gap:26px;
+  #pasteleFooter .pt-footer-brand {
+    margin-bottom: 32px;
   }
-
-  .footer-brand p{
-    font-size:12px;
-    line-height:1.6;
+  #pasteleFooter .pt-footer-brand p {
+    max-width: 100%;
   }
-
-  .footer-links{
-    grid-template-columns:repeat(3,1fr);
-    gap:12px;
+  #pasteleFooter .pt-footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
-
-  .footer-group h4{
-    font-size:11px;
-    margin-bottom:12px;
+  #pasteleFooter .pt-footer-col h4 {
+    font-size: 12px;
   }
-
-  .footer-group a,
-  .footer-group button{
-    font-size:10px;
-    gap:6px;
-    margin-bottom:9px;
+  #pasteleFooter .pt-footer-col a,
+  #pasteleFooter .pt-footer-col button {
+    font-size: 11px;
   }
-
-  .footer-group a i,
-  .footer-group button i{
-    width:12px;
-    font-size:10px;
-  }
-
-  .footer-bottom{
-    min-height:auto;
-    padding:14px 0;
-    font-size:9px;
+  #pasteleFooter .pt-footer-bottom {
+    min-height: auto;
+    padding: 17px 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
-
-/* =========================
+/* =========================================================
    SMALL PHONE
-   ========================= */
-
-@media(max-width:380px){
-
-  .footer-links{
-    gap:8px;
+   ========================================================= */
+@media (max-width: 400px) {
+  #pasteleFooter .pt-footer-links {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
   }
-
-  .footer-group a,
-  .footer-group button{
-    font-size:9px;
-  }
-
-  .footer-bottom{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:6px;
+  #pasteleFooter .pt-footer-col a,
+  #pasteleFooter .pt-footer-col button {
+    gap: 5px;
+    font-size: 10px;
   }
 }
