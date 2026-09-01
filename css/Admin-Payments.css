@@ -1,0 +1,71 @@
+
+
+/* ===== PasTele SaaS Core — per-page self-contained UI ===== */
+:root{
+ --p-bg:#f5f7fb;--p-surface:#fff;--p-surface-2:#f8fafc;--p-text:#0b1220;--p-muted:#667085;
+ --p-line:#e4e7ec;--p-brand:#229ed9;--p-brand-strong:#1487bc;--p-success:#12b76a;--p-danger:#f04438;
+ --p-warning:#f79009;--p-radius:16px;--p-shadow:0 8px 30px rgba(16,24,40,.06);
+ --p-shadow-lg:0 22px 60px rgba(16,24,40,.10);
+}
+html[data-theme="dark"]{
+ --p-bg:#070b12;--p-surface:#0f1722;--p-surface-2:#151f2c;--p-text:#f5f7fa;--p-muted:#98a2b3;
+ --p-line:#263445;--p-brand:#2aabee;--p-brand-strong:#53b9ed;--p-success:#32d583;--p-danger:#f97066;
+ --p-warning:#fdb022;--p-shadow:0 10px 34px rgba(0,0,0,.24);--p-shadow-lg:0 25px 70px rgba(0,0,0,.34);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--p-bg)!important;color:var(--p-text)!important}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body:before{background:radial-gradient(700px 360px at 0 -8%,rgba(34,158,217,.08),transparent 70%),radial-gradient(620px 340px at 100% 0,rgba(99,102,241,.045),transparent 70%)!important}
+html[data-theme="dark"] body:before{background:radial-gradient(700px 360px at 0 -8%,rgba(34,158,217,.12),transparent 70%),radial-gradient(620px 340px at 100% 0,rgba(99,102,241,.08),transparent 70%)!important}
+h1,h2,h3,h4,h5,h6,strong,b,th{color:var(--p-text)}
+p,small,.muted,.kpi,label,.empty{color:var(--p-muted)}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit}
+img{max-width:100%;height:auto}
+.container,.dash-container{width:min(1180px,calc(100% - 32px));margin-inline:auto}
+.section{padding:34px 0}
+.card,.panel,.stat-card,.wallet-card,.security-panel,.profile-hero,.auth-card,.reset-box,
+.market-card,.product-card,.product-detail,.notice-card,.tx-section,.my-section,.cta,.setup-box,
+.login-security,.payment-card,.saved-payment,.filterbar,.pt-toolbar,.window,.preview,.code-preview{
+ background:var(--p-surface)!important;color:var(--p-text)!important;border:1px solid var(--p-line)!important;
+ border-radius:var(--p-radius)!important;box-shadow:var(--p-shadow)!important;
+}
+.card,.panel,.market-card,.product-card,.product-detail{overflow-wrap:anywhere}
+.input,.select,.textarea,.composer,input,select,textarea{
+ width:100%;min-height:46px;padding:11px 13px;border-radius:11px!important;
+ background:var(--p-surface)!important;color:var(--p-text)!important;border:1px solid var(--p-line)!important;
+ box-shadow:0 1px 2px rgba(16,24,40,.025)
+}
+.input:focus,.select:focus,.textarea:focus,.composer:focus,input:focus,select:focus,textarea:focus{
+ outline:0;border-color:var(--p-brand)!important;box-shadow:0 0 0 4px rgba(34,158,217,.10)!important
+}
+input::placeholder,textarea::placeholder{color:var(--p-muted)!important;opacity:.8}
+.btn{
+ min-height:44px;padding:10px 15px;border-radius:11px!important;border:1px solid var(--p-line)!important;
+ background:var(--p-surface)!important;color:var(--p-text)!important;font-weight:750;cursor:pointer;
+ transition:transform .16s,box-shadow .16s,border-color .16s,background .16s
+}
+.btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--p-brand) 35%,var(--p-line))!important;box-shadow:0 8px 22px rgba(16,24,40,.07)}
+.btn.primary,.primary{background:linear-gradient(135deg,var(--p-brand),var(--p-brand-strong))!important;color:#fff!important;border-color:transparent!important;box-shadow:0 8px 24px rgba(34,158,217,.18)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+.badge,.chip,.eyebrow{background:var(--p-surface-2)!important;color:var(--p-brand-strong)!important;border:1px solid var(--p-line)!important;border-radius:999px!important}
+.table-wrap{background:var(--p-surface)!important;border:1px solid var(--p-line)!important;border-radius:14px!important;overflow:auto!important}
+.table th{background:var(--p-surface-2)!important;color:var(--p-muted)!important}
+.table td,.table th,.list-item{border-color:var(--p-line)!important}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--p-brand) 4%,var(--p-surface))!important}
+.notice{background:color-mix(in srgb,var(--p-brand) 7%,var(--p-surface))!important;color:var(--p-text)!important;border:1px solid color-mix(in srgb,var(--p-brand) 22%,var(--p-line))!important}
+.navbar,.topbar,.app-navbar{background:color-mix(in srgb,var(--p-surface) 96%,transparent)!important;color:var(--p-text)!important;border-color:var(--p-line)!important;backdrop-filter:blur(18px)}
+.nav-links a{color:var(--p-text)!important}.nav-links a:hover{background:var(--p-surface-2)!important}.nav-links a.active{background:color-mix(in srgb,var(--p-brand) 10%,var(--p-surface))!important;color:var(--p-brand-strong)!important}
+.nav-theme,.nav-logout{background:var(--p-surface)!important;color:var(--p-text)!important;border-color:var(--p-line)!important}
+body.app-page>main{margin-left:var(--sidebar,272px)}
+body.app-page>#pasteleFooter{margin-left:var(--sidebar,272px)}
+body:not(.app-page)>main{margin-left:0!important}
+#pasteleFooter{display:block!important;margin-top:48px!important;padding:40px 0 0!important;background:var(--p-surface)!important;color:var(--p-muted)!important;border-top:1px solid var(--p-line)!important}
+#pasteleFooter .brand,#pasteleFooter b{color:var(--p-text)!important}#pasteleFooter a,#pasteleFooter button{color:var(--p-muted)!important}#pasteleFooter a:hover,#pasteleFooter button:hover{color:var(--p-brand)!important}
+#pasteleFooter .footer-bottom{border-color:var(--p-line)!important}
+@media(max-width:900px){body.app-page>main,body.app-page>#pasteleFooter{margin-left:0!important}.container,.dash-container{width:calc(100% - 28px)}}
+@media(max-width:700px){.section{padding:24px 0}.container,.dash-container{width:calc(100% - 24px)}#pasteleFooter{margin-top:34px!important;padding-top:30px!important}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+/* PAGE: payments — dedicated layout hooks */
+.page-style-1,.page-style-2{isolation:isolate}.row{min-width:0}.field{min-width:0}.iconbox{flex:0 0 auto}
