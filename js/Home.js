@@ -1,113 +1,516 @@
+'use strict';
 
-/* SOURCE: /js/index.js?v=20260831-final */
-document.addEventListener('DOMContentLoaded', async () => {
-  const $ = id => document.getElementById(id);
+/* =========================================================
+   PasTele — Home.js
+   Home / Landing Page Controller
+   ---------------------------------------------------------
+   Responsibility:
+   - Load public marketplace
+   - Render product cards
+   - Render Top Link / Code / Channel
+   - Handle loading & error state
+   - NO FOOTER GENERATOR
+   - NO DUPLICATE PAGE SHELL
+   ========================================================= */
+
+(() => {
+
+  /* -------------------------------------------------------
+     DOM helper
+     ------------------------------------------------------- */
+
+  const $ = (id) => document.getElementById(id);
+
+
+  /* -------------------------------------------------------
+     Escape HTML
+     ------------------------------------------------------- */
 
   function esc(value) {
-    if (window.TC?.esc) return TC.esc(value);
-    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+    if (window.TC?.esc) {
+      return window.TC.esc(value);
+    }
+
+    return String(value ?? '').replace(
+      /[&<>"']/g,
+      (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[char]
+    );
   }
+
+
+  /* -------------------------------------------------------
+     Currency
+     ------------------------------------------------------- */
 
   function money(value) {
-    if (window.TC?.money) return TC.money(value);
-    return value ? `Rp ${Number(value).toLocaleString('id-ID')}` : 'FREE';
+
+    if (window.TC?.money) {
+      return window.TC.money(value);
+    }
+
+    const amount = Number(value || 0);
+
+    if (amount <= 0) {
+      return 'FREE';
+    }
+
+    return `Rp ${amount.toLocaleString('id-ID')}`;
   }
+
+
+  /* -------------------------------------------------------
+     Type helper
+     ------------------------------------------------------- */
+
+  function typeOf(item) {
+    return String(item?.type || '')
+      .trim()
+      .toLowerCase();
+  }
+
+
+  /* -------------------------------------------------------
+     Icon helper
+     ------------------------------------------------------- */
+
+  function iconFor(type) {
+
+    const icons = {
+      code: 'fa-code',
+      channel: 'fa-tower-broadcast',
+      group: 'fa-users',
+      link: 'fa-link',
+      payment: 'fa-credit-card',
+      paste: 'fa-file-lines',
+      pastelink: 'fa-link'
+    };
+
+    return icons[type] || 'fa-cube';
+  }
+
+
+  /* -------------------------------------------------------
+     Empty state
+     ------------------------------------------------------- */
 
   function empty(message) {
-    return `<div class="card landing-empty">${esc(message)}</div>`;
+
+    return `
+      <div class="landing-empty">
+        <div class="landing-empty-icon">
+          <i class="fa-solid fa-box-open"></i>
+        </div>
+
+        <div class="landing-empty-content">
+          <strong>Belum ada produk</strong>
+          <span>${esc(message)}</span>
+        </div>
+      </div>
+    `;
   }
 
-  async function market() {
-    const box = $('market');
-    if (!box) return;
 
-    if (typeof sb === 'undefined' || !sb) {
-      box.innerHTML = empty('Marketplace siap. Hubungkan database untuk menampilkan produk secara live.');
+  /* -------------------------------------------------------
+     Loading state
+     ------------------------------------------------------- */
+
+  function loading() {
+
+    return `
+      <div class="market-loading">
+        <div class="loading-spinner">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+
+        <span>Memuat marketplace...</span>
+      </div>
+    `;
+  }
+
+
+  /* -------------------------------------------------------
+     Render marketplace
+     ------------------------------------------------------- */
+
+  function renderMarketplace(items) {
+
+    const box = $('market');
+
+    if (!box) {
       return;
     }
 
+    if (!items.length) {
+      box.innerHTML = empty(
+        'Belum ada produk publik dari member.'
+      );
+
+      return;
+    }
+
+    box.innerHTML = items
+      .slice(0, 8)
+      .map((item) => {
+
+        const type = typeOf(item);
+
+        const id = encodeURIComponent(
+          item.id || ''
+        );
+
+        const itemType = encodeURIComponent(
+          item.type || ''
+        );
+
+        const title =
+          item.title ||
+          'Untitled';
+
+        const category =
+          item.category ||
+          'General';
+
+        const access =
+          String(
+            item.access_type || 'free'
+          ).toUpperCase();
+
+        const price =
+          Number(item.price || 0);
+
+        const views =
+          Number(item.views || 0);
+
+        return `
+          <a
+            class="card product"
+            href="product.html?id=${id}&type=${itemType}"
+            aria-label="${esc(title)}"
+          >
+
+            <div class="thumb">
+              <i class="fa-solid ${iconFor(type)}"></i>
+            </div>
+
+            <div class="pbody">
+
+              <span class="pill">
+                ${esc(access)}
+              </span>
+
+              <h3>
+                ${esc(title)}
+              </h3>
+
+              <div class="meta">
+
+                <span class="muted">
+                  ${esc(category)}
+                </span>
+
+                <span class="price">
+                  ${
+                    price > 0
+                      ? money(price)
+                      : 'FREE'
+                  }
+                </span>
+
+              </div>
+
+              <div class="product-views">
+                <i class="fa-solid fa-eye"></i>
+                ${views.toLocaleString('id-ID')}
+              </div>
+
+            </div>
+
+          </a>
+        `;
+      })
+      .join('');
+  }
+
+
+  /* -------------------------------------------------------
+     Render ranking
+     ------------------------------------------------------- */
+
+  function renderRanking(
+    targetId,
+    items,
+    allowedTypes
+  ) {
+
+    const node = $(targetId);
+
+    if (!node) {
+      return;
+    }
+
+    const ranking = items
+      .filter((item) => {
+        return allowedTypes.includes(
+          typeOf(item)
+        );
+      })
+      .sort((a, b) => {
+        return (
+          Number(b.views || 0) -
+          Number(a.views || 0)
+        );
+      })
+      .slice(0, 10);
+
+    if (!ranking.length) {
+
+      node.innerHTML = `
+        <div class="ranking-empty muted">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Belum ada data.</span>
+        </div>
+      `;
+
+      return;
+    }
+
+    node.innerHTML = ranking
+      .map((item, index) => {
+
+        const title =
+          item.title ||
+          'Untitled';
+
+        const views =
+          Number(item.views || 0)
+            .toLocaleString('id-ID');
+
+        const price =
+          Number(item.price || 0);
+
+        return `
+          <div class="topitem">
+
+            <span class="rank">
+              #${index + 1}
+            </span>
+
+            <span class="topitem-content">
+
+              <b>
+                ${esc(title)}
+              </b>
+
+              <small>
+                <i class="fa-solid fa-eye"></i>
+                ${views} views
+                <span class="ranking-separator">·</span>
+                ${
+                  price > 0
+                    ? money(price)
+                    : 'FREE'
+                }
+              </small>
+
+            </span>
+
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+
+  /* -------------------------------------------------------
+     Render all rankings
+     ------------------------------------------------------- */
+
+  function renderRankings(items) {
+
+    renderRanking(
+      'topLink',
+      items,
+      [
+        'link',
+        'paste',
+        'pastelink',
+        'payment'
+      ]
+    );
+
+    renderRanking(
+      'topCode',
+      items,
+      [
+        'code'
+      ]
+    );
+
+    renderRanking(
+      'topChannel',
+      items,
+      [
+        'channel'
+      ]
+    );
+  }
+
+
+  /* -------------------------------------------------------
+     Ranking fallback
+     ------------------------------------------------------- */
+
+  function renderRankingFallback() {
+
+    [
+      'topLink',
+      'topCode',
+      'topChannel'
+    ].forEach((id) => {
+
+      const node = $(id);
+
+      if (!node) {
+        return;
+      }
+
+      node.innerHTML = `
+        <div class="ranking-empty muted">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Data belum tersedia.</span>
+        </div>
+      `;
+    });
+  }
+
+
+  /* -------------------------------------------------------
+     Load marketplace
+     ------------------------------------------------------- */
+
+  async function loadMarketplace() {
+
+    const box = $('market');
+
+    if (!box) {
+      return;
+    }
+
+    /* Loading */
+    box.innerHTML = loading();
+
+
+    /* Supabase check */
+
+    if (
+      typeof window.sb === 'undefined' ||
+      !window.sb
+    ) {
+
+      box.innerHTML = empty(
+        'Marketplace siap. Hubungkan database untuk menampilkan produk secara live.'
+      );
+
+      renderRankingFallback();
+
+      return;
+    }
+
+
     try {
-      const { data, error } = await sb
+
+      const {
+        data,
+        error
+      } = await window.sb
         .from('marketplace_public')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order(
+          'created_at',
+          {
+            ascending: false
+          }
+        )
         .limit(60);
 
-      if (error) throw error;
 
-      const items = data || [];
-      const icon = type => ({
-        code: 'fa-code',
-        channel: 'fa-broadcast-tower',
-        group: 'fa-users',
-        link: 'fa-link',
-        payment: 'fa-credit-card'
-      }[String(type || '').toLowerCase()] || 'fa-cube');
-
-      box.innerHTML = items.slice(0, 8).map(x => `
-        <a class="card product" href="product.html?id=${encodeURIComponent(x.id || '')}&type=${encodeURIComponent(x.type || '')}">
-          <div class="thumb"><i class="fa-solid ${icon(x.type)}"></i></div>
-          <div class="pbody">
-            <span class="pill">${esc(x.access_type || 'free').toUpperCase()}</span>
-            <h3>${esc(x.title || 'Untitled')}</h3>
-            <div class="meta">
-              <span class="muted">${esc(x.category || 'General')}</span>
-              <span class="price">${x.price ? money(x.price) : 'FREE'}</span>
-            </div>
-          </div>
-        </a>
-      `).join('') || empty('Belum ada produk publik dari member.');
-
-      const sets = [
-        ['topLink', ['link', 'paste', 'pastelink', 'payment']],
-        ['topCode', ['code']],
-        ['topChannel', ['channel']]
-      ];
-
-      for (const [target, types] of sets) {
-        const node = $(target);
-        if (!node) continue;
-
-        const arr = items
-          .filter(x => types.includes(String(x.type || '').toLowerCase()))
-          .sort((a, b) => Number(b.views || 0) - Number(a.views || 0))
-          .slice(0, 10);
-
-        node.innerHTML = arr.map((x, i) => `
-          <div class="topitem">
-            <span class="rank">#${i + 1}</span>
-            <span>
-              <b>${esc(x.title || 'Untitled')}</b>
-              <small>${Number(x.views || 0).toLocaleString('id-ID')} views · ${x.price ? money(x.price) : 'FREE'}</small>
-            </span>
-          </div>
-        `).join('') || '<div class="muted">Belum ada data.</div>';
+      if (error) {
+        throw error;
       }
+
+
+      const items =
+        Array.isArray(data)
+          ? data
+          : [];
+
+
+      renderMarketplace(items);
+      renderRankings(items);
+
+
     } catch (error) {
-      console.error('[PasTele] Marketplace:', error);
-      box.innerHTML = empty('Marketplace belum dapat memuat data saat ini.');
+
+      console.error(
+        '[PasTele] Home marketplace error:',
+        error
+      );
+
+
+      box.innerHTML = empty(
+        'Marketplace belum dapat memuat data saat ini.'
+      );
+
+      renderRankingFallback();
     }
   }
 
-  market();
-});
+
+  /* -------------------------------------------------------
+     Prevent duplicate Home initialization
+     ------------------------------------------------------- */
+
+  if (
+    window.__PASTELE_HOME_INITIALIZED__
+  ) {
+    return;
+  }
+
+  window.__PASTELE_HOME_INITIALIZED__ = true;
 
 
-/* ===== Page shell: one canonical footer ===== */
-(() => {
- const mount=()=>{
-   if(document.getElementById('pasteleFooter')) return;
-   document.querySelectorAll('body>footer').forEach(x=>x.remove());
-   const admin=location.pathname.includes('/admin/'), base=admin?'../':'';
-   const f=document.createElement('footer'); f.id='pasteleFooter'; f.className='pastele-footer';
-   f.innerHTML=`<div class="container footer-grid">
-    <div class="footer-brand-block"><a class="brand" href="${base}index.html"><span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span>PasTele</span></a><p>Publish, discover, share, and monetize Telegram links, codes, channels and groups.</p><span class="footer-status"><i class="fa-solid fa-circle-check"></i> Platform ready</span></div>
-    <div><b>Platform</b><a href="${base}index.html"><i class="fa-solid fa-house"></i> Home</a><a href="${base}marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="${base}paste.html"><i class="fa-solid fa-plus"></i> Create</a></div>
-    <div><b>Account</b><a href="${base}dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a><a href="${base}profile.html"><i class="fa-solid fa-user"></i> Profile</a><a href="${base}settings.html"><i class="fa-solid fa-gear"></i> Settings</a><button type="button" data-footer-logout><i class="fa-solid fa-right-from-bracket"></i> Log out</button></div>
-    <div><b>Support</b><a href="${base}notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a><a href="${base}setup.html"><i class="fa-solid fa-circle-question"></i> Help & setup</a></div>
-   </div><div class="container footer-bottom"><span>© 2026 PasTele. All rights reserved.</span><span>Secure · Responsive · Database driven</span></div>`;
-   document.body.appendChild(f);
-   f.querySelector('[data-footer-logout]')?.addEventListener('click',async()=>{try{await Auth.logout()}catch(e){window.TC?.toast?.(e.message,'error')}});
- };
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+  /* -------------------------------------------------------
+     Init
+     ------------------------------------------------------- */
+
+  function init() {
+    loadMarketplace();
+  }
+
+
+  if (
+    document.readyState === 'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      init,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    init();
+
+  }
+
 })();
