@@ -4,10 +4,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>Register — PasTele</title><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script>
 <script src="/js/debug-panel.js"></script><script src="/js/auth.js"></script>
-<link rel="stylesheet" href="css/Register.css"></head>
+<link rel="stylesheet" href="css/Register.css"><link rel="stylesheet" href="css/final-fix-20260903.css?v=20260903"></head>
 <body><main class="auth-shell"><div class="card auth-card"><div class="auth-logo"><i class="fa-solid fa-user-plus"></i></div><h1>Buat akun PasTele</h1><p class="muted">Mulai publish, share, dan monetize konten digital kamu.</p>
 <div class="auth-error hidden" id="authError"></div><div class="notice hidden" id="authNotice"></div>
-<form class="list" id="reg"><div class="field"><label>Username</label><input autocomplete="username" class="input" id="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_]+" placeholder="username" required=""/></div>
+<div class="auth-progress" aria-label="Kelengkapan formulir"><i id="regProgress"></i></div><form class="list" id="reg"><div class="field"><label>Username</label><input autocomplete="username" class="input" id="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_]+" placeholder="username" required=""/></div>
 <div class="field"><label>Email</label><input autocomplete="email" class="input" id="email" placeholder="nama@email.com" required="" type="email"/></div>
 <div class="field"><label>Kata sandi</label><div class="row"><input autocomplete="new-password" class="input" id="password" minlength="6" required="" type="password"/><button class="btn toggle" data-t="password" type="button"><i class="fa-solid fa-eye"></i></button></div></div>
 <div class="field"><label>Konfirmasi kata sandi</label><div class="row"><input autocomplete="new-password" class="input" id="confirm" minlength="6" required="" type="password"/><button class="btn toggle" data-t="confirm" type="button"><i class="fa-solid fa-eye"></i></button></div></div>
@@ -15,4 +15,4 @@
 <button class="btn page-style-1" id="google"><i class="fa-brands fa-google"></i> Daftar dengan Google</button>
 <p class="muted page-style-2">Sudah punya akun? <a class="page-style-3" href="login.html">Login</a> · <a class="page-style-4" href="index.html">Kembali</a></p>
 </div></main>
-<script src="js/Register.js?v=20260901-ui"></script></body></html>
+<script src="js/Register.js?v=20260903-fix"></script><script src="js/site-shell.js?v=20260903"></script></body></html>

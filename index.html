@@ -15,7 +15,7 @@
 <script src="/js/auth.js"></script>
 
 
-<link rel="stylesheet" href="css/Home.css"></head>
+<link rel="stylesheet" href="css/Home.css"><link rel="stylesheet" href="css/final-fix-20260903.css?v=20260903"></head>
 <body class="landing-page">
 <header class="landing-header">
   <div class="container landing-header-inner">
@@ -35,7 +35,7 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <span class="eyebrow"><i class="fa-solid fa-sparkles"></i> Professional digital publishing platform</span>
-      <h1>Satu platform untuk <span>link, payment link, code &amp; Telegram.</span></h1>
+      <h1>Satu platform untuk <span class="typing-word" id="typingWord">link</span>.</h1>
       <p>PasTele membantu creator, developer, seller, dan pemilik komunitas membuat halaman digital, membagikan resource, menjual produk, mengelola akses, serta memantau transaksi dari satu workspace yang clean dan modern.</p>
       <div class="hero-actions">
         <a class="btn primary btn-lg" href="register.html"><i class="fa-solid fa-rocket"></i> Mulai sekarang</a>
@@ -57,11 +57,11 @@
             <span class="pill">LIVE</span>
           </div>
           <div class="dashboard-preview">
-            <div class="preview-kpi"><span>Total revenue</span><b>Rp 12,8 jt</b><small><i class="fa-solid fa-arrow-trend-up"></i> +24,8%</small></div>
+            <div class="preview-kpi"><span>Total revenue</span><b id="homeRevenue">Rp 0</b><small><i class="fa-solid fa-arrow-trend-up"></i> <span id="homeRevenueTrend">0,0%</span></small></div>
             <div class="preview-list">
-              <div><span class="preview-icon"><i class="fa-solid fa-link"></i></span><span><b>Payment Link</b><small>Instant checkout</small></span><strong>Aktif</strong></div>
-              <div><span class="preview-icon"><i class="fa-solid fa-code"></i></span><span><b>Code Product</b><small>Free / Paid</small></span><strong>12 item</strong></div>
-              <div><span class="preview-icon"><i class="fa-brands fa-telegram"></i></span><span><b>Telegram Access</b><small>Channel / Group</small></span><strong>1.2K</strong></div>
+              <div><span class="preview-icon"><i class="fa-solid fa-link"></i></span><span><b>Payment Link</b><small>Instant checkout</small></span><strong id="homePaymentCount">0 item</strong></div>
+              <div><span class="preview-icon"><i class="fa-solid fa-code"></i></span><span><b>Code Product</b><small>Free / Paid</small></span><strong id="homeCodeCount">0 item</strong></div>
+              <div><span class="preview-icon"><i class="fa-brands fa-telegram"></i></span><span><b>Telegram Access</b><small>Channel / Group</small></span><strong id="homeTelegramCount">0 item</strong></div>
             </div>
           </div>
         </div>
@@ -162,8 +162,5 @@
 
 <div id="toast"></div>
 
-<script src="js/Home.js?v=20260901-ui"></script>
-<script src="js/footer.js?v=20260901"></script>
-
-</body>
+<script src="js/Home.js?v=20260903-fix"></script><script src="js/site-shell.js?v=20260903"></script></body>
 </html>
