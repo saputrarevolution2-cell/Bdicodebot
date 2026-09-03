@@ -1,0 +1,7 @@
+/* PasTele — Product.css page layer FINAL 2026-09-03 */
+/* Page source: product.css */
+.product-content{white-space:pre-wrap;word-break:break-word}.rich-output a{color:var(--cyan)}
+.page-style-1{margin-top:25px;font-size:12px}
+
+/* Page source: product-fixed.css */
+.product-detail{max-width:820px;margin:auto}.product-detail-icon{width:80px;height:80px;border-radius:22px;display:grid;place-items:center;background:#eaf7fd;color:#229ed9;font-size:32px;margin-bottom:18px}.product-detail h1{font-size:36px;margin:12px 0}.detail-body{margin:24px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--surface);line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}.detail-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.detail-actions .price{margin-left:auto;font-size:22px}@media(max-width:600px){.product-detail h1{font-size:28px}.detail-actions .price{margin-left:0;width:100%}}
