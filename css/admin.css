@@ -1,9 +1,0 @@
-@import url("global.css");
-@import url("navbar.css");
-@import url("pastele-polish.css");
-.admin-layout{display:grid;grid-template-columns:230px 1fr;gap:18px}.admin-side{position:sticky;top:88px;height:max-content}.admin-side a{display:block;padding:11px 12px;border-radius:11px;color:var(--muted)}.admin-side a:hover,.admin-side a.active{background:rgba(0,234,255,.08);color:#fff}@media(max-width:800px){.admin-layout{grid-template-columns:1fr}.admin-side{position:static}.admin-side .admin-nav{display:flex;overflow:auto;gap:6px}.admin-side a{white-space:nowrap}}
-
-
-.admin-layout{display:grid;grid-template-columns:215px minmax(0,1fr);gap:14px}.admin-side{position:sticky;top:16px;height:max-content;padding:7px}
-.admin-nav{display:grid;gap:2px}.admin-side a{display:block;padding:9px 10px;border-radius:8px;color:var(--text)}.admin-side a:hover,.admin-side a.active{background:var(--blue-soft);color:var(--blue-dark)}
-@media(max-width:800px){.admin-layout{grid-template-columns:1fr}.admin-side{position:static}.admin-side .admin-nav{display:flex;overflow:auto;gap:5px}.admin-side a{white-space:nowrap}}

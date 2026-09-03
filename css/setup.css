@@ -1,5 +1,0 @@
-@import url("global.css");
-@import url("navbar.css");
-@import url("pastele-polish.css");
-.setup-shell{min-height:100vh;padding:40px 16px}
-.setup-box{width:min(760px,100%);margin:auto}

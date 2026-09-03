@@ -1,6 +1,0 @@
-@import url("global.css");
-@import url("navbar.css");
-@import url("pastele-polish.css");
-.callback-shell{min-height:100vh;display:grid;place-items:center;text-align:center;padding:28px 16px}
-.callback-shell h2{margin:0}
-.callback-shell #m{color:var(--muted)}
