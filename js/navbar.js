@@ -5,16 +5,31 @@ document.addEventListener('DOMContentLoaded', async () => {
  let user=null; try{user=await TC.user()}catch(_){}
  const esc=v=>TC?.esc?TC.esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
  const name=user?.user_metadata?.username||user?.user_metadata?.full_name||user?.email?.split('@')[0]||'Guest';
- const links=isAdmin?[
-  ['index.html','fa-chart-pie','Overview'],['users.html','fa-users','Users'],['products.html','fa-box','Products'],
-  ['orders.html','fa-receipt','Orders'],['payments.html','fa-credit-card','Payments'],['withdrawals.html','fa-money-bill-transfer','Withdrawals'],
-  ['transactions.html','fa-arrow-right-arrow-left','Transactions'],['pastes.html','fa-file-lines','Pastes'],['bots.html','fa-robot','Bots'],['logs.html','fa-list','Logs']
+ const groups=isAdmin?[
+  ['Workspace',[
+   ['index.html','fa-chart-pie','Overview'],['users.html','fa-users','Users'],['products.html','fa-box','Products'],['orders.html','fa-receipt','Orders']
+  ]],
+  ['Finance',[
+   ['payments.html','fa-credit-card','Payments'],['withdrawals.html','fa-money-bill-transfer','Withdrawals'],['transactions.html','fa-arrow-right-arrow-left','Transactions']
+  ]],
+  ['System',[
+   ['pastes.html','fa-file-lines','Pastes'],['bots.html','fa-robot','Bots'],['logs.html','fa-list','Logs']
+  ]]
  ]:[
-  ['dashboard.html','fa-house','Dashboard'],['marketplace.html','fa-store','Marketplace'],['paste.html','fa-paperclip','Create'],
-  ['my-products.html','fa-link','My Links'],['purchases.html','fa-bag-shopping','Purchases'],['wallet.html','fa-wallet','Wallet'],
-  ['withdrawals.html','fa-money-bill-transfer','Withdraw'],['transactions.html','fa-arrow-right-arrow-left','Transactions'],
-  ['notifications.html','fa-bell','Notifications'],['profile.html','fa-user','Profile'],['settings.html','fa-gear','Settings']
+  ['Workspace',[
+   ['dashboard.html','fa-house','Dashboard'],['marketplace.html','fa-store','Marketplace']
+  ]],
+  ['Create & Manage',[
+   ['paste.html','fa-paperclip','Create'],['my-products.html','fa-link','My Links'],['purchases.html','fa-bag-shopping','Purchases']
+  ]],
+  ['Finance',[
+   ['wallet.html','fa-wallet','Wallet'],['withdrawals.html','fa-money-bill-transfer','Withdraw'],['transactions.html','fa-arrow-right-arrow-left','Transactions']
+  ]],
+  ['Account',[
+   ['notifications.html','fa-bell','Notifications'],['profile.html','fa-user','Profile'],['settings.html','fa-gear','Settings']
+  ]]
  ];
+ const links=groups.flatMap(([,items])=>items);
  host.innerHTML=`<header class="navbar" id="tgSidebar">
   <div class="nav-inner">
    <a class="brand" href="${base}${isAdmin?'index.html':'dashboard.html'}">
@@ -28,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <span class="nav-balance" id="navBalance">Rp 0</span>
     <button class="nav-theme" id="navTheme" type="button" title="Tema"><i class="fa-solid fa-moon"></i></button>
    </div>
-   <nav class="nav-links" id="navLinks">${links.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav><div class="nav-extra" id="navSocials"></div><div class="nav-tools"><button class="nav-logout" id="navLogout" type="button"><i class="fa-solid fa-right-from-bracket"></i><span>Log out</span></button></div>
+   <nav class="nav-links" id="navLinks">${groups.map(([title,items])=>`<div class="nav-group"><small class="nav-group-title">${title}</small>${items.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</div>`).join('')}</nav><div class="nav-extra" id="navSocials"></div><div class="nav-tools"><button class="nav-logout" id="navLogout" type="button"><i class="fa-solid fa-right-from-bracket"></i><span>Log out</span></button></div>
   </div>
  </header>
  <div class="nav-backdrop" id="navBackdrop"></div>
