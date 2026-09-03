@@ -35,6 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
     box._timer = setTimeout(() => box.classList.remove('show'), duration);
   };
 
+  const fields=['username','email','password','confirm'].map(id=>document.getElementById(id));
+  const progress=document.getElementById('regProgress');
+  const updateProgress=()=>{const valid=fields.filter(Boolean).filter(i=>i.value.trim().length>0).length; const password=document.getElementById('password')?.value||''; const confirm=document.getElementById('confirm')?.value||''; let score=valid; if(password.length>=6)score++; if(confirm&&password===confirm)score++; const pct=Math.min(100,Math.round(score/6*100)); if(progress)progress.style.width=pct+'%'};
+  fields.forEach(i=>i?.addEventListener('input',updateProgress)); updateProgress();
+
   document.querySelectorAll('.toggle').forEach(button => {
     button.onclick = () => {
       const input = document.getElementById(button.dataset.t);

@@ -21,12 +21,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     <span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span>PasTele</span>
    </a>
    <div class="nav-account">
-    <div class="nav-account-info"><div class="nav-avatar"><i class="fa-solid fa-user"></i></div>
-     <div class="nav-name"><b>${esc(name)}</b><small>${isAdmin?'Administrator':'Online'}</small></div>
-    </div>
+    <a class="nav-account-info" href="${base}${isAdmin?'index.html':'profile.html'}" aria-label="Profil">
+      <div class="nav-avatar"><i class="fa-solid fa-user"></i></div>
+      <div class="nav-name"><b>${esc(name)}</b><small>${isAdmin?'Administrator':'Profil akun'}</small></div>
+    </a>
     <span class="nav-balance" id="navBalance">Rp 0</span>
+    <button class="nav-theme" id="navTheme" type="button" title="Tema"><i class="fa-solid fa-moon"></i></button>
    </div>
-   <nav class="nav-links" id="navLinks">${links.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav><div class="nav-extra" id="navSocials"></div><div class="nav-tools"><button class="nav-theme" id="navTheme" type="button" title="Tema"><i class="fa-solid fa-moon"></i><span>Tema</span></button><button class="nav-logout" id="navLogout" type="button"><i class="fa-solid fa-right-from-bracket"></i><span>Log out</span></button></div>
+   <nav class="nav-links" id="navLinks">${links.map(([href,icon,label])=>`<a href="${base}${href}" data-href="${href}"><i class="fa-solid ${icon}"></i><span>${label}</span></a>`).join('')}</nav><div class="nav-extra" id="navSocials"></div><div class="nav-tools"><button class="nav-logout" id="navLogout" type="button"><i class="fa-solid fa-right-from-bracket"></i><span>Log out</span></button></div>
   </div>
  </header>
  <div class="nav-backdrop" id="navBackdrop"></div>

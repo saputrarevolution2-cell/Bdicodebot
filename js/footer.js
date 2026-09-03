@@ -1,123 +1,63 @@
-/* =========================================================
-   PasTele — footer.js
-   GLOBAL FOOTER • CLEAN • HORIZONTAL • ONE ONLY
-   ========================================================= */
+/* PasTele — canonical singleton footer renderer. */
 (() => {
-  'use strict';
-  function mountFooter() {
-    // Hapus semua footer lama
-    document.querySelectorAll('footer').forEach(el => el.remove());
-    const isAdmin = location.pathname.includes('/admin/');
-    const base = isAdmin ? '../' : '';
+  if (window.__PASTELE_FOOTER_RENDERER__) return;
+  window.__PASTELE_FOOTER_RENDERER__ = true;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const admin = location.pathname.includes('/admin/');
+    const base = admin ? '../' : '';
+
+    // Remove any legacy/static/dynamically-created footer before creating exactly one.
+    document.querySelectorAll(
+      'footer, #pasteleFooter, .pastele-footer, .landing-footer, .site-footer, .footer'
+    ).forEach(el => el.remove());
+
+    let socials = [];
+    try {
+      if (window.sb) {
+        const { data } = await sb.rpc('get_public_site_settings');
+        socials = Array.isArray(data?.socials) ? data.socials : [];
+      }
+    } catch (_) {}
+
+    const safe = v => window.TC?.esc
+      ? TC.esc(v)
+      : String(v ?? '').replace(/[&<>"']/g, c => ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+        }[c]));
+
+    const socialHtml = socials
+      .filter(x => /^https?:\/\//i.test(String(x?.url || '')))
+      .slice(0, 8)
+      .map(x =>
+        `<a href="${safe(x.url)}" target="_blank" rel="noopener noreferrer" title="${safe(x.name || 'Social')}"><i class="${safe(x.icon || 'fa-solid fa-link')}"></i><span>${safe(x.name || 'Social')}</span></a>`
+      ).join('');
+
     const footer = document.createElement('footer');
     footer.id = 'pasteleFooter';
-    footer.className = 'pt-footer';
+    footer.className = 'pastele-footer';
+    footer.setAttribute('data-pastele-footer','true');
     footer.innerHTML = `
-      <div class="pt-footer-wrap">
-        <div class="pt-footer-top">
-          <div class="pt-footer-brand">
-            <a href="${base}index.html" class="pt-footer-logo">
-              <span class="pt-footer-logo-icon">
-                <i class="fa-solid fa-bolt"></i>
-              </span>
-              <span>PasTele</span>
-            </a>
-            <p>
-              Platform digital untuk publish, discover, share,
-              dan monetize Link, Code, Channel & Group Telegram.
-            </p>
-            <span class="pt-footer-status">
-              <i class="fa-solid fa-circle-check"></i>
-              Platform ready
-            </span>
-          </div>
-          <nav class="pt-footer-links">
-            <div class="pt-footer-col">
-              <h4>
-                <i class="fa-solid fa-layer-group"></i>
-                Platform
-              </h4>
-              <a href="${base}index.html">
-                <i class="fa-solid fa-house"></i>
-                Beranda
-              </a>
-              <a href="${base}marketplace.html">
-                <i class="fa-solid fa-store"></i>
-                Marketplace
-              </a>
-              <a href="${base}paste.html">
-                <i class="fa-solid fa-plus"></i>
-                Create
-              </a>
-            </div>
-            <div class="pt-footer-col">
-              <h4>
-                <i class="fa-solid fa-user"></i>
-                Akun
-              </h4>
-              <a href="${base}dashboard.html">
-                <i class="fa-solid fa-gauge-high"></i>
-                Dashboard
-              </a>
-              <a href="${base}profile.html">
-                <i class="fa-solid fa-user"></i>
-                Profile
-              </a>
-              <a href="${base}settings.html">
-                <i class="fa-solid fa-gear"></i>
-                Settings
-              </a>
-            </div>
-            <div class="pt-footer-col">
-              <h4>
-                <i class="fa-solid fa-life-ring"></i>
-                Bantuan
-              </h4>
-              <a href="${base}notifications.html">
-                <i class="fa-solid fa-bell"></i>
-                Notifikasi
-              </a>
-              <a href="${base}setup.html">
-                <i class="fa-solid fa-circle-question"></i>
-                Bantuan
-              </a>
-              <button type="button" data-footer-logout>
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Log out
-              </button>
-            </div>
-          </nav>
+      <div class="container footer-grid">
+        <div class="footer-brand-block">
+          <a class="brand" href="${base}index.html"><span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span>PasTele</span></a>
+          <p>Platform digital untuk publish, discover, share, dan monetize Link, Code, Channel &amp; Group Telegram.</p>
+          <span class="footer-status"><i class="fa-solid fa-circle-check"></i> Platform ready</span>
         </div>
-        <div class="pt-footer-bottom">
-          <span>© 2026 PasTele. All rights reserved.</span>
-          <span>
-            <i class="fa-solid fa-shield-halved"></i>
-            Secure platform
-          </span>
-        </div>
+        <div><b>Platform</b><a href="${base}index.html"><i class="fa-solid fa-house"></i> Beranda</a><a href="${base}marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="${base}paste.html"><i class="fa-solid fa-plus"></i> Create</a></div>
+        <div><b>Akun</b><a href="${base}dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a><a href="${base}profile.html"><i class="fa-solid fa-user"></i> Profile</a><a href="${base}settings.html"><i class="fa-solid fa-gear"></i> Settings</a><button type="button" class="footer-logout" data-footer-logout><i class="fa-solid fa-right-from-bracket"></i> Log out</button></div>
+        <div class="footer-social"><b>Sosial Media</b>${socialHtml || '<span class="muted">Belum ada sosial media.</span>'}</div>
       </div>
-    `;
-    document.body.appendChild(footer);
-    const logout = footer.querySelector('[data-footer-logout]');
-    logout?.addEventListener('click', async () => {
-      try {
-        if (window.Auth && typeof Auth.logout === 'function') {
-          await Auth.logout();
-        }
-      } catch (error) {
-        console.error('[PasTele] Footer logout:', error);
-        window.TC?.toast?.(
-          error?.message || 'Logout gagal.',
-          'error'
-        );
-      }
+      <div class="container footer-bottom"><span>© 2026 PasTele. All rights reserved.</span><span>Secure · Responsive · Database driven</span></div>`;
+
+    // Append once only.
+    if (!document.getElementById('pasteleFooter')) {
+      document.body.appendChild(footer);
+    }
+
+    footer.querySelector('[data-footer-logout]')?.addEventListener('click', async () => {
+      try { await Auth.logout(); }
+      catch (e) { window.TC?.toast?.(e.message, 'error'); }
     });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountFooter, {
-      once: true
-    });
-  } else {
-    mountFooter();
-  }
+  });
 })();

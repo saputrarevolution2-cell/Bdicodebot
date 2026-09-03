@@ -1,271 +1,133 @@
-/* =========================================================
-   PasTele — Home.js
-   ONLY HOME PAGE LOGIC
-   Footer is NOT created here.
-   ========================================================= */
+
+/* SOURCE: /js/index.js?v=20260831-final */
 document.addEventListener('DOMContentLoaded', async () => {
-  'use strict';
   const $ = id => document.getElementById(id);
-  /* ---------------------------------------------------------
-     Helpers
-  --------------------------------------------------------- */
+
   function esc(value) {
-    if (window.TC?.esc) {
-      return window.TC.esc(value);
-    }
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    }[char]));
+    if (window.TC?.esc) return TC.esc(value);
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   }
+
   function money(value) {
-    if (window.TC?.money) {
-      return window.TC.money(value);
-    }
-    const amount = Number(value || 0);
-    if (!amount) {
-      return 'FREE';
-    }
-    return `Rp ${amount.toLocaleString('id-ID')}`;
+    if (window.TC?.money) return TC.money(value);
+    return value ? `Rp ${Number(value).toLocaleString('id-ID')}` : 'FREE';
   }
+
   function empty(message) {
-    return `
-      <div class="card landing-empty">
-        <i class="fa-solid fa-box-open"></i>
-        <span>${esc(message)}</span>
-      </div>
-    `;
+    return `<div class="card landing-empty">${esc(message)}</div>`;
   }
-  /* ---------------------------------------------------------
-     Product icon
-  --------------------------------------------------------- */
-  function getProductIcon(type) {
-    const icons = {
-      code: 'fa-code',
-      channel: 'fa-broadcast-tower',
-      group: 'fa-users',
-      link: 'fa-link',
-      paste: 'fa-file-lines',
-      pastelink: 'fa-file-lines',
-      payment: 'fa-credit-card'
-    };
-    return icons[String(type || '').toLowerCase()] || 'fa-cube';
+
+  function startTyping(){
+    const el=$('typingWord'); if(!el)return;
+    const words=['link','payment link','code','Telegram']; let wi=0,ci=0,del=false;
+    const tick=()=>{const w=words[wi]; el.textContent=del?w.slice(0,ci--):w.slice(0,ci++); if(!del&&ci>w.length){del=true;return setTimeout(tick,1200)} if(del&&ci<0){del=false;wi=(wi+1)%words.length;ci=0} setTimeout(tick,del?55:85)}; tick();
   }
-  /* ---------------------------------------------------------
-     Render marketplace
-  --------------------------------------------------------- */
-  async function loadMarketplace() {
+
+  async function workspace(){
+    const set=(id,v)=>{const e=$(id);if(e)e.textContent=v};
+    try{
+      const r=await sb.rpc('get_public_workspace_stats');
+      if(r.error)throw r.error; const x=r.data||{};
+      set('homeRevenue',money(x.total_revenue||0)); set('homeRevenueTrend',(x.revenue_trend>=0?'+':'')+Number(x.revenue_trend||0).toFixed(1)+'%');
+      set('homePaymentCount',Number(x.payment_links||0).toLocaleString('id-ID')+' item');
+      set('homeCodeCount',Number(x.code_products||0).toLocaleString('id-ID')+' item');
+      set('homeTelegramCount',Number(x.telegram_access||0).toLocaleString('id-ID')+' item');
+    }catch(e){console.warn('[PasTele] workspace stats unavailable',e)}
+  }
+
+  async function market() {
     const box = $('market');
-    if (!box) {
+    if (!box) return;
+
+    if (typeof sb === 'undefined' || !sb) {
+      box.innerHTML = empty('Marketplace siap. Hubungkan database untuk menampilkan produk secara live.');
       return;
     }
-    /* Prevent duplicate initialization */
-    if (box.dataset.loaded === 'true') {
-      return;
-    }
-    box.dataset.loaded = 'loading';
-    /* Supabase not available */
-    if (typeof window.sb === 'undefined' || !window.sb) {
-      box.innerHTML = empty(
-        'Marketplace siap. Hubungkan database untuk menampilkan produk secara live.'
-      );
-      box.dataset.loaded = 'true';
-      return;
-    }
+
     try {
-      const { data, error } = await window.sb
+      const { data, error } = await sb
         .from('marketplace_public')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(60);
-      if (error) {
-        throw error;
-      }
-      const items = Array.isArray(data) ? data : [];
-      /* -----------------------------------------------------
-         Marketplace cards
-      ----------------------------------------------------- */
-      const products = items.slice(0, 8);
-      if (!products.length) {
-        box.innerHTML = empty(
-          'Belum ada produk publik dari member.'
-        );
-      } else {
-        box.innerHTML = products.map(item => {
-          const id = encodeURIComponent(item.id || '');
-          const type = encodeURIComponent(item.type || '');
-          const title = esc(
-            item.title || 'Untitled'
-          );
-          const category = esc(
-            item.category || 'General'
-          );
-          const access = esc(
-            String(item.access_type || 'free').toUpperCase()
-          );
-          const price = item.price
-            ? money(item.price)
-            : 'FREE';
-          return `
-            <a
-              class="card product"
-              href="product.html?id=${id}&type=${type}"
-              aria-label="Buka ${title}"
-            >
-              <div class="thumb">
-                <i class="fa-solid ${getProductIcon(item.type)}"></i>
-              </div>
-              <div class="pbody">
-                <span class="pill">
-                  ${access}
-                </span>
-                <h3>
-                  ${title}
-                </h3>
-                <div class="meta">
-                  <span class="muted">
-                    ${category}
-                  </span>
-                  <span class="price">
-                    ${price}
-                  </span>
-                </div>
-              </div>
-            </a>
-          `;
-        }).join('');
-      }
-      /* -----------------------------------------------------
-         Ranking sections
-      ----------------------------------------------------- */
-      const rankings = [
-        {
-          target: 'topLink',
-          types: [
-            'link',
-            'paste',
-            'pastelink',
-            'payment'
-          ]
-        },
-        {
-          target: 'topCode',
-          types: [
-            'code'
-          ]
-        },
-        {
-          target: 'topChannel',
-          types: [
-            'channel'
-          ]
-        }
+
+      if (error) throw error;
+
+      const items = data || [];
+      const icon = type => ({
+        code: 'fa-code',
+        channel: 'fa-broadcast-tower',
+        group: 'fa-users',
+        link: 'fa-link',
+        payment: 'fa-credit-card'
+      }[String(type || '').toLowerCase()] || 'fa-cube');
+
+      box.innerHTML = items.slice(0, 8).map(x => `
+        <a class="card product" href="product.html?id=${encodeURIComponent(x.id || '')}&type=${encodeURIComponent(x.type || '')}">
+          <div class="thumb"><i class="fa-solid ${icon(x.type)}"></i></div>
+          <div class="pbody">
+            <span class="pill">${esc(x.access_type || 'free').toUpperCase()}</span>
+            <h3>${esc(x.title || 'Untitled')}</h3>
+            <div class="meta">
+              <span class="muted">${esc(x.category || 'General')}</span>
+              <span class="price">${x.price ? money(x.price) : 'FREE'}</span>
+            </div>
+          </div>
+        </a>
+      `).join('') || empty('Belum ada produk publik dari member.');
+
+      const sets = [
+        ['topLink', ['link', 'paste', 'pastelink', 'payment']],
+        ['topCode', ['code']],
+        ['topChannel', ['channel']]
       ];
-      rankings.forEach(({ target, types }) => {
+
+      for (const [target, types] of sets) {
         const node = $(target);
-        if (!node) {
-          return;
-        }
-        const ranking = items
-          .filter(item =>
-            types.includes(
-              String(item.type || '').toLowerCase()
-            )
-          )
-          .sort(
-            (a, b) =>
-              Number(b.views || 0) -
-              Number(a.views || 0)
-          )
+        if (!node) continue;
+
+        const arr = items
+          .filter(x => types.includes(String(x.type || '').toLowerCase()))
+          .sort((a, b) => Number(b.views || 0) - Number(a.views || 0))
           .slice(0, 10);
-        if (!ranking.length) {
-          node.innerHTML = `
-            <div class="muted top-empty">
-              <i class="fa-solid fa-chart-simple"></i>
-              Belum ada data.
-            </div>
-          `;
-          return;
-        }
-        node.innerHTML = ranking.map((item, index) => {
-          const title = esc(
-            item.title || 'Untitled'
-          );
-          const views = Number(
-            item.views || 0
-          ).toLocaleString('id-ID');
-          const price = item.price
-            ? money(item.price)
-            : 'FREE';
-          return `
-            <div class="topitem">
-              <span class="rank">
-                #${index + 1}
-              </span>
-              <span class="topitem-info">
-                <b>
-                  ${title}
-                </b>
-                <small>
-                  ${views} views · ${price}
-                </small>
-              </span>
-            </div>
-          `;
-        }).join('');
-      });
-      box.dataset.loaded = 'true';
-    } catch (error) {
-      console.error(
-        '[PasTele] Home marketplace:',
-        error
-      );
-      box.innerHTML = empty(
-        'Marketplace belum dapat memuat data saat ini.'
-      );
-      box.dataset.loaded = 'error';
-    }
-  }
-  /* ---------------------------------------------------------
-     Remove accidental duplicate FOOTERS
-     
-     IMPORTANT:
-     This does NOT create a footer.
-     It only protects Home from legacy duplicate footer
-     elements created by old scripts.
-  --------------------------------------------------------- */
-  function removeDuplicateFooters() {
-    const footers = [
-      ...document.querySelectorAll('footer')
-    ];
-    if (footers.length <= 1) {
-      return;
-    }
-    /*
-      Keep an existing canonical footer if it exists.
-      Otherwise keep the first footer in the document.
-    */
-    const canonical =
-      document.getElementById('pasteleFooter') ||
-      footers[0];
-    footers.forEach(footer => {
-      if (footer !== canonical) {
-        footer.remove();
+
+        node.innerHTML = arr.map((x, i) => `
+          <div class="topitem">
+            <span class="rank">#${i + 1}</span>
+            <span>
+              <b>${esc(x.title || 'Untitled')}</b>
+              <small>${Number(x.views || 0).toLocaleString('id-ID')} views · ${x.price ? money(x.price) : 'FREE'}</small>
+            </span>
+          </div>
+        `).join('') || '<div class="muted">Belum ada data.</div>';
       }
-    });
+    } catch (error) {
+      console.error('[PasTele] Marketplace:', error);
+      box.innerHTML = empty('Marketplace belum dapat memuat data saat ini.');
+    }
   }
-  /* ---------------------------------------------------------
-     Home initialization
-  --------------------------------------------------------- */
-  await loadMarketplace();
-  /*
-    Run once after other DOMContentLoaded handlers,
-    allowing legacy footer scripts to finish first.
-  */
-  setTimeout(() => {
-    removeDuplicateFooters();
-  }, 0);
+
+  startTyping();
+  if(typeof sb!=='undefined'&&sb)workspace();
+  market();
 });
+
+
+/* ===== Page shell: one canonical footer ===== */
+(() => {
+ const mount=()=>{
+   if(document.getElementById('pasteleFooter')) return;
+   document.querySelectorAll('body>footer').forEach(x=>x.remove());
+   const admin=location.pathname.includes('/admin/'), base=admin?'../':'';
+   const f=document.createElement('footer'); f.id='pasteleFooter'; f.className='pastele-footer';
+   f.innerHTML=`<div class="container footer-grid">
+    <div class="footer-brand-block"><a class="brand" href="${base}index.html"><span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span>PasTele</span></a><p>Publish, discover, share, and monetize Telegram links, codes, channels and groups.</p><span class="footer-status"><i class="fa-solid fa-circle-check"></i> Platform ready</span></div>
+    <div><b>Platform</b><a href="${base}index.html"><i class="fa-solid fa-house"></i> Home</a><a href="${base}marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="${base}paste.html"><i class="fa-solid fa-plus"></i> Create</a></div>
+    <div><b>Account</b><a href="${base}dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a><a href="${base}profile.html"><i class="fa-solid fa-user"></i> Profile</a><a href="${base}settings.html"><i class="fa-solid fa-gear"></i> Settings</a><button type="button" data-footer-logout><i class="fa-solid fa-right-from-bracket"></i> Log out</button></div>
+    <div><b>Support</b><a href="${base}notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a><a href="${base}setup.html"><i class="fa-solid fa-circle-question"></i> Help & setup</a></div>
+   </div><div class="container footer-bottom"><span>© 2026 PasTele. All rights reserved.</span><span>Secure · Responsive · Database driven</span></div>`;
+   document.body.appendChild(f);
+   f.querySelector('[data-footer-logout]')?.addEventListener('click',async()=>{try{await Auth.logout()}catch(e){window.TC?.toast?.(e.message,'error')}});
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+})();
