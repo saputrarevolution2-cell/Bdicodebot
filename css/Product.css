@@ -224,3 +224,6 @@ body:not(.app-page)>main{margin-left:0!important}
 
 /* PAGE: product — dedicated layout hooks */
 .page-style-1,.page-style-2{isolation:isolate}.row{min-width:0}.field{min-width:0}.iconbox{flex:0 0 auto}
+
+.cashi-modal-backdrop{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:18px;background:rgba(3,10,17,.72);backdrop-filter:blur(8px)}.cashi-modal{position:relative;width:min(420px,100%);padding:24px;border-radius:22px;border:1px solid var(--p-line,#263445);background:var(--p-surface,#fff);color:var(--p-text,#101828);box-shadow:0 30px 100px rgba(0,0,0,.35);text-align:center}.cashi-close{position:absolute;right:12px;top:10px;border:0;background:transparent;color:inherit;font-size:28px;cursor:pointer}.cashi-modal h2{margin:14px 0 5px}.cashi-qr{min-height:220px;margin:16px auto;padding:14px;display:grid;place-items:center;border:1px dashed var(--p-line,#dfe6ec);border-radius:16px;background:#fff;max-width:270px}.cashi-qr img{width:100%;max-width:240px;aspect-ratio:1;object-fit:contain}.qr-text{font-size:10px;word-break:break-all;color:#334155}.cashi-status{margin:14px 0 0;font-size:12px;color:#168ac3}.cashi-modal .btn{width:100%;justify-content:center}
+html[data-theme="dark"] .cashi-modal{background:#0f1924;color:#edf4f8;border-color:#294050}.cashi-modal .empty{background:#f8fafc;color:#667085}
