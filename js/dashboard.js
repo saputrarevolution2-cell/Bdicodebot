@@ -1,81 +1,164 @@
 /* =========================================================
-   PasTele Dashboard
-   SOURCE: /js/dashboard.js?v=20260904
-   Full clean version
+   PasTele — DASHBOARD
+   SOURCE: /js/dashboard.js
+   VERSION: 2026-09-04
+   Clean / Real Supabase Data / 7-Day Analytics
    ========================================================= */
 document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
+  /* =======================================================
+     HELPERS
+     ======================================================= */
   const $ = (id) => document.getElementById(id);
-  const esc = TC.esc;
+  const esc =
+    typeof TC?.esc === 'function'
+      ? TC.esc
+      : (value) =>
+          String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+  const number = (value) => {
+    const n = Number(value || 0);
+    return n.toLocaleString('id-ID');
+  };
+  const money = (value) => {
+    const n = Number(value || 0);
+    if (typeof TC?.money === 'function') {
+      return TC.money(n);
+    }
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0
+    }).format(n);
+  };
+  const safeDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? null
+      : date;
+  };
   /* =======================================================
      AUTH
      ======================================================= */
-  const u = await TC.user();
-  if (!u) {
+  let user;
+  try {
+    user = await TC.user();
+  } catch (error) {
+    console.error('Auth error:', error);
+    location.replace('login.html');
+    return;
+  }
+  if (!user) {
     location.replace('login.html');
     return;
   }
   /* =======================================================
      DATE HELPERS
      ======================================================= */
-  const now = new Date();
-  // Gunakan tanggal lokal agar tidak bergeser karena UTC.
-  const dateKey = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  const startOfDay = (value) => {
+    const date = new Date(value);
+    date.setHours(0, 0, 0, 0);
+    return date;
   };
-  const startOfDay = (date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
+  const addDays = (value, amount) => {
+    const date = new Date(value);
+    date.setDate(date.getDate() + amount);
+    return date;
   };
-  const addDays = (date, amount) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + amount);
-    return d;
-  };
-  const today = startOfDay(now);
   /*
-   * Performa:
-   * - current: 7 hari terakhir, termasuk hari ini
-   * - previous: 7 hari sebelum current
+   * Local date key.
+   *
+   * Jangan menggunakan:
+   * date.toISOString().slice(0, 10)
+   *
+   * untuk grouping harian karena dapat bergeser
+   * satu hari akibat timezone.
    */
-  const currentStart = addDays(today, -6);
-  const previousStart = addDays(today, -13);
+  const dateKey = (value) => {
+    const date =
+      value instanceof Date
+        ? value
+        : new Date(value);
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, '0');
+    const day = String(
+      date.getDate()
+    ).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const today = startOfDay(new Date());
   /*
-   * Query harus mengambil sejak awal periode sebelumnya.
+   * CURRENT:
+   * hari ini + 6 hari sebelumnya
+   *
+   * PREVIOUS:
+   * 7 hari sebelum current
    */
-  const queryStart = previousStart.toISOString();
-  const currentDays = Array.from(
-    { length: 7 },
-    (_, index) => addDays(currentStart, index)
-  );
-  const previousDays = Array.from(
-    { length: 7 },
-    (_, index) => addDays(previousStart, index)
-  );
-  /* =======================================================
-     FORMATTERS
-     ======================================================= */
-  const number = (value) => {
-    const n = Number(value || 0);
-    return n.toLocaleString('id-ID');
-  };
-  const money = (value) => {
-    return TC.money(Number(value || 0));
-  };
+  const currentStart =
+    addDays(today, -6);
+  const previousStart =
+    addDays(today, -13);
+  /*
+   * Supabase menerima timestamp UTC.
+   * Local midnight dikonversi ke ISO dengan benar.
+   */
+  const queryStart =
+    previousStart.toISOString();
+  const currentDays =
+    Array.from(
+      { length: 7 },
+      (_, index) =>
+        addDays(currentStart, index)
+    );
+  const previousDays =
+    Array.from(
+      { length: 7 },
+      (_, index) =>
+        addDays(previousStart, index)
+    );
+  const currentDayKeys =
+    new Set(
+      currentDays.map(dateKey)
+    );
+  const previousDayKeys =
+    new Set(
+      previousDays.map(dateKey)
+    );
   const formatDay = (date) => {
-    return date.toLocaleDateString('id-ID', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short'
-    });
+    return date.toLocaleDateString(
+      'id-ID',
+      {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short'
+      }
+    );
   };
-  const safeDate = (value) => {
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
+  const formatDate = (value) => {
+    const date = safeDate(value);
+    if (!date) return '-';
+    return date.toLocaleDateString(
+      'id-ID',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }
+    );
+  };
+  const formatDateTime = (value) => {
+    const date = safeDate(value);
+    if (!date) return '-';
+    return date.toLocaleString(
+      'id-ID'
+    );
   };
   /* =======================================================
      SCOPE
@@ -83,180 +166,281 @@ document.addEventListener('DOMContentLoaded', async () => {
   const getScope = () => {
     return $('scope')?.value || 'all';
   };
-  const matchProductType = (type, scope) => {
-    const normalized = String(type || 'link').toLowerCase();
-    if (scope === 'all') return true;
-    if (scope === 'paste') return normalized === 'link' || normalized === 'paste';
+  const normalize = (value) => {
+    return String(
+      value || ''
+    )
+      .trim()
+      .toLowerCase();
+  };
+  /*
+   * Product scope.
+   */
+  const matchProductType = (
+    type,
+    scope
+  ) => {
+    const normalized =
+      normalize(type);
+    if (scope === 'all') {
+      return true;
+    }
+    if (scope === 'paste') {
+      return [
+        'link',
+        'paste',
+        'pastelink'
+      ].includes(normalized);
+    }
     return normalized === scope;
   };
-  const matchEvent = (event, scope) => {
-    const eventType = String(event?.target_type || '').toLowerCase();
-    if (scope === 'all') return true;
+  /*
+   * Analytics event scope.
+   */
+  const matchEvent = (
+    event,
+    scope
+  ) => {
+    if (scope === 'all') {
+      return true;
+    }
+    const targetType =
+      normalize(
+        event?.target_type
+      );
     if (scope === 'paste') {
-      return ['link', 'pastelink', 'paste'].includes(eventType);
+      return [
+        'link',
+        'paste',
+        'pastelink'
+      ].includes(targetType);
     }
     if (scope === 'code') {
-      return eventType === 'code';
+      return targetType === 'code';
     }
     if (scope === 'channel') {
-      return eventType === 'channel';
+      return targetType === 'channel';
     }
     if (scope === 'group') {
-      return eventType === 'group';
+      return targetType === 'group';
     }
     return false;
   };
   /* =======================================================
-     TREND CALCULATION
+     TREND
      ======================================================= */
-  const calculateTrend = (current, previous) => {
-    const currentValue = Number(current || 0);
-    const previousValue = Number(previous || 0);
-    if (previousValue === 0 && currentValue === 0) {
+  const calculateTrend = (
+    current,
+    previous
+  ) => {
+    const currentValue =
+      Number(current || 0);
+    const previousValue =
+      Number(previous || 0);
+    /*
+     * Keduanya kosong.
+     */
+    if (
+      currentValue === 0 &&
+      previousValue === 0
+    ) {
       return {
-        percent: 0,
         direction: 'stable',
         icon: 'fa-minus',
-        label: '0%'
+        label: '0%',
+        percent: 0
       };
     }
-    if (previousValue === 0) {
+    /*
+     * Sebelumnya 0 tetapi sekarang ada data.
+     *
+     * Tidak menyebut infinite%.
+     * Kita tampilkan +100% agar UI tetap
+     * masuk akal dan tidak rusak.
+     */
+    if (
+      previousValue === 0 &&
+      currentValue > 0
+    ) {
       return {
-        percent: 100,
         direction: 'up',
         icon: 'fa-arrow-trend-up',
-        label: '+100%'
+        label: '+100%',
+        percent: 100
       };
     }
     const percent =
-      ((currentValue - previousValue) / previousValue) * 100;
-    const rounded = Math.abs(percent).toFixed(1);
-    if (percent > 0) {
+      (
+        (currentValue - previousValue) /
+        previousValue
+      ) *
+      100;
+    if (
+      Math.abs(percent) < 0.05
+    ) {
       return {
-        percent,
-        direction: 'up',
-        icon: 'fa-arrow-trend-up',
-        label: `+${rounded}%`
+        direction: 'stable',
+        icon: 'fa-minus',
+        label: '0%',
+        percent: 0
       };
     }
-    if (percent < 0) {
+    const rounded =
+      Math.abs(percent).toFixed(1);
+    if (percent > 0) {
       return {
-        percent,
-        direction: 'down',
-        icon: 'fa-arrow-trend-down',
-        label: `-${rounded}%`
+        direction: 'up',
+        icon: 'fa-arrow-trend-up',
+        label: `+${rounded}%`,
+        percent
       };
     }
     return {
-      percent: 0,
-      direction: 'stable',
-      icon: 'fa-minus',
-      label: '0%'
+      direction: 'down',
+      icon: 'fa-arrow-trend-down',
+      label: `-${rounded}%`,
+      percent
     };
   };
-  /* =======================================================
-     TREND UI
-     ======================================================= */
-  const renderTrend = (elementId, trend) => {
-    const el = $(elementId);
-    if (!el) return;
-    el.className = `trend trend-${trend.direction}`;
-    el.innerHTML = `
-      <i class="fa-solid ${trend.icon}" aria-hidden="true"></i>
-      <span>${esc(trend.label)}</span>
-    `;
-  };
-  /*
-   * Kalau HTML belum mempunyai element trend,
-   * function ini tidak error.
-   */
-  const renderOptionalTrend = (id, trend) => {
-    if ($(id)) {
-      renderTrend(id, trend);
+  const renderTrend = (
+    elementId,
+    trend
+  ) => {
+    const element = $(elementId);
+    if (!element) {
+      return;
     }
+    element.className =
+      `trend trend-${trend.direction}`;
+    element.innerHTML = `
+      <i
+        class="fa-solid ${esc(trend.icon)}"
+        aria-hidden="true"
+      ></i>
+      <span>
+        ${esc(trend.label)}
+      </span>
+    `;
   };
   /* =======================================================
      CHART
      ======================================================= */
-  const renderChart = (chartData) => {
+  const renderChart = (
+    chartData
+  ) => {
     const chart = $('chart');
-    if (!chart) return;
+    if (!chart) {
+      return;
+    }
     const max = Math.max(
       1,
-      ...currentDays.map((day) => {
-        const item = chartData[dateKey(day)];
-        return Math.max(
-          Number(item?.views || 0),
-          Number(item?.sales || 0),
-          Number(item?.share || 0)
-        );
-      })
+      ...currentDays.map(
+        (day) => {
+          const item =
+            chartData[
+              dateKey(day)
+            ] || {};
+          return Math.max(
+            Number(
+              item.views || 0
+            ),
+            Number(
+              item.sales || 0
+            ),
+            Number(
+              item.share || 0
+            )
+          );
+        }
+      )
     );
-    chart.innerHTML = currentDays
-      .map((day) => {
-        const key = dateKey(day);
-        const item = chartData[key] || {
-          views: 0,
-          sales: 0,
-          share: 0
-        };
-        const viewsHeight =
-          item.views > 0
-            ? Math.max(3, (item.views / max) * 100)
-            : 2;
-        const salesHeight =
-          item.sales > 0
-            ? Math.max(3, (item.sales / max) * 100)
-            : 2;
-        const shareHeight =
-          item.share > 0
-            ? Math.max(3, (item.share / max) * 100)
-            : 2;
-        return `
-          <div
-            class="chart-day"
-            data-date="${esc(key)}"
-            title="${esc(
-              `${formatDay(day)} — Views ${number(item.views)}, Sales ${number(item.sales)}, Share ${number(item.share)}`
-            )}"
-          >
-            <div class="bars">
-              <i
-                class="bar-views"
-                style="height:${viewsHeight}%"
-                title="Views: ${number(item.views)}"
-              ></i>
-              <i
-                class="bar-sales"
-                style="height:${salesHeight}%"
-                title="Sales: ${number(item.sales)}"
-              ></i>
-              <i
-                class="bar-share"
-                style="height:${shareHeight}%"
-                title="Share: ${number(item.share)}"
-              ></i>
+    chart.innerHTML =
+      currentDays
+        .map((day) => {
+          const key =
+            dateKey(day);
+          const item =
+            chartData[key] || {
+              views: 0,
+              sales: 0,
+              share: 0
+            };
+          const views =
+            Number(
+              item.views || 0
+            );
+          const sales =
+            Number(
+              item.sales || 0
+            );
+          const share =
+            Number(
+              item.share || 0
+            );
+          const viewsHeight =
+            views > 0
+              ? Math.max(
+                  3,
+                  (views / max) * 100
+                )
+              : 2;
+          const salesHeight =
+            sales > 0
+              ? Math.max(
+                  3,
+                  (sales / max) * 100
+                )
+              : 2;
+          const shareHeight =
+            share > 0
+              ? Math.max(
+                  3,
+                  (share / max) * 100
+                )
+              : 2;
+          return `
+            <div
+              class="chart-day"
+              data-date="${esc(key)}"
+              title="${esc(
+                `${formatDay(day)} — Views ${number(views)}, Sales ${number(sales)}, Share ${number(share)}`
+              )}"
+            >
+              <div class="bars">
+                <i
+                  class="bar-views"
+                  style="height:${viewsHeight}%"
+                  aria-label="Views ${number(views)}"
+                ></i>
+                <i
+                  class="bar-sales"
+                  style="height:${salesHeight}%"
+                  aria-label="Sales ${number(sales)}"
+                ></i>
+                <i
+                  class="bar-share"
+                  style="height:${shareHeight}%"
+                  aria-label="Share ${number(share)}"
+                ></i>
+              </div>
+              <small>
+                ${esc(formatDay(day))}
+              </small>
             </div>
-            <small>${esc(formatDay(day))}</small>
-          </div>
-        `;
-      })
-      .join('');
+          `;
+        })
+        .join('');
   };
   /* =======================================================
      MAIN LOAD
      ======================================================= */
   async function load() {
-    const scope = getScope();
+    const scope =
+      getScope();
     /*
-     * Ambil semua data yang diperlukan.
-     *
-     * orders + transactions:
-     * periode previous + current
-     *
-     * analytics_events:
-     * diambil semua karena existing dashboard juga
-     * menggunakan total event.
+     * -------------------------------------------------------
+     * DATABASE REQUESTS
+     * -------------------------------------------------------
      */
     const [
       productsResult,
@@ -272,62 +456,165 @@ document.addEventListener('DOMContentLoaded', async () => {
       sb
         .from('products')
         .select(
-          'id,title,type,views,sales_count,price,created_at,status'
+          [
+            'id',
+            'title',
+            'type',
+            'views',
+            'sales_count',
+            'price',
+            'created_at',
+            'status'
+          ].join(',')
         )
-        .eq('creator_id', u.id)
-        .order('created_at', { ascending: false }),
+        .eq(
+          'creator_id',
+          user.id
+        )
+        .order(
+          'created_at',
+          {
+            ascending: false
+          }
+        ),
       sb
         .from('pastelinks')
-        .select('id,slug,title,views,created_at')
-        .eq('user_id', u.id)
-        .order('created_at', { ascending: false }),
+        .select(
+          'id,slug,title,views,created_at'
+        )
+        .eq(
+          'user_id',
+          user.id
+        )
+        .order(
+          'created_at',
+          {
+            ascending: false
+          }
+        ),
       sb
         .from('telegram_products')
         .select(
-          'id,title,product_type,access_type,price,is_published,created_at'
+          [
+            'id',
+            'title',
+            'product_type',
+            'access_type',
+            'price',
+            'is_published',
+            'created_at'
+          ].join(',')
         )
-        .eq('owner_id', u.id)
-        .order('created_at', { ascending: false }),
+        .eq(
+          'owner_id',
+          user.id
+        )
+        .order(
+          'created_at',
+          {
+            ascending: false
+          }
+        ),
       sb
         .from('telegram_channels')
         .select(
-          'id,name,type,access_type,price,is_published,created_at'
+          [
+            'id',
+            'name',
+            'type',
+            'access_type',
+            'price',
+            'is_published',
+            'created_at'
+          ].join(',')
         )
-        .eq('owner_id', u.id)
-        .order('created_at', { ascending: false }),
+        .eq(
+          'owner_id',
+          user.id
+        )
+        .order(
+          'created_at',
+          {
+            ascending: false
+          }
+        ),
       sb
         .from('orders')
-        .select('id,amount,status,created_at')
-        .eq('seller_id', u.id)
-        .eq('status', 'paid')
-        .gte('created_at', queryStart),
+        .select(
+          'id,amount,status,created_at'
+        )
+        .eq(
+          'seller_id',
+          user.id
+        )
+        .eq(
+          'status',
+          'paid'
+        )
+        .gte(
+          'created_at',
+          queryStart
+        ),
       sb
         .from('transactions')
         .select(
-          'id,amount,net_amount,type,status,created_at'
+          [
+            'id',
+            'amount',
+            'net_amount',
+            'type',
+            'status',
+            'created_at'
+          ].join(',')
         )
-        .eq('user_id', u.id)
-        .gte('created_at', queryStart),
+        .eq(
+          'user_id',
+          user.id
+        )
+        .gte(
+          'created_at',
+          queryStart
+        ),
       sb
         .from('analytics_events')
         .select(
-          'event_type,target_type,target_id,created_at'
+          [
+            'event_type',
+            'target_type',
+            'target_id',
+            'created_at'
+          ].join(',')
         )
-        .eq('owner_id', u.id),
+        .eq(
+          'owner_id',
+          user.id
+        ),
       sb
         .from('content_likes')
-        .select('id', {
-          count: 'exact',
-          head: true
-        })
-        .eq('content_owner_id', u.id),
+        .select(
+          'id',
+          {
+            count: 'exact',
+            head: true
+          }
+        )
+        .eq(
+          'content_owner_id',
+          user.id
+        ),
       sb
         .from('creator_followers')
-        .select('id', {
-          count: 'exact',
-          head: true
-        })
-        .eq('creator_id', u.id)
+        .select(
+          'id',
+          {
+            count: 'exact',
+            head: true
+          }
+        )
+        .eq(
+          'creator_id',
+          user.id
+        )
     ]);
     /* =====================================================
        ERROR CHECK
@@ -343,49 +630,98 @@ document.addEventListener('DOMContentLoaded', async () => {
       likesResult,
       followsResult
     ];
-    const firstError = results.find((result) => result?.error);
+    const firstError =
+      results.find(
+        (result) =>
+          result?.error
+      );
     if (firstError?.error) {
       throw firstError.error;
     }
     /* =====================================================
-       NORMALIZE DATA
+       NORMALIZE
        ===================================================== */
-    const products = productsResult.data || [];
-    const pastes = pastesResult.data || [];
-    const codes = codesResult.data || [];
-    const channels = channelsResult.data || [];
-    const orders = ordersResult.data || [];
-    const transactions = transactionsResult.data || [];
-    const allEvents = eventsResult.data || [];
+    const products =
+      productsResult.data || [];
+    const pastes =
+      pastesResult.data || [];
+    const codes =
+      codesResult.data || [];
+    const channels =
+      channelsResult.data || [];
+    const orders =
+      ordersResult.data || [];
+    const transactions =
+      transactionsResult.data || [];
+    const allEvents =
+      eventsResult.data || [];
     /* =====================================================
-       FILTER BY SCOPE
+       FILTER CONTENT
        ===================================================== */
-    const filteredProducts = products.filter((item) =>
-      matchProductType(item.type, scope)
-    );
+    const filteredProducts =
+      products.filter(
+        (item) =>
+          matchProductType(
+            item.type,
+            scope
+          )
+      );
     const filteredPastes =
-      scope === 'all' || scope === 'paste'
+      scope === 'all' ||
+      scope === 'paste'
         ? pastes
         : [];
+    /*
+     * telegram_products memakai product_type.
+     *
+     * Jangan otomatis menganggap semua telegram_products
+     * sebagai "code" apabila database bisa mempunyai
+     * tipe lain.
+     */
     const filteredCodes =
-      scope === 'all' || scope === 'code'
-        ? codes
-        : [];
-    const filteredChannels =
       scope === 'all' ||
-      scope === 'channel' ||
-      scope === 'group'
-        ? channels.filter(
-            (item) =>
-              scope === 'all' ||
-              String(item.type || '').toLowerCase() === scope
+      scope === 'code'
+        ? codes.filter(
+            (item) => {
+              if (
+                scope === 'all'
+              ) {
+                return true;
+              }
+              return [
+                'code',
+                'product',
+                'file'
+              ].includes(
+                normalize(
+                  item.product_type
+                )
+              );
+            }
           )
         : [];
-    const scopedEvents = allEvents.filter((event) =>
-      matchEvent(event, scope)
-    );
+    const filteredChannels =
+      scope === 'all'
+        ? channels
+        : channels.filter(
+            (item) =>
+              normalize(
+                item.type
+              ) === scope
+          );
     /* =====================================================
-       CREATED CONTENT
+       SCOPED EVENTS
+       ===================================================== */
+    const scopedEvents =
+      allEvents.filter(
+        (event) =>
+          matchEvent(
+            event,
+            scope
+          )
+      );
+    /* =====================================================
+       CONTENT COUNT
        ===================================================== */
     const createdCount =
       filteredProducts.length +
@@ -393,173 +729,307 @@ document.addEventListener('DOMContentLoaded', async () => {
       filteredCodes.length +
       filteredChannels.length;
     if ($('created')) {
-      $('created').textContent = number(createdCount);
+      $('created').textContent =
+        number(createdCount);
+    }
+    if ($('detailContent')) {
+      $('detailContent').textContent =
+        number(createdCount);
     }
     /* =====================================================
        TOTAL VIEWS
        ===================================================== */
+    /*
+     * products.views dan pastelinks.views adalah
+     * cumulative counter.
+     *
+     * analytics_events adalah event history.
+     *
+     * Untuk total dashboard kita mengambil nilai terbesar
+     * agar tidak menampilkan angka event yang lebih kecil
+     * dari counter database.
+     */
     const storedViews =
       filteredProducts.reduce(
         (total, item) =>
-          total + Number(item.views || 0),
+          total +
+          Number(
+            item.views || 0
+          ),
         0
       ) +
       filteredPastes.reduce(
         (total, item) =>
-          total + Number(item.views || 0),
+          total +
+          Number(
+            item.views || 0
+          ),
         0
       );
-    const eventViews = scopedEvents.filter(
-      (event) =>
-        String(event.event_type).toLowerCase() === 'view'
-    ).length;
-    const views = Math.max(
-      storedViews,
-      eventViews
-    );
+    const eventViews =
+      scopedEvents.filter(
+        (event) =>
+          normalize(
+            event.event_type
+          ) === 'view'
+      ).length;
+    const totalViews =
+      Math.max(
+        storedViews,
+        eventViews
+      );
     if ($('views')) {
-      $('views').textContent = number(views);
+      $('views').textContent =
+        number(totalViews);
+    }
+    if ($('detailViews')) {
+      $('detailViews').textContent =
+        number(totalViews);
     }
     /* =====================================================
-       SALES / TRANSACTIONS
+       VALID SELL TRANSACTIONS
        ===================================================== */
-    const validSellTransactions = transactions.filter(
-      (item) =>
-        /^sell_/i.test(String(item.type || '')) &&
-        ['completed', 'paid', 'success'].includes(
-          String(item.status || '').toLowerCase()
-        )
-    );
-    const sales = orders.length + validSellTransactions.length;
+    const validSellTransactions =
+      transactions.filter(
+        (item) => {
+          const type =
+            normalize(
+              item.type
+            );
+          const status =
+            normalize(
+              item.status
+            );
+          return (
+            /^sell_/i.test(type) &&
+            [
+              'completed',
+              'paid',
+              'success'
+            ].includes(status)
+          );
+        }
+      );
+    /* =====================================================
+       SALES
+       ===================================================== */
+    /*
+     * IMPORTANT:
+     *
+     * analytics_events.type = paid
+     * TIDAK dihitung sebagai sale.
+     *
+     * Sumber financial:
+     * 1. orders
+     * 2. sell_* transactions
+     *
+     * Dengan begitu event paid tidak menyebabkan
+     * double-count dengan transaksi.
+     */
+    const totalSales =
+      orders.length +
+      validSellTransactions.length;
     if ($('sales')) {
-      $('sales').textContent = number(sales);
+      $('sales').textContent =
+        number(totalSales);
+    }
+    if ($('detailSales')) {
+      $('detailSales').textContent =
+        number(totalSales);
     }
     /* =====================================================
        REVENUE
        ===================================================== */
-    const orderRevenue = orders.reduce(
-      (total, item) =>
-        total + Number(item.amount || 0),
-      0
-    );
-    const transactionRevenue =
-      validSellTransactions.reduce(
-        (total, item) =>
+    const orderRevenue =
+      orders.reduce(
+        (total, order) =>
           total +
           Number(
-            item.net_amount ??
-            item.amount ??
+            order.amount || 0
+          ),
+        0
+      );
+    const transactionRevenue =
+      validSellTransactions.reduce(
+        (
+          total,
+          transaction
+        ) =>
+          total +
+          Number(
+            transaction.net_amount ??
+            transaction.amount ??
             0
           ),
         0
       );
-    const revenue =
+    const totalRevenue =
       orderRevenue +
       transactionRevenue;
     if ($('revenue')) {
-      $('revenue').textContent = money(revenue);
+      $('revenue').textContent =
+        money(totalRevenue);
+    }
+    if ($('detailRevenue')) {
+      $('detailRevenue').textContent =
+        money(totalRevenue);
     }
     /* =====================================================
        CONTENT COUNTERS
        ===================================================== */
     const totalLink =
-      products.filter((item) =>
-        ['link', 'paste', 'pastelink'].includes(
-          String(item.type || '').toLowerCase()
-        )
+      products.filter(
+        (item) =>
+          [
+            'link',
+            'paste',
+            'pastelink'
+          ].includes(
+            normalize(item.type)
+          )
       ).length +
       pastes.length;
-    const totalCode = codes.length;
-    const totalChannel = channels.filter(
-      (item) =>
-        String(item.type || '').toLowerCase() === 'channel'
-    ).length;
+    const totalCode =
+      codes.length;
+    const totalChannel =
+      channels.filter(
+        (item) =>
+          normalize(
+            item.type
+          ) === 'channel'
+      ).length;
     if ($('totalLink')) {
-      $('totalLink').textContent = number(totalLink);
+      $('totalLink').textContent =
+        number(totalLink);
     }
     if ($('totalCode')) {
-      $('totalCode').textContent = number(totalCode);
+      $('totalCode').textContent =
+        number(totalCode);
     }
     if ($('totalChannel')) {
-      $('totalChannel').textContent = number(totalChannel);
+      $('totalChannel').textContent =
+        number(totalChannel);
     }
     /* =====================================================
        INTERACTIONS
        ===================================================== */
-    const countEvent = (type) =>
-      scopedEvents.filter(
-        (event) =>
-          String(event.event_type || '').toLowerCase() ===
-          type
-      ).length;
+    const countEvent =
+      (type) =>
+        scopedEvents.filter(
+          (event) =>
+            normalize(
+              event.event_type
+            ) === normalize(type)
+        ).length;
+    const likeCount =
+      Number(
+        likesResult.count || 0
+      );
+    const followerCount =
+      Number(
+        followsResult.count || 0
+      );
+    const shareCount =
+      countEvent('share');
     if ($('interactions')) {
       const interactionItems = [
-        [
-          'fa-eye',
-          'Views',
-          views,
-          'blue'
-        ],
-        [
-          'fa-heart',
-          'Like',
-          likesResult.count || 0,
-          'pink'
-        ],
-        [
-          'fa-share-nodes',
-          'Share',
-          countEvent('share'),
-          'violet'
-        ],
-        [
-          'fa-user-plus',
-          'Follower',
-          followsResult.count || 0,
-          'green'
-        ]
+        {
+          icon: 'fa-eye',
+          label: 'Views',
+          value: totalViews,
+          color: 'blue'
+        },
+        {
+          icon: 'fa-heart',
+          label: 'Like',
+          value: likeCount,
+          color: 'pink'
+        },
+        {
+          icon: 'fa-share-nodes',
+          label: 'Share',
+          value: shareCount,
+          color: 'violet'
+        },
+        {
+          icon: 'fa-user-plus',
+          label: 'Follower',
+          value: followerCount,
+          color: 'green'
+        }
       ];
       $('interactions').innerHTML =
         interactionItems
           .map(
             (item) => `
-              <div class="circle-stat ${esc(item[3])}">
+              <div
+                class="circle-stat ${esc(
+                  item.color
+                )}"
+              >
                 <div class="circle">
                   <i
-                    class="fa-solid ${esc(item[0])}"
+                    class="fa-solid ${esc(
+                      item.icon
+                    )}"
                     aria-hidden="true"
                   ></i>
                 </div>
-                <strong>${number(item[2])}</strong>
-                <span>${esc(item[1])}</span>
+                <strong>
+                  ${number(
+                    item.value
+                  )}
+                </strong>
+                <span>
+                  ${esc(
+                    item.label
+                  )}
+                </span>
               </div>
             `
           )
           .join('');
     }
     /* =====================================================
-       7 DAY PERFORMANCE DATA
+       7 DAY CHART DATA
        ===================================================== */
     const chartData = {};
-    currentDays.forEach((day) => {
-      chartData[dateKey(day)] = {
-        views: 0,
-        sales: 0,
-        share: 0,
-        revenue: 0
-      };
-    });
+    currentDays.forEach(
+      (day) => {
+        chartData[
+          dateKey(day)
+        ] = {
+          views: 0,
+          sales: 0,
+          share: 0,
+          revenue: 0
+        };
+      }
+    );
     /* -----------------------------------------------------
-       Current 7 days events
+       EVENTS
        ----------------------------------------------------- */
-    for (const event of scopedEvents) {
-      const eventDate = safeDate(event.created_at);
-      if (!eventDate) continue;
-      const key = dateKey(eventDate);
-      if (!chartData[key]) continue;
-      const type = String(
-        event.event_type || ''
-      ).toLowerCase();
+    for (
+      const event of scopedEvents
+    ) {
+      const date =
+        safeDate(
+          event.created_at
+        );
+      if (!date) {
+        continue;
+      }
+      const key =
+        dateKey(date);
+      if (
+        !currentDayKeys.has(key)
+      ) {
+        continue;
+      }
+      const type =
+        normalize(
+          event.event_type
+        );
       if (type === 'view') {
         chartData[key].views++;
       }
@@ -567,236 +1037,276 @@ document.addEventListener('DOMContentLoaded', async () => {
         chartData[key].share++;
       }
       /*
-       * Event paid dihitung sebagai sale hanya jika
-       * memang ada event paid.
-       */
-      if (type === 'paid') {
-        chartData[key].sales++;
-      }
-    }
-    /* -----------------------------------------------------
-       Current orders
-       ----------------------------------------------------- */
-    for (const order of orders) {
-      const orderDate = safeDate(order.created_at);
-      if (!orderDate) continue;
-      const key = dateKey(orderDate);
-      if (!chartData[key]) continue;
-      chartData[key].sales++;
-      chartData[key].revenue += Number(
-        order.amount || 0
-      );
-    }
-    /* -----------------------------------------------------
-       Current sell transactions
-       ----------------------------------------------------- */
-    for (const transaction of validSellTransactions) {
-      const transactionDate = safeDate(
-        transaction.created_at
-      );
-      if (!transactionDate) continue;
-      const key = dateKey(transactionDate);
-      if (!chartData[key]) continue;
-      /*
-       * Jangan menganggap transaction yang sama
-       * sebagai event paid + transaction jika event
-       * paid berasal dari transaksi yang sama.
+       * paid event sengaja tidak dimasukkan.
        *
-       * Existing system sebelumnya menghitung keduanya.
-       * Di sini transaksi tetap dianggap sebagai sale
-       * karena merupakan sumber transaksi finansial.
+       * Sales berasal dari orders + transactions.
        */
+    }
+    /* -----------------------------------------------------
+       CURRENT ORDERS
+       ----------------------------------------------------- */
+    for (
+      const order of orders
+    ) {
+      const date =
+        safeDate(
+          order.created_at
+        );
+      if (!date) {
+        continue;
+      }
+      const key =
+        dateKey(date);
+      if (
+        !currentDayKeys.has(key)
+      ) {
+        continue;
+      }
       chartData[key].sales++;
-      chartData[key].revenue += Number(
-        transaction.net_amount ??
-        transaction.amount ??
-        0
-      );
+      chartData[key].revenue +=
+        Number(
+          order.amount || 0
+        );
+    }
+    /* -----------------------------------------------------
+       CURRENT SELL TRANSACTIONS
+       ----------------------------------------------------- */
+    for (
+      const transaction of
+        validSellTransactions
+    ) {
+      const date =
+        safeDate(
+          transaction.created_at
+        );
+      if (!date) {
+        continue;
+      }
+      const key =
+        dateKey(date);
+      if (
+        !currentDayKeys.has(key)
+      ) {
+        continue;
+      }
+      chartData[key].sales++;
+      chartData[key].revenue +=
+        Number(
+          transaction.net_amount ??
+          transaction.amount ??
+          0
+        );
     }
     /* =====================================================
-       PREVIOUS 7 DAYS CALCULATION
+       PREVIOUS 7 DAYS
        ===================================================== */
     const previousData = {
       views: 0,
       sales: 0,
       revenue: 0
     };
-    /*
-     * Previous event metrics
-     */
-    for (const event of scopedEvents) {
-      const eventDate = safeDate(event.created_at);
-      if (!eventDate) continue;
-      const key = dateKey(eventDate);
-      const belongsToPrevious =
-        previousDays.some(
-          (day) => dateKey(day) === key
+    /* -----------------------------------------------------
+       PREVIOUS EVENT METRICS
+       ----------------------------------------------------- */
+    for (
+      const event of scopedEvents
+    ) {
+      const date =
+        safeDate(
+          event.created_at
         );
-      if (!belongsToPrevious) continue;
-      const type = String(
-        event.event_type || ''
-      ).toLowerCase();
+      if (!date) {
+        continue;
+      }
+      const key =
+        dateKey(date);
+      if (
+        !previousDayKeys.has(key)
+      ) {
+        continue;
+      }
+      const type =
+        normalize(
+          event.event_type
+        );
       if (type === 'view') {
         previousData.views++;
       }
-      if (type === 'paid') {
-        previousData.sales++;
+      /*
+       * paid event tidak dihitung sebagai sales.
+       */
+    }
+    /* -----------------------------------------------------
+       PREVIOUS ORDERS
+       ----------------------------------------------------- */
+    for (
+      const order of orders
+    ) {
+      const date =
+        safeDate(
+          order.created_at
+        );
+      if (!date) {
+        continue;
       }
-    }
-    /*
-     * Previous orders
-     */
-    for (const order of orders) {
-      const orderDate = safeDate(order.created_at);
-      if (!orderDate) continue;
-      const key = dateKey(orderDate);
-      const belongsToPrevious =
-        previousDays.some(
-          (day) => dateKey(day) === key
-        );
-      if (!belongsToPrevious) continue;
+      const key =
+        dateKey(date);
+      if (
+        !previousDayKeys.has(key)
+      ) {
+        continue;
+      }
       previousData.sales++;
-      previousData.revenue += Number(
-        order.amount || 0
-      );
-    }
-    /*
-     * Previous transactions
-     */
-    for (const transaction of validSellTransactions) {
-      const transactionDate = safeDate(
-        transaction.created_at
-      );
-      if (!transactionDate) continue;
-      const key = dateKey(transactionDate);
-      const belongsToPrevious =
-        previousDays.some(
-          (day) => dateKey(day) === key
+      previousData.revenue +=
+        Number(
+          order.amount || 0
         );
-      if (!belongsToPrevious) continue;
+    }
+    /* -----------------------------------------------------
+       PREVIOUS SELL TRANSACTIONS
+       ----------------------------------------------------- */
+    for (
+      const transaction of
+        validSellTransactions
+    ) {
+      const date =
+        safeDate(
+          transaction.created_at
+        );
+      if (!date) {
+        continue;
+      }
+      const key =
+        dateKey(date);
+      if (
+        !previousDayKeys.has(key)
+      ) {
+        continue;
+      }
       previousData.sales++;
-      previousData.revenue += Number(
-        transaction.net_amount ??
-        transaction.amount ??
-        0
-      );
+      previousData.revenue +=
+        Number(
+          transaction.net_amount ??
+          transaction.amount ??
+          0
+        );
     }
     /* =====================================================
-       CURRENT PERIOD TOTALS
+       CURRENT PERIOD
        ===================================================== */
     const currentData = {
-      views: currentDays.reduce(
-        (total, day) =>
-          total +
-          Number(
-            chartData[dateKey(day)]?.views || 0
-          ),
-        0
-      ),
-      sales: currentDays.reduce(
-        (total, day) =>
-          total +
-          Number(
-            chartData[dateKey(day)]?.sales || 0
-          ),
-        0
-      ),
-      revenue: currentDays.reduce(
-        (total, day) =>
-          total +
-          Number(
-            chartData[dateKey(day)]?.revenue || 0
-          ),
-        0
-      )
+      views: 0,
+      sales: 0,
+      revenue: 0
     };
+    currentDays.forEach(
+      (day) => {
+        const item =
+          chartData[
+            dateKey(day)
+          ];
+        currentData.views +=
+          Number(
+            item?.views || 0
+          );
+        currentData.sales +=
+          Number(
+            item?.sales || 0
+          );
+        currentData.revenue +=
+          Number(
+            item?.revenue || 0
+          );
+      }
+    );
     /* =====================================================
        TRENDS
        ===================================================== */
-    const viewsTrend = calculateTrend(
-      currentData.views,
-      previousData.views
-    );
-    const salesTrend = calculateTrend(
-      currentData.sales,
-      previousData.sales
-    );
-    const revenueTrend = calculateTrend(
-      currentData.revenue,
-      previousData.revenue
-    );
+    const viewsTrend =
+      calculateTrend(
+        currentData.views,
+        previousData.views
+      );
+    const salesTrend =
+      calculateTrend(
+        currentData.sales,
+        previousData.sales
+      );
+    const revenueTrend =
+      calculateTrend(
+        currentData.revenue,
+        previousData.revenue
+      );
     /*
-     * Support multiple possible IDs so HTML can be
-     * connected without breaking old markup.
+     * Old / alternative IDs.
      */
-    renderOptionalTrend(
-      'viewsTrend',
-      viewsTrend
-    );
-    renderOptionalTrend(
-      'salesTrend',
-      salesTrend
-    );
-    renderOptionalTrend(
-      'revenueTrend',
-      revenueTrend
-    );
-    renderOptionalTrend(
-      'viewsChange',
-      viewsTrend
-    );
-    renderOptionalTrend(
-      'salesChange',
-      salesTrend
-    );
-    renderOptionalTrend(
-      'revenueChange',
-      revenueTrend
+    [
+      ['viewsTrend', viewsTrend],
+      ['salesTrend', salesTrend],
+      ['revenueTrend', revenueTrend],
+      ['viewsChange', viewsTrend],
+      ['salesChange', salesTrend],
+      ['revenueChange', revenueTrend],
+      [
+        'performanceViewsTrend',
+        viewsTrend
+      ],
+      [
+        'performanceSalesTrend',
+        salesTrend
+      ],
+      [
+        'performanceRevenueTrend',
+        revenueTrend
+      ]
+    ].forEach(
+      ([id, trend]) => {
+        if ($(id)) {
+          renderTrend(
+            id,
+            trend
+          );
+        }
+      }
     );
     /* =====================================================
-       OPTIONAL 7 DAY SUMMARY ELEMENTS
+       PERFORMANCE SUMMARY
        ===================================================== */
     if ($('performanceViews')) {
       $('performanceViews').textContent =
-        number(currentData.views);
+        number(
+          currentData.views
+        );
     }
     if ($('performanceSales')) {
       $('performanceSales').textContent =
-        number(currentData.sales);
+        number(
+          currentData.sales
+        );
     }
     if ($('performanceRevenue')) {
       $('performanceRevenue').textContent =
-        money(currentData.revenue);
-    }
-    if ($('performanceViewsTrend')) {
-      renderTrend(
-        'performanceViewsTrend',
-        viewsTrend
-      );
-    }
-    if ($('performanceSalesTrend')) {
-      renderTrend(
-        'performanceSalesTrend',
-        salesTrend
-      );
-    }
-    if ($('performanceRevenueTrend')) {
-      renderTrend(
-        'performanceRevenueTrend',
-        revenueTrend
-      );
+        money(
+          currentData.revenue
+        );
     }
     /* =====================================================
-       PERIOD LABEL
+       PERFORMANCE PERIOD
        ===================================================== */
+    const firstDay =
+      currentDays[0];
+    const lastDay =
+      currentDays[
+        currentDays.length - 1
+      ];
     const periodLabel =
-      `${currentDays[0].toLocaleDateString(
+      `${firstDay.toLocaleDateString(
         'id-ID',
         {
           day: '2-digit',
           month: 'short'
         }
-      )} – ${currentDays[6].toLocaleDateString(
+      )} – ${lastDay.toLocaleDateString(
         'id-ID',
         {
           day: '2-digit',
@@ -813,143 +1323,277 @@ document.addEventListener('DOMContentLoaded', async () => {
         '7 Hari';
     }
     /* =====================================================
-       RENDER CHART
+       PERFORMANCE META
        ===================================================== */
-    renderChart(chartData);
+    const performanceMeta =
+      document.querySelector(
+        '.performance-meta'
+      );
+    if (
+      performanceMeta
+    ) {
+      const comparisonText =
+        `Dibandingkan ${previousDays[0].toLocaleDateString(
+          'id-ID',
+          {
+            day: '2-digit',
+            month: 'short'
+          }
+        )} – ${previousDays[
+          previousDays.length - 1
+        ].toLocaleDateString(
+          'id-ID',
+          {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }
+        )}`;
+      const firstMeta =
+        performanceMeta.querySelector(
+          '.performance-meta-item span'
+        );
+      if (firstMeta) {
+        firstMeta.textContent =
+          comparisonText;
+      }
+    }
+    /* =====================================================
+       CHART
+       ===================================================== */
+    renderChart(
+      chartData
+    );
     /* =====================================================
        RECENT CONTENT
        ===================================================== */
-    const rows = [
-      ...products.map((item) => ({
-        title: item.title,
-        type: item.type,
-        icon:
-          String(item.type || '').toLowerCase() ===
-          'code'
-            ? 'fa-code'
-            : 'fa-link',
-        date: item.created_at,
-        views: item.views || 0,
-        price: item.price || 0
-      })),
-      ...pastes.map((item) => ({
-        title:
-          item.title ||
-          item.slug ||
-          'PasteLink',
-        type: 'pastelink',
-        icon: 'fa-file-lines',
-        date: item.created_at,
-        views: item.views || 0,
-        price: 0
-      })),
-      ...codes.map((item) => ({
-        title: item.title,
-        type: 'code',
-        icon: 'fa-code',
-        date: item.created_at,
-        views: 0,
-        price: item.price || 0
-      })),
-      ...channels.map((item) => ({
-        title:
-          item.name ||
-          'Channel',
-        type: item.type,
-        icon:
-          String(item.type || '').toLowerCase() ===
-          'group'
-            ? 'fa-users'
-            : 'fa-broadcast-tower',
-        date: item.created_at,
-        views: 0,
-        price: item.price || 0
-      }))
+    const recentProducts =
+      filteredProducts.map(
+        (item) => ({
+          title:
+            item.title ||
+            'Untitled',
+          type:
+            item.type ||
+            'link',
+          icon:
+            normalize(
+              item.type
+            ) === 'code'
+              ? 'fa-code'
+              : 'fa-link',
+          date:
+            item.created_at,
+          views:
+            Number(
+              item.views || 0
+            ),
+          price:
+            Number(
+              item.price || 0
+            )
+        })
+      );
+    const recentPastes =
+      filteredPastes.map(
+        (item) => ({
+          title:
+            item.title ||
+            item.slug ||
+            'PasteLink',
+          type:
+            'pastelink',
+          icon:
+            'fa-file-lines',
+          date:
+            item.created_at,
+          views:
+            Number(
+              item.views || 0
+            ),
+          price: 0
+        })
+      );
+    const recentCodes =
+      filteredCodes.map(
+        (item) => ({
+          title:
+            item.title ||
+            'Code',
+          type:
+            item.product_type ||
+            'code',
+          icon:
+            'fa-code',
+          date:
+            item.created_at,
+          views: 0,
+          price:
+            Number(
+              item.price || 0
+            )
+        })
+      );
+    const recentChannels =
+      filteredChannels.map(
+        (item) => ({
+          title:
+            item.name ||
+            'Telegram',
+          type:
+            item.type ||
+            'channel',
+          icon:
+            normalize(
+              item.type
+            ) === 'group'
+              ? 'fa-users'
+              : 'fa-broadcast-tower',
+          date:
+            item.created_at,
+          views: 0,
+          price:
+            Number(
+              item.price || 0
+            )
+        })
+      );
+    const recentRows = [
+      ...recentProducts,
+      ...recentPastes,
+      ...recentCodes,
+      ...recentChannels
     ]
       .sort(
-        (a, b) =>
-          new Date(b.date) -
-          new Date(a.date)
+        (a, b) => {
+          const dateA =
+            safeDate(a.date)
+              ?.getTime() || 0;
+          const dateB =
+            safeDate(b.date)
+              ?.getTime() || 0;
+          return dateB - dateA;
+        }
       )
       .slice(0, 8);
     if ($('recentLinks')) {
       $('recentLinks').innerHTML =
-        rows
-          .map(
-            (item) => `
-              <div class="recent-item">
-                <span class="recent-icon">
-                  <i
-                    class="fa-solid ${esc(item.icon)}"
-                    aria-hidden="true"
-                  ></i>
-                </span>
-                <div>
-                  <b>${esc(
-                    item.title || 'Untitled'
-                  )}</b>
-                  <small>
-                    ${esc(
-                      String(
-                        item.type || 'content'
-                      )
-                    )}
-                    ·
-                    ${
-                      safeDate(item.date)
-                        ? safeDate(
-                            item.date
-                          ).toLocaleDateString(
-                            'id-ID'
+        recentRows.length
+          ? recentRows
+              .map(
+                (item) => `
+                  <div class="recent-item">
+                    <span class="recent-icon">
+                      <i
+                        class="fa-solid ${esc(
+                          item.icon
+                        )}"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <div>
+                      <b>
+                        ${esc(
+                          item.title
+                        )}
+                      </b>
+                      <small>
+                        ${esc(
+                          String(
+                            item.type ||
+                            'content'
                           )
-                        : '-'
-                    }
-                  </small>
-                </div>
-                <strong>
-                  ${
-                    Number(item.price || 0) > 0
-                      ? money(item.price)
-                      : `${number(
-                          item.views
-                        )} views`
-                  }
-                </strong>
+                        )}
+                        ·
+                        ${esc(
+                          formatDate(
+                            item.date
+                          )
+                        )}
+                      </small>
+                    </div>
+                    <strong>
+                      ${
+                        item.price > 0
+                          ? esc(
+                              money(
+                                item.price
+                              )
+                            )
+                          : `${number(
+                              item.views
+                            )} views`
+                      }
+                    </strong>
+                  </div>
+                `
+              )
+              .join('')
+          : `
+              <div class="empty">
+                Belum ada konten.
               </div>
-            `
-          )
-          .join('') ||
-        '<div class="empty">Belum ada konten.</div>';
+            `;
     }
     /* =====================================================
        ACTIVITY
        ===================================================== */
-    const activityEvents = allEvents
-      .filter((event) => matchEvent(event, scope))
-      .map((event) => ({
-        t: String(
-          event.event_type || 'activity'
-        ).toLowerCase(),
-        d: event.created_at
-      }));
-    const orderActivities = orders.map(
-      (order) => ({
-        t: 'paid',
-        d: order.created_at
-      })
-    );
+    const activityEvents =
+      scopedEvents.map(
+        (event) => ({
+          type:
+            normalize(
+              event.event_type
+            ) || 'activity',
+          date:
+            event.created_at
+        })
+      );
+    const orderActivities =
+      orders.map(
+        (order) => ({
+          type:
+            'paid',
+          date:
+            order.created_at
+        })
+      );
+    /*
+     * Sell transactions juga ditampilkan sebagai
+     * aktivitas financial.
+     */
+    const transactionActivities =
+      validSellTransactions.map(
+        (transaction) => ({
+          type:
+            'sale',
+          date:
+            transaction.created_at
+        })
+      );
     const activities = [
       ...activityEvents,
-      ...orderActivities
+      ...orderActivities,
+      ...transactionActivities
     ]
       .sort(
-        (a, b) =>
-          new Date(b.d) -
-          new Date(a.d)
+        (a, b) => {
+          const dateA =
+            safeDate(a.date)
+              ?.getTime() || 0;
+          const dateB =
+            safeDate(b.date)
+              ?.getTime() || 0;
+          return dateB - dateA;
+        }
       )
       .slice(0, 8);
-    const activityIcon = (type) => {
-      switch (type) {
+    const activityIcon = (
+      type
+    ) => {
+      switch (
+        normalize(type)
+      ) {
         case 'view':
           return 'fa-eye';
         case 'like':
@@ -963,82 +1607,96 @@ document.addEventListener('DOMContentLoaded', async () => {
           return 'fa-cart-shopping';
         case 'click':
           return 'fa-arrow-pointer';
+        case 'download':
+          return 'fa-download';
+        case 'purchase':
+          return 'fa-bag-shopping';
         default:
           return 'fa-bolt';
       }
     };
     if ($('activity')) {
       $('activity').innerHTML =
-        activities
-          .map((item) => {
-            const activityDate =
-              safeDate(item.d);
-            return `
-              <div class="activity-row">
-                <span>
-                  <i
-                    class="fa-solid ${activityIcon(
-                      item.t
-                    )}"
-                    aria-hidden="true"
-                  ></i>
-                </span>
-                <div>
-                  <b>
-                    ${esc(
-                      String(
-                        item.t || 'activity'
-                      ).toUpperCase()
-                    )}
-                  </b>
-                  <small>
-                    ${
-                      activityDate
-                        ? activityDate.toLocaleString(
-                            'id-ID'
+        activities.length
+          ? activities
+              .map(
+                (item) => `
+                  <div class="activity-row">
+                    <span>
+                      <i
+                        class="fa-solid ${esc(
+                          activityIcon(
+                            item.type
                           )
-                        : '-'
-                    }
-                  </small>
-                </div>
+                        )}"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <div>
+                      <b>
+                        ${esc(
+                          String(
+                            item.type ||
+                            'activity'
+                          ).toUpperCase()
+                        )}
+                      </b>
+                      <small>
+                        ${esc(
+                          formatDateTime(
+                            item.date
+                          )
+                        )}
+                      </small>
+                    </div>
+                  </div>
+                `
+              )
+              .join('')
+          : `
+              <div class="empty">
+                Belum ada aktivitas.
               </div>
             `;
-          })
-          .join('') ||
-        '<div class="empty">Belum ada aktivitas.</div>';
     }
     /* =====================================================
        GREETING
        ===================================================== */
     if ($('helloName')) {
       $('helloName').textContent =
-        u.user_metadata?.username ||
-        u.user_metadata?.name ||
-        u.email?.split('@')[0] ||
+        user.user_metadata?.username ||
+        user.user_metadata?.name ||
+        user.email?.split('@')[0] ||
         'User';
     }
   }
   /* =======================================================
-     SCOPE EVENT
+     SCOPE CHANGE
      ======================================================= */
-  const scopeElement = $('scope');
+  const scopeElement =
+    $('scope');
   if (scopeElement) {
     scopeElement.addEventListener(
       'change',
-      () => {
-        load().catch((error) => {
+      async () => {
+        try {
+          await load();
+        } catch (error) {
           console.error(
             'Dashboard scope error:',
             error
           );
-          if (typeof TC.toast === 'function') {
+          if (
+            typeof TC?.toast ===
+            'function'
+          ) {
             TC.toast(
               error?.message ||
                 'Dashboard gagal dimuat',
               'error'
             );
           }
-        });
+        }
       }
     );
   }
@@ -1052,7 +1710,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       'Dashboard load error:',
       error
     );
-    if (typeof TC.toast === 'function') {
+    if (
+      typeof TC?.toast ===
+      'function'
+    ) {
       TC.toast(
         error?.message ||
           'Dashboard gagal dimuat',
