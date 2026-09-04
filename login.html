@@ -2,26 +2,43 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Theme -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <!-- =====================================================
+       THEME PRELOAD
+       ===================================================== -->
   <script src="js/theme-preload.js"></script>
-  <!-- Fonts -->
+  <!-- =====================================================
+       FONTS
+       ===================================================== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <!-- Supabase -->
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <title>Login — PasTele</title>
-  <!-- Core configuration -->
+  <!-- =====================================================
+       CORE CONFIGURATION
+       ===================================================== -->
   <script src="/js/config.js?v=20260831"></script>
   <script src="/js/supabase.js?v=20260831"></script>
-  <!-- Authentication -->
+  <!-- =====================================================
+       AUTHENTICATION
+       ===================================================== -->
   <script src="/js/debug-panel.js"></script>
   <script src="/js/auth.js"></script>
-  <!-- Font Awesome -->
+  <!-- =====================================================
+       FONT AWESOME
+       ===================================================== -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
-  <!-- Styles -->
+  <!-- =====================================================
+       STYLES
+       ===================================================== -->
   <link
     rel="stylesheet"
     href="css/app.css?v=20260904"
@@ -32,20 +49,31 @@
   >
 </head>
 <body>
+  <!-- =====================================================
+       LOGIN SHELL
+       ===================================================== -->
   <main class="auth-shell">
     <div class="card auth-card">
-      <!-- Logo -->
-      <div class="auth-logo" aria-hidden="true">
+      <!-- =================================================
+           LOGO
+           ================================================= -->
+      <div
+        class="auth-logo"
+        aria-hidden="true"
+      >
         <i class="fa-solid fa-bolt"></i>
       </div>
-      <!-- Title -->
+      <!-- =================================================
+           TITLE
+           ================================================= -->
       <h1>Masuk ke PasTele</h1>
       <p class="muted">
         Gunakan username atau Gmail.
       </p>
-      <!-- =====================================================
-           STEP 1 — USERNAME / GMAIL
-           ===================================================== -->
+      <!-- =================================================
+           STEP 1
+           USERNAME / GMAIL
+           ================================================= -->
       <form
         class="list"
         id="loginStep1"
@@ -55,49 +83,118 @@
           <label for="identifier">
             Username / Gmail
           </label>
-          <input
-            id="identifier"
-            name="identifier"
-            class="input"
-            type="text"
-            autocomplete="username"
-            autocapitalize="none"
-            spellcheck="false"
-            required
+          <!-- =============================================
+               IDENTIFIER WRAPPER
+               ============================================= -->
+          <div
+            class="identifier-wrap"
+            id="identifierWrap"
           >
+            <input
+              id="identifier"
+              name="identifier"
+              class="input"
+              type="text"
+              autocomplete="username"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="Masukkan username atau Gmail"
+              required
+            >
+            <!-- ===========================================
+                 VERIFIED CHECK
+                 =========================================== -->
+            <span
+              class="identifier-status"
+              id="identifierStatus"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-check"></i>
+            </span>
+          </div>
+          <!-- =============================================
+               VERIFIED USERNAME STATUS
+               Awalnya hidden.
+               Muncul setelah akun ditemukan.
+               ============================================= -->
+          <div
+            class="login-verified-state hidden"
+            id="loginVerifiedState"
+            aria-live="polite"
+          >
+            <i
+              class="fa-solid fa-circle-check"
+              aria-hidden="true"
+            ></i>
+            <span>
+              Masuk dengan username yang terdaftar
+            </span>
+          </div>
         </div>
+        <!-- ===============================================
+             CONTINUE
+             Akan hilang setelah akun ditemukan.
+             =============================================== -->
         <button
           type="submit"
           class="btn primary"
+          id="continueLogin"
         >
           <i class="fa-solid fa-arrow-right"></i>
           Lanjut
         </button>
       </form>
-      <!-- =====================================================
-           STEP 2 — PASSWORD
-           ===================================================== -->
+      <!-- =================================================
+           STEP 2
+           PASSWORD
+           ================================================= -->
       <form
         class="list hidden"
         id="loginStep2"
         autocomplete="on"
       >
+        <!-- ===============================================
+             PASSWORD HEADING
+             =============================================== -->
+        <div class="password-heading">
+          <span
+            class="password-heading-icon"
+            aria-hidden="true"
+          >
+            <i class="fa-solid fa-lock"></i>
+          </span>
+          <div>
+            <strong>
+              Masukkan kata sandi
+            </strong>
+            <span>
+              Gunakan kata sandi akun kamu untuk masuk.
+            </span>
+          </div>
+        </div>
+        <!-- ===============================================
+             PASSWORD FIELD
+             =============================================== -->
         <div class="field">
           <label for="password">
             Kata sandi
           </label>
-          <div class="row">
+          <div class="password-wrap">
             <input
               id="password"
               name="password"
               class="input"
               type="password"
               autocomplete="current-password"
+              placeholder="Masukkan kata sandi"
               required
             >
+            <!-- ===========================================
+                 PASSWORD TOGGLE
+                 =========================================== -->
             <button
               type="button"
-              class="btn"
+              class="password-toggle"
               id="toggle"
               aria-label="Tampilkan kata sandi"
               title="Tampilkan kata sandi"
@@ -106,6 +203,9 @@
             </button>
           </div>
         </div>
+        <!-- ===============================================
+             LOGIN
+             =============================================== -->
         <button
           type="submit"
           class="btn primary"
@@ -113,23 +213,37 @@
           <i class="fa-solid fa-right-to-bracket"></i>
           Masuk
         </button>
+        <!-- ===============================================
+             FORGOT PASSWORD
+             =============================================== -->
         <a
-          class="muted"
+          class="forgot-link"
           href="#"
           id="forgot"
         >
           Lupa kata sandi?
         </a>
+        <!-- ===============================================
+             CHANGE ACCOUNT
+             =============================================== -->
+        <button
+          type="button"
+          class="account-change-login"
+          id="changeAccount"
+        >
+          <i class="fa-solid fa-arrow-left"></i>
+          Ganti akun
+        </button>
       </form>
-      <!-- =====================================================
+      <!-- =================================================
            DIVIDER
-           ===================================================== -->
+           ================================================= -->
       <div class="auth-divider">
         <span>atau</span>
       </div>
-      <!-- =====================================================
+      <!-- =================================================
            GOOGLE LOGIN
-           ===================================================== -->
+           ================================================= -->
       <button
         type="button"
         class="btn"
@@ -138,33 +252,45 @@
         <i class="fa-brands fa-google"></i>
         Login dengan Gmail
       </button>
-      <!-- =====================================================
+      <!-- =================================================
            REGISTER / BACK
-           ===================================================== -->
+           ================================================= -->
       <p class="muted">
         Belum punya akun?
         <a href="register.html">
           Register
         </a>
-        ·
+        <span aria-hidden="true"> · </span>
         <a href="index.html">
           Kembali
         </a>
       </p>
     </div>
   </main>
-  <!-- =========================================================
+  <!-- =====================================================
        GLOBAL FLOATING TOAST
-       SATU-SATUNYA CONTAINER NOTIFIKASI
-       ========================================================= -->
+       SATU-SATUNYA CONTAINER NOTIFIKASI LOGIN.
+       JS menggunakan #toast untuk:
+       - Akun ditemukan
+       - Login berhasil
+       - Login gagal
+       - Akun tidak ditemukan
+       - Reset password
+       - Google login error
+       ===================================================== -->
   <div
     id="toast"
     role="alert"
     aria-live="polite"
     aria-atomic="true"
   ></div>
-  <!-- Scripts -->
+  <!-- =====================================================
+       LOGIN SCRIPT
+       ===================================================== -->
   <script src="js/login.js?v=20260904"></script>
+  <!-- =====================================================
+       SITE SHELL
+       ===================================================== -->
   <script src="js/site-shell.js?v=20260904"></script>
 </body>
 </html>
