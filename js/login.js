@@ -2,7 +2,21 @@
    PasTele — LOGIN
    Stable Clean Version
    Username / Gmail → Account Found → Password → Login
-   All notifications use #toast only
+   UI:
+   - Identifier tetap tampil setelah akun ditemukan
+   - Identifier berubah menjadi username terdaftar
+   - Identifier terkunci
+   - Check hijau muncul di dalam input
+   - Status verified kecil di bawah input
+   - Tombol Lanjut hilang
+   - Password section muncul
+   - Akun ditemukan hanya menggunakan floating #toast
+   - Ganti akun mengembalikan form ke kondisi awal
+   IMPORTANT:
+   - Auth.lookup() tetap digunakan
+   - Auth.login() tetap digunakan
+   - Auth.google() tetap digunakan
+   - Supabase reset password tetap digunakan
    ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
   /* =======================================================
@@ -33,6 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("loginStep2");
   const identifier =
     document.getElementById("identifier");
+  const identifierWrap =
+    document.getElementById("identifierWrap");
+  const identifierStatus =
+    document.getElementById("identifierStatus");
+  const loginVerifiedState =
+    document.getElementById("loginVerifiedState");
+  const continueLogin =
+    document.getElementById("continueLogin");
   const password =
     document.getElementById("password");
   const toggle =
@@ -41,19 +63,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("google");
   const forgot =
     document.getElementById("forgot");
-  /* =======================================================
-     ACCOUNT FOUND ELEMENTS
-     ======================================================= */
-  const identifierWrap =
-    document.getElementById("identifierWrap");
-  const identifierStatus =
-    document.getElementById("identifierStatus");
-  const loginAccountState =
-    document.getElementById("loginAccountState");
-  const accountUsername =
-    document.getElementById("accountUsername");
   const changeAccount =
     document.getElementById("changeAccount");
+  const toastElement =
+    document.getElementById("toast");
   /* =======================================================
      STATE
      ======================================================= */
@@ -62,21 +75,25 @@ document.addEventListener("DOMContentLoaded", () => {
   let accountFound = false;
   /* =======================================================
      TOAST
+     Semua notifikasi menggunakan #toast
      ======================================================= */
   function toast(message, type = "error") {
     const el =
+      toastElement ||
       document.getElementById("toast");
     if (!el) {
       console.log(`[${type}] ${message}`);
       return;
     }
     clearTimeout(window.__loginToastTimer);
-    el.textContent = String(message || "");
-    /*
-     * Reset animation supaya toast tetap
-     * bisa animasi setiap kali dipanggil.
-     */
+    el.textContent =
+      String(message || "");
     el.className = "";
+    /*
+     * Force browser reflow.
+     * Membuat animasi tetap berjalan
+     * walaupun toast dipanggil berulang.
+     */
     void el.offsetWidth;
     el.className =
       `show ${type}`;
@@ -100,103 +117,29 @@ document.addEventListener("DOMContentLoaded", () => {
      CLEAR TOAST
      ======================================================= */
   function clearError() {
-    const el =
-      document.getElementById("toast");
-    if (el) {
-      el.className = "";
-      el.textContent = "";
+    if (toastElement) {
+      toastElement.className = "";
+      toastElement.textContent = "";
     }
     clearTimeout(
       window.__loginToastTimer
     );
   }
   /* =======================================================
-     ESCAPE HTML
+     SHOW INITIAL STATE
      ======================================================= */
-  function escapeHTML(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-  /* =======================================================
-     SHOW ACCOUNT FOUND
-     ======================================================= */
-  function showAccountFound(found) {
-    if (!found) return;
-    currentUsername =
-      String(
-        found.username ||
-        found.display_name ||
-        identifier?.value ||
-        "Pengguna"
-      ).trim();
-    if (!currentUsername) {
-      currentUsername = "Pengguna";
-    }
-    /* -------------------------------------------------------
-       Identifier
-       ------------------------------------------------------- */
-    if (identifier) {
-      /*
-       * Tetap tampilkan username.
-       * Jangan disembunyikan.
-       */
-      identifier.value =
-        currentUsername;
-      /*
-       * Lock input setelah akun ditemukan.
-       */
-      identifier.disabled = true;
-      identifier.setAttribute(
-        "aria-readonly",
-        "true"
-      );
-    }
-    /* -------------------------------------------------------
-       Green verified state
-       ------------------------------------------------------- */
-    identifierWrap?.classList.add(
-      "found"
-    );
-    if (identifierStatus) {
-      identifierStatus.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-    }
-    /* -------------------------------------------------------
-       Account information
-       ------------------------------------------------------- */
-    if (accountUsername) {
-      accountUsername.textContent =
-        currentUsername;
-    }
-    /* -------------------------------------------------------
-       Account state box
-       ------------------------------------------------------- */
-    loginAccountState?.classList.remove(
-      "hidden"
-    );
-    /* -------------------------------------------------------
-       State
-       ------------------------------------------------------- */
-    accountFound = true;
-  }
-  /* =======================================================
-     RESET ACCOUNT STATE
-     ======================================================= */
-  function resetAccountState(
+  function showInitialState(
     clearIdentifier = true
   ) {
+    /* -----------------------------------------------------
+       Reset internal state
+       ----------------------------------------------------- */
     currentEmail = "";
     currentUsername = "";
     accountFound = false;
-    /* -------------------------------------------------------
+    /* -----------------------------------------------------
        Identifier
-       ------------------------------------------------------- */
+       ----------------------------------------------------- */
     if (identifier) {
       identifier.disabled = false;
       identifier.removeAttribute(
@@ -206,46 +149,54 @@ document.addEventListener("DOMContentLoaded", () => {
         identifier.value = "";
       }
     }
-    /* -------------------------------------------------------
-       Remove verified state
-       ------------------------------------------------------- */
+    /* -----------------------------------------------------
+       Remove green check
+       ----------------------------------------------------- */
     identifierWrap?.classList.remove(
       "found"
     );
-    if (identifierStatus) {
-      identifierStatus.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-    }
-    /* -------------------------------------------------------
-       Hide account state
-       ------------------------------------------------------- */
-    loginAccountState?.classList.add(
+    /* -----------------------------------------------------
+       Reset check accessibility
+       ----------------------------------------------------- */
+    identifierStatus?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+    /* -----------------------------------------------------
+       Hide verified text
+       ----------------------------------------------------- */
+    loginVerifiedState?.classList.add(
       "hidden"
     );
-    /* -------------------------------------------------------
-       Hide password step
-       ------------------------------------------------------- */
+    /* -----------------------------------------------------
+       Show Lanjut
+       ----------------------------------------------------- */
+    if (continueLogin) {
+      continueLogin.style.display = "";
+      continueLogin.disabled = false;
+    }
+    /* -----------------------------------------------------
+       Hide password
+       ----------------------------------------------------- */
     step2?.classList.add(
       "hidden"
     );
-    /* -------------------------------------------------------
-       Show identifier step
-       ------------------------------------------------------- */
+    /* -----------------------------------------------------
+       Show identifier form
+       ----------------------------------------------------- */
     step1?.classList.remove(
       "hidden"
     );
-    /* -------------------------------------------------------
+    /* -----------------------------------------------------
        Reset password
-       ------------------------------------------------------- */
+       ----------------------------------------------------- */
     if (password) {
       password.value = "";
       password.type = "password";
     }
-    /* -------------------------------------------------------
-       Reset eye button
-       ------------------------------------------------------- */
+    /* -----------------------------------------------------
+       Reset eye icon
+       ----------------------------------------------------- */
     if (toggle) {
       toggle.innerHTML =
         '<i class="fa-solid fa-eye"></i>';
@@ -260,17 +211,92 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   /* =======================================================
+     SHOW ACCOUNT FOUND
+     ======================================================= */
+  function showAccountFound(found) {
+    if (!found) {
+      return;
+    }
+    /* -----------------------------------------------------
+       Get registered username
+       ----------------------------------------------------- */
+    currentUsername =
+      String(
+        found.username ||
+        found.display_name ||
+        identifier?.value ||
+        "Pengguna"
+      ).trim();
+    if (!currentUsername) {
+      currentUsername = "Pengguna";
+    }
+    /* -----------------------------------------------------
+       Keep identifier visible
+       ----------------------------------------------------- */
+    if (identifier) {
+      /*
+       * Ganti nilai input dengan username
+       * yang benar-benar terdaftar.
+       */
+      identifier.value =
+        currentUsername;
+      /*
+       * Lock identifier.
+       */
+      identifier.disabled = true;
+      identifier.setAttribute(
+        "aria-readonly",
+        "true"
+      );
+    }
+    /* -----------------------------------------------------
+       Green check inside identifier
+       ----------------------------------------------------- */
+    identifierWrap?.classList.add(
+      "found"
+    );
+    if (identifierStatus) {
+      identifierStatus.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+    }
+    /* -----------------------------------------------------
+       Inline verified status
+       ----------------------------------------------------- */
+    loginVerifiedState?.classList.remove(
+      "hidden"
+    );
+    /* -----------------------------------------------------
+       Hide Lanjut completely
+       ----------------------------------------------------- */
+    if (continueLogin) {
+      continueLogin.style.display =
+        "none";
+    }
+    /* -----------------------------------------------------
+       State
+       ----------------------------------------------------- */
+    accountFound = true;
+  }
+  /* =======================================================
      STEP 1
-     CEK USERNAME / GMAIL
+     USERNAME / GMAIL LOOKUP
      ======================================================= */
   step1?.addEventListener(
     "submit",
     async (e) => {
       e.preventDefault();
       clearError();
-      /* -----------------------------------------------------
-         Input
-         ----------------------------------------------------- */
+      /* ---------------------------------------------------
+         Prevent duplicate lookup
+         --------------------------------------------------- */
+      if (accountFound) {
+        return;
+      }
+      /* ---------------------------------------------------
+         Identifier value
+         --------------------------------------------------- */
       const value =
         identifier?.value?.trim() ||
         "";
@@ -281,14 +307,17 @@ document.addEventListener("DOMContentLoaded", () => {
         identifier?.focus();
         return;
       }
-      /* -----------------------------------------------------
-         Button
-         ----------------------------------------------------- */
+      /* ---------------------------------------------------
+         Continue button
+         --------------------------------------------------- */
       const btn =
+        continueLogin ||
         step1.querySelector(
           "button[type='submit'], button:not([type])"
         );
-      if (!btn) return;
+      if (!btn) {
+        return;
+      }
       const oldHTML =
         btn.innerHTML;
       btn.disabled = true;
@@ -296,40 +325,63 @@ document.addEventListener("DOMContentLoaded", () => {
         <i class="fa-solid fa-spinner fa-spin"></i>
         Memeriksa...
       `;
+      /* ---------------------------------------------------
+         Lookup
+         --------------------------------------------------- */
       try {
-        /* ===================================================
-           IMPORTANT
-           Jangan ubah Auth.lookup()
-           =================================================== */
+        /*
+         * IMPORTANT:
+         * Jangan ubah Auth.lookup().
+         */
         const found =
           await Auth.lookup(value);
         console.log(
           "LOGIN LOOKUP:",
           found
         );
-        /* ===================================================
+        /* =================================================
            ACCOUNT NOT FOUND
-           =================================================== */
+           ================================================= */
         if (
           !found ||
           !found.auth_email
         ) {
           currentEmail = "";
+          currentUsername = "";
           accountFound = false;
+          /*
+           * Pastikan password tetap tersembunyi.
+           */
           step2?.classList.add(
             "hidden"
           );
-          loginAccountState?.classList.add(
+          /*
+           * Pastikan identifier kembali normal.
+           */
+          identifierWrap?.classList.remove(
+            "found"
+          );
+          identifierStatus?.setAttribute(
+            "aria-hidden",
+            "true"
+          );
+          loginVerifiedState?.classList.add(
             "hidden"
           );
+          if (identifier) {
+            identifier.disabled = false;
+            identifier.removeAttribute(
+              "aria-readonly"
+            );
+          }
           showError(
             "Akun tidak ditemukan. Periksa kembali username atau Gmail kamu."
           );
           return;
         }
-        /* ===================================================
+        /* =================================================
            ACCOUNT BANNED
-           =================================================== */
+           ================================================= */
         if (
           found.is_banned === true ||
           String(
@@ -337,21 +389,35 @@ document.addEventListener("DOMContentLoaded", () => {
           ).toLowerCase() === "banned"
         ) {
           currentEmail = "";
+          currentUsername = "";
           accountFound = false;
           step2?.classList.add(
             "hidden"
           );
-          loginAccountState?.classList.add(
+          identifierWrap?.classList.remove(
+            "found"
+          );
+          identifierStatus?.setAttribute(
+            "aria-hidden",
+            "true"
+          );
+          loginVerifiedState?.classList.add(
             "hidden"
           );
+          if (identifier) {
+            identifier.disabled = false;
+            identifier.removeAttribute(
+              "aria-readonly"
+            );
+          }
           showError(
             "Akun ini sedang diblokir dan tidak dapat digunakan untuk login."
           );
           return;
         }
-        /* ===================================================
-           VALID EMAIL
-           =================================================== */
+        /* =================================================
+           VALID AUTH EMAIL
+           ================================================= */
         currentEmail =
           String(
             found.auth_email
@@ -363,31 +429,31 @@ document.addEventListener("DOMContentLoaded", () => {
           );
           return;
         }
-        /* ===================================================
+        /* =================================================
            ACCOUNT FOUND
-           =================================================== */
+           ================================================= */
         showAccountFound(
           found
         );
-        /* ===================================================
-           SHOW PASSWORD
-           =================================================== */
+        /* =================================================
+           SHOW PASSWORD SECTION
+           ================================================= */
         step1?.classList.remove(
           "hidden"
         );
         step2?.classList.remove(
           "hidden"
         );
-        /* ===================================================
-           SUCCESS NOTIFICATION
-           =================================================== */
+        /* =================================================
+           SUCCESS TOAST
+           ================================================= */
         toast(
-          "Akun ditemukan ✓",
+          "✓ Akun ditemukan",
           "success"
         );
-        /* ===================================================
+        /* =================================================
            FOCUS PASSWORD
-           =================================================== */
+           ================================================= */
         if (password) {
           password.value = "";
           setTimeout(() => {
@@ -404,9 +470,15 @@ document.addEventListener("DOMContentLoaded", () => {
           "Terjadi kesalahan saat memeriksa akun."
         );
       } finally {
-        btn.disabled = false;
-        btn.innerHTML =
-          oldHTML;
+        /*
+         * Jangan mengembalikan display jika
+         * akun sudah ditemukan.
+         */
+        if (!accountFound) {
+          btn.disabled = false;
+          btn.innerHTML =
+            oldHTML;
+        }
       }
     }
   );
@@ -419,9 +491,9 @@ document.addEventListener("DOMContentLoaded", () => {
     async (e) => {
       e.preventDefault();
       clearError();
-      /* -----------------------------------------------------
+      /* ---------------------------------------------------
          Safety check
-         ----------------------------------------------------- */
+         --------------------------------------------------- */
       if (
         !currentEmail ||
         !accountFound
@@ -429,15 +501,15 @@ document.addEventListener("DOMContentLoaded", () => {
         showError(
           "Silakan masukkan username atau Gmail terlebih dahulu."
         );
-        resetAccountState(
+        showInitialState(
           false
         );
         identifier?.focus();
         return;
       }
-      /* -----------------------------------------------------
+      /* ---------------------------------------------------
          Password
-         ----------------------------------------------------- */
+         --------------------------------------------------- */
       const pass =
         password?.value || "";
       if (!pass) {
@@ -447,14 +519,16 @@ document.addEventListener("DOMContentLoaded", () => {
         password?.focus();
         return;
       }
-      /* -----------------------------------------------------
+      /* ---------------------------------------------------
          Login button
-         ----------------------------------------------------- */
+         --------------------------------------------------- */
       const btn =
         step2.querySelector(
-          "button[type='submit'], button:not([type])"
+          "button[type='submit']"
         );
-      if (!btn) return;
+      if (!btn) {
+        return;
+      }
       const oldHTML =
         btn.innerHTML;
       btn.disabled = true;
@@ -462,29 +536,32 @@ document.addEventListener("DOMContentLoaded", () => {
         <i class="fa-solid fa-spinner fa-spin"></i>
         Masuk...
       `;
+      /* ---------------------------------------------------
+         Auth login
+         --------------------------------------------------- */
       try {
         console.log(
           "LOGIN EMAIL:",
           currentEmail
         );
-        /* ===================================================
-           IMPORTANT
-           Auth.login tetap sama
-           =================================================== */
+        /*
+         * IMPORTANT:
+         * Auth.login() tetap sama.
+         */
         await Auth.login(
           currentEmail,
           pass
         );
-        /* -----------------------------------------------------
+        /* -------------------------------------------------
            Success
-           ----------------------------------------------------- */
+           ------------------------------------------------- */
         toast(
           "Login berhasil ✓",
           "success"
         );
-        /* -----------------------------------------------------
+        /* -------------------------------------------------
            Redirect
-           ----------------------------------------------------- */
+           ------------------------------------------------- */
         setTimeout(() => {
           window.location.href =
             "dashboard.html";
@@ -511,7 +588,11 @@ document.addEventListener("DOMContentLoaded", () => {
     "click",
     () => {
       clearError();
-      resetAccountState(
+      /*
+       * Kembalikan semuanya ke kondisi
+       * awal.
+       */
+      showInitialState(
         true
       );
       toast(
@@ -538,6 +619,10 @@ document.addEventListener("DOMContentLoaded", () => {
         Menghubungkan...
       `;
       try {
+        /*
+         * IMPORTANT:
+         * Auth.google() tetap sama.
+         */
         await Auth.google();
       } catch (err) {
         console.error(
@@ -562,12 +647,15 @@ document.addEventListener("DOMContentLoaded", () => {
     async (e) => {
       e.preventDefault();
       clearError();
-      /* -----------------------------------------------------
-         Use current email if already found.
-         Otherwise lookup identifier.
-         ----------------------------------------------------- */
+      /*
+       * Jika akun sudah ditemukan,
+       * langsung gunakan email yang sudah didapat.
+       */
       let email =
         currentEmail;
+      /* ---------------------------------------------------
+         Jika belum lookup, lakukan lookup.
+         --------------------------------------------------- */
       if (!email) {
         const value =
           identifier?.value?.trim() ||
@@ -580,6 +668,10 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
         try {
+          /*
+           * IMPORTANT:
+           * Auth.lookup() tetap sama.
+           */
           const found =
             await Auth.lookup(
               value
@@ -609,18 +701,18 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
       }
-      /* -----------------------------------------------------
+      /* ---------------------------------------------------
          Validate email
-         ----------------------------------------------------- */
+         --------------------------------------------------- */
       if (!email) {
         showError(
           "Email akun tidak valid."
         );
         return;
       }
-      /* -----------------------------------------------------
+      /* ---------------------------------------------------
          Reset password
-         ----------------------------------------------------- */
+         --------------------------------------------------- */
       try {
         const {
           error
@@ -652,12 +744,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   );
   /* =======================================================
-     TOGGLE PASSWORD
+     PASSWORD VISIBILITY TOGGLE
      ======================================================= */
   toggle?.addEventListener(
     "click",
     () => {
-      if (!password) return;
+      if (!password) {
+        return;
+      }
       const isPassword =
         password.type === "password";
       password.type =
@@ -686,26 +780,17 @@ document.addEventListener("DOMContentLoaded", () => {
      INITIAL STATE
      ======================================================= */
   /*
-   * Pastikan ketika halaman pertama kali dibuka:
+   * Saat halaman pertama kali dibuka:
    *
-   * Username form  = tampil
-   * Account state   = hidden
-   * Password        = hidden
-   * Identifier      = aktif
+   * Identifier       = tampil
+   * Identifier       = aktif
+   * Check hijau      = hidden
+   * Verified status  = hidden
+   * Lanjut           = tampil
+   * Password         = hidden
+   * Account state    = tidak ada
    */
-  loginAccountState?.classList.add(
-    "hidden"
+  showInitialState(
+    false
   );
-  step2?.classList.add(
-    "hidden"
-  );
-  identifierWrap?.classList.remove(
-    "found"
-  );
-  if (identifier) {
-    identifier.disabled = false;
-    identifier.removeAttribute(
-      "aria-readonly"
-    );
-  }
 });
