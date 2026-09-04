@@ -1,0 +1,19 @@
+PasTele SUPER FIX v7
+=====================
+
+Perbaikan visual yang dilakukan:
+- Semua halaman memakai satu visual system yang konsisten.
+- Card, input, button, heading, spacing, table, badge, status dan footer dinormalisasi.
+- Navbar diperbaiki untuk desktop + mobile dan ditambah tombol dark/light.
+- Dark/light theme tersimpan di localStorage dan berlaku lintas halaman.
+- Marketplace dibuat grid responsif: 4/3/2/1 kolom sesuai lebar layar.
+- Admin layout dibuat stabil dan responsif; sidebar berubah menjadi horizontal pada mobile.
+- Tabel admin tidak lagi menampilkan seluruh field database secara mentah; kolom internal/berlebihan disaring dan nilai status/tanggal/uang diformat.
+- Purchases, Transactions dan My Products tidak lagi menampilkan JSON mentah; semuanya menjadi komponen list yang rapi.
+- Create Product: harga tidak lagi wajib untuk produk Free.
+- Form, toolbar, table overflow dan teks panjang diperkeras agar tidak merusak layout.
+
+Catatan:
+- Tidak mengubah struktur database Supabase.
+- Tidak mengganti endpoint/RPC utama.
+- Fokus patch ini adalah UI/layout dan penyajian data.

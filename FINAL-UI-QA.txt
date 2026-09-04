@@ -5,6 +5,3 @@ PasTele final UI pass
 - Footer: premium landing footer + universal application footer styling.
 - Index JS: removed obsolete publish handler and made marketplace loading resilient.
 - Local HTML CSS/JS references: verified, no missing local references.
-
-
-2026-09-03 FINAL UI cleanup: consolidated shared CSS into css/ui-system.css; page layers are now isolated; legacy duplicate CSS removed.
