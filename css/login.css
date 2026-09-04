@@ -10,7 +10,7 @@
    Password
         ↓
    Login
-   Design goals:
+   Design:
    - Clean
    - Premium
    - Compact
@@ -313,7 +313,8 @@
 }
 .forgot-link:hover {
   color: #1685ba;
-  background: rgba(34, 158, 217, .06);
+  background:
+    rgba(34, 158, 217, .06);
   text-decoration: none;
 }
 .forgot-link:focus-visible {
@@ -437,9 +438,7 @@
 /* =========================================================
    15. DARK MODE
    ========================================================= */
-/* ---------------------------------------------------------
-   Identifier
-   --------------------------------------------------------- */
+/* Identifier */
 .theme-dark .identifier-wrap.found .input {
   border-color: #3bc77d !important;
   background: #0e2118;
@@ -452,18 +451,14 @@
   box-shadow:
     0 3px 10px rgba(32, 178, 107, .25);
 }
-/* ---------------------------------------------------------
-   Verified
-   --------------------------------------------------------- */
+/* Verified */
 .theme-dark .login-verified-state {
   color: #73d99f;
 }
 .theme-dark .login-verified-state > i {
   color: #53d58b;
 }
-/* ---------------------------------------------------------
-   Password heading
-   --------------------------------------------------------- */
+/* Password heading */
 .theme-dark .password-heading-icon {
   border-color: rgba(85, 195, 242, .08);
   background:
@@ -482,9 +477,7 @@
 .theme-dark .password-heading span {
   color: #91a8b9;
 }
-/* ---------------------------------------------------------
-   Password toggle
-   --------------------------------------------------------- */
+/* Password toggle */
 .theme-dark .password-toggle {
   color: #91a8b9;
 }
@@ -492,9 +485,7 @@
   background: #142c3e;
   color: #55c3f2;
 }
-/* ---------------------------------------------------------
-   Forgot
-   --------------------------------------------------------- */
+/* Forgot */
 .theme-dark .forgot-link {
   color: #55c3f2;
 }
@@ -503,9 +494,7 @@
   background:
     rgba(85, 195, 242, .08);
 }
-/* ---------------------------------------------------------
-   Change account
-   --------------------------------------------------------- */
+/* Change account */
 .theme-dark .account-change-login {
   color: #91a8b9;
 }
@@ -513,9 +502,7 @@
   background: #142c3e;
   color: #55c3f2;
 }
-/* ---------------------------------------------------------
-   Toast
-   --------------------------------------------------------- */
+/* Toast */
 .theme-dark #toast {
   box-shadow:
     0 18px 45px rgba(0, 0, 0, .42);
@@ -534,7 +521,6 @@
    16. MOBILE
    ========================================================= */
 @media (max-width: 520px) {
-  /* Identifier */
   .identifier-wrap .input {
     padding-right: 48px;
   }
@@ -651,670 +637,464 @@
     transition: none !important;
   }
 }
-
 /* =========================================================
-19. AUTH DIVIDER
-“atau”
-========================================================= */
-
+   19. AUTH DIVIDER
+   "atau"
+   ========================================================= */
 .auth-divider {
-position: relative;
-
-width: 100%;
-height: 18px;
-
-display: flex;
-align-items: center;
-justify-content: center;
-
-margin: 18px 0 15px;
-
-color: #8b9aa4;
-
-font-size: 10px;
-line-height: 1;
-
-font-weight: 600;
-
-text-transform: uppercase;
-letter-spacing: .08em;
+  position: relative;
+  width: 100%;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 18px 0 15px;
+  color: #8b9aa4;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
 }
-
 .auth-divider::before,
 .auth-divider::after {
-content: “”;
-
-position: absolute;
-
-top: 50%;
-
-width: calc(50% - 24px);
-height: 1px;
-
-background: #e3eaee;
-
-transform: translateY(-50%);
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 24px);
+  height: 1px;
+  transform: translateY(-50%);
 }
-
 .auth-divider::before {
-left: 0;
-
-background:
-linear-gradient(
-90deg,
-transparent,
-#e3eaee
-);
+  left: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #e3eaee
+    );
 }
-
 .auth-divider::after {
-right: 0;
-
-background:
-linear-gradient(
-90deg,
-#e3eaee,
-transparent
-);
+  right: 0;
+  background:
+    linear-gradient(
+      90deg,
+      #e3eaee,
+      transparent
+    );
 }
-
 .auth-divider span {
-position: relative;
-
-z-index: 1;
-
-display: inline-flex;
-align-items: center;
-justify-content: center;
-
-min-width: 32px;
-height: 18px;
-
-padding: 0 7px;
-
-border-radius: 999px;
-
-background: var(–card-bg, #ffffff);
-
-color: #8b9aa4;
-
-font-size: 9px;
-line-height: 1;
-
-font-weight: 700;
-
-letter-spacing: .06em;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--card-bg, #ffffff);
+  color: #8b9aa4;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: .06em;
 }
-
 /* =========================================================
-20. GOOGLE LOGIN
-========================================================= */
-
+   20. GOOGLE LOGIN
+   ========================================================= */
 .google-login-btn {
-position: relative;
-
-width: 100%;
-min-width: 0;
-min-height: 46px;
-
-display: flex;
-align-items: center;
-justify-content: center;
-
-gap: 9px;
-
-padding: 10px 14px;
-
-border: 1px solid #dfe7eb;
-border-radius: 12px;
-
-background: #ffffff;
-
-color: #334754;
-
-font-family: inherit;
-
-font-size: 13px;
-line-height: 1.2;
-
-font-weight: 650;
-
-box-shadow:
-0 2px 7px rgba(25, 50, 65, .035);
-
-cursor: pointer;
-
-transition:
-border-color .18s ease,
-background-color .18s ease,
-box-shadow .18s ease,
-transform .15s ease;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid #dfe7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334754;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 650;
+  box-shadow:
+    0 2px 7px rgba(25, 50, 65, .035);
+  cursor: pointer;
+  transition:
+    border-color .18s ease,
+    background-color .18s ease,
+    box-shadow .18s ease,
+    transform .15s ease;
 }
-
 .google-login-btn:hover {
-border-color: #cbd9df;
-
-background: #fbfdfe;
-
-box-shadow:
-0 5px 15px rgba(25, 50, 65, .07);
+  border-color: #cbd9df;
+  background: #fbfdfe;
+  box-shadow:
+    0 5px 15px rgba(25, 50, 65, .07);
 }
-
 .google-login-btn:active {
-transform: scale(.985);
+  transform: scale(.985);
 }
-
 .google-login-btn:focus-visible {
-outline: 3px solid rgba(34, 158, 217, .14);
-outline-offset: 2px;
+  outline: 3px solid rgba(34, 158, 217, .14);
+  outline-offset: 2px;
 }
-
 .google-login-btn:disabled {
-opacity: .65;
-
-cursor: not-allowed;
-
-transform: none;
-
-box-shadow: none;
+  opacity: .65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
-
 /* =========================================================
-21. GOOGLE ICON
-========================================================= */
-
+   21. GOOGLE ICON
+   ========================================================= */
 .google-icon {
-flex: 0 0 25px;
-
-width: 25px;
-height: 25px;
-
-display: flex;
-align-items: center;
-justify-content: center;
-
-border-radius: 7px;
-
-background: #ffffff;
-
-font-size: 14px;
-line-height: 1;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #ffffff;
+  font-size: 14px;
+  line-height: 1;
 }
-
 .google-icon i {
-display: block;
-
-margin: 0;
-padding: 0;
-
-line-height: 1;
-
-text-align: center;
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  text-align: center;
 }
-
 /* =========================================================
-22. AUTH FOOTER
-========================================================= */
-
+   22. AUTH FOOTER
+   ========================================================= */
 .auth-footer {
-width: 100%;
-min-width: 0;
-
-display: flex;
-flex-direction: column;
-align-items: center;
-
-gap: 5px;
-
-margin-top: 15px;
-
-padding: 0;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 15px;
+  padding: 0;
 }
-
 /* =========================================================
-23. REGISTER PROMPT
-========================================================= */
-
+   23. REGISTER PROMPT
+   ========================================================= */
 .register-prompt {
-width: 100%;
-min-width: 0;
-
-display: flex;
-align-items: center;
-justify-content: center;
-
-flex-wrap: wrap;
-
-gap: 4px;
-
-margin: 0;
-padding: 0;
-
-color: #7c8b95;
-
-font-size: 11.5px;
-line-height: 1.5;
-
-text-align: center;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  color: #7c8b95;
+  font-size: 11.5px;
+  line-height: 1.5;
+  text-align: center;
 }
-
 .register-prompt > span {
-display: inline-block;
-
-margin: 0;
-padding: 0;
-
-color: #7c8b95;
-
-font-size: inherit;
-line-height: inherit;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  color: #7c8b95;
+  font-size: inherit;
+  line-height: inherit;
 }
-
 /* =========================================================
-24. REGISTER LINK
-========================================================= */
-
+   24. REGISTER LINK
+   ========================================================= */
 .register-link {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-
-gap: 4px;
-
-min-height: 24px;
-
-padding: 3px 7px;
-
-border-radius: 7px;
-
-color: #229ed9;
-
-font-size: 11.5px;
-line-height: 1.4;
-
-font-weight: 700;
-
-text-decoration: none;
-
-transition:
-color .18s ease,
-background-color .18s ease,
-transform .15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  color: #229ed9;
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    color .18s ease,
+    background-color .18s ease,
+    transform .15s ease;
 }
-
 .register-link:hover {
-color: #1685ba;
-
-background:
-rgba(34, 158, 217, .07);
-
-text-decoration: none;
+  color: #1685ba;
+  background:
+    rgba(34, 158, 217, .07);
+  text-decoration: none;
 }
-
 .register-link:active {
-transform: scale(.96);
+  transform: scale(.96);
 }
-
 .register-link:focus-visible {
-outline: 3px solid rgba(34, 158, 217, .14);
-outline-offset: 2px;
+  outline: 3px solid rgba(34, 158, 217, .14);
+  outline-offset: 2px;
 }
-
 .register-link i {
-display: block;
-
-font-size: 9px;
-line-height: 1;
-
-transition:
-transform .18s ease;
+  display: block;
+  font-size: 9px;
+  line-height: 1;
+  transition:
+    transform .18s ease;
 }
-
 .register-link:hover i {
-transform: translateX(2px);
+  transform: translateX(2px);
 }
-
 /* =========================================================
-25. BACK LINK
-========================================================= */
-
+   25. BACK LINK
+   ========================================================= */
 .back-link {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-
-gap: 6px;
-
-min-height: 30px;
-
-padding: 6px 11px;
-
-border: 1px solid #e3eaee;
-border-radius: 9px;
-
-background: transparent;
-
-color: #7a8a94;
-
-font-size: 10.5px;
-line-height: 1.2;
-
-font-weight: 600;
-
-text-decoration: none;
-
-box-shadow:
-0 2px 7px rgba(25, 50, 65, .025);
-
-transition:
-color .18s ease,
-border-color .18s ease,
-background-color .18s ease,
-box-shadow .18s ease,
-transform .15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 1px solid #e3eaee;
+  border-radius: 9px;
+  background: transparent;
+  color: #7a8a94;
+  font-size: 10.5px;
+  line-height: 1.2;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow:
+    0 2px 7px rgba(25, 50, 65, .025);
+  transition:
+    color .18s ease,
+    border-color .18s ease,
+    background-color .18s ease,
+    box-shadow .18s ease,
+    transform .15s ease;
 }
-
 .back-link:hover {
-color: #229ed9;
-
-border-color:
-rgba(34, 158, 217, .22);
-
-background:
-rgba(34, 158, 217, .045);
-
-box-shadow:
-0 4px 12px rgba(34, 158, 217, .055);
-
-text-decoration: none;
+  color: #229ed9;
+  border-color:
+    rgba(34, 158, 217, .22);
+  background:
+    rgba(34, 158, 217, .045);
+  box-shadow:
+    0 4px 12px rgba(34, 158, 217, .055);
+  text-decoration: none;
 }
-
 .back-link:active {
-transform: scale(.97);
+  transform: scale(.97);
 }
-
 .back-link:focus-visible {
-outline: 3px solid rgba(34, 158, 217, .14);
-outline-offset: 2px;
+  outline: 3px solid rgba(34, 158, 217, .14);
+  outline-offset: 2px;
 }
-
 .back-link i {
-display: block;
-
-flex: 0 0 auto;
-
-font-size: 9px;
-line-height: 1;
-
-transition:
-transform .18s ease;
+  display: block;
+  flex: 0 0 auto;
+  font-size: 9px;
+  line-height: 1;
+  transition:
+    transform .18s ease;
 }
-
 .back-link:hover i {
-transform: translateX(-2px);
+  transform: translateX(-2px);
 }
-
 /* =========================================================
-26. DARK MODE — DIVIDER
-========================================================= */
-
+   26. DARK MODE — DIVIDER
+   ========================================================= */
 .theme-dark .auth-divider {
-color: #81939e;
+  color: #81939e;
 }
-
 .theme-dark .auth-divider::before {
-background:
-linear-gradient(
-90deg,
-transparent,
-#2b3d48
-);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #2b3d48
+    );
 }
-
 .theme-dark .auth-divider::after {
-background:
-linear-gradient(
-90deg,
-#2b3d48,
-transparent
-);
+  background:
+    linear-gradient(
+      90deg,
+      #2b3d48,
+      transparent
+    );
 }
-
 .theme-dark .auth-divider span {
-background:
-var(–card-bg, #101c24);
-
-color: #81939e;
+  background:
+    var(--card-bg, #101c24);
+  color: #81939e;
 }
-
 /* =========================================================
-27. DARK MODE — GOOGLE
-========================================================= */
-
+   27. DARK MODE — GOOGLE
+   ========================================================= */
 .theme-dark .google-login-btn {
-border-color: #2b3e49;
-
-background: #111f28;
-
-color: #e1edf3;
-
-box-shadow:
-0 3px 10px rgba(0, 0, 0, .14);
+  border-color: #2b3e49;
+  background: #111f28;
+  color: #e1edf3;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, .14);
 }
-
 .theme-dark .google-login-btn:hover {
-border-color: #3a5260;
-
-background: #142731;
-
-box-shadow:
-0 6px 16px rgba(0, 0, 0, .22);
+  border-color: #3a5260;
+  background: #142731;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, .22);
 }
-
 .theme-dark .google-login-btn:focus-visible {
-outline-color:
-rgba(85, 195, 242, .18);
+  outline-color:
+    rgba(85, 195, 242, .18);
 }
-
 .theme-dark .google-icon {
-background: #ffffff;
+  background: #ffffff;
 }
-
 /* =========================================================
-28. DARK MODE — REGISTER
-========================================================= */
-
+   28. DARK MODE — REGISTER
+   ========================================================= */
 .theme-dark .register-prompt,
 .theme-dark .register-prompt > span {
-color: #899da8;
+  color: #899da8;
 }
-
 .theme-dark .register-link {
-color: #55c3f2;
+  color: #55c3f2;
 }
-
 .theme-dark .register-link:hover {
-color: #7ad5fa;
-
-background:
-rgba(85, 195, 242, .08);
+  color: #7ad5fa;
+  background:
+    rgba(85, 195, 242, .08);
 }
-
 .theme-dark .register-link:focus-visible {
-outline-color:
-rgba(85, 195, 242, .18);
+  outline-color:
+    rgba(85, 195, 242, .18);
 }
-
 /* =========================================================
-29. DARK MODE — BACK
-========================================================= */
-
+   29. DARK MODE — BACK
+   ========================================================= */
 .theme-dark .back-link {
-border-color: #2b3e49;
-
-background: transparent;
-
-color: #91a5b0;
-
-box-shadow:
-0 3px 10px rgba(0, 0, 0, .12);
+  border-color: #2b3e49;
+  background: transparent;
+  color: #91a5b0;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, .12);
 }
-
 .theme-dark .back-link:hover {
-color: #55c3f2;
-
-border-color:
-rgba(85, 195, 242, .24);
-
-background:
-rgba(85, 195, 242, .06);
-
-box-shadow:
-0 5px 14px rgba(0, 0, 0, .2);
+  color: #55c3f2;
+  border-color:
+    rgba(85, 195, 242, .24);
+  background:
+    rgba(85, 195, 242, .06);
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, .2);
 }
-
 /* =========================================================
-30. MOBILE
-========================================================= */
-
+   30. MOBILE — FOOTER
+   ========================================================= */
 @media (max-width: 520px) {
-
-.auth-divider {
-height: 17px;
-
-margin: 15px 0 13px;
-font-size: 9px;
-
+  .auth-divider {
+    height: 17px;
+    margin: 15px 0 13px;
+    font-size: 9px;
+  }
+  .auth-divider::before,
+  .auth-divider::after {
+    width: calc(50% - 21px);
+  }
+  .auth-divider span {
+    min-width: 29px;
+    height: 17px;
+    padding: 0 6px;
+    font-size: 8px;
+  }
+  /* Google */
+  .google-login-btn {
+    min-height: 44px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    font-size: 12px;
+  }
+  .google-icon {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  /* Footer */
+  .auth-footer {
+    margin-top: 13px;
+    gap: 4px;
+  }
+  .register-prompt {
+    font-size: 11px;
+  }
+  .register-link {
+    min-height: 23px;
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .register-link i {
+    font-size: 8px;
+  }
+  /* Back */
+  .back-link {
+    min-height: 29px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+  }
+  .back-link i {
+    font-size: 8px;
+  }
 }
-
-.auth-divider::before,
-.auth-divider::after {
-width: calc(50% - 21px);
-}
-
-.auth-divider span {
-min-width: 29px;
-height: 17px;
-
-padding: 0 6px;
-font-size: 8px;
-
-}
-
-/* Google */
-
-.google-login-btn {
-min-height: 44px;
-
-padding: 9px 12px;
-border-radius: 11px;
-font-size: 12px;
-
-}
-
-.google-icon {
-width: 24px;
-height: 24px;
-
-flex-basis: 24px;
-border-radius: 6px;
-font-size: 13px;
-
-}
-
-/* Footer */
-
-.auth-footer {
-margin-top: 13px;
-
-gap: 4px;
-
-}
-
-.register-prompt {
-font-size: 11px;
-}
-
-.register-link {
-min-height: 23px;
-
-padding: 3px 6px;
-font-size: 11px;
-border-radius: 6px;
-
-}
-
-.register-link i {
-font-size: 8px;
-}
-
-/* Back */
-
-.back-link {
-min-height: 29px;
-
-padding: 5px 10px;
-border-radius: 8px;
-font-size: 10px;
-
-}
-
-.back-link i {
-font-size: 8px;
-}
-}
-
 /* =========================================================
-31. VERY SMALL SCREEN
-========================================================= */
-
+   31. VERY SMALL SCREEN — FOOTER
+   ========================================================= */
 @media (max-width: 360px) {
-
-.auth-divider {
-margin-top: 13px;
-margin-bottom: 11px;
+  .auth-divider {
+    margin-top: 13px;
+    margin-bottom: 11px;
+  }
+  .google-login-btn {
+    min-height: 42px;
+    border-radius: 10px;
+    font-size: 11.5px;
+  }
+  .auth-footer {
+    margin-top: 11px;
+  }
+  .register-prompt {
+    font-size: 10.5px;
+  }
+  .register-link {
+    font-size: 10.5px;
+  }
+  .back-link {
+    min-height: 28px;
+    padding: 5px 9px;
+    font-size: 9.5px;
+  }
 }
-
-.google-login-btn {
-min-height: 42px;
-
-border-radius: 10px;
-font-size: 11.5px;
-
-}
-
-.auth-footer {
-margin-top: 11px;
-}
-
-.register-prompt {
-font-size: 10.5px;
-}
-
-.register-link {
-font-size: 10.5px;
-}
-
-.back-link {
-min-height: 28px;
-
-padding: 5px 9px;
-font-size: 9.5px;
-
-}
-}
-
 /* =========================================================
-32. REDUCED MOTION — FOOTER
-========================================================= */
-
+   32. REDUCED MOTION — FOOTER
+   ========================================================= */
 @media (prefers-reduced-motion: reduce) {
-
-.google-login-btn,
-.register-link,
-.register-link i,
-.back-link,
-.back-link i {
-transition: none !important;
-}
+  .google-login-btn,
+  .register-link,
+  .register-link i,
+  .back-link,
+  .back-link i {
+    transition: none !important;
+  }
 }
