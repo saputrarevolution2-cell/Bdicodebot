@@ -1,5 +1,193 @@
-<!doctype html><html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260903-fix"></script><title>Profile — PasTele</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904"><link rel="stylesheet" href="css/profile.css?v=20260904"></head><body class="app-page"><div id="navbar"></div><main><section class="section"><div class="container">
-<div class="profile-hero card"><div class="avatar big" id="avatar">P</div><div><span class="eyebrow">ACCOUNT PROFILE</span><h1 id="name">Profile</h1><p class="muted" id="bio">Kelola identitas dan kontenmu.</p></div><div class="profile-actions"><a class="btn" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a><a class="btn primary" id="adminBtn" href="admin/index.html"><i class="fa-solid fa-shield-halved"></i> Admin</a></div></div>
-<div class="profile-grid"><div class="card"><h2><i class="fa-solid fa-id-card"></i> Detail profil</h2><div class="profile-details" id="details"></div></div><div class="card"><h2><i class="fa-solid fa-layer-group"></i> Konten</h2><div class="content-counts" id="counts"></div></div></div>
-<div class="card"><h2><i class="fa-solid fa-key"></i> Kata sandi</h2><form id="profilePass" class="password-row"><input class="input" id="profileNewPass" minlength="6" placeholder="Password baru" type="password"><button class="btn" type="button" id="profilePassToggle"><i class="fa-solid fa-eye"></i></button><button class="btn primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Ubah</button></form><small class="muted">Password saat ini tidak pernah ditampilkan demi keamanan.</small></div><div class="card"><h2><i class="fa-solid fa-shield-halved"></i> Keamanan login</h2><div class="login-grid"><div><b id="currentLogin">Memuat...</b><small>Login saat ini</small></div><div><b id="lastLogin">Belum ada</b><small>Login terakhir</small></div></div></div>
-</div></section></main><div id="toast"></div><script src="js/profile.js?v=20260904"></script><script src="js/site-shell.js?v=20260904"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <script src="js/theme-preload.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js?v=20260831"></script>
+  <script src="/js/supabase.js?v=20260831"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/navbar.js?v=20260903-fix"></script>
+  <title>Profile — PasTele</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+  <link rel="stylesheet" href="css/app.css?v=20260904">
+  <link rel="stylesheet" href="css/profile.css?v=20260904">
+</head>
+<body class="app-page">
+  <div id="navbar"></div>
+  <main>
+    <section class="section">
+      <div class="container profile-page">
+        <!-- PROFILE HEADER -->
+        <section class="profile-hero">
+          <div class="profile-avatar" id="avatar">
+            P
+          </div>
+          <div class="profile-heading">
+            <span class="profile-eyebrow">
+              <i class="fa-solid fa-user-circle"></i>
+              ACCOUNT PROFILE
+            </span>
+            <h1 id="name">Profile</h1>
+            <p id="bio" class="muted">
+              Kelola identitas dan kontenmu.
+            </p>
+          </div>
+          <div class="profile-actions">
+            <a
+              class="btn"
+              href="settings.html"
+            >
+              <i class="fa-solid fa-gear"></i>
+              Settings
+            </a>
+            <a
+              class="btn primary"
+              id="adminBtn"
+              href="admin/index.html"
+              hidden
+            >
+              <i class="fa-solid fa-shield-halved"></i>
+              Admin Panel
+            </a>
+          </div>
+        </section>
+        <!-- PROFILE INFORMATION -->
+        <div class="profile-grid">
+          <!-- DETAILS -->
+          <section class="profile-section">
+            <div class="section-heading">
+              <div class="section-icon">
+                <i class="fa-solid fa-id-card"></i>
+              </div>
+              <div>
+                <h2>Detail profil</h2>
+                <p>Informasi akun kamu.</p>
+              </div>
+            </div>
+            <div
+              class="profile-details"
+              id="details"
+            >
+              <div class="profile-loading">
+                <i class="fa-solid fa-circle-notch"></i>
+                <span>Memuat profil...</span>
+              </div>
+            </div>
+          </section>
+          <!-- CONTENT -->
+          <section class="profile-section">
+            <div class="section-heading">
+              <div class="section-icon">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+              <div>
+                <h2>Konten</h2>
+                <p>Konten yang kamu buat.</p>
+              </div>
+            </div>
+            <div
+              class="content-counts"
+              id="counts"
+            >
+              <div class="profile-loading">
+                <i class="fa-solid fa-circle-notch"></i>
+                <span>Memuat statistik...</span>
+              </div>
+            </div>
+          </section>
+        </div>
+        <!-- PASSWORD -->
+        <section class="profile-section password-section">
+          <div class="section-heading">
+            <div class="section-icon">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <div>
+              <h2>Kata sandi</h2>
+              <p>Perbarui password akun kamu.</p>
+            </div>
+          </div>
+          <form
+            id="profilePass"
+            class="password-form"
+          >
+            <div class="password-input">
+              <i class="fa-solid fa-lock"></i>
+              <input
+                class="input"
+                id="profileNewPass"
+                minlength="6"
+                autocomplete="new-password"
+                placeholder="Password baru"
+                type="password"
+                required
+              >
+              <button
+                type="button"
+                class="password-toggle"
+                id="profilePassToggle"
+                aria-label="Tampilkan password"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <button
+              class="btn primary password-submit"
+              type="submit"
+            >
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Ubah password</span>
+            </button>
+          </form>
+          <div class="security-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>
+              Password saat ini tidak pernah ditampilkan demi keamanan.
+            </span>
+          </div>
+        </section>
+        <!-- LOGIN SECURITY -->
+        <section class="profile-section">
+          <div class="section-heading">
+            <div class="section-icon">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <h2>Keamanan login</h2>
+              <p>Aktivitas login akun.</p>
+            </div>
+          </div>
+          <div class="login-grid">
+            <div class="login-item">
+              <span class="login-icon">
+                <i class="fa-solid fa-right-to-bracket"></i>
+              </span>
+              <div>
+                <small>Login saat ini</small>
+                <b id="currentLogin">Memuat...</b>
+              </div>
+            </div>
+            <div class="login-item">
+              <span class="login-icon">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </span>
+              <div>
+                <small>Login terakhir</small>
+                <b id="lastLogin">Belum ada</b>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div id="toast"></div>
+  <script src="js/profile.js?v=20260904"></script>
+  <script src="js/site-shell.js?v=20260904"></script>
+</body>
+</html>
