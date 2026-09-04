@@ -1,4 +1,578 @@
 <!DOCTYPE html>
-<html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Create Center</title><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script>
-<script src="/js/debug-panel.js"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260903-fix"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904"><link rel="stylesheet" href="css/paste.css?v=20260904"></head><body class="app-page"><div id="navbar"></div><main><section class="section"><div class="container"><span class="badge"><i class="fa-solid fa-pen-to-square"></i> Create Center</span><h1>Buat konten</h1><p class="muted">Pilih jenis konten yang ingin kamu publikasikan.</p><div class="tabs create-tabs" id="types"><button class="btn active" data-type="paste"><i class="fa-solid fa-file-lines"></i> PasteLink</button><button class="btn" data-type="code"><i class="fa-solid fa-code"></i> Code Telegram</button><button class="btn" data-type="channel"><i class="fa-brands fa-telegram"></i> Channel / Group</button></div><div class="card page-style-1"><form class="list" id="create"><div class="field"><label>Judul</label><input class="input" id="title" required=""/></div><div class="field hidden" id="botWrap"><label>Bot Telegram</label><select class="select" id="bot"><option>Memuat bot...</option></select><small class="muted" id="botStatus"></small></div><div class="field hidden" id="channelType"><label>Jenis</label><select class="select" id="ctype"><option value="channel">Channel</option><option value="group">Group</option></select></div><div class="field"><label>Content</label><div class="row wrap"><button class="btn" data-cmd="bold" type="button"><i class="fa-solid fa-bold"></i></button><button class="btn" data-cmd="italic" type="button"><i class="fa-solid fa-italic"></i></button><button class="btn" data-cmd="underline" type="button"><i class="fa-solid fa-underline"></i></button><button class="btn" data-cmd="strikeThrough" type="button"><i class="fa-solid fa-strikethrough"></i></button><button class="btn" id="linkBtn" type="button"><i class="fa-solid fa-link"></i></button><button class="btn" data-cmd="formatBlock" type="button"><i class="fa-solid fa-code"></i></button><button class="btn" id="spoiler" type="button"><i class="fa-solid fa-eye-slash"></i></button><label class="btn"><i class="fa-solid fa-image"></i> Image <input accept="image/*" hidden="" id="image" type="file"/></label></div><div class="textarea paste-canvas page-style-2" contenteditable="true" data-placeholder="Tulis konten di sini..." id="editor"></div></div><div class="grid grid-2" id="privacyWrap"><div class="field"><label>Visibility</label><select class="select" id="visibility"><option value="public">Public</option><option value="private">Private</option></select></div><div class="field" id="passwordWrap"><label>Password (opsional)</label><input class="input" id="ppass" type="password"/></div><div class="field" id="expireWrap"><label>Expired</label><select class="select" id="expire"><option value="never">Tidak expired</option><option value="1d">1 hari</option><option value="7d">7 hari</option><option value="30d">30 hari</option></select></div><div class="field" id="tagsWrap"><label>Tag</label><input class="input" id="tags" placeholder="telegram, tutorial, ..."/></div></div><div class="field hidden" id="accessWrap"><label>Akses</label><select class="select" id="access"><option value="free">Free</option><option value="paid">Paid</option></select></div><div class="field hidden" id="priceWrap"><label>Harga (IDR)</label><input class="input" id="price" min="0" step="1000" type="number"/></div><button class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> Publikasikan</button></form></div></div></section></main><div id="toast"></div><script src="js/paste.js?v=20260904"></script><script src="js/site-shell.js?v=20260904"></script></body></html>
+<html lang="id">
+<head>
+  <script src="js/theme-preload.js"></script>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Create Center</title>
+  <script src="/js/config.js?v=20260831"></script>
+  <script src="/js/supabase.js?v=20260831"></script>
+  <script src="/js/debug-panel.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/navbar.js?v=20260903-fix"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260904"
+  >
+  <link
+    rel="stylesheet"
+    href="css/paste.css?v=20260904"
+  >
+</head>
+<body class="app-page paste-page">
+  <div id="navbar"></div>
+  <main class="paste-main">
+    <section class="paste-section">
+      <div class="paste-container">
+        <!-- =================================================
+             HEADER
+             ================================================= -->
+        <header class="paste-header">
+          <div class="paste-header-main">
+            <div class="paste-page-icon">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <div class="paste-heading">
+              <span class="paste-eyebrow">
+                <i class="fa-solid fa-layer-group"></i>
+                CREATE CENTER
+              </span>
+              <h1>Buat Konten</h1>
+              <p>
+                Buat PasteLink, Code Telegram, atau Channel / Group.
+              </p>
+            </div>
+          </div>
+          <a
+            href="dashboard.html"
+            class="paste-back-btn"
+          >
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Dashboard</span>
+          </a>
+        </header>
+        <!-- =================================================
+             TYPE SELECTOR
+             ================================================= -->
+        <div
+          class="create-tabs"
+          id="types"
+          role="tablist"
+          aria-label="Jenis konten"
+        >
+          <button
+            class="create-tab active"
+            data-type="paste"
+            type="button"
+            role="tab"
+            aria-selected="true"
+          >
+            <span class="create-tab-icon">
+              <i class="fa-solid fa-file-lines"></i>
+            </span>
+            <span>
+              <strong>PasteLink</strong>
+              <small>Bagikan konten</small>
+            </span>
+          </button>
+          <button
+            class="create-tab"
+            data-type="code"
+            type="button"
+            role="tab"
+            aria-selected="false"
+          >
+            <span class="create-tab-icon">
+              <i class="fa-solid fa-code"></i>
+            </span>
+            <span>
+              <strong>Code Telegram</strong>
+              <small>Jual kode / bot</small>
+            </span>
+          </button>
+          <button
+            class="create-tab"
+            data-type="channel"
+            type="button"
+            role="tab"
+            aria-selected="false"
+          >
+            <span class="create-tab-icon">
+              <i class="fa-brands fa-telegram"></i>
+            </span>
+            <span>
+              <strong>Channel / Group</strong>
+              <small>Jual akses Telegram</small>
+            </span>
+          </button>
+        </div>
+        <!-- =================================================
+             MAIN CONTENT
+             ================================================= -->
+        <form
+          class="paste-layout"
+          id="create"
+          autocomplete="off"
+        >
+          <!-- =================================================
+               EDITOR PANEL
+               ================================================= -->
+          <div class="paste-editor-panel">
+            <div class="paste-panel-head">
+              <div>
+                <span class="paste-panel-kicker">
+                  CONTENT EDITOR
+                </span>
+                <h2>Tulis konten kamu</h2>
+                <p>
+                  Gunakan toolbar untuk memformat isi konten.
+                </p>
+              </div>
+              <span class="paste-panel-icon">
+                <i class="fa-solid fa-pen"></i>
+              </span>
+            </div>
+            <!-- TITLE -->
+            <div class="paste-field">
+              <label for="title">
+                Judul
+                <span>*</span>
+              </label>
+              <div class="paste-input-wrap">
+                <i class="fa-solid fa-heading"></i>
+                <input
+                  class="input"
+                  id="title"
+                  type="text"
+                  maxlength="160"
+                  placeholder="Masukkan judul konten..."
+                  required
+                >
+              </div>
+            </div>
+            <!-- BOT -->
+            <div
+              class="paste-field hidden"
+              id="botWrap"
+            >
+              <label for="bot">
+                Bot Telegram
+                <span>*</span>
+              </label>
+              <div class="paste-input-wrap">
+                <i class="fa-solid fa-robot"></i>
+                <select
+                  class="select"
+                  id="bot"
+                >
+                  <option value="">
+                    Memuat bot...
+                  </option>
+                </select>
+              </div>
+              <small
+                class="paste-help"
+                id="botStatus"
+              >
+                Memuat daftar bot approved...
+              </small>
+            </div>
+            <!-- CHANNEL TYPE -->
+            <div
+              class="paste-field hidden"
+              id="channelType"
+            >
+              <label for="ctype">
+                Jenis Telegram
+                <span>*</span>
+              </label>
+              <div class="paste-input-wrap">
+                <i class="fa-brands fa-telegram"></i>
+                <select
+                  class="select"
+                  id="ctype"
+                >
+                  <option value="channel">
+                    Channel
+                  </option>
+                  <option value="group">
+                    Group
+                  </option>
+                </select>
+              </div>
+            </div>
+            <!-- TOOLBAR + EDITOR -->
+            <div class="paste-field editor-field">
+              <div class="editor-label-row">
+                <label for="editor">
+                  Content
+                  <span>*</span>
+                </label>
+                <span class="editor-hint">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  Rich text
+                </span>
+              </div>
+              <div class="editor-shell">
+                <div
+                  class="paste-toolbar"
+                  id="toolbar"
+                  role="toolbar"
+                  aria-label="Formatting toolbar"
+                >
+                  <button
+                    class="editor-tool"
+                    data-cmd="bold"
+                    type="button"
+                    title="Bold"
+                  >
+                    <i class="fa-solid fa-bold"></i>
+                  </button>
+                  <button
+                    class="editor-tool"
+                    data-cmd="italic"
+                    type="button"
+                    title="Italic"
+                  >
+                    <i class="fa-solid fa-italic"></i>
+                  </button>
+                  <button
+                    class="editor-tool"
+                    data-cmd="underline"
+                    type="button"
+                    title="Underline"
+                  >
+                    <i class="fa-solid fa-underline"></i>
+                  </button>
+                  <button
+                    class="editor-tool"
+                    data-cmd="strikeThrough"
+                    type="button"
+                    title="Strikethrough"
+                  >
+                    <i class="fa-solid fa-strikethrough"></i>
+                  </button>
+                  <span class="toolbar-divider"></span>
+                  <button
+                    class="editor-tool"
+                    id="linkBtn"
+                    type="button"
+                    title="Insert link"
+                  >
+                    <i class="fa-solid fa-link"></i>
+                  </button>
+                  <button
+                    class="editor-tool"
+                    data-cmd="formatBlock"
+                    data-value="pre"
+                    type="button"
+                    title="Code"
+                  >
+                    <i class="fa-solid fa-code"></i>
+                  </button>
+                  <button
+                    class="editor-tool"
+                    id="spoiler"
+                    type="button"
+                    title="Spoiler"
+                  >
+                    <i class="fa-solid fa-eye-slash"></i>
+                  </button>
+                  <label
+                    class="editor-tool file-tool"
+                    title="Insert image"
+                  >
+                    <i class="fa-solid fa-image"></i>
+                    <input
+                      accept="image/*"
+                      hidden
+                      id="image"
+                      type="file"
+                    >
+                  </label>
+                </div>
+                <div
+                  class="paste-canvas"
+                  contenteditable="true"
+                  data-placeholder="Tulis konten di sini..."
+                  id="editor"
+                  role="textbox"
+                  aria-multiline="true"
+                  spellcheck="true"
+                ></div>
+                <div class="editor-footer">
+                  <span>
+                    <i class="fa-solid fa-circle-info"></i>
+                    Format teks akan disimpan sebagai rich text.
+                  </span>
+                  <span id="editorStatus">
+                    0 karakter
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- =================================================
+                 PASTE SETTINGS
+                 ================================================= -->
+            <div
+              class="paste-settings"
+              id="privacyWrap"
+            >
+              <div class="settings-heading">
+                <span>
+                  <i class="fa-solid fa-sliders"></i>
+                </span>
+                <div>
+                  <strong>Pengaturan Paste</strong>
+                  <small>
+                    Atur privasi dan masa aktif konten.
+                  </small>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="paste-field">
+                  <label for="visibility">
+                    Visibility
+                  </label>
+                  <div class="paste-input-wrap">
+                    <i class="fa-solid fa-eye"></i>
+                    <select
+                      class="select"
+                      id="visibility"
+                    >
+                      <option value="public">
+                        Public
+                      </option>
+                      <option value="private">
+                        Private
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div
+                  class="paste-field"
+                  id="passwordWrap"
+                >
+                  <label for="ppass">
+                    Password
+                    <small>Opsional</small>
+                  </label>
+                  <div class="paste-input-wrap">
+                    <i class="fa-solid fa-lock"></i>
+                    <input
+                      class="input"
+                      id="ppass"
+                      type="password"
+                      maxlength="120"
+                      placeholder="Password..."
+                    >
+                  </div>
+                </div>
+                <div
+                  class="paste-field"
+                  id="expireWrap"
+                >
+                  <label for="expire">
+                    Expired
+                  </label>
+                  <div class="paste-input-wrap">
+                    <i class="fa-solid fa-clock"></i>
+                    <select
+                      class="select"
+                      id="expire"
+                    >
+                      <option value="never">
+                        Tidak expired
+                      </option>
+                      <option value="1d">
+                        1 hari
+                      </option>
+                      <option value="7d">
+                        7 hari
+                      </option>
+                      <option value="30d">
+                        30 hari
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div
+                  class="paste-field"
+                  id="tagsWrap"
+                >
+                  <label for="tags">
+                    Tag
+                  </label>
+                  <div class="paste-input-wrap">
+                    <i class="fa-solid fa-tags"></i>
+                    <input
+                      class="input"
+                      id="tags"
+                      type="text"
+                      maxlength="500"
+                      placeholder="telegram, tutorial..."
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- =================================================
+                 MARKETPLACE SETTINGS
+                 ================================================= -->
+            <div
+              class="market-settings hidden"
+              id="marketSettings"
+            >
+              <div class="settings-heading">
+                <span>
+                  <i class="fa-solid fa-store"></i>
+                </span>
+                <div>
+                  <strong>Marketplace</strong>
+                  <small>
+                    Atur akses dan harga produk.
+                  </small>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div
+                  class="paste-field"
+                  id="accessWrap"
+                >
+                  <label for="access">
+                    Akses
+                  </label>
+                  <div class="paste-input-wrap">
+                    <i class="fa-solid fa-lock-open"></i>
+                    <select
+                      class="select"
+                      id="access"
+                    >
+                      <option value="free">
+                        Free
+                      </option>
+                      <option value="paid">
+                        Paid
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div
+                  class="paste-field hidden"
+                  id="priceWrap"
+                >
+                  <label for="price">
+                    Harga
+                    <small>IDR</small>
+                  </label>
+                  <div class="paste-input-wrap">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <input
+                      class="input"
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value="0"
+                      placeholder="0"
+                      inputmode="numeric"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- =================================================
+                 ACTIONS
+                 ================================================= -->
+            <div class="paste-actions">
+              <a
+                href="dashboard.html"
+                class="paste-cancel"
+              >
+                Batal
+              </a>
+              <button
+                class="paste-submit"
+                id="publishBtn"
+                type="submit"
+              >
+                <span id="publishNormal">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  Publikasikan
+                </span>
+                <span
+                  id="publishLoading"
+                  hidden
+                >
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  Memproses...
+                </span>
+              </button>
+            </div>
+          </div>
+          <!-- =================================================
+               SIDEBAR
+               ================================================= -->
+          <aside class="paste-sidebar">
+            <div class="paste-side-card">
+              <div class="paste-side-icon">
+                <i class="fa-solid fa-lightbulb"></i>
+              </div>
+              <span class="paste-side-kicker">
+                TIPS
+              </span>
+              <h3>
+                Buat konten yang rapi
+              </h3>
+              <p>
+                Gunakan judul yang jelas dan isi konten
+                yang mudah dibaca.
+              </p>
+              <ul>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Gunakan judul yang spesifik.</span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Gunakan format teks seperlunya.</span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Tambahkan tag yang relevan.</span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Pastikan content sudah benar.</span>
+                </li>
+              </ul>
+            </div>
+            <div class="paste-side-note">
+              <i class="fa-solid fa-shield-halved"></i>
+              <div>
+                <strong>Publikasi aman</strong>
+                <span>
+                  Konten akan dibuat menggunakan akun
+                  yang sedang login.
+                </span>
+              </div>
+            </div>
+          </aside>
+        </form>
+      </div>
+    </section>
+  </main>
+  <div id="toast"></div>
+  <script src="js/paste.js?v=20260904"></script>
+  <script src="js/site-shell.js?v=20260904"></script>
+</body>
+</html>
