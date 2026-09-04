@@ -6,27 +6,37 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
-  <meta name="color-scheme" content="light dark">
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+  <meta
+    name="theme-color"
+    content="#ffffff"
+  >
   <!-- =====================================================
        THEME PRELOAD
        ===================================================== -->
   <script src="js/theme-preload.js"></script>
   <!-- =====================================================
-       FONTS
+       FONT PRECONNECT
        ===================================================== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- =====================================================
        SUPABASE
        ===================================================== -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
   <title>Dashboard — PasTele</title>
   <!-- =====================================================
-       CORE CONFIGURATION
+       CORE CONFIG
        ===================================================== -->
   <script src="/js/config.js?v=20260831"></script>
   <script src="/js/supabase.js?v=20260831"></script>
   <!-- =====================================================
-       AUTHENTICATION
+       AUTH
        ===================================================== -->
   <script src="/js/auth.js"></script>
   <!-- =====================================================
@@ -41,12 +51,15 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
   <!-- =====================================================
-       STYLES
+       APP CSS
        ===================================================== -->
   <link
     rel="stylesheet"
     href="css/app.css?v=20260904"
   >
+  <!-- =====================================================
+       DASHBOARD CSS
+       ===================================================== -->
   <link
     rel="stylesheet"
     href="css/dashboard.css?v=20260904"
@@ -58,9 +71,12 @@
        ===================================================== -->
   <div id="navbar"></div>
   <!-- =====================================================
-       DASHBOARD
+       MAIN DASHBOARD
        ===================================================== -->
-  <main class="dashboard-fixed">
+  <main
+    class="dashboard-fixed"
+    id="dashboardMain"
+  >
     <div class="dash-container">
       <!-- ===================================================
            DASHBOARD HEADER
@@ -73,7 +89,7 @@
           >
             <i class="fa-solid fa-chart-pie"></i>
           </div>
-          <div>
+          <div class="dash-heading-content">
             <span class="eyebrow">
               WORKSPACE
             </span>
@@ -87,37 +103,44 @@
             </p>
           </div>
         </div>
-        <!-- =================================================
+        <!-- ===============================================
              CONTENT FILTER
-             ================================================= -->
+             =============================================== -->
         <div class="dash-controls">
           <label
             class="sr-only"
             for="scope"
           >
-            Filter konten
+            Filter jenis konten
           </label>
-          <select
-            class="select"
-            id="scope"
-            name="scope"
-          >
-            <option value="all">
-              Semua konten
-            </option>
-            <option value="paste">
-              Pastelink
-            </option>
-            <option value="code">
-              Code
-            </option>
-            <option value="channel">
-              Channel
-            </option>
-            <option value="group">
-              Group
-            </option>
-          </select>
+          <div class="select-wrap">
+            <i
+              class="fa-solid fa-filter"
+              aria-hidden="true"
+            ></i>
+            <select
+              class="select"
+              id="scope"
+              name="scope"
+              aria-label="Filter jenis konten"
+            >
+              <option value="all">
+                Semua konten
+              </option>
+              <option value="paste">
+                Pastelink
+              </option>
+              <option value="code">
+                Code
+              </option>
+              <option value="channel">
+                Channel
+              </option>
+              <option value="group">
+                Group
+              </option>
+            </select>
+          </div>
         </div>
       </header>
       <!-- ===================================================
@@ -126,9 +149,11 @@
       <section
         class="dash-stat-grid"
         id="contentStats"
-        aria-label="Statistik dashboard"
+        aria-label="Statistik utama"
       >
-        <!-- Total Created -->
+        <!-- ===============================================
+             TOTAL CREATED
+             =============================================== -->
         <a
           class="dash-stat cyan"
           href="my-products.html"
@@ -146,7 +171,9 @@
             Semua konten
           </em>
         </a>
-        <!-- Total Views -->
+        <!-- ===============================================
+             TOTAL VIEWS
+             =============================================== -->
         <a
           class="dash-stat blue"
           href="my-products.html"
@@ -164,7 +191,9 @@
             Aktivitas view
           </em>
         </a>
-        <!-- Total Paid -->
+        <!-- ===============================================
+             TOTAL SALES
+             =============================================== -->
         <a
           class="dash-stat violet"
           href="purchases.html"
@@ -182,7 +211,9 @@
             Pembelian berhasil
           </em>
         </a>
-        <!-- Revenue -->
+        <!-- ===============================================
+             REVENUE
+             =============================================== -->
         <a
           class="dash-stat pink"
           href="wallet.html"
@@ -208,6 +239,7 @@
         class="count-grid"
         aria-label="Jumlah konten"
       >
+        <!-- LINK -->
         <a
           class="count-card"
           href="my-products.html?type=link"
@@ -223,6 +255,7 @@
             Total Link
           </small>
         </a>
+        <!-- CODE -->
         <a
           class="count-card"
           href="my-products.html?type=code"
@@ -238,6 +271,7 @@
             Total Code
           </small>
         </a>
+        <!-- CHANNEL -->
         <a
           class="count-card"
           href="my-products.html?type=channel"
@@ -258,72 +292,466 @@
            INTERACTION + PERFORMANCE
            =================================================== -->
       <section class="dash-two">
-        <!-- Interaction -->
-        <div class="panel">
+        <!-- =================================================
+             INTERACTIONS
+             ================================================= -->
+        <section
+          class="panel interaction-panel"
+          aria-labelledby="interactionTitle"
+        >
           <div class="panel-head">
             <div>
-              <h2>
+              <span class="panel-kicker">
+                ENGAGEMENT
+              </span>
+              <h2 id="interactionTitle">
                 Interaksi
               </h2>
               <p>
                 Ringkasan engagement akun
               </p>
             </div>
+            <span class="panel-icon">
+              <i
+                class="fa-solid fa-chart-simple"
+                aria-hidden="true"
+              ></i>
+            </span>
           </div>
+          <!-- Dynamic interaction statistics -->
           <div
             class="circle-stats"
             id="interactions"
-          ></div>
-        </div>
-        <!-- Performance -->
-        <div class="panel">
-          <div class="panel-head">
+            aria-live="polite"
+          >
+            <div class="circle-stat blue">
+              <div class="circle">
+                <i
+                  class="fa-solid fa-eye"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <strong>
+                0
+              </strong>
+              <span>
+                Views
+              </span>
+            </div>
+            <div class="circle-stat pink">
+              <div class="circle">
+                <i
+                  class="fa-solid fa-heart"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <strong>
+                0
+              </strong>
+              <span>
+                Like
+              </span>
+            </div>
+            <div class="circle-stat violet">
+              <div class="circle">
+                <i
+                  class="fa-solid fa-share-nodes"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <strong>
+                0
+              </strong>
+              <span>
+                Share
+              </span>
+            </div>
+            <div class="circle-stat green">
+              <div class="circle">
+                <i
+                  class="fa-solid fa-user-plus"
+                  aria-hidden="true"
+                ></i>
+              </div>
+              <strong>
+                0
+              </strong>
+              <span>
+                Follower
+              </span>
+            </div>
+          </div>
+        </section>
+        <!-- =================================================
+             PERFORMANCE
+             ================================================= -->
+        <section
+          class="panel performance-panel"
+          aria-labelledby="performanceTitle"
+        >
+          <!-- ===============================================
+               PERFORMANCE HEADER
+               =============================================== -->
+          <div class="panel-head performance-head">
             <div>
-              <h2>
-                Performa
+              <span class="panel-kicker">
+                ANALYTICS
+              </span>
+              <h2 id="performanceTitle">
+                Performa 7 Hari
               </h2>
-              <p>
-                30 hari terakhir · mengikuti database
+              <p id="performancePeriod">
+                7 hari terakhir
               </p>
             </div>
-            <span class="period-badge">
-              30 Hari
+            <span
+              class="period-badge"
+              id="periodBadge"
+            >
+              7 Hari
             </span>
           </div>
+          <!-- ===============================================
+               PERFORMANCE SUMMARY
+               =============================================== -->
+          <div
+            class="performance-summary"
+            aria-label="Ringkasan performa 7 hari"
+          >
+            <!-- VIEWS -->
+            <article class="performance-stat performance-stat-views">
+              <div class="performance-stat-top">
+                <span class="performance-stat-icon">
+                  <i
+                    class="fa-solid fa-eye"
+                    aria-hidden="true"
+                  ></i>
+                </span>
+                <span class="performance-stat-label">
+                  Views
+                </span>
+              </div>
+              <strong
+                id="performanceViews"
+                class="performance-value"
+              >
+                0
+              </strong>
+              <span
+                id="performanceViewsTrend"
+                class="trend trend-stable"
+              >
+                <i
+                  class="fa-solid fa-minus"
+                  aria-hidden="true"
+                ></i>
+                <span>
+                  0%
+                </span>
+              </span>
+            </article>
+            <!-- SALES -->
+            <article class="performance-stat performance-stat-sales">
+              <div class="performance-stat-top">
+                <span class="performance-stat-icon">
+                  <i
+                    class="fa-solid fa-cart-shopping"
+                    aria-hidden="true"
+                  ></i>
+                </span>
+                <span class="performance-stat-label">
+                  Sales
+                </span>
+              </div>
+              <strong
+                id="performanceSales"
+                class="performance-value"
+              >
+                0
+              </strong>
+              <span
+                id="performanceSalesTrend"
+                class="trend trend-stable"
+              >
+                <i
+                  class="fa-solid fa-minus"
+                  aria-hidden="true"
+                ></i>
+                <span>
+                  0%
+                </span>
+              </span>
+            </article>
+            <!-- REVENUE -->
+            <article class="performance-stat performance-stat-revenue">
+              <div class="performance-stat-top">
+                <span class="performance-stat-icon">
+                  <i
+                    class="fa-solid fa-wallet"
+                    aria-hidden="true"
+                  ></i>
+                </span>
+                <span class="performance-stat-label">
+                  Revenue
+                </span>
+              </div>
+              <strong
+                id="performanceRevenue"
+                class="performance-value performance-money"
+              >
+                Rp0
+              </strong>
+              <span
+                id="performanceRevenueTrend"
+                class="trend trend-stable"
+              >
+                <i
+                  class="fa-solid fa-minus"
+                  aria-hidden="true"
+                ></i>
+                <span>
+                  0%
+                </span>
+              </span>
+            </article>
+          </div>
+          <!-- ===============================================
+               TREND DETAILS
+               =============================================== -->
+          <div class="performance-meta">
+            <div class="performance-meta-item">
+              <i
+                class="fa-solid fa-calendar-days"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Dibandingkan 7 hari sebelumnya
+              </span>
+            </div>
+            <div class="performance-meta-item">
+              <i
+                class="fa-solid fa-arrow-trend-up"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Trend otomatis
+              </span>
+            </div>
+          </div>
+          <!-- ===============================================
+               CHART LEGEND
+               =============================================== -->
           <div
             class="legend"
-            aria-label="Legenda grafik"
+            aria-label="Legenda grafik performa"
           >
-            <span>
-              <i aria-hidden="true"></i>
-              Views
+            <span class="legend-item legend-views">
+              <i
+                aria-hidden="true"
+              ></i>
+              <span>
+                Views
+              </span>
             </span>
-            <span>
-              <i aria-hidden="true"></i>
-              Paid
+            <span class="legend-item legend-sales">
+              <i
+                aria-hidden="true"
+              ></i>
+              <span>
+                Sales
+              </span>
             </span>
-            <span>
-              <i aria-hidden="true"></i>
-              Share
+            <span class="legend-item legend-share">
+              <i
+                aria-hidden="true"
+              ></i>
+              <span>
+                Share
+              </span>
             </span>
           </div>
+          <!-- ===============================================
+               CHART
+               =============================================== -->
           <div
-            class="chart-fixed"
-            id="chart"
-            aria-label="Grafik performa"
-          ></div>
+            class="chart-wrapper"
+          >
+            <div
+              class="chart-y-labels"
+              aria-hidden="true"
+            >
+              <span>
+                Tinggi
+              </span>
+              <span>
+                Sedang
+              </span>
+              <span>
+                Rendah
+              </span>
+            </div>
+            <div
+              class="chart-fixed"
+              id="chart"
+              role="img"
+              aria-label="Grafik performa 7 hari"
+            >
+              <!-- JS akan mengisi grafik -->
+              <div class="chart-empty-state">
+                <i
+                  class="fa-solid fa-chart-line"
+                  aria-hidden="true"
+                ></i>
+                <span>
+                  Memuat performa...
+                </span>
+              </div>
+            </div>
+          </div>
+          <!-- ===============================================
+               PERFORMANCE FOOTER
+               =============================================== -->
+          <div class="performance-footer">
+            <div class="performance-footer-item">
+              <i
+                class="fa-solid fa-circle-info"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Data diambil dari aktivitas dan transaksi
+                akun kamu.
+              </span>
+            </div>
+          </div>
+        </section>
+      </section>
+      <!-- ===================================================
+           DETAIL STATISTICS
+           =================================================== -->
+      <section
+        class="panel dashboard-detail-panel"
+        aria-labelledby="detailStatsTitle"
+      >
+        <div class="panel-head">
+          <div>
+            <span class="panel-kicker">
+              OVERVIEW
+            </span>
+            <h2 id="detailStatsTitle">
+              Detail Statistik
+            </h2>
+            <p>
+              Ringkasan seluruh konten dan aktivitas kamu
+            </p>
+          </div>
+          <span class="panel-icon">
+            <i
+              class="fa-solid fa-chart-column"
+              aria-hidden="true"
+            ></i>
+          </span>
+        </div>
+        <div class="detail-stats-grid">
+          <!-- DETAIL VIEWS -->
+          <div class="detail-stat-card">
+            <div class="detail-stat-icon">
+              <i
+                class="fa-solid fa-eye"
+                aria-hidden="true"
+              ></i>
+            </div>
+            <div class="detail-stat-content">
+              <span>
+                Total Views
+              </span>
+              <strong id="detailViews">
+                0
+              </strong>
+              <small>
+                Semua aktivitas view
+              </small>
+            </div>
+          </div>
+          <!-- DETAIL SALES -->
+          <div class="detail-stat-card">
+            <div class="detail-stat-icon">
+              <i
+                class="fa-solid fa-cart-shopping"
+                aria-hidden="true"
+              ></i>
+            </div>
+            <div class="detail-stat-content">
+              <span>
+                Total Sales
+              </span>
+              <strong id="detailSales">
+                0
+              </strong>
+              <small>
+                Pembelian berhasil
+              </small>
+            </div>
+          </div>
+          <!-- DETAIL REVENUE -->
+          <div class="detail-stat-card">
+            <div class="detail-stat-icon">
+              <i
+                class="fa-solid fa-money-bill-wave"
+                aria-hidden="true"
+              ></i>
+            </div>
+            <div class="detail-stat-content">
+              <span>
+                Total Revenue
+              </span>
+              <strong id="detailRevenue">
+                Rp0
+              </strong>
+              <small>
+                Pendapatan tercatat
+              </small>
+            </div>
+          </div>
+          <!-- DETAIL CONTENT -->
+          <div class="detail-stat-card">
+            <div class="detail-stat-icon">
+              <i
+                class="fa-solid fa-layer-group"
+                aria-hidden="true"
+              ></i>
+            </div>
+            <div class="detail-stat-content">
+              <span>
+                Total Content
+              </span>
+              <strong id="detailContent">
+                0
+              </strong>
+              <small>
+                Semua konten aktif
+              </small>
+            </div>
+          </div>
         </div>
       </section>
       <!-- ===================================================
            RECENT CONTENT + ACTIVITY
            =================================================== -->
       <section class="dash-two">
-        <!-- Recent Content -->
-        <div class="panel">
+        <!-- =================================================
+             RECENT CONTENT
+             ================================================= -->
+        <section
+          class="panel"
+          aria-labelledby="recentContentTitle"
+        >
           <div class="panel-head">
             <div>
-              <h2>
-                Recent content
+              <span class="panel-kicker">
+                CONTENT
+              </span>
+              <h2 id="recentContentTitle">
+                Recent Content
               </h2>
               <p>
                 Konten terbaru kamu
@@ -332,6 +760,7 @@
             <a
               class="mini-btn"
               href="my-products.html"
+              aria-label="Lihat semua konten"
             >
               <i
                 class="fa-solid fa-arrow-up-right-from-square"
@@ -345,22 +774,42 @@
           <div
             class="recent-list"
             id="recentLinks"
-          ></div>
-        </div>
-        <!-- Activity -->
-        <div class="panel">
+            aria-live="polite"
+          >
+            <div class="empty">
+              <i
+                class="fa-solid fa-spinner fa-spin"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Memuat konten...
+              </span>
+            </div>
+          </div>
+        </section>
+        <!-- =================================================
+             ACTIVITY
+             ================================================= -->
+        <section
+          class="panel"
+          aria-labelledby="activityTitle"
+        >
           <div class="panel-head">
             <div>
-              <h2>
+              <span class="panel-kicker">
+                ACTIVITY
+              </span>
+              <h2 id="activityTitle">
                 Aktivitas
               </h2>
               <p>
-                Event terbaru
+                Event terbaru akun
               </p>
             </div>
             <a
               class="mini-btn"
               href="notifications.html"
+              aria-label="Buka notifikasi"
             >
               <i
                 class="fa-solid fa-bell"
@@ -372,10 +821,21 @@
             </a>
           </div>
           <div
-            id="activity"
             class="activity-list"
-          ></div>
-        </div>
+            id="activity"
+            aria-live="polite"
+          >
+            <div class="empty">
+              <i
+                class="fa-solid fa-spinner fa-spin"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Memuat aktivitas...
+              </span>
+            </div>
+          </div>
+        </section>
       </section>
     </div>
   </main>
