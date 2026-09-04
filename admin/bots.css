@@ -1,7 +1,3 @@
-@import url("../css/global.css");
-@import url("../css/navbar.css");
-@import url("../css/pastele-polish.css");
-@import url("../css/admin.css");
 .page-style-1{margin-top:25px;font-size:12px}
 .bot-admin-head{margin-bottom:14px}.bot-admin-head h2{margin:0 0 4px}.pt-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}.pt-toolbar .input{flex:1;min-width:170px}
 .bot-list{display:grid;gap:9px}.bot-row{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--pc-line);border-radius:14px;background:var(--pc-surface-2)}
