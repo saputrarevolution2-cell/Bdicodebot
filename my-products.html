@@ -1,4 +1,167 @@
 <!DOCTYPE html>
-<html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Produk Saya</title><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script>
-<script src="/js/debug-panel.js"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260903-fix"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904"><link rel="stylesheet" href="css/my-products.css?v=20260904"></head><body class="app-page"><div id="navbar"></div><main><section class="section"><div class="container"><span class="badge"><i class="fa-solid fa-box"></i> Produk Saya</span><h1>Produk Saya</h1><p class="muted">Kelola semua produk milikmu.</p><div class="card" id="content"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div></div></div></section></main><div id="toast"></div><script src="js/my-products.js?v=20260904"></script><script src="js/site-shell.js?v=20260904"></script></body></html>
+<html lang="id">
+<head>
+    <script src="js/theme-preload.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Produk Saya</title>
+    <!-- Core -->
+    <script src="/js/config.js?v=20260831"></script>
+    <script src="/js/supabase.js?v=20260831"></script>
+    <script src="/js/debug-panel.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/navbar.js?v=20260903-fix"></script>
+    <!-- Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/app.css?v=20260904">
+    <link rel="stylesheet" href="css/my-products.css?v=20260904">
+</head>
+<body class="app-page my-products-page">
+    <div id="navbar"></div>
+    <main>
+        <section class="section my-products-section">
+            <div class="container my-products-container">
+                <!-- Page heading -->
+                <div class="page-heading">
+                    <div class="page-heading-copy">
+                        <div class="badge page-badge">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                            Produk Saya
+                        </div>
+                        <h1>Produk Saya</h1>
+                        <p class="muted">
+                            Kelola semua konten dan produk yang kamu publikasikan.
+                        </p>
+                    </div>
+                    <a
+                        class="btn primary create-product-btn"
+                        href="create-product.html"
+                    >
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Buat Produk</span>
+                    </a>
+                </div>
+                <!-- Overview -->
+                <div class="products-overview" id="overview">
+                    <div class="overview-card">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </span>
+                        <div>
+                            <small>Total Konten</small>
+                            <strong id="totalCount">—</strong>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </span>
+                        <div>
+                            <small>Published</small>
+                            <strong id="publishedCount">—</strong>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-tag"></i>
+                        </span>
+                        <div>
+                            <small>Paid</small>
+                            <strong id="paidCount">—</strong>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-file-circle-xmark"></i>
+                        </span>
+                        <div>
+                            <small>Draft</small>
+                            <strong id="draftCount">—</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Toolbar -->
+                <div class="products-toolbar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input
+                            class="input"
+                            id="searchInput"
+                            type="search"
+                            autocomplete="off"
+                            placeholder="Cari produk, judul, slug..."
+                            aria-label="Cari produk"
+                        >
+                        <button
+                            class="search-clear hidden"
+                            id="clearSearch"
+                            type="button"
+                            aria-label="Hapus pencarian"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="filter-wrap">
+                        <label class="sr-only" for="typeFilter">
+                            Filter tipe
+                        </label>
+                        <select class="select" id="typeFilter">
+                            <option value="all">Semua tipe</option>
+                            <option value="paste">PasteLink</option>
+                            <option value="code">Code</option>
+                            <option value="channel">Channel / Group</option>
+                            <option value="product">Marketplace Product</option>
+                        </select>
+                    </div>
+                    <div class="filter-wrap">
+                        <label class="sr-only" for="statusFilter">
+                            Filter status
+                        </label>
+                        <select class="select" id="statusFilter">
+                            <option value="all">Semua status</option>
+                            <option value="published">Published</option>
+                            <option value="paid">Paid</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Result info -->
+                <div class="result-bar">
+                    <span id="resultInfo">
+                        Memuat produk...
+                    </span>
+                    <button
+                        class="btn btn-small"
+                        id="refreshBtn"
+                        type="button"
+                    >
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+                <!-- Main content -->
+                <div id="content">
+                    <div class="loading-state">
+                        <div class="loading-spinner">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                        </div>
+                        <strong>Memuat produk...</strong>
+                        <span>
+                            Mengambil data dari database.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div id="toast"></div>
+    <script src="js/my-products.js?v=20260904"></script>
+    <script src="js/site-shell.js?v=20260904"></script>
+</body>
+</html>
