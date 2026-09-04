@@ -1,0 +1,7 @@
+/* PasTele canonical page stylesheet: marketplace.css */
+
+/* ===== source: marketplace.css ===== */
+
+
+/* ===== source: marketplace-fixed.css ===== */
+.market-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.product-card{display:block;overflow:hidden;text-decoration:none;color:inherit;transition:.2s}.product-card:hover{transform:translateY(-3px)}.product-card .thumb{height:130px;display:grid;place-items:center;background:linear-gradient(135deg,#eaf8ff,#f4f0ff);font-size:36px;color:#229ed9}.product-body{padding:17px}.product-body h3{margin:8px 0 4px}.product-body .rank{font-size:10px;font-weight:800;color:#229ed9}.product-body b{color:#182b39}@media(max-width:800px){.market-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.market-grid{grid-template-columns:1fr}}
