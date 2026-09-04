@@ -1,1 +1,170 @@
-<!doctype html><html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260903-fix"></script><title>Wallet — PasTele</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904"><link rel="stylesheet" href="css/wallet.css?v=20260904"></head><body class="app-page"><div id="navbar"></div><main><section class="section"><div class="container"><span class="badge"><i class="fa-solid fa-wallet"></i> WALLET</span><h1>Keuangan</h1><div class="wallet-stats"><div class="wallet-card"><i class="fa-solid fa-circle-check"></i><small>Saldo tersedia</small><b id="available">Rp0</b></div><div class="wallet-card"><i class="fa-solid fa-clock"></i><small>Saldo tertunda</small><b id="pending">Rp0</b><em>Verifikasi ±1 jam</em></div><div class="wallet-card"><i class="fa-solid fa-chart-line"></i><small>Total pendapatan</small><b id="income">Rp0</b></div><div class="wallet-card"><i class="fa-solid fa-calendar-day"></i><small>Pendapatan hari ini</small><b id="today">Rp0</b></div></div><div class="card"><h2><i class="fa-solid fa-chart-column"></i> Statistik pendapatan</h2><div class="income-grid" id="breakdown"></div></div></div></section></main><div id="toast"></div><script src="js/wallet.js?v=20260904"></script><script src="js/site-shell.js?v=20260904"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+    <script src="js/theme-preload.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/config.js?v=20260831"></script>
+    <script src="/js/supabase.js?v=20260831"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/navbar.js?v=20260903-fix"></script>
+    <title>Wallet — PasTele</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+    <link rel="stylesheet" href="css/app.css?v=20260904">
+    <link rel="stylesheet" href="css/wallet.css?v=20260904">
+</head>
+<body class="app-page wallet-page">
+    <div id="navbar"></div>
+    <main>
+        <section class="section wallet-section">
+            <div class="container wallet-container">
+                <!-- Heading -->
+                <div class="wallet-heading">
+                    <div>
+                        <span class="badge wallet-badge">
+                            <i class="fa-solid fa-wallet"></i>
+                            WALLET
+                        </span>
+                        <h1>Keuangan</h1>
+                        <p class="muted">
+                            Pantau saldo, pendapatan, dan aktivitas keuanganmu.
+                        </p>
+                    </div>
+                    <a
+                        href="transactions.html"
+                        class="btn wallet-history-btn"
+                    >
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Riwayat Transaksi</span>
+                    </a>
+                </div>
+                <!-- Balance cards -->
+                <div class="wallet-stats">
+                    <div class="wallet-card wallet-card-primary">
+                        <div class="wallet-card-top">
+                            <span class="wallet-card-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </span>
+                            <span class="wallet-card-label">
+                                Tersedia
+                            </span>
+                        </div>
+                        <strong id="available">
+                            Rp0
+                        </strong>
+                        <small>
+                            Saldo yang dapat digunakan
+                        </small>
+                    </div>
+                    <div class="wallet-card">
+                        <div class="wallet-card-top">
+                            <span class="wallet-card-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </span>
+                            <span class="wallet-card-label">
+                                Tertunda
+                            </span>
+                        </div>
+                        <strong id="pending">
+                            Rp0
+                        </strong>
+                        <small>
+                            Menunggu verifikasi
+                        </small>
+                        <em>
+                            <i class="fa-solid fa-circle-info"></i>
+                            Verifikasi ±1 jam
+                        </em>
+                    </div>
+                    <div class="wallet-card">
+                        <div class="wallet-card-top">
+                            <span class="wallet-card-icon">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </span>
+                            <span class="wallet-card-label">
+                                Total Pendapatan
+                            </span>
+                        </div>
+                        <strong id="income">
+                            Rp0
+                        </strong>
+                        <small>
+                            Pendapatan berhasil
+                        </small>
+                    </div>
+                    <div class="wallet-card">
+                        <div class="wallet-card-top">
+                            <span class="wallet-card-icon">
+                                <i class="fa-solid fa-calendar-day"></i>
+                            </span>
+                            <span class="wallet-card-label">
+                                Hari Ini
+                            </span>
+                        </div>
+                        <strong id="today">
+                            Rp0
+                        </strong>
+                        <small>
+                            Pendapatan hari ini
+                        </small>
+                    </div>
+                </div>
+                <!-- Income breakdown -->
+                <section class="wallet-panel">
+                    <div class="wallet-panel-heading">
+                        <div>
+                            <div class="wallet-panel-title">
+                                <span class="panel-icon">
+                                    <i class="fa-solid fa-chart-column"></i>
+                                </span>
+                                <div>
+                                    <h2>Statistik Pendapatan</h2>
+                                    <p>
+                                        Ringkasan pendapatan berdasarkan jenis konten.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <a
+                            href="transactions.html"
+                            class="wallet-view-all"
+                        >
+                            Lihat semua
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div
+                        class="income-grid"
+                        id="breakdown"
+                    >
+                        <div class="wallet-loading">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <span>Memuat statistik...</span>
+                        </div>
+                    </div>
+                </section>
+                <!-- Info -->
+                <div class="wallet-info">
+                    <div class="wallet-info-icon">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <strong>Keuangan kamu tetap aman</strong>
+                        <p>
+                            Saldo dan riwayat pendapatan ditampilkan langsung
+                            dari database akunmu.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div id="toast"></div>
+    <script src="js/wallet.js?v=20260904"></script>
+    <script src="js/site-shell.js?v=20260904"></script>
+</body>
+</html>
