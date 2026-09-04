@@ -1,25 +1,19 @@
 /* =========================================================
-   PasTele LOGIN — FINAL CLEAN / SCOPED
+   PasTele LOGIN
+   FINAL RESPONSIVE / CLEAN / SCOPED
    2026-09-04
-   HTML TARGET:
-   #loginStep1
-   #identifier
-   #identifierWrap
-   #identifierStatus
-   #loginVerifiedState
-   #continueLogin
-   #loginStep2
-   #password
-   #toggle
-   #forgot
-   #changeAccount
-   #google
-   #toast
-   Loaded AFTER app.css.
-   Does not modify authentication logic.
+   Loaded AFTER app.css
+   Supported:
+   - Android
+   - iPhone
+   - Tablet
+   - Desktop
+   - Light mode
+   - Dark mode
+   Authentication logic is NOT modified.
    ========================================================= */
 /* =========================================================
-   01. LOGIN VARIABLES
+   01. VARIABLES
    ========================================================= */
 html,
 body {
@@ -27,120 +21,125 @@ body {
 }
 html[data-theme="light"],
 html:not([data-theme]) {
-  --login-bg: #f6f8fb;
+  --login-bg: #f5f7fa;
   --login-card: #ffffff;
-  --login-card-soft: #f7fafc;
+  --login-soft: #f7fafc;
   --login-text: #17212b;
   --login-muted: #718293;
-  --login-line: #dfe7ed;
-  --login-line-strong: #cbd8e1;
+  --login-border: #dce5eb;
+  --login-border-strong: #c9d6df;
   --login-blue: #229ed9;
   --login-blue-dark: #168ac3;
   --login-success: #21a366;
   --login-success-soft: #ecfaf2;
-  --login-danger: #d64545;
 }
 html[data-theme="dark"] {
-  --login-bg: #0b121a;
-  --login-card: #111c27;
-  --login-card-soft: #162532;
+  --login-bg: #0a1118;
+  --login-card: #111b25;
+  --login-soft: #16232e;
   --login-text: #edf4f8;
   --login-muted: #91a4b2;
-  --login-line: #293b49;
-  --login-line-strong: #3a5261;
+  --login-border: #293b49;
+  --login-border-strong: #3a5261;
   --login-blue: #2aabee;
   --login-blue-dark: #64c6f3;
   --login-success: #39c77b;
   --login-success-soft: #123426;
-  --login-danger: #ff9292;
 }
 /* =========================================================
-   02. PAGE
+   02. BOX SIZING
    ========================================================= */
-body {
-  background: var(--login-bg) !important;
-  color: var(--login-text) !important;
-}
-.auth-shell {
-  width: 100% !important;
-  min-height: 100dvh !important;
-  margin: 0 !important;
-  padding:
-    max(32px, env(safe-area-inset-top))
-    16px
-    max(28px, env(safe-area-inset-bottom))
-    16px !important;
-  display: grid !important;
-  place-items: center !important;
-  background: var(--login-bg) !important;
-  color: var(--login-text) !important;
-  position: relative !important;
-  isolation: isolate !important;
-  box-sizing: border-box !important;
-}
+.auth-shell,
 .auth-shell *,
 .auth-shell *::before,
 .auth-shell *::after {
   box-sizing: border-box;
 }
 /* =========================================================
-   03. BACKGROUND DECORATION
+   03. BODY
+   ========================================================= */
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--login-bg) !important;
+  color: var(--login-text) !important;
+}
+/* =========================================================
+   04. LOGIN SHELL
+   ========================================================= */
+.auth-shell {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding:
+    max(32px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(32px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--login-bg) !important;
+  overflow-x: hidden !important;
+}
+/* =========================================================
+   05. BACKGROUND GLOW
    ========================================================= */
 .auth-shell::before {
   content: "";
   position: absolute;
-  width: min(620px, 100vw);
-  height: 360px;
+  top: -120px;
   left: 50%;
-  top: 0;
+  width: min(700px, 120vw);
+  height: 430px;
   transform: translateX(-50%);
   pointer-events: none;
-  z-index: -1;
   background:
     radial-gradient(
       ellipse at center,
       rgba(42, 171, 238, 0.10),
       transparent 68%
     );
+  z-index: 0;
 }
 html[data-theme="dark"] .auth-shell::before {
   background:
     radial-gradient(
       ellipse at center,
-      rgba(42, 171, 238, 0.07),
+      rgba(42, 171, 238, 0.06),
       transparent 68%
     );
 }
 /* =========================================================
-   04. CARD
+   06. CARD
    ========================================================= */
 .auth-shell > .auth-card {
-  width: min(460px, 100%) !important;
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
   max-width: 460px !important;
   margin: 0 auto !important;
   padding: 30px !important;
-  position: relative !important;
-  overflow: hidden !important;
-  border: 1px solid var(--login-line) !important;
+  border: 1px solid var(--login-border) !important;
   border-radius: 20px !important;
   background: var(--login-card) !important;
   color: var(--login-text) !important;
   box-shadow:
-    0 22px 65px rgba(15, 23, 42, 0.09) !important;
+    0 20px 60px rgba(15, 23, 42, 0.08) !important;
+  overflow: hidden !important;
 }
 html[data-theme="dark"] .auth-shell > .auth-card {
-  background: var(--login-card) !important;
-  border-color: var(--login-line) !important;
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.34) !important;
 }
-/* Top accent */
+/* TOP ACCENT */
 .auth-shell > .auth-card::before {
   content: "";
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  top: 0;
   height: 3px;
   background:
     linear-gradient(
@@ -151,14 +150,15 @@ html[data-theme="dark"] .auth-shell > .auth-card {
     );
 }
 /* =========================================================
-   05. LOGO
+   07. LOGO
    ========================================================= */
 .auth-shell .auth-logo {
   width: 58px !important;
   height: 58px !important;
-  margin: 0 auto 18px !important;
-  display: grid !important;
-  place-items: center !important;
+  margin: 0 auto 17px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   border-radius: 16px !important;
   background:
     linear-gradient(
@@ -166,49 +166,49 @@ html[data-theme="dark"] .auth-shell > .auth-card {
       var(--login-blue),
       #667eea
     ) !important;
-  color: #ffffff !important;
+  color: #fff !important;
   font-size: 22px !important;
   box-shadow:
-    0 12px 30px rgba(42, 171, 238, 0.22) !important;
+    0 10px 28px rgba(42, 171, 238, 0.20) !important;
 }
 .auth-shell .auth-logo i {
   display: block !important;
-  color: #ffffff !important;
   line-height: 1 !important;
 }
 /* =========================================================
-   06. TITLE
+   08. TITLE
    ========================================================= */
 .auth-shell .auth-card h1 {
   margin: 0 0 7px !important;
   text-align: center !important;
   color: var(--login-text) !important;
-  font-size: 28px !important;
+  font-size: 27px !important;
   line-height: 1.2 !important;
   font-weight: 800 !important;
-  letter-spacing: -0.6px !important;
+  letter-spacing: -0.5px !important;
 }
 .auth-shell .auth-card > p.muted {
   margin: 0 0 24px !important;
   text-align: center !important;
   color: var(--login-muted) !important;
   font-size: 13px !important;
-  line-height: 1.55 !important;
+  line-height: 1.5 !important;
 }
 /* =========================================================
-   07. FORM
+   09. FORM
    ========================================================= */
 .auth-shell .auth-card form.list {
   width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
   display: grid !important;
   gap: 15px !important;
-  margin: 0 !important;
 }
 .auth-shell .auth-card .field {
   width: 100% !important;
+  margin: 0 !important;
   display: grid !important;
   gap: 7px !important;
-  margin: 0 !important;
 }
 .auth-shell .auth-card .field label {
   margin: 0 !important;
@@ -218,30 +218,30 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   font-weight: 700 !important;
 }
 /* =========================================================
-   08. IDENTIFIER WRAPPER
+   10. IDENTIFIER
    ========================================================= */
 .auth-shell .identifier-wrap {
   position: relative !important;
   width: 100% !important;
   display: block !important;
 }
-/* =========================================================
-   09. IDENTIFIER INPUT
-   ========================================================= */
 .auth-shell #identifier {
+  display: block !important;
   width: 100% !important;
   min-width: 0 !important;
   min-height: 48px !important;
-  padding: 11px 45px 11px 13px !important;
-  border: 1px solid var(--login-line-strong) !important;
+  margin: 0 !important;
+  padding:
+    11px 45px 11px 13px !important;
+  border: 1px solid var(--login-border-strong) !important;
   border-radius: 12px !important;
   background: var(--login-card) !important;
   color: var(--login-text) !important;
   outline: none !important;
-  font: inherit !important;
+  font-family: inherit !important;
   font-size: 13px !important;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.025) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -251,94 +251,80 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   color: var(--login-muted) !important;
   opacity: 1 !important;
 }
-.auth-shell #identifier:hover {
-  border-color: var(--login-blue) !important;
-}
 .auth-shell #identifier:focus {
   border-color: var(--login-blue) !important;
   box-shadow:
     0 0 0 4px rgba(42, 171, 238, 0.11) !important;
 }
-/* =========================================================
-   10. LOCKED IDENTIFIER
-   ========================================================= */
+/* DISABLED / VERIFIED */
 .auth-shell #identifier:disabled {
-  cursor: default !important;
   opacity: 1 !important;
-  background: var(--login-card-soft) !important;
+  cursor: default !important;
+  background: var(--login-soft) !important;
   color: var(--login-text) !important;
   border-color:
     rgba(33, 163, 102, 0.45) !important;
 }
 /* =========================================================
-   11. VERIFIED CHECK
-   IMPORTANT:
-   Hidden by default.
-   We DO NOT use:
-   #identifierStatus:not(.hidden)
-   because the HTML does not initially contain .hidden.
+   11. GREEN CHECK
    ========================================================= */
 .auth-shell .identifier-status {
   position: absolute !important;
-  right: 12px !important;
   top: 50% !important;
+  right: 12px !important;
   width: 22px !important;
   height: 22px !important;
   transform:
     translateY(-50%) scale(0.85) !important;
-  display: grid !important;
-  place-items: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   border-radius: 50% !important;
   background: var(--login-success) !important;
-  color: #ffffff !important;
+  color: #fff !important;
   font-size: 11px !important;
-  line-height: 1 !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  z-index: 3 !important;
   transition:
     opacity 0.18s ease,
     visibility 0.18s ease,
     transform 0.18s ease !important;
-  z-index: 3 !important;
 }
-/*
-   Show check when the identifier has been locked.
-   This matches the intended login flow.
-*/
-.auth-shell .identifier-wrap:has(#identifier:disabled)
-  .identifier-status {
+/* SHOW WHEN ACCOUNT IS LOCKED */
+.auth-shell
+.identifier-wrap:has(#identifier:disabled)
+.identifier-status {
   opacity: 1 !important;
   visibility: visible !important;
   transform:
     translateY(-50%) scale(1) !important;
 }
-/*
-   Also support JS that adds a valid state to wrapper.
-*/
-.auth-shell .identifier-wrap.is-valid
-  .identifier-status,
-.auth-shell .identifier-wrap.valid
-  .identifier-status {
+/* JS VALID STATES */
+.auth-shell
+.identifier-wrap.is-valid
+.identifier-status,
+.auth-shell
+.identifier-wrap.valid
+.identifier-status {
   opacity: 1 !important;
   visibility: visible !important;
   transform:
     translateY(-50%) scale(1) !important;
 }
-/* Check icon */
 .auth-shell .identifier-status i {
-  display: block !important;
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1 !important;
-  color: #ffffff !important;
+  color: #fff !important;
 }
 /* =========================================================
    12. VERIFIED MESSAGE
    ========================================================= */
 .auth-shell #loginVerifiedState {
   width: 100% !important;
-  min-height: 26px !important;
+  min-height: 25px !important;
   margin: 1px 0 0 !important;
   display: flex !important;
   align-items: center !important;
@@ -353,12 +339,11 @@ html[data-theme="dark"] .auth-shell > .auth-card {
 }
 .auth-shell #loginVerifiedState i {
   flex: 0 0 auto !important;
-  color: var(--login-success) !important;
   font-size: 13px !important;
-  line-height: 1 !important;
+  color: var(--login-success) !important;
 }
 /* =========================================================
-   13. CONTINUE
+   13. CONTINUE BUTTON
    ========================================================= */
 .auth-shell #continueLogin {
   width: 100% !important;
@@ -377,21 +362,20 @@ html[data-theme="dark"] .auth-shell > .auth-card {
       var(--login-blue),
       var(--login-blue-dark)
     ) !important;
-  color: #ffffff !important;
-  font: inherit !important;
+  color: #fff !important;
+  font-family: inherit !important;
   font-size: 13px !important;
   font-weight: 800 !important;
   cursor: pointer !important;
   box-shadow:
     0 9px 23px rgba(42, 171, 238, 0.20) !important;
+  -webkit-tap-highlight-color: transparent !important;
   transition:
     transform 0.18s ease,
-    box-shadow 0.18s ease,
-    filter 0.18s ease !important;
+    box-shadow 0.18s ease !important;
 }
 .auth-shell #continueLogin:hover {
   transform: translateY(-1px) !important;
-  filter: brightness(1.02) !important;
   box-shadow:
     0 12px 27px rgba(42, 171, 238, 0.25) !important;
 }
@@ -407,9 +391,9 @@ html[data-theme="dark"] .auth-shell > .auth-card {
    ========================================================= */
 .auth-shell #loginStep2 {
   width: 100% !important;
+  margin: 0 !important;
   display: grid !important;
   gap: 15px !important;
-  margin: 0 !important;
 }
 .auth-shell #loginStep2.hidden,
 .auth-shell #loginStep2[hidden] {
@@ -420,14 +404,14 @@ html[data-theme="dark"] .auth-shell > .auth-card {
    ========================================================= */
 .auth-shell .password-heading {
   width: 100% !important;
+  min-width: 0 !important;
+  padding: 11px 12px !important;
   display: flex !important;
   align-items: center !important;
   gap: 11px !important;
-  min-width: 0 !important;
-  padding: 11px 12px !important;
-  border: 1px solid var(--login-line) !important;
+  border: 1px solid var(--login-border) !important;
   border-radius: 13px !important;
-  background: var(--login-card-soft) !important;
+  background: var(--login-soft) !important;
 }
 /* =========================================================
    16. LOCK ICON
@@ -436,12 +420,12 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   width: 38px !important;
   height: 38px !important;
   flex: 0 0 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   align-self: center !important;
-  margin: 0 !important;
-  padding: 0 !important;
   border-radius: 11px !important;
   background:
     rgba(42, 171, 238, 0.10) !important;
@@ -457,7 +441,6 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1 !important;
-  text-align: center !important;
 }
 /* =========================================================
    17. PASSWORD HEADING TEXT
@@ -470,7 +453,6 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   gap: 2px !important;
 }
 .auth-shell .password-heading strong {
-  display: block !important;
   margin: 0 !important;
   color: var(--login-text) !important;
   font-size: 13px !important;
@@ -478,14 +460,13 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   font-weight: 800 !important;
 }
 .auth-shell .password-heading > div > span {
-  display: block !important;
   margin: 0 !important;
   color: var(--login-muted) !important;
   font-size: 11px !important;
   line-height: 1.45 !important;
 }
 /* =========================================================
-   18. PASSWORD FIELD
+   18. PASSWORD INPUT
    ========================================================= */
 .auth-shell .password-wrap {
   position: relative !important;
@@ -493,18 +474,22 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   display: block !important;
 }
 .auth-shell #password {
+  display: block !important;
   width: 100% !important;
   min-width: 0 !important;
   min-height: 48px !important;
+  margin: 0 !important;
   padding:
     11px 48px 11px 13px !important;
-  border: 1px solid var(--login-line-strong) !important;
+  border: 1px solid var(--login-border-strong) !important;
   border-radius: 12px !important;
   background: var(--login-card) !important;
   color: var(--login-text) !important;
   outline: none !important;
-  font: inherit !important;
+  font-family: inherit !important;
   font-size: 13px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease !important;
@@ -519,7 +504,7 @@ html[data-theme="dark"] .auth-shell > .auth-card {
     0 0 0 4px rgba(42, 171, 238, 0.11) !important;
 }
 /* =========================================================
-   19. PASSWORD EYE
+   19. PASSWORD TOGGLE
    ========================================================= */
 .auth-shell #toggle.password-toggle {
   position: absolute !important;
@@ -527,7 +512,8 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   right: 7px !important;
   width: 36px !important;
   height: 36px !important;
-  transform: translateY(-50%) !important;
+  transform:
+    translateY(-50%) !important;
   margin: 0 !important;
   padding: 0 !important;
   display: flex !important;
@@ -539,14 +525,13 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   color: var(--login-muted) !important;
   box-shadow: none !important;
   font-size: 14px !important;
-  line-height: 1 !important;
   cursor: pointer !important;
   z-index: 5 !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 .auth-shell #toggle.password-toggle:hover {
-  background: var(--login-card-soft) !important;
+  background: var(--login-soft) !important;
   color: var(--login-blue) !important;
-  transform: translateY(-50%) !important;
 }
 .auth-shell #toggle.password-toggle:active {
   transform:
@@ -554,15 +539,12 @@ html[data-theme="dark"] .auth-shell > .auth-card {
 }
 .auth-shell #toggle.password-toggle i {
   display: block !important;
-  width: auto !important;
-  height: auto !important;
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1 !important;
-  font-size: 14px !important;
 }
 /* =========================================================
-   20. LOGIN BUTTON STEP 2
+   20. LOGIN BUTTON
    ========================================================= */
 .auth-shell #loginStep2 > button[type="submit"] {
   width: 100% !important;
@@ -581,13 +563,14 @@ html[data-theme="dark"] .auth-shell > .auth-card {
       var(--login-blue),
       var(--login-blue-dark)
     ) !important;
-  color: #ffffff !important;
-  font: inherit !important;
+  color: #fff !important;
+  font-family: inherit !important;
   font-size: 13px !important;
   font-weight: 800 !important;
   cursor: pointer !important;
   box-shadow:
     0 9px 23px rgba(42, 171, 238, 0.20) !important;
+  -webkit-tap-highlight-color: transparent !important;
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease !important;
@@ -597,22 +580,19 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   box-shadow:
     0 12px 27px rgba(42, 171, 238, 0.25) !important;
 }
-.auth-shell #loginStep2 > button[type="submit"]:active {
-  transform: translateY(0) !important;
-}
 /* =========================================================
-   21. FORGOT PASSWORD
+   21. FORGOT
    ========================================================= */
 .auth-shell #forgot.forgot-link {
   width: max-content !important;
   max-width: 100% !important;
   margin: 0 auto !important;
-  padding: 2px 4px !important;
+  padding: 3px 5px !important;
   display: block !important;
   color: var(--login-blue-dark) !important;
   font-size: 11px !important;
+  font-weight: 700 !important;
   line-height: 1.4 !important;
-  font-weight: 750 !important;
   text-align: center !important;
   text-decoration: none !important;
 }
@@ -627,40 +607,40 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   max-width: 100% !important;
   min-height: 34px !important;
   margin: 0 auto !important;
-  padding: 6px 10px !important;
+  padding: 6px 11px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 7px !important;
-  border: 1px solid var(--login-line) !important;
+  border: 1px solid var(--login-border) !important;
   border-radius: 9px !important;
   background: transparent !important;
   color: var(--login-muted) !important;
-  font: inherit !important;
+  font-family: inherit !important;
   font-size: 11px !important;
   font-weight: 700 !important;
   box-shadow: none !important;
   cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 .auth-shell #changeAccount.account-change-login:hover {
-  background: var(--login-card-soft) !important;
-  border-color: var(--login-line-strong) !important;
+  background: var(--login-soft) !important;
+  border-color: var(--login-border-strong) !important;
   color: var(--login-blue-dark) !important;
-  transform: none !important;
 }
 .auth-shell #changeAccount.account-change-login i {
   font-size: 10px !important;
   line-height: 1 !important;
 }
 /* =========================================================
-   23. OR DIVIDER
+   23. OR
    ========================================================= */
 .auth-shell .auth-divider {
   width: 100% !important;
+  margin: 22px 0 17px !important;
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  margin: 22px 0 17px !important;
   color: var(--login-muted) !important;
 }
 .auth-shell .auth-divider::before,
@@ -669,7 +649,7 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   flex: 1 1 auto !important;
   width: auto !important;
   height: 1px !important;
-  background: var(--login-line) !important;
+  background: var(--login-border) !important;
 }
 .auth-shell .auth-divider span {
   flex: 0 0 auto !important;
@@ -677,12 +657,11 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   padding: 0 !important;
   color: var(--login-muted) !important;
   font-size: 10px !important;
-  line-height: 1 !important;
   font-weight: 700 !important;
-  text-transform: lowercase !important;
+  line-height: 1 !important;
 }
 /* =========================================================
-   24. GOOGLE BUTTON
+   24. GOOGLE
    ========================================================= */
 .auth-shell #google.google-login-btn {
   width: 100% !important;
@@ -693,43 +672,41 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   align-items: center !important;
   justify-content: center !important;
   gap: 10px !important;
-  border: 1px solid var(--login-line-strong) !important;
+  border: 1px solid var(--login-border-strong) !important;
   border-radius: 12px !important;
   background: var(--login-card) !important;
   color: var(--login-text) !important;
-  font: inherit !important;
+  font-family: inherit !important;
   font-size: 12px !important;
   font-weight: 750 !important;
   box-shadow: none !important;
   cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
   transition:
     background 0.18s ease,
     border-color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease !important;
+    transform 0.18s ease !important;
 }
 .auth-shell #google.google-login-btn:hover {
-  background: var(--login-card-soft) !important;
-  border-color: var(--login-line-strong) !important;
+  background: var(--login-soft) !important;
+  border-color: var(--login-border-strong) !important;
   transform: translateY(-1px) !important;
-  box-shadow:
-    0 7px 18px rgba(15, 23, 42, 0.06) !important;
 }
 .auth-shell #google.google-login-btn:active {
   transform: translateY(0) !important;
 }
-/* Google icon */
+/* GOOGLE ICON */
 .auth-shell #google .google-icon {
   width: 25px !important;
   height: 25px !important;
   flex: 0 0 25px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: 0 !important;
-  padding: 0 !important;
   border-radius: 7px !important;
-  background: #ffffff !important;
+  background: #fff !important;
   color: #4285f4 !important;
   font-size: 14px !important;
   line-height: 1 !important;
@@ -745,26 +722,24 @@ html[data-theme="dark"] .auth-shell > .auth-card {
    ========================================================= */
 .auth-shell .auth-footer {
   width: 100% !important;
+  margin-top: 21px !important;
+  padding-top: 18px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   gap: 13px !important;
-  margin-top: 21px !important;
-  padding-top: 18px !important;
-  border-top: 1px solid var(--login-line) !important;
+  border-top: 1px solid var(--login-border) !important;
   text-align: center !important;
 }
-/* =========================================================
-   26. REGISTER
-   ========================================================= */
+/* REGISTER */
 .auth-shell .register-prompt {
   width: 100% !important;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   flex-wrap: wrap !important;
   gap: 5px !important;
-  margin: 0 !important;
   color: var(--login-muted) !important;
   font-size: 11px !important;
   line-height: 1.5 !important;
@@ -775,7 +750,6 @@ html[data-theme="dark"] .auth-shell > .auth-card {
 .auth-shell .register-link {
   display: inline-flex !important;
   align-items: center !important;
-  justify-content: center !important;
   gap: 5px !important;
   color: var(--login-blue-dark) !important;
   font-size: 11px !important;
@@ -789,9 +763,7 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   font-size: 9px !important;
   line-height: 1 !important;
 }
-/* =========================================================
-   27. BACK LINK
-   ========================================================= */
+/* BACK */
 .auth-shell .back-link {
   display: inline-flex !important;
   align-items: center !important;
@@ -811,24 +783,21 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   line-height: 1 !important;
 }
 /* =========================================================
-   28. TOAST
+   26. TOAST
    ========================================================= */
-#toast {
+body #toast {
   position: fixed !important;
   left: 50% !important;
-  right: auto !important;
   bottom:
-    max(22px, env(safe-area-inset-bottom)) !important;
+    max(18px, env(safe-area-inset-bottom)) !important;
   width: max-content !important;
-  max-width: min(92vw, 420px) !important;
+  max-width: calc(100vw - 32px) !important;
   margin: 0 !important;
   padding: 11px 15px !important;
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
   border-radius: 12px !important;
   background: #17212b !important;
-  color: #ffffff !important;
-  box-shadow:
-    0 14px 38px rgba(0, 0, 0, 0.20) !important;
+  color: #fff !important;
   font-size: 12px !important;
   line-height: 1.4 !important;
   font-weight: 700 !important;
@@ -838,132 +807,161 @@ html[data-theme="dark"] .auth-shell > .auth-card {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  z-index: 999999 !important;
   transition:
     opacity 0.20s ease,
     transform 0.20s ease,
     visibility 0.20s ease !important;
-  z-index: 100000 !important;
 }
-#toast.show {
+body #toast.show {
   opacity: 1 !important;
   visibility: visible !important;
   transform:
     translate(-50%, 0) !important;
 }
-html[data-theme="dark"] #toast {
+html[data-theme="dark"] body #toast {
   background: #16232e !important;
   color: #edf4f8 !important;
   border-color: #2f4b5c !important;
 }
 /* =========================================================
-   29. HIDDEN SAFETY
+   27. HIDDEN
    ========================================================= */
 .auth-shell .hidden,
 .auth-shell [hidden] {
   display: none !important;
 }
 /* =========================================================
-   30. DISABLED / LOADING SAFETY
+   28. DISABLED
    ========================================================= */
 .auth-shell button:disabled {
   cursor: not-allowed !important;
+  opacity: 0.65 !important;
 }
 .auth-shell input:disabled {
   cursor: default !important;
 }
 /* =========================================================
-   31. FOCUS
+   29. FOCUS
    ========================================================= */
-.auth-shell #identifier:focus-visible,
-.auth-shell #password:focus-visible,
-.auth-shell #toggle:focus-visible,
-.auth-shell #continueLogin:focus-visible,
-.auth-shell #google:focus-visible,
-.auth-shell #forgot:focus-visible,
-.auth-shell #changeAccount:focus-visible,
-.auth-shell .register-link:focus-visible,
-.auth-shell .back-link:focus-visible {
-  outline: 3px solid rgba(42, 171, 238, 0.25) !important;
+.auth-shell
+#identifier:focus-visible,
+.auth-shell
+#password:focus-visible,
+.auth-shell
+#toggle:focus-visible,
+.auth-shell
+#continueLogin:focus-visible,
+.auth-shell
+#google:focus-visible,
+.auth-shell
+#forgot:focus-visible,
+.auth-shell
+#changeAccount:focus-visible,
+.auth-shell
+.register-link:focus-visible,
+.auth-shell
+.back-link:focus-visible {
+  outline: 3px solid rgba(42, 171, 238, 0.24) !important;
   outline-offset: 2px !important;
 }
 /* =========================================================
-   32. DARK MODE
+   30. DARK MODE
    ========================================================= */
 html[data-theme="dark"] .auth-shell {
   background: var(--login-bg) !important;
   color: var(--login-text) !important;
 }
-html[data-theme="dark"] .auth-shell > .auth-card {
+html[data-theme="dark"]
+.auth-shell > .auth-card {
   background: var(--login-card) !important;
   color: var(--login-text) !important;
-  border-color: var(--login-line) !important;
+  border-color: var(--login-border) !important;
 }
-html[data-theme="dark"] .auth-shell .auth-card h1 {
+html[data-theme="dark"]
+.auth-shell .auth-card h1 {
   color: var(--login-text) !important;
 }
-html[data-theme="dark"] .auth-shell .auth-card > p.muted,
-html[data-theme="dark"] .auth-shell .field label {
+html[data-theme="dark"]
+.auth-shell .auth-card > p.muted,
+html[data-theme="dark"]
+.auth-shell .field label {
   color: var(--login-muted) !important;
 }
-html[data-theme="dark"] .auth-shell #identifier,
-html[data-theme="dark"] .auth-shell #password {
+html[data-theme="dark"]
+.auth-shell #identifier,
+html[data-theme="dark"]
+.auth-shell #password {
   background: #0c1721 !important;
   color: var(--login-text) !important;
-  border-color: var(--login-line-strong) !important;
+  border-color: var(--login-border-strong) !important;
 }
-html[data-theme="dark"] .auth-shell #identifier::placeholder,
-html[data-theme="dark"] .auth-shell #password::placeholder {
-  color: var(--login-muted) !important;
-}
-html[data-theme="dark"] .auth-shell #identifier:disabled {
+html[data-theme="dark"]
+.auth-shell #identifier:disabled {
   background: #14232e !important;
   color: var(--login-text) !important;
   border-color:
     rgba(57, 199, 123, 0.42) !important;
 }
-html[data-theme="dark"] .auth-shell .password-heading {
-  background: var(--login-card-soft) !important;
-  border-color: var(--login-line) !important;
+html[data-theme="dark"]
+.auth-shell .password-heading {
+  background: var(--login-soft) !important;
+  border-color: var(--login-border) !important;
 }
-html[data-theme="dark"] .auth-shell .password-heading strong {
-  color: var(--login-text) !important;
-}
-html[data-theme="dark"] .auth-shell .password-heading > div > span {
-  color: var(--login-muted) !important;
-}
-html[data-theme="dark"] .auth-shell #google.google-login-btn {
+html[data-theme="dark"]
+.auth-shell #google.google-login-btn {
   background: var(--login-card) !important;
   color: var(--login-text) !important;
-  border-color: var(--login-line-strong) !important;
+  border-color: var(--login-border-strong) !important;
 }
-html[data-theme="dark"] .auth-shell #google.google-login-btn:hover {
-  background: var(--login-card-soft) !important;
-  border-color: #496373 !important;
+html[data-theme="dark"]
+.auth-shell #google.google-login-btn:hover {
+  background: var(--login-soft) !important;
 }
-html[data-theme="dark"] .auth-shell #changeAccount.account-change-login {
+html[data-theme="dark"]
+.auth-shell #changeAccount.account-change-login {
   background: transparent !important;
   color: var(--login-muted) !important;
-  border-color: var(--login-line) !important;
+  border-color: var(--login-border) !important;
 }
-html[data-theme="dark"] .auth-shell #changeAccount.account-change-login:hover {
-  background: var(--login-card-soft) !important;
+html[data-theme="dark"]
+.auth-shell #changeAccount.account-change-login:hover {
+  background: var(--login-soft) !important;
   color: var(--login-blue-dark) !important;
 }
-html[data-theme="dark"] .auth-shell .auth-divider::before,
-html[data-theme="dark"] .auth-shell .auth-divider::after {
-  background: var(--login-line) !important;
+html[data-theme="dark"]
+.auth-shell .auth-divider::before,
+html[data-theme="dark"]
+.auth-shell .auth-divider::after {
+  background: var(--login-border) !important;
 }
 /* =========================================================
-   33. MOBILE
+   31. TABLET
+   ========================================================= */
+@media (min-width: 651px) and (max-width: 1024px) {
+  .auth-shell {
+    padding:
+      max(28px, env(safe-area-inset-top))
+      20px
+      max(28px, env(safe-area-inset-bottom))
+      20px !important;
+  }
+  .auth-shell > .auth-card {
+    max-width: 460px !important;
+  }
+}
+/* =========================================================
+   32. ANDROID / MOBILE
    ========================================================= */
 @media (max-width: 650px) {
   .auth-shell {
+    min-height: 100dvh !important;
     padding:
-      max(22px, env(safe-area-inset-top))
-      11px
+      max(20px, env(safe-area-inset-top))
+      max(11px, env(safe-area-inset-right))
       max(20px, env(safe-area-inset-bottom))
-      11px !important;
-    place-items: center !important;
+      max(11px, env(safe-area-inset-left)) !important;
+    align-items: center !important;
   }
   .auth-shell > .auth-card {
     width: 100% !important;
@@ -974,12 +972,12 @@ html[data-theme="dark"] .auth-shell .auth-divider::after {
   .auth-shell .auth-logo {
     width: 53px !important;
     height: 53px !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 15px !important;
     border-radius: 15px !important;
     font-size: 20px !important;
   }
   .auth-shell .auth-card h1 {
-    font-size: 25px !important;
+    font-size: 24px !important;
   }
   .auth-shell .auth-card > p.muted {
     margin-bottom: 21px !important;
@@ -988,6 +986,7 @@ html[data-theme="dark"] .auth-shell .auth-divider::after {
   .auth-shell #identifier,
   .auth-shell #password {
     min-height: 47px !important;
+    font-size: 13px !important;
   }
   .auth-shell #continueLogin,
   .auth-shell #loginStep2 > button[type="submit"] {
@@ -1012,13 +1011,9 @@ html[data-theme="dark"] .auth-shell .auth-divider::after {
     margin-top: 18px !important;
     padding-top: 16px !important;
   }
-  #toast {
-    bottom:
-      max(18px, env(safe-area-inset-bottom)) !important;
-  }
 }
 /* =========================================================
-   34. VERY SMALL DEVICES
+   33. SMALL ANDROID
    ========================================================= */
 @media (max-width: 380px) {
   .auth-shell {
@@ -1026,11 +1021,17 @@ html[data-theme="dark"] .auth-shell .auth-divider::after {
     padding-right: 8px !important;
   }
   .auth-shell > .auth-card {
-    padding: 21px 15px !important;
+    padding:
+      21px 15px !important;
     border-radius: 16px !important;
   }
+  .auth-shell .auth-logo {
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 14px !important;
+  }
   .auth-shell .auth-card h1 {
-    font-size: 23px !important;
+    font-size: 22px !important;
   }
   .auth-shell .password-heading {
     gap: 9px !important;
@@ -1049,6 +1050,23 @@ html[data-theme="dark"] .auth-shell .auth-divider::after {
   }
 }
 /* =========================================================
+   34. LANDSCAPE MOBILE
+   ========================================================= */
+@media (max-width: 850px) and (orientation: landscape) {
+  .auth-shell {
+    align-items: flex-start !important;
+    padding-top:
+      max(18px, env(safe-area-inset-top)) !important;
+    padding-bottom:
+      max(18px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+  }
+  .auth-shell > .auth-card {
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+  }
+}
+/* =========================================================
    35. REDUCED MOTION
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
@@ -1058,5 +1076,15 @@ html[data-theme="dark"] .auth-shell .auth-divider::after {
   #toast {
     animation: none !important;
     transition: none !important;
+  }
+}
+/* =========================================================
+   36. TOUCH DEVICE
+   ========================================================= */
+@media (hover: none) {
+  .auth-shell #continueLogin:hover,
+  .auth-shell #loginStep2 > button[type="submit"]:hover,
+  .auth-shell #google.google-login-btn:hover {
+    transform: none !important;
   }
 }
