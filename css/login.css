@@ -1,552 +1,362 @@
 /* =========================================================
-   PasTele — LOGIN PAGE
-   Clean / Canonical / Dark Mode Safe
+   LOGIN ACCOUNT FOUND STATE
    ========================================================= */
-/* =========================================================
-   AUTH SHELL
-   ========================================================= */
-.auth-shell {
+.identifier-wrap {
   position: relative;
-  min-height: 100vh;
   width: 100%;
-  box-sizing: border-box;
-  display: grid;
-  place-items: start center;
-  padding: 7vh 16px;
-  overflow: hidden;
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(34, 158, 217, 0.20),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 85% 90%,
-      rgba(111, 86, 210, 0.16),
-      transparent 30%
-    ),
-    #07131f;
 }
-/* Decorative circle */
-.auth-shell::before {
-  content: "";
+.identifier-wrap .input {
+  padding-right: 52px;
+}
+.identifier-status {
   position: absolute;
-  width: 520px;
-  height: 520px;
-  right: -220px;
-  top: -230px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 50%;
-  pointer-events: none;
-}
-/* =========================================================
-   AUTH CARD
-   ========================================================= */
-.auth-card {
-  position: relative;
-  z-index: 1;
-  width: min(480px, 100%);
-  box-sizing: border-box;
-  padding: 34px;
-  border-radius: 28px !important;
-  background: rgba(255, 255, 255, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.28);
-  color: #172a38;
-}
-/* =========================================================
-   LOGO
-   ========================================================= */
-.auth-logo {
-  width: 64px;
-  height: 64px;
+  top: 50%;
+  right: 14px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  border-radius: 20px;
-  background: #229ed9;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #20b26b;
   color: #ffffff;
-  font-size: 27px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.identifier-wrap.found .identifier-status {
+  opacity: 1;
+  visibility: visible;
+  transform:
+    translateY(-50%)
+    scale(1);
+}
+.identifier-wrap.found .input {
+  border-color: #20b26b !important;
   box-shadow:
-    0 12px 30px rgba(34, 158, 217, 0.30);
+    0 0 0 4px rgba(32, 178, 107, 0.10) !important;
 }
 /* =========================================================
-   TITLE
+   ACCOUNT STATE
    ========================================================= */
-.auth-card h1 {
-  margin: 18px 0 5px;
-  font-size: 30px;
-  line-height: 1.2;
-  font-weight: 800;
-  color: #172a38;
-}
-/* =========================================================
-   FIELD
-   ========================================================= */
-.auth-card .field {
+.login-account-state {
+  position: relative;
   width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f0fbf5;
+  border: 1px solid #c9ecd8;
+  color: #173c2a;
+}
+.login-account-state.hidden {
+  display: none !important;
+}
+.account-state-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #20b26b;
+  color: #ffffff;
+  font-size: 17px;
+}
+.account-state-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.account-state-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #278154;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.account-state-content strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  color: #173c2a;
+}
+.account-state-login {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #4d7562;
+}
+.account-state-login i {
+  font-size: 10px;
+  color: #20b26b;
+}
+.account-change {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c9ecd8;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #278154;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+.account-change:hover {
+  background: #f5fffa;
+  border-color: #20b26b;
+  transform: translateY(-1px);
+}
+.account-change:active {
+  transform: translateY(0);
 }
 /* =========================================================
-   LABEL
+   PASSWORD HEADING
    ========================================================= */
-.auth-card .field label {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 700;
+.password-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 2px;
+}
+.password-heading-icon {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #eef8fd;
+  color: #229ed9;
+  font-size: 15px;
+}
+.password-heading div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.password-heading strong {
+  font-size: 14px;
   color: #243747;
 }
+.password-heading span {
+  font-size: 12px;
+  color: #718593;
+}
 /* =========================================================
-   INPUT
+   PASSWORD INPUT
    ========================================================= */
-.auth-card .input {
+.password-wrap {
+  position: relative;
   width: 100%;
-  min-height: 48px;
-  box-sizing: border-box;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid #dce7ee;
-  background: #ffffff;
-  color: #172a38;
-  outline: none;
-  font: inherit;
+}
+.password-wrap .input {
+  padding-right: 52px;
+}
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #718593;
+  cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
     background 0.2s ease,
     color 0.2s ease;
 }
-.auth-card .input::placeholder {
-  color: #91a1ad;
+.password-toggle:hover {
+  background: #eef4f7;
+  color: #229ed9;
 }
-.auth-card .input:hover {
-  border-color: #c7d7e1;
-}
-.auth-card .input:focus {
-  border-color: #229ed9;
-  box-shadow:
-    0 0 0 4px rgba(34, 158, 217, 0.12);
-}
-/* =========================================================
-   PASSWORD ROW
-   ========================================================= */
-.auth-card .row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.auth-card .row .input {
-  flex: 1;
-  min-width: 0;
-}
-/* =========================================================
-   PASSWORD TOGGLE
-   ========================================================= */
-.auth-card #toggle {
-  flex: 0 0 48px;
-  width: 48px;
-  min-width: 48px;
-  min-height: 48px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  cursor: pointer;
-}
-.auth-card #toggle i {
+.password-toggle i {
   pointer-events: none;
 }
 /* =========================================================
-   BUTTONS
+   FORGOT PASSWORD
    ========================================================= */
-.auth-card .btn {
-  min-height: 48px;
-  border-radius: 13px;
-  font-weight: 700;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-.auth-card .btn:hover {
-  transform: translateY(-1px);
-}
-.auth-card .btn:active {
-  transform: translateY(0);
-}
-.auth-card .btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
+.forgot-link {
+  display: block;
+  width: fit-content;
+  margin: -2px auto 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #229ed9;
 }
 /* =========================================================
-   PRIMARY BUTTON
-   ========================================================= */
-.auth-card .primary {
-  box-shadow:
-    0 12px 24px rgba(34, 158, 217, 0.22);
-}
-.auth-card .primary:hover {
-  box-shadow:
-    0 15px 28px rgba(34, 158, 217, 0.28);
-}
-/* =========================================================
-   SECONDARY BUTTON
-   ========================================================= */
-.auth-card .btn:not(.primary) {
-  border: 1px solid #dce7ee;
-  background: #ffffff;
-  color: #243747;
-}
-.auth-card .btn:not(.primary):hover {
-  background: #f7fafc;
-  border-color: #cbdbe4;
-}
-/* =========================================================
-   GOOGLE LOGIN
-   ========================================================= */
-#google {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-}
-#google i {
-  font-size: 17px;
-}
-#google:disabled {
-  pointer-events: none;
-}
-/* =========================================================
-   DIVIDER
-   ========================================================= */
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #8b9ca8;
-  font-size: 12px;
-}
-.auth-divider::before,
-.auth-divider::after {
-  content: "";
-  height: 1px;
-  background: #e4ebf0;
-  flex: 1;
-}
-.auth-divider span {
-  flex: 0 0 auto;
-}
-/* =========================================================
-   MUTED TEXT
-   ========================================================= */
-.auth-card .muted {
-  color: #718593;
-}
-.auth-card a {
-  text-decoration: none;
-}
-.auth-card a:hover {
-  text-decoration: underline;
-}
-/* =========================================================
-   HIDDEN
-   ========================================================= */
-.hidden {
-  display: none !important;
-}
-/* =========================================================
-   INLINE NOTIFICATION
-   DISABLED
-   ========================================================= */
-/*
-   Login page hanya menggunakan #toast.
-   Tidak ada notification di dalam auth-card.
-*/
-.auth-card .notice,
-.auth-card .auth-notice,
-.auth-card .auth-error,
-.auth-card #accountInfo {
-  display: none !important;
-}
-/* =========================================================
-   GLOBAL FLOATING TOAST
+   FLOATING TOAST
    ========================================================= */
 #toast {
   position: fixed;
-  top: 24px;
+  top: 22px;
   left: 50%;
-  width: min(420px, calc(100vw - 32px));
+  width: min(430px, calc(100vw - 28px));
   box-sizing: border-box;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  border-radius: 15px;
   z-index: 2147483647;
-  display: block;
-  padding: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 600;
+  box-shadow:
+    0 16px 45px rgba(0, 0, 0, 0.18);
   transform:
-    translate3d(-50%, -18px, 0);
+    translate3d(-50%, -24px, 0);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition:
-    opacity 0.25s ease,
-    transform 0.25s ease,
-    visibility 0.25s ease;
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    visibility 0.22s ease;
 }
-/* =========================================================
-   TOAST ACTIVE STATE
-   ========================================================= */
-#toast.show,
-#toast.active,
-#toast.visible {
+#toast.show {
   opacity: 1;
   visibility: visible;
   transform:
     translate3d(-50%, 0, 0);
 }
-/* =========================================================
-   TOAST MESSAGE
-   ========================================================= */
-/*
-   login.js menggunakan:
-   #toast.className = "show success"
-   #toast.className = "show error"
-*/
-#toast.show::before {
-  content: "";
-  display: block;
-  width: 100%;
-  min-height: 52px;
-  box-sizing: border-box;
-  padding: 15px 18px;
-  border-radius: 14px;
-  font-size: 14px;
-  line-height: 1.45;
-  font-weight: 600;
-  text-align: left;
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.20);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-/*
-   Karena #toast memakai textContent,
-   pseudo-element tidak dapat membaca textContent.
-   Maka kita gunakan text node secara langsung
-   dengan styling container.
-*/
-#toast.show {
-  min-height: 52px;
-  padding: 15px 18px;
-  border-radius: 14px;
-  font-size: 14px;
-  line-height: 1.45;
-  font-weight: 600;
-  box-sizing: border-box;
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.20);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-/* =========================================================
-   SUCCESS TOAST
-   ========================================================= */
 #toast.show.success {
-  background: #e9f9f0;
-  color: #146b3a;
-  border-color: #bde8ce;
-  box-shadow:
-    0 16px 40px rgba(20, 107, 58, 0.16);
+  background: #effbf4;
+  color: #176b3d;
+  border: 1px solid #c4ead3;
 }
-/* =========================================================
-   ERROR TOAST
-   ========================================================= */
 #toast.show.error {
-  background: #fff0f1;
-  color: #a5232d;
-  border-color: #f1c5c9;
-  box-shadow:
-    0 16px 40px rgba(165, 35, 45, 0.16);
+  background: #fff2f3;
+  color: #a32631;
+  border: 1px solid #f0c7cb;
 }
 /* =========================================================
-   DARK MODE
+   DARK MODE — ACCOUNT STATE
    ========================================================= */
-.theme-dark .auth-shell {
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(34, 158, 217, 0.20),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 85% 90%,
-      rgba(111, 86, 210, 0.16),
-      transparent 30%
-    ),
-    #07111b;
+.theme-dark .login-account-state {
+  background: #102a20;
+  border-color: #24563f;
+  color: #e4f8ec;
+}
+.theme-dark .account-state-icon {
+  background: #20b26b;
+  color: #ffffff;
+}
+.theme-dark .account-state-label {
+  color: #73d99f;
+}
+.theme-dark .account-state-content strong {
+  color: #e4f8ec;
+}
+.theme-dark .account-state-login {
+  color: #9ab9a8;
+}
+.theme-dark .account-state-login i {
+  color: #53d58b;
+}
+.theme-dark .account-change {
+  background: #122f24;
+  border-color: #2b6048;
+  color: #73d99f;
+}
+.theme-dark .account-change:hover {
+  background: #173a2b;
+  border-color: #3a7959;
 }
 /* =========================================================
-   DARK CARD
+   DARK MODE — PASSWORD
    ========================================================= */
-.theme-dark .auth-card {
-  background: #0d1b28 !important;
-  border-color:
-    rgba(255, 255, 255, 0.08) !important;
+.theme-dark .password-heading-icon {
+  background: #102b3a;
+  color: #55c3f2;
+}
+.theme-dark .password-heading strong {
   color: #e6f1f7;
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.theme-dark .password-heading span {
+  color: #91a8b9;
+}
+.theme-dark .password-toggle {
+  color: #91a8b9;
+}
+.theme-dark .password-toggle:hover {
+  background: #142c3e;
+  color: #55c3f2;
+}
+.theme-dark .forgot-link {
+  color: #55c3f2;
 }
 /* =========================================================
-   DARK TITLE
-   ========================================================= */
-.theme-dark .auth-card h1 {
-  color: #f4f9fc;
-}
-/* =========================================================
-   DARK LABEL
-   ========================================================= */
-.theme-dark .auth-card .field label {
-  color: #dbeaf3;
-}
-/* =========================================================
-   DARK MUTED
-   ========================================================= */
-.theme-dark .auth-card .muted {
-  color: #91a8b9 !important;
-}
-/* =========================================================
-   DARK INPUT
-   ========================================================= */
-.theme-dark .auth-card .input {
-  background: #0a1723 !important;
-  color: #e6f1f7 !important;
-  border-color: #243b4b !important;
-}
-.theme-dark .auth-card .input::placeholder {
-  color: #6f8797;
-}
-.theme-dark .auth-card .input:hover {
-  border-color: #315063 !important;
-}
-.theme-dark .auth-card .input:focus {
-  border-color: #229ed9 !important;
-  box-shadow:
-    0 0 0 4px rgba(34, 158, 217, 0.14);
-}
-/* =========================================================
-   DARK SECONDARY BUTTON
-   ========================================================= */
-.theme-dark .auth-card .btn:not(.primary) {
-  background: #102332 !important;
-  color: #dbeaf3 !important;
-  border-color: #284151 !important;
-}
-.theme-dark .auth-card .btn:not(.primary):hover {
-  background: #142c3e !important;
-  border-color: #35566a !important;
-}
-/* =========================================================
-   DARK DIVIDER
-   ========================================================= */
-.theme-dark .auth-divider {
-  color: #718b9b;
-}
-.theme-dark .auth-divider::before,
-.theme-dark .auth-divider::after {
-  background: #243b4b;
-}
-/* =========================================================
-   DARK SUCCESS TOAST
+   DARK MODE — TOAST
    ========================================================= */
 .theme-dark #toast.show.success {
   background: #102d22;
   color: #9ce5bb;
-  border-color: #245d45;
+  border-color: #285e46;
   box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.40);
+    0 18px 45px rgba(0, 0, 0, 0.42);
 }
-/* =========================================================
-   DARK ERROR TOAST
-   ========================================================= */
 .theme-dark #toast.show.error {
   background: #321a1e;
   color: #ffb5bb;
   border-color: #68343b;
   box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.40);
+    0 18px 45px rgba(0, 0, 0, 0.42);
 }
 /* =========================================================
    MOBILE
    ========================================================= */
 @media (max-width: 520px) {
-  .auth-shell {
-    padding:
-      32px 14px;
+  .login-account-state {
+    padding: 12px;
+    border-radius: 14px;
   }
-  .auth-card {
-    width: 100%;
-    padding: 24px;
-    border-radius: 22px !important;
+  .account-state-icon {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
-  .auth-card h1 {
-    font-size: 25px;
+  .account-state-content strong {
+    font-size: 14px;
   }
-  .auth-logo {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
-    font-size: 24px;
+  .account-change {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
   }
-  #toast {
-    top: 14px;
-    width:
-      calc(100vw - 28px);
-  }
-  #toast.show {
-    min-height: 50px;
-    padding: 14px 15px;
-    border-radius: 13px;
-    font-size: 13px;
-  }
-}
-/* =========================================================
-   VERY SMALL SCREENS
-   ========================================================= */
-@media (max-width: 360px) {
-  .auth-card {
-    padding: 20px;
-  }
-  .auth-card h1 {
-    font-size: 23px;
-  }
-  .auth-card .btn,
-  .auth-card .input {
-    min-height: 46px;
-  }
-  .auth-card #toggle {
-    width: 46px;
-    min-width: 46px;
-    min-height: 46px;
+  .password-heading-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
   }
   #toast {
-    width:
-      calc(100vw - 20px);
-    top: 10px;
-  }
-  #toast.show {
+    top: 12px;
+    width: calc(100vw - 24px);
     padding: 13px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-  }
-}
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-@media (prefers-reduced-motion: reduce) {
-  .auth-card .btn,
-  .auth-card .input,
-  #toast {
-    transition: none;
+    border-radius: 13px;
   }
 }
