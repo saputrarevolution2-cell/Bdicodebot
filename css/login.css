@@ -1,11 +1,12 @@
 /* =========================================================
-   LOGIN ACCOUNT FOUND STATE
+   LOGIN — ACCOUNT FOUND / IDENTIFIER
    ========================================================= */
 .identifier-wrap {
   position: relative;
   width: 100%;
 }
 .identifier-wrap .input {
+  width: 100%;
   padding-right: 52px;
 }
 .identifier-status {
@@ -16,31 +17,35 @@
   height: 24px;
   display: grid;
   place-items: center;
-  transform: translateY(-50%);
+  transform: translateY(-50%) scale(.85);
   border-radius: 50%;
   background: #20b26b;
-  color: #ffffff;
-  font-size: 12px;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity .2s ease,
+    visibility .2s ease,
+    transform .2s ease;
 }
 .identifier-wrap.found .identifier-status {
   opacity: 1;
   visibility: visible;
-  transform:
-    translateY(-50%)
-    scale(1);
+  transform: translateY(-50%) scale(1);
 }
 .identifier-wrap.found .input {
   border-color: #20b26b !important;
-  box-shadow:
-    0 0 0 4px rgba(32, 178, 107, 0.10) !important;
+  box-shadow: 0 0 0 4px rgba(32, 178, 107, .10) !important;
+}
+.identifier-wrap .input:disabled {
+  opacity: 1;
+  cursor: default;
 }
 /* =========================================================
-   ACCOUNT STATE
+   ACCOUNT FOUND STATE
    ========================================================= */
 .login-account-state {
   position: relative;
@@ -49,16 +54,28 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 18px 0 14px;
+  margin: 16px 0 14px;
   padding: 14px;
+  border: 1px solid #c9ecd8;
   border-radius: 16px;
   background: #f0fbf5;
-  border: 1px solid #c9ecd8;
   color: #173c2a;
+  animation: loginAccountIn .22s ease both;
 }
 .login-account-state.hidden {
   display: none !important;
 }
+@keyframes loginAccountIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Icon */
 .account-state-icon {
   flex: 0 0 40px;
   width: 40px;
@@ -67,28 +84,35 @@
   place-items: center;
   border-radius: 12px;
   background: #20b26b;
-  color: #ffffff;
+  color: #fff;
   font-size: 17px;
+  line-height: 1;
 }
+/* Content */
 .account-state-content {
   min-width: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 .account-state-label {
   font-size: 11px;
+  line-height: 1.2;
   font-weight: 700;
   color: #278154;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: .035em;
 }
 .account-state-content strong {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 15px;
+  line-height: 1.35;
+  font-weight: 700;
   color: #173c2a;
 }
 .account-state-login {
@@ -97,12 +121,14 @@
   gap: 5px;
   margin-top: 2px;
   font-size: 12px;
+  line-height: 1.3;
   color: #4d7562;
 }
 .account-state-login i {
-  font-size: 10px;
   color: #20b26b;
+  font-size: 10px;
 }
+/* Change account */
 .account-change {
   flex: 0 0 36px;
   width: 36px;
@@ -112,21 +138,27 @@
   place-items: center;
   border: 1px solid #c9ecd8;
   border-radius: 10px;
-  background: #ffffff;
+  background: #fff;
   color: #278154;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.15s ease;
+    background .2s ease,
+    border-color .2s ease,
+    color .2s ease,
+    transform .15s ease;
 }
 .account-change:hover {
   background: #f5fffa;
   border-color: #20b26b;
+  color: #176b3d;
   transform: translateY(-1px);
 }
 .account-change:active {
   transform: translateY(0);
+}
+.account-change:focus-visible {
+  outline: 3px solid rgba(32, 178, 107, .18);
+  outline-offset: 2px;
 }
 /* =========================================================
    PASSWORD HEADING
@@ -135,7 +167,7 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  margin-bottom: 2px;
+  margin: 0 0 4px;
 }
 .password-heading-icon {
   flex: 0 0 38px;
@@ -148,7 +180,7 @@
   color: #229ed9;
   font-size: 15px;
 }
-.password-heading div {
+.password-heading > div {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -156,10 +188,13 @@
 }
 .password-heading strong {
   font-size: 14px;
+  line-height: 1.3;
+  font-weight: 700;
   color: #243747;
 }
 .password-heading span {
   font-size: 12px;
+  line-height: 1.4;
   color: #718593;
 }
 /* =========================================================
@@ -170,6 +205,7 @@
   width: 100%;
 }
 .password-wrap .input {
+  width: 100%;
   padding-right: 52px;
 }
 .password-toggle {
@@ -181,18 +217,26 @@
   display: grid;
   place-items: center;
   transform: translateY(-50%);
+  padding: 0;
   border: 0;
   border-radius: 9px;
   background: transparent;
   color: #718593;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    color 0.2s ease;
+    background .2s ease,
+    color .2s ease;
 }
 .password-toggle:hover {
   background: #eef4f7;
   color: #229ed9;
+}
+.password-toggle:active {
+  transform: translateY(-50%) scale(.96);
+}
+.password-toggle:focus-visible {
+  outline: 3px solid rgba(34, 158, 217, .15);
+  outline-offset: 1px;
 }
 .password-toggle i {
   pointer-events: none;
@@ -205,11 +249,25 @@
   width: fit-content;
   margin: -2px auto 0;
   font-size: 13px;
+  line-height: 1.4;
   font-weight: 600;
   color: #229ed9;
+  text-decoration: none;
+  transition:
+    color .2s ease,
+    opacity .2s ease;
+}
+.forgot-link:hover {
+  color: #1685ba;
+  text-decoration: underline;
+}
+.forgot-link:focus-visible {
+  outline: 3px solid rgba(34, 158, 217, .15);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 /* =========================================================
-   FLOATING TOAST
+   FLOATING LOGIN TOAST
    ========================================================= */
 #toast {
   position: fixed;
@@ -217,42 +275,58 @@
   left: 50%;
   width: min(430px, calc(100vw - 28px));
   box-sizing: border-box;
-  padding: 14px 16px;
   display: flex;
   align-items: center;
   min-height: 52px;
+  padding: 13px 16px;
+  border: 1px solid transparent;
   border-radius: 15px;
-  z-index: 2147483647;
   font-size: 13px;
   line-height: 1.45;
   font-weight: 600;
-  box-shadow:
-    0 16px 45px rgba(0, 0, 0, 0.18);
-  transform:
-    translate3d(-50%, -24px, 0);
+  text-align: left;
+  z-index: 2147483647;
+  transform: translate3d(-50%, -24px, 0);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, .18);
   transition:
-    opacity 0.22s ease,
-    transform 0.22s ease,
-    visibility 0.22s ease;
+    opacity .22s ease,
+    transform .22s ease,
+    visibility .22s ease;
 }
 #toast.show {
   opacity: 1;
   visibility: visible;
-  transform:
-    translate3d(-50%, 0, 0);
+  transform: translate3d(-50%, 0, 0);
 }
 #toast.show.success {
   background: #effbf4;
   color: #176b3d;
-  border: 1px solid #c4ead3;
+  border-color: #c4ead3;
 }
 #toast.show.error {
   background: #fff2f3;
   color: #a32631;
-  border: 1px solid #f0c7cb;
+  border-color: #f0c7cb;
+}
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+#toast[aria-hidden="true"] {
+  visibility: hidden;
+}
+/* =========================================================
+   DARK MODE — IDENTIFIER
+   ========================================================= */
+.theme-dark .identifier-wrap.found .input {
+  border-color: #3bc77d !important;
+  box-shadow:
+    0 0 0 4px rgba(59, 199, 125, .12) !important;
+}
+.theme-dark .identifier-status {
+  background: #20b26b;
 }
 /* =========================================================
    DARK MODE — ACCOUNT STATE
@@ -264,7 +338,7 @@
 }
 .theme-dark .account-state-icon {
   background: #20b26b;
-  color: #ffffff;
+  color: #fff;
 }
 .theme-dark .account-state-label {
   color: #73d99f;
@@ -286,9 +360,10 @@
 .theme-dark .account-change:hover {
   background: #173a2b;
   border-color: #3a7959;
+  color: #8ae7af;
 }
 /* =========================================================
-   DARK MODE — PASSWORD
+   DARK MODE — PASSWORD HEADING
    ========================================================= */
 .theme-dark .password-heading-icon {
   background: #102b3a;
@@ -300,6 +375,9 @@
 .theme-dark .password-heading span {
   color: #91a8b9;
 }
+/* =========================================================
+   DARK MODE — PASSWORD TOGGLE
+   ========================================================= */
 .theme-dark .password-toggle {
   color: #91a8b9;
 }
@@ -307,56 +385,123 @@
   background: #142c3e;
   color: #55c3f2;
 }
+/* =========================================================
+   DARK MODE — FORGOT
+   ========================================================= */
 .theme-dark .forgot-link {
   color: #55c3f2;
+}
+.theme-dark .forgot-link:hover {
+  color: #79d4fa;
 }
 /* =========================================================
    DARK MODE — TOAST
    ========================================================= */
+.theme-dark #toast {
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, .42);
+}
 .theme-dark #toast.show.success {
   background: #102d22;
   color: #9ce5bb;
   border-color: #285e46;
-  box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.42);
 }
 .theme-dark #toast.show.error {
   background: #321a1e;
   color: #ffb5bb;
   border-color: #68343b;
-  box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.42);
 }
 /* =========================================================
    MOBILE
    ========================================================= */
 @media (max-width: 520px) {
   .login-account-state {
+    gap: 10px;
+    margin-top: 14px;
     padding: 12px;
     border-radius: 14px;
   }
   .account-state-icon {
+    flex-basis: 38px;
     width: 38px;
     height: 38px;
-    flex-basis: 38px;
+    border-radius: 11px;
+    font-size: 16px;
+  }
+  .account-state-label {
+    font-size: 10px;
   }
   .account-state-content strong {
     font-size: 14px;
   }
+  .account-state-login {
+    font-size: 11px;
+  }
   .account-change {
+    flex-basis: 34px;
     width: 34px;
     height: 34px;
-    flex-basis: 34px;
+    border-radius: 9px;
+  }
+  .password-heading {
+    gap: 9px;
   }
   .password-heading-icon {
+    flex-basis: 36px;
     width: 36px;
     height: 36px;
-    flex-basis: 36px;
+    border-radius: 10px;
+  }
+  .password-heading strong {
+    font-size: 13px;
+  }
+  .password-heading span {
+    font-size: 11px;
   }
   #toast {
     top: 12px;
     width: calc(100vw - 24px);
-    padding: 13px 14px;
+    min-height: 48px;
+    padding: 12px 14px;
     border-radius: 13px;
+    font-size: 12px;
+  }
+}
+/* =========================================================
+   VERY SMALL SCREEN
+   ========================================================= */
+@media (max-width: 360px) {
+  .login-account-state {
+    padding: 10px;
+  }
+  .account-state-icon {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+  .account-state-content strong {
+    font-size: 13px;
+  }
+  .account-state-login {
+    font-size: 10px;
+  }
+  .account-change {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+}
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .login-account-state,
+  #toast,
+  .identifier-status,
+  .account-change,
+  .password-toggle {
+    animation: none !important;
+    transition: none !important;
   }
 }
