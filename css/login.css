@@ -500,3 +500,13 @@
     transition: none !important;
   }
 }
+
+
+/* =========================================================
+   LOGIN — CONTINUE BUTTON STATE
+   Setelah akun ditemukan tombol Lanjut benar-benar hilang.
+   ========================================================= */
+#continueLogin[hidden],
+#continueLogin.login-continue-hidden {
+  display: none !important;
+}
