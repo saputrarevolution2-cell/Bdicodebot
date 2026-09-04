@@ -1,11 +1,28 @@
 /* =========================================================
    PasTele — LOGIN EXTRA UI
-   Clean / Fixed / Responsive
-   Account Found → Same Identifier Input
+   PREMIUM CLEAN / FIXED / RESPONSIVE
+   =========================================================
+   Flow:
+   Username / Gmail
+        ↓
+   Account Found
+        ↓
+   Password
+        ↓
+   Login
+   Design goals:
+   - Clean
+   - Premium
+   - Compact
+   - Responsive
+   - Dark mode
+   - No layout overflow
+   - No duplicate account card
+   - Identifier tetap terlihat
+   - Lanjut hilang setelah account found
    ========================================================= */
 /* =========================================================
-   GLOBAL FORM SAFETY
-   Mencegah input / button membuat card melebar
+   01. GLOBAL FORM SAFETY
    ========================================================= */
 .auth-card,
 .auth-card *,
@@ -31,7 +48,7 @@
   min-width: 0;
 }
 /* =========================================================
-   LOGIN IDENTIFIER
+   02. LOGIN IDENTIFIER
    Username / Gmail
    ========================================================= */
 .identifier-wrap {
@@ -46,10 +63,13 @@
   min-width: 0;
   max-width: 100%;
   padding-right: 52px;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background-color .2s ease;
 }
 /* =========================================================
-   GREEN CHECK
-   Hanya muncul setelah akun ditemukan
+   03. GREEN VERIFIED CHECK
    ========================================================= */
 .identifier-status {
   position: absolute;
@@ -59,15 +79,19 @@
   height: 24px;
   display: grid;
   place-items: center;
-  transform: translateY(-50%) scale(.85);
+  transform:
+    translateY(-50%)
+    scale(.82);
   border-radius: 50%;
   background: #20b26b;
-  color: #fff;
+  color: #ffffff;
   font-size: 11px;
   line-height: 1;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  box-shadow:
+    0 3px 9px rgba(32, 178, 107, .22);
   transition:
     opacity .2s ease,
     visibility .2s ease,
@@ -76,23 +100,26 @@
 .identifier-wrap.found .identifier-status {
   opacity: 1;
   visibility: visible;
-  transform: translateY(-50%) scale(1);
+  transform:
+    translateY(-50%)
+    scale(1);
 }
-/* Input saat akun ditemukan */
+/* =========================================================
+   04. IDENTIFIER FOUND STATE
+   ========================================================= */
 .identifier-wrap.found .input {
   border-color: #20b26b !important;
+  background: #fbfffd;
   box-shadow:
-    0 0 0 4px rgba(32, 178, 107, .10) !important;
+    0 0 0 3px rgba(32, 178, 107, .10) !important;
 }
-/* Username locked */
 .identifier-wrap .input:disabled {
   opacity: 1;
   cursor: default;
   -webkit-text-fill-color: inherit;
 }
 /* =========================================================
-   INLINE VERIFIED STATUS
-   Tidak menggunakan card
+   05. INLINE VERIFIED STATUS
    ========================================================= */
 .login-verified-state {
   width: 100%;
@@ -101,6 +128,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 7px;
+  padding: 0 2px;
   font-size: 11px;
   line-height: 1.35;
   font-weight: 600;
@@ -110,13 +138,13 @@
   flex: 0 0 auto;
   color: #20b26b;
   font-size: 11px;
+  line-height: 1;
 }
 .login-verified-state.hidden {
   display: none !important;
 }
 /* =========================================================
-   PASSWORD SECTION
-   Icon gembok benar-benar center
+   06. PASSWORD SECTION
    ========================================================= */
 .password-heading {
   width: 100%;
@@ -124,9 +152,13 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  margin: 0 0 10px;
+  margin: 0 0 11px;
   padding: 0;
 }
+/* =========================================================
+   07. LOCK ICON
+   Perfect center
+   ========================================================= */
 .password-heading-icon {
   flex: 0 0 38px;
   width: 38px;
@@ -137,12 +169,20 @@
   align-self: center;
   margin: 0;
   padding: 0;
+  border: 1px solid rgba(34, 158, 217, .08);
   border-radius: 11px;
-  background: #eef8fd;
+  background:
+    linear-gradient(
+      145deg,
+      #f1faff,
+      #e9f6fc
+    );
   color: #229ed9;
   font-size: 15px;
   line-height: 1;
   box-sizing: border-box;
+  box-shadow:
+    0 4px 12px rgba(34, 158, 217, .08);
 }
 .password-heading-icon i {
   display: block;
@@ -154,6 +194,9 @@
   text-align: center;
   transform: none;
 }
+/* =========================================================
+   08. PASSWORD HEADING TEXT
+   ========================================================= */
 .password-heading > div {
   min-width: 0;
   flex: 1;
@@ -172,6 +215,7 @@
   font-size: 14px;
   line-height: 1.3;
   font-weight: 700;
+  letter-spacing: -.01em;
   color: #243747;
 }
 .password-heading span {
@@ -184,7 +228,7 @@
   color: #718593;
 }
 /* =========================================================
-   PASSWORD INPUT
+   09. PASSWORD INPUT
    ========================================================= */
 .password-wrap {
   position: relative;
@@ -198,9 +242,13 @@
   min-width: 0;
   max-width: 100%;
   padding-right: 52px;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background-color .2s ease;
 }
 /* =========================================================
-   PASSWORD TOGGLE
+   10. PASSWORD TOGGLE
    ========================================================= */
 .password-toggle {
   position: absolute;
@@ -211,6 +259,7 @@
   display: grid;
   place-items: center;
   transform: translateY(-50%);
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 9px;
@@ -218,8 +267,8 @@
   color: #718593;
   cursor: pointer;
   transition:
-    background .2s ease,
-    color .2s ease,
+    background-color .18s ease,
+    color .18s ease,
     transform .15s ease;
 }
 .password-toggle:hover {
@@ -227,44 +276,52 @@
   color: #229ed9;
 }
 .password-toggle:active {
-  transform: translateY(-50%) scale(.96);
+  transform:
+    translateY(-50%)
+    scale(.95);
 }
 .password-toggle:focus-visible {
   outline: 3px solid rgba(34, 158, 217, .15);
   outline-offset: 1px;
 }
 .password-toggle i {
+  display: block;
+  margin: 0;
+  padding: 0;
   pointer-events: none;
+  line-height: 1;
 }
 /* =========================================================
-   FORGOT PASSWORD
+   11. FORGOT PASSWORD
    ========================================================= */
 .forgot-link {
   display: block;
   width: fit-content;
   max-width: 100%;
-  margin: -2px auto 0;
+  margin: 0 auto;
+  padding: 2px 4px;
+  border-radius: 5px;
   font-size: 13px;
   line-height: 1.4;
   font-weight: 600;
   color: #229ed9;
   text-decoration: none;
   transition:
-    color .2s ease,
-    opacity .2s ease;
+    color .18s ease,
+    background-color .18s ease,
+    opacity .18s ease;
 }
 .forgot-link:hover {
   color: #1685ba;
-  text-decoration: underline;
+  background: rgba(34, 158, 217, .06);
+  text-decoration: none;
 }
 .forgot-link:focus-visible {
   outline: 3px solid rgba(34, 158, 217, .15);
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline-offset: 2px;
 }
 /* =========================================================
-   GANTI AKUN
-   Berupa text button, bukan card
+   12. CHANGE ACCOUNT
    ========================================================= */
 .account-change-login {
   width: fit-content;
@@ -274,10 +331,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin: 1px auto 0;
-  padding: 4px 8px;
+  margin: 0 auto;
+  padding: 5px 9px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
   color: #718593;
   font-family: inherit;
@@ -286,32 +343,39 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background .2s ease,
-    color .2s ease;
+    background-color .18s ease,
+    color .18s ease,
+    transform .15s ease;
 }
 .account-change-login:hover {
   background: #eef4f7;
   color: #229ed9;
 }
 .account-change-login:active {
-  transform: translateY(0);
+  transform: scale(.98);
 }
 .account-change-login:focus-visible {
   outline: 3px solid rgba(34, 158, 217, .15);
   outline-offset: 2px;
 }
 .account-change-login i {
+  flex: 0 0 auto;
   font-size: 10px;
+  line-height: 1;
 }
 /* =========================================================
-   FLOATING LOGIN TOAST
+   13. FLOATING TOAST
    ========================================================= */
 #toast {
   position: fixed;
   top: 22px;
   left: 50%;
-  width: min(430px, calc(100vw - 28px));
-  max-width: calc(100vw - 28px);
+  width: min(
+    430px,
+    calc(100vw - 28px)
+  );
+  max-width:
+    calc(100vw - 28px);
   min-height: 52px;
   display: flex;
   align-items: center;
@@ -324,7 +388,11 @@
   text-align: left;
   z-index: 2147483647;
   transform:
-    translate3d(-50%, -24px, 0);
+    translate3d(
+      -50%,
+      -24px,
+      0
+    );
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -339,7 +407,11 @@
   opacity: 1;
   visibility: visible;
   transform:
-    translate3d(-50%, 0, 0);
+    translate3d(
+      -50%,
+      0,
+      0
+    );
 }
 #toast.show.success {
   background: #effbf4;
@@ -351,35 +423,58 @@
   color: #a32631;
   border-color: #f0c7cb;
 }
-/* =========================================================
-   TOAST ACCESSIBILITY
-   ========================================================= */
 #toast[aria-hidden="true"] {
   visibility: hidden;
 }
 /* =========================================================
-   DARK MODE
+   14. CONTINUE BUTTON
+   Account Found → HILANG TOTAL
    ========================================================= */
-/* Identifier */
+#continueLogin[hidden],
+#continueLogin.login-continue-hidden {
+  display: none !important;
+}
+/* =========================================================
+   15. DARK MODE
+   ========================================================= */
+/* ---------------------------------------------------------
+   Identifier
+   --------------------------------------------------------- */
 .theme-dark .identifier-wrap.found .input {
   border-color: #3bc77d !important;
+  background: #0e2118;
   box-shadow:
-    0 0 0 4px rgba(59, 199, 125, .12) !important;
+    0 0 0 3px rgba(59, 199, 125, .12) !important;
 }
 .theme-dark .identifier-status {
   background: #20b26b;
+  color: #ffffff;
+  box-shadow:
+    0 3px 10px rgba(32, 178, 107, .25);
 }
-/* Verified */
+/* ---------------------------------------------------------
+   Verified
+   --------------------------------------------------------- */
 .theme-dark .login-verified-state {
   color: #73d99f;
 }
 .theme-dark .login-verified-state > i {
   color: #53d58b;
 }
-/* Password heading */
+/* ---------------------------------------------------------
+   Password heading
+   --------------------------------------------------------- */
 .theme-dark .password-heading-icon {
-  background: #102b3a;
+  border-color: rgba(85, 195, 242, .08);
+  background:
+    linear-gradient(
+      145deg,
+      #122f3f,
+      #102936
+    );
   color: #55c3f2;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, .18);
 }
 .theme-dark .password-heading strong {
   color: #e6f1f7;
@@ -387,7 +482,9 @@
 .theme-dark .password-heading span {
   color: #91a8b9;
 }
-/* Password toggle */
+/* ---------------------------------------------------------
+   Password toggle
+   --------------------------------------------------------- */
 .theme-dark .password-toggle {
   color: #91a8b9;
 }
@@ -395,14 +492,20 @@
   background: #142c3e;
   color: #55c3f2;
 }
-/* Forgot */
+/* ---------------------------------------------------------
+   Forgot
+   --------------------------------------------------------- */
 .theme-dark .forgot-link {
   color: #55c3f2;
 }
 .theme-dark .forgot-link:hover {
   color: #79d4fa;
+  background:
+    rgba(85, 195, 242, .08);
 }
-/* Change account */
+/* ---------------------------------------------------------
+   Change account
+   --------------------------------------------------------- */
 .theme-dark .account-change-login {
   color: #91a8b9;
 }
@@ -410,7 +513,9 @@
   background: #142c3e;
   color: #55c3f2;
 }
-/* Toast */
+/* ---------------------------------------------------------
+   Toast
+   --------------------------------------------------------- */
 .theme-dark #toast {
   box-shadow:
     0 18px 45px rgba(0, 0, 0, .42);
@@ -426,9 +531,10 @@
   border-color: #68343b;
 }
 /* =========================================================
-   MOBILE
+   16. MOBILE
    ========================================================= */
 @media (max-width: 520px) {
+  /* Identifier */
   .identifier-wrap .input {
     padding-right: 48px;
   }
@@ -440,17 +546,26 @@
   }
   .login-verified-state {
     margin-top: 6px;
+    padding-left: 1px;
     font-size: 10.5px;
   }
-  /* Password */
+  /* Password heading */
   .password-heading {
     gap: 9px;
+    margin-bottom: 10px;
   }
   .password-heading-icon {
     flex-basis: 36px;
     width: 36px;
     height: 36px;
     border-radius: 10px;
+    font-size: 14px;
+  }
+  .password-heading-icon i {
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    text-align: center;
   }
   .password-heading strong {
     font-size: 13px;
@@ -458,14 +573,16 @@
   .password-heading span {
     font-size: 11px;
   }
+  /* Password input */
   .password-wrap .input {
     padding-right: 48px;
   }
-  /* Toggle */
+  /* Eye */
   .password-toggle {
     right: 6px;
     width: 34px;
     height: 34px;
+    border-radius: 8px;
   }
   /* Forgot */
   .forgot-link {
@@ -478,8 +595,10 @@
   /* Toast */
   #toast {
     top: 12px;
-    width: calc(100vw - 24px);
-    max-width: calc(100vw - 24px);
+    width:
+      calc(100vw - 24px);
+    max-width:
+      calc(100vw - 24px);
     min-height: 48px;
     padding: 12px 14px;
     border-radius: 13px;
@@ -487,18 +606,24 @@
   }
 }
 /* =========================================================
-   VERY SMALL SCREEN
+   17. VERY SMALL SCREEN
    ========================================================= */
 @media (max-width: 360px) {
   .password-heading {
     gap: 8px;
+    margin-bottom: 9px;
   }
   .password-heading-icon {
     flex-basis: 34px;
     width: 34px;
     height: 34px;
     border-radius: 9px;
-    font-size: 14px;
+    font-size: 13px;
+  }
+  .password-heading-icon i {
+    width: 13px;
+    height: 13px;
+    line-height: 13px;
   }
   .password-heading strong {
     font-size: 12px;
@@ -514,23 +639,15 @@
   }
 }
 /* =========================================================
-   REDUCED MOTION
+   18. REDUCED MOTION
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
   #toast,
   .identifier-status,
   .password-toggle,
-  .account-change-login {
+  .account-change-login,
+  .identifier-wrap .input,
+  .password-wrap .input {
     transition: none !important;
   }
-}
-
-
-/* =========================================================
-   LOGIN — CONTINUE BUTTON STATE
-   Setelah akun ditemukan tombol Lanjut benar-benar hilang.
-   ========================================================= */
-#continueLogin[hidden],
-#continueLogin.login-continue-hidden {
-  display: none !important;
 }
