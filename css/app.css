@@ -898,3 +898,14 @@ html[data-theme="dark"] .footer h4,html[data-theme="dark"] .pastele-footer b,htm
 html[data-theme="dark"] .btn:not(.primary):not(.danger){background:var(--surface,#111c27);color:var(--text,#edf4f8);border-color:var(--line-strong,#38505f)}
 html[data-theme="dark"] .btn:not(.primary):not(.danger):hover{background:var(--surface-soft,#172532)}
 html[data-theme="dark"] .btn.danger{background:#351d20!important;border-color:#63353a!important;color:#ffaaa8!important}
+
+/* ===== FINAL CROSS-PAGE NORMALIZATION ===== */
+html[data-theme="dark"] .field label{color:var(--muted)!important}
+html[data-theme="dark"] .progress{background:#24313d!important}
+html[data-theme="dark"] .btn.primary{color:#fff!important}
+html[data-theme="dark"] .badge,html[data-theme="dark"] .chip,html[data-theme="dark"] .eyebrow{background:var(--blue-soft);border-color:var(--line-strong);color:#70cbf6}
+html[data-theme="dark"] .toast{background:#111b25!important;color:#f2f7fa!important;border-color:#31556b!important}
+html[data-theme="dark"] .code-preview,html[data-theme="dark"] pre,html[data-theme="dark"] code{color:#eaf5fb}
+.table-wrap{max-width:100%;-webkit-overflow-scrolling:touch}
+button:disabled,.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+:focus-visible{outline:3px solid rgba(42,171,238,.28);outline-offset:2px}
