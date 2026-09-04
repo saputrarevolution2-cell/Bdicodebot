@@ -1,4 +1,317 @@
 <!DOCTYPE html>
-<html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Create Product</title><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script>
-<script src="/js/debug-panel.js"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260903-fix"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904"><link rel="stylesheet" href="css/create-product.css?v=20260904"></head><body class="app-page"><div id="navbar"></div><main><section class="section"><div class="container"><div class="card"><span class="badge">Marketplace</span><h1>Create Product</h1><form class="list" id="f"><input class="input" id="title" placeholder="Judul" required=""/><input class="input" id="slug" placeholder="Slug" required=""/><div class="field"><label>Harga (IDR)</label><input class="input" id="price" min="0" placeholder="0" step="1000" type="number"/></div><input class="input" id="thumb" placeholder="Thumbnail URL"/><select class="select" id="type"><option value="link">Link</option><option value="code">Code</option><option value="channel">Channel</option><option value="group">Group</option></select><div class="field"><label>Akses</label><select class="select" id="access"><option value="free">Free</option><option value="paid">Paid</option></select></div><textarea class="textarea" id="desc" placeholder="Deskripsi"></textarea><textarea class="textarea" id="content" placeholder="Content / delivery"></textarea><button class="btn primary">Simpan</button></form></div></div></section></main><div id="toast"></div><script src="js/create-product.js?v=20260904"></script><script src="js/site-shell.js?v=20260904"></script></body></html>
+<html lang="id">
+<head>
+  <script src="js/theme-preload.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Create Product</title>
+  <script src="/js/config.js?v=20260831"></script>
+  <script src="/js/supabase.js?v=20260831"></script>
+  <script src="/js/debug-panel.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/navbar.js?v=20260903-fix"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+  <link rel="stylesheet" href="css/app.css?v=20260904">
+  <link rel="stylesheet" href="css/create-product.css?v=20260904">
+</head>
+<body class="app-page create-product-page">
+  <div id="navbar"></div>
+  <main class="create-main">
+    <section class="create-section">
+      <div class="create-container">
+        <!-- PAGE HEADER -->
+        <header class="create-header">
+          <div class="create-header-main">
+            <div class="create-icon">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="create-heading">
+              <span class="create-eyebrow">
+                <i class="fa-solid fa-store"></i>
+                MARKETPLACE
+              </span>
+              <h1>Create Product</h1>
+              <p>
+                Buat dan publikasikan produk kamu ke Marketplace PasTele.
+              </p>
+            </div>
+          </div>
+          <a class="back-btn" href="my-products.html">
+            <i class="fa-solid fa-box-open"></i>
+            <span>My Products</span>
+          </a>
+        </header>
+        <!-- FORM -->
+        <form class="create-layout" id="f">
+          <!-- LEFT -->
+          <div class="create-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">PRODUCT INFORMATION</span>
+                <h2>Informasi Produk</h2>
+                <p>Lengkapi informasi dasar produk yang akan dijual.</p>
+              </div>
+              <span class="panel-heading-icon">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </span>
+            </div>
+            <!-- TITLE -->
+            <div class="form-field">
+              <label for="title">
+                Judul Produk
+                <span>*</span>
+              </label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-heading"></i>
+                <input
+                  class="input"
+                  id="title"
+                  type="text"
+                  placeholder="Contoh: Premium Telegram Bot"
+                  maxlength="120"
+                  autocomplete="off"
+                  required
+                >
+              </div>
+              <small>Gunakan judul yang singkat dan mudah dipahami.</small>
+            </div>
+            <!-- SLUG -->
+            <div class="form-field">
+              <label for="slug">
+                Slug
+                <span>*</span>
+              </label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-link"></i>
+                <input
+                  class="input"
+                  id="slug"
+                  type="text"
+                  placeholder="premium-telegram-bot"
+                  maxlength="80"
+                  autocomplete="off"
+                  required
+                >
+              </div>
+              <small>
+                Hanya huruf kecil, angka, dan tanda
+                <code>-</code>.
+              </small>
+            </div>
+            <!-- TYPE + ACCESS -->
+            <div class="form-row">
+              <div class="form-field">
+                <label for="type">
+                  Tipe Produk
+                  <span>*</span>
+                </label>
+                <div class="input-wrap select-wrap">
+                  <i class="fa-solid fa-layer-group"></i>
+                  <select class="select" id="type" required>
+                    <option value="link">Link</option>
+                    <option value="paste">Paste</option>
+                    <option value="pastelink">Paste Link</option>
+                    <option value="code">Code</option>
+                    <option value="channel">Channel</option>
+                    <option value="group">Group</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="access">
+                  Akses
+                  <span>*</span>
+                </label>
+                <div class="input-wrap select-wrap">
+                  <i class="fa-solid fa-lock-open"></i>
+                  <select class="select" id="access" required>
+                    <option value="free">Free</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <!-- PRICE -->
+            <div class="form-field price-field">
+              <label for="price">
+                Harga
+                <span class="optional-label">IDR</span>
+              </label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                <input
+                  class="input"
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value="0"
+                  placeholder="0"
+                  inputmode="numeric"
+                >
+              </div>
+              <small id="priceHint">
+                Produk gratis tidak dikenakan biaya.
+              </small>
+            </div>
+            <!-- THUMBNAIL -->
+            <div class="form-field">
+              <label for="thumb">
+                Thumbnail URL
+                <span class="optional-label">Opsional</span>
+              </label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-image"></i>
+                <input
+                  class="input"
+                  id="thumb"
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  autocomplete="off"
+                >
+              </div>
+              <div class="thumb-preview" id="thumbPreview" hidden>
+                <img id="thumbImage" alt="Preview thumbnail">
+                <div>
+                  <strong>Preview Thumbnail</strong>
+                  <small>Gambar yang akan digunakan pada produk.</small>
+                </div>
+              </div>
+            </div>
+            <!-- DESCRIPTION -->
+            <div class="form-field">
+              <label for="desc">
+                Deskripsi
+                <span class="optional-label">Opsional</span>
+              </label>
+              <div class="textarea-wrap">
+                <i class="fa-solid fa-align-left"></i>
+                <textarea
+                  class="textarea"
+                  id="desc"
+                  rows="5"
+                  maxlength="3000"
+                  placeholder="Jelaskan produk kamu secara singkat..."
+                ></textarea>
+              </div>
+              <div class="field-bottom">
+                <small>Jelaskan manfaat atau isi produk.</small>
+                <span id="descCounter">0 / 3000</span>
+              </div>
+            </div>
+            <!-- CONTENT -->
+            <div class="form-field">
+              <label for="content">
+                Content / Delivery
+                <span class="optional-label">Opsional</span>
+              </label>
+              <div class="textarea-wrap content-wrap">
+                <i class="fa-solid fa-file-arrow-down"></i>
+                <textarea
+                  class="textarea"
+                  id="content"
+                  rows="8"
+                  placeholder="Masukkan content atau delivery produk..."
+                ></textarea>
+              </div>
+              <small>
+                Content ini akan disimpan sebagai delivery produk.
+              </small>
+            </div>
+            <!-- SUBMIT -->
+            <div class="form-actions">
+              <a
+                href="my-products.html"
+                class="cancel-btn"
+                id="cancelBtn"
+              >
+                Batal
+              </a>
+              <button
+                class="submit-btn"
+                id="submitBtn"
+                type="submit"
+              >
+                <span class="submit-normal">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  Publikasikan Produk
+                </span>
+                <span class="submit-loading" hidden>
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  Menyimpan...
+                </span>
+              </button>
+            </div>
+          </div>
+          <!-- RIGHT -->
+          <aside class="create-side">
+            <!-- STATUS CARD -->
+            <div class="side-card publish-card">
+              <div class="side-card-icon">
+                <i class="fa-solid fa-rocket"></i>
+              </div>
+              <div class="side-card-content">
+                <span class="side-kicker">PUBLISH</span>
+                <h3>Siap dipublikasikan?</h3>
+                <p>
+                  Produk akan dibuat dengan status
+                  <strong>Published</strong> setelah berhasil disimpan.
+                </p>
+              </div>
+            </div>
+            <!-- TIPS -->
+            <div class="side-card">
+              <div class="side-card-header">
+                <span class="side-icon">
+                  <i class="fa-solid fa-lightbulb"></i>
+                </span>
+                <div>
+                  <span class="side-kicker">TIPS</span>
+                  <h3>Membuat produk yang bagus</h3>
+                </div>
+              </div>
+              <ul class="tips-list">
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Gunakan judul yang jelas dan menarik.</span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Gunakan slug sederhana dan mudah diingat.</span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Tambahkan deskripsi agar pembeli memahami produk.</span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>Pastikan content delivery sudah benar.</span>
+                </li>
+              </ul>
+            </div>
+            <!-- SECURITY -->
+            <div class="side-note">
+              <i class="fa-solid fa-shield-halved"></i>
+              <div>
+                <strong>Data aman</strong>
+                <span>
+                  Produk akan tersimpan di database PasTele
+                  menggunakan akun kamu.
+                </span>
+              </div>
+            </div>
+          </aside>
+        </form>
+      </div>
+    </section>
+  </main>
+  <div id="toast"></div>
+  <script src="js/create-product.js?v=20260904"></script>
+  <script src="js/site-shell.js?v=20260904"></script>
+</body>
+</html>
