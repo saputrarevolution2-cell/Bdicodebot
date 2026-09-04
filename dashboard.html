@@ -1,23 +1,400 @@
-<!doctype html><html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<link rel="preconnect" href="https://fonts.googleapis.com"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Dashboard — PasTele</title>
-<script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260903-fix"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904"><link rel="stylesheet" href="css/dashboard.css?v=20260904"></head>
-<body class="app-page dashboard-page"><div id="navbar"></div><main class="dashboard-fixed"><div class="dash-container">
-<header class="dash-head"><div class="dash-title"><div class="dash-logo"><i class="fa-solid fa-chart-pie"></i></div><div><span class="eyebrow">WORKSPACE</span><h1>Dashboard</h1><p>Halo, <strong id="helloName">User</strong> 👋</p></div></div>
-<div class="dash-controls"><select class="select" id="scope"><option value="all">Semua konten</option><option value="paste">Pastelink</option><option value="code">Code</option><option value="channel">Channel</option><option value="group">Group</option></select></div></header>
-<section class="dash-stat-grid" id="contentStats">
-<a class="dash-stat cyan" href="my-products.html"><span><i class="fa-solid fa-layer-group"></i></span><small>Total dibuat</small><strong id="created">0</strong><em>Semua konten</em></a>
-<a class="dash-stat blue" href="my-products.html"><span><i class="fa-solid fa-eye"></i></span><small>Total view</small><strong id="views">0</strong><em>Aktivitas view</em></a>
-<a class="dash-stat violet" href="purchases.html"><span><i class="fa-solid fa-bag-shopping"></i></span><small>Total paid</small><strong id="sales">0</strong><em>Pembelian berhasil</em></a>
-<a class="dash-stat pink" href="wallet.html"><span><i class="fa-solid fa-wallet"></i></span><small>Pendapatan</small><strong id="revenue">Rp0</strong><em>Wallet income</em></a></section>
-<section class="count-grid">
-<a class="count-card" href="my-products.html?type=link"><i class="fa-solid fa-link"></i><b id="totalLink">0</b><small>Total Link</small></a>
-<a class="count-card" href="my-products.html?type=code"><i class="fa-solid fa-code"></i><b id="totalCode">0</b><small>Total Code</small></a>
-<a class="count-card" href="my-products.html?type=channel"><i class="fa-brands fa-telegram"></i><b id="totalChannel">0</b><small>Total Channel</small></a></section>
-<section class="dash-two">
-<div class="panel"><div class="panel-head"><div><h2>Interaksi</h2><p>Ringkasan engagement akun</p></div></div><div class="circle-stats" id="interactions"></div></div>
-<div class="panel"><div class="panel-head"><div><h2>Performa</h2><p>30 hari terakhir · mengikuti database</p></div><span class="period-badge">30 Hari</span></div>
-<div class="legend"><span><i></i> Views</span><span><i></i> Paid</span><span><i></i> Share</span></div><div class="chart-fixed" id="chart"></div></div></section>
-<section class="dash-two"><div class="panel"><div class="panel-head"><div><h2>Recent content</h2><p>Konten terbaru kamu</p></div><a class="mini-btn" href="my-products.html">Lihat semua</a></div><div class="recent-list" id="recentLinks"></div></div>
-<div class="panel"><div class="panel-head"><div><h2>Aktivitas</h2><p>Event terbaru</p></div><a class="mini-btn" href="notifications.html">Notifikasi</a></div><div id="activity" class="activity-list"></div></div></section>
-</div></main><div id="toast"></div><script src="js/dashboard.js?v=20260904"></script><script src="js/site-shell.js?v=20260904"></script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="color-scheme" content="light dark">
+  <!-- =====================================================
+       THEME PRELOAD
+       ===================================================== -->
+  <script src="js/theme-preload.js"></script>
+  <!-- =====================================================
+       FONTS
+       ===================================================== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Dashboard — PasTele</title>
+  <!-- =====================================================
+       CORE CONFIGURATION
+       ===================================================== -->
+  <script src="/js/config.js?v=20260831"></script>
+  <script src="/js/supabase.js?v=20260831"></script>
+  <!-- =====================================================
+       AUTHENTICATION
+       ===================================================== -->
+  <script src="/js/auth.js"></script>
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+  <script src="/js/navbar.js?v=20260903-fix"></script>
+  <!-- =====================================================
+       FONT AWESOME
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+  <!-- =====================================================
+       STYLES
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260904"
+  >
+  <link
+    rel="stylesheet"
+    href="css/dashboard.css?v=20260904"
+  >
+</head>
+<body class="app-page dashboard-page">
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+  <div id="navbar"></div>
+  <!-- =====================================================
+       DASHBOARD
+       ===================================================== -->
+  <main class="dashboard-fixed">
+    <div class="dash-container">
+      <!-- ===================================================
+           DASHBOARD HEADER
+           =================================================== -->
+      <header class="dash-head">
+        <div class="dash-title">
+          <div
+            class="dash-logo"
+            aria-hidden="true"
+          >
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <div>
+            <span class="eyebrow">
+              WORKSPACE
+            </span>
+            <h1>
+              Dashboard
+            </h1>
+            <p>
+              Halo,
+              <strong id="helloName">User</strong>
+              👋
+            </p>
+          </div>
+        </div>
+        <!-- =================================================
+             CONTENT FILTER
+             ================================================= -->
+        <div class="dash-controls">
+          <label
+            class="sr-only"
+            for="scope"
+          >
+            Filter konten
+          </label>
+          <select
+            class="select"
+            id="scope"
+            name="scope"
+          >
+            <option value="all">
+              Semua konten
+            </option>
+            <option value="paste">
+              Pastelink
+            </option>
+            <option value="code">
+              Code
+            </option>
+            <option value="channel">
+              Channel
+            </option>
+            <option value="group">
+              Group
+            </option>
+          </select>
+        </div>
+      </header>
+      <!-- ===================================================
+           MAIN STATISTICS
+           =================================================== -->
+      <section
+        class="dash-stat-grid"
+        id="contentStats"
+        aria-label="Statistik dashboard"
+      >
+        <!-- Total Created -->
+        <a
+          class="dash-stat cyan"
+          href="my-products.html"
+        >
+          <span aria-hidden="true">
+            <i class="fa-solid fa-layer-group"></i>
+          </span>
+          <small>
+            Total dibuat
+          </small>
+          <strong id="created">
+            0
+          </strong>
+          <em>
+            Semua konten
+          </em>
+        </a>
+        <!-- Total Views -->
+        <a
+          class="dash-stat blue"
+          href="my-products.html"
+        >
+          <span aria-hidden="true">
+            <i class="fa-solid fa-eye"></i>
+          </span>
+          <small>
+            Total view
+          </small>
+          <strong id="views">
+            0
+          </strong>
+          <em>
+            Aktivitas view
+          </em>
+        </a>
+        <!-- Total Paid -->
+        <a
+          class="dash-stat violet"
+          href="purchases.html"
+        >
+          <span aria-hidden="true">
+            <i class="fa-solid fa-bag-shopping"></i>
+          </span>
+          <small>
+            Total paid
+          </small>
+          <strong id="sales">
+            0
+          </strong>
+          <em>
+            Pembelian berhasil
+          </em>
+        </a>
+        <!-- Revenue -->
+        <a
+          class="dash-stat pink"
+          href="wallet.html"
+        >
+          <span aria-hidden="true">
+            <i class="fa-solid fa-wallet"></i>
+          </span>
+          <small>
+            Pendapatan
+          </small>
+          <strong id="revenue">
+            Rp0
+          </strong>
+          <em>
+            Wallet income
+          </em>
+        </a>
+      </section>
+      <!-- ===================================================
+           CONTENT COUNTERS
+           =================================================== -->
+      <section
+        class="count-grid"
+        aria-label="Jumlah konten"
+      >
+        <a
+          class="count-card"
+          href="my-products.html?type=link"
+        >
+          <i
+            class="fa-solid fa-link"
+            aria-hidden="true"
+          ></i>
+          <b id="totalLink">
+            0
+          </b>
+          <small>
+            Total Link
+          </small>
+        </a>
+        <a
+          class="count-card"
+          href="my-products.html?type=code"
+        >
+          <i
+            class="fa-solid fa-code"
+            aria-hidden="true"
+          ></i>
+          <b id="totalCode">
+            0
+          </b>
+          <small>
+            Total Code
+          </small>
+        </a>
+        <a
+          class="count-card"
+          href="my-products.html?type=channel"
+        >
+          <i
+            class="fa-brands fa-telegram"
+            aria-hidden="true"
+          ></i>
+          <b id="totalChannel">
+            0
+          </b>
+          <small>
+            Total Channel
+          </small>
+        </a>
+      </section>
+      <!-- ===================================================
+           INTERACTION + PERFORMANCE
+           =================================================== -->
+      <section class="dash-two">
+        <!-- Interaction -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>
+                Interaksi
+              </h2>
+              <p>
+                Ringkasan engagement akun
+              </p>
+            </div>
+          </div>
+          <div
+            class="circle-stats"
+            id="interactions"
+          ></div>
+        </div>
+        <!-- Performance -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>
+                Performa
+              </h2>
+              <p>
+                30 hari terakhir · mengikuti database
+              </p>
+            </div>
+            <span class="period-badge">
+              30 Hari
+            </span>
+          </div>
+          <div
+            class="legend"
+            aria-label="Legenda grafik"
+          >
+            <span>
+              <i aria-hidden="true"></i>
+              Views
+            </span>
+            <span>
+              <i aria-hidden="true"></i>
+              Paid
+            </span>
+            <span>
+              <i aria-hidden="true"></i>
+              Share
+            </span>
+          </div>
+          <div
+            class="chart-fixed"
+            id="chart"
+            aria-label="Grafik performa"
+          ></div>
+        </div>
+      </section>
+      <!-- ===================================================
+           RECENT CONTENT + ACTIVITY
+           =================================================== -->
+      <section class="dash-two">
+        <!-- Recent Content -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>
+                Recent content
+              </h2>
+              <p>
+                Konten terbaru kamu
+              </p>
+            </div>
+            <a
+              class="mini-btn"
+              href="my-products.html"
+            >
+              <i
+                class="fa-solid fa-arrow-up-right-from-square"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Lihat semua
+              </span>
+            </a>
+          </div>
+          <div
+            class="recent-list"
+            id="recentLinks"
+          ></div>
+        </div>
+        <!-- Activity -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>
+                Aktivitas
+              </h2>
+              <p>
+                Event terbaru
+              </p>
+            </div>
+            <a
+              class="mini-btn"
+              href="notifications.html"
+            >
+              <i
+                class="fa-solid fa-bell"
+                aria-hidden="true"
+              ></i>
+              <span>
+                Notifikasi
+              </span>
+            </a>
+          </div>
+          <div
+            id="activity"
+            class="activity-list"
+          ></div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+  <div
+    id="toast"
+    role="alert"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+  <!-- =====================================================
+       DASHBOARD JS
+       ===================================================== -->
+  <script src="js/dashboard.js?v=20260904"></script>
+  <!-- =====================================================
+       SITE SHELL
+       ===================================================== -->
+  <script src="js/site-shell.js?v=20260904"></script>
+</body>
+</html>
