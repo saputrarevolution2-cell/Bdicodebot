@@ -1,7 +1,6 @@
 /* =========================================================
-   PasTele — LOGIN
-   Canonical /js/login.js
-   Single floating toast notification system
+   PasTele — /js/login.js
+   Login logic + SINGLE floating toast notification
    ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
   /* =======================================================
@@ -18,44 +17,40 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentEmail = "";
   /* =======================================================
      TOAST
-     SATU-SATUNYA SISTEM NOTIFIKASI
      ======================================================= */
   let toastTimer = null;
   function toast(message, type = "error") {
     if (!toastElement) {
-      console.warn(`[${type}] ${message}`);
+      console.log(`[${type}] ${message}`);
       return;
     }
     clearTimeout(toastTimer);
     toastElement.textContent = String(message || "");
-    /*
-     * login.css menangani:
-     * .show
-     * .active
-     * .visible
-     */
     toastElement.className = `show ${type}`;
     toastTimer = setTimeout(() => {
       toastElement.className = "";
       toastElement.textContent = "";
     }, 5000);
   }
+  /* =======================================================
+     ERROR
+     SEMUA ERROR SEKARANG KE FLOATING TOAST
+     ======================================================= */
   function showError(message) {
-    toast(message, "error");
-  }
-  function showSuccess(message) {
-    toast(message, "success");
+    toast(
+      message || "Terjadi kesalahan.",
+      "error"
+    );
   }
   /* =======================================================
-     ESCAPE HTML
+     SUCCESS
+     SEMUA SUCCESS KE FLOATING TOAST
      ======================================================= */
-  function escapeHTML(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  function showSuccess(message) {
+    toast(
+      message || "Berhasil.",
+      "success"
+    );
   }
   /* =======================================================
      SUPABASE CHECK
@@ -71,12 +66,12 @@ document.addEventListener("DOMContentLoaded", () => {
      ======================================================= */
   step1?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const value = identifier?.value.trim() || "";
+    const value = identifier.value.trim();
     if (!value) {
       showError(
         "Masukkan username atau Gmail terlebih dahulu."
       );
-      identifier?.focus();
+      identifier.focus();
       return;
     }
     const btn = step1.querySelector(
@@ -90,39 +85,28 @@ document.addEventListener("DOMContentLoaded", () => {
       Memeriksa...
     `;
     try {
-      /* ================================================
-         CEK AKUN
-         ================================================ */
-      if (
-        !window.Auth ||
-        typeof Auth.lookup !== "function"
-      ) {
-        throw new Error(
-          "Sistem autentikasi belum siap."
-        );
-      }
+      /* =================================================
+         JANGAN UBAH Auth.lookup()
+         ================================================= */
       const found = await Auth.lookup(value);
       console.log(
         "LOGIN LOOKUP:",
         found
       );
-      /* ================================================
+      /* =================================================
          AKUN TIDAK DITEMUKAN
-         ================================================ */
-      if (
-        !found ||
-        !found.auth_email
-      ) {
+         ================================================= */
+      if (!found || !found.auth_email) {
         showError(
           "Akun tidak ditemukan. Periksa kembali username atau Gmail kamu."
         );
-        step2?.classList.add("hidden");
+        step2.classList.add("hidden");
         currentEmail = "";
         return;
       }
-      /* ================================================
+      /* =================================================
          AKUN DIBLOKIR
-         ================================================ */
+         ================================================= */
       if (
         found.is_banned === true ||
         String(found.status || "").toLowerCase() === "banned"
@@ -130,28 +114,30 @@ document.addEventListener("DOMContentLoaded", () => {
         showError(
           "Akun ini sedang diblokir dan tidak dapat digunakan untuk login."
         );
-        step2?.classList.add("hidden");
+        step2.classList.add("hidden");
         currentEmail = "";
         return;
       }
-      /* ================================================
+      /* =================================================
          AKUN DITEMUKAN
-         ================================================ */
+         ================================================= */
       currentEmail =
         String(found.auth_email).trim();
+      /*
+       * Tidak lagi memakai accountInfo.
+       * Notifikasi hanya floating.
+       */
       showSuccess(
         "Akun ditemukan ✓"
       );
-      /* ================================================
-         PINDAH KE STEP PASSWORD
-         ================================================ */
+      /* =================================================
+         PINDAH KE PASSWORD
+         ================================================= */
       step1.classList.add("hidden");
-      step2?.classList.remove("hidden");
-      if (password) {
-        password.value = "";
-      }
+      step2.classList.remove("hidden");
+      password.value = "";
       setTimeout(() => {
-        password?.focus();
+        password.focus();
       }, 100);
     } catch (err) {
       console.error(
@@ -178,17 +164,16 @@ document.addEventListener("DOMContentLoaded", () => {
         "Silakan periksa akun terlebih dahulu."
       );
       step2.classList.add("hidden");
-      step1?.classList.remove("hidden");
-      identifier?.focus();
+      step1.classList.remove("hidden");
+      identifier.focus();
       return;
     }
-    const pass =
-      password?.value || "";
+    const pass = password.value;
     if (!pass) {
       showError(
         "Masukkan kata sandi."
       );
-      password?.focus();
+      password.focus();
       return;
     }
     const btn = step2.querySelector(
@@ -206,14 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
         "LOGIN EMAIL:",
         currentEmail
       );
-      if (
-        !window.Auth ||
-        typeof Auth.login !== "function"
-      ) {
-        throw new Error(
-          "Sistem autentikasi belum siap."
-        );
-      }
+      /*
+       * Auth.login tetap menggunakan
+       * email hasil Auth.lookup()
+       */
       await Auth.login(
         currentEmail,
         pass
@@ -221,9 +202,9 @@ document.addEventListener("DOMContentLoaded", () => {
       showSuccess(
         "Login berhasil ✓"
       );
-      /* ================================================
+      /* =================================================
          REDIRECT
-         ================================================ */
+         ================================================= */
       setTimeout(() => {
         window.location.href =
           "dashboard.html";
@@ -245,22 +226,14 @@ document.addEventListener("DOMContentLoaded", () => {
      GOOGLE LOGIN
      ======================================================= */
   google?.addEventListener("click", async () => {
+    google.disabled = true;
     const oldHTML =
       google.innerHTML;
-    google.disabled = true;
     google.innerHTML = `
       <i class="fa-solid fa-spinner fa-spin"></i>
       Menghubungkan...
     `;
     try {
-      if (
-        !window.Auth ||
-        typeof Auth.google !== "function"
-      ) {
-        throw new Error(
-          "Login Google belum tersedia."
-        );
-      }
       await Auth.google();
     } catch (err) {
       console.error(
@@ -282,34 +255,15 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const value =
       currentEmail ||
-      identifier?.value.trim() ||
-      "";
+      identifier.value.trim();
     if (!value) {
       showError(
         "Masukkan username atau Gmail terlebih dahulu."
       );
-      identifier?.focus();
+      identifier.focus();
       return;
     }
-    const originalHTML =
-      forgot.innerHTML;
-    forgot.style.pointerEvents = "none";
-    forgot.innerHTML = `
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      Mengirim...
-    `;
     try {
-      /* ================================================
-         CEK AKUN
-         ================================================ */
-      if (
-        !window.Auth ||
-        typeof Auth.lookup !== "function"
-      ) {
-        throw new Error(
-          "Sistem autentikasi belum siap."
-        );
-      }
       const found =
         await Auth.lookup(value);
       if (!found?.auth_email) {
@@ -318,20 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         return;
       }
-      /* ================================================
-         SUPABASE RESET PASSWORD
-         ================================================ */
-      if (
-        !window.sb?.auth ||
-        typeof sb.auth.resetPasswordForEmail !== "function"
-      ) {
-        throw new Error(
-          "Supabase Auth belum siap."
-        );
-      }
-      const {
-        error
-      } =
+      const { error } =
         await sb.auth.resetPasswordForEmail(
           found.auth_email,
           {
@@ -342,9 +283,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (error) {
         throw error;
       }
-      /* ================================================
-         SUCCESS
-         ================================================ */
       showSuccess(
         "Link reset password sudah dikirim. Periksa inbox Gmail kamu."
       );
@@ -357,16 +295,12 @@ document.addEventListener("DOMContentLoaded", () => {
         err?.message ||
         "Gagal mengirim reset password."
       );
-    } finally {
-      forgot.style.pointerEvents = "";
-      forgot.innerHTML = originalHTML;
     }
   });
   /* =======================================================
      TOGGLE PASSWORD
      ======================================================= */
   toggle?.addEventListener("click", () => {
-    if (!password) return;
     const isPassword =
       password.type === "password";
     password.type =
@@ -379,12 +313,6 @@ document.addEventListener("DOMContentLoaded", () => {
         : '<i class="fa-solid fa-eye"></i>';
     toggle.setAttribute(
       "aria-label",
-      isPassword
-        ? "Sembunyikan kata sandi"
-        : "Tampilkan kata sandi"
-    );
-    toggle.setAttribute(
-      "title",
       isPassword
         ? "Sembunyikan kata sandi"
         : "Tampilkan kata sandi"
