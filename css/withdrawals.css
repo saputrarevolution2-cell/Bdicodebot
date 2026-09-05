@@ -1,56 +1,105 @@
 /* =========================================================
    PasTele — Withdrawals
    Clean / Premium / App-like
+   Responsive / Schedule Ready
    ========================================================= */
+
 .withdrawals-page {
     --wd-bg: #f7fafc;
     --wd-card: #ffffff;
     --wd-text: #102331;
     --wd-muted: #7d909d;
+
     --wd-border: rgba(15, 35, 52, .075);
     --wd-soft-border: rgba(15, 35, 52, .055);
+
     --wd-primary: #229ed9;
     --wd-primary-soft: rgba(34, 158, 217, .10);
+
     --wd-success: #22a66f;
     --wd-success-soft: rgba(34, 166, 111, .10);
+
     --wd-warning: #d79c22;
     --wd-warning-soft: rgba(215, 156, 34, .11);
+
     --wd-danger: #d95763;
     --wd-danger-soft: rgba(217, 87, 99, .10);
+
     --wd-shadow: 0 10px 35px rgba(15, 35, 52, .045);
 }
+
+
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+
 html[data-theme="dark"] .withdrawals-page,
 html.theme-dark .withdrawals-page,
 body.theme-dark.withdrawals-page {
+
     --wd-bg: #071017;
     --wd-card: #0c171f;
     --wd-text: #edf5f8;
     --wd-muted: #8da0ab;
+
     --wd-border: rgba(255, 255, 255, .075);
     --wd-soft-border: rgba(255, 255, 255, .055);
+
     --wd-primary: #35b5ef;
     --wd-primary-soft: rgba(53, 181, 239, .11);
+
     --wd-success: #45c98d;
     --wd-success-soft: rgba(69, 201, 141, .11);
+
     --wd-warning: #e5b54b;
     --wd-warning-soft: rgba(229, 181, 75, .11);
+
     --wd-danger: #ef7180;
     --wd-danger-soft: rgba(239, 113, 128, .11);
+
     --wd-shadow: 0 12px 40px rgba(0, 0, 0, .18);
 }
+
+
 /* =========================================================
-   Layout
+   GLOBAL
    ========================================================= */
+
+.withdrawals-page * {
+    box-sizing: border-box;
+}
+
+.withdrawals-page button,
+.withdrawals-page input,
+.withdrawals-page select {
+    font: inherit;
+}
+
+.withdrawals-page button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
 .withdrawals-section {
     min-height: calc(100vh - 80px);
     background: var(--wd-bg);
 }
+
 .withdrawals-container {
+    width: 100%;
     max-width: 1120px;
+    margin: 0 auto;
 }
+
+
 /* =========================================================
-   Header
+   HEADER
    ========================================================= */
+
 .withdraw-header {
     display: flex;
     align-items: flex-end;
@@ -58,725 +107,1597 @@ body.theme-dark.withdrawals-page {
     gap: 18px;
     margin-bottom: 18px;
 }
+
 .withdraw-heading {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
+
 .withdraw-heading-icon {
     width: 43px;
     height: 43px;
     flex: 0 0 43px;
+
     display: grid;
     place-items: center;
-    border-radius: 13px;
+
     color: var(--wd-primary);
     background: var(--wd-primary-soft);
+
+    border-radius: 13px;
 }
+
+.withdraw-heading-icon i {
+    font-size: 17px;
+}
+
 .withdraw-eyebrow {
     display: block;
     margin-bottom: 4px;
+
     color: var(--wd-primary);
+
     font-size: 9px;
     font-weight: 800;
     letter-spacing: .12em;
 }
+
 .withdraw-heading h1 {
     margin: 0;
+
     color: var(--wd-text);
+
     font-size: clamp(25px, 4vw, 34px);
     line-height: 1.15;
     letter-spacing: -.025em;
 }
+
 .withdraw-heading p {
     margin: 5px 0 0;
+
     color: var(--wd-muted);
+
     font-size: 11px;
+    line-height: 1.45;
 }
+
 .withdraw-settings {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
+
     padding: 9px 12px;
+
     color: var(--wd-muted);
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 10px;
+
     font-size: 10.5px;
     font-weight: 650;
+
     text-decoration: none;
-    transition: .18s ease;
+
+    transition:
+        color .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
 }
+
 .withdraw-settings:hover {
     color: var(--wd-primary);
     border-color: rgba(34, 158, 217, .18);
+    transform: translateY(-1px);
 }
+
+
 /* =========================================================
-   Balance
+   BALANCE
    ========================================================= */
+
 .balance-panel {
     position: relative;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     min-height: 145px;
+
     padding: 23px 25px;
+
     overflow: hidden;
+
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 18px;
+
     box-shadow: var(--wd-shadow);
 }
+
 .balance-panel::after {
     position: absolute;
+
     right: -55px;
     top: -65px;
+
     width: 190px;
     height: 190px;
+
     border: 35px solid var(--wd-primary-soft);
     border-radius: 50%;
+
     content: "";
+
     pointer-events: none;
 }
+
 .balance-main {
     position: relative;
     z-index: 1;
+
+    min-width: 0;
 }
+
 .balance-label {
     display: flex;
     align-items: center;
     gap: 7px;
+
     color: var(--wd-muted);
+
     font-size: 10.5px;
     font-weight: 650;
 }
+
 .balance-label i {
     color: var(--wd-primary);
 }
+
 .balance-main > strong {
     display: block;
+
     margin-top: 7px;
+
     color: var(--wd-text);
+
     font-size: clamp(28px, 5vw, 40px);
     line-height: 1.1;
+
     letter-spacing: -.035em;
 }
+
 .balance-note {
     display: block;
+
     margin-top: 7px;
+
     color: var(--wd-muted);
+
     font-size: 10px;
 }
+
 .balance-action {
     position: relative;
     z-index: 1;
 }
+
 .balance-action a {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+
     padding: 8px 11px;
+
     color: var(--wd-muted);
     background: var(--wd-bg);
+
     border: 1px solid var(--wd-soft-border);
     border-radius: 9px;
+
     font-size: 10px;
     text-decoration: none;
+
+    transition: .18s ease;
 }
+
 .balance-action a:hover {
     color: var(--wd-primary);
 }
+
+
 /* =========================================================
-   Statistics
+   STATISTICS
    ========================================================= */
+
 .withdraw-stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+
     gap: 9px;
+
     margin: 9px 0;
 }
+
 .withdraw-stat {
     display: flex;
     align-items: center;
     gap: 10px;
+
     min-width: 0;
+
     padding: 12px 13px;
+
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 13px;
 }
+
 .stat-icon {
     width: 34px;
     height: 34px;
     flex: 0 0 34px;
+
     display: grid;
     place-items: center;
+
     border-radius: 10px;
 }
+
 .stat-icon.pending {
     color: var(--wd-warning);
     background: var(--wd-warning-soft);
 }
+
 .stat-icon.success {
     color: var(--wd-success);
     background: var(--wd-success-soft);
 }
+
 .stat-icon.limit {
     color: var(--wd-primary);
     background: var(--wd-primary-soft);
 }
+
 .withdraw-stat small {
     display: block;
+
     overflow: hidden;
+
     color: var(--wd-muted);
+
     font-size: 9.5px;
+
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .withdraw-stat strong {
     display: block;
+
     margin-top: 2px;
+
     overflow: hidden;
+
     color: var(--wd-text);
+
     font-size: 13px;
+
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+
 /* =========================================================
-   Daily limit
+   DAILY LIMIT
    ========================================================= */
+
 .daily-limit {
     padding: 13px 15px;
+
     margin-bottom: 13px;
+
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 13px;
 }
+
 .daily-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
+
     margin-bottom: 8px;
 }
+
 .daily-top > div {
     display: flex;
     align-items: center;
+
     gap: 8px;
+
+    min-width: 0;
 }
+
 .daily-top span {
     color: var(--wd-text);
+
     font-size: 10.5px;
     font-weight: 700;
 }
+
 .daily-top span i {
     margin-right: 4px;
+
     color: var(--wd-primary);
 }
+
 .daily-top small {
     color: var(--wd-muted);
+
     font-size: 9.5px;
 }
+
 .daily-top b {
+    flex: 0 0 auto;
+
     color: var(--wd-primary);
+
     font-size: 10px;
 }
+
 .progress {
     height: 6px;
+
     overflow: hidden;
+
     background: var(--wd-bg);
+
     border-radius: 99px;
 }
+
 .progress i {
     display: block;
+
     width: 0;
     height: 100%;
+
     background: var(--wd-success);
+
     border-radius: inherit;
-    transition: width .35s ease, background .2s ease;
+
+    transition:
+        width .35s ease,
+        background .2s ease;
 }
+
 .progress i[data-level="half"] {
     background: var(--wd-warning);
 }
+
 .progress i[data-level="full"] {
     background: var(--wd-danger);
 }
+
+
 /* =========================================================
-   Withdraw layout
+   WITHDRAW LAYOUT
    ========================================================= */
+
 .withdraw-layout {
     display: grid;
-    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+
+    grid-template-columns:
+        minmax(0, .9fr)
+        minmax(0, 1.1fr);
+
     gap: 10px;
 }
+
 .withdraw-box {
+    position: relative;
+
     min-width: 0;
+
     padding: 17px;
+
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 16px;
+
     box-shadow: var(--wd-shadow);
+
+    transition:
+        border-color .2s ease,
+        opacity .2s ease;
 }
+
+
+/* =========================================================
+   BOX HEADING
+   ========================================================= */
+
 .box-heading {
     display: flex;
     align-items: center;
+
     gap: 10px;
+
+    min-width: 0;
 }
+
+.box-heading > div:last-child {
+    min-width: 0;
+}
+
 .box-heading-icon {
     width: 38px;
     height: 38px;
     flex: 0 0 38px;
+
     display: grid;
     place-items: center;
+
     border-radius: 11px;
 }
+
 .box-heading-icon.instant {
     color: var(--wd-warning);
     background: var(--wd-warning-soft);
 }
+
 .box-heading-icon.manual {
     color: var(--wd-primary);
     background: var(--wd-primary-soft);
 }
+
 .box-heading h2 {
     margin: 0;
+
     color: var(--wd-text);
+
     font-size: 14px;
 }
+
 .box-heading p {
     margin: 3px 0 0;
+
     color: var(--wd-muted);
+
+    font-size: 9.5px;
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   WITHDRAW STATUS
+   ========================================================= */
+
+.withdraw-status {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    min-width: 0;
+
+    margin-top: 12px;
+
+    padding: 9px 10px;
+
+    border: 1px solid transparent;
+    border-radius: 10px;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        color .2s ease;
+}
+
+.withdraw-status > i {
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 8px;
+}
+
+.withdraw-status > div {
+    min-width: 0;
+}
+
+.withdraw-status strong {
+    display: block;
+
+    color: var(--wd-text);
+
+    font-size: 9.5px;
+    line-height: 1.3;
+}
+
+.withdraw-status small {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--wd-muted);
+
+    font-size: 8.5px;
+    line-height: 1.35;
+}
+
+
+/* =========================================================
+   INSTANT STATUS
+   ========================================================= */
+
+.instant-status {
+    color: var(--wd-success);
+
+    background: var(--wd-success-soft);
+    border-color: rgba(34, 166, 111, .10);
+}
+
+.instant-status > i {
+    color: var(--wd-success);
+    background: rgba(34, 166, 111, .10);
+}
+
+
+/* =========================================================
+   MANUAL STATUS — DEFAULT / OPEN
+   ========================================================= */
+
+.manual-status {
+    color: var(--wd-primary);
+
+    background: var(--wd-primary-soft);
+    border-color: rgba(34, 158, 217, .10);
+}
+
+.manual-status > i {
+    color: var(--wd-primary);
+    background: rgba(34, 158, 217, .10);
+}
+
+
+/* =========================================================
+   MANUAL STATUS — OPEN
+   ========================================================= */
+
+.manual-status[data-state="open"] {
+    color: var(--wd-success);
+
+    background: var(--wd-success-soft);
+    border-color: rgba(34, 166, 111, .12);
+}
+
+.manual-status[data-state="open"] > i {
+    color: var(--wd-success);
+    background: rgba(34, 166, 111, .10);
+}
+
+
+/* =========================================================
+   MANUAL STATUS — CLOSED
+   ========================================================= */
+
+.manual-status[data-state="closed"] {
+    color: var(--wd-danger);
+
+    background: var(--wd-danger-soft);
+    border-color: rgba(217, 87, 99, .13);
+}
+
+.manual-status[data-state="closed"] > i {
+    color: var(--wd-danger);
+    background: rgba(217, 87, 99, .10);
+}
+
+
+/* =========================================================
+   MANUAL STATUS — CHECKING
+   ========================================================= */
+
+.manual-status[data-state="checking"] {
+    color: var(--wd-warning);
+
+    background: var(--wd-warning-soft);
+    border-color: rgba(215, 156, 34, .12);
+}
+
+.manual-status[data-state="checking"] > i {
+    color: var(--wd-warning);
+    background: rgba(215, 156, 34, .10);
+}
+
+
+/* =========================================================
+   MANUAL CLOSED BOX
+   ========================================================= */
+
+.manual-box.manual-closed {
+    border-color: rgba(217, 87, 99, .14);
+}
+
+.manual-box.manual-closed .withdraw-form {
+    opacity: .58;
+}
+
+
+/* =========================================================
+   MANUAL CLOSED NOTICE
+   ========================================================= */
+
+.manual-closed-notice {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    margin-top: 10px;
+    padding: 10px;
+
+    color: var(--wd-danger);
+
+    background: var(--wd-danger-soft);
+
+    border: 1px solid rgba(217, 87, 99, .12);
+    border-radius: 10px;
+
+    animation: wdNoticeIn .18s ease;
+}
+
+.manual-closed-icon {
+    width: 29px;
+    height: 29px;
+    flex: 0 0 29px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--wd-danger);
+
+    background: rgba(217, 87, 99, .10);
+
+    border-radius: 8px;
+}
+
+.manual-closed-icon i {
+    font-size: 11px;
+}
+
+.manual-closed-content {
+    min-width: 0;
+}
+
+.manual-closed-content strong {
+    display: block;
+
+    color: var(--wd-danger);
+
     font-size: 9.5px;
 }
+
+.manual-closed-content span {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--wd-muted);
+
+    font-size: 8.5px;
+    line-height: 1.4;
+}
+
+@keyframes wdNoticeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-3px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
 /* =========================================================
-   Rules
+   RULES
    ========================================================= */
+
 .rule-info {
     display: flex;
     flex-wrap: wrap;
+
     gap: 5px;
+
     margin: 13px 0 15px;
 }
+
 .rule-info div {
     display: inline-flex;
     align-items: center;
+
     gap: 5px;
+
     padding: 5px 7px;
+
     color: var(--wd-muted);
     background: var(--wd-bg);
+
     border: 1px solid var(--wd-soft-border);
     border-radius: 7px;
+
     font-size: 8.5px;
+    line-height: 1.35;
 }
+
+.rule-info div span {
+    min-width: 0;
+}
+
 .rule-info i {
+    flex: 0 0 auto;
+
     color: var(--wd-primary);
 }
+
+
 /* =========================================================
-   Instant
+   INSTANT
    ========================================================= */
+
 .field-label {
     margin-bottom: 7px;
+
     color: var(--wd-text);
+
     font-size: 10px;
     font-weight: 700;
 }
+
 .instant-actions {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
     gap: 6px;
 }
+
 .instant-choice {
     min-width: 0;
+
     padding: 9px 5px;
+
     color: var(--wd-muted);
     background: var(--wd-bg);
+
     border: 1px solid var(--wd-soft-border);
     border-radius: 9px;
+
     font-size: 9px;
     font-weight: 700;
+
     cursor: pointer;
-    transition: .18s ease;
+
+    transition:
+        color .18s ease,
+        background .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
 }
+
 .instant-choice:hover {
     color: var(--wd-primary);
+
     border-color: rgba(34, 158, 217, .18);
+
+    transform: translateY(-1px);
 }
+
 .instant-choice.selected {
     color: var(--wd-primary);
+
     background: var(--wd-primary-soft);
+
     border-color: rgba(34, 158, 217, .28);
 }
+
 .instant-choice i {
     display: block;
+
     margin-bottom: 4px;
+
     font-size: 10px;
 }
+
+.instant-choice:disabled {
+    opacity: .45;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   SELECTED AMOUNT
+   ========================================================= */
+
 .selected-amount {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
+
     padding: 10px 11px;
+
     margin-top: 9px;
+
     background: var(--wd-bg);
+
     border-radius: 9px;
 }
+
 .selected-amount span {
     color: var(--wd-muted);
+
     font-size: 9.5px;
 }
+
 .selected-amount strong {
     color: var(--wd-text);
+
     font-size: 12px;
 }
+
+
 /* =========================================================
-   Saved methods
+   SAVED METHODS
    ========================================================= */
+
 .saved-methods {
     margin-bottom: 12px;
 }
+
 .saved-title {
     display: flex;
     align-items: center;
+
     gap: 6px;
+
     margin-bottom: 7px;
+
     color: var(--wd-text);
+
     font-size: 9.5px;
     font-weight: 700;
 }
+
 .saved-title i {
     color: var(--wd-primary);
 }
+
 .saved-method-list {
     display: grid;
+
     gap: 5px;
 }
+
 .saved-method {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 8px;
+
     width: 100%;
+
     padding: 8px 9px;
+
     color: var(--wd-text);
     text-align: left;
+
     background: var(--wd-bg);
+
     border: 1px solid var(--wd-soft-border);
     border-radius: 9px;
+
     cursor: pointer;
-    transition: .18s ease;
+
+    transition:
+        border-color .18s ease,
+        background .18s ease,
+        transform .18s ease;
 }
+
 .saved-method:hover,
 .saved-method.selected {
     border-color: rgba(34, 158, 217, .22);
+
     background: var(--wd-primary-soft);
+
+    transform: translateY(-1px);
 }
+
 .saved-method-main {
     min-width: 0;
 }
+
 .saved-method-main strong {
     display: block;
+
     overflow: hidden;
+
     font-size: 9.5px;
+
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .saved-method-main small {
     display: block;
+
     margin-top: 2px;
+
     overflow: hidden;
+
     color: var(--wd-muted);
+
     font-size: 8.5px;
+
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .saved-method > i {
+    flex: 0 0 auto;
+
     color: var(--wd-muted);
+
     font-size: 10px;
 }
+
+
 /* =========================================================
-   Form
+   FORM
    ========================================================= */
+
 .withdraw-form {
     display: grid;
+
     gap: 10px;
+
+    transition: opacity .2s ease;
 }
+
 .field {
     min-width: 0;
 }
+
 .field label {
     display: block;
+
     margin-bottom: 5px;
+
     color: var(--wd-text);
+
     font-size: 9.5px;
     font-weight: 700;
 }
+
 .field > small {
     display: block;
+
     margin-top: 4px;
+
     color: var(--wd-muted);
+
     font-size: 8.5px;
+    line-height: 1.35;
 }
+
+
+/* =========================================================
+   FORM GRID
+   ========================================================= */
+
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+
+    grid-template-columns:
+        1fr 1fr;
+
     gap: 8px;
 }
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
 .input-money {
     position: relative;
 }
+
 .input-money > span {
     position: absolute;
+
     top: 50%;
     left: 10px;
+
     z-index: 1;
+
     color: var(--wd-muted);
+
     font-size: 10px;
     font-weight: 700;
+
     transform: translateY(-50%);
+
+    pointer-events: none;
 }
+
 .input-money .input {
     padding-left: 32px;
 }
+
+.withdrawals-page .input,
+.withdrawals-page .select {
+    width: 100%;
+
+    min-height: 38px;
+
+    color: var(--wd-text);
+
+    background: var(--wd-bg);
+
+    border: 1px solid var(--wd-soft-border);
+    border-radius: 9px;
+
+    outline: none;
+
+    font-size: 10px;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+.withdrawals-page .input {
+    padding: 8px 10px;
+}
+
+.withdrawals-page .input::placeholder {
+    color: var(--wd-muted);
+
+    opacity: .72;
+}
+
+.withdrawals-page .input:focus,
+.withdrawals-page .select:focus {
+    border-color: rgba(34, 158, 217, .35);
+
+    box-shadow:
+        0 0 0 3px var(--wd-primary-soft);
+}
+
+.withdrawals-page .input:disabled,
+.withdrawals-page .select:disabled {
+    opacity: .55;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   SELECT
+   ========================================================= */
+
 .select-wrap {
     position: relative;
 }
+
 .select-wrap .select {
-    width: 100%;
     appearance: none;
-    padding-right: 32px;
+
+    padding: 8px 32px 8px 10px;
+
+    cursor: pointer;
 }
+
 .select-wrap > i {
     position: absolute;
+
     top: 50%;
     right: 11px;
+
     color: var(--wd-muted);
+
     font-size: 9px;
+
     pointer-events: none;
+
     transform: translateY(-50%);
 }
+
+
 /* =========================================================
-   Submit
+   FEE PREVIEW
    ========================================================= */
+
+.withdraw-fee-preview {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 7px;
+
+    padding: 9px;
+
+    background: var(--wd-bg);
+
+    border: 1px solid var(--wd-soft-border);
+    border-radius: 10px;
+}
+
+.withdraw-fee-preview > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    min-width: 0;
+}
+
+.withdraw-fee-preview span {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 5px;
+
+    min-width: 0;
+
+    color: var(--wd-muted);
+
+    font-size: 8.5px;
+}
+
+.withdraw-fee-preview span i {
+    flex: 0 0 auto;
+
+    color: var(--wd-primary);
+}
+
+.withdraw-fee-preview strong {
+    flex: 0 0 auto;
+
+    color: var(--wd-text);
+
+    font-size: 9.5px;
+
+    white-space: nowrap;
+}
+
+
+/* Fee increased state */
+.withdraw-fee-preview.fee-increased {
+    background: var(--wd-warning-soft);
+
+    border-color: rgba(215, 156, 34, .15);
+}
+
+.withdraw-fee-preview.fee-increased strong {
+    color: var(--wd-warning);
+}
+
+#manualFeeText.fee-increased,
+#withdrawFee.fee-increased {
+    color: var(--wd-warning);
+}
+
+
+/* =========================================================
+   SUBMIT
+   ========================================================= */
+
 .withdraw-submit {
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 7px;
+
     width: 100%;
+
     min-height: 39px;
+
     margin-top: 2px;
+
     border-radius: 10px;
+
     font-size: 10.5px;
     font-weight: 750;
+
     cursor: pointer;
-    transition: .18s ease;
+
+    transition:
+        filter .18s ease,
+        transform .18s ease,
+        opacity .18s ease,
+        background .18s ease;
 }
+
 .withdraw-submit.primary {
     color: #fff;
+
     background: var(--wd-primary);
+
     border: 1px solid var(--wd-primary);
 }
+
 .withdraw-submit.primary:hover {
     filter: brightness(.96);
+
     transform: translateY(-1px);
 }
+
+.withdraw-submit:active {
+    transform: translateY(0);
+}
+
 .withdraw-submit:disabled {
     opacity: .55;
+
     cursor: not-allowed;
+
     transform: none;
+
+    filter: none;
 }
+
 .withdraw-submit.loading {
     pointer-events: none;
 }
+
 .withdraw-submit.loading i {
     animation: withdrawSpin .8s linear infinite;
 }
+
 @keyframes withdrawSpin {
     to {
         transform: rotate(360deg);
     }
 }
+
+
 /* =========================================================
-   Admin request
+   ADMIN REQUEST
    ========================================================= */
+
 .admin-request {
     display: flex;
     align-items: center;
+
     gap: 11px;
+
     margin-top: 10px;
+
     padding: 12px 14px;
+
     background: var(--wd-primary-soft);
+
     border: 1px solid rgba(34, 158, 217, .10);
     border-radius: 13px;
 }
+
 .admin-request-icon {
     width: 34px;
     height: 34px;
     flex: 0 0 34px;
+
     display: grid;
     place-items: center;
+
     color: var(--wd-primary);
+
     background: var(--wd-card);
+
     border-radius: 10px;
 }
+
 .admin-request-content {
     min-width: 0;
+
     flex: 1;
 }
+
 .admin-request-content strong {
     display: block;
+
     color: var(--wd-text);
+
     font-size: 10.5px;
 }
+
 .admin-request-content p {
     margin: 3px 0 0;
+
     color: var(--wd-muted);
+
     font-size: 8.5px;
     line-height: 1.4;
 }
+
 .admin-request-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+
     gap: 6px;
+
     padding: 8px 10px;
+
     color: var(--wd-primary);
+
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 8px;
+
     font-size: 9px;
     font-weight: 700;
+
     white-space: nowrap;
+
     cursor: pointer;
+
+    transition:
+        color .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
 }
+
+.admin-request-btn:hover {
+    color: var(--wd-primary);
+
+    border-color: rgba(34, 158, 217, .22);
+
+    transform: translateY(-1px);
+}
+
+
 /* =========================================================
-   History
+   HISTORY
    ========================================================= */
+
 .history-panel {
     margin-top: 10px;
+
     overflow: hidden;
+
     background: var(--wd-card);
+
     border: 1px solid var(--wd-border);
     border-radius: 16px;
+
     box-shadow: var(--wd-shadow);
 }
+
 .history-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 12px;
+
     padding: 15px;
+
     border-bottom: 1px solid var(--wd-soft-border);
 }
+
 .history-heading > div {
     display: flex;
     align-items: center;
+
     gap: 9px;
+
+    min-width: 0;
 }
+
 .history-icon {
     width: 35px;
     height: 35px;
+    flex: 0 0 35px;
+
     display: grid;
     place-items: center;
+
     color: var(--wd-primary);
+
     background: var(--wd-primary-soft);
+
     border-radius: 10px;
 }
+
 .history-heading h2 {
     margin: 0;
+
     color: var(--wd-text);
+
     font-size: 13px;
 }
+
 .history-heading p {
     margin: 3px 0 0;
+
     color: var(--wd-muted);
+
     font-size: 8.5px;
 }
+
 .history-count {
+    flex: 0 0 auto;
+
     padding: 5px 7px;
+
     color: var(--wd-muted);
+
     background: var(--wd-bg);
+
     border-radius: 7px;
+
     font-size: 8.5px;
 }
+
+
 /* =========================================================
-   History rows
+   HISTORY ROWS
    ========================================================= */
+
 .history-list {
     padding: 4px 15px 8px;
 }
+
 .history-row {
     display: grid;
-    grid-template-columns: minmax(110px, 1.2fr) minmax(100px, 1fr) minmax(115px, 1.1fr) 75px 85px;
+
+    grid-template-columns:
+        minmax(110px, 1.2fr)
+        minmax(100px, 1fr)
+        minmax(115px, 1.1fr)
+        75px
+        85px;
+
     align-items: center;
+
     gap: 10px;
+
     padding: 11px 0;
+
     border-bottom: 1px solid var(--wd-soft-border);
 }
+
 .history-row:last-child {
     border-bottom: 0;
 }
+
 .history-date strong,
 .history-amount strong,
 .history-method strong {
     display: block;
+
     color: var(--wd-text);
+
     font-size: 9.5px;
 }
+
 .history-date small,
 .history-method small {
     display: block;
+
     margin-top: 3px;
+
     overflow: hidden;
+
     color: var(--wd-muted);
+
     font-size: 8px;
+
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .history-amount strong {
     font-size: 10.5px;
 }
+
 .history-type {
     color: var(--wd-muted);
+
     font-size: 8.5px;
+
     text-transform: uppercase;
 }
+
 .status-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     width: max-content;
+
     padding: 4px 6px;
+
     border-radius: 6px;
+
     font-size: 7.5px;
     font-weight: 750;
 }
+
 .status-badge.pending {
     color: var(--wd-warning);
+
     background: var(--wd-warning-soft);
 }
+
 .status-badge.processing {
     color: var(--wd-primary);
+
     background: var(--wd-primary-soft);
 }
+
 .status-badge.success {
     color: var(--wd-success);
+
     background: var(--wd-success-soft);
 }
+
 .status-badge.failed,
 .status-badge.cancelled,
 .status-badge.rejected {
     color: var(--wd-danger);
+
     background: var(--wd-danger-soft);
 }
+
 .ticket-code {
     overflow: hidden;
+
     color: var(--wd-muted);
+
     font-family: monospace;
     font-size: 8px;
+
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+
+/* =========================================================
+   LOADING / EMPTY / ERROR
+   ========================================================= */
+
 .history-loading,
 .history-empty,
 .history-error,
@@ -784,45 +1705,85 @@ body.theme-dark.withdrawals-page {
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 7px;
+
     color: var(--wd-muted);
+
     font-size: 9.5px;
 }
+
 .history-loading,
 .history-empty,
 .history-error {
     min-height: 110px;
 }
+
 .history-loading i,
 .inline-loading i {
     color: var(--wd-primary);
 }
+
 .history-error {
     flex-direction: column;
+
     padding: 20px;
+
     text-align: center;
 }
+
 .history-error strong {
     color: var(--wd-text);
+
     font-size: 11px;
 }
+
 .history-error span {
     max-width: 400px;
+
     line-height: 1.5;
 }
+
+
 /* =========================================================
-   Empty / hidden
+   TOAST
    ========================================================= */
+
+#toast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 22px;
+
+    z-index: 9999;
+
+    max-width: min(92vw, 420px);
+
+    pointer-events: none;
+
+    transform: translateX(-50%);
+}
+
+
+/* =========================================================
+   HIDDEN
+   ========================================================= */
+
 .hidden {
     display: none !important;
 }
+
+
 /* =========================================================
-   Responsive
+   RESPONSIVE — TABLET
    ========================================================= */
+
 @media (max-width: 900px) {
+
     .withdraw-layout {
         grid-template-columns: 1fr;
     }
+
     .history-row {
         grid-template-columns:
             minmax(105px, 1fr)
@@ -830,112 +1791,243 @@ body.theme-dark.withdrawals-page {
             minmax(105px, 1fr)
             70px;
     }
+
     .history-row > :nth-child(4) {
         display: none;
     }
 }
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
 @media (max-width: 650px) {
+
     .withdrawals-section {
         padding-top: 18px;
     }
+
     .withdraw-header {
         align-items: stretch;
+
         flex-direction: column;
+
         gap: 12px;
     }
+
     .withdraw-settings {
         justify-content: center;
     }
+
     .balance-panel {
         min-height: 135px;
+
         padding: 20px;
     }
+
     .balance-main > strong {
         font-size: 29px;
     }
+
     .balance-action {
         display: none;
     }
+
     .withdraw-stats {
         grid-template-columns: 1fr;
     }
+
     .withdraw-stat {
         padding: 10px 12px;
     }
+
     .instant-actions {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns:
+            repeat(3, 1fr);
     }
+
     .form-grid {
         grid-template-columns: 1fr;
     }
+
+    .withdraw-fee-preview {
+        grid-template-columns: 1fr;
+    }
+
     .admin-request {
         align-items: flex-start;
     }
+
     .admin-request-btn {
         align-self: center;
     }
+
     .history-heading {
         align-items: flex-start;
     }
+
     .history-list {
         padding: 4px 12px 8px;
     }
+
     .history-row {
-        grid-template-columns: 1fr auto;
+        grid-template-columns:
+            1fr
+            auto;
+
         gap: 7px 12px;
+
         padding: 12px 0;
     }
+
     .history-row > :nth-child(3) {
         grid-column: 1;
     }
+
     .history-row > :nth-child(5) {
         grid-column: 2;
         grid-row: 1;
     }
+
     .history-row > :nth-child(4) {
         display: block;
+
         grid-column: 2;
         grid-row: 2;
+
         text-align: right;
     }
+
     .ticket-code {
         grid-column: 1 / -1;
     }
 }
+
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+   ========================================================= */
+
 @media (max-width: 430px) {
+
     .withdraw-heading {
         align-items: flex-start;
     }
+
     .withdraw-heading-icon {
         width: 38px;
         height: 38px;
         flex-basis: 38px;
     }
+
     .withdraw-heading h1 {
         font-size: 25px;
     }
+
+    .withdraw-heading p {
+        font-size: 10px;
+    }
+
     .withdraw-box {
         padding: 14px;
     }
+
+    .box-heading {
+        align-items: flex-start;
+    }
+
+    .box-heading-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+
+    .rule-info {
+        flex-direction: column;
+    }
+
     .rule-info div {
         width: 100%;
     }
+
     .instant-actions {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, 1fr);
     }
+
     .daily-top > div {
         align-items: flex-start;
+
         flex-direction: column;
+
         gap: 3px;
     }
+
     .admin-request {
         flex-wrap: wrap;
     }
+
     .admin-request-content {
         flex-basis: calc(100% - 50px);
     }
+
     .admin-request-btn {
         width: 100%;
+
         justify-content: center;
+    }
+
+    .manual-closed-notice {
+        align-items: flex-start;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL DEVICES
+   ========================================================= */
+
+@media (max-width: 350px) {
+
+    .withdraw-box {
+        padding: 12px;
+    }
+
+    .instant-actions {
+        gap: 5px;
+    }
+
+    .instant-choice {
+        padding: 8px 4px;
+
+        font-size: 8px;
+    }
+
+    .withdraw-submit {
+        font-size: 9.5px;
+    }
+
+    .withdraw-fee-preview {
+        padding: 8px;
+    }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .withdrawals-page *,
+    .withdrawals-page *::before,
+    .withdrawals-page *::after {
+        scroll-behavior: auto !important;
+
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+
+        transition-duration: .01ms !important;
     }
 }
