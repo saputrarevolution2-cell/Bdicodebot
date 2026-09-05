@@ -1,0 +1,308 @@
+
+/* ============================================================
+   PasTele — SAAS FINAL UI SYSTEM
+   Unified visual layer. Loaded LAST on every page.
+   Clean / premium / responsive / light + dark.
+============================================================ */
+:root{
+  --saas-bg:#f6f8fb;
+  --saas-surface:#ffffff;
+  --saas-surface-2:#f8fafc;
+  --saas-surface-3:#f1f5f9;
+  --saas-text:#14212b;
+  --saas-heading:#0f1c26;
+  --saas-muted:#6f8190;
+  --saas-line:#e3e9ef;
+  --saas-line-strong:#d4dee6;
+  --saas-primary:#229ed9;
+  --saas-primary-2:#168bc0;
+  --saas-primary-soft:#eaf7fc;
+  --saas-success:#1f9d68;
+  --saas-warning:#b98112;
+  --saas-danger:#d95c67;
+  --saas-radius:16px;
+  --saas-radius-sm:12px;
+  --saas-shadow:0 8px 30px rgba(15,35,52,.055);
+  --saas-shadow-lg:0 18px 55px rgba(15,35,52,.085);
+  --saas-focus:0 0 0 4px rgba(34,158,217,.12);
+}
+html[data-theme="dark"],html.theme-dark,body.theme-dark{
+  --saas-bg:#07131c;
+  --saas-surface:#0c1b26;
+  --saas-surface-2:#10222e;
+  --saas-surface-3:#132936;
+  --saas-text:#dce8ee;
+  --saas-heading:#f5f9fb;
+  --saas-muted:#8ea4b3;
+  --saas-line:#1d3543;
+  --saas-line-strong:#294452;
+  --saas-primary:#2aa9e2;
+  --saas-primary-2:#51bce9;
+  --saas-primary-soft:rgba(42,169,226,.11);
+  --saas-shadow:0 10px 34px rgba(0,0,0,.18);
+  --saas-shadow-lg:0 22px 65px rgba(0,0,0,.27);
+  --saas-focus:0 0 0 4px rgba(42,169,226,.14);
+}
+html,body{min-height:100%}
+body.app-page{
+  background:
+    radial-gradient(circle at 0 0,rgba(34,158,217,.055),transparent 28%),
+    var(--saas-bg)!important;
+  color:var(--saas-text);
+}
+body.app-page h1,body.app-page h2,body.app-page h3,body.app-page h4{
+  color:var(--saas-heading);
+}
+body.app-page .container{
+  width:min(1180px,calc(100% - 40px));
+}
+body.app-page .section{
+  padding-top:28px;
+  padding-bottom:42px;
+}
+body.app-page .card,body.app-page .panel,body.app-page .market-panel,
+body.app-page .settings-card,body.app-page .wallet-panel,body.app-page .history-panel,
+body.app-page .create-form-panel,body.app-page .side-card,body.app-page .publish-card,
+body.app-page .payment-card,.admin-page .card,.admin-page .panel{
+  background:var(--saas-surface);
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius);
+  box-shadow:var(--saas-shadow);
+}
+body.app-page .card:hover,body.app-page .panel:hover{
+  border-color:var(--saas-line-strong);
+}
+body.app-page .btn{
+  min-height:42px;
+  border-radius:var(--saas-radius-sm);
+  border:1px solid var(--saas-line-strong);
+  background:var(--saas-surface);
+  color:var(--saas-text);
+  font-weight:700;
+  box-shadow:none;
+}
+body.app-page .btn:hover{
+  background:var(--saas-surface-2);
+  border-color:rgba(34,158,217,.32);
+  transform:translateY(-1px);
+}
+body.app-page .btn.primary,body.app-page .btn.primary:hover,
+body.app-page .primary,body.app-page .primary:hover{
+  color:#fff;
+  background:linear-gradient(135deg,var(--saas-primary),var(--saas-primary-2));
+  border-color:transparent;
+  box-shadow:0 8px 22px rgba(34,158,217,.18);
+}
+body.app-page .input,body.app-page .select,body.app-page .textarea,
+body.app-page input,body.app-page select,body.app-page textarea{
+  color:var(--saas-text);
+  background:var(--saas-surface);
+  border-color:var(--saas-line-strong);
+  border-radius:12px;
+}
+body.app-page .input:focus,body.app-page .select:focus,body.app-page .textarea:focus,
+body.app-page input:focus,body.app-page select:focus,body.app-page textarea:focus{
+  border-color:var(--saas-primary);
+  box-shadow:var(--saas-focus);
+  outline:0;
+}
+body.app-page .muted{color:var(--saas-muted)!important}
+body.app-page .badge,body.app-page .eyebrow,body.app-page .chip{
+  border-color:rgba(34,158,217,.16);
+  background:var(--saas-primary-soft);
+  color:var(--saas-primary-2);
+}
+body.app-page .table-wrap{
+  border-color:var(--saas-line);
+  border-radius:14px;
+  box-shadow:var(--saas-shadow);
+}
+body.app-page .table th{background:var(--saas-surface-2);color:var(--saas-muted)}
+body.app-page .table td,body.app-page .table th{border-color:var(--saas-line)}
+body.app-page .table tbody tr:hover td{background:var(--saas-surface-2)}
+body.app-page .empty{padding:50px 24px;color:var(--saas-muted)}
+body.app-page .section-heading,body.app-page .page-heading,
+body.app-page .market-heading,body.app-page .settings-header,
+body.app-page .wallet-heading,body.app-page .tx-heading,
+body.app-page .profile-heading,.create-header,.paste-header{
+  color:var(--saas-heading);
+}
+body.app-page .page-heading h1,body.app-page .market-heading h1,
+body.app-page .wallet-heading h1,body.app-page .tx-heading h1,
+body.app-page .profile-heading h1,.create-heading h1,.paste-heading h1{
+  letter-spacing:-.035em;
+  font-weight:850;
+}
+body.app-page .section-head,body.app-page .market-header{
+  margin-bottom:22px;
+}
+body.app-page .section-head h2{
+  letter-spacing:-.035em;
+  font-weight:850;
+}
+body.app-page .form-field,body.app-page .field,body.app-page .paste-field{
+  gap:7px;
+}
+body.app-page label,.app-page .field-label{
+  color:var(--saas-text);
+  font-weight:750;
+}
+body.app-page .notice{
+  background:var(--saas-primary-soft);
+  border-color:rgba(34,158,217,.16);
+  color:var(--saas-text);
+  border-radius:13px;
+}
+body.app-page .progress{background:var(--saas-surface-3)}
+body.app-page .progress>i{background:linear-gradient(90deg,var(--saas-primary),#5ac7f0)}
+/* consistent page header blocks */
+.app-page .page-heading,.app-page .market-heading,.app-page .wallet-heading,
+.app-page .tx-heading,.app-page .profile-heading,.app-page .settings-header,
+.app-page .withdraw-header,.app-page .create-header,.app-page .paste-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+}
+.app-page .page-heading p,.app-page .market-heading p,.app-page .wallet-heading p,
+.app-page .tx-heading p,.app-page .profile-heading p,.app-page .settings-header p{
+  color:var(--saas-muted);
+}
+/* Search / filter bars */
+.app-page .market-toolbar,.app-page .tx-toolbar,.app-page .products-toolbar,
+.app-page .saved-header{
+  background:var(--saas-surface);
+  border:1px solid var(--saas-line);
+  border-radius:14px;
+  box-shadow:var(--saas-shadow);
+}
+.app-page .market-search,.app-page .tx-search,.app-page .search-box{
+  border-radius:12px;
+}
+/* cards should never create horizontal overflow */
+.app-page .card,.app-page .panel,.app-page .create-layout>*,
+.app-page .profile-grid>*,.app-page .settings-grid>*{min-width:0}
+.app-page .grid,.app-page .feature-grid,.app-page .plan-grid{align-items:stretch}
+/* Auth / setup shells */
+body:not(.app-page):not(.landing-page){
+  color:var(--saas-text);
+}
+.auth-shell,.login-shell,.register-shell,.callback-shell,.reset-shell,.setup-shell{
+  background:
+    radial-gradient(circle at 15% 10%,rgba(34,158,217,.10),transparent 32%),
+    radial-gradient(circle at 90% 80%,rgba(34,158,217,.07),transparent 28%),
+    var(--saas-bg)!important;
+}
+.auth-shell .card,.login-shell .card,.register-shell .card,.reset-shell .card,
+.setup-shell .card{
+  border-radius:20px;
+  border:1px solid var(--saas-line);
+  box-shadow:var(--saas-shadow-lg);
+  background:var(--saas-surface);
+}
+/* Landing polish */
+body.landing-page{
+  background:
+    radial-gradient(circle at 10% 0,rgba(42,171,238,.10),transparent 34%),
+    radial-gradient(circle at 90% 5%,rgba(42,171,238,.08),transparent 30%),
+    var(--saas-bg);
+}
+.landing-page .hero-card{box-shadow:var(--saas-shadow-lg)}
+.landing-page .feature,.landing-page .monetize-card,.landing-page .step,
+.landing-page .topcard{
+  border-color:var(--saas-line);
+  box-shadow:var(--saas-shadow);
+}
+.landing-page .market-skeleton,.landing-page .landing-empty{
+  border-radius:16px;
+}
+/* Admin visual system */
+.admin-page .admin-main{background:transparent!important}
+.admin-page .admin-sidebar,.admin-page .admin-topbar{
+  border-color:var(--saas-line)!important;
+  background:var(--saas-surface)!important;
+}
+.admin-page .admin-content{min-width:0}
+.admin-page .admin-title h1,.admin-page h1,.admin-page h2,.admin-page h3{
+  letter-spacing:-.025em;
+}
+.admin-page .admin-stat,.admin-page .stat-card{
+  background:var(--saas-surface);
+  border:1px solid var(--saas-line);
+  border-radius:16px;
+  box-shadow:var(--saas-shadow);
+}
+/* Focus / motion */
+.app-page a:focus-visible,.app-page button:focus-visible,
+.landing-page a:focus-visible,.landing-page button:focus-visible,
+.admin-page a:focus-visible,.admin-page button:focus-visible{
+  outline:3px solid rgba(34,158,217,.22);
+  outline-offset:2px;
+}
+@media(max-width:900px){
+  body.app-page .container{width:calc(100% - 28px)}
+  .app-page .page-heading,.app-page .market-heading,.app-page .wallet-heading,
+  .app-page .tx-heading,.app-page .profile-heading,.app-page .settings-header,
+  .app-page .withdraw-header,.app-page .create-header,.app-page .paste-header{
+    align-items:flex-start;flex-direction:column;
+  }
+  .app-page .section{padding-top:22px;padding-bottom:32px}
+}
+@media(max-width:640px){
+  body.app-page .container{width:calc(100% - 24px)}
+  body.app-page .card,body.app-page .panel{border-radius:14px}
+  body.app-page .btn{min-height:44px}
+  .app-page .market-toolbar,.app-page .tx-toolbar,.app-page .products-toolbar{
+    padding:12px!important;
+  }
+  .landing-page .container{width:calc(100% - 24px)}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
+
+/* ============================================================
+   FINAL-2 HARDENING
+   Prevent layout breakage from legacy page CSS.
+============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{overflow-x:hidden}
+body{margin:0;overflow-x:hidden}
+img,svg,video,canvas{max-width:100%;height:auto}
+button,a,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled,.btn:disabled{cursor:not-allowed;opacity:.58;transform:none!important}
+.app-page main,.landing-page main{min-width:0}
+.app-page .container,.landing-page .container{max-width:1180px;margin-inline:auto}
+.app-page .card,.app-page .panel,.landing-page .card{overflow:hidden}
+.app-page table{width:100%;border-collapse:collapse}
+.app-page .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.app-page .table-wrap table{min-width:640px}
+.app-page .empty,.app-page .landing-empty{
+  min-height:120px;display:grid;place-items:center;
+  padding:24px;text-align:center;color:var(--saas-muted);
+}
+.app-page .loading,.app-page .skeleton{color:var(--saas-muted)}
+.app-page .btn,.landing-page .btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;text-decoration:none;white-space:nowrap;
+}
+.app-page .btn i,.landing-page .btn i{flex:0 0 auto}
+.app-page .form-grid,.app-page .grid,.app-page .stats-grid{
+  min-width:0;
+}
+@media(max-width:640px){
+  .app-page .container,.landing-page .container{width:calc(100% - 24px)}
+  .app-page .btn,.landing-page .btn{max-width:100%}
+  .app-page .actions,.app-page .toolbar,.app-page .header-actions{
+    width:100%;flex-wrap:wrap;
+  }
+  .app-page .actions>.btn,.app-page .toolbar>.btn{flex:1 1 auto}
+  .landing-page .hero-actions{flex-wrap:wrap}
+  .landing-page .hero-actions .btn{flex:1 1 180px}
+  .landing-page .floating-card{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
