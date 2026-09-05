@@ -25,14 +25,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function workspace(){
     const set=(id,v)=>{const e=$(id);if(e)e.textContent=v};
+    if(!window.sb) return;
+
+    /*
+      Workspace stats are intentionally server-driven.
+      The RPC uses auth.uid() when a creator is logged in, so the
+      homepage preview reflects the current creator's own content.
+      Anonymous visitors get public totals instead.
+    */
     try{
-      const r=await sb.rpc('get_public_workspace_stats');
-      if(r.error)throw r.error; const x=r.data||{};
-      set('homeRevenue',money(x.total_revenue||0)); set('homeRevenueTrend',(x.revenue_trend>=0?'+':'')+Number(x.revenue_trend||0).toFixed(1)+'%');
-      set('homePaymentCount',Number(x.payment_links||0).toLocaleString('id-ID')+' item');
-      set('homeCodeCount',Number(x.code_products||0).toLocaleString('id-ID')+' item');
-      set('homeTelegramCount',Number(x.telegram_access||0).toLocaleString('id-ID')+' item');
-    }catch(e){console.warn('[PasTele] workspace stats unavailable',e)}
+      const {data,error}=await sb.rpc('get_public_workspace_stats');
+      if(error) throw error;
+      const x=(data && typeof data==='object') ? data : {};
+
+      const revenue=Number(x.total_revenue||0);
+      const trend=Number(x.revenue_trend||0);
+      const links=Number(x.payment_links||0);
+      const codes=Number(x.code_products||0);
+      const telegram=Number(x.telegram_access||0);
+
+      set('homeRevenue', `Rp ${revenue.toLocaleString('id-ID')}`);
+      set('homeRevenueTrend', `${trend>=0?'+':''}${trend.toFixed(1)}%`);
+      set('homePaymentCount', `${links.toLocaleString('id-ID')} item`);
+      set('homeCodeCount', `${codes.toLocaleString('id-ID')} item`);
+      set('homeTelegramCount', `${telegram.toLocaleString('id-ID')} item`);
+
+      document.querySelector('.hero-card')?.classList.add('stats-ready');
+    }catch(e){
+      console.warn('[PasTele] Workspace stats unavailable:',e);
+      // Never leave a misleading spinner/undefined state.
+      set('homeRevenue','Rp 0');
+      set('homeRevenueTrend','+0,0%');
+      set('homePaymentCount','0 item');
+      set('homeCodeCount','0 item');
+      set('homeTelegramCount','0 item');
+    }
   }
 
   async function market() {
