@@ -967,3 +967,4 @@ html[data-theme="dark"] #navbar .nav-account {
 }
 
 .nav-badge{font-style:normal;font-size:8px!important;line-height:1;padding:3px 5px;border-radius:999px;margin-left:auto;display:inline-flex;align-items:center;gap:3px}.nav-hot{background:#fff2b8;color:#d79a00}.nav-new{background:#dff9ea;color:#149b59}
+\n.nav-badge.nav-trend{color:#fff;background:#ff1f3d;box-shadow:0 0 12px rgba(255,31,61,.75);animation:navTrendPulse 1.3s infinite}.nav-badge.nav-trend i{color:#fff}@keyframes navTrendPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35);transform:scale(1.03)}}\n
