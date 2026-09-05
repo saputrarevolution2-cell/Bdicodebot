@@ -1,5 +1,6 @@
 /* =========================================================
    PasTele — My Products
+   FINAL CLEAN UI
    Real Supabase data
    No schema changes
    ========================================================= */
@@ -54,9 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const labelFor = (type) => {
         const labels = {
             paste: 'PasteLink',
-            code: 'Code',
+            code: 'Code Telegram',
             channel: 'Channel / Group',
-            product: 'Marketplace Product'
+            product: 'Marketplace'
         };
         return labels[type] || 'Product';
     };
@@ -76,21 +77,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Untitled'
         );
     };
+    /*
+     * Compact date.
+     * Tidak lagi menampilkan jam panjang
+     * di setiap item.
+     */
     const dateOf = (item) => {
-        if (!item?.created_at) return 'Tanggal tidak tersedia';
+        if (!item?.created_at) {
+            return 'Tanggal tidak tersedia';
+        }
         const date = new Date(item.created_at);
         if (Number.isNaN(date.getTime())) {
             return 'Tanggal tidak tersedia';
         }
-        return date.toLocaleString('id-ID', {
+        return date.toLocaleDateString('id-ID', {
             day: '2-digit',
             month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric'
         });
     };
     const statusOf = (item) => {
+        /*
+         * Harga > 0 dianggap Paid
+         */
         if (Number(item?.price || 0) > 0) {
             return {
                 value: 'paid',
@@ -98,6 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 icon: 'fa-tag'
             };
         }
+        /*
+         * Explicit draft
+         */
         if (
             item?.is_published === false ||
             item?.status === 'draft'
@@ -115,27 +127,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     };
     const hrefFor = (item, type) => {
-        if (!item) return '#';
+        if (!item) {
+            return '#';
+        }
         if (type === 'paste') {
-            if (!item.slug) return '#';
+            if (!item.slug) {
+                return '#';
+            }
             return `${location.origin}/paste-view.html?slug=${encodeURIComponent(
                 item.slug
             )}`;
         }
-        if (!item.id) return '#';
+        if (!item.id) {
+            return '#';
+        }
         return `${location.origin}/product.html?id=${encodeURIComponent(
             item.id
         )}&type=${encodeURIComponent(
-            item.type || item.product_type || type
+            item.type ||
+            item.product_type ||
+            type
         )}`;
     };
     const findItem = (id, type) => {
         return allItems.find((entry) => {
-            return entry.id === id && entry.__type === type;
+            return String(entry.id) === String(id) &&
+                entry.__type === type;
         });
     };
     /* =====================================================
-       Loading / error states
+       Price
+       ===================================================== */
+    const formatPrice = (price) => {
+        const value = Number(price || 0);
+        if (!Number.isFinite(value) || value <= 0) {
+            return null;
+        }
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0
+        }).format(value);
+    };
+    /* =====================================================
+       Loading / Error
        ===================================================== */
     const renderLoading = () => {
         content.innerHTML = `
@@ -158,21 +193,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <strong>Gagal memuat produk</strong>
-                <span>${esc(message || 'Terjadi kesalahan saat mengambil data.')}</span>
-                <button class="btn primary" id="retryBtn" type="button">
+                <span>
+                    ${esc(
+                        message ||
+                        'Terjadi kesalahan saat mengambil data.'
+                    )}
+                </span>
+                <button
+                    class="btn primary"
+                    id="retryBtn"
+                    type="button"
+                >
                     <i class="fa-solid fa-rotate"></i>
                     Coba Lagi
                 </button>
             </div>
         `;
         resultInfo.textContent = 'Gagal memuat data.';
-        $('retryBtn')?.addEventListener('click', loadData);
+        $('retryBtn')?.addEventListener(
+            'click',
+            loadData
+        );
     };
     /* =====================================================
-       Load real Supabase data
+       Load Supabase Data
        ===================================================== */
     async function loadData() {
-        if (loading) return;
+        if (loading) {
+            return;
+        }
         loading = true;
         renderLoading();
         refreshBtn.disabled = true;
@@ -193,22 +242,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .from('products')
                     .select('*')
                     .eq('creator_id', profile.id)
-                    .order('created_at', { ascending: false }),
+                    .order('created_at', {
+                        ascending: false
+                    }),
                 sb
                     .from('pastelinks')
                     .select('*')
                     .eq('user_id', profile.id)
-                    .order('created_at', { ascending: false }),
+                    .order('created_at', {
+                        ascending: false
+                    }),
                 sb
                     .from('telegram_products')
                     .select('*')
                     .eq('owner_id', profile.id)
-                    .order('created_at', { ascending: false }),
+                    .order('created_at', {
+                        ascending: false
+                    }),
                 sb
                     .from('telegram_channels')
                     .select('*')
                     .eq('owner_id', profile.id)
-                    .order('created_at', { ascending: false })
+                    .order('created_at', {
+                        ascending: false
+                    })
             ]);
             const responses = [
                 productsResponse,
@@ -216,26 +273,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                 codeResponse,
                 channelResponse
             ];
-            const failed = responses.find((response) => response?.error);
+            const failed = responses.find(
+                (response) => response?.error
+            );
             if (failed?.error) {
                 throw failed.error;
             }
-            const productItems = (productsResponse.data || []).map((item) => ({
-                ...item,
-                __type: 'product'
-            }));
-            const pasteItems = (pasteResponse.data || []).map((item) => ({
-                ...item,
-                __type: 'paste'
-            }));
-            const codeItems = (codeResponse.data || []).map((item) => ({
-                ...item,
-                __type: 'code'
-            }));
-            const channelItems = (channelResponse.data || []).map((item) => ({
-                ...item,
-                __type: 'channel'
-            }));
+            const productItems =
+                (productsResponse.data || []).map(
+                    (item) => ({
+                        ...item,
+                        __type: 'product'
+                    })
+                );
+            const pasteItems =
+                (pasteResponse.data || []).map(
+                    (item) => ({
+                        ...item,
+                        __type: 'paste'
+                    })
+                );
+            const codeItems =
+                (codeResponse.data || []).map(
+                    (item) => ({
+                        ...item,
+                        __type: 'code'
+                    })
+                );
+            const channelItems =
+                (channelResponse.data || []).map(
+                    (item) => ({
+                        ...item,
+                        __type: 'channel'
+                    })
+                );
             groups = [
                 {
                     key: 'paste',
@@ -262,11 +333,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     items: productItems
                 }
             ];
-            allItems = groups.flatMap((group) => group.items);
+            allItems = groups.flatMap(
+                (group) => group.items
+            );
             updateOverview();
             render();
         } catch (error) {
-            console.error('My Products load error:', error);
+            console.error(
+                'My Products load error:',
+                error
+            );
             renderError(
                 error?.message ||
                 'Tidak dapat mengambil data dari database.'
@@ -274,7 +350,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             loading = false;
             refreshBtn.disabled = false;
-            refreshBtn.classList.remove('is-loading');
+            refreshBtn.classList.remove(
+                'is-loading'
+            );
         }
     }
     /* =====================================================
@@ -282,15 +360,21 @@ document.addEventListener('DOMContentLoaded', async () => {
        ===================================================== */
     function updateOverview() {
         const total = allItems.length;
-        const published = allItems.filter((item) => {
-            return statusOf(item).value === 'published';
-        }).length;
-        const paid = allItems.filter((item) => {
-            return statusOf(item).value === 'paid';
-        }).length;
-        const draft = allItems.filter((item) => {
-            return statusOf(item).value === 'draft';
-        }).length;
+        const published =
+            allItems.filter(
+                (item) =>
+                    statusOf(item).value === 'published'
+            ).length;
+        const paid =
+            allItems.filter(
+                (item) =>
+                    statusOf(item).value === 'paid'
+            ).length;
+        const draft =
+            allItems.filter(
+                (item) =>
+                    statusOf(item).value === 'draft'
+            ).length;
         totalCount.textContent = total;
         publishedCount.textContent = published;
         paidCount.textContent = paid;
@@ -300,63 +384,94 @@ document.addEventListener('DOMContentLoaded', async () => {
        Filtering
        ===================================================== */
     function getFilteredGroups() {
-        const search = String(searchInput?.value || '')
-            .trim()
-            .toLowerCase();
-        const selectedType = typeFilter?.value || 'all';
-        const selectedStatus = statusFilter?.value || 'all';
+        const search =
+            String(searchInput?.value || '')
+                .trim()
+                .toLowerCase();
+        const selectedType =
+            typeFilter?.value || 'all';
+        const selectedStatus =
+            statusFilter?.value || 'all';
         return groups.map((group) => {
-            const filtered = group.items.filter((item) => {
-                const title = titleOf(item).toLowerCase();
-                const slug = String(item.slug || '').toLowerCase();
-                const type = typeValue(item, group.key);
-                const status = statusOf(item).value;
-                const matchesSearch =
-                    !search ||
-                    title.includes(search) ||
-                    slug.includes(search) ||
-                    type.includes(search);
-                const matchesType =
-                    selectedType === 'all' ||
-                    group.key === selectedType;
-                const matchesStatus =
-                    selectedStatus === 'all' ||
-                    status === selectedStatus;
-                return matchesSearch && matchesType && matchesStatus;
-            });
+            const filtered =
+                group.items.filter((item) => {
+                    const title =
+                        titleOf(item)
+                            .toLowerCase();
+                    const slug =
+                        String(item.slug || '')
+                            .toLowerCase();
+                    const type =
+                        typeValue(
+                            item,
+                            group.key
+                        );
+                    const status =
+                        statusOf(item).value;
+                    const matchesSearch =
+                        !search ||
+                        title.includes(search) ||
+                        slug.includes(search) ||
+                        type.includes(search);
+                    const matchesType =
+                        selectedType === 'all' ||
+                        group.key === selectedType;
+                    const matchesStatus =
+                        selectedStatus === 'all' ||
+                        status === selectedStatus;
+                    return (
+                        matchesSearch &&
+                        matchesType &&
+                        matchesStatus
+                    );
+                });
             return {
                 ...group,
                 items: filtered
             };
         });
     }
+    /* =====================================================
+       Main Render
+       ===================================================== */
     function render() {
-        const filteredGroups = getFilteredGroups();
-        const visibleItems = filteredGroups.reduce(
-            (total, group) => total + group.items.length,
-            0
-        );
+        const filteredGroups =
+            getFilteredGroups();
+        const visibleItems =
+            filteredGroups.reduce(
+                (total, group) =>
+                    total + group.items.length,
+                0
+            );
         const hasFilter =
             String(searchInput?.value || '').trim() ||
             (typeFilter?.value || 'all') !== 'all' ||
             (statusFilter?.value || 'all') !== 'all';
-        resultInfo.textContent = hasFilter
-            ? `${visibleItems} hasil ditemukan`
-            : `${allItems.length} konten tersedia`;
+        resultInfo.textContent =
+            hasFilter
+                ? `${visibleItems} hasil ditemukan`
+                : `${allItems.length} konten tersedia`;
         clearSearch?.classList.toggle(
             'hidden',
-            !String(searchInput?.value || '').trim()
+            !String(
+                searchInput?.value || ''
+            ).trim()
         );
-        const sections = filteredGroups
-            .filter((group) => group.items.length > 0)
-            .map(renderGroup)
-            .join('');
+        const sections =
+            filteredGroups
+                .filter(
+                    (group) =>
+                        group.items.length > 0
+                )
+                .map(renderGroup)
+                .join('');
         if (sections) {
             content.innerHTML = sections;
             bindActions();
             return;
         }
-        const isEmptyDatabase = allItems.length === 0;
+        const isEmptyDatabase =
+            allItems.length === 0;
         content.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">
@@ -410,7 +525,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
     }
     /* =====================================================
-       Render group
+       Render Group
        ===================================================== */
     function renderGroup(group) {
         return `
@@ -420,51 +535,111 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="my-section-title-icon">
                             <i class="fa-solid ${group.icon}"></i>
                         </span>
-                        <h2>${esc(group.title)}</h2>
+                        <h2>
+                            ${esc(group.title)}
+                        </h2>
                     </div>
                     <span class="my-section-count">
                         ${group.items.length}
                     </span>
                 </div>
                 ${group.items.map((item) => {
-                    const title = titleOf(item);
-                    const status = statusOf(item);
-                    const type = typeValue(item, group.key);
-                    const href = hrefFor(item, group.key);
+                    const title =
+                        titleOf(item);
+                    const status =
+                        statusOf(item);
+                    const href =
+                        hrefFor(
+                            item,
+                            group.key
+                        );
+                    const price =
+                        formatPrice(
+                            item.price
+                        );
+                    const slug =
+                        String(
+                            item.slug || ''
+                        ).trim();
                     return `
-                        <div class="my-row">
-                            <span class="my-icon">
+                        <article
+                            class="my-row"
+                            data-product-type="${esc(group.key)}"
+                        >
+                            <!-- Icon -->
+                            <span
+                                class="my-icon"
+                                aria-hidden="true"
+                            >
                                 <i class="fa-solid ${iconFor(group.key)}"></i>
                             </span>
+                            <!-- Main -->
                             <div class="my-row-main">
-                                <span class="my-row-title">
+                                <span
+                                    class="my-row-title"
+                                    title="${esc(title)}"
+                                >
                                     ${esc(title)}
                                 </span>
                                 <div class="my-row-meta">
                                     <span>
-                                        ${esc(labelFor(group.key))}
+                                        ${esc(
+                                            labelFor(
+                                                group.key
+                                            )
+                                        )}
                                     </span>
-                                    <span class="meta-dot">•</span>
+                                    <span
+                                        class="meta-dot"
+                                        aria-hidden="true"
+                                    >
+                                        •
+                                    </span>
                                     <span>
                                         ${esc(dateOf(item))}
                                     </span>
-                                    <span class="meta-dot">•</span>
-                                    <span class="status-badge status-${esc(status.value)}">
-                                        <i class="fa-solid ${status.icon}"></i>
-                                        ${esc(status.label)}
-                                    </span>
                                     ${
-                                        item.slug
+                                        price
                                             ? `
-                                                <span class="meta-dot">•</span>
+                                                <span
+                                                    class="meta-dot"
+                                                    aria-hidden="true"
+                                                >
+                                                    •
+                                                </span>
                                                 <span>
-                                                    /${esc(item.slug)}
+                                                    ${esc(price)}
+                                                </span>
+                                            `
+                                            : ''
+                                    }
+                                    ${
+                                        slug
+                                            ? `
+                                                <span
+                                                    class="meta-dot"
+                                                    aria-hidden="true"
+                                                >
+                                                    •
+                                                </span>
+                                                <span
+                                                    title="/${esc(slug)}"
+                                                >
+                                                    /${esc(slug)}
                                                 </span>
                                             `
                                             : ''
                                     }
                                 </div>
                             </div>
+                            <!-- Status -->
+                            <span
+                                class="status-badge status-${esc(status.value)}"
+                            >
+                                <i class="fa-solid ${status.icon}"></i>
+                                ${esc(status.label)}
+                            </span>
+                            <!-- Actions -->
                             <div class="my-row-actions">
                                 <button
                                     class="btn"
@@ -515,7 +690,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <span>Hapus</span>
                                 </button>
                             </div>
-                        </div>
+                        </article>
                     `;
                 }).join('')}
             </section>
@@ -528,35 +703,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         content
             .querySelectorAll('[data-action]')
             .forEach((button) => {
-                button.addEventListener('click', async () => {
-                    const id = button.dataset.id;
-                    const type = button.dataset.type;
-                    const action = button.dataset.action;
-                    const item = findItem(id, type);
-                    if (!item) {
-                        showToast(
-                            'Data produk tidak ditemukan. Silakan refresh.',
-                            'error'
-                        );
-                        return;
+                button.addEventListener(
+                    'click',
+                    async () => {
+                        const id =
+                            button.dataset.id;
+                        const type =
+                            button.dataset.type;
+                        const action =
+                            button.dataset.action;
+                        const item =
+                            findItem(
+                                id,
+                                type
+                            );
+                        if (!item) {
+                            showToast(
+                                'Data produk tidak ditemukan. Silakan refresh.',
+                                'error'
+                            );
+                            return;
+                        }
+                        if (action === 'open') {
+                            openItem(
+                                item,
+                                type
+                            );
+                        }
+                        if (action === 'copy') {
+                            await copyItem(
+                                item,
+                                type
+                            );
+                        }
+                        if (action === 'edit') {
+                            await editItem(
+                                item,
+                                type
+                            );
+                        }
+                        if (action === 'delete') {
+                            await deleteItem(
+                                item,
+                                type
+                            );
+                        }
                     }
-                    if (action === 'open') {
-                        openItem(item, type);
-                    }
-                    if (action === 'copy') {
-                        await copyItem(item, type);
-                    }
-                    if (action === 'edit') {
-                        await editItem(item, type);
-                    }
-                    if (action === 'delete') {
-                        await deleteItem(item, type);
-                    }
-                });
+                );
             });
     }
+    /* =====================================================
+       Open
+       ===================================================== */
     function openItem(item, type) {
-        const href = hrefFor(item, type);
+        const href =
+            hrefFor(
+                item,
+                type
+            );
         if (!href || href === '#') {
             showToast(
                 'Link untuk konten ini tidak tersedia.',
@@ -564,10 +768,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             return;
         }
-        window.open(href, '_blank', 'noopener,noreferrer');
+        window.open(
+            href,
+            '_blank',
+            'noopener,noreferrer'
+        );
     }
+    /* =====================================================
+       Copy
+       ===================================================== */
     async function copyItem(item, type) {
-        const href = hrefFor(item, type);
+        const href =
+            hrefFor(
+                item,
+                type
+            );
         if (!href || href === '#') {
             showToast(
                 'Link untuk konten ini tidak tersedia.',
@@ -576,13 +791,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         try {
-            await navigator.clipboard.writeText(href);
+            await navigator.clipboard.writeText(
+                href
+            );
             showToast(
                 'Link berhasil disalin',
                 'success'
             );
         } catch (error) {
-            console.error('Copy error:', error);
+            console.error(
+                'Copy error:',
+                error
+            );
             showToast(
                 'Gagal menyalin link',
                 'error'
@@ -593,13 +813,18 @@ document.addEventListener('DOMContentLoaded', async () => {
        Edit
        ===================================================== */
     async function editItem(item, type) {
-        const currentTitle = titleOf(item);
-        const title = prompt(
-            'Judul',
-            currentTitle
-        );
-        if (title === null) return;
-        const cleanTitle = title.trim();
+        const currentTitle =
+            titleOf(item);
+        const title =
+            prompt(
+                'Judul',
+                currentTitle
+            );
+        if (title === null) {
+            return;
+        }
+        const cleanTitle =
+            title.trim();
         if (!cleanTitle) {
             showToast(
                 'Judul wajib diisi.',
@@ -609,72 +834,148 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         let response;
         try {
+            /* ---------------------------------------------
+               PasteLink
+               --------------------------------------------- */
             if (type === 'paste') {
-                response = await sb
-                    .from('pastelinks')
-                    .update({
-                        title: cleanTitle
-                    })
-                    .eq('id', item.id)
-                    .eq('user_id', profile.id);
+                response =
+                    await sb
+                        .from('pastelinks')
+                        .update({
+                            title: cleanTitle
+                        })
+                        .eq('id', item.id)
+                        .eq(
+                            'user_id',
+                            profile.id
+                        );
             }
+            /* ---------------------------------------------
+               Code
+               --------------------------------------------- */
             else if (type === 'code') {
-                const description = prompt(
-                    'Deskripsi',
-                    item.description || ''
-                );
-                if (description === null) return;
-                let price = Number(item.price || 0);
-                let accessType = item.access_type || (
-                    price > 0 ? 'paid' : 'free'
-                );
-                if (accessType === 'paid') {
-                    const enteredPrice = prompt(
-                        'Harga IDR',
-                        String(price)
+                const description =
+                    prompt(
+                        'Deskripsi',
+                        item.description || ''
                     );
-                    if (enteredPrice === null) return;
-                    price = Number(
-                        String(enteredPrice)
-                            .replace(/[^\d]/g, '')
+                if (description === null) {
+                    return;
+                }
+                let price =
+                    Number(
+                        item.price || 0
                     );
-                    if (!Number.isFinite(price) || price < 0) {
+                let accessType =
+                    item.access_type ||
+                    (
+                        price > 0
+                            ? 'paid'
+                            : 'free'
+                    );
+                if (
+                    accessType === 'paid'
+                ) {
+                    const enteredPrice =
+                        prompt(
+                            'Harga IDR',
+                            String(price)
+                        );
+                    if (
+                        enteredPrice === null
+                    ) {
+                        return;
+                    }
+                    price =
+                        Number(
+                            String(
+                                enteredPrice
+                            ).replace(
+                                /[^\d]/g,
+                                ''
+                            )
+                        );
+                    if (
+                        !Number.isFinite(price) ||
+                        price < 0
+                    ) {
                         showToast(
                             'Harga tidak valid.',
                             'error'
                         );
                         return;
                     }
-                    accessType = price > 0 ? 'paid' : 'free';
+                    accessType =
+                        price > 0
+                            ? 'paid'
+                            : 'free';
                 }
-                response = await sb
-                    .from('telegram_products')
-                    .update({
-                        title: cleanTitle,
-                        description: description.trim(),
-                        price,
-                        access_type: accessType
-                    })
-                    .eq('id', item.id)
-                    .eq('owner_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'telegram_products'
+                        )
+                        .update({
+                            title:
+                                cleanTitle,
+                            description:
+                                description.trim(),
+                            price,
+                            access_type:
+                                accessType
+                        })
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'owner_id',
+                            profile.id
+                        );
             }
+            /* ---------------------------------------------
+               Channel
+               --------------------------------------------- */
             else if (type === 'channel') {
-                response = await sb
-                    .from('telegram_channels')
-                    .update({
-                        name: cleanTitle
-                    })
-                    .eq('id', item.id)
-                    .eq('owner_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'telegram_channels'
+                        )
+                        .update({
+                            name:
+                                cleanTitle
+                        })
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'owner_id',
+                            profile.id
+                        );
             }
+            /* ---------------------------------------------
+               Marketplace Product
+               --------------------------------------------- */
             else if (type === 'product') {
-                response = await sb
-                    .from('products')
-                    .update({
-                        title: cleanTitle
-                    })
-                    .eq('id', item.id)
-                    .eq('creator_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'products'
+                        )
+                        .update({
+                            title:
+                                cleanTitle
+                        })
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'creator_id',
+                            profile.id
+                        );
             }
             else {
                 showToast(
@@ -692,7 +993,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             await loadData();
         } catch (error) {
-            console.error('Edit product error:', error);
+            console.error(
+                'Edit product error:',
+                error
+            );
             showToast(
                 error?.message ||
                 'Gagal memperbarui produk.',
@@ -703,41 +1007,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* =====================================================
        Delete
        ===================================================== */
-    async function deleteItem(item, type) {
-        const title = titleOf(item);
-        const confirmed = confirm(
-            `Hapus "${title}"?\n\nTindakan ini tidak dapat dibatalkan.`
-        );
-        if (!confirmed) return;
+    async function deleteItem(
+        item,
+        type
+    ) {
+        const title =
+            titleOf(item);
+        const confirmed =
+            confirm(
+                `Hapus "${title}"?\n\nTindakan ini tidak dapat dibatalkan.`
+            );
+        if (!confirmed) {
+            return;
+        }
         let response;
         try {
             if (type === 'paste') {
-                response = await sb
-                    .from('pastelinks')
-                    .delete()
-                    .eq('id', item.id)
-                    .eq('user_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'pastelinks'
+                        )
+                        .delete()
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'user_id',
+                            profile.id
+                        );
             }
             else if (type === 'code') {
-                response = await sb
-                    .from('telegram_products')
-                    .delete()
-                    .eq('id', item.id)
-                    .eq('owner_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'telegram_products'
+                        )
+                        .delete()
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'owner_id',
+                            profile.id
+                        );
             }
             else if (type === 'channel') {
-                response = await sb
-                    .from('telegram_channels')
-                    .delete()
-                    .eq('id', item.id)
-                    .eq('owner_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'telegram_channels'
+                        )
+                        .delete()
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'owner_id',
+                            profile.id
+                        );
             }
             else if (type === 'product') {
-                response = await sb
-                    .from('products')
-                    .delete()
-                    .eq('id', item.id)
-                    .eq('creator_id', profile.id);
+                response =
+                    await sb
+                        .from(
+                            'products'
+                        )
+                        .delete()
+                        .eq(
+                            'id',
+                            item.id
+                        )
+                        .eq(
+                            'creator_id',
+                            profile.id
+                        );
             }
             else {
                 showToast(
@@ -755,7 +1102,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             await loadData();
         } catch (error) {
-            console.error('Delete product error:', error);
+            console.error(
+                'Delete product error:',
+                error
+            );
             showToast(
                 error?.message ||
                 'Gagal menghapus konten.',
@@ -764,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     /* =====================================================
-       Reset filters
+       Reset Filters
        ===================================================== */
     function resetFilters() {
         if (searchInput) {
@@ -781,21 +1131,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* =====================================================
        Events
        ===================================================== */
-    searchInput?.addEventListener('input', render);
-    typeFilter?.addEventListener('change', render);
-    statusFilter?.addEventListener('change', render);
-    clearSearch?.addEventListener('click', () => {
-        if (searchInput) {
-            searchInput.value = '';
-            searchInput.focus();
+    searchInput?.addEventListener(
+        'input',
+        render
+    );
+    typeFilter?.addEventListener(
+        'change',
+        render
+    );
+    statusFilter?.addEventListener(
+        'change',
+        render
+    );
+    clearSearch?.addEventListener(
+        'click',
+        () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+            }
+            render();
         }
-        render();
-    });
-    refreshBtn?.addEventListener('click', async () => {
-        await loadData();
-    });
+    );
+    refreshBtn?.addEventListener(
+        'click',
+        async () => {
+            await loadData();
+        }
+    );
     /* =====================================================
-       Initial load
+       Initial Load
        ===================================================== */
     await loadData();
 });
