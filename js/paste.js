@@ -863,10 +863,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const publishPaste = async (
     product
   ) => {
-    const slug =
-      crypto.randomUUID()
-        .replaceAll("-", "")
-        .slice(0, 12);
+    // Public PasteLink URL uses a short 5-character alphanumeric token.
+    // Example: https://telecod.biz.id/p/Vk4aQ
+    const randomSlug = (length = 5) => {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (byte) => chars[byte % chars.length]).join("");
+    };
+
+    const slug = randomSlug(5);
     let expiresAt = null;
     if (
       expire?.value &&
@@ -968,9 +974,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         "Bot belum approved atau tidak aktif oleh admin."
       );
     }
+    const randomSlug = (length = 5) => {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (byte) => chars[byte % chars.length]).join("");
+    };
+
+    const slug = randomSlug(5);
+
     const payload = {
       owner_id:
         currentUser.id,
+      slug,
       title:
         product.title,
       description:
@@ -1000,6 +1016,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) {
       throw error;
     }
+    return slug;
   };
   /* =======================================================
      PUBLISH CHANNEL / GROUP
@@ -1019,9 +1036,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       ctype?.value === "group"
         ? "group"
         : "channel";
+    const randomSlug = (length = 5) => {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (byte) => chars[byte % chars.length]).join("");
+    };
+
+    const slug = randomSlug(5);
+
     const payload = {
       owner_id:
         currentUser.id,
+      slug,
       name:
         product.title,
       username:
@@ -1045,6 +1072,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) {
       throw error;
     }
+    return slug;
   };
   /* =======================================================
      FORM SUBMIT
@@ -1094,30 +1122,29 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
         if (kind === "code") {
-          await publishCode(
-            product
-          );
+          const slug = await publishCode(product);
+          const accessPrefix = product.accessType === "paid" ? "p" : "f";
+          const publicUrl = `${location.origin}/c/${accessPrefix}/${encodeURIComponent(slug)}`;
           toast(
             "Code berhasil dipublikasikan ke Marketplace.",
             "success"
           );
           setTimeout(() => {
-            location.href =
-              "dashboard.html";
+            location.href = publicUrl;
           }, 650);
           return;
         }
         if (kind === "channel") {
-          await publishChannel(
-            product
-          );
+          const slug = await publishChannel(product);
+          const accessPrefix = product.accessType === "paid" ? "p" : "f";
+          const contentPrefix = ctype?.value === "group" ? "g" : "ch";
+          const publicUrl = `${location.origin}/${contentPrefix}/${accessPrefix}/${encodeURIComponent(slug)}`;
           toast(
             "Channel/Group berhasil dipublikasikan ke Marketplace.",
             "success"
           );
           setTimeout(() => {
-            location.href =
-              "dashboard.html";
+            location.href = publicUrl;
           }, 650);
           return;
         }

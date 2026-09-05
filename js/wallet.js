@@ -127,6 +127,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 location.replace('login.html');
                 return;
             }
+            // Mature H1/H2 balances before reading the wallet.
+            // The RPC is idempotent, so it is safe to call on every wallet visit.
+            try { await sb.rpc('release_matured_wallet'); } catch (releaseError) {
+                console.warn('release_matured_wallet:', releaseError?.message || releaseError);
+            }
             const [
                 walletResponse,
                 walletTransactionsResponse,
@@ -325,6 +330,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             })
             .join('');
     }
+    /* =====================================================
+       Pending balance detail
+       ===================================================== */
+    $('pendingCard')?.addEventListener('click', async () => {
+        try {
+            const { data, error } = await sb.rpc('get_pending_balance_detail');
+            if (error) throw error;
+            const rows = Array.isArray(data) ? data : [];
+            if (!rows.length) {
+                showToast('Tidak ada saldo yang sedang tertunda.', 'info');
+                return;
+            }
+            const fmtDate = value => {
+                const d = new Date(value);
+                return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('id-ID', {
+                    dateStyle: 'medium', timeStyle: 'short'
+                });
+            };
+            const html = rows.slice(0, 20).map(r => `
+                <div style="padding:12px 0;border-bottom:1px solid rgba(148,163,184,.16)">
+                    <b>${esc(money(r.amount))}</b>
+                    <div style="margin-top:4px;font-size:.86rem;opacity:.78">
+                        Terjual ${esc(fmtDate(r.created_at))}
+                    </div>
+                    <div style="margin-top:4px;font-size:.86rem">
+                        <b>${esc(r.hold_label || 'H1')}</b> · Tersedia ${esc(fmtDate(r.available_at))}
+                    </div>
+                </div>
+            `).join('');
+            const overlay = document.createElement('div');
+            overlay.className = 'wallet-pending-modal';
+            overlay.innerHTML = `<div class="wallet-pending-dialog">
+                <button class="wallet-pending-close" aria-label="Tutup">×</button>
+                <span class="badge"><i class="fa-solid fa-clock"></i> SALDO PENDING</span>
+                <h2>Kapan saldo tersedia?</h2>
+                <p class="muted">Penjualan 05:00–20:59 WIB masuk <b>H1</b>. Penjualan 21:00–04:59 WIB masuk <b>H2</b>.</p>
+                <div>${html}</div>
+            </div>`;
+            document.body.appendChild(overlay);
+            overlay.querySelector('.wallet-pending-close').onclick=()=>overlay.remove();
+            overlay.addEventListener('click', e=>{if(e.target===overlay)overlay.remove()});
+        } catch (e) {
+            showToast(e?.message || 'Detail saldo pending gagal dimuat.', 'error');
+        }
+    });
+
     /* =====================================================
        Initial load
        ===================================================== */

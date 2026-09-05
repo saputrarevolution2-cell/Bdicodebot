@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
-  const qs=new URLSearchParams(location.search), id=qs.get('id'), type=(qs.get('type')||'link').toLowerCase(), box=document.getElementById('content');
+  const qs=new URLSearchParams(location.search), initialId=qs.get('id'), slug=qs.get('slug'), type=(qs.get('type')||'link').toLowerCase(), box=document.getElementById('content');
   const esc=v=>window.TC?.esc?TC.esc(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const icon=t=>t==='code'?'fa-code':t==='channel'||t==='group'?'fa-brands fa-telegram':t==='paste'||t==='pastelink'?'fa-file-lines':'fa-link';
   const safeUrl=v=>{let s=String(v||'').trim();if(!s)return'';if(/^www\./i.test(s))s='https://'+s;if(/^https?:\/\//i.test(s)){try{let u=new URL(s);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}}if(/^t\.me\//i.test(s))return'https://'+s;if(/^@[\w\d_]{3,}$/i.test(s))return'https://t.me/'+s.slice(1);return''};
@@ -8,8 +8,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const linkifyHtml=raw=>{const d=new DOMParser().parseFromString(String(raw||''),'text/html');d.querySelectorAll('script,iframe,object,embed,style').forEach(e=>e.remove());d.querySelectorAll('[onclick],[onerror],[onload],[onmouseover]').forEach(e=>['onclick','onerror','onload','onmouseover'].forEach(a=>e.removeAttribute(a)));d.querySelectorAll('a').forEach(a=>{const h=safeUrl(a.getAttribute('href'));if(h){a.setAttribute('href',h);a.setAttribute('target','_blank');a.setAttribute('rel','noopener noreferrer')}else a.removeAttribute('href')});const walker=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())if(!walker.currentNode.parentElement.closest('a,pre,code'))nodes.push(walker.currentNode);const re=/((?:https?:\/\/|www\.)[^\s<>"']+)/gi;nodes.forEach(n=>{const frag=document.createDocumentFragment();let last=0,m;while((m=re.exec(n.nodeValue))){let url=m[1],trail='';while(/[.,!?;:)\]}]$/.test(url)){trail=url.slice(-1)+trail;url=url.slice(0,-1)}if(m.index>last)frag.append(document.createTextNode(n.nodeValue.slice(last,m.index)));const a=document.createElement('a');a.href=safeUrl(url)||url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=url;frag.append(a);if(trail)frag.append(document.createTextNode(trail));last=m.index+m[1].length}if(last){if(last<n.nodeValue.length)frag.append(document.createTextNode(n.nodeValue.slice(last)));n.replaceWith(frag)}});return d.body.innerHTML};
   const codeText=html=>textFromHtml(html).replace(/\u00a0/g,' ');
   const telegramUrl=v=>{let u=safeUrl(v);return u&&(/t\.me|telegram\.me/i.test(u)?u:'')};
-  if(!id){box.innerHTML='<div class="empty">Produk tidak ditemukan.</div>';return}
+  let id = initialId;
   try{
+    // Short public URLs use a 5-character slug. Resolve it to the existing
+    // UUID so the existing detail/access RPC remains the single source of truth.
+    if(!id && slug){
+      const table = type==='code'
+        ? 'telegram_products'
+        : (type==='channel'||type==='group')
+          ? 'telegram_channels'
+          : null;
+      if(!table){
+        box.innerHTML='<div class="empty">Produk tidak ditemukan.</div>';
+        return;
+      }
+      const {data:row,error:slugError}=await sb
+        .from(table)
+        .select('id')
+        .eq('slug',slug)
+        .maybeSingle();
+      if(slugError || !row?.id){
+        box.innerHTML=`<div class="empty">${esc(slugError?.message||'Link tidak ditemukan atau sudah tidak tersedia.')}</div>`;
+        return;
+      }
+      id = row.id;
+    }
+    if(!id){box.innerHTML='<div class="empty">Produk tidak ditemukan.</div>';return}
     const {data:x,error}=await sb.rpc('get_market_item_detail',{p_type:type,p_id:id});
     if(error||!x){box.innerHTML=`<div class="empty">${esc(error?.message||'Produk tidak ditemukan atau belum dipublikasikan.')}</div>`;return}
     try{await sb.rpc('record_content_view',{p_owner:x.owner_id,p_target_type:type,p_target_id:id})}catch(_){}
@@ -26,7 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }else{
       body=`<div class="rich-output-view">${canAccess?linkifyHtml(x.content_html||x.content||x.description||'Tidak ada konten.'):linkifyHtml(x.description||'Konten berbayar. Buka akses untuk melihat isi lengkap.')}</div>`;
     }
-    box.innerHTML=`<article class="product-detail premium-view"><div class="product-detail-icon"><i class="fa-solid ${icon(type)}"></i></div><span class="badge">${esc(String(x.access_type||'free').toUpperCase())}</span><h1>${esc(x.title||'Untitled')}</h1><p class="muted">Oleh <b>${esc(x.creator_name||'Creator')}</b> · ${Number(x.views||0).toLocaleString('id-ID')} views</p>${body}<div class="detail-actions"><button class="btn" id="like"><i class="fa-regular fa-heart"></i> Like</button><button class="btn" id="share"><i class="fa-solid fa-share-nodes"></i> Share</button><b class="price">${price?TC.money(price):'FREE'}</b><button class="btn primary" id="buy">${canAccess?'<i class="fa-solid fa-circle-check"></i> Sudah diakses':price?'<i class="fa-solid fa-qrcode"></i> Bayar via Cashi QRIS':'<i class="fa-solid fa-unlock"></i> Ambil akses'}</button></div></article>`;
+    const accessHint = x.access_reason==='subscription_limit'
+      ? '<div class="access-limit-note"><i class="fa-solid fa-clock"></i><span>Batas Langganan 5x Code hari ini sudah tercapai. Kamu bisa mencoba lagi besok atau upgrade Premium.</span></div>'
+      : x.access_reason==='subscription'
+        ? '<div class="access-limit-note"><i class="fa-solid fa-gem"></i><span>Akses dibuka dengan Langganan · maksimal 5 Code Paid per hari.</span></div>'
+        : x.access_reason==='premium'
+          ? '<div class="access-limit-note premium-access-note"><i class="fa-solid fa-circle-check"></i><span>Premium aktif · akses Paid terbuka.</span></div>' : '';
+    box.innerHTML=`<article class="product-detail premium-view"><div class="product-detail-icon"><i class="fa-solid ${icon(type)}"></i></div><span class="badge">${esc(String(x.access_type||'free').toUpperCase())}</span><h1>${esc(x.title||'Untitled')}</h1><p class="muted">Oleh <b>${esc(x.creator_name||'Creator')}</b> · ${Number(x.views||0).toLocaleString('id-ID')} views</p>${accessHint}${body}<div class="detail-actions"><button class="btn" id="like"><i class="fa-regular fa-heart"></i> Like</button><button class="btn" id="share"><i class="fa-solid fa-share-nodes"></i> Share</button><b class="price">${price?TC.money(price):'FREE'}</b><button class="btn primary" id="buy">${canAccess?'<i class="fa-solid fa-circle-check"></i> Sudah diakses':price?'<i class="fa-solid fa-qrcode"></i> Bayar via Cashi QRIS':'<i class="fa-solid fa-unlock"></i> Ambil akses'}</button></div></article>`;
     if(canAccess)document.getElementById('buy').disabled=true;
     document.getElementById('copyCode')?.addEventListener('click',async()=>{const text=codeText(x.content||'');try{await navigator.clipboard.writeText(text);TC.toast('Kode berhasil disalin','success')}catch(_){TC.toast('Gagal menyalin kode','error')}});
     document.querySelector('.telegram-copy-btn')?.addEventListener('click',async e=>{try{await navigator.clipboard.writeText(e.currentTarget.dataset.copy||'');TC.toast('Link berhasil disalin','success')}catch(_){TC.toast('Gagal menyalin link','error')}});

@@ -194,9 +194,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return '#';
             }
 
+            return `${location.origin}/p/${encodeURIComponent(item.slug)}`;
+        }
+
+        const publicPrefix =
+            type === 'code'
+                ? 'c'
+                : type === 'channel'
+                    ? (item.type === 'group' ? 'g' : 'ch')
+                    : null;
+
+        if (publicPrefix && item.slug) {
+            const accessPrefix =
+                String(item.access_type || 'free').toLowerCase() === 'paid'
+                    ? 'p'
+                    : 'f';
+
             return (
-                `${location.origin}/paste-view.html` +
-                `?slug=${encodeURIComponent(item.slug)}`
+                `${location.origin}/${publicPrefix}/${accessPrefix}/` +
+                encodeURIComponent(item.slug)
             );
         }
 
