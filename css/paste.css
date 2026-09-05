@@ -1016,3 +1016,6 @@ body.theme-dark {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Color-coded create modes */
+.paste-page[data-create-type="paste"] .paste-page-icon,.paste-page[data-create-type="paste"] .create-tab.active .create-tab-icon{background:linear-gradient(135deg,#ec4899,#db2777);color:#fff}.paste-page[data-create-type="code"] .paste-page-icon,.paste-page[data-create-type="code"] .create-tab.active .create-tab-icon{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff}.paste-page[data-create-type="channel"] .paste-page-icon,.paste-page[data-create-type="channel"] .create-tab.active .create-tab-icon{background:linear-gradient(135deg,#22a9e5,#168cc1);color:#fff}.paste-page .create-tab{transition:.2s ease}.paste-page .create-tab:hover{transform:translateY(-1px)}

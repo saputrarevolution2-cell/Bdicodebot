@@ -965,3 +965,5 @@ html[data-theme="dark"] #navbar .nav-account {
     transition: none !important;
   }
 }
+
+.nav-badge{font-style:normal;font-size:8px!important;line-height:1;padding:3px 5px;border-radius:999px;margin-left:auto;display:inline-flex;align-items:center;gap:3px}.nav-hot{background:#fff2b8;color:#d79a00}.nav-new{background:#dff9ea;color:#149b59}
