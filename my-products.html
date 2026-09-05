@@ -2,168 +2,416 @@
 <html lang="id">
 <head>
     <script src="js/theme-preload.js"></script>
+
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#f7fafc"
+    >
+
+    <meta
+        name="description"
+        content="Kelola semua produk, link, dan konten yang kamu buat di PasTele."
+    >
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Produk Saya</title>
-    <!-- Core -->
+
+    <title>Produk Saya — PasTele</title>
+
+    <!-- =========================
+         CORE
+    ========================== -->
     <script src="/js/config.js?v=20260831"></script>
     <script src="/js/supabase.js?v=20260831"></script>
     <script src="/js/debug-panel.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/navbar.js?v=20260903-fix"></script>
-    <!-- Icons -->
+
+    <!-- =========================
+         FONT AWESOME
+    ========================== -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260905">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
-    <link rel="stylesheet" href="css/my-products.css?v=20260904">
+
+    <!-- =========================
+         GLOBAL STYLES
+    ========================== -->
+    <link
+        rel="stylesheet"
+        href="css/app.css?v=20260904"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/navbar.css?v=20260905"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/footer.css?v=20260905"
+    >
+
+    <!-- =========================
+         PAGE STYLE
+    ========================== -->
+    <link
+        rel="stylesheet"
+        href="css/my-products.css?v=20260905-final"
+    >
 </head>
+
+
 <body class="app-page my-products-page">
+
+    <!-- =========================
+         NAVBAR
+    ========================== -->
     <div id="navbar"></div>
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
     <main>
+
         <section class="section my-products-section">
+
             <div class="container my-products-container">
-                <!-- Page heading -->
-                <div class="page-heading">
+
+
+                <!-- =========================
+                     HEADER
+                ========================== -->
+                <header class="page-heading">
+
                     <div class="page-heading-copy">
+
                         <div class="badge page-badge">
                             <i class="fa-solid fa-boxes-stacked"></i>
-                            Produk Saya
+                            <span>Produk Saya</span>
                         </div>
-                        <h1>Produk Saya</h1>
+
+                        <h1>
+                            Produk Saya
+                        </h1>
+
                         <p class="muted">
-                            Kelola semua konten dan produk yang kamu publikasikan.
+                            Kelola semua link, produk, dan konten yang sudah kamu buat.
                         </p>
+
                     </div>
+
+
                     <a
-                        class="btn primary create-product-btn"
                         href="create-product.html"
+                        class="btn primary create-product-btn"
                     >
                         <i class="fa-solid fa-plus"></i>
                         <span>Buat Produk</span>
                     </a>
-                </div>
-                <!-- Overview -->
-                <div class="products-overview" id="overview">
+
+                </header>
+
+
+                <!-- =========================
+                     OVERVIEW
+                ========================== -->
+                <section
+                    id="overview"
+                    class="products-overview"
+                    aria-label="Ringkasan produk"
+                >
+
+
+                    <!-- TOTAL -->
                     <div class="overview-card">
+
                         <span class="overview-icon">
                             <i class="fa-solid fa-layer-group"></i>
                         </span>
-                        <div>
-                            <small>Total Konten</small>
-                            <strong id="totalCount">—</strong>
+
+                        <div class="overview-content">
+
+                            <small>
+                                Total Konten
+                            </small>
+
+                            <strong id="totalCount">
+                                —
+                            </strong>
+
                         </div>
+
                     </div>
+
+
+                    <!-- PUBLISHED -->
                     <div class="overview-card">
+
                         <span class="overview-icon">
                             <i class="fa-solid fa-circle-check"></i>
                         </span>
-                        <div>
-                            <small>Published</small>
-                            <strong id="publishedCount">—</strong>
+
+                        <div class="overview-content">
+
+                            <small>
+                                Published
+                            </small>
+
+                            <strong id="publishedCount">
+                                —
+                            </strong>
+
                         </div>
+
                     </div>
+
+
+                    <!-- PAID -->
                     <div class="overview-card">
+
                         <span class="overview-icon">
                             <i class="fa-solid fa-tag"></i>
                         </span>
-                        <div>
-                            <small>Paid</small>
-                            <strong id="paidCount">—</strong>
+
+                        <div class="overview-content">
+
+                            <small>
+                                Paid
+                            </small>
+
+                            <strong id="paidCount">
+                                —
+                            </strong>
+
                         </div>
+
                     </div>
+
+
+                    <!-- DRAFT -->
                     <div class="overview-card">
+
                         <span class="overview-icon">
                             <i class="fa-solid fa-file-circle-xmark"></i>
                         </span>
-                        <div>
-                            <small>Draft</small>
-                            <strong id="draftCount">—</strong>
+
+                        <div class="overview-content">
+
+                            <small>
+                                Draft
+                            </small>
+
+                            <strong id="draftCount">
+                                —
+                            </strong>
+
                         </div>
+
                     </div>
-                </div>
-                <!-- Toolbar -->
-                <div class="products-toolbar">
+
+                </section>
+
+
+                <!-- =========================
+                     SEARCH + FILTER
+                ========================== -->
+                <section
+                    class="products-toolbar"
+                    aria-label="Filter produk"
+                >
+
+
+                    <!-- SEARCH -->
                     <div class="search-box">
+
                         <i class="fa-solid fa-magnifying-glass"></i>
+
                         <input
-                            class="input"
                             id="searchInput"
+                            class="input"
                             type="search"
                             autocomplete="off"
-                            placeholder="Cari produk, judul, slug..."
+                            placeholder="Cari judul, link, slug..."
                             aria-label="Cari produk"
                         >
+
                         <button
-                            class="search-clear hidden"
                             id="clearSearch"
+                            class="search-clear hidden"
                             type="button"
                             aria-label="Hapus pencarian"
+                            title="Hapus pencarian"
                         >
                             <i class="fa-solid fa-xmark"></i>
                         </button>
+
                     </div>
+
+
+                    <!-- TYPE -->
                     <div class="filter-wrap">
-                        <label class="sr-only" for="typeFilter">
+
+                        <label
+                            class="sr-only"
+                            for="typeFilter"
+                        >
                             Filter tipe
                         </label>
-                        <select class="select" id="typeFilter">
-                            <option value="all">Semua tipe</option>
-                            <option value="paste">PasteLink</option>
-                            <option value="code">Code</option>
-                            <option value="channel">Channel / Group</option>
-                            <option value="product">Marketplace Product</option>
+
+                        <select
+                            id="typeFilter"
+                            class="select"
+                        >
+
+                            <option value="all">
+                                Semua tipe
+                            </option>
+
+                            <option value="paste">
+                                PasteLink
+                            </option>
+
+                            <option value="code">
+                                Code
+                            </option>
+
+                            <option value="channel">
+                                Channel / Group
+                            </option>
+
+                            <option value="product">
+                                Marketplace Product
+                            </option>
+
                         </select>
+
                     </div>
+
+
+                    <!-- STATUS -->
                     <div class="filter-wrap">
-                        <label class="sr-only" for="statusFilter">
+
+                        <label
+                            class="sr-only"
+                            for="statusFilter"
+                        >
                             Filter status
                         </label>
-                        <select class="select" id="statusFilter">
-                            <option value="all">Semua status</option>
-                            <option value="published">Published</option>
-                            <option value="paid">Paid</option>
-                            <option value="draft">Draft</option>
+
+                        <select
+                            id="statusFilter"
+                            class="select"
+                        >
+
+                            <option value="all">
+                                Semua status
+                            </option>
+
+                            <option value="published">
+                                Published
+                            </option>
+
+                            <option value="paid">
+                                Paid
+                            </option>
+
+                            <option value="draft">
+                                Draft
+                            </option>
+
                         </select>
+
                     </div>
-                </div>
-                <!-- Result info -->
+
+                </section>
+
+
+                <!-- =========================
+                     RESULT BAR
+                ========================== -->
                 <div class="result-bar">
+
                     <span id="resultInfo">
                         Memuat produk...
                     </span>
+
+
                     <button
-                        class="btn btn-small"
                         id="refreshBtn"
+                        class="btn btn-small"
                         type="button"
+                        title="Refresh"
                     >
+
                         <i class="fa-solid fa-rotate"></i>
-                        <span>Refresh</span>
+
+                        <span>
+                            Refresh
+                        </span>
+
                     </button>
+
                 </div>
-                <!-- Main content -->
+
+
+                <!-- =========================
+                     PRODUCT CONTENT
+                ========================== -->
                 <div id="content">
+
                     <div class="loading-state">
+
                         <div class="loading-spinner">
                             <i class="fa-solid fa-spinner fa-spin"></i>
                         </div>
-                        <strong>Memuat produk...</strong>
+
+                        <strong>
+                            Memuat produk...
+                        </strong>
+
                         <span>
-                            Mengambil data dari database.
+                            Mengambil data terbaru dari database.
                         </span>
+
                     </div>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
+
+
+    <!-- =========================
+         TOAST
+    ========================== -->
     <div id="toast"></div>
-    <script src="js/my-products.js?v=20260904"></script>
-    <script src="js/footer.js?v=20260904"></script>
+
+
+    <!-- =========================
+         PAGE SCRIPT
+    ========================== -->
+    <script src="js/my-products.js?v=20260905-final"></script>
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+    <script src="js/footer.js?v=20260905"></script>
+
 </body>
 </html>
