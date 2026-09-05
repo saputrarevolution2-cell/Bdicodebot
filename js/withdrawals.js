@@ -2,9 +2,25 @@
    PasTele — Withdrawals
    Real Supabase data
    Existing schema preserved
+   WITHDRAW RULES
+   ---------------------------------------------------------
+   WD Instant :
+   - Buka 24/7
+   - Senin-Minggu
+   - Maks Rp250.000 / transaksi
+   - Maks Rp500.000 / hari
+   - Fee Rp15.000
+   WD Manual :
+   - Normal: Senin-Jumat 07:00-21:00 WIB
+   - Sabtu-Minggu / di luar jam normal:
+     tetap bisa diajukan
+   - Fee normal + OFF_HOURS_FEE
    ========================================================= */
 document.addEventListener('DOMContentLoaded', async () => {
     'use strict';
+    /* =====================================================
+       DOM
+       ===================================================== */
     const $ = (id) => document.getElementById(id);
     const balEl = $('bal');
     const reqEl = $('req');
@@ -24,9 +40,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const manualSubmit = $('manualSubmit');
     const historyEl = $('history');
     const historyCount = $('historyCount');
+    /* New HTML elements */
+    const manualStatus = $('manualStatus');
+    const manualStatusTitle = $('manualStatusTitle');
+    const manualStatusText = $('manualStatusText');
+    const manualFeeText = $('manualFeeText');
+    const withdrawFeePreview = $('withdrawFeePreview');
+    const withdrawFee = $('withdrawFee');
+    const withdrawNet = $('withdrawNet');
+    /* =====================================================
+       CONSTANTS
+       ===================================================== */
     const DAILY_LIMIT = 500000;
     const INSTANT_MAX = 250000;
     const MANUAL_MIN = 100000;
+    const INSTANT_FEE = 15000;
+    const MANUAL_FEE_BANK = 10000;
+    const MANUAL_FEE_EWALLET = 7000;
+    /*
+     * Fee tambahan ketika WD Manual dilakukan:
+     *
+     * - Sabtu
+     * - Minggu
+     * - Senin-Jumat sebelum 07:00
+     * - Senin-Jumat mulai 21:00
+     *
+     * GANTI ANGKA INI jika nominal fee tambahan
+     * yang kamu inginkan berbeda.
+     */
+    const MANUAL_OFF_HOURS_FEE = 5000;
+    const MANUAL_OPEN_HOUR = 7;
+    const MANUAL_CLOSE_HOUR = 21;
+    const TIMEZONE = 'Asia/Jakarta';
     const INSTANT_AMOUNTS = [
         50000,
         100000,
@@ -34,6 +79,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         200000,
         250000
     ];
+    /* =====================================================
+       STATE
+       ===================================================== */
     let profile = null;
     let wallet = null;
     let withdrawals = [];
@@ -42,41 +90,269 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedPaymentMethod = null;
     let isSubmitting = false;
     /* =====================================================
-       Helpers
+       TIME / WITHDRAW SCHEDULE
+       ===================================================== */
+    /*
+     * Mendapatkan waktu WIB secara konsisten.
+     *
+     * Kita tidak memakai timezone browser untuk menentukan
+     * jam operasional.
+     */
+    const getJakartaParts = () => {
+        const parts = new Intl.DateTimeFormat(
+            'en-US',
+            {
+                timeZone: TIMEZONE,
+                weekday: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }
+        ).formatToParts(new Date());
+        const get = (type) => {
+            return parts.find(
+                (part) => part.type === type
+            )?.value;
+        };
+        const weekday = get('weekday');
+        const hour = Number(get('hour') || 0);
+        const minute = Number(get('minute') || 0);
+        return {
+            weekday,
+            hour,
+            minute,
+            totalMinutes: (hour * 60) + minute
+        };
+    };
+    /*
+     * Manual NORMAL hanya:
+     * Senin-Jumat
+     * 07:00 sampai sebelum 21:00 WIB
+     */
+    const isManualNormalHours = () => {
+        const now = getJakartaParts();
+        const weekend =
+            now.weekday === 'Sat' ||
+            now.weekday === 'Sun';
+        if (weekend) {
+            return false;
+        }
+        const currentMinutes =
+            now.totalMinutes;
+        const openMinutes =
+            MANUAL_OPEN_HOUR * 60;
+        const closeMinutes =
+            MANUAL_CLOSE_HOUR * 60;
+        return (
+            currentMinutes >= openMinutes &&
+            currentMinutes < closeMinutes
+        );
+    };
+    /*
+     * Instant selalu buka.
+     */
+    const isInstantOpen = () => {
+        return true;
+    };
+    /*
+     * Apakah manual sedang di luar jam normal?
+     */
+    const isManualOffHours = () => {
+        return !isManualNormalHours();
+    };
+    /* =====================================================
+       MANUAL FEE
+       ===================================================== */
+    const getNormalManualFee = () => {
+        const method =
+            String(
+                methodEl?.value || 'ewallet'
+            ).toLowerCase();
+        if (method === 'bank') {
+            return MANUAL_FEE_BANK;
+        }
+        return MANUAL_FEE_EWALLET;
+    };
+    const getManualFee = () => {
+        const normalFee =
+            getNormalManualFee();
+        if (isManualOffHours()) {
+            return (
+                normalFee +
+                MANUAL_OFF_HOURS_FEE
+            );
+        }
+        return normalFee;
+    };
+    /* =====================================================
+       MANUAL STATUS UI
+       ===================================================== */
+    const renderManualSchedule = () => {
+        if (!manualStatus) {
+            return;
+        }
+        const normalHours =
+            isManualNormalHours();
+        const offHours =
+            !normalHours;
+        manualStatus.classList.remove(
+            'open',
+            'closed',
+            'off-hours'
+        );
+        if (normalHours) {
+            manualStatus.classList.add(
+                'open'
+            );
+            if (manualStatusTitle) {
+                manualStatusTitle.textContent =
+                    'WD Manual sedang buka';
+            }
+            if (manualStatusText) {
+                manualStatusText.textContent =
+                    'Senin–Jumat, 07:00–21:00 WIB. Fee normal berlaku.';
+            }
+        } else {
+            manualStatus.classList.add(
+                'off-hours'
+            );
+            if (manualStatusTitle) {
+                manualStatusTitle.textContent =
+                    'WD Manual di luar jam normal';
+            }
+            if (manualStatusText) {
+                manualStatusText.textContent =
+                    `Tetap bisa mengajukan. Fee tambahan ${money(MANUAL_OFF_HOURS_FEE)} berlaku.`;
+            }
+        }
+        renderManualFeeInfo();
+    };
+    /* =====================================================
+       MANUAL FEE INFO
+       ===================================================== */
+    const renderManualFeeInfo = () => {
+        if (!manualFeeText) {
+            return;
+        }
+        const extra =
+            isManualOffHours()
+                ? MANUAL_OFF_HOURS_FEE
+                : 0;
+        const bankFee =
+            MANUAL_FEE_BANK + extra;
+        const ewalletFee =
+            MANUAL_FEE_EWALLET + extra;
+        if (extra > 0) {
+            manualFeeText.textContent =
+                `Fee saat ini: Bank ${money(bankFee)} · E-Wallet ${money(ewalletFee)}`;
+        } else {
+            manualFeeText.textContent =
+                `Fee Bank ${money(MANUAL_FEE_BANK)} · E-Wallet ${money(MANUAL_FEE_EWALLET)}`;
+        }
+    };
+    /* =====================================================
+       FEE PREVIEW
+       ===================================================== */
+    const renderFeePreview = () => {
+        if (!withdrawFee || !withdrawNet) {
+            return;
+        }
+        const amount =
+            amountNumber(
+                amountEl?.value
+            );
+        if (amount <= 0) {
+            withdrawFee.textContent =
+                money(getManualFee());
+            withdrawNet.textContent =
+                money(0);
+            return;
+        }
+        const fee =
+            getManualFee();
+        const net =
+            Math.max(
+                0,
+                amount - fee
+            );
+        withdrawFee.textContent =
+            money(fee);
+        withdrawNet.textContent =
+            money(net);
+    };
+    /* =====================================================
+       HELPERS
        ===================================================== */
     const money = (value) => {
-        const amount = Number(value || 0);
-        if (typeof TC?.money === 'function') {
+        const amount = Number(
+            value || 0
+        );
+        if (
+            typeof TC !== 'undefined' &&
+            typeof TC?.money === 'function'
+        ) {
             return TC.money(
                 Number.isFinite(amount)
                     ? amount
                     : 0
             );
         }
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            maximumFractionDigits: 0
-        }).format(
+        return new Intl.NumberFormat(
+            'id-ID',
+            {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }
+        ).format(
             Number.isFinite(amount)
                 ? amount
                 : 0
         );
     };
     const esc = (value) => {
-        if (typeof TC?.esc === 'function') {
-            return TC.esc(String(value ?? ''));
+        if (
+            typeof TC !== 'undefined' &&
+            typeof TC?.esc === 'function'
+        ) {
+            return TC.esc(
+                String(value ?? '')
+            );
         }
         return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+            .replace(
+                /&/g,
+                '&amp;'
+            )
+            .replace(
+                /</g,
+                '&lt;'
+            )
+            .replace(
+                />/g,
+                '&gt;'
+            )
+            .replace(
+                /"/g,
+                '&quot;'
+            )
+            .replace(
+                /'/g,
+                '&#039;'
+            );
     };
-    const toast = (message, type = 'error') => {
-        if (typeof TC?.toast === 'function') {
-            TC.toast(message, type);
+    const toast = (
+        message,
+        type = 'error'
+    ) => {
+        if (
+            typeof TC !== 'undefined' &&
+            typeof TC?.toast === 'function'
+        ) {
+            TC.toast(
+                message,
+                type
+            );
             return;
         }
         alert(message);
@@ -86,18 +362,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             status || ''
         ).toLowerCase();
         if (
-            ['completed', 'paid', 'success', 'successful'].includes(value)
+            [
+                'completed',
+                'paid',
+                'success',
+                'successful'
+            ].includes(value)
         ) {
             return 'success';
         }
         if (
-            ['failed', 'cancelled', 'canceled', 'rejected'].includes(value)
+            [
+                'failed',
+                'cancelled',
+                'canceled',
+                'rejected'
+            ].includes(value)
         ) {
             return value === 'rejected'
                 ? 'rejected'
                 : 'failed';
         }
-        if (value === 'processing') {
+        if (
+            value === 'processing'
+        ) {
             return 'processing';
         }
         return 'pending';
@@ -120,11 +408,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         return labels[value] || (
             value
-                ? value.replace(/_/g, ' ')
+                ? value.replace(
+                    /_/g,
+                    ' '
+                )
                 : 'Tidak diketahui'
         );
     };
-    const methodLabel = (method) => {
+    const methodLabel = (
+        method
+    ) => {
         const value = String(
             method || ''
         ).toLowerCase();
@@ -139,13 +432,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         return method || '-';
     };
-    const methodIcon = (method) => {
-        return String(method || '').toLowerCase() === 'bank'
+    const methodIcon = (
+        method
+    ) => {
+        return String(
+            method || ''
+        ).toLowerCase() === 'bank'
             ? 'fa-building-columns'
             : 'fa-wallet';
     };
-    const amountNumber = (value) => {
-        const number = Number(value);
+    const amountNumber = (
+        value
+    ) => {
+        const number =
+            Number(value);
         return Number.isFinite(number)
             ? number
             : 0;
@@ -155,7 +455,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             'pending',
             'processing'
         ].includes(
-            String(row?.status || '').toLowerCase()
+            String(
+                row?.status || ''
+            ).toLowerCase()
         );
     };
     const isCompleted = (row) => {
@@ -165,24 +467,68 @@ document.addEventListener('DOMContentLoaded', async () => {
             'success',
             'successful'
         ].includes(
-            String(row?.status || '').toLowerCase()
+            String(
+                row?.status || ''
+            ).toLowerCase()
         );
     };
-    const isToday = (dateValue) => {
+    /* =====================================================
+       WIB DATE HELPERS
+       ===================================================== */
+    const jakartaDateKey = (
+        dateValue
+    ) => {
         if (!dateValue) {
-            return false;
+            return null;
         }
-        const date = new Date(dateValue);
-        if (Number.isNaN(date.getTime())) {
-            return false;
+        const date =
+            new Date(dateValue);
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return null;
         }
-        const now = new Date();
-        return (
-            date.getFullYear() === now.getFullYear() &&
-            date.getMonth() === now.getMonth() &&
-            date.getDate() === now.getDate()
+        const parts =
+            new Intl.DateTimeFormat(
+                'en-CA',
+                {
+                    timeZone: TIMEZONE,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }
+            ).formatToParts(date);
+        const get = (type) => {
+            return parts.find(
+                (part) =>
+                    part.type === type
+            )?.value;
+        };
+        return `${get('year')}-${get('month')}-${get('day')}`;
+    };
+    const todayJakartaKey = () => {
+        return jakartaDateKey(
+            new Date()
         );
     };
+    const isToday = (
+        dateValue
+    ) => {
+        const rowKey =
+            jakartaDateKey(
+                dateValue
+            );
+        return (
+            rowKey !== null &&
+            rowKey ===
+                todayJakartaKey()
+        );
+    };
+    /* =====================================================
+       BUTTON LOADING
+       ===================================================== */
     const setButtonLoading = (
         button,
         loading,
@@ -195,24 +541,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             button.dataset.originalHtml =
                 button.innerHTML;
             button.disabled = true;
-            button.classList.add('loading');
+            button.classList.add(
+                'loading'
+            );
             button.innerHTML = `
-                <i class="fa-solid fa-spinner"></i>
-                <span>${esc(loadingText || 'Memproses...')}</span>
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>
+                    ${esc(
+                        loadingText ||
+                        'Memproses...'
+                    )}
+                </span>
             `;
             return;
         }
         button.disabled = false;
-        button.classList.remove('loading');
-        if (button.dataset.originalHtml) {
+        button.classList.remove(
+            'loading'
+        );
+        if (
+            button.dataset.originalHtml
+        ) {
             button.innerHTML =
                 button.dataset.originalHtml;
         }
     };
     /* =====================================================
-       Loading / Error
+       LOADING / ERROR
        ===================================================== */
     const renderHistoryLoading = () => {
+        if (!historyEl) {
+            return;
+        }
         historyEl.innerHTML = `
             <div class="history-loading">
                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -220,7 +580,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
     };
-    const renderHistoryError = (message) => {
+    const renderHistoryError = (
+        message
+    ) => {
+        if (!historyEl) {
+            return;
+        }
         historyEl.innerHTML = `
             <div class="history-error">
                 <strong>
@@ -250,27 +615,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
     };
     /* =====================================================
-       Daily limit
+       DAILY LIMIT
        ===================================================== */
     const calculateTodayAmount = () => {
         return withdrawals
             .filter(isToday)
+            .filter((row) => {
+                /*
+                 * Limit Rp500.000 adalah khusus
+                 * WD Instant.
+                 */
+                const mode =
+                    String(
+                        row?.mode ||
+                        ''
+                    ).toLowerCase();
+                return mode === 'instant';
+            })
             .reduce(
                 (total, row) => {
-                    return total + amountNumber(
-                        row?.amount
+                    return (
+                        total +
+                        amountNumber(
+                            row?.amount
+                        )
                     );
                 },
                 0
             );
     };
     const renderDailyLimit = () => {
+        if (
+            !dailyBar ||
+            !dailyText ||
+            !dailyPercent
+        ) {
+            return;
+        }
         const todayAmount =
             calculateTodayAmount();
         const percent = Math.min(
             100,
             Math.round(
-                (todayAmount / DAILY_LIMIT) * 100
+                (
+                    todayAmount /
+                    DAILY_LIMIT
+                ) * 100
             )
         );
         dailyBar.style.width =
@@ -279,74 +669,103 @@ document.addEventListener('DOMContentLoaded', async () => {
             `${percent}%`;
         dailyText.textContent =
             `${money(todayAmount)} / ${money(DAILY_LIMIT)}`;
-        dailyBar.removeAttribute('data-level');
+        dailyBar.removeAttribute(
+            'data-level'
+        );
         if (percent >= 100) {
-            dailyBar.dataset.level = 'full';
+            dailyBar.dataset.level =
+                'full';
         } else if (percent >= 50) {
-            dailyBar.dataset.level = 'half';
+            dailyBar.dataset.level =
+                'half';
         }
     };
     /* =====================================================
-       Instant amounts
+       INSTANT AMOUNTS
        ===================================================== */
     const renderInstantAmounts = () => {
+        if (!instantBtns) {
+            return;
+        }
         instantBtns.innerHTML =
             INSTANT_AMOUNTS
-                .map((amount) => `
-                    <button
-                        type="button"
-                        class="instant-choice ${
-                            amount === selectedInstantAmount
-                                ? 'selected'
-                                : ''
-                        }"
-                        data-amount="${amount}"
-                    >
-                        <i class="fa-solid fa-bolt"></i>
-                        ${esc(money(amount))}
-                    </button>
-                `)
+                .map(
+                    (amount) => `
+                        <button
+                            type="button"
+                            class="instant-choice ${
+                                amount ===
+                                selectedInstantAmount
+                                    ? 'selected'
+                                    : ''
+                            }"
+                            data-amount="${amount}"
+                        >
+                            <i class="fa-solid fa-bolt"></i>
+                            ${esc(
+                                money(amount)
+                            )}
+                        </button>
+                    `
+                )
                 .join('');
         instantBtns
-            .querySelectorAll('.instant-choice')
-            .forEach((button) => {
-                button.addEventListener(
-                    'click',
-                    () => {
-                        selectedInstantAmount =
-                            amountNumber(
-                                button.dataset.amount
-                            );
-                        instantBtns
-                            .querySelectorAll(
-                                '.instant-choice'
-                            )
-                            .forEach((item) => {
-                                item.classList.remove(
-                                    'selected'
+            .querySelectorAll(
+                '.instant-choice'
+            )
+            .forEach(
+                (button) => {
+                    button.addEventListener(
+                        'click',
+                        () => {
+                            selectedInstantAmount =
+                                amountNumber(
+                                    button.dataset.amount
                                 );
-                            });
-                        button.classList.add(
-                            'selected'
-                        );
-                        instantAmount.textContent =
-                            money(
-                                selectedInstantAmount
+                            instantBtns
+                                .querySelectorAll(
+                                    '.instant-choice'
+                                )
+                                .forEach(
+                                    (item) => {
+                                        item.classList.remove(
+                                            'selected'
+                                        );
+                                    }
+                                );
+                            button.classList.add(
+                                'selected'
                             );
-                    }
+                            if (
+                                instantAmount
+                            ) {
+                                instantAmount.textContent =
+                                    money(
+                                        selectedInstantAmount
+                                    );
+                            }
+                        }
+                    );
+                }
+            );
+        if (instantAmount) {
+            instantAmount.textContent =
+                money(
+                    selectedInstantAmount
                 );
-            });
-        instantAmount.textContent =
-            money(selectedInstantAmount);
+        }
     };
     /* =====================================================
-       Payment methods
+       PAYMENT METHODS
        ===================================================== */
-    const applyPaymentMethod = (method) => {
+    const applyPaymentMethod = (
+        method
+    ) => {
         if (!method) {
             return;
         }
-        selectedPaymentMethod = method;
+        selectedPaymentMethod =
+            method;
         methodEl.value =
             method.method_type ||
             method.method ||
@@ -358,21 +777,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             method.account_number ||
             '';
         savedMethodsEl
-            .querySelectorAll('.saved-method')
-            .forEach((button) => {
-                button.classList.toggle(
-                    'selected',
-                    button.dataset.methodId ===
-                    String(method.id)
-                );
-            });
+            ?.querySelectorAll(
+                '.saved-method'
+            )
+            .forEach(
+                (button) => {
+                    button.classList.toggle(
+                        'selected',
+                        button.dataset.methodId ===
+                        String(method.id)
+                    );
+                }
+            );
+        renderManualSchedule();
+        renderFeePreview();
     };
     const renderPaymentMethods = () => {
+        if (!savedMethodsEl) {
+            return;
+        }
         if (!paymentMethods.length) {
             savedMethodsEl.classList.add(
                 'hidden'
             );
-            savedMethodsEl.innerHTML = '';
+            savedMethodsEl.innerHTML =
+                '';
             return;
         }
         savedMethodsEl.classList.remove(
@@ -385,39 +814,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div class="saved-method-list">
                 ${paymentMethods
-                    .map((method) => `
-                        <button
-                            type="button"
-                            class="saved-method ${
-                                selectedPaymentMethod?.id === method.id
-                                    ? 'selected'
-                                    : ''
-                            }"
-                            data-method-id="${esc(method.id)}"
-                        >
-                            <div class="saved-method-main">
-                                <strong>
-                                    ${esc(
-                                        method.provider ||
-                                        method.method_type ||
-                                        'Payment'
-                                    )}
-                                </strong>
-                                <small>
-                                    ${esc(
-                                        method.account_name ||
-                                        ''
-                                    )}
-                                    ${method.account_name ? ' · ' : ''}
-                                    ${esc(
-                                        method.account_number ||
-                                        ''
-                                    )}
-                                </small>
-                            </div>
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    `)
+                    .map(
+                        (method) => `
+                            <button
+                                type="button"
+                                class="saved-method ${
+                                    selectedPaymentMethod?.id ===
+                                    method.id
+                                        ? 'selected'
+                                        : ''
+                                }"
+                                data-method-id="${esc(
+                                    method.id
+                                )}"
+                            >
+                                <div class="saved-method-main">
+                                    <strong>
+                                        ${esc(
+                                            method.provider ||
+                                            method.method_type ||
+                                            'Payment'
+                                        )}
+                                    </strong>
+                                    <small>
+                                        ${esc(
+                                            method.account_name ||
+                                            ''
+                                        )}
+                                        ${
+                                            method.account_name
+                                                ? ' · '
+                                                : ''
+                                        }
+                                        ${esc(
+                                            method.account_number ||
+                                            ''
+                                        )}
+                                    </small>
+                                </div>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        `
+                    )
                     .join('')}
             </div>
         `;
@@ -425,56 +863,75 @@ document.addEventListener('DOMContentLoaded', async () => {
             .querySelectorAll(
                 '[data-method-id]'
             )
-            .forEach((button) => {
-                button.addEventListener(
-                    'click',
-                    () => {
-                        const method =
-                            paymentMethods.find(
-                                (item) =>
-                                    String(item.id) ===
-                                    String(
-                                        button.dataset.methodId
-                                    )
+            .forEach(
+                (button) => {
+                    button.addEventListener(
+                        'click',
+                        () => {
+                            const method =
+                                paymentMethods.find(
+                                    (item) =>
+                                        String(
+                                            item.id
+                                        ) ===
+                                        String(
+                                            button.dataset.methodId
+                                        )
+                                );
+                            applyPaymentMethod(
+                                method
                             );
-                        applyPaymentMethod(
-                            method
-                        );
-                    }
-                );
-            });
+                        }
+                    );
+                }
+            );
     };
     /* =====================================================
-       Summary
+       SUMMARY
        ===================================================== */
     const renderSummary = () => {
-        const balance = amountNumber(
-            wallet?.available_balance ??
-            wallet?.balance ??
-            profile?.balance ??
-            0
-        );
-        const pending = withdrawals
-            .filter(isPending)
-            .reduce(
-                (total, row) => {
-                    return total + amountNumber(
-                        row?.total_debit ??
-                        row?.amount
-                    );
-                },
+        const balance =
+            amountNumber(
+                wallet?.available_balance ??
+                wallet?.balance ??
+                profile?.balance ??
                 0
             );
-        const completed = withdrawals
-            .filter(isCompleted)
-            .reduce(
-                (total, row) => {
-                    return total + amountNumber(
-                        row?.amount
-                    );
-                },
-                0
-            );
+        const pending =
+            withdrawals
+                .filter(isPending)
+                .reduce(
+                    (
+                        total,
+                        row
+                    ) => {
+                        return (
+                            total +
+                            amountNumber(
+                                row?.total_debit ??
+                                row?.amount
+                            )
+                        );
+                    },
+                    0
+                );
+        const completed =
+            withdrawals
+                .filter(isCompleted)
+                .reduce(
+                    (
+                        total,
+                        row
+                    ) => {
+                        return (
+                            total +
+                            amountNumber(
+                                row?.amount
+                            )
+                        );
+                    },
+                    0
+                );
         balEl.textContent =
             money(balance);
         reqEl.textContent =
@@ -483,9 +940,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             money(completed);
     };
     /* =====================================================
-       History
+       HISTORY
        ===================================================== */
     const renderHistory = () => {
+        if (!historyEl) {
+            return;
+        }
         historyCount.textContent =
             `${withdrawals.length} transaksi`;
         if (!withdrawals.length) {
@@ -499,121 +959,156 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         historyEl.innerHTML =
             withdrawals
-                .map((row) => {
-                    const date =
-                        new Date(row.created_at);
-                    const dateText =
-                        Number.isNaN(
-                            date.getTime()
-                        )
-                            ? '-'
-                            : date.toLocaleDateString(
-                                'id-ID',
-                                {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                }
+                .map(
+                    (row) => {
+                        const date =
+                            new Date(
+                                row.created_at
                             );
-                    const timeText =
-                        Number.isNaN(
-                            date.getTime()
-                        )
-                            ? ''
-                            : date.toLocaleTimeString(
-                                'id-ID',
-                                {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                }
+                        const dateText =
+                            Number.isNaN(
+                                date.getTime()
+                            )
+                                ? '-'
+                                : date.toLocaleDateString(
+                                    'id-ID',
+                                    {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        timeZone:
+                                            TIMEZONE
+                                    }
+                                );
+                        const timeText =
+                            Number.isNaN(
+                                date.getTime()
+                            )
+                                ? ''
+                                : date.toLocaleTimeString(
+                                    'id-ID',
+                                    {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        timeZone:
+                                            TIMEZONE
+                                    }
+                                );
+                        const status =
+                            statusKey(
+                                row.status
                             );
-                    const status =
-                        statusKey(
-                            row.status
-                        );
-                    const method =
-                        row.method ||
-                        row.method_type ||
-                        '-';
-                    const ticket =
-                        row.ticket_code ||
-                        row.id ||
-                        '-';
-                    return `
-                        <div class="history-row">
-                            <div class="history-date">
-                                <strong>
-                                    ${esc(dateText)}
-                                </strong>
-                                <small>
-                                    ${esc(timeText)}
-                                </small>
-                            </div>
-                            <div class="history-amount">
-                                <strong>
+                        const method =
+                            row.method ||
+                            row.method_type ||
+                            '-';
+                        const ticket =
+                            row.ticket_code ||
+                            row.id ||
+                            '-';
+                        return `
+                            <div class="history-row">
+                                <div class="history-date">
+                                    <strong>
+                                        ${esc(
+                                            dateText
+                                        )}
+                                    </strong>
+                                    <small>
+                                        ${esc(
+                                            timeText
+                                        )}
+                                    </small>
+                                </div>
+                                <div class="history-amount">
+                                    <strong>
+                                        ${esc(
+                                            money(
+                                                row.amount
+                                            )
+                                        )}
+                                    </strong>
+                                </div>
+                                <div class="history-method">
+                                    <strong>
+                                        <i
+                                            class="fa-solid ${
+                                                methodIcon(
+                                                    method
+                                                )
+                                            }"
+                                        ></i>
+                                        ${esc(
+                                            methodLabel(
+                                                method
+                                            )
+                                        )}
+                                    </strong>
+                                    <small>
+                                        ${esc(
+                                            row.account_number ||
+                                            '-'
+                                        )}
+                                    </small>
+                                </div>
+                                <div class="history-type">
                                     ${esc(
-                                        money(
-                                            row.amount
+                                        String(
+                                            row.mode ||
+                                            'manual'
+                                        ).replace(
+                                            /_/g,
+                                            ' '
                                         )
                                     )}
-                                </strong>
+                                </div>
+                                <div>
+                                    <span
+                                        class="status-badge ${status}"
+                                    >
+                                        ${esc(
+                                            statusLabel(
+                                                row.status
+                                            )
+                                        )}
+                                    </span>
+                                </div>
+                                <div class="ticket-code">
+                                    #${esc(ticket)}
+                                </div>
                             </div>
-                            <div class="history-method">
-                                <strong>
-                                    <i class="fa-solid ${methodIcon(method)}"></i>
-                                    ${esc(
-                                        methodLabel(method)
-                                    )}
-                                </strong>
-                                <small>
-                                    ${esc(
-                                        row.account_number ||
-                                        '-'
-                                    )}
-                                </small>
-                            </div>
-                            <div class="history-type">
-                                ${esc(
-                                    String(
-                                        row.mode ||
-                                        'manual'
-                                    ).replace(
-                                        /_/g,
-                                        ' '
-                                    )
-                                )}
-                            </div>
-                            <div>
-                                <span
-                                    class="status-badge ${status}"
-                                >
-                                    ${esc(
-                                        statusLabel(
-                                            row.status
-                                        )
-                                    )}
-                                </span>
-                            </div>
-                            <div class="ticket-code">
-                                #${esc(ticket)}
-                            </div>
-                        </div>
-                    `;
-                })
+                        `;
+                    }
+                )
                 .join('');
     };
     /* =====================================================
-       Validation
+       VALIDATION
        ===================================================== */
     const validateCommon = (
         amount,
         mode
     ) => {
-        if (!amount || amount <= 0) {
+        if (
+            !amount ||
+            amount <= 0
+        ) {
             return 'Nominal wajib diisi.';
         }
+        /* ---------------------------------------------
+           INSTANT
+           --------------------------------------------- */
         if (mode === 'instant') {
-            if (amount > INSTANT_MAX) {
+            /*
+             * Instant selalu buka 24/7.
+             */
+            if (!isInstantOpen()) {
+                return 'WD Instant sedang tidak tersedia.';
+            }
+            if (
+                amount >
+                INSTANT_MAX
+            ) {
                 return 'WD Instant maksimum Rp250.000.';
             }
             const today =
@@ -625,12 +1120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return 'Batas WD Instant harian Rp500.000 akan terlampaui.';
             }
         }
+        /* ---------------------------------------------
+           MANUAL
+           --------------------------------------------- */
         if (
             mode === 'manual' &&
             amount < MANUAL_MIN
         ) {
             return 'WD Manual minimum Rp100.000.';
         }
+        /* ---------------------------------------------
+           BALANCE
+           --------------------------------------------- */
         const balance =
             amountNumber(
                 wallet?.available_balance ??
@@ -638,9 +1139,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 profile?.balance ??
                 0
             );
-        if (amount > balance) {
-            return 'Saldo tersedia tidak mencukupi.';
+        /*
+         * Saldo harus cukup untuk nominal + fee.
+         */
+        const fee =
+            mode === 'instant'
+                ? INSTANT_FEE
+                : getManualFee();
+        const totalDebit =
+            amount + fee;
+        if (
+            totalDebit >
+            balance
+        ) {
+            return (
+                `Saldo tidak mencukupi. ` +
+                `Dibutuhkan ${money(totalDebit)} ` +
+                `(nominal ${money(amount)} + fee ${money(fee)}).`
+            );
         }
+        /* ---------------------------------------------
+           ACCOUNT
+           --------------------------------------------- */
         const accountName =
             nameEl.value.trim();
         const accountNumber =
@@ -654,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return null;
     };
     /* =====================================================
-       Request withdrawal
+       REQUEST WITHDRAWAL
        ===================================================== */
     async function requestWithdrawal(
         amount,
@@ -688,12 +1208,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : 'Mengirim pengajuan...'
         );
         try {
+            /*
+             * IMPORTANT:
+             *
+             * Fee harus dihitung juga di database/RPC.
+             * Frontend hanya sebagai preview.
+             */
             const response =
                 await sb.rpc(
                     'request_withdrawal_v2',
                     {
-                        p_amount: amount,
-                        p_mode: mode,
+                        p_amount:
+                            amount,
+                        p_mode:
+                            mode,
                         p_method:
                             methodEl.value,
                         p_account_name:
@@ -708,17 +1236,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             toast(
                 mode === 'instant'
                     ? 'WD Instant berhasil diajukan.'
-                    : 'WD Manual berhasil diajukan.',
+                    : (
+                        isManualOffHours()
+                            ? 'WD Manual berhasil diajukan. Fee tambahan di luar jam normal berlaku.'
+                            : 'WD Manual berhasil diajukan.'
+                    ),
                 'success'
             );
             /*
-             * Reload after RPC success so the wallet,
-             * limits and history are always synchronized
-             * with Supabase.
+             * Reload setelah RPC sukses supaya:
+             * - saldo
+             * - limit
+             * - history
+             * selalu sinkron dengan Supabase.
              */
-            setTimeout(() => {
-                location.reload();
-            }, 650);
+            setTimeout(
+                () => {
+                    location.reload();
+                },
+                650
+            );
         } catch (error) {
             console.error(
                 'Withdrawal error:',
@@ -737,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     /* =====================================================
-       Load wallet
+       LOAD WALLET
        ===================================================== */
     async function loadWallet() {
         renderHistoryLoading();
@@ -773,12 +1310,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .order(
                         'created_at',
                         {
-                            ascending: false
+                            ascending:
+                                false
                         }
                     )
                     .limit(100),
                 sb
-                    .from('payment_methods')
+                    .from(
+                        'payment_methods'
+                    )
                     .select('*')
                     .eq(
                         'user_id',
@@ -787,11 +1327,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .order(
                         'created_at',
                         {
-                            ascending: false
+                            ascending:
+                                false
                         }
                     )
             ]);
-            if (walletResponse?.error) {
+            if (
+                walletResponse?.error
+            ) {
                 throw walletResponse.error;
             }
             if (
@@ -799,31 +1342,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             ) {
                 throw withdrawalsResponse.error;
             }
-            if (methodsResponse?.error) {
+            if (
+                methodsResponse?.error
+            ) {
                 throw methodsResponse.error;
             }
             wallet =
                 walletResponse.data;
             withdrawals =
-                withdrawalsResponse.data || [];
+                withdrawalsResponse.data ||
+                [];
             paymentMethods =
-                methodsResponse.data || [];
+                methodsResponse.data ||
+                [];
             selectedPaymentMethod =
-                paymentMethods[0] || null;
+                paymentMethods[0] ||
+                null;
             renderSummary();
             renderDailyLimit();
             renderInstantAmounts();
             renderPaymentMethods();
             renderHistory();
+            renderManualSchedule();
             /*
-             * Automatically use the first saved
-             * payment method when available.
+             * Automatically use first saved
+             * payment method.
              */
-            if (selectedPaymentMethod) {
+            if (
+                selectedPaymentMethod
+            ) {
                 applyPaymentMethod(
                     selectedPaymentMethod
                 );
             }
+            renderFeePreview();
         } catch (error) {
             console.error(
                 'Withdrawals load error:',
@@ -838,9 +1390,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     /* =====================================================
-       Instant submit
+       INSTANT SUBMIT
        ===================================================== */
-    instantSubmit.addEventListener(
+    instantSubmit?.addEventListener(
         'click',
         () => {
             requestWithdrawal(
@@ -850,9 +1402,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     );
     /* =====================================================
-       Manual submit
+       MANUAL SUBMIT
        ===================================================== */
-    form.addEventListener(
+    form?.addEventListener(
         'submit',
         (event) => {
             event.preventDefault();
@@ -865,9 +1417,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     );
     /* =====================================================
-       Input normalization
+       PAYMENT METHOD CHANGE
        ===================================================== */
-    amountEl.addEventListener(
+    methodEl?.addEventListener(
+        'change',
+        () => {
+            renderManualSchedule();
+            renderFeePreview();
+        }
+    );
+    /* =====================================================
+       AMOUNT CHANGE
+       ===================================================== */
+    amountEl?.addEventListener(
         'input',
         () => {
             let value =
@@ -879,34 +1441,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             amountEl.value =
                 value || '';
+            renderFeePreview();
         }
     );
-    numberEl.addEventListener(
+    /* =====================================================
+       ACCOUNT NUMBER
+       ===================================================== */
+    numberEl?.addEventListener(
         'input',
         () => {
             /*
-             * Keep the field friendly for account numbers
-             * while preventing accidental spaces.
+             * Keep field friendly while
+             * preventing accidental spaces.
              */
             numberEl.value =
                 numberEl.value
-                    .replace(/\s+/g, '')
+                    .replace(
+                        /\s+/g,
+                        ''
+                    )
                     .trim();
         }
     );
     /* =====================================================
-       Urgent admin request
+       URGENT ADMIN REQUEST
        ===================================================== */
     $('urgent')?.addEventListener(
         'click',
         () => {
             /*
-             * The existing implementation only showed a toast.
-             * There is currently no known RPC/table in the supplied
-             * schema for an actual admin-request ticket.
+             * Existing implementation only
+             * showed a toast.
              *
-             * Therefore we keep this honest and do not insert
-             * fake data into an unknown table.
+             * No fake RPC/table is created.
              */
             toast(
                 'Silakan hubungi admin melalui kanal bantuan PasTele.',
@@ -915,7 +1482,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     );
     /* =====================================================
-       Start
+       REFRESH SCHEDULE STATUS
+       ===================================================== */
+    /*
+     * Update status dan fee setiap menit.
+     *
+     * Berguna ketika user membuka halaman sebelum
+     * jam 21:00 lalu tetap berada di halaman sampai
+     * lewat jam operasional.
+     */
+    setInterval(
+        () => {
+            renderManualSchedule();
+            renderFeePreview();
+        },
+        60 * 1000
+    );
+    /* =====================================================
+       START
        ===================================================== */
     await loadWallet();
 });
