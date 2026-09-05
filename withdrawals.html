@@ -16,8 +16,8 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
     <link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260905">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
+    <link rel="stylesheet" href="css/navbar.css?v=20260905">
+    <link rel="stylesheet" href="css/footer.css?v=20260905">
     <link rel="stylesheet" href="css/withdrawals.css?v=20260904">
 </head>
 <body class="app-page withdrawals-page">
@@ -25,7 +25,9 @@
 <main>
     <section class="section withdrawals-section">
         <div class="container withdrawals-container">
-            <!-- Header -->
+            <!-- =====================================================
+                 HEADER
+            ====================================================== -->
             <header class="withdraw-header">
                 <div class="withdraw-heading">
                     <div class="withdraw-heading-icon">
@@ -49,7 +51,9 @@
                     <span>Pengaturan pembayaran</span>
                 </a>
             </header>
-            <!-- Main balance -->
+            <!-- =====================================================
+                 BALANCE
+            ====================================================== -->
             <section class="balance-panel">
                 <div class="balance-main">
                     <span class="balance-label">
@@ -68,7 +72,9 @@
                     </a>
                 </div>
             </section>
-            <!-- Small statistics -->
+            <!-- =====================================================
+                 STATISTICS
+            ====================================================== -->
             <div class="withdraw-stats">
                 <div class="withdraw-stat">
                     <span class="stat-icon pending">
@@ -98,7 +104,9 @@
                     </div>
                 </div>
             </div>
-            <!-- Daily limit -->
+            <!-- =====================================================
+                 DAILY INSTANT LIMIT
+            ====================================================== -->
             <section class="daily-limit">
                 <div class="daily-top">
                     <div>
@@ -116,9 +124,13 @@
                     <i id="dailyBar"></i>
                 </div>
             </section>
-            <!-- Withdraw methods -->
+            <!-- =====================================================
+                 WITHDRAW METHODS
+            ====================================================== -->
             <div class="withdraw-layout">
-                <!-- Instant -->
+                <!-- =================================================
+                     WD INSTANT
+                ================================================== -->
                 <section class="withdraw-box">
                     <div class="box-heading">
                         <div class="box-heading-icon instant">
@@ -127,8 +139,22 @@
                         <div>
                             <h2>WD Instant</h2>
                             <p>
-                                Tarik cepat dengan nominal yang tersedia.
+                                Tarik cepat kapan saja, termasuk
+                                Sabtu dan Minggu.
                             </p>
+                        </div>
+                    </div>
+                    <!-- Instant status -->
+                    <div
+                        class="withdraw-status instant-status"
+                        id="instantStatus"
+                    >
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <strong>WD Instant Aktif</strong>
+                            <small>
+                                Tersedia 24 jam setiap hari.
+                            </small>
                         </div>
                     </div>
                     <div class="rule-info">
@@ -171,10 +197,14 @@
                         type="button"
                     >
                         <i class="fa-solid fa-bolt"></i>
-                        <span>Ajukan WD Instant</span>
+                        <span>
+                            Ajukan WD Instant
+                        </span>
                     </button>
                 </section>
-                <!-- Manual -->
+                <!-- =================================================
+                     WD MANUAL
+                ================================================== -->
                 <section class="withdraw-box">
                     <div class="box-heading">
                         <div class="box-heading-icon manual">
@@ -183,8 +213,24 @@
                         <div>
                             <h2>WD Manual</h2>
                             <p>
-                                Ajukan penarikan ke metode pembayaranmu.
+                                Penarikan manual ke rekening atau
+                                e-wallet yang tersimpan.
                             </p>
+                        </div>
+                    </div>
+                    <!-- Manual operating status -->
+                    <div
+                        class="withdraw-status manual-status"
+                        id="manualStatus"
+                    >
+                        <i class="fa-solid fa-clock"></i>
+                        <div>
+                            <strong id="manualStatusTitle">
+                                Jam operasional WD Manual
+                            </strong>
+                            <small id="manualStatusText">
+                                Senin–Jumat, 07:00–21:00 WIB.
+                            </small>
                         </div>
                     </div>
                     <div class="rule-info">
@@ -198,15 +244,22 @@
                         </div>
                         <div>
                             <i class="fa-solid fa-receipt"></i>
-                            Fee Bank Rp10.000 · E-Wallet Rp7.000
+                            <span id="manualFeeText">
+                                Fee Bank Rp10.000 · E-Wallet Rp7.000
+                            </span>
                         </div>
                     </div>
-                    <!-- Saved methods -->
+                    <!-- Saved payment methods -->
                     <div
                         id="savedMethods"
                         class="saved-methods hidden"
                     ></div>
-                    <form id="wd" class="withdraw-form">
+                    <!-- Manual form -->
+                    <form
+                        id="wd"
+                        class="withdraw-form"
+                    >
+                        <!-- Amount -->
                         <div class="field">
                             <label for="amount">
                                 Nominal
@@ -228,6 +281,7 @@
                                 Minimum penarikan Rp100.000
                             </small>
                         </div>
+                        <!-- Payment method -->
                         <div class="field">
                             <label for="method">
                                 Metode pembayaran
@@ -248,6 +302,7 @@
                                 <i class="fa-solid fa-chevron-down"></i>
                             </div>
                         </div>
+                        <!-- Account information -->
                         <div class="form-grid">
                             <div class="field">
                                 <label for="aname">
@@ -275,6 +330,31 @@
                                 >
                             </div>
                         </div>
+                        <!-- Fee preview -->
+                        <div
+                            class="withdraw-fee-preview"
+                            id="withdrawFeePreview"
+                        >
+                            <div>
+                                <span>
+                                    <i class="fa-solid fa-receipt"></i>
+                                    Fee penarikan
+                                </span>
+                                <strong id="withdrawFee">
+                                    Rp7.000
+                                </strong>
+                            </div>
+                            <div>
+                                <span>
+                                    <i class="fa-solid fa-wallet"></i>
+                                    Saldo diterima
+                                </span>
+                                <strong id="withdrawNet">
+                                    Rp0
+                                </strong>
+                            </div>
+                        </div>
+                        <!-- Submit -->
                         <button
                             class="withdraw-submit primary"
                             type="submit"
@@ -288,7 +368,9 @@
                     </form>
                 </section>
             </div>
-            <!-- Emergency request -->
+            <!-- =====================================================
+                 EMERGENCY ADMIN
+            ====================================================== -->
             <section class="admin-request">
                 <div class="admin-request-icon">
                     <i class="fa-solid fa-headset"></i>
@@ -298,8 +380,8 @@
                         Butuh penarikan mendesak?
                     </strong>
                     <p>
-                        Hubungi admin jika ada kebutuhan khusus di luar
-                        ketentuan withdraw normal.
+                        Hubungi admin jika ada kebutuhan khusus
+                        di luar ketentuan withdraw normal.
                     </p>
                 </div>
                 <button
@@ -311,7 +393,9 @@
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </section>
-            <!-- History -->
+            <!-- =====================================================
+                 WITHDRAW HISTORY
+            ====================================================== -->
             <section class="history-panel">
                 <div class="history-heading">
                     <div>
@@ -319,7 +403,9 @@
                             <i class="fa-solid fa-clock-rotate-left"></i>
                         </span>
                         <div>
-                            <h2>Riwayat penarikan</h2>
+                            <h2>
+                                Riwayat penarikan
+                            </h2>
                             <p>
                                 Semua pengajuan withdraw akunmu.
                             </p>
