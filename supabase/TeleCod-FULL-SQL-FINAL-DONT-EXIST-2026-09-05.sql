@@ -827,52 +827,133 @@ create index if not exists orders_item_idx
 -- Public workspace statistics
 -- ------------------------------------------------------------
 drop function if exists public.get_public_workspace_stats();
+
 create or replace function public.get_public_workspace_stats()
 returns jsonb
-language sql
+language plpgsql
 security definer
-set search_path=public
+set search_path = public
 as $$
-  with rev as (
+declare
+  uid uuid := auth.uid();
+  total_links bigint := 0;
+  total_codes bigint := 0;
+  total_telegram bigint := 0;
+  product_links bigint := 0;
+  current_revenue numeric := 0;
+  previous_revenue numeric := 0;
+  trend numeric := 0;
+begin
+  if uid is not null then
+
+    -- Creator's own PasteLinks.
+    select count(*)
+      into total_links
+    from public.pastelinks p
+    where p.user_id = uid;
+
+    -- Creator's own marketplace products.
+    -- A product can use either seller_id or creator_id depending on
+    -- which version of the create-product flow created it.
+    select
+      count(*) filter (
+        where lower(coalesce(pr.type,'')) in ('link','payment','paste','pastelink')
+          and lower(coalesce(pr.status,'')) <> 'rejected'
+      ),
+      count(*) filter (
+        where lower(coalesce(pr.type,'')) = 'code'
+          and lower(coalesce(pr.status,'')) <> 'rejected'
+      ),
+      count(*) filter (
+        where lower(coalesce(pr.type,'')) in ('channel','group')
+          and lower(coalesce(pr.status,'')) <> 'rejected'
+      )
+      into product_links, total_codes, total_telegram
+    from public.products pr
+    where pr.seller_id = uid or pr.creator_id = uid;
+
+    total_links := total_links + product_links;
+
+    -- Paid orders belonging to this creator.
     select
       coalesce(sum(case
-        when status='paid'
-         and paid_at >= now() - interval '30 days'
-        then amount else 0 end),0) as current_rev,
+        when o.status = 'paid'
+         and o.paid_at >= now() - interval '30 days'
+        then coalesce(o.amount,0) else 0 end),0),
       coalesce(sum(case
-        when status='paid'
-         and paid_at >= now() - interval '60 days'
-         and paid_at <  now() - interval '30 days'
-        then amount else 0 end),0) as previous_rev
-    from public.orders
-  ),
-  counts as (
+        when o.status = 'paid'
+         and o.paid_at >= now() - interval '60 days'
+         and o.paid_at < now() - interval '30 days'
+        then coalesce(o.amount,0) else 0 end),0)
+      into current_revenue, previous_revenue
+    from public.orders o
+    where o.seller_id = uid;
+
+  else
+
+    -- Public/anonymous homepage totals.
+    select count(*)
+      into total_links
+    from public.pastelinks p
+    where p.visibility = 'public';
+
     select
-      (select count(*) from public.products
-       where status='published'
-         and type in ('link','paste','pastelink')) as payment_links,
-      (select count(*) from public.telegram_products
-       where is_published=true) as code_products,
-      (select count(*) from public.telegram_channels
-       where is_published=true) as telegram_access
-  )
-  select jsonb_build_object(
-    'total_revenue',(select current_rev from rev),
-    'revenue_trend',
-      case
-        when (select previous_rev from rev)=0
-          then case when (select current_rev from rev)>0 then 100 else 0 end
-        else round(
-          (((select current_rev from rev)-(select previous_rev from rev))
-          / nullif((select previous_rev from rev),0))*100,1)
-      end,
-    'payment_links',(select payment_links from counts),
-    'code_products',(select code_products from counts),
-    'telegram_access',(select telegram_access from counts)
+      count(*) filter (
+        where lower(coalesce(pr.type,'')) in ('link','payment','paste','pastelink')
+      ),
+      count(*) filter (
+        where lower(coalesce(pr.type,'')) = 'code'
+      ),
+      count(*) filter (
+        where lower(coalesce(pr.type,'')) in ('channel','group')
+      )
+      into product_links, total_codes, total_telegram
+    from public.products pr
+    where lower(coalesce(pr.status,'')) = 'published';
+
+    total_links := total_links + product_links;
+
+    -- Do not expose seller-specific financial data to anonymous visitors.
+    -- This is a platform-level public revenue preview only.
+    select
+      coalesce(sum(case
+        when o.status = 'paid'
+         and o.paid_at >= now() - interval '30 days'
+        then coalesce(o.amount,0) else 0 end),0),
+      coalesce(sum(case
+        when o.status = 'paid'
+         and o.paid_at >= now() - interval '60 days'
+         and o.paid_at < now() - interval '30 days'
+        then coalesce(o.amount,0) else 0 end),0)
+      into current_revenue, previous_revenue
+    from public.orders o;
+
+  end if;
+
+  if previous_revenue = 0 then
+    if current_revenue > 0 then trend := 100;
+    else trend := 0;
+    end if;
+  else
+    trend := round(((current_revenue - previous_revenue)
+                    / previous_revenue) * 100, 1);
+  end if;
+
+  return jsonb_build_object(
+    'total_revenue', coalesce(current_revenue,0),
+    'revenue_trend', coalesce(trend,0),
+    'payment_links', coalesce(total_links,0),
+    'code_products', coalesce(total_codes,0),
+    'telegram_access', coalesce(total_telegram,0),
+    'scope', case when uid is null then 'public' else 'creator' end
   );
+end;
 $$;
+
 revoke all on function public.get_public_workspace_stats() from public;
-grant execute on function public.get_public_workspace_stats() to anon,authenticated;
+grant execute on function public.get_public_workspace_stats() to anon, authenticated;
+
+
 
 -- ------------------------------------------------------------
 -- Unified marketplace item detail
@@ -1258,26 +1339,24 @@ grant execute on function public.admin_mark_order_paid(uuid,text) to authenticat
 -- ------------------------------------------------------------
 drop function if exists public.get_my_content_counts();
 create or replace function public.get_my_content_counts()
-returns jsonb
-language sql
-security definer
-set search_path=public
-as $$
-  select jsonb_build_object(
-    'link',
-      (select count(*) from public.products
-       where coalesce(creator_id,seller_id)=auth.uid()
-         and type in ('link','paste','pastelink'))
-      +(select count(*) from public.pastelinks where user_id=auth.uid()),
-    'code',
-      (select count(*) from public.telegram_products where owner_id=auth.uid()),
-    'channel',
-      (select count(*) from public.telegram_channels
-       where owner_id=auth.uid() and type='channel'),
-    'group',
-      (select count(*) from public.telegram_channels
-       where owner_id=auth.uid() and type='group')
-  );
+returns jsonb language sql security definer set search_path=public as $$
+ select jsonb_build_object(
+  'link',
+    (select count(*) from products
+      where coalesce(creator_id,seller_id)=auth.uid()
+        and type in ('link','payment','paste','pastelink'))
+    +(select count(*) from pastelinks where user_id=auth.uid()),
+  'code',
+    (select count(*) from products
+      where coalesce(creator_id,seller_id)=auth.uid()
+        and type='code')
+    +(select count(*) from telegram_products where owner_id=auth.uid()),
+  'channel',
+    (select count(*) from products
+      where coalesce(creator_id,seller_id)=auth.uid()
+        and type in ('channel','group'))
+    +(select count(*) from telegram_channels where owner_id=auth.uid())
+ );
 $$;
 grant execute on function public.get_my_content_counts() to authenticated;
 
