@@ -2,9 +2,11 @@
 <html lang="id">
 
 <head>
+
     <script src="js/theme-preload.js"></script>
 
     <meta charset="utf-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1"
@@ -15,6 +17,7 @@
     ========================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
     <!-- =========================================================
          APP CORE
     ========================================================== -->
@@ -24,23 +27,45 @@
     <script src="/js/auth.js"></script>
     <script src="/js/navbar.js?v=20260903-fix"></script>
 
-    <title>Withdraw — PasTele</title>
 
     <!-- =========================================================
-         ICONS
+         PAGE TITLE
+    ========================================================== -->
+    <title>Withdraw — PasTele</title>
+
+
+    <!-- =========================================================
+         FONT AWESOME
     ========================================================== -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
 
+
     <!-- =========================================================
          STYLES
     ========================================================== -->
-    <link rel="stylesheet" href="css/app.css?v=20260904">
-    <link rel="stylesheet" href="css/navbar.css?v=20260905">
-    <link rel="stylesheet" href="css/footer.css?v=20260905">
-    <link rel="stylesheet" href="css/withdrawals.css?v=20260905">
+    <link
+        rel="stylesheet"
+        href="css/app.css?v=20260904"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/navbar.css?v=20260905"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/footer.css?v=20260905"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/withdrawals.css?v=20260905"
+    >
+
 </head>
 
 
@@ -53,7 +78,7 @@
 
 
     <!-- =========================================================
-         MAIN
+         MAIN CONTENT
     ========================================================== -->
     <main>
 
@@ -79,9 +104,7 @@
                                 KEUANGAN
                             </span>
 
-                            <h1>
-                                Tarik saldo
-                            </h1>
+                            <h1>Tarik saldo</h1>
 
                             <p>
                                 Tarik penghasilanmu ke rekening
@@ -107,7 +130,6 @@
                     </a>
 
                 </header>
-
 
 
                 <!-- =================================================
@@ -153,12 +175,10 @@
                 </section>
 
 
-
                 <!-- =================================================
                      STATISTICS
                 ================================================== -->
                 <div class="withdraw-stats">
-
 
                     <!-- Pending -->
                     <div class="withdraw-stat">
@@ -204,7 +224,7 @@
                     </div>
 
 
-                    <!-- Instant daily limit -->
+                    <!-- Daily limit -->
                     <div class="withdraw-stat">
 
                         <span class="stat-icon limit">
@@ -226,7 +246,6 @@
                     </div>
 
                 </div>
-
 
 
                 <!-- =================================================
@@ -268,7 +287,6 @@
                     </div>
 
                 </section>
-
 
 
                 <!-- =================================================
@@ -345,6 +363,7 @@
 
                         <!-- =================================================
                              INSTANT RULES
+                             Tidak menampilkan fee
                         ================================================== -->
                         <div class="rule-info">
 
@@ -365,17 +384,6 @@
 
                                 <span>
                                     Maks. Rp500.000 per hari
-                                </span>
-
-                            </div>
-
-
-                            <div>
-
-                                <i class="fa-solid fa-receipt"></i>
-
-                                <span>
-                                    Fee Rp15.000
                                 </span>
 
                             </div>
@@ -438,7 +446,6 @@
                         </button>
 
                     </section>
-
 
 
                     <!-- =================================================
@@ -541,9 +548,9 @@
 
                         <!-- =================================================
                              MANUAL RULES
+                             Tidak menampilkan fee
                         ================================================== -->
                         <div class="rule-info">
-
 
                             <div>
 
@@ -562,18 +569,6 @@
 
                                 <span>
                                     Maks. 5 pengajuan
-                                </span>
-
-                            </div>
-
-
-                            <div>
-
-                                <i class="fa-solid fa-receipt"></i>
-
-                                <span id="manualFeeText">
-                                    Fee Bank Rp10.000 ·
-                                    E-Wallet Rp7.000
                                 </span>
 
                             </div>
@@ -598,7 +593,6 @@
                             class="withdraw-form"
                         >
 
-
                             <!-- Amount -->
                             <div class="field">
 
@@ -617,11 +611,11 @@
                                     <input
                                         class="input"
                                         id="amount"
+                                        type="number"
                                         min="100000"
-                                        required
                                         step="50000"
                                         inputmode="numeric"
-                                        type="number"
+                                        required
                                         placeholder="100000"
                                         autocomplete="off"
                                     >
@@ -634,7 +628,6 @@
                                 </small>
 
                             </div>
-
 
 
                             <!-- Payment method -->
@@ -671,10 +664,8 @@
                             </div>
 
 
-
-                            <!-- Account -->
+                            <!-- Account information -->
                             <div class="form-grid">
-
 
                                 <!-- Account name -->
                                 <div class="field">
@@ -687,6 +678,7 @@
                                     <input
                                         class="input"
                                         id="aname"
+                                        type="text"
                                         required
                                         autocomplete="name"
                                         placeholder="Nama sesuai rekening"
@@ -706,6 +698,7 @@
                                     <input
                                         class="input"
                                         id="anum"
+                                        type="text"
                                         required
                                         inputmode="numeric"
                                         autocomplete="tel"
@@ -717,15 +710,14 @@
                             </div>
 
 
-
                             <!-- =================================================
-                                 FEE PREVIEW
+                                 WITHDRAW PREVIEW
+                                 Fee hanya muncul di sini
                             ================================================== -->
                             <div
                                 class="withdraw-fee-preview"
                                 id="withdrawFeePreview"
                             >
-
 
                                 <!-- Fee -->
                                 <div>
@@ -746,7 +738,7 @@
                                 </div>
 
 
-                                <!-- Net -->
+                                <!-- Net amount -->
                                 <div>
 
                                     <span>
@@ -767,12 +759,11 @@
                             </div>
 
 
-
                             <!-- Submit -->
                             <button
                                 class="withdraw-submit primary"
-                                type="submit"
                                 id="manualSubmit"
+                                type="submit"
                             >
 
                                 <i class="fa-solid fa-paper-plane"></i>
@@ -788,7 +779,6 @@
                     </section>
 
                 </div>
-
 
 
                 <!-- =================================================
@@ -835,14 +825,12 @@
                 </section>
 
 
-
                 <!-- =================================================
                      WITHDRAW HISTORY
                 ================================================== -->
                 <section class="history-panel">
 
-
-                    <!-- Heading -->
+                    <!-- History heading -->
                     <div class="history-heading">
 
                         <div>
@@ -880,7 +868,7 @@
                     </div>
 
 
-                    <!-- History -->
+                    <!-- History list -->
                     <div
                         class="history-list"
                         id="history"
@@ -912,7 +900,7 @@
 
 
     <!-- =========================================================
-         SCRIPTS
+         PAGE SCRIPTS
     ========================================================== -->
     <script src="js/withdrawals.js?v=20260905"></script>
     <script src="js/footer.js?v=20260905"></script>
