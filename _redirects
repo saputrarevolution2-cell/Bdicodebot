@@ -1,0 +1,16 @@
+# TeleCod short public URLs
+# The destination pages read the slug from the query string.
+# 200 = rewrite, so the browser keeps the short URL.
+
+# PasteLink
+/p/* /paste-view.html?slug=:splat 200
+
+# Telegram Code
+/c/p/* /product.html?type=code&slug=:splat 200
+/c/f/* /product.html?type=code&slug=:splat 200
+
+# Telegram Channel / Group
+/ch/p/* /product.html?type=channel&slug=:splat 200
+/ch/f/* /product.html?type=channel&slug=:splat 200
+/g/p/* /product.html?type=group&slug=:splat 200
+/g/f/* /product.html?type=group&slug=:splat 200
