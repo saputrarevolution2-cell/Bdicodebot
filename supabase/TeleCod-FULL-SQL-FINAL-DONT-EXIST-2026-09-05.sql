@@ -921,10 +921,16 @@ begin
 
   elsif v_type in ('channel','group') then
     select
-      tc.owner_id,coalesce(tc.name,'Telegram'),'',tc.access_type,tc.price,
-      coalesce(pr.display_name,pr.username,'Creator'),pr.username
+      tc.owner_id,
+      coalesce(tc.name,'Telegram'),
+      '',
+      coalesce(tc.telegram_channel_id,''),
+      tc.access_type,
+      tc.price,
+      coalesce(pr.display_name,pr.username,'Creator'),
+      pr.username
     into
-      v_owner,v_title,v_description,v_access,v_price,v_creator,v_username
+      v_owner,v_title,v_description,v_content,v_access,v_price,v_creator,v_username
     from public.telegram_channels tc
     left join public.profiles pr on pr.id=tc.owner_id
     where tc.id=p_id and tc.type=v_type and tc.is_published=true;
@@ -996,6 +1002,10 @@ begin
     'title',v_title,
     'description',coalesce(v_description,''),
     'content',case when v_can_access then coalesce(v_content,'') else '' end,
+    'channel_link',case
+      when v_can_access then coalesce(v_content,'')
+      else ''
+    end,
     'access_type',coalesce(v_access,'free'),
     'price',coalesce(v_price,0),
     'views',coalesce(v_views,0),
