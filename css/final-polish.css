@@ -1,0 +1,153 @@
+
+/* ============================================================
+   TELECOD — FINAL UI POLISH
+   Cross-page consistency layer. Loaded last.
+============================================================ */
+:root{
+  --ui-bg:#f5f8fc;
+  --ui-surface:#fff;
+  --ui-surface-2:#f8fafc;
+  --ui-text:#14212b;
+  --ui-muted:#718293;
+  --ui-line:#e2e9ef;
+  --ui-primary:#229ed9;
+  --ui-radius:16px;
+}
+html[data-theme="dark"]{
+  --ui-bg:#08121a;
+  --ui-surface:#101d27;
+  --ui-surface-2:#142631;
+  --ui-text:#edf5f8;
+  --ui-muted:#91a4b2;
+  --ui-line:#263d4b;
+}
+html,body{min-height:100%}
+body.app-page{
+  background:var(--ui-bg)!important;
+  color:var(--ui-text);
+}
+body.app-page main{min-width:0}
+body.app-page .section{padding-top:30px;padding-bottom:42px}
+body.app-page .container{width:min(1160px,calc(100% - 40px))}
+body.app-page h1,body.app-page h2,body.app-page h3{color:var(--ui-text)}
+body.app-page .muted{color:var(--ui-muted)!important}
+
+/* Keep every ordinary page at one visual rhythm. */
+body.app-page:not(.dashboard-page) main > .section > .container > :first-child{margin-top:0}
+body.app-page .card,
+body.app-page .panel{
+  border-color:var(--ui-line);
+  border-radius:var(--ui-radius);
+  box-shadow:0 8px 28px rgba(15,35,52,.045);
+}
+html[data-theme="dark"] body.app-page .card,
+html[data-theme="dark"] body.app-page .panel{
+  box-shadow:0 10px 34px rgba(0,0,0,.16);
+}
+
+/* Forms */
+body.app-page .field{gap:7px}
+body.app-page .field label{font-size:12px;font-weight:750}
+body.app-page .input,
+body.app-page .select,
+body.app-page .textarea{
+  min-height:44px;
+  border-radius:11px;
+}
+body.app-page .textarea{min-height:130px}
+body.app-page .btn{min-height:42px;border-radius:11px}
+body.app-page .btn.primary{
+  box-shadow:0 7px 18px rgba(34,158,217,.16);
+}
+
+/* Page headings */
+body.app-page .page-heading,
+body.app-page .wallet-heading,
+body.app-page .tx-heading,
+body.app-page .purchase-heading,
+body.app-page .market-heading,
+body.app-page .profile-heading,
+body.app-page .settings-heading{
+  margin-bottom:24px;
+}
+body.app-page .badge{white-space:nowrap}
+
+/* Plans: make the upgrade pages feel like one product surface. */
+body.app-page .plans-section{
+  min-height:calc(100dvh - 1px);
+  background:transparent;
+}
+.plans-section .container{max-width:1080px}
+.plan-hero{padding:8px 10px 20px}
+.plan-hero h1{font-weight:850;letter-spacing:-.04em}
+.plan-hero p{max-width:620px;margin-inline:auto;line-height:1.7}
+.plan-grid{align-items:stretch}
+.plan-card{
+  display:flex;
+  flex-direction:column;
+  min-height:270px;
+}
+.plan-card p{flex:1}
+.plan-card .btn{margin-top:auto}
+.plan-card.featured{transform:translateY(-4px)}
+.premium-price{position:relative}
+.premium-price .btn{min-width:min(100%,300px)}
+.active-plan{
+  width:min(100%,680px);
+  margin:18px auto 0;
+}
+.cashi-plan-box{
+  max-height:min(92dvh,760px);
+  overflow:auto;
+  box-shadow:0 25px 80px rgba(0,0,0,.28);
+}
+.cashi-plan-box .btn{margin-top:6px}
+.cashi-plan-box img{display:block;object-fit:contain;background:#fff;padding:8px}
+
+/* Wallet pending card: visibly actionable. */
+.wallet-pending-click{
+  appearance:none;
+  text-align:left;
+  font:inherit;
+  color:inherit;
+  cursor:pointer;
+}
+.wallet-pending-click:hover{
+  border-color:rgba(34,158,217,.35)!important;
+  box-shadow:0 10px 32px rgba(34,158,217,.10)!important;
+}
+.wallet-pending-click:focus-visible{
+  outline:3px solid rgba(34,158,217,.20);
+  outline-offset:2px;
+}
+
+/* Tables/lists never overflow their cards. */
+body.app-page .table-wrap{overflow-x:auto}
+body.app-page table{max-width:100%}
+body.app-page .list-item{min-width:0}
+
+/* Admin */
+body.admin-page .admin-main{padding-top:8px}
+body.admin-page .admin-content{min-width:0}
+body.admin-page .admin-extra-grid{align-items:stretch}
+body.admin-page .admin-extra-grid>.card{height:100%}
+
+/* Mobile */
+@media(max-width:900px){
+  body.app-page .container{width:min(100% - 28px,1160px)}
+  body.app-page .section{padding-top:22px;padding-bottom:34px}
+  body.app-page:not(.dashboard-page) main{padding-top:0}
+  .plan-card.featured{transform:none}
+}
+@media(max-width:600px){
+  body.app-page .container{width:calc(100% - 24px)}
+  body.app-page .card{border-radius:14px}
+  .plan-hero{padding-inline:0}
+  .plan-hero h1{font-size:clamp(28px,8vw,38px)}
+  .benefit-card{padding:18px;border-radius:18px}
+  .premium-price{padding:24px 18px;border-radius:20px}
+  .premium-price strong{font-size:2.35rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .plan-card,.wallet-pending-click{transition:none!important}
+}
