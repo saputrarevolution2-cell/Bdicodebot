@@ -109,6 +109,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         [
           "Account",
           [
+            ["subscription.html", "fa-crown", "Langganan <em class=\"nav-badge nav-new\"><i class=\"fa-solid fa-sparkles\"></i> New</em>"],
+            ["premium.html", "fa-gem", "Premium <em class=\"nav-badge nav-trend\"><i class=\"fa-solid fa-fire\"></i> Trend</em>"],
             ["notifications.html", "fa-bell", "Notifications <em class=\"nav-badge nav-new\"><i class=\"fa-solid fa-sparkles\"></i> New</em>"],
             ["profile.html", "fa-user", "Profile"],
             ["settings.html", "fa-gear", "Settings"]
