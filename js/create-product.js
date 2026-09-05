@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const VALID_ACCESS = [
     "free",
     "paid"
-  ];
+  ];\n  const syncFeatureForm = () => {\n    document.body.dataset.productType = type?.value || "";\n    const map = { link:["fa-link","Link / URL"], paste:["fa-file-lines","Paste"], pastelink:["fa-link","PasteLink"], code:["fa-code","Code Telegram"], channel:["fa-broadcast-tower","Channel"], group:["fa-users","Group"] };\n    const info = map[type?.value] || map.link;\n    const icon = document.querySelector(".create-icon i"); if(icon) icon.className = "fa-solid " + info[0];\n    const content = document.getElementById("content"); if(content){ content.placeholder = type?.value==="code" ? "Tempel kode bot di sini..." : (type?.value==="channel"||type?.value==="group" ? "https://t.me/username atau @username" : "Masukkan content / delivery produk..."); }\n  };\n  type?.addEventListener("change", syncFeatureForm);\n  syncFeatureForm();
   let slugManuallyEdited = false;
   let submitting = false;
   /* =======================================================

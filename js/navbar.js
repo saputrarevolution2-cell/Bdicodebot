@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           "Workspace",
           [
             ["dashboard.html", "fa-house", "Dashboard"],
-            ["marketplace.html", "fa-store", "Marketplace"]
+            ["marketplace.html", "fa-store", "Marketplace <em class=\"nav-badge nav-hot\"><i class=\"fa-solid fa-fire\"></i> Hot</em>"]
           ]
         ],
         [
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           [
             ["paste.html", "fa-paperclip", "Create"],
             ["my-products.html", "fa-link", "My Links"],
-            ["purchases.html", "fa-bag-shopping", "Purchases"]
+            ["purchases.html", "fa-bag-shopping", "Purchases <em class=\"nav-badge nav-new\"><i class=\"fa-solid fa-sparkles\"></i> New</em>"]
           ]
         ],
         [
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         [
           "Account",
           [
-            ["notifications.html", "fa-bell", "Notifications"],
+            ["notifications.html", "fa-bell", "Notifications <em class=\"nav-badge nav-new\"><i class=\"fa-solid fa-sparkles\"></i> New</em>"],
             ["profile.html", "fa-user", "Profile"],
             ["settings.html", "fa-gear", "Settings"]
           ]
@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             class="nav-link"
           >
             <i class="fa-solid ${esc(icon)}" aria-hidden="true"></i>
-            <span>${esc(label)}</span>
+            <span>${label}</span>
           </a>
         `).join("")}
       </div>
@@ -465,7 +465,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   class="${esc(icon)}"
                   aria-hidden="true"
                 ></i>
-                <span>${esc(label)}</span>
+                <span>${label}</span>
               </a>
             `;
           })

@@ -630,6 +630,7 @@ document.addEventListener("DOMContentLoaded", async () => {
      UI BY TYPE
      ======================================================= */
   const updateTypeUI = () => {
+    document.body.dataset.createType = kind;
     const isPaste =
       kind === "paste";
     const isCode =
@@ -707,6 +708,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
           }
           kind = nextKind;
+          document.body.dataset.createType = kind;
           document
             .querySelectorAll(
               "#types [data-type]"
@@ -1031,8 +1033,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       price:
         product.price,
       telegram_channel_id:
-        telegramContent,
-      access_content:
         telegramContent,
       is_published:
         true
