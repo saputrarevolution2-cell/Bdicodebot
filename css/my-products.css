@@ -1,23 +1,24 @@
 /* =========================================================
    PasTele — My Products
-   Canonical page stylesheet
+   FINAL CLEAN / PREMIUM / RESPONSIVE
    ========================================================= */
 .my-products-page {
     --mp-bg: #f7fafc;
     --mp-card: #ffffff;
-    --mp-border: rgba(15, 35, 52, .08);
-    --mp-border-soft: rgba(15, 35, 52, .055);
+    --mp-border: rgba(15, 35, 52, .075);
+    --mp-border-soft: rgba(15, 35, 52, .045);
     --mp-text: #102331;
     --mp-muted: #748693;
     --mp-primary: #229ed9;
-    --mp-primary-soft: rgba(34, 158, 217, .10);
+    --mp-primary-soft: rgba(34, 158, 217, .09);
     --mp-success: #1f9d68;
-    --mp-success-soft: rgba(31, 157, 104, .10);
+    --mp-success-soft: rgba(31, 157, 104, .09);
     --mp-warning: #c98416;
-    --mp-warning-soft: rgba(201, 132, 22, .10);
+    --mp-warning-soft: rgba(201, 132, 22, .09);
     --mp-danger: #d94d5c;
-    --mp-danger-soft: rgba(217, 77, 92, .10);
-    --mp-shadow: 0 10px 35px rgba(15, 35, 52, .055);
+    --mp-danger-soft: rgba(217, 77, 92, .09);
+    --mp-shadow:
+        0 8px 28px rgba(15, 35, 52, .045);
 }
 html[data-theme="dark"] .my-products-page,
 html.theme-dark .my-products-page,
@@ -25,28 +26,33 @@ body.theme-dark.my-products-page {
     --mp-bg: #071017;
     --mp-card: #0c171f;
     --mp-border: rgba(255, 255, 255, .075);
-    --mp-border-soft: rgba(255, 255, 255, .055);
+    --mp-border-soft: rgba(255, 255, 255, .045);
     --mp-text: #edf5f8;
     --mp-muted: #8da0ab;
     --mp-primary: #35b5ef;
-    --mp-primary-soft: rgba(53, 181, 239, .11);
+    --mp-primary-soft: rgba(53, 181, 239, .10);
     --mp-success: #45c98d;
-    --mp-success-soft: rgba(69, 201, 141, .11);
+    --mp-success-soft: rgba(69, 201, 141, .10);
     --mp-warning: #e0a341;
-    --mp-warning-soft: rgba(224, 163, 65, .11);
+    --mp-warning-soft: rgba(224, 163, 65, .10);
     --mp-danger: #ff6b78;
-    --mp-danger-soft: rgba(255, 107, 120, .11);
-    --mp-shadow: 0 12px 40px rgba(0, 0, 0, .20);
+    --mp-danger-soft: rgba(255, 107, 120, .10);
+    --mp-shadow:
+        0 12px 38px rgba(0, 0, 0, .18);
 }
+/* =========================================================
+   PAGE
+   ========================================================= */
 .my-products-section {
     min-height: calc(100vh - 80px);
     background: var(--mp-bg);
 }
 .my-products-container {
+    width: 100%;
     max-width: 1120px;
 }
 /* =========================================================
-   Heading
+   HEADING
    ========================================================= */
 .page-heading {
     display: flex;
@@ -59,7 +65,7 @@ body.theme-dark.my-products-page {
     min-width: 0;
 }
 .page-badge {
-    margin-bottom: 10px;
+    margin-bottom: 9px;
 }
 .page-heading h1 {
     margin: 0;
@@ -71,17 +77,20 @@ body.theme-dark.my-products-page {
 .page-heading p {
     margin: 8px 0 0;
     color: var(--mp-muted);
+    font-size: 14px;
+    line-height: 1.5;
 }
 .create-product-btn {
     flex: 0 0 auto;
     white-space: nowrap;
 }
 /* =========================================================
-   Overview
+   OVERVIEW
    ========================================================= */
 .products-overview {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 16px;
 }
@@ -105,28 +114,30 @@ body.theme-dark.my-products-page {
     border-radius: 11px;
     color: var(--mp-primary);
     background: var(--mp-primary-soft);
+    font-size: 14px;
 }
 .overview-card small {
     display: block;
     margin-bottom: 3px;
     color: var(--mp-muted);
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10.5px;
+    font-weight: 650;
 }
 .overview-card strong {
     display: block;
     color: var(--mp-text);
     font-size: 19px;
+    font-weight: 750;
     line-height: 1;
 }
 /* =========================================================
-   Toolbar
+   TOOLBAR
    ========================================================= */
 .products-toolbar {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 11px;
+    padding: 10px;
     margin-bottom: 10px;
     background: var(--mp-card);
     border: 1px solid var(--mp-border);
@@ -182,7 +193,7 @@ body.theme-dark.my-products-page {
     min-height: 42px;
 }
 /* =========================================================
-   Result bar
+   RESULT BAR
    ========================================================= */
 .result-bar {
     display: flex;
@@ -199,26 +210,30 @@ body.theme-dark.my-products-page {
     font-size: 12px;
 }
 /* =========================================================
-   Sections
+   PRODUCT SECTION
    ========================================================= */
 .my-section {
-    margin: 0 0 12px;
+    margin: 0 0 14px;
     padding: 0;
     overflow: hidden;
     background: var(--mp-card);
     border: 1px solid var(--mp-border);
-    border-radius: 17px;
+    border-radius: 18px;
     box-shadow: var(--mp-shadow);
 }
 .my-section:last-child {
     margin-bottom: 0;
 }
+/* =========================================================
+   SECTION HEADER
+   ========================================================= */
 .my-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 15px 16px;
+    padding: 14px 16px;
+    background: var(--mp-card);
     border-bottom: 1px solid var(--mp-border-soft);
 }
 .my-section-title {
@@ -237,36 +252,45 @@ body.theme-dark.my-products-page {
     border-radius: 10px;
     color: var(--mp-primary);
     background: var(--mp-primary-soft);
+    font-size: 13px;
 }
 .my-section-title h2 {
     margin: 0;
-    font-size: 15px;
-    font-weight: 700;
+    color: var(--mp-text);
+    font-size: 14px;
+    font-weight: 750;
     line-height: 1.2;
 }
 .my-section-count {
-    min-width: 26px;
+    min-width: 27px;
     padding: 4px 8px;
     border-radius: 999px;
     color: var(--mp-primary);
     background: var(--mp-primary-soft);
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 800;
     text-align: center;
 }
 /* =========================================================
-   Product rows
+   PRODUCT ROW
    ========================================================= */
 .my-row {
-    display: flex;
+    display: grid;
+    grid-template-columns:
+        42px
+        minmax(0, 1fr)
+        auto;
     align-items: center;
-    gap: 12px;
+    gap: 13px;
+    width: 100%;
     min-width: 0;
     padding: 13px 16px;
+    box-sizing: border-box;
+    background: var(--mp-card);
     border-bottom: 1px solid var(--mp-border-soft);
     transition:
         background .18s ease,
-        transform .18s ease;
+        box-shadow .18s ease;
 }
 .my-row:last-child {
     border-bottom: 0;
@@ -274,27 +298,36 @@ body.theme-dark.my-products-page {
 .my-row:hover {
     background: var(--mp-primary-soft);
 }
+/* =========================================================
+   PRODUCT ICON
+   ========================================================= */
 .my-icon {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
     display: grid;
     place-items: center;
     border-radius: 12px;
     color: var(--mp-primary);
     background: var(--mp-primary-soft);
+    font-size: 14px;
 }
+/* =========================================================
+   PRODUCT MAIN
+   ========================================================= */
 .my-row-main {
-    flex: 1 1 auto;
     min-width: 0;
+    width: 100%;
 }
 .my-row-title {
     display: block;
+    width: 100%;
+    max-width: 100%;
     overflow: hidden;
     color: var(--mp-text);
     font-size: 13px;
-    font-weight: 700;
-    line-height: 1.35;
+    font-weight: 750;
+    line-height: 1.4;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -302,24 +335,40 @@ body.theme-dark.my-products-page {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px 7px;
     margin-top: 5px;
+    min-width: 0;
     color: var(--mp-muted);
-    font-size: 10.5px;
+    font-size: 10px;
+    line-height: 1.4;
+}
+.my-row-meta > * {
+    min-width: 0;
 }
 .meta-dot {
-    opacity: .45;
+    opacity: .35;
 }
+/* =========================================================
+   STATUS
+   ========================================================= */
 .status-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
-    padding: 4px 7px;
+    min-height: 21px;
+    padding: 3px 8px;
+    box-sizing: border-box;
     border-radius: 999px;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: .02em;
+    line-height: 1;
+    letter-spacing: .025em;
     text-transform: uppercase;
+    white-space: nowrap;
+}
+.status-badge i {
+    font-size: 8px;
 }
 .status-published {
     color: var(--mp-success);
@@ -333,28 +382,50 @@ body.theme-dark.my-products-page {
     color: var(--mp-warning);
     background: var(--mp-warning-soft);
 }
+/* =========================================================
+   ACTIONS
+   ========================================================= */
 .my-row-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 6px;
     flex: 0 0 auto;
+    white-space: nowrap;
 }
 .my-row-actions .btn {
     min-height: 34px;
     padding: 7px 10px;
-    font-size: 11px;
+    border-radius: 9px;
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 .my-row-actions .btn i {
-    font-size: 11px;
+    font-size: 10px;
 }
 .my-row-actions .danger {
     color: var(--mp-danger);
     background: var(--mp-danger-soft);
     border-color: transparent;
 }
+.my-row-actions .danger:hover {
+    background: var(--mp-danger-soft);
+}
 /* =========================================================
-   Empty / loading / error
+   SAFETY
+   ========================================================= */
+.my-row,
+.my-row-main,
+.my-row-meta,
+.my-row-actions {
+    box-sizing: border-box;
+}
+.my-row-main * {
+    max-width: 100%;
+}
+/* =========================================================
+   EMPTY / LOADING / ERROR
    ========================================================= */
 .loading-state,
 .empty-state,
@@ -365,6 +436,7 @@ body.theme-dark.my-products-page {
     justify-content: center;
     min-height: 270px;
     padding: 30px 20px;
+    box-sizing: border-box;
     color: var(--mp-muted);
     text-align: center;
     background: var(--mp-card);
@@ -405,7 +477,7 @@ body.theme-dark.my-products-page {
     margin-top: 15px;
 }
 /* =========================================================
-   Utility
+   UTILITY
    ========================================================= */
 .hidden {
     display: none !important;
@@ -422,11 +494,12 @@ body.theme-dark.my-products-page {
     border: 0;
 }
 /* =========================================================
-   Responsive
+   TABLET
    ========================================================= */
 @media (max-width: 820px) {
     .products-overview {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
     .products-toolbar {
         flex-wrap: wrap;
@@ -438,7 +511,30 @@ body.theme-dark.my-products-page {
         flex: 1 1 0;
         min-width: 0;
     }
+    .my-row {
+        grid-template-columns:
+            40px
+            minmax(0, 1fr)
+            auto;
+        gap: 11px;
+        padding: 12px 14px;
+    }
+    .my-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+    .my-row-actions {
+        gap: 5px;
+    }
+    .my-row-actions .btn {
+        min-height: 33px;
+        padding: 7px 9px;
+    }
 }
+/* =========================================================
+   MOBILE
+   ========================================================= */
 @media (max-width: 640px) {
     .my-products-section {
         padding-top: 20px;
@@ -446,16 +542,26 @@ body.theme-dark.my-products-page {
     .page-heading {
         align-items: stretch;
         flex-direction: column;
-        gap: 15px;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+    .page-heading h1 {
+        font-size: 28px;
+    }
+    .page-heading p {
+        font-size: 13px;
     }
     .create-product-btn {
         width: 100%;
         justify-content: center;
     }
+    /* Overview */
     .products-overview {
         gap: 8px;
+        margin-bottom: 12px;
     }
     .overview-card {
+        gap: 9px;
         padding: 12px;
     }
     .overview-icon {
@@ -463,87 +569,189 @@ body.theme-dark.my-products-page {
         height: 34px;
         flex-basis: 34px;
     }
+    .overview-card small {
+        font-size: 10px;
+    }
     .overview-card strong {
         font-size: 17px;
     }
+    /* Toolbar */
     .products-toolbar {
+        gap: 7px;
         padding: 9px;
+        border-radius: 14px;
+    }
+    .search-box {
+        flex: 1 1 100%;
     }
     .filter-wrap {
         flex: 1 1 100%;
     }
+    /* Result */
     .result-bar {
-        align-items: flex-start;
+        align-items: center;
+        margin: 11px 1px;
+    }
+    .result-bar .btn-small {
+        min-width: 34px;
+        padding: 7px 9px;
     }
     .result-bar .btn-small span {
         display: none;
     }
-    .my-section-header {
-        padding: 13px;
+    /* Section */
+    .my-section {
+        margin-bottom: 12px;
+        border-radius: 16px;
     }
+    .my-section-header {
+        padding: 12px 13px;
+    }
+    .my-section-title {
+        gap: 8px;
+    }
+    .my-section-title-icon {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+    .my-section-title h2 {
+        font-size: 13px;
+    }
+    /* =====================================================
+       MOBILE PRODUCT CARD
+       ===================================================== */
     .my-row {
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns:
+            36px
+            minmax(0, 1fr);
+        align-items: start;
+        gap: 10px;
         padding: 13px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .my-icon {
         width: 36px;
         height: 36px;
         flex-basis: 36px;
+        border-radius: 10px;
+        font-size: 12px;
     }
     .my-row-main {
         min-width: 0;
-    }
-    .my-row-actions {
-        align-self: center;
-        flex-wrap: wrap;
-    }
-    .my-row-actions .btn {
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
-        padding: 0;
-        display: grid;
-        place-items: center;
-    }
-    .my-row-actions .btn i {
-        margin: 0;
-    }
-    .my-row-actions .btn:not(.danger) {
-        font-size: 0;
-    }
-    .my-row-actions .btn.danger {
-        font-size: 0;
-    }
-    .my-row-actions .btn i {
-        font-size: 11px;
+        width: 100%;
     }
     .my-row-title {
-        white-space: normal;
+        font-size: 12.5px;
         display: -webkit-box;
+        overflow: hidden;
+        white-space: normal;
+        text-overflow: ellipsis;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
+    .my-row-meta {
+        margin-top: 6px;
+        gap: 5px;
+        font-size: 9.5px;
+    }
+    /* Actions become clean bottom toolbar */
+    .my-row-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-top: 1px;
+        padding-top: 9px;
+        border-top: 1px solid var(--mp-border-soft);
+        gap: 6px;
+        justify-content: flex-end;
+    }
+    .my-row-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        min-width: 34px;
+        min-height: 33px;
+        padding: 7px 10px;
+        border-radius: 9px;
+        font-size: 10px;
+    }
+    .my-row-actions .btn i {
+        margin-right: 4px;
+        font-size: 10px;
+    }
+    /*
+       Jangan lagi membuat tombol menjadi
+       ikon kecil tanpa label.
+    */
+    .my-row-actions .btn:not(.danger),
+    .my-row-actions .btn.danger {
+        font-size: 10px;
+    }
 }
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
 @media (max-width: 390px) {
     .products-overview {
         grid-template-columns: 1fr 1fr;
+        gap: 7px;
     }
     .overview-card {
-        gap: 8px;
+        gap: 7px;
+        padding: 10px;
     }
     .overview-card small {
-        font-size: 10px;
+        font-size: 9.5px;
     }
     .overview-card strong {
         font-size: 16px;
     }
     .my-row {
+        grid-template-columns:
+            34px
+            minmax(0, 1fr);
         gap: 9px;
+        padding: 12px;
     }
+    .my-icon {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+    .my-row-title {
+        font-size: 12px;
+    }
+    .my-row-meta {
+        font-size: 9px;
+    }
+    .my-row-actions {
+        gap: 5px;
+    }
+    .my-row-actions .btn {
+        min-height: 32px;
+        padding: 6px 8px;
+        font-size: 9.5px;
+    }
+    .my-row-actions .btn i {
+        font-size: 9px;
+    }
+}
+/* =========================================================
+   VERY SMALL DEVICES
+   ========================================================= */
+@media (max-width: 340px) {
     .my-icon {
         display: none;
     }
+    .my-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
     .my-row-actions {
-        gap: 4px;
+        grid-column: 1;
     }
 }
