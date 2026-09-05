@@ -1,438 +1,922 @@
 <!doctype html>
 <html lang="id">
+
 <head>
     <script src="js/theme-preload.js"></script>
+
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <!-- =========================================================
+         SUPABASE
+    ========================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- =========================================================
+         APP CORE
+    ========================================================== -->
     <script src="/js/config.js?v=20260831"></script>
     <script src="/js/supabase.js?v=20260831"></script>
     <script src="/js/debug-panel.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/navbar.js?v=20260903-fix"></script>
+
     <title>Withdraw — PasTele</title>
+
+    <!-- =========================================================
+         ICONS
+    ========================================================== -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
+
+    <!-- =========================================================
+         STYLES
+    ========================================================== -->
     <link rel="stylesheet" href="css/app.css?v=20260904">
     <link rel="stylesheet" href="css/navbar.css?v=20260905">
     <link rel="stylesheet" href="css/footer.css?v=20260905">
-    <link rel="stylesheet" href="css/withdrawals.css?v=20260904">
+    <link rel="stylesheet" href="css/withdrawals.css?v=20260905">
 </head>
+
+
 <body class="app-page withdrawals-page">
-<div id="navbar"></div>
-<main>
-    <section class="section withdrawals-section">
-        <div class="container withdrawals-container">
-            <!-- =====================================================
-                 HEADER
-            ====================================================== -->
-            <header class="withdraw-header">
-                <div class="withdraw-heading">
-                    <div class="withdraw-heading-icon">
-                        <i class="fa-solid fa-money-bill-transfer"></i>
-                    </div>
-                    <div>
-                        <span class="withdraw-eyebrow">
-                            KEUANGAN
-                        </span>
-                        <h1>Tarik saldo</h1>
-                        <p>
-                            Tarik penghasilanmu ke rekening atau e-wallet.
-                        </p>
-                    </div>
-                </div>
-                <a
-                    href="settings.html"
-                    class="withdraw-settings"
-                >
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Pengaturan pembayaran</span>
-                </a>
-            </header>
-            <!-- =====================================================
-                 BALANCE
-            ====================================================== -->
-            <section class="balance-panel">
-                <div class="balance-main">
-                    <span class="balance-label">
-                        <i class="fa-solid fa-wallet"></i>
-                        Saldo tersedia
-                    </span>
-                    <strong id="bal">Rp0</strong>
-                    <span class="balance-note">
-                        Saldo yang dapat ditarik
-                    </span>
-                </div>
-                <div class="balance-action">
-                    <a href="wallet.html">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        Wallet
-                    </a>
-                </div>
-            </section>
-            <!-- =====================================================
-                 STATISTICS
-            ====================================================== -->
-            <div class="withdraw-stats">
-                <div class="withdraw-stat">
-                    <span class="stat-icon pending">
-                        <i class="fa-solid fa-clock"></i>
-                    </span>
-                    <div>
-                        <small>Saldo pengajuan</small>
-                        <strong id="req">Rp0</strong>
-                    </div>
-                </div>
-                <div class="withdraw-stat">
-                    <span class="stat-icon success">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </span>
-                    <div>
-                        <small>Total sudah ditarik</small>
-                        <strong id="done">Rp0</strong>
-                    </div>
-                </div>
-                <div class="withdraw-stat">
-                    <span class="stat-icon limit">
-                        <i class="fa-solid fa-gauge-high"></i>
-                    </span>
-                    <div>
-                        <small>Limit instant hari ini</small>
-                        <strong>Rp500.000</strong>
-                    </div>
-                </div>
-            </div>
-            <!-- =====================================================
-                 DAILY INSTANT LIMIT
-            ====================================================== -->
-            <section class="daily-limit">
-                <div class="daily-top">
-                    <div>
-                        <span>
-                            <i class="fa-solid fa-chart-simple"></i>
-                            WD Instant hari ini
-                        </span>
-                        <small id="dailyText">
-                            Rp0 / Rp500.000
-                        </small>
-                    </div>
-                    <b id="dailyPercent">0%</b>
-                </div>
-                <div class="progress">
-                    <i id="dailyBar"></i>
-                </div>
-            </section>
-            <!-- =====================================================
-                 WITHDRAW METHODS
-            ====================================================== -->
-            <div class="withdraw-layout">
+
+    <!-- =========================================================
+         NAVBAR
+    ========================================================== -->
+    <div id="navbar"></div>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================== -->
+    <main>
+
+        <section class="section withdrawals-section">
+
+            <div class="container withdrawals-container">
+
+
                 <!-- =================================================
-                     WD INSTANT
+                     HEADER
                 ================================================== -->
-                <section class="withdraw-box">
-                    <div class="box-heading">
-                        <div class="box-heading-icon instant">
-                            <i class="fa-solid fa-bolt"></i>
+                <header class="withdraw-header">
+
+                    <div class="withdraw-heading">
+
+                        <div class="withdraw-heading-icon">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
                         </div>
+
                         <div>
-                            <h2>WD Instant</h2>
-                            <p>
-                                Tarik cepat kapan saja, termasuk
-                                Sabtu dan Minggu.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Instant status -->
-                    <div
-                        class="withdraw-status instant-status"
-                        id="instantStatus"
-                    >
-                        <i class="fa-solid fa-circle-check"></i>
-                        <div>
-                            <strong>WD Instant Aktif</strong>
-                            <small>
-                                Tersedia 24 jam setiap hari.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="rule-info">
-                        <div>
-                            <i class="fa-solid fa-circle-info"></i>
-                            Maks. Rp250.000 sekali transaksi
-                        </div>
-                        <div>
-                            <i class="fa-solid fa-calendar-day"></i>
-                            Maks. Rp500.000 per hari
-                        </div>
-                        <div>
-                            <i class="fa-solid fa-receipt"></i>
-                            Fee Rp15.000
-                        </div>
-                    </div>
-                    <div class="field-label">
-                        Pilih nominal
-                    </div>
-                    <div
-                        class="instant-actions"
-                        id="instantBtns"
-                    >
-                        <div class="inline-loading">
-                            <i class="fa-solid fa-spinner fa-spin"></i>
-                            Memuat...
-                        </div>
-                    </div>
-                    <div class="selected-amount">
-                        <span>
-                            Nominal dipilih
-                        </span>
-                        <strong id="instantAmount">
-                            Rp50.000
-                        </strong>
-                    </div>
-                    <button
-                        class="withdraw-submit primary"
-                        id="instantSubmit"
-                        type="button"
-                    >
-                        <i class="fa-solid fa-bolt"></i>
-                        <span>
-                            Ajukan WD Instant
-                        </span>
-                    </button>
-                </section>
-                <!-- =================================================
-                     WD MANUAL
-                ================================================== -->
-                <section class="withdraw-box">
-                    <div class="box-heading">
-                        <div class="box-heading-icon manual">
-                            <i class="fa-solid fa-building-columns"></i>
-                        </div>
-                        <div>
-                            <h2>WD Manual</h2>
-                            <p>
-                                Penarikan manual ke rekening atau
-                                e-wallet yang tersimpan.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Manual operating status -->
-                    <div
-                        class="withdraw-status manual-status"
-                        id="manualStatus"
-                    >
-                        <i class="fa-solid fa-clock"></i>
-                        <div>
-                            <strong id="manualStatusTitle">
-                                Jam operasional WD Manual
-                            </strong>
-                            <small id="manualStatusText">
-                                Senin–Jumat, 07:00–21:00 WIB.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="rule-info">
-                        <div>
-                            <i class="fa-solid fa-arrow-down-1-9"></i>
-                            Minimum Rp100.000
-                        </div>
-                        <div>
-                            <i class="fa-solid fa-list-check"></i>
-                            Maks. 5 pengajuan
-                        </div>
-                        <div>
-                            <i class="fa-solid fa-receipt"></i>
-                            <span id="manualFeeText">
-                                Fee Bank Rp10.000 · E-Wallet Rp7.000
+
+                            <span class="withdraw-eyebrow">
+                                KEUANGAN
                             </span>
+
+                            <h1>
+                                Tarik saldo
+                            </h1>
+
+                            <p>
+                                Tarik penghasilanmu ke rekening
+                                atau e-wallet.
+                            </p>
+
                         </div>
+
                     </div>
-                    <!-- Saved payment methods -->
-                    <div
-                        id="savedMethods"
-                        class="saved-methods hidden"
-                    ></div>
-                    <!-- Manual form -->
-                    <form
-                        id="wd"
-                        class="withdraw-form"
+
+
+                    <a
+                        href="settings.html"
+                        class="withdraw-settings"
                     >
-                        <!-- Amount -->
-                        <div class="field">
-                            <label for="amount">
-                                Nominal
-                            </label>
-                            <div class="input-money">
-                                <span>Rp</span>
-                                <input
-                                    class="input"
-                                    id="amount"
-                                    min="100000"
-                                    required
-                                    step="50000"
-                                    inputmode="numeric"
-                                    type="number"
-                                    placeholder="100000"
-                                >
-                            </div>
+
+                        <i class="fa-solid fa-gear"></i>
+
+                        <span>
+                            Pengaturan pembayaran
+                        </span>
+
+                    </a>
+
+                </header>
+
+
+
+                <!-- =================================================
+                     BALANCE
+                ================================================== -->
+                <section class="balance-panel">
+
+                    <div class="balance-main">
+
+                        <span class="balance-label">
+
+                            <i class="fa-solid fa-wallet"></i>
+
+                            Saldo tersedia
+
+                        </span>
+
+
+                        <strong id="bal">
+                            Rp0
+                        </strong>
+
+
+                        <span class="balance-note">
+                            Saldo yang dapat ditarik
+                        </span>
+
+                    </div>
+
+
+                    <div class="balance-action">
+
+                        <a href="wallet.html">
+
+                            <i class="fa-solid fa-arrow-left"></i>
+
+                            Wallet
+
+                        </a>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================================
+                     STATISTICS
+                ================================================== -->
+                <div class="withdraw-stats">
+
+
+                    <!-- Pending -->
+                    <div class="withdraw-stat">
+
+                        <span class="stat-icon pending">
+                            <i class="fa-solid fa-clock"></i>
+                        </span>
+
+                        <div>
+
                             <small>
-                                Minimum penarikan Rp100.000
+                                Saldo pengajuan
                             </small>
+
+                            <strong id="req">
+                                Rp0
+                            </strong>
+
                         </div>
-                        <!-- Payment method -->
-                        <div class="field">
-                            <label for="method">
-                                Metode pembayaran
-                            </label>
-                            <div class="select-wrap">
-                                <select
-                                    class="select"
-                                    id="method"
-                                    required
-                                >
-                                    <option value="ewallet">
-                                        E-Wallet
-                                    </option>
-                                    <option value="bank">
-                                        Bank
-                                    </option>
-                                </select>
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
+
+                    </div>
+
+
+                    <!-- Completed -->
+                    <div class="withdraw-stat">
+
+                        <span class="stat-icon success">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </span>
+
+                        <div>
+
+                            <small>
+                                Total sudah ditarik
+                            </small>
+
+                            <strong id="done">
+                                Rp0
+                            </strong>
+
                         </div>
-                        <!-- Account information -->
-                        <div class="form-grid">
-                            <div class="field">
-                                <label for="aname">
-                                    Nama pemegang
-                                </label>
-                                <input
-                                    class="input"
-                                    id="aname"
-                                    required
-                                    autocomplete="name"
-                                    placeholder="Nama sesuai rekening"
-                                >
-                            </div>
-                            <div class="field">
-                                <label for="anum">
-                                    No. rekening / e-wallet
-                                </label>
-                                <input
-                                    class="input"
-                                    id="anum"
-                                    required
-                                    inputmode="numeric"
-                                    autocomplete="tel"
-                                    placeholder="Nomor tujuan"
-                                >
-                            </div>
+
+                    </div>
+
+
+                    <!-- Instant daily limit -->
+                    <div class="withdraw-stat">
+
+                        <span class="stat-icon limit">
+                            <i class="fa-solid fa-gauge-high"></i>
+                        </span>
+
+                        <div>
+
+                            <small>
+                                Limit instant hari ini
+                            </small>
+
+                            <strong>
+                                Rp500.000
+                            </strong>
+
                         </div>
-                        <!-- Fee preview -->
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     DAILY INSTANT LIMIT
+                ================================================== -->
+                <section class="daily-limit">
+
+                    <div class="daily-top">
+
+                        <div>
+
+                            <span>
+
+                                <i class="fa-solid fa-chart-simple"></i>
+
+                                WD Instant hari ini
+
+                            </span>
+
+
+                            <small id="dailyText">
+                                Rp0 / Rp500.000
+                            </small>
+
+                        </div>
+
+
+                        <b id="dailyPercent">
+                            0%
+                        </b>
+
+                    </div>
+
+
+                    <div class="progress">
+
+                        <i id="dailyBar"></i>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================================
+                     WITHDRAW METHODS
+                ================================================== -->
+                <div class="withdraw-layout">
+
+
+                    <!-- =================================================
+                         WD INSTANT
+                    ================================================== -->
+                    <section
+                        class="withdraw-box instant-box"
+                        id="instantBox"
+                    >
+
+                        <!-- Heading -->
+                        <div class="box-heading">
+
+                            <div class="box-heading-icon instant">
+
+                                <i class="fa-solid fa-bolt"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <h2>
+                                    WD Instant
+                                </h2>
+
+                                <p>
+                                    Tarik cepat kapan saja,
+                                    termasuk Sabtu dan Minggu.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             INSTANT STATUS
+                        ================================================== -->
                         <div
-                            class="withdraw-fee-preview"
-                            id="withdrawFeePreview"
+                            class="withdraw-status instant-status"
+                            id="instantStatus"
+                            data-state="open"
                         >
+
+                            <i
+                                class="fa-solid fa-circle-check"
+                                id="instantStatusIcon"
+                            ></i>
+
+
                             <div>
-                                <span>
-                                    <i class="fa-solid fa-receipt"></i>
-                                    Fee penarikan
-                                </span>
-                                <strong id="withdrawFee">
-                                    Rp7.000
+
+                                <strong id="instantStatusTitle">
+                                    WD Instant Aktif
                                 </strong>
+
+
+                                <small id="instantStatusText">
+                                    Tersedia 24 jam setiap hari,
+                                    termasuk Sabtu dan Minggu.
+                                </small>
+
                             </div>
-                            <div>
-                                <span>
-                                    <i class="fa-solid fa-wallet"></i>
-                                    Saldo diterima
-                                </span>
-                                <strong id="withdrawNet">
-                                    Rp0
-                                </strong>
-                            </div>
+
                         </div>
+
+
+                        <!-- =================================================
+                             INSTANT RULES
+                        ================================================== -->
+                        <div class="rule-info">
+
+                            <div>
+
+                                <i class="fa-solid fa-circle-info"></i>
+
+                                <span>
+                                    Maks. Rp250.000 sekali transaksi
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <i class="fa-solid fa-calendar-day"></i>
+
+                                <span>
+                                    Maks. Rp500.000 per hari
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <i class="fa-solid fa-receipt"></i>
+
+                                <span>
+                                    Fee Rp15.000
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             AMOUNT
+                        ================================================== -->
+                        <div class="field-label">
+                            Pilih nominal
+                        </div>
+
+
+                        <div
+                            class="instant-actions"
+                            id="instantBtns"
+                        >
+
+                            <div class="inline-loading">
+
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                                Memuat...
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Selected amount -->
+                        <div class="selected-amount">
+
+                            <span>
+                                Nominal dipilih
+                            </span>
+
+
+                            <strong id="instantAmount">
+                                Rp50.000
+                            </strong>
+
+                        </div>
+
+
                         <!-- Submit -->
                         <button
                             class="withdraw-submit primary"
-                            type="submit"
-                            id="manualSubmit"
+                            id="instantSubmit"
+                            type="button"
                         >
-                            <i class="fa-solid fa-paper-plane"></i>
+
+                            <i class="fa-solid fa-bolt"></i>
+
                             <span>
-                                Ajukan WD Manual
+                                Ajukan WD Instant
                             </span>
+
                         </button>
-                    </form>
-                </section>
-            </div>
-            <!-- =====================================================
-                 EMERGENCY ADMIN
-            ====================================================== -->
-            <section class="admin-request">
-                <div class="admin-request-icon">
-                    <i class="fa-solid fa-headset"></i>
-                </div>
-                <div class="admin-request-content">
-                    <strong>
-                        Butuh penarikan mendesak?
-                    </strong>
-                    <p>
-                        Hubungi admin jika ada kebutuhan khusus
-                        di luar ketentuan withdraw normal.
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    class="admin-request-btn"
-                    id="urgent"
-                >
-                    Hubungi Admin
-                    <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </section>
-            <!-- =====================================================
-                 WITHDRAW HISTORY
-            ====================================================== -->
-            <section class="history-panel">
-                <div class="history-heading">
-                    <div>
-                        <span class="history-icon">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                        </span>
-                        <div>
-                            <h2>
-                                Riwayat penarikan
-                            </h2>
-                            <p>
-                                Semua pengajuan withdraw akunmu.
-                            </p>
-                        </div>
-                    </div>
-                    <span
-                        class="history-count"
-                        id="historyCount"
+
+                    </section>
+
+
+
+                    <!-- =================================================
+                         WD MANUAL
+                    ================================================== -->
+                    <section
+                        class="withdraw-box manual-box"
+                        id="manualBox"
                     >
-                        0 transaksi
-                    </span>
+
+                        <!-- Heading -->
+                        <div class="box-heading">
+
+                            <div class="box-heading-icon manual">
+
+                                <i class="fa-solid fa-building-columns"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <h2>
+                                    WD Manual
+                                </h2>
+
+                                <p>
+                                    Penarikan manual ke rekening
+                                    atau e-wallet yang tersimpan.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             MANUAL STATUS
+                        ================================================== -->
+                        <div
+                            class="withdraw-status manual-status"
+                            id="manualStatus"
+                            data-state="checking"
+                        >
+
+                            <i
+                                class="fa-solid fa-clock"
+                                id="manualStatusIcon"
+                            ></i>
+
+
+                            <div>
+
+                                <strong id="manualStatusTitle">
+                                    Memeriksa jadwal WD Manual...
+                                </strong>
+
+
+                                <small id="manualStatusText">
+                                    Senin–Jumat, 07:00–21:00 WIB.
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             MANUAL CLOSED NOTICE
+                        ================================================== -->
+                        <div
+                            class="manual-closed-notice"
+                            id="manualClosedNotice"
+                            style="display:none;"
+                        >
+
+                            <div class="manual-closed-icon">
+
+                                <i class="fa-solid fa-lock"></i>
+
+                            </div>
+
+
+                            <div class="manual-closed-content">
+
+                                <strong>
+                                    WD Manual sedang tutup
+                                </strong>
+
+
+                                <span id="manualClosedText">
+                                    WD Manual buka kembali
+                                    sesuai jadwal operasional.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             MANUAL RULES
+                        ================================================== -->
+                        <div class="rule-info">
+
+
+                            <div>
+
+                                <i class="fa-solid fa-arrow-down-1-9"></i>
+
+                                <span>
+                                    Minimum Rp100.000
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <i class="fa-solid fa-list-check"></i>
+
+                                <span>
+                                    Maks. 5 pengajuan
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <i class="fa-solid fa-receipt"></i>
+
+                                <span id="manualFeeText">
+                                    Fee Bank Rp10.000 ·
+                                    E-Wallet Rp7.000
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             SAVED PAYMENT METHODS
+                        ================================================== -->
+                        <div
+                            id="savedMethods"
+                            class="saved-methods hidden"
+                        ></div>
+
+
+                        <!-- =================================================
+                             MANUAL FORM
+                        ================================================== -->
+                        <form
+                            id="wd"
+                            class="withdraw-form"
+                        >
+
+
+                            <!-- Amount -->
+                            <div class="field">
+
+                                <label for="amount">
+                                    Nominal
+                                </label>
+
+
+                                <div class="input-money">
+
+                                    <span>
+                                        Rp
+                                    </span>
+
+
+                                    <input
+                                        class="input"
+                                        id="amount"
+                                        min="100000"
+                                        required
+                                        step="50000"
+                                        inputmode="numeric"
+                                        type="number"
+                                        placeholder="100000"
+                                        autocomplete="off"
+                                    >
+
+                                </div>
+
+
+                                <small>
+                                    Minimum penarikan Rp100.000
+                                </small>
+
+                            </div>
+
+
+
+                            <!-- Payment method -->
+                            <div class="field">
+
+                                <label for="method">
+                                    Metode pembayaran
+                                </label>
+
+
+                                <div class="select-wrap">
+
+                                    <select
+                                        class="select"
+                                        id="method"
+                                        required
+                                    >
+
+                                        <option value="ewallet">
+                                            E-Wallet
+                                        </option>
+
+                                        <option value="bank">
+                                            Bank
+                                        </option>
+
+                                    </select>
+
+
+                                    <i class="fa-solid fa-chevron-down"></i>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- Account -->
+                            <div class="form-grid">
+
+
+                                <!-- Account name -->
+                                <div class="field">
+
+                                    <label for="aname">
+                                        Nama pemegang
+                                    </label>
+
+
+                                    <input
+                                        class="input"
+                                        id="aname"
+                                        required
+                                        autocomplete="name"
+                                        placeholder="Nama sesuai rekening"
+                                    >
+
+                                </div>
+
+
+                                <!-- Account number -->
+                                <div class="field">
+
+                                    <label for="anum">
+                                        No. rekening / e-wallet
+                                    </label>
+
+
+                                    <input
+                                        class="input"
+                                        id="anum"
+                                        required
+                                        inputmode="numeric"
+                                        autocomplete="tel"
+                                        placeholder="Nomor tujuan"
+                                    >
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- =================================================
+                                 FEE PREVIEW
+                            ================================================== -->
+                            <div
+                                class="withdraw-fee-preview"
+                                id="withdrawFeePreview"
+                            >
+
+
+                                <!-- Fee -->
+                                <div>
+
+                                    <span>
+
+                                        <i class="fa-solid fa-receipt"></i>
+
+                                        Fee penarikan
+
+                                    </span>
+
+
+                                    <strong id="withdrawFee">
+                                        Rp7.000
+                                    </strong>
+
+                                </div>
+
+
+                                <!-- Net -->
+                                <div>
+
+                                    <span>
+
+                                        <i class="fa-solid fa-wallet"></i>
+
+                                        Saldo diterima
+
+                                    </span>
+
+
+                                    <strong id="withdrawNet">
+                                        Rp0
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- Submit -->
+                            <button
+                                class="withdraw-submit primary"
+                                type="submit"
+                                id="manualSubmit"
+                            >
+
+                                <i class="fa-solid fa-paper-plane"></i>
+
+                                <span>
+                                    Ajukan WD Manual
+                                </span>
+
+                            </button>
+
+                        </form>
+
+                    </section>
+
                 </div>
-                <div
-                    class="history-list"
-                    id="history"
-                >
-                    <div class="history-loading">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        Memuat riwayat...
+
+
+
+                <!-- =================================================
+                     EMERGENCY ADMIN
+                ================================================== -->
+                <section class="admin-request">
+
+                    <div class="admin-request-icon">
+
+                        <i class="fa-solid fa-headset"></i>
+
                     </div>
-                </div>
-            </section>
-        </div>
-    </section>
-</main>
-<div id="toast"></div>
-<script src="js/withdrawals.js?v=20260904"></script>
-<script src="js/footer.js?v=20260904"></script>
+
+
+                    <div class="admin-request-content">
+
+                        <strong>
+                            Butuh penarikan mendesak?
+                        </strong>
+
+
+                        <p>
+                            Hubungi admin jika ada kebutuhan khusus
+                            di luar ketentuan withdraw normal.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="admin-request-btn"
+                        id="urgent"
+                    >
+
+                        <span>
+                            Hubungi Admin
+                        </span>
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </button>
+
+                </section>
+
+
+
+                <!-- =================================================
+                     WITHDRAW HISTORY
+                ================================================== -->
+                <section class="history-panel">
+
+
+                    <!-- Heading -->
+                    <div class="history-heading">
+
+                        <div>
+
+                            <span class="history-icon">
+
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+
+                            </span>
+
+
+                            <div>
+
+                                <h2>
+                                    Riwayat penarikan
+                                </h2>
+
+
+                                <p>
+                                    Semua pengajuan withdraw akunmu.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <span
+                            class="history-count"
+                            id="historyCount"
+                        >
+                            0 transaksi
+                        </span>
+
+                    </div>
+
+
+                    <!-- History -->
+                    <div
+                        class="history-list"
+                        id="history"
+                    >
+
+                        <div class="history-loading">
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            Memuat riwayat...
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         TOAST
+    ========================================================== -->
+    <div id="toast"></div>
+
+
+    <!-- =========================================================
+         SCRIPTS
+    ========================================================== -->
+    <script src="js/withdrawals.js?v=20260905"></script>
+    <script src="js/footer.js?v=20260905"></script>
+
 </body>
+
 </html>
