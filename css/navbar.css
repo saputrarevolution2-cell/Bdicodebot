@@ -1,127 +1,243 @@
 /* ============================================================
-   PASTELE — COLORFUL NAVBAR FINAL
-   Premium • Colorful • Soft • Responsive
+   PASTELE — COLORFUL NAVBAR
+   Premium • Clean • Soft • Responsive
+   Works with navbar.js final structure
 ============================================================ */
+/* ============================================================
+   MAIN NAV ICON
+   Hanya icon utama menu.
+   Jangan gunakan .nav-link i karena badge juga punya <i>.
+============================================================ */
+#navbar .nav-link > .nav-main-icon {
+  width: 18px;
+  min-width: 18px;
+  flex: 0 0 18px;
+  font-size: 13px;
+  text-align: center;
+  color: currentColor;
+  transition:
+    color 180ms ease,
+    transform 180ms ease,
+    filter 180ms ease;
+}
+/* ============================================================
+   COLOR — USER NAVIGATION
+============================================================ */
+#navbar .nav-link > .fa-house {
+  color: #3b82f6;
+}
+#navbar .nav-link > .fa-store {
+  color: #8b5cf6;
+}
+#navbar .nav-link > .fa-paperclip {
+  color: #06b6d4;
+}
+#navbar .nav-link > .fa-link {
+  color: #14b8a6;
+}
+#navbar .nav-link > .fa-bag-shopping {
+  color: #f97316;
+}
+#navbar .nav-link > .fa-wallet {
+  color: #10b981;
+}
+#navbar .nav-link > .fa-money-bill-transfer {
+  color: #22c55e;
+}
+#navbar .nav-link > .fa-arrow-right-arrow-left {
+  color: #6366f1;
+}
+#navbar .nav-link > .fa-crown {
+  color: #f59e0b;
+}
+#navbar .nav-link > .fa-gem {
+  color: #ec4899;
+}
+#navbar .nav-link > .fa-bell {
+  color: #f43f5e;
+}
+#navbar .nav-link > .fa-user {
+  color: #0ea5e9;
+}
+#navbar .nav-link > .fa-gear {
+  color: #64748b;
+}
+/* ============================================================
+   COLOR — ADMIN NAVIGATION
+============================================================ */
+#navbar .nav-link > .fa-chart-pie {
+  color: #6366f1;
+}
+#navbar .nav-link > .fa-users {
+  color: #06b6d4;
+}
+#navbar .nav-link > .fa-box {
+  color: #8b5cf6;
+}
+#navbar .nav-link > .fa-receipt {
+  color: #f59e0b;
+}
+#navbar .nav-link > .fa-credit-card {
+  color: #10b981;
+}
+#navbar .nav-link > .fa-robot {
+  color: #ec4899;
+}
+#navbar .nav-link > .fa-list {
+  color: #64748b;
+}
+/* ============================================================
+   NAV ICON HOVER
+============================================================ */
+#navbar .nav-link:hover > .nav-main-icon {
+  transform: scale(1.08);
+  filter:
+    saturate(1.12)
+    brightness(1.06);
+}
+/* ============================================================
+   ACTIVE MENU
+   Warna icon tetap mengikuti warna masing-masing.
+============================================================ */
+#navbar .nav-link.active > .nav-main-icon {
+  filter:
+    saturate(1.08)
+    brightness(1.03);
+}
 /* ============================================================
    BADGE BASE
 ============================================================ */
 #navbar .nav-badge {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  flex: 0 0 auto !important;
-  min-width: 38px !important;
-  min-height: 20px !important;
-  padding: 3px 7px !important;
-  margin-left: auto !important;
-  border-radius: 999px !important;
-  font-style: normal !important;
-  font-size: 8px !important;
-  font-weight: 800 !important;
-  line-height: 1 !important;
-  letter-spacing: .15px !important;
-  white-space: nowrap !important;
-  border: 1px solid transparent !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 7px;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .15px;
+  white-space: nowrap;
+  box-sizing: border-box;
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
-    filter 180ms ease !important;
+    filter 180ms ease;
+}
+/* ============================================================
+   BADGE TEXT
+============================================================ */
+#navbar .nav-badge-text {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1;
 }
 /* ============================================================
    BADGE ICON
-   Jangan sampai terkena style .nav-link i
+   Sangat penting:
+   Jangan biarkan selector .nav-link > i
+   mengubah ukuran icon badge.
 ============================================================ */
-#navbar .nav-badge i,
-#navbar .nav-badge > i {
-  width: auto !important;
-  min-width: 0 !important;
-  flex: 0 0 auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  font-size: 7px !important;
-  text-align: center !important;
-  transform: none !important;
+#navbar .nav-badge > .nav-badge-icon {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  font-size: 7px;
+  line-height: 1;
+  text-align: center;
+  transform: none;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
 }
 /* ============================================================
-   🔥 HOT
+   🔥 HOT BADGE
 ============================================================ */
 #navbar .nav-badge.nav-hot {
-  color: #a16207 !important;
+  color: #a16207;
   background:
     linear-gradient(
       135deg,
-      #fff7d6 0%,
-      #ffe8a3 100%
-    ) !important;
-  border-color: rgba(245, 158, 11, .25) !important;
+      #fff8dc,
+      #ffe9a8
+    );
+  border-color: rgba(245, 158, 11, .25);
   box-shadow:
-    0 3px 10px rgba(245, 158, 11, .15) !important;
+    0 3px 9px rgba(245, 158, 11, .13);
 }
-#navbar .nav-badge.nav-hot i,
-#navbar .nav-badge.nav-hot > i {
-  color: #f59e0b !important;
+#navbar .nav-badge.nav-hot > .nav-badge-icon {
+  color: #f59e0b;
 }
 /* ============================================================
-   ✨ NEW
+   ✨ NEW BADGE
 ============================================================ */
 #navbar .nav-badge.nav-new {
-  color: #047857 !important;
+  color: #047857;
   background:
     linear-gradient(
       135deg,
-      #ecfdf5 0%,
-      #c6f6dc 100%
-    ) !important;
-  border-color: rgba(16, 185, 129, .22) !important;
+      #effdf7,
+      #c9f6df
+    );
+  border-color: rgba(16, 185, 129, .22);
   box-shadow:
-    0 3px 10px rgba(16, 185, 129, .14) !important;
+    0 3px 9px rgba(16, 185, 129, .12);
 }
-#navbar .nav-badge.nav-new i,
-#navbar .nav-badge.nav-new > i {
-  color: #10b981 !important;
+#navbar .nav-badge.nav-new > .nav-badge-icon {
+  color: #10b981;
 }
 /* ============================================================
-   💗 TREND
-   Pink / Fuchsia — dibuat jelas terlihat
+   💗 TREND BADGE
+   Pink / Feminine / Premium
 ============================================================ */
 #navbar .nav-badge.nav-trend {
-  color: #be185d !important;
+  color: #be185d;
   background:
     linear-gradient(
       135deg,
-      #fff1f7 0%,
-      #ffd1e3 50%,
+      #fff3f8 0%,
+      #ffd9e8 55%,
       #fbcfe8 100%
-    ) !important;
-  border-color: rgba(236, 72, 153, .32) !important;
+    );
+  border-color: rgba(236, 72, 153, .28);
   box-shadow:
-    0 3px 13px rgba(236, 72, 153, .20) !important;
-  animation: navTrendGlow 2s ease-in-out infinite !important;
+    0 3px 11px rgba(236, 72, 153, .16);
+  animation:
+    navTrendGlow 2.4s ease-in-out infinite;
 }
-#navbar .nav-badge.nav-trend i,
-#navbar .nav-badge.nav-trend > i {
-  color: #ec4899 !important;
+#navbar .nav-badge.nav-trend > .nav-badge-icon {
+  color: #ec4899;
   text-shadow:
-    0 0 7px rgba(236, 72, 153, .28) !important;
+    0 0 6px rgba(236, 72, 153, .25);
 }
 /* ============================================================
    BADGE HOVER
 ============================================================ */
 #navbar .nav-link:hover .nav-badge {
-  transform: translateY(-1px) !important;
+  transform: translateY(-1px);
 }
 #navbar .nav-link:hover .nav-badge.nav-hot {
   box-shadow:
-    0 5px 15px rgba(245, 158, 11, .22) !important;
+    0 5px 13px rgba(245, 158, 11, .19);
 }
 #navbar .nav-link:hover .nav-badge.nav-new {
   box-shadow:
-    0 5px 15px rgba(16, 185, 129, .20) !important;
+    0 5px 13px rgba(16, 185, 129, .18);
 }
 #navbar .nav-link:hover .nav-badge.nav-trend {
   box-shadow:
-    0 5px 17px rgba(236, 72, 153, .30) !important;
+    0 5px 15px rgba(236, 72, 153, .25);
 }
 /* ============================================================
    TREND ANIMATION
@@ -132,312 +248,240 @@
     filter: brightness(1);
   }
   50% {
-    filter: brightness(1.08);
+    filter: brightness(1.07);
   }
 }
 /* ============================================================
-   🌈 MAIN NAV ICONS
+   ACCOUNT AVATAR
 ============================================================ */
-/* Dashboard */
-#navbar .nav-link > i.fa-house {
-  color: #3b82f6 !important;
-}
-/* Marketplace */
-#navbar .nav-link > i.fa-store {
-  color: #8b5cf6 !important;
-}
-/* Create */
-#navbar .nav-link > i.fa-paperclip {
-  color: #06b6d4 !important;
-}
-/* My Links */
-#navbar .nav-link > i.fa-link {
-  color: #14b8a6 !important;
-}
-/* Purchases */
-#navbar .nav-link > i.fa-bag-shopping {
-  color: #f97316 !important;
-}
-/* Wallet */
-#navbar .nav-link > i.fa-wallet {
-  color: #10b981 !important;
-}
-/* Withdraw */
-#navbar .nav-link > i.fa-money-bill-transfer {
-  color: #22c55e !important;
-}
-/* Transactions */
-#navbar .nav-link > i.fa-arrow-right-arrow-left {
-  color: #6366f1 !important;
-}
-/* Subscription */
-#navbar .nav-link > i.fa-crown {
-  color: #f59e0b !important;
-}
-/* Premium */
-#navbar .nav-link > i.fa-gem {
-  color: #ec4899 !important;
-}
-/* Notifications */
-#navbar .nav-link > i.fa-bell {
-  color: #f43f5e !important;
-}
-/* Profile */
-#navbar .nav-link > i.fa-user {
-  color: #0ea5e9 !important;
-}
-/* Settings */
-#navbar .nav-link > i.fa-gear {
-  color: #64748b !important;
+#navbar .nav-avatar > i {
+  color: #06b6d4;
 }
 /* ============================================================
-   ADMIN ICONS
+   THEME BUTTON
 ============================================================ */
-#navbar .nav-link > i.fa-chart-pie {
-  color: #6366f1 !important;
-}
-#navbar .nav-link > i.fa-users {
-  color: #06b6d4 !important;
-}
-#navbar .nav-link > i.fa-box {
-  color: #8b5cf6 !important;
-}
-#navbar .nav-link > i.fa-receipt {
-  color: #f59e0b !important;
-}
-#navbar .nav-link > i.fa-credit-card {
-  color: #10b981 !important;
-}
-#navbar .nav-link > i.fa-list {
-  color: #64748b !important;
-}
-#navbar .nav-link > i.fa-robot {
-  color: #ec4899 !important;
-}
-/* ============================================================
-   ICON HOVER
-============================================================ */
-#navbar .nav-link:hover > i {
-  transform: scale(1.12) !important;
-  filter:
-    saturate(1.15)
-    brightness(1.08) !important;
-}
-/* ============================================================
-   ACTIVE
-   Jangan ubah icon menjadi cyan.
-   Tetap pertahankan warna masing-masing.
-============================================================ */
-#navbar .nav-link.active > i.fa-house {
-  color: #2563eb !important;
-}
-#navbar .nav-link.active > i.fa-store {
-  color: #7c3aed !important;
-}
-#navbar .nav-link.active > i.fa-paperclip {
-  color: #0891b2 !important;
-}
-#navbar .nav-link.active > i.fa-link {
-  color: #0d9488 !important;
-}
-#navbar .nav-link.active > i.fa-bag-shopping {
-  color: #ea580c !important;
-}
-#navbar .nav-link.active > i.fa-wallet {
-  color: #059669 !important;
-}
-#navbar .nav-link.active > i.fa-money-bill-transfer {
-  color: #16a34a !important;
-}
-#navbar .nav-link.active > i.fa-arrow-right-arrow-left {
-  color: #4f46e5 !important;
-}
-#navbar .nav-link.active > i.fa-crown {
-  color: #d97706 !important;
-}
-#navbar .nav-link.active > i.fa-gem {
-  color: #db2777 !important;
-}
-#navbar .nav-link.active > i.fa-bell {
-  color: #e11d48 !important;
-}
-#navbar .nav-link.active > i.fa-user {
-  color: #0284c7 !important;
-}
-#navbar .nav-link.active > i.fa-gear {
-  color: #475569 !important;
-}
-/* ============================================================
-   🌈 THEME BUTTON
-============================================================ */
-#navbar .nav-theme i {
-  color: #8b5cf6 !important;
+#navbar .nav-theme > i {
+  color: #8b5cf6;
   transition:
     color 180ms ease,
     transform 180ms ease;
 }
-#navbar .nav-theme:hover i {
-  color: #ec4899 !important;
-  transform: rotate(18deg) scale(1.08) !important;
+#navbar .nav-theme:hover > i {
+  color: #ec4899;
+  transform:
+    rotate(18deg)
+    scale(1.08);
 }
 /* ============================================================
-   🌈 MOBILE MENU BUTTON
+   MOBILE MENU BUTTON
 ============================================================ */
-#navbar .nav-toggle i {
-  color: #06b6d4 !important;
+#navbar .nav-toggle > i {
+  color: #06b6d4;
   transition:
     color 180ms ease,
     transform 180ms ease;
 }
-#navbar .nav-toggle:hover i {
-  color: #8b5cf6 !important;
-  transform: scale(1.1) !important;
+#navbar .nav-toggle:hover > i {
+  color: #8b5cf6;
+  transform: scale(1.08);
 }
 /* ============================================================
-   🌈 LOGOUT
+   LOGOUT
 ============================================================ */
-#navbar .nav-logout i {
-  color: #f43f5e !important;
+#navbar .nav-logout > i {
+  color: #f43f5e;
   transition:
     color 180ms ease,
     transform 180ms ease;
 }
-#navbar .nav-logout:hover i {
-  color: #ef4444 !important;
-  transform: translateX(2px) !important;
+#navbar .nav-logout:hover > i {
+  color: #ef4444;
+  transform: translateX(2px);
 }
 /* ============================================================
-   🌈 ACCOUNT AVATAR
+   SOCIAL ICONS
 ============================================================ */
-#navbar .nav-avatar i {
-  color: #06b6d4 !important;
+#navbar .nav-extra a > i {
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
 }
-/* ============================================================
-   🌈 SOCIAL ICONS
-============================================================ */
-#navbar .nav-extra a:nth-of-type(1) i {
-  color: #229ed9 !important;
+#navbar .nav-extra a:nth-of-type(1) > i {
+  color: #229ed9;
 }
-#navbar .nav-extra a:nth-of-type(2) i {
-  color: #1877f2 !important;
+#navbar .nav-extra a:nth-of-type(2) > i {
+  color: #1877f2;
 }
-#navbar .nav-extra a:nth-of-type(3) i {
-  color: #ff0050 !important;
+#navbar .nav-extra a:nth-of-type(3) > i {
+  color: #ff0050;
 }
-#navbar .nav-extra a:nth-of-type(4) i {
-  color: #25d366 !important;
+#navbar .nav-extra a:nth-of-type(4) > i {
+  color: #25d366;
 }
-#navbar .nav-extra a:nth-of-type(5) i {
-  color: #8b5cf6 !important;
+#navbar .nav-extra a:nth-of-type(5) > i {
+  color: #8b5cf6;
 }
-#navbar .nav-extra a:hover i {
-  transform: scale(1.12) !important;
+#navbar .nav-extra a:hover > i {
+  transform: scale(1.08);
 }
 /* ============================================================
    DARK MODE — MAIN ICONS
 ============================================================ */
-html[data-theme="dark"] #navbar .nav-link > i.fa-house {
-  color: #60a5fa !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-house {
+  color: #60a5fa;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-store {
-  color: #a78bfa !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-store {
+  color: #a78bfa;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-paperclip {
-  color: #22d3ee !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-paperclip {
+  color: #22d3ee;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-link {
-  color: #2dd4bf !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-link {
+  color: #2dd4bf;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-bag-shopping {
-  color: #fb923c !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-bag-shopping {
+  color: #fb923c;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-wallet {
-  color: #34d399 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-wallet {
+  color: #34d399;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-money-bill-transfer {
-  color: #4ade80 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-money-bill-transfer {
+  color: #4ade80;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-arrow-right-arrow-left {
-  color: #818cf8 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-arrow-right-arrow-left {
+  color: #818cf8;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-crown {
-  color: #fbbf24 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-crown {
+  color: #fbbf24;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-gem {
-  color: #f472b6 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-gem {
+  color: #f472b6;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-bell {
-  color: #fb7185 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-bell {
+  color: #fb7185;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-user {
-  color: #38bdf8 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-user {
+  color: #38bdf8;
 }
-html[data-theme="dark"] #navbar .nav-link > i.fa-gear {
-  color: #94a3b8 !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-gear {
+  color: #94a3b8;
 }
 /* ============================================================
-   DARK MODE — TREND
+   DARK MODE — ADMIN ICONS
 ============================================================ */
-html[data-theme="dark"] #navbar .nav-badge.nav-trend {
-  color: #f9a8d4 !important;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(236, 72, 153, .22),
-      rgba(244, 63, 94, .13)
-    ) !important;
-  border-color:
-    rgba(244, 114, 182, .30) !important;
-  box-shadow:
-    0 4px 15px rgba(236, 72, 153, .18) !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-chart-pie {
+  color: #818cf8;
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-trend i {
-  color: #f472b6 !important;
-  text-shadow:
-    0 0 8px rgba(244, 114, 182, .40) !important;
+html[data-theme="dark"] #navbar .nav-link > .fa-users {
+  color: #22d3ee;
+}
+html[data-theme="dark"] #navbar .nav-link > .fa-box {
+  color: #a78bfa;
+}
+html[data-theme="dark"] #navbar .nav-link > .fa-receipt {
+  color: #fbbf24;
+}
+html[data-theme="dark"] #navbar .nav-link > .fa-credit-card {
+  color: #34d399;
+}
+html[data-theme="dark"] #navbar .nav-link > .fa-robot {
+  color: #f472b6;
+}
+html[data-theme="dark"] #navbar .nav-link > .fa-list {
+  color: #94a3b8;
 }
 /* ============================================================
-   DARK MODE — HOT
+   DARK MODE — BADGES
 ============================================================ */
 html[data-theme="dark"] #navbar .nav-badge.nav-hot {
-  color: #fcd34d !important;
+  color: #fcd34d;
   background:
     linear-gradient(
       135deg,
       rgba(245, 158, 11, .20),
-      rgba(251, 191, 36, .10)
-    ) !important;
+      rgba(251, 191, 36, .09)
+    );
+  border-color:
+    rgba(251, 191, 36, .20);
+  box-shadow:
+    0 3px 11px rgba(245, 158, 11, .12);
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-hot i {
-  color: #fbbf24 !important;
+html[data-theme="dark"] #navbar .nav-badge.nav-hot > .nav-badge-icon {
+  color: #fbbf24;
 }
-/* ============================================================
-   DARK MODE — NEW
-============================================================ */
 html[data-theme="dark"] #navbar .nav-badge.nav-new {
-  color: #6ee7b7 !important;
+  color: #6ee7b7;
   background:
     linear-gradient(
       135deg,
       rgba(16, 185, 129, .20),
-      rgba(52, 211, 153, .10)
-    ) !important;
+      rgba(52, 211, 153, .08)
+    );
+  border-color:
+    rgba(52, 211, 153, .20);
+  box-shadow:
+    0 3px 11px rgba(16, 185, 129, .12);
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-new i {
-  color: #34d399 !important;
+html[data-theme="dark"] #navbar .nav-badge.nav-new > .nav-badge-icon {
+  color: #34d399;
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-trend {
+  color: #f9a8d4;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(236, 72, 153, .22),
+      rgba(244, 63, 94, .11)
+    );
+  border-color:
+    rgba(244, 114, 182, .30);
+  box-shadow:
+    0 3px 13px rgba(236, 72, 153, .18);
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-trend > .nav-badge-icon {
+  color: #f472b6;
+  text-shadow:
+    0 0 8px rgba(244, 114, 182, .38);
+}
+/* ============================================================
+   DARK MODE — ACCOUNT / BUTTONS
+============================================================ */
+html[data-theme="dark"] #navbar .nav-avatar > i {
+  color: #22d3ee;
+}
+html[data-theme="dark"] #navbar .nav-theme > i {
+  color: #a78bfa;
+}
+html[data-theme="dark"] #navbar .nav-theme:hover > i {
+  color: #f472b6;
 }
 /* ============================================================
    MOBILE
 ============================================================ */
+@media (max-width: 900px) {
+  #navbar .nav-badge {
+    min-width: 39px;
+    height: 21px;
+    padding: 0 7px;
+    font-size: 8px;
+  }
+  #navbar .nav-badge > .nav-badge-icon {
+    font-size: 7px;
+  }
+}
+/* ============================================================
+   SMALL PHONE
+============================================================ */
 @media (max-width: 480px) {
   #navbar .nav-badge {
-    min-width: 37px !important;
-    min-height: 20px !important;
-    padding: 3px 6px !important;
-    font-size: 8px !important;
+    min-width: 37px;
+    height: 20px;
+    padding: 0 6px;
+    gap: 3px;
+    font-size: 7.5px;
   }
-  #navbar .nav-badge i {
-    font-size: 7px !important;
+  #navbar .nav-badge > .nav-badge-icon {
+    font-size: 6.5px;
   }
 }
 /* ============================================================
@@ -445,13 +489,15 @@ html[data-theme="dark"] #navbar .nav-badge.nav-new i {
 ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   #navbar .nav-badge.nav-trend {
-    animation: none !important;
+    animation: none;
   }
+  #navbar .nav-link > .nav-main-icon,
   #navbar .nav-badge,
-  #navbar .nav-link i,
-  #navbar .nav-theme i,
-  #navbar .nav-toggle i,
-  #navbar .nav-logout i {
-    transition: none !important;
+  #navbar .nav-badge > .nav-badge-icon,
+  #navbar .nav-theme > i,
+  #navbar .nav-toggle > i,
+  #navbar .nav-logout > i,
+  #navbar .nav-extra a > i {
+    transition: none;
   }
 }
