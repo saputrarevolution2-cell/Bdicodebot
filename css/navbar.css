@@ -34,7 +34,7 @@
 
 
 /* ============================================================
-   DARK MODE VARIABLES
+   DARK MODE
 ============================================================ */
 
 html[data-theme="dark"] {
@@ -257,7 +257,7 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   AVATAR BUTTON
+   AVATAR
 ============================================================ */
 
 #navbar .nav-avatar {
@@ -372,7 +372,7 @@ html[data-theme="dark"] {
   font-size: 9.5px;
   font-weight: 750;
 
-  line-height: 1.2;
+  line-height: 1;
 
   text-align: right;
 
@@ -460,11 +460,6 @@ html[data-theme="dark"] {
   flex: 1;
 }
 
-
-/* ============================================================
-   GROUP
-============================================================ */
-
 #navbar .nav-group {
   display: flex;
   flex-direction: column;
@@ -529,7 +524,8 @@ html[data-theme="dark"] {
 
 /* ============================================================
    MAIN ICON
-   ONLY .nav-main-icon
+   IMPORTANT:
+   Hanya selector .nav-main-icon yang mengatur icon menu.
 ============================================================ */
 
 #navbar .nav-link > .nav-main-icon {
@@ -564,98 +560,133 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   🌈 MAIN USER ICON COLORS
+   🌈 USER MENU — COLORFUL
 ============================================================ */
 
+/* Dashboard */
 #navbar .nav-main-icon.fa-house {
   color: #3b82f6 !important;
 }
 
+/* Marketplace */
 #navbar .nav-main-icon.fa-store {
   color: #8b5cf6 !important;
 }
 
+/* Create */
 #navbar .nav-main-icon.fa-paperclip {
   color: #06b6d4 !important;
 }
 
+/* My Links */
 #navbar .nav-main-icon.fa-link {
   color: #14b8a6 !important;
 }
 
+/* Purchases */
 #navbar .nav-main-icon.fa-bag-shopping {
   color: #f97316 !important;
 }
 
+/* Wallet */
 #navbar .nav-main-icon.fa-wallet {
   color: #10b981 !important;
 }
 
+/* Withdraw */
 #navbar .nav-main-icon.fa-money-bill-transfer {
   color: #22c55e !important;
 }
 
+/* Transactions */
 #navbar .nav-main-icon.fa-arrow-right-arrow-left {
   color: #6366f1 !important;
 }
 
+/* Subscription */
 #navbar .nav-main-icon.fa-crown {
   color: #f59e0b !important;
 }
 
+/* Premium */
 #navbar .nav-main-icon.fa-gem {
   color: #ec4899 !important;
 }
 
+/* Notifications */
 #navbar .nav-main-icon.fa-bell {
   color: #f43f5e !important;
 }
 
+/* Profile */
 #navbar .nav-main-icon.fa-user {
   color: #0ea5e9 !important;
 }
 
+/* Settings */
 #navbar .nav-main-icon.fa-gear {
   color: #64748b !important;
 }
 
 
 /* ============================================================
-   🌈 ADMIN ICON COLORS
+   🌈 ADMIN MENU — COLORFUL
 ============================================================ */
 
+/* Admin Dashboard */
 #navbar .nav-main-icon.fa-chart-pie {
   color: #6366f1 !important;
 }
 
+/* Users */
 #navbar .nav-main-icon.fa-users {
   color: #06b6d4 !important;
 }
 
+/* Products */
 #navbar .nav-main-icon.fa-box {
   color: #8b5cf6 !important;
 }
 
+/* Orders */
 #navbar .nav-main-icon.fa-receipt {
   color: #f59e0b !important;
 }
 
+/* Payments */
 #navbar .nav-main-icon.fa-credit-card {
   color: #10b981 !important;
 }
 
+/* Withdrawals */
+#navbar .nav-main-icon.fa-money-bill-transfer {
+  color: #22c55e !important;
+}
+
+/* Transactions */
+#navbar .nav-main-icon.fa-arrow-right-arrow-left {
+  color: #6366f1 !important;
+}
+
+/* Pastelinks / Reports */
+#navbar .nav-main-icon.fa-file-lines {
+  color: #0ea5e9 !important;
+}
+
+/* Bot */
 #navbar .nav-main-icon.fa-robot {
   color: #ec4899 !important;
 }
 
+/* Logs */
 #navbar .nav-main-icon.fa-list {
   color: #64748b !important;
 }
 
 
 /* ============================================================
-   HOVER
-   COLOR TETAP
+   NAV LINK HOVER
+   WARNA ICON TIDAK DIGANTI
 ============================================================ */
 
 #navbar .nav-link:hover {
@@ -667,11 +698,15 @@ html[data-theme="dark"] {
 }
 
 #navbar .nav-link:hover > .nav-main-icon {
-  transform: scale(1.10);
+  transform: scale(1.12);
 
   filter:
-    saturate(1.18)
-    brightness(1.08);
+    saturate(1.30)
+    brightness(1.10)
+    drop-shadow(
+      0 2px 5px
+      rgba(0, 0, 0, .10)
+    );
 }
 
 
@@ -712,11 +747,15 @@ html[data-theme="dark"] {
 }
 
 #navbar .nav-link.active > .nav-main-icon {
-  transform: scale(1.04);
+  transform: scale(1.08);
 
   filter:
-    saturate(1.15)
-    brightness(1.08);
+    saturate(1.25)
+    brightness(1.08)
+    drop-shadow(
+      0 2px 5px
+      rgba(0, 0, 0, .08)
+    );
 }
 
 
@@ -1016,30 +1055,25 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   🌈 SOCIAL COLORS
+   SOCIAL COLORS
 ============================================================ */
 
-/* Telegram */
 #navbar .nav-extra a:nth-of-type(1) > .nav-social-icon {
   color: #229ed9 !important;
 }
 
-/* Facebook */
 #navbar .nav-extra a:nth-of-type(2) > .nav-social-icon {
   color: #1877f2 !important;
 }
 
-/* TikTok */
 #navbar .nav-extra a:nth-of-type(3) > .nav-social-icon {
   color: #ff0050 !important;
 }
 
-/* WhatsApp */
 #navbar .nav-extra a:nth-of-type(4) > .nav-social-icon {
   color: #25d366 !important;
 }
 
-/* Other */
 #navbar .nav-extra a:nth-of-type(5) > .nav-social-icon {
   color: #8b5cf6 !important;
 }
@@ -1061,7 +1095,7 @@ html[data-theme="dark"] {
   transform: scale(1.10);
 
   filter:
-    saturate(1.18)
+    saturate(1.25)
     brightness(1.08);
 }
 
@@ -1450,7 +1484,7 @@ body.nav-menu-open {
 
 
 /* ============================================================
-   DARK MODE — MAIN ICONS
+   DARK MODE — USER ICONS
 ============================================================ */
 
 html[data-theme="dark"] #navbar .nav-main-icon.fa-house {
@@ -1507,7 +1541,7 @@ html[data-theme="dark"] #navbar .nav-main-icon.fa-gear {
 
 
 /* ============================================================
-   DARK MODE — ADMIN
+   DARK MODE — ADMIN ICONS
 ============================================================ */
 
 html[data-theme="dark"] #navbar .nav-main-icon.fa-chart-pie {
@@ -1635,23 +1669,19 @@ html[data-theme="dark"]
    DARK MODE — BUTTON ICONS
 ============================================================ */
 
-html[data-theme="dark"]
-#navbar .nav-avatar > i {
+html[data-theme="dark"] #navbar .nav-avatar > i {
   color: #22d3ee !important;
 }
 
-html[data-theme="dark"]
-#navbar .nav-theme > i {
+html[data-theme="dark"] #navbar .nav-theme > i {
   color: #a78bfa !important;
 }
 
-html[data-theme="dark"]
-#navbar .nav-toggle > i {
+html[data-theme="dark"] #navbar .nav-toggle > i {
   color: #22d3ee !important;
 }
 
-html[data-theme="dark"]
-#navbar .nav-logout > i {
+html[data-theme="dark"] #navbar .nav-logout > i {
   color: #fb7185 !important;
 }
 
@@ -1687,7 +1717,7 @@ html[data-theme="dark"]
 
 
 /* ============================================================
-   DARK MODE — BRAND
+   DARK MODE — BRAND / ACCOUNT
 ============================================================ */
 
 html[data-theme="dark"] #navbar .brand-mark {
@@ -1720,21 +1750,15 @@ html[data-theme="dark"] #navbar .nav-account {
 
 
 /* ============================================================
-   DARK MODE — ICON DEPTH
+   DARK ICON DEPTH
 ============================================================ */
 
-html[data-theme="dark"]
-#navbar .nav-main-icon,
-html[data-theme="dark"]
-#navbar .nav-social-icon,
-html[data-theme="dark"]
-#navbar .nav-theme > i,
-html[data-theme="dark"]
-#navbar .nav-toggle > i,
-html[data-theme="dark"]
-#navbar .nav-avatar > i,
-html[data-theme="dark"]
-#navbar .nav-logout > i {
+html[data-theme="dark"] #navbar .nav-main-icon,
+html[data-theme="dark"] #navbar .nav-social-icon,
+html[data-theme="dark"] #navbar .nav-theme > i,
+html[data-theme="dark"] #navbar .nav-toggle > i,
+html[data-theme="dark"] #navbar .nav-avatar > i,
+html[data-theme="dark"] #navbar .nav-logout > i {
   text-shadow:
     0 0 7px
     rgba(255, 255, 255, .06);
