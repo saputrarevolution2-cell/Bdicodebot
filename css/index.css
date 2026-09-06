@@ -1,8 +1,9 @@
 /* =========================================================
    PasTele — Landing Page / index.css
-   Canonical landing-page stylesheet
+   FINAL — Premium SaaS + Colorful Icon System
    Works with css/app.css + theme-preload.js
    ========================================================= */
+
 
 /* =========================================================
    LANDING BASE
@@ -11,7 +12,7 @@
 body.landing-page {
   background:
     radial-gradient(circle at 12% 0%, rgba(42, 171, 238, .10), transparent 34%),
-    radial-gradient(circle at 88% 8%, rgba(42, 171, 238, .07), transparent 30%),
+    radial-gradient(circle at 88% 8%, rgba(139, 92, 246, .07), transparent 30%),
     var(--app-bg);
   color: var(--text);
   overflow-x: hidden;
@@ -24,6 +25,7 @@ body.landing-page main {
 .landing-page .container {
   width: min(1180px, calc(100% - 40px));
 }
+
 
 /* =========================================================
    HEADER
@@ -71,6 +73,7 @@ body.landing-page main {
 }
 
 .landing-brand-mark i {
+  color: #fff !important;
   font-size: 16px;
 }
 
@@ -83,6 +86,17 @@ body.landing-page main {
 .landing-header-actions .btn {
   min-height: 40px;
 }
+
+/* Login */
+.landing-header-actions .btn:first-child i {
+  color: #3b82f6 !important;
+}
+
+/* Register */
+.landing-header-actions .btn.primary i {
+  color: #fff !important;
+}
+
 
 /* =========================================================
    HERO
@@ -115,7 +129,7 @@ body.landing-page main {
   right: -220px;
   top: -180px;
   border-radius: 50%;
-  background: rgba(42, 171, 238, .07);
+  background: rgba(139, 92, 246, .07);
   filter: blur(18px);
   pointer-events: none;
 }
@@ -142,6 +156,10 @@ body.landing-page main {
   text-transform: uppercase;
 }
 
+.hero .eyebrow i {
+  color: #f59e0b !important;
+}
+
 .hero-copy h1 {
   max-width: 760px;
   margin: 20px 0 18px;
@@ -166,6 +184,11 @@ body.landing-page main {
   line-height: 1.75;
 }
 
+
+/* =========================================================
+   HERO ACTIONS
+   ========================================================= */
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -178,6 +201,19 @@ body.landing-page main {
   padding: 11px 17px;
   border-radius: 11px;
 }
+
+.hero-actions .btn:first-child i {
+  color: #fff !important;
+}
+
+.hero-actions .btn:nth-child(2) i {
+  color: #8b5cf6 !important;
+}
+
+
+/* =========================================================
+   TRUST
+   ========================================================= */
 
 .trust {
   display: flex;
@@ -195,9 +231,22 @@ body.landing-page main {
   font-weight: 650;
 }
 
-.trust i {
-  color: var(--blue);
+.trust span:nth-child(1) i {
+  color: #10b981 !important;
 }
+
+.trust span:nth-child(2) i {
+  color: #06b6d4 !important;
+}
+
+.trust span:nth-child(3) i {
+  color: #8b5cf6 !important;
+}
+
+.trust span:nth-child(4) i {
+  color: #22c55e !important;
+}
+
 
 /* =========================================================
    HERO VISUAL
@@ -281,6 +330,11 @@ body.landing-page main {
   padding: 20px;
 }
 
+
+/* =========================================================
+   PREVIEW KPI
+   ========================================================= */
+
 .preview-kpi {
   padding: 18px;
   border: 1px solid var(--line);
@@ -314,6 +368,15 @@ body.landing-page main {
   font-weight: 750;
 }
 
+.preview-kpi small i {
+  color: #22c55e !important;
+}
+
+
+/* =========================================================
+   PREVIEW LIST
+   ========================================================= */
+
 .preview-list {
   display: grid;
   gap: 8px;
@@ -329,7 +392,10 @@ body.landing-page main {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  transition: transform .18s ease, border-color .18s ease;
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
 }
 
 .preview-list > div:hover {
@@ -344,8 +410,33 @@ body.landing-page main {
   display: grid;
   place-items: center;
   border-radius: 10px;
-  color: var(--blue);
-  background: var(--blue-soft);
+}
+
+.preview-list > div:nth-child(1) .preview-icon {
+  color: #06b6d4 !important;
+  background: rgba(6, 182, 212, .12);
+}
+
+.preview-list > div:nth-child(1) .preview-icon i {
+  color: #06b6d4 !important;
+}
+
+.preview-list > div:nth-child(2) .preview-icon {
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, .12);
+}
+
+.preview-list > div:nth-child(2) .preview-icon i {
+  color: #8b5cf6 !important;
+}
+
+.preview-list > div:nth-child(3) .preview-icon {
+  color: #229ed9 !important;
+  background: rgba(34, 158, 217, .12);
+}
+
+.preview-list > div:nth-child(3) .preview-icon i {
+  color: #229ed9 !important;
 }
 
 .preview-list > div > span:nth-child(2) {
@@ -374,6 +465,11 @@ body.landing-page main {
   color: var(--muted);
 }
 
+
+/* =========================================================
+   FLOATING CARDS
+   ========================================================= */
+
 .floating-card {
   position: absolute;
   z-index: 3;
@@ -397,8 +493,16 @@ body.landing-page main {
   place-items: center;
   flex: 0 0 31px;
   border-radius: 9px;
-  color: var(--success);
-  background: rgba(33, 163, 102, .10);
+}
+
+.floating-one > i {
+  color: #22c55e !important;
+  background: rgba(34, 197, 94, .12);
+}
+
+.floating-two > i {
+  color: #6366f1 !important;
+  background: rgba(99, 102, 241, .12);
 }
 
 .floating-card span {
@@ -427,10 +531,6 @@ body.landing-page main {
   top: 72px;
 }
 
-.floating-two > i {
-  color: var(--blue);
-  background: var(--blue-soft);
-}
 
 /* =========================================================
    SECTION COMMON
@@ -468,6 +568,7 @@ body.landing-page main {
   line-height: 1.75;
 }
 
+
 /* =========================================================
    FEATURE SECTION
    ========================================================= */
@@ -503,8 +604,23 @@ body.landing-page main {
   right: -65px;
   top: -65px;
   border-radius: 50%;
-  background: rgba(42, 171, 238, .06);
   pointer-events: none;
+}
+
+.feature:nth-child(1)::after {
+  background: rgba(6, 182, 212, .07);
+}
+
+.feature:nth-child(2)::after {
+  background: rgba(59, 130, 246, .07);
+}
+
+.feature:nth-child(3)::after {
+  background: rgba(139, 92, 246, .07);
+}
+
+.feature:nth-child(4)::after {
+  background: rgba(34, 158, 217, .07);
 }
 
 .feature:hover {
@@ -519,9 +635,43 @@ body.landing-page main {
   display: grid;
   place-items: center;
   border-radius: 13px;
-  color: var(--blue);
-  background: var(--blue-soft);
   font-size: 17px;
+}
+
+.feature:nth-child(1) .feature-icon {
+  color: #06b6d4 !important;
+  background: rgba(6, 182, 212, .12);
+}
+
+.feature:nth-child(2) .feature-icon {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, .12);
+}
+
+.feature:nth-child(3) .feature-icon {
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, .12);
+}
+
+.feature:nth-child(4) .feature-icon {
+  color: #229ed9 !important;
+  background: rgba(34, 158, 217, .12);
+}
+
+.feature:nth-child(1) .feature-icon i {
+  color: #06b6d4 !important;
+}
+
+.feature:nth-child(2) .feature-icon i {
+  color: #3b82f6 !important;
+}
+
+.feature:nth-child(3) .feature-icon i {
+  color: #8b5cf6 !important;
+}
+
+.feature:nth-child(4) .feature-icon i {
+  color: #229ed9 !important;
 }
 
 .feature h3 {
@@ -543,10 +693,30 @@ body.landing-page main {
   width: fit-content;
   margin-top: auto;
   padding-top: 18px;
-  color: var(--blue);
   font-size: 10px;
   font-weight: 750;
 }
+
+.feature:nth-child(1) .feature-tag,
+.feature:nth-child(1) .feature-tag i {
+  color: #06b6d4 !important;
+}
+
+.feature:nth-child(2) .feature-tag,
+.feature:nth-child(2) .feature-tag i {
+  color: #3b82f6 !important;
+}
+
+.feature:nth-child(3) .feature-tag,
+.feature:nth-child(3) .feature-tag i {
+  color: #8b5cf6 !important;
+}
+
+.feature:nth-child(4) .feature-tag,
+.feature:nth-child(4) .feature-tag i {
+  color: #229ed9 !important;
+}
+
 
 /* =========================================================
    MONETIZATION
@@ -573,7 +743,9 @@ body.landing-page main {
   min-height: 255px;
   overflow: hidden;
   padding: 24px;
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
 }
 
 .monetize-card:hover {
@@ -597,9 +769,27 @@ body.landing-page main {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  color: var(--blue);
-  background: var(--blue-soft);
   font-size: 16px;
+}
+
+.monetize-card:nth-child(1) > i {
+  color: #06b6d4 !important;
+  background: rgba(6, 182, 212, .12);
+}
+
+.monetize-card:nth-child(2) > i {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, .12);
+}
+
+.monetize-card:nth-child(3) > i {
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, .12);
+}
+
+.monetize-card:nth-child(4) > i {
+  color: #229ed9 !important;
+  background: rgba(34, 158, 217, .12);
 }
 
 .monetize-card h3 {
@@ -613,6 +803,7 @@ body.landing-page main {
   font-size: 12px;
   line-height: 1.7;
 }
+
 
 /* =========================================================
    WORKFLOW
@@ -646,8 +837,42 @@ body.landing-page main {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  color: var(--blue);
-  background: var(--blue-soft);
+}
+
+.step:nth-child(1) .step-icon {
+  color: #06b6d4 !important;
+  background: rgba(6, 182, 212, .12);
+}
+
+.step:nth-child(2) .step-icon {
+  color: #f59e0b !important;
+  background: rgba(245, 158, 11, .12);
+}
+
+.step:nth-child(3) .step-icon {
+  color: #ec4899 !important;
+  background: rgba(236, 72, 153, .12);
+}
+
+.step:nth-child(4) .step-icon {
+  color: #6366f1 !important;
+  background: rgba(99, 102, 241, .12);
+}
+
+.step:nth-child(1) .step-icon i {
+  color: #06b6d4 !important;
+}
+
+.step:nth-child(2) .step-icon i {
+  color: #f59e0b !important;
+}
+
+.step:nth-child(3) .step-icon i {
+  color: #ec4899 !important;
+}
+
+.step:nth-child(4) .step-icon i {
+  color: #6366f1 !important;
 }
 
 .step h3 {
@@ -660,6 +885,7 @@ body.landing-page main {
   font-size: 12px;
   line-height: 1.7;
 }
+
 
 /* =========================================================
    MARKETPLACE
@@ -690,7 +916,11 @@ body.landing-page main {
 }
 
 .marketbar > span i {
-  color: var(--blue);
+  color: #8b5cf6 !important;
+}
+
+.marketbar .btn i {
+  color: #06b6d4 !important;
 }
 
 .market-grid {
@@ -744,8 +974,16 @@ body.landing-page main {
   font-size: 13px;
 }
 
-.topcard h3 i {
-  color: var(--blue);
+.topcard:nth-child(1) h3 i {
+  color: #f59e0b !important;
+}
+
+.topcard:nth-child(2) h3 i {
+  color: #8b5cf6 !important;
+}
+
+.topcard:nth-child(3) h3 i {
+  color: #229ed9 !important;
 }
 
 .topcard > div {
@@ -756,7 +994,7 @@ body.landing-page main {
   color: var(--blue);
 }
 
-/* Support common dynamically rendered marketplace cards */
+/* Dynamic marketplace */
 .market-grid .card {
   height: 100%;
   padding: 16px;
@@ -783,6 +1021,7 @@ body.landing-page main {
   line-height: 1.6;
 }
 
+
 /* =========================================================
    SECURITY
    ========================================================= */
@@ -808,6 +1047,10 @@ body.landing-page main {
 .security-panel .eyebrow {
   width: fit-content;
   margin-bottom: 14px;
+}
+
+.security-panel .eyebrow i {
+  color: #10b981 !important;
 }
 
 .security-panel h2 {
@@ -844,9 +1087,22 @@ body.landing-page main {
   font-weight: 700;
 }
 
-.security-points i {
-  color: var(--blue);
+.security-points span:nth-child(1) i {
+  color: #10b981 !important;
 }
+
+.security-points span:nth-child(2) i {
+  color: #f59e0b !important;
+}
+
+.security-points span:nth-child(3) i {
+  color: #22c55e !important;
+}
+
+.security-points span:nth-child(4) i {
+  color: #6366f1 !important;
+}
+
 
 /* =========================================================
    FINAL CTA
@@ -895,6 +1151,10 @@ body.landing-page main {
   color: #fff;
 }
 
+.cta .eyebrow i {
+  color: #fbbf24 !important;
+}
+
 .cta h2 {
   margin: 13px 0 8px;
   font-size: clamp(28px, 4vw, 42px);
@@ -924,6 +1184,10 @@ body.landing-page main {
   color: #17212b;
 }
 
+.cta .btn.light i {
+  color: #f59e0b !important;
+}
+
 .cta .btn.light:hover {
   background: #f4f7fa;
 }
@@ -934,10 +1198,15 @@ body.landing-page main {
   color: #fff;
 }
 
+.cta .btn.ghost i {
+  color: #fbbf24 !important;
+}
+
 .cta .btn.ghost:hover {
   background: rgba(255, 255, 255, .18);
   border-color: rgba(255, 255, 255, .5);
 }
+
 
 /* =========================================================
    FOOTER COMPATIBILITY
@@ -948,6 +1217,7 @@ body.landing-page main {
   margin-top: 0;
 }
 
+
 /* =========================================================
    DARK MODE
    ========================================================= */
@@ -955,7 +1225,7 @@ body.landing-page main {
 html[data-theme="dark"] body.landing-page {
   background:
     radial-gradient(circle at 10% 0%, rgba(42, 171, 238, .10), transparent 35%),
-    radial-gradient(circle at 90% 5%, rgba(42, 171, 238, .07), transparent 30%),
+    radial-gradient(circle at 90% 5%, rgba(139, 92, 246, .08), transparent 30%),
     var(--app-bg);
 }
 
@@ -1002,13 +1272,17 @@ html[data-theme="dark"] .cta {
   box-shadow: 0 24px 55px rgba(0, 0, 0, .28);
 }
 
+
 /* =========================================================
    RESPONSIVE — TABLET
    ========================================================= */
 
 @media (max-width: 1100px) {
+
   .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(390px, .85fr);
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(390px, .85fr);
     gap: 35px;
   }
 
@@ -1029,11 +1303,13 @@ html[data-theme="dark"] .cta {
   }
 }
 
+
 /* =========================================================
    RESPONSIVE — MOBILE
    ========================================================= */
 
 @media (max-width: 820px) {
+
   .landing-page .container {
     width: min(100% - 28px, 1180px);
   }
@@ -1124,11 +1400,13 @@ html[data-theme="dark"] .cta {
   }
 }
 
+
 /* =========================================================
    RESPONSIVE — SMALL MOBILE
    ========================================================= */
 
 @media (max-width: 560px) {
+
   .landing-page .container {
     width: min(100% - 22px, 1180px);
   }
@@ -1311,11 +1589,13 @@ html[data-theme="dark"] .cta {
   }
 }
 
+
 /* =========================================================
    VERY SMALL DEVICES
    ========================================================= */
 
 @media (max-width: 380px) {
+
   .landing-brand > span:last-child {
     display: none;
   }
@@ -1341,11 +1621,13 @@ html[data-theme="dark"] .cta {
   }
 }
 
+
 /* =========================================================
    ACCESSIBILITY / MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
   html {
     scroll-behavior: auto;
   }
