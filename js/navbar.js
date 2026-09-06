@@ -1,16 +1,21 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const host = document.getElementById("navbar");
   if (!host) return;
+
   // Prevent duplicate initialization
   if (host.dataset.navbarReady === "1") return;
   host.dataset.navbarReady = "1";
+
   const isAdmin = location.pathname.includes("/admin/");
   const base = isAdmin ? "../" : "";
+
   /* =========================================================
      HELPERS
   ========================================================= */
+
   const esc = (value) => {
     if (window.TC?.esc) return TC.esc(value);
+
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -19,55 +24,67 @@ document.addEventListener("DOMContentLoaded", async () => {
       "'": "&#039;"
     })[char]);
   };
+
   const safeUrl = (value) => {
     try {
       const url = new URL(
         String(value || ""),
         window.location.origin
       );
+
       if (
         url.protocol !== "http:" &&
         url.protocol !== "https:"
       ) {
         return "#";
       }
+
       return url.href;
     } catch {
       return "#";
     }
   };
+
   const getCurrentFile = () => {
     const path = location.pathname.replace(/\/+$/, "");
     const file = path.split("/").pop();
+
     return file || (
       isAdmin
         ? "index.html"
         : "dashboard.html"
     );
   };
-  /*
-   * Render badge navbar.
-   * Badge dipisahkan dari label agar styling lebih mudah
-   * dan tidak membuat teks menu terlihat berantakan.
-   */
+
+  /* =========================================================
+     BADGE
+  ========================================================= */
+
   const badge = (type, text, icon) => {
     return `
       <span
         class="nav-badge nav-${esc(type)}"
+        data-badge="${esc(type)}"
         aria-label="${esc(text)}"
       >
         <i
-          class="fa-solid ${esc(icon)}"
+          class="fa-solid ${esc(icon)} nav-badge-icon"
           aria-hidden="true"
         ></i>
-        <span>${esc(text)}</span>
+
+        <span class="nav-badge-text">
+          ${esc(text)}
+        </span>
       </span>
     `;
   };
+
   /* =========================================================
      USER
   ========================================================= */
+
   let user = null;
+
   try {
     if (window.TC?.user) {
       user = await TC.user();
@@ -75,14 +92,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (_) {
     user = null;
   }
+
   const name =
     user?.user_metadata?.username ||
     user?.user_metadata?.full_name ||
     user?.email?.split("@")[0] ||
     "Guest";
+
   /* =========================================================
-     NAVIGATION
+     NAVIGATION CONFIG
   ========================================================= */
+
   const groups = isAdmin
     ? [
         [
@@ -94,10 +114,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             ["orders.html", "fa-receipt", "Orders"]
           ]
         ],
+
         [
           "Finance",
           [
-            ["payments.html", "fa-credit-card", "Payments"],
+            [
+              "payments.html",
+              "fa-credit-card",
+              "Payments"
+            ],
             [
               "withdrawals.html",
               "fa-money-bill-transfer",
@@ -110,12 +135,25 @@ document.addEventListener("DOMContentLoaded", async () => {
             ]
           ]
         ],
+
         [
           "System",
           [
-            ["pastes.html", "fa-file-lines", "Pastes"],
-            ["bots.html", "fa-robot", "Bots"],
-            ["logs.html", "fa-list", "Logs"]
+            [
+              "pastes.html",
+              "fa-file-lines",
+              "Pastes"
+            ],
+            [
+              "bots.html",
+              "fa-robot",
+              "Bots"
+            ],
+            [
+              "logs.html",
+              "fa-list",
+              "Logs"
+            ]
           ]
         ]
       ]
@@ -136,6 +174,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             ]
           ]
         ],
+
         [
           "Create & Manage",
           [
@@ -157,6 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             ]
           ]
         ],
+
         [
           "Finance",
           [
@@ -177,6 +217,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             ]
           ]
         ],
+
         [
           "Account",
           [
@@ -211,16 +252,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           ]
         ]
       ];
+
   /* =========================================================
      RENDER NAVIGATION
   ========================================================= */
+
   const renderGroups = groups
     .map(([title, items]) => {
       return `
         <div class="nav-group">
+
           <small class="nav-group-title">
             ${esc(title)}
           </small>
+
           ${items.map((item) => {
             const [
               href,
@@ -228,7 +273,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               label,
               badgeType
             ] = item;
+
             let badgeHTML = "";
+
             if (badgeType === "hot") {
               badgeHTML = badge(
                 "hot",
@@ -236,6 +283,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "fa-fire"
               );
             }
+
             if (badgeType === "new") {
               badgeHTML = badge(
                 "new",
@@ -243,6 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "fa-sparkles"
               );
             }
+
             if (badgeType === "trend") {
               badgeHTML = badge(
                 "trend",
@@ -250,72 +299,102 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "fa-fire"
               );
             }
+
             return `
               <a
                 href="${base}${esc(href)}"
                 data-href="${esc(href)}"
                 class="nav-link"
               >
+
                 <i
-                  class="fa-solid ${esc(icon)}"
+                  class="fa-solid ${esc(icon)} nav-main-icon"
                   aria-hidden="true"
                 ></i>
+
                 <span class="nav-label">
                   ${esc(label)}
                 </span>
+
                 ${badgeHTML}
+
               </a>
             `;
           }).join("")}
+
         </div>
       `;
     })
     .join("");
+
   /* =========================================================
      NAVBAR HTML
   ========================================================= */
+
   host.innerHTML = `
     <header
       class="navbar"
       id="tgSidebar"
     >
+
       <div class="nav-inner">
+
         <!-- BRAND -->
         <a
           class="brand"
           href="${base}${isAdmin ? "index.html" : "dashboard.html"}"
           aria-label="PasTele"
         >
+
           <span class="brand-mark">
             <i
-              class="fa-brands fa-telegram"
+              class="fa-brands fa-telegram brand-icon"
               aria-hidden="true"
             ></i>
           </span>
-          <span>PasTele</span>
+
+          <span class="brand-text">
+            PasTele
+          </span>
+
         </a>
+
+
         <!-- ACCOUNT -->
         <div class="nav-account">
+
           <a
             class="nav-account-info"
             href="${base}${isAdmin ? "index.html" : "profile.html"}"
             aria-label="Profil"
           >
+
             <div class="nav-avatar">
               <i
-                class="fa-solid fa-user"
+                class="fa-solid fa-user nav-avatar-icon"
                 aria-hidden="true"
               ></i>
             </div>
+
             <div class="nav-name">
-              <b>${esc(name)}</b>
+
+              <b>
+                ${esc(name)}
+              </b>
+
               <small>
-                ${isAdmin
-                  ? "Administrator"
-                  : "Profil akun"}
+                ${
+                  isAdmin
+                    ? "Administrator"
+                    : "Profil akun"
+                }
               </small>
+
             </div>
+
           </a>
+
+
           <span
             class="nav-balance"
             id="navBalance"
@@ -323,6 +402,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           >
             Rp 0
           </span>
+
+
           <button
             class="nav-theme"
             id="navTheme"
@@ -330,12 +411,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             title="Ganti tema"
             aria-label="Ganti tema"
           >
+
             <i
-              class="fa-solid fa-moon"
+              class="fa-solid fa-moon nav-theme-icon"
               aria-hidden="true"
             ></i>
+
           </button>
+
         </div>
+
+
         <!-- NAVIGATION -->
         <nav
           class="nav-links"
@@ -346,36 +432,55 @@ document.addEventListener("DOMContentLoaded", async () => {
               : "Main navigation"
           }"
         >
+
           ${renderGroups}
+
         </nav>
+
+
         <!-- SOCIAL -->
         <div
           class="nav-extra"
           id="navSocials"
           aria-label="Sosial Media"
         ></div>
+
+
         <!-- TOOLS -->
         <div class="nav-tools">
+
           <button
             class="nav-logout"
             id="navLogout"
             type="button"
           >
+
             <i
-              class="fa-solid fa-right-from-bracket"
+              class="fa-solid fa-right-from-bracket nav-logout-icon"
               aria-hidden="true"
             ></i>
-            <span>Log out</span>
+
+            <span>
+              Log out
+            </span>
+
           </button>
+
         </div>
+
       </div>
+
     </header>
+
+
     <!-- MOBILE BACKDROP -->
     <div
       class="nav-backdrop"
       id="navBackdrop"
       aria-hidden="true"
     ></div>
+
+
     <!-- MOBILE TOGGLE -->
     <button
       class="nav-toggle"
@@ -385,47 +490,63 @@ document.addEventListener("DOMContentLoaded", async () => {
       aria-expanded="false"
       title="Menu"
     >
+
       <i
-        class="fa-solid fa-bars"
+        class="fa-solid fa-bars nav-toggle-icon"
         aria-hidden="true"
       ></i>
+
     </button>
   `;
+
   /* =========================================================
      ELEMENTS
   ========================================================= */
+
   const sidebar =
     document.getElementById("tgSidebar");
+
   const toggle =
     document.getElementById("navToggle");
+
   const backdrop =
     document.getElementById("navBackdrop");
+
   const themeBtn =
     document.getElementById("navTheme");
+
   const logoutBtn =
     document.getElementById("navLogout");
+
   const navLinks = [
     ...document.querySelectorAll(
-      "#navLinks a"
+      "#navLinks .nav-link"
     )
   ];
+
   /* =========================================================
      ACTIVE MENU
   ========================================================= */
+
   const current = getCurrentFile();
+
   navLinks.forEach((link) => {
     const href = link.dataset.href;
+
     if (href === current) {
       link.classList.add("active");
+
       link.setAttribute(
         "aria-current",
         "page"
       );
     }
   });
+
   /* =========================================================
      MOBILE MENU
   ========================================================= */
+
   const setMenu = (open) => {
     if (
       !sidebar ||
@@ -434,66 +555,82 @@ document.addEventListener("DOMContentLoaded", async () => {
     ) {
       return;
     }
+
     sidebar.classList.toggle(
       "nav-open",
       open
     );
+
     backdrop.classList.toggle(
       "show",
       open
     );
+
     toggle.setAttribute(
       "aria-expanded",
       String(open)
     );
+
     toggle.setAttribute(
       "aria-label",
       open
         ? "Tutup menu"
         : "Buka menu"
     );
+
     toggle.setAttribute(
       "title",
       open
         ? "Tutup menu"
         : "Menu"
     );
+
     backdrop.setAttribute(
       "aria-hidden",
       String(!open)
     );
+
     const icon =
-      toggle.querySelector("i");
+      toggle.querySelector(
+        ".nav-toggle-icon"
+      );
+
     if (icon) {
       icon.className =
         `fa-solid ${
           open
             ? "fa-xmark"
             : "fa-bars"
-        }`;
+        } nav-toggle-icon`;
     }
+
     document.body.classList.toggle(
       "nav-menu-open",
       open
     );
   };
+
   const toggleMenu = () => {
     const isOpen =
       sidebar?.classList.contains(
         "nav-open"
       );
+
     setMenu(!isOpen);
   };
+
   toggle?.addEventListener(
     "click",
     toggleMenu
   );
+
   backdrop?.addEventListener(
     "click",
     () => {
       setMenu(false);
     }
   );
+
   navLinks.forEach((link) => {
     link.addEventListener(
       "click",
@@ -502,6 +639,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     );
   });
+
   window.addEventListener(
     "keydown",
     (event) => {
@@ -510,6 +648,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   );
+
   window.addEventListener(
     "resize",
     () => {
@@ -518,20 +657,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   );
+
   /* =========================================================
      THEME
   ========================================================= */
+
   const getStoredTheme = () => {
     const saved =
       localStorage.getItem(
         "pastele-theme"
       );
+
     if (
       saved === "dark" ||
       saved === "light"
     ) {
       return saved;
     }
+
     return (
       window.matchMedia &&
       window.matchMedia(
@@ -541,32 +684,43 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? "dark"
       : "light";
   };
+
   const applyTheme = (theme) => {
     const normalized =
       theme === "dark"
         ? "dark"
         : "light";
+
     document.documentElement.dataset.theme =
       normalized;
+
     document.body.classList.toggle(
       "theme-dark",
       normalized === "dark"
     );
+
     if (themeBtn) {
       const icon =
-        themeBtn.querySelector("i");
+        themeBtn.querySelector(
+          ".nav-theme-icon"
+        );
+
       if (icon) {
         icon.className =
-          normalized === "dark"
-            ? "fa-solid fa-sun"
-            : "fa-solid fa-moon";
+          `fa-solid ${
+            normalized === "dark"
+              ? "fa-sun"
+              : "fa-moon"
+          } nav-theme-icon`;
       }
+
       themeBtn.setAttribute(
         "aria-label",
         normalized === "dark"
           ? "Gunakan tema terang"
           : "Gunakan tema gelap"
       );
+
       themeBtn.setAttribute(
         "title",
         normalized === "dark"
@@ -575,9 +729,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     }
   };
+
   const initialTheme =
     getStoredTheme();
+
   applyTheme(initialTheme);
+
   themeBtn?.addEventListener(
     "click",
     () => {
@@ -586,20 +743,25 @@ document.addEventListener("DOMContentLoaded", async () => {
           .dataset.theme === "dark"
           ? "dark"
           : "light";
+
       const nextTheme =
         currentTheme === "dark"
           ? "light"
           : "dark";
+
       localStorage.setItem(
         "pastele-theme",
         nextTheme
       );
+
       applyTheme(nextTheme);
     }
   );
+
   /* =========================================================
      WALLET BALANCE
   ========================================================= */
+
   if (user && window.sb) {
     try {
       const {
@@ -615,15 +777,18 @@ document.addEventListener("DOMContentLoaded", async () => {
           user.id
         )
         .maybeSingle();
+
       if (!error) {
         const balance =
           wallet?.available_balance ??
           wallet?.balance ??
           0;
+
         const balanceEl =
           document.getElementById(
             "navBalance"
           );
+
         if (balanceEl) {
           if (window.TC?.money) {
             balanceEl.textContent =
@@ -642,31 +807,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Wallet failure must never break navbar.
     }
   }
+
   /* =========================================================
      LOGOUT
   ========================================================= */
+
   logoutBtn?.addEventListener(
     "click",
     async () => {
       if (logoutBtn.disabled) return;
+
       logoutBtn.disabled = true;
+
       const originalHTML =
         logoutBtn.innerHTML;
+
       logoutBtn.innerHTML = `
         <i
-          class="fa-solid fa-spinner fa-spin"
+          class="fa-solid fa-spinner fa-spin nav-logout-icon"
           aria-hidden="true"
         ></i>
-        <span>Keluar...</span>
+
+        <span>
+          Keluar...
+        </span>
       `;
+
       try {
         if (window.Auth?.logout) {
           await Auth.logout();
         }
       } catch (error) {
         logoutBtn.disabled = false;
+
         logoutBtn.innerHTML =
           originalHTML;
+
         try {
           if (window.TC?.toast) {
             TC.toast(
@@ -676,29 +852,35 @@ document.addEventListener("DOMContentLoaded", async () => {
             );
           }
         } catch (_) {}
+
         return;
       }
     }
   );
+
   /* =========================================================
      SOCIAL MEDIA
   ========================================================= */
+
   if (window.sb) {
     try {
       const response =
         await sb.rpc(
           "get_public_site_settings"
         );
+
       const socials =
         Array.isArray(
           response?.data?.socials
         )
           ? response.data.socials
           : [];
+
       const socialHost =
         document.getElementById(
           "navSocials"
         );
+
       if (
         socialHost &&
         socials.length
@@ -711,38 +893,49 @@ document.addEventListener("DOMContentLoaded", async () => {
                 safeUrl(
                   social?.url
                 );
+
               if (url === "#") {
                 return null;
               }
-              const icon =
+
+              const rawIcon =
                 social?.icon ||
                 "fa-solid fa-link";
+
               const label =
                 social?.name ||
                 "Social";
+
               return `
                 <a
                   href="${esc(url)}"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="${esc(label)}"
+                  title="${esc(label)}"
                 >
+
                   <i
-                    class="${esc(icon)}"
+                    class="${esc(rawIcon)} nav-social-icon"
                     aria-hidden="true"
                   ></i>
-                  <span>
+
+                  <span class="nav-social-label">
                     ${esc(label)}
                   </span>
+
                 </a>
               `;
             })
             .filter(Boolean)
             .join("");
+
         if (validSocials) {
           socialHost.innerHTML = `
-            <small>
+            <small class="nav-social-title">
               Sosial Media
             </small>
+
             ${validSocials}
           `;
         }
