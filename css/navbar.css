@@ -1,7 +1,7 @@
 /* ============================================================
-   PASTELE — NAVBAR COLORFUL FINAL
+   PASTELE — NAVBAR FINAL
    Premium • Colorful Icons • Clean • Responsive
-   Compatible with dynamic navbar.js
+   Requires navbar.js with dedicated icon classes
 ============================================================ */
 
 
@@ -24,7 +24,6 @@
 
   --nav-accent: #00b8ff;
   --nav-accent-strong: #009fe0;
-  --nav-green: #00c98b;
 
   --nav-shadow:
     8px 0 35px rgba(15, 23, 42, 0.06);
@@ -40,22 +39,16 @@
 html[data-theme="dark"] {
   --nav-bg: #070b14;
   --nav-surface: #0d131f;
-
-  --nav-border:
-    rgba(255, 255, 255, 0.075);
+  --nav-border: rgba(255, 255, 255, 0.075);
 
   --nav-text: #f3f7ff;
   --nav-muted: #8994a8;
 
-  --nav-hover:
-    rgba(255, 255, 255, 0.055);
-
-  --nav-active:
-    rgba(0, 234, 255, 0.09);
+  --nav-hover: rgba(255, 255, 255, 0.055);
+  --nav-active: rgba(0, 234, 255, 0.09);
 
   --nav-accent: #00eaff;
   --nav-accent-strong: #00bce9;
-  --nav-green: #00ffae;
 
   --nav-shadow:
     8px 0 40px rgba(0, 0, 0, 0.32);
@@ -72,7 +65,9 @@ html[data-theme="dark"] {
 }
 
 #navbar,
-#navbar * {
+#navbar *,
+#navbar *::before,
+#navbar *::after {
   box-sizing: border-box;
 }
 
@@ -87,26 +82,27 @@ html[data-theme="dark"] {
 
   width: var(--nav-width);
 
+  display: block;
+
   background: var(--nav-bg);
   color: var(--nav-text);
 
-  border-right:
-    1px solid var(--nav-border);
+  border-right: 1px solid var(--nav-border);
 
   box-shadow: var(--nav-shadow);
-
-  z-index: 1000;
 
   overflow: hidden;
 
   transform: translateX(0);
 
+  z-index: 1000;
+
+  isolation: isolate;
+
   transition:
     transform var(--nav-ease),
     background-color var(--nav-ease),
     border-color var(--nav-ease);
-
-  isolation: isolate;
 }
 
 
@@ -187,7 +183,7 @@ html[data-theme="dark"] {
   display: grid;
   place-items: center;
 
-  flex-shrink: 0;
+  flex: 0 0 37px;
 
   border-radius: 11px;
 
@@ -198,16 +194,21 @@ html[data-theme="dark"] {
       var(--nav-accent-strong)
     );
 
-  color: #ffffff;
-
   box-shadow:
     0 7px 20px
     rgba(0, 184, 255, 0.20);
 }
 
-#navbar .brand-mark > i {
+#navbar .brand-mark > .brand-icon {
   color: #ffffff !important;
-  font-size: 18px;
+
+  font-size: 18px !important;
+
+  line-height: 1 !important;
+
+  text-shadow:
+    0 1px 2px
+    rgba(0, 0, 0, .10);
 }
 
 
@@ -216,20 +217,19 @@ html[data-theme="dark"] {
 ============================================================ */
 
 #navbar .nav-account {
+  width: 100%;
+
   display: flex;
   align-items: center;
 
   gap: 7px;
-
-  width: 100%;
 
   padding: 9px;
   margin-bottom: 15px;
 
   background: var(--nav-surface);
 
-  border:
-    1px solid var(--nav-border);
+  border: 1px solid var(--nav-border);
 
   border-radius: 15px;
 
@@ -238,7 +238,6 @@ html[data-theme="dark"] {
 
 #navbar .nav-account-info {
   min-width: 0;
-
   flex: 1;
 
   display: flex;
@@ -267,26 +266,28 @@ html[data-theme="dark"] {
   display: grid;
   place-items: center;
 
-  flex-shrink: 0;
+  flex: 0 0 35px;
 
   border-radius: 10px;
 
   background:
     linear-gradient(
       145deg,
-      rgba(6, 182, 212, 0.14),
-      rgba(16, 185, 129, 0.10)
+      rgba(6, 182, 212, .14),
+      rgba(16, 185, 129, .10)
     );
 
   border:
     1px solid
-    rgba(6, 182, 212, 0.18);
+    rgba(6, 182, 212, .18);
 }
 
-#navbar .nav-avatar > i {
+#navbar .nav-avatar-icon {
   color: #06b6d4 !important;
 
-  font-size: 14px;
+  font-size: 14px !important;
+
+  line-height: 1 !important;
 
   transition:
     transform var(--nav-ease),
@@ -294,7 +295,7 @@ html[data-theme="dark"] {
     filter var(--nav-ease);
 }
 
-#navbar .nav-avatar:hover > i {
+#navbar .nav-avatar:hover .nav-avatar-icon {
   color: #8b5cf6 !important;
 
   transform: scale(1.08);
@@ -356,18 +357,18 @@ html[data-theme="dark"] {
 
   max-width: 82px;
 
+  padding: 5px 6px;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  padding: 5px 6px;
-
   border-radius: 7px;
 
   background:
-    rgba(16, 185, 129, 0.09);
+    rgba(16, 185, 129, .09);
 
-  color: #10b981;
+  color: #10b981 !important;
 
   font-size: 9.5px;
   font-weight: 750;
@@ -391,9 +392,9 @@ html[data-theme="dark"] {
   display: grid;
   place-items: center;
 
-  flex-shrink: 0;
-
   padding: 0;
+
+  flex: 0 0 31px;
 
   border:
     1px solid var(--nav-border);
@@ -401,8 +402,6 @@ html[data-theme="dark"] {
   border-radius: 9px;
 
   background: transparent;
-
-  color: var(--nav-muted);
 
   cursor: pointer;
 
@@ -412,10 +411,12 @@ html[data-theme="dark"] {
     transform var(--nav-ease);
 }
 
-#navbar .nav-theme > i {
+#navbar .nav-theme-icon {
   color: #8b5cf6 !important;
 
-  font-size: 13px;
+  font-size: 13px !important;
+
+  line-height: 1 !important;
 
   transition:
     color var(--nav-ease),
@@ -427,12 +428,12 @@ html[data-theme="dark"] {
   background: var(--nav-hover);
 
   border-color:
-    rgba(139, 92, 246, 0.22);
+    rgba(139, 92, 246, .22);
 
   transform: translateY(-1px);
 }
 
-#navbar .nav-theme:hover > i {
+#navbar .nav-theme:hover .nav-theme-icon {
   color: #ec4899 !important;
 
   transform:
@@ -450,23 +451,23 @@ html[data-theme="dark"] {
 ============================================================ */
 
 #navbar .nav-links {
+  width: 100%;
+
   display: flex;
   flex-direction: column;
 
   gap: 16px;
 
-  width: 100%;
-
   flex: 1;
 }
 
 #navbar .nav-group {
+  width: 100%;
+
   display: flex;
   flex-direction: column;
 
   gap: 2px;
-
-  width: 100%;
 }
 
 #navbar .nav-group-title {
@@ -480,7 +481,8 @@ html[data-theme="dark"] {
   font-size: 8.5px;
   font-weight: 800;
 
-  letter-spacing: 0.85px;
+  letter-spacing: .85px;
+
   line-height: 1.4;
 
   text-transform: uppercase;
@@ -494,11 +496,11 @@ html[data-theme="dark"] {
 #navbar .nav-link {
   position: relative;
 
-  display: flex;
-  align-items: center;
-
   width: 100%;
   min-height: 39px;
+
+  display: flex;
+  align-items: center;
 
   gap: 10px;
 
@@ -521,20 +523,33 @@ html[data-theme="dark"] {
     transform var(--nav-ease);
 }
 
+#navbar .nav-link:hover {
+  color: var(--nav-text);
+
+  background: var(--nav-hover);
+
+  transform: translateX(2px);
+}
+
 
 /* ============================================================
-   MAIN ICON
-   IMPORTANT:
-   Hanya selector .nav-main-icon yang mengatur icon menu.
+   MAIN ICON BASE
 ============================================================ */
 
 #navbar .nav-link > .nav-main-icon {
   width: 18px;
   min-width: 18px;
+  height: 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   flex: 0 0 18px;
 
-  font-size: 13px;
+  font-size: 13px !important;
+
+  line-height: 1 !important;
 
   text-align: center;
 
@@ -545,157 +560,104 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   LABEL
+   MAIN ICON COLORS — USER
 ============================================================ */
 
-#navbar .nav-link > .nav-label {
-  min-width: 0;
-
-  flex: 1;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-
-/* ============================================================
-   🌈 USER MENU — COLORFUL
-============================================================ */
-
-/* Dashboard */
 #navbar .nav-main-icon.fa-house {
   color: #3b82f6 !important;
 }
 
-/* Marketplace */
 #navbar .nav-main-icon.fa-store {
   color: #8b5cf6 !important;
 }
 
-/* Create */
 #navbar .nav-main-icon.fa-paperclip {
   color: #06b6d4 !important;
 }
 
-/* My Links */
 #navbar .nav-main-icon.fa-link {
   color: #14b8a6 !important;
 }
 
-/* Purchases */
 #navbar .nav-main-icon.fa-bag-shopping {
   color: #f97316 !important;
 }
 
-/* Wallet */
 #navbar .nav-main-icon.fa-wallet {
   color: #10b981 !important;
 }
 
-/* Withdraw */
 #navbar .nav-main-icon.fa-money-bill-transfer {
   color: #22c55e !important;
 }
 
-/* Transactions */
 #navbar .nav-main-icon.fa-arrow-right-arrow-left {
   color: #6366f1 !important;
 }
 
-/* Subscription */
 #navbar .nav-main-icon.fa-crown {
   color: #f59e0b !important;
 }
 
-/* Premium */
 #navbar .nav-main-icon.fa-gem {
   color: #ec4899 !important;
 }
 
-/* Notifications */
 #navbar .nav-main-icon.fa-bell {
   color: #f43f5e !important;
 }
 
-/* Profile */
 #navbar .nav-main-icon.fa-user {
   color: #0ea5e9 !important;
 }
 
-/* Settings */
 #navbar .nav-main-icon.fa-gear {
   color: #64748b !important;
 }
 
 
 /* ============================================================
-   🌈 ADMIN MENU — COLORFUL
+   MAIN ICON COLORS — ADMIN
 ============================================================ */
 
-/* Admin Dashboard */
 #navbar .nav-main-icon.fa-chart-pie {
   color: #6366f1 !important;
 }
 
-/* Users */
 #navbar .nav-main-icon.fa-users {
   color: #06b6d4 !important;
 }
 
-/* Products */
 #navbar .nav-main-icon.fa-box {
   color: #8b5cf6 !important;
 }
 
-/* Orders */
 #navbar .nav-main-icon.fa-receipt {
   color: #f59e0b !important;
 }
 
-/* Payments */
 #navbar .nav-main-icon.fa-credit-card {
   color: #10b981 !important;
 }
 
-/* Withdrawals */
-#navbar .nav-main-icon.fa-money-bill-transfer {
-  color: #22c55e !important;
-}
-
-/* Transactions */
-#navbar .nav-main-icon.fa-arrow-right-arrow-left {
-  color: #6366f1 !important;
-}
-
-/* Pastelinks / Reports */
 #navbar .nav-main-icon.fa-file-lines {
   color: #0ea5e9 !important;
 }
 
-/* Bot */
 #navbar .nav-main-icon.fa-robot {
   color: #ec4899 !important;
 }
 
-/* Logs */
 #navbar .nav-main-icon.fa-list {
   color: #64748b !important;
 }
 
 
 /* ============================================================
-   NAV LINK HOVER
-   WARNA ICON TIDAK DIGANTI
+   ICON HOVER
+   IMPORTANT:
+   Tidak mengubah color.
 ============================================================ */
-
-#navbar .nav-link:hover {
-  color: var(--nav-text);
-
-  background: var(--nav-hover);
-
-  transform: translateX(2px);
-}
 
 #navbar .nav-link:hover > .nav-main-icon {
   transform: scale(1.12);
@@ -743,7 +705,7 @@ html[data-theme="dark"] {
 
   box-shadow:
     0 0 9px
-    rgba(0, 234, 255, 0.42);
+    rgba(0, 234, 255, .42);
 }
 
 #navbar .nav-link.active > .nav-main-icon {
@@ -760,7 +722,22 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   BADGES
+   LABEL
+============================================================ */
+
+#navbar .nav-link > .nav-label {
+  min-width: 0;
+
+  flex: 1;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   BADGE
 ============================================================ */
 
 #navbar .nav-badge {
@@ -770,17 +747,15 @@ html[data-theme="dark"] {
 
   gap: 4px;
 
-  flex: 0 0 auto;
-
   min-width: 38px;
   height: 20px;
 
   margin-left: auto;
-
   padding: 0 7px;
 
-  border:
-    1px solid transparent;
+  flex: 0 0 auto;
+
+  border: 1px solid transparent;
 
   border-radius: 999px;
 
@@ -799,11 +774,6 @@ html[data-theme="dark"] {
     filter 180ms ease;
 }
 
-
-/* ============================================================
-   BADGE TEXT
-============================================================ */
-
 #navbar .nav-badge-text {
   display: inline-block;
 
@@ -816,36 +786,33 @@ html[data-theme="dark"] {
   line-height: 1;
 }
 
-
-/* ============================================================
-   BADGE ICON
-============================================================ */
-
 #navbar .nav-badge > .nav-badge-icon {
   width: auto;
   min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   flex: 0 0 auto;
 
   margin: 0;
   padding: 0;
 
-  font-size: 7px;
+  font-size: 7px !important;
 
-  line-height: 1;
-
-  text-align: center;
+  line-height: 1 !important;
 
   transform: none;
 }
 
 
 /* ============================================================
-   🔥 HOT
+   HOT
 ============================================================ */
 
 #navbar .nav-badge.nav-hot {
-  color: #a16207;
+  color: #a16207 !important;
 
   background:
     linear-gradient(
@@ -868,11 +835,11 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   ✨ NEW
+   NEW
 ============================================================ */
 
 #navbar .nav-badge.nav-new {
-  color: #047857;
+  color: #047857 !important;
 
   background:
     linear-gradient(
@@ -895,18 +862,18 @@ html[data-theme="dark"] {
 
 
 /* ============================================================
-   💗 TREND
+   TREND
 ============================================================ */
 
 #navbar .nav-badge.nav-trend {
-  color: #be185d;
+  color: #be185d !important;
 
   background:
     linear-gradient(
       135deg,
-      #fff2f8 0%,
+      #fff2f8,
       #ffd5e6 55%,
-      #fbcfe8 100%
+      #fbcfe8
     );
 
   border-color:
@@ -977,12 +944,12 @@ html[data-theme="dark"] {
 ============================================================ */
 
 #navbar .nav-extra {
+  width: 100%;
+
   display: flex;
   flex-direction: column;
 
   gap: 2px;
-
-  width: 100%;
 
   margin-top: 14px;
   padding-top: 13px;
@@ -997,7 +964,7 @@ html[data-theme="dark"] {
   display: none;
 }
 
-#navbar .nav-extra small {
+#navbar .nav-social-title {
   display: block;
 
   padding: 0 9px;
@@ -1014,13 +981,13 @@ html[data-theme="dark"] {
 }
 
 #navbar .nav-extra a {
+  width: 100%;
+  min-height: 34px;
+
   display: flex;
   align-items: center;
 
   gap: 9px;
-
-  width: 100%;
-  min-height: 34px;
 
   padding: 7px 9px;
 
@@ -1039,14 +1006,19 @@ html[data-theme="dark"] {
     transform var(--nav-ease);
 }
 
-#navbar .nav-extra a > .nav-social-icon {
+#navbar .nav-social-icon {
   width: 17px;
+  height: 17px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   flex: 0 0 17px;
 
-  font-size: 12px;
+  font-size: 12px !important;
 
-  text-align: center;
+  line-height: 1 !important;
 
   transition:
     transform var(--nav-ease),
@@ -1058,23 +1030,23 @@ html[data-theme="dark"] {
    SOCIAL COLORS
 ============================================================ */
 
-#navbar .nav-extra a:nth-of-type(1) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(1) .nav-social-icon {
   color: #229ed9 !important;
 }
 
-#navbar .nav-extra a:nth-of-type(2) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(2) .nav-social-icon {
   color: #1877f2 !important;
 }
 
-#navbar .nav-extra a:nth-of-type(3) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(3) .nav-social-icon {
   color: #ff0050 !important;
 }
 
-#navbar .nav-extra a:nth-of-type(4) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(4) .nav-social-icon {
   color: #25d366 !important;
 }
 
-#navbar .nav-extra a:nth-of-type(5) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(5) .nav-social-icon {
   color: #8b5cf6 !important;
 }
 
@@ -1091,7 +1063,7 @@ html[data-theme="dark"] {
   transform: translateX(2px);
 }
 
-#navbar .nav-extra a:hover > .nav-social-icon {
+#navbar .nav-extra a:hover .nav-social-icon {
   transform: scale(1.10);
 
   filter:
@@ -1151,8 +1123,12 @@ html[data-theme="dark"] {
     transform var(--nav-ease);
 }
 
-#navbar .nav-logout > i {
+#navbar .nav-logout-icon {
   color: #f43f5e !important;
+
+  font-size: 13px !important;
+
+  line-height: 1 !important;
 
   transition:
     color var(--nav-ease),
@@ -1170,7 +1146,7 @@ html[data-theme="dark"] {
   transform: translateY(-1px);
 }
 
-#navbar .nav-logout:hover > i {
+#navbar .nav-logout:hover .nav-logout-icon {
   color: #ef4444 !important;
 
   transform:
@@ -1188,9 +1164,7 @@ html[data-theme="dark"] {
 
 #navbar .nav-logout:disabled {
   opacity: .55;
-
   cursor: wait;
-
   transform: none;
 }
 
@@ -1222,8 +1196,6 @@ html[data-theme="dark"] {
 
   background: var(--nav-bg);
 
-  color: var(--nav-text);
-
   box-shadow:
     0 8px 25px
     rgba(0, 0, 0, .10);
@@ -1236,10 +1208,12 @@ html[data-theme="dark"] {
     transform var(--nav-ease);
 }
 
-#navbar .nav-toggle > i {
+#navbar .nav-toggle-icon {
   color: #06b6d4 !important;
 
-  font-size: 16px;
+  font-size: 16px !important;
+
+  line-height: 1 !important;
 
   transition:
     color var(--nav-ease),
@@ -1247,7 +1221,7 @@ html[data-theme="dark"] {
     filter var(--nav-ease);
 }
 
-#navbar .nav-toggle:hover > i {
+#navbar .nav-toggle:hover .nav-toggle-icon {
   color: #8b5cf6 !important;
 
   transform: scale(1.08);
@@ -1264,7 +1238,6 @@ html[data-theme="dark"] {
 
 #navbar .nav-backdrop {
   position: fixed;
-
   inset: 0;
 
   z-index: 1050;
@@ -1273,7 +1246,6 @@ html[data-theme="dark"] {
     rgba(2, 6, 15, .55);
 
   opacity: 0;
-
   visibility: hidden;
 
   pointer-events: none;
@@ -1288,9 +1260,7 @@ html[data-theme="dark"] {
 
 #navbar .nav-backdrop.show {
   opacity: 1;
-
   visibility: visible;
-
   pointer-events: auto;
 }
 
@@ -1327,11 +1297,7 @@ html[data-theme="dark"] {
         var(--nav-width) - 56px
       );
 
-    background:
-      var(--nav-surface);
-
-    color:
-      var(--nav-text);
+    background: var(--nav-surface);
   }
 
   #navbar .nav-inner {
@@ -1403,7 +1369,6 @@ html[data-theme="dark"] {
 
   #navbar .nav-badge {
     min-width: 37px;
-
     height: 20px;
 
     padding: 0 6px;
@@ -1414,7 +1379,7 @@ html[data-theme="dark"] {
   }
 
   #navbar .nav-badge > .nav-badge-icon {
-    font-size: 6.5px;
+    font-size: 6.5px !important;
   }
 }
 
@@ -1436,6 +1401,7 @@ html[data-theme="dark"] {
   #navbar .nav-avatar {
     width: 33px;
     height: 33px;
+    flex-basis: 33px;
   }
 
   #navbar .nav-name b {
@@ -1444,13 +1410,13 @@ html[data-theme="dark"] {
 
   #navbar .nav-balance {
     max-width: 72px;
-
     font-size: 9px;
   }
 
   #navbar .nav-theme {
     width: 29px;
     height: 29px;
+    flex-basis: 29px;
   }
 }
 
@@ -1466,7 +1432,6 @@ html[data-theme="dark"] {
 #navbar .nav-theme:focus-visible,
 #navbar .nav-logout:focus-visible,
 #navbar .nav-toggle:focus-visible {
-
   outline:
     2px solid var(--nav-accent);
 
@@ -1484,7 +1449,7 @@ body.nav-menu-open {
 
 
 /* ============================================================
-   DARK MODE — USER ICONS
+   DARK MODE — MAIN ICONS
 ============================================================ */
 
 html[data-theme="dark"] #navbar .nav-main-icon.fa-house {
@@ -1564,14 +1529,6 @@ html[data-theme="dark"] #navbar .nav-main-icon.fa-credit-card {
   color: #34d399 !important;
 }
 
-html[data-theme="dark"] #navbar .nav-main-icon.fa-money-bill-transfer {
-  color: #4ade80 !important;
-}
-
-html[data-theme="dark"] #navbar .nav-main-icon.fa-arrow-right-arrow-left {
-  color: #818cf8 !important;
-}
-
 html[data-theme="dark"] #navbar .nav-main-icon.fa-file-lines {
   color: #38bdf8 !important;
 }
@@ -1590,7 +1547,7 @@ html[data-theme="dark"] #navbar .nav-main-icon.fa-list {
 ============================================================ */
 
 html[data-theme="dark"] #navbar .nav-badge.nav-hot {
-  color: #fcd34d;
+  color: #fcd34d !important;
 
   background:
     linear-gradient(
@@ -1601,10 +1558,6 @@ html[data-theme="dark"] #navbar .nav-badge.nav-hot {
 
   border-color:
     rgba(251, 191, 36, .20);
-
-  box-shadow:
-    0 3px 11px
-    rgba(245, 158, 11, .12);
 }
 
 html[data-theme="dark"]
@@ -1614,7 +1567,7 @@ html[data-theme="dark"]
 
 
 html[data-theme="dark"] #navbar .nav-badge.nav-new {
-  color: #6ee7b7;
+  color: #6ee7b7 !important;
 
   background:
     linear-gradient(
@@ -1625,10 +1578,6 @@ html[data-theme="dark"] #navbar .nav-badge.nav-new {
 
   border-color:
     rgba(52, 211, 153, .20);
-
-  box-shadow:
-    0 3px 11px
-    rgba(16, 185, 129, .12);
 }
 
 html[data-theme="dark"]
@@ -1638,7 +1587,7 @@ html[data-theme="dark"]
 
 
 html[data-theme="dark"] #navbar .nav-badge.nav-trend {
-  color: #f9a8d4;
+  color: #f9a8d4 !important;
 
   background:
     linear-gradient(
@@ -1649,19 +1598,11 @@ html[data-theme="dark"] #navbar .nav-badge.nav-trend {
 
   border-color:
     rgba(244, 114, 182, .30);
-
-  box-shadow:
-    0 3px 13px
-    rgba(236, 72, 153, .18);
 }
 
 html[data-theme="dark"]
 #navbar .nav-badge.nav-trend > .nav-badge-icon {
   color: #f472b6 !important;
-
-  text-shadow:
-    0 0 8px
-    rgba(244, 114, 182, .38);
 }
 
 
@@ -1669,20 +1610,36 @@ html[data-theme="dark"]
    DARK MODE — BUTTON ICONS
 ============================================================ */
 
-html[data-theme="dark"] #navbar .nav-avatar > i {
+html[data-theme="dark"] #navbar .nav-avatar-icon {
   color: #22d3ee !important;
 }
 
-html[data-theme="dark"] #navbar .nav-theme > i {
+html[data-theme="dark"] #navbar .nav-avatar:hover .nav-avatar-icon {
   color: #a78bfa !important;
 }
 
-html[data-theme="dark"] #navbar .nav-toggle > i {
+html[data-theme="dark"] #navbar .nav-theme-icon {
+  color: #a78bfa !important;
+}
+
+html[data-theme="dark"] #navbar .nav-theme:hover .nav-theme-icon {
+  color: #f472b6 !important;
+}
+
+html[data-theme="dark"] #navbar .nav-toggle-icon {
   color: #22d3ee !important;
 }
 
-html[data-theme="dark"] #navbar .nav-logout > i {
+html[data-theme="dark"] #navbar .nav-toggle:hover .nav-toggle-icon {
+  color: #a78bfa !important;
+}
+
+html[data-theme="dark"] #navbar .nav-logout-icon {
   color: #fb7185 !important;
+}
+
+html[data-theme="dark"] #navbar .nav-logout:hover .nav-logout-icon {
+  color: #f87171 !important;
 }
 
 
@@ -1691,45 +1648,43 @@ html[data-theme="dark"] #navbar .nav-logout > i {
 ============================================================ */
 
 html[data-theme="dark"]
-#navbar .nav-extra a:nth-of-type(1) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(1) .nav-social-icon {
   color: #38bdf8 !important;
 }
 
 html[data-theme="dark"]
-#navbar .nav-extra a:nth-of-type(2) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(2) .nav-social-icon {
   color: #60a5fa !important;
 }
 
 html[data-theme="dark"]
-#navbar .nav-extra a:nth-of-type(3) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(3) .nav-social-icon {
   color: #ff4d88 !important;
 }
 
 html[data-theme="dark"]
-#navbar .nav-extra a:nth-of-type(4) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(4) .nav-social-icon {
   color: #4ade80 !important;
 }
 
 html[data-theme="dark"]
-#navbar .nav-extra a:nth-of-type(5) > .nav-social-icon {
+#navbar .nav-extra a:nth-of-type(5) .nav-social-icon {
   color: #a78bfa !important;
 }
 
 
 /* ============================================================
-   DARK MODE — BRAND / ACCOUNT
+   DARK MODE — ACCOUNT
 ============================================================ */
-
-html[data-theme="dark"] #navbar .brand-mark {
-  box-shadow:
-    0 0 22px
-    rgba(0, 234, 255, .20);
-}
 
 html[data-theme="dark"] #navbar .nav-account {
   box-shadow:
     inset 0 1px 0
     rgba(255, 255, 255, .02);
+}
+
+html[data-theme="dark"] #navbar .nav-balance {
+  color: #34d399 !important;
 }
 
 
@@ -1739,10 +1694,10 @@ html[data-theme="dark"] #navbar .nav-account {
 
 #navbar .nav-main-icon,
 #navbar .nav-social-icon,
-#navbar .nav-theme > i,
-#navbar .nav-toggle > i,
-#navbar .nav-avatar > i,
-#navbar .nav-logout > i {
+#navbar .nav-theme-icon,
+#navbar .nav-toggle-icon,
+#navbar .nav-avatar-icon,
+#navbar .nav-logout-icon {
   text-shadow:
     0 1px 2px
     rgba(15, 23, 42, .08);
@@ -1753,12 +1708,18 @@ html[data-theme="dark"] #navbar .nav-account {
    DARK ICON DEPTH
 ============================================================ */
 
-html[data-theme="dark"] #navbar .nav-main-icon,
-html[data-theme="dark"] #navbar .nav-social-icon,
-html[data-theme="dark"] #navbar .nav-theme > i,
-html[data-theme="dark"] #navbar .nav-toggle > i,
-html[data-theme="dark"] #navbar .nav-avatar > i,
-html[data-theme="dark"] #navbar .nav-logout > i {
+html[data-theme="dark"]
+#navbar .nav-main-icon,
+html[data-theme="dark"]
+#navbar .nav-social-icon,
+html[data-theme="dark"]
+#navbar .nav-theme-icon,
+html[data-theme="dark"]
+#navbar .nav-toggle-icon,
+html[data-theme="dark"]
+#navbar .nav-avatar-icon,
+html[data-theme="dark"]
+#navbar .nav-logout-icon {
   text-shadow:
     0 0 7px
     rgba(255, 255, 255, .06);
@@ -1781,7 +1742,10 @@ html[data-theme="dark"] #navbar .nav-logout > i {
   #navbar .nav-theme,
   #navbar .nav-toggle,
   #navbar .nav-logout,
-  #navbar .nav-avatar > i {
+  #navbar .nav-avatar-icon,
+  #navbar .nav-theme-icon,
+  #navbar .nav-toggle-icon,
+  #navbar .nav-logout-icon {
 
     transition: none;
   }
