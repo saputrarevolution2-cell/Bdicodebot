@@ -1,471 +1,457 @@
 /* ============================================================
-   PASTELE — PREMIUM NAV BADGES
-   Hot / New / Trend
+   PASTELE — COLORFUL NAVBAR FINAL
+   Premium • Colorful • Soft • Responsive
 ============================================================ */
-
+/* ============================================================
+   BADGE BASE
+============================================================ */
 #navbar .nav-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-
-  flex: 0 0 auto;
-
-  min-height: 19px;
-  padding: 3px 7px;
-
-  margin-left: auto;
-
-  border-radius: 999px;
-
-  font-style: normal;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex: 0 0 auto !important;
+  min-width: 38px !important;
+  min-height: 20px !important;
+  padding: 3px 7px !important;
+  margin-left: auto !important;
+  border-radius: 999px !important;
+  font-style: normal !important;
   font-size: 8px !important;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: .15px;
-
-  white-space: nowrap;
-
-  border: 1px solid transparent;
-
-  box-shadow: none;
-
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  letter-spacing: .15px !important;
+  white-space: nowrap !important;
+  border: 1px solid transparent !important;
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
-    filter 180ms ease;
+    filter 180ms ease !important;
 }
-
-#navbar .nav-badge i {
+/* ============================================================
+   BADGE ICON
+   Jangan sampai terkena style .nav-link i
+============================================================ */
+#navbar .nav-badge i,
+#navbar .nav-badge > i {
   width: auto !important;
+  min-width: 0 !important;
   flex: 0 0 auto !important;
-
+  margin: 0 !important;
+  padding: 0 !important;
   font-size: 7px !important;
-
+  text-align: center !important;
   transform: none !important;
 }
-
 /* ============================================================
-   HOT
+   🔥 HOT
 ============================================================ */
-
 #navbar .nav-badge.nav-hot {
-  color: #a86d00;
-
+  color: #a16207 !important;
   background:
     linear-gradient(
       135deg,
-      #fff8d8,
-      #ffeaa0
-    );
-
-  border-color: rgba(245, 158, 11, .22);
-
+      #fff7d6 0%,
+      #ffe8a3 100%
+    ) !important;
+  border-color: rgba(245, 158, 11, .25) !important;
   box-shadow:
-    0 3px 10px rgba(245, 158, 11, .14);
+    0 3px 10px rgba(245, 158, 11, .15) !important;
 }
-
-#navbar .nav-badge.nav-hot i {
+#navbar .nav-badge.nav-hot i,
+#navbar .nav-badge.nav-hot > i {
   color: #f59e0b !important;
 }
-
 /* ============================================================
-   NEW
+   ✨ NEW
 ============================================================ */
-
 #navbar .nav-badge.nav-new {
-  color: #087f4e;
-
+  color: #047857 !important;
   background:
     linear-gradient(
       135deg,
-      #eafff5,
-      #c9f8df
-    );
-
-  border-color: rgba(16, 185, 129, .20);
-
+      #ecfdf5 0%,
+      #c6f6dc 100%
+    ) !important;
+  border-color: rgba(16, 185, 129, .22) !important;
   box-shadow:
-    0 3px 10px rgba(16, 185, 129, .13);
+    0 3px 10px rgba(16, 185, 129, .14) !important;
 }
-
-#navbar .nav-badge.nav-new i {
+#navbar .nav-badge.nav-new i,
+#navbar .nav-badge.nav-new > i {
   color: #10b981 !important;
 }
-
 /* ============================================================
-   TREND
+   💗 TREND
+   Pink / Fuchsia — dibuat jelas terlihat
 ============================================================ */
-
 #navbar .nav-badge.nav-trend {
-  color: #c0264d;
-
+  color: #be185d !important;
   background:
     linear-gradient(
       135deg,
-      #fff0f5,
-      #ffd7e4
-    );
-
-  border-color: rgba(236, 72, 153, .20);
-
+      #fff1f7 0%,
+      #ffd1e3 50%,
+      #fbcfe8 100%
+    ) !important;
+  border-color: rgba(236, 72, 153, .32) !important;
   box-shadow:
-    0 3px 12px rgba(236, 72, 153, .16);
-
-  animation: navTrendFloat 2s ease-in-out infinite;
+    0 3px 13px rgba(236, 72, 153, .20) !important;
+  animation: navTrendGlow 2s ease-in-out infinite !important;
 }
-
-#navbar .nav-badge.nav-trend i {
+#navbar .nav-badge.nav-trend i,
+#navbar .nav-badge.nav-trend > i {
   color: #ec4899 !important;
+  text-shadow:
+    0 0 7px rgba(236, 72, 153, .28) !important;
 }
-
 /* ============================================================
    BADGE HOVER
 ============================================================ */
-
 #navbar .nav-link:hover .nav-badge {
-  transform: translateY(-1px);
+  transform: translateY(-1px) !important;
 }
-
 #navbar .nav-link:hover .nav-badge.nav-hot {
   box-shadow:
-    0 5px 14px rgba(245, 158, 11, .20);
+    0 5px 15px rgba(245, 158, 11, .22) !important;
 }
-
 #navbar .nav-link:hover .nav-badge.nav-new {
   box-shadow:
-    0 5px 14px rgba(16, 185, 129, .19);
+    0 5px 15px rgba(16, 185, 129, .20) !important;
 }
-
 #navbar .nav-link:hover .nav-badge.nav-trend {
   box-shadow:
-    0 5px 15px rgba(236, 72, 153, .24);
+    0 5px 17px rgba(236, 72, 153, .30) !important;
 }
-
 /* ============================================================
    TREND ANIMATION
 ============================================================ */
-
-@keyframes navTrendFloat {
+@keyframes navTrendGlow {
   0%,
   100% {
-    transform: translateY(0);
+    filter: brightness(1);
   }
-
   50% {
-    transform: translateY(-1px);
+    filter: brightness(1.08);
   }
 }
-
 /* ============================================================
-   DARK MODE — BADGES
+   🌈 MAIN NAV ICONS
 ============================================================ */
-
-html[data-theme="dark"] #navbar .nav-badge.nav-hot {
-  color: #ffd76a;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(245, 158, 11, .16),
-      rgba(251, 191, 36, .09)
-    );
-
-  border-color: rgba(251, 191, 36, .22);
-
-  box-shadow:
-    0 3px 12px rgba(245, 158, 11, .08);
-}
-
-html[data-theme="dark"] #navbar .nav-badge.nav-hot i {
-  color: #fbbf24 !important;
-}
-
-html[data-theme="dark"] #navbar .nav-badge.nav-new {
-  color: #5ee7ad;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(16, 185, 129, .16),
-      rgba(52, 211, 153, .08)
-    );
-
-  border-color: rgba(52, 211, 153, .22);
-
-  box-shadow:
-    0 3px 12px rgba(16, 185, 129, .08);
-}
-
-html[data-theme="dark"] #navbar .nav-badge.nav-new i {
-  color: #34d399 !important;
-}
-
-html[data-theme="dark"] #navbar .nav-badge.nav-trend {
-  color: #ff8fb5;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(236, 72, 153, .17),
-      rgba(244, 63, 94, .09)
-    );
-
-  border-color: rgba(244, 63, 94, .22);
-
-  box-shadow:
-    0 3px 14px rgba(236, 72, 153, .12);
-}
-
-html[data-theme="dark"] #navbar .nav-badge.nav-trend i {
-  color: #fb7185 !important;
-}
-
-
-/* ============================================================
-   PASTELE — COLORFUL NAV ICONS
-============================================================ */
-
 /* Dashboard */
-#navbar .nav-link .fa-house {
-  color: #3b82f6;
+#navbar .nav-link > i.fa-house {
+  color: #3b82f6 !important;
 }
-
 /* Marketplace */
-#navbar .nav-link .fa-store {
-  color: #8b5cf6;
+#navbar .nav-link > i.fa-store {
+  color: #8b5cf6 !important;
 }
-
 /* Create */
-#navbar .nav-link .fa-paperclip {
-  color: #06b6d4;
+#navbar .nav-link > i.fa-paperclip {
+  color: #06b6d4 !important;
 }
-
 /* My Links */
-#navbar .nav-link .fa-link {
-  color: #14b8a6;
+#navbar .nav-link > i.fa-link {
+  color: #14b8a6 !important;
 }
-
 /* Purchases */
-#navbar .nav-link .fa-bag-shopping {
-  color: #f59e0b;
+#navbar .nav-link > i.fa-bag-shopping {
+  color: #f97316 !important;
 }
-
 /* Wallet */
-#navbar .nav-link .fa-wallet {
-  color: #10b981;
+#navbar .nav-link > i.fa-wallet {
+  color: #10b981 !important;
 }
-
 /* Withdraw */
-#navbar .nav-link .fa-money-bill-transfer {
-  color: #22c55e;
+#navbar .nav-link > i.fa-money-bill-transfer {
+  color: #22c55e !important;
 }
-
 /* Transactions */
-#navbar .nav-link .fa-arrow-right-arrow-left {
-  color: #6366f1;
+#navbar .nav-link > i.fa-arrow-right-arrow-left {
+  color: #6366f1 !important;
 }
-
 /* Subscription */
-#navbar .nav-link .fa-crown {
-  color: #f59e0b;
+#navbar .nav-link > i.fa-crown {
+  color: #f59e0b !important;
 }
-
 /* Premium */
-#navbar .nav-link .fa-gem {
-  color: #ec4899;
+#navbar .nav-link > i.fa-gem {
+  color: #ec4899 !important;
 }
-
 /* Notifications */
-#navbar .nav-link .fa-bell {
-  color: #f43f5e;
+#navbar .nav-link > i.fa-bell {
+  color: #f43f5e !important;
 }
-
 /* Profile */
-#navbar .nav-link .fa-user {
-  color: #06b6d4;
+#navbar .nav-link > i.fa-user {
+  color: #0ea5e9 !important;
 }
-
 /* Settings */
-#navbar .nav-link .fa-gear {
-  color: #64748b;
+#navbar .nav-link > i.fa-gear {
+  color: #64748b !important;
 }
-
-
-/* ============================================================
-   ICON HOVER
-============================================================ */
-
-#navbar .nav-link:hover i {
-  transform: scale(1.08) !important;
-  filter: brightness(1.08);
-}
-
-
-/* ============================================================
-   ACTIVE ICON
-   Tetap mempertahankan warna khas icon,
-   tetapi dibuat lebih terang.
-============================================================ */
-
-#navbar .nav-link.active .fa-house {
-  color: #2563eb;
-}
-
-#navbar .nav-link.active .fa-store {
-  color: #7c3aed;
-}
-
-#navbar .nav-link.active .fa-paperclip {
-  color: #0891b2;
-}
-
-#navbar .nav-link.active .fa-link {
-  color: #0d9488;
-}
-
-#navbar .nav-link.active .fa-bag-shopping {
-  color: #d97706;
-}
-
-#navbar .nav-link.active .fa-wallet {
-  color: #059669;
-}
-
-#navbar .nav-link.active .fa-crown {
-  color: #d97706;
-}
-
-#navbar .nav-link.active .fa-gem {
-  color: #db2777;
-}
-
-#navbar .nav-link.active .fa-bell {
-  color: #e11d48;
-}
-
-
-/* ============================================================
-   DARK MODE — ICONS
-============================================================ */
-
-html[data-theme="dark"] #navbar .nav-link .fa-house {
-  color: #60a5fa;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-store {
-  color: #a78bfa;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-paperclip {
-  color: #22d3ee;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-link {
-  color: #2dd4bf;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-bag-shopping {
-  color: #fbbf24;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-wallet {
-  color: #34d399;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-money-bill-transfer {
-  color: #4ade80;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-arrow-right-arrow-left {
-  color: #818cf8;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-crown {
-  color: #fbbf24;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-gem {
-  color: #f472b6;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-bell {
-  color: #fb7185;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-user {
-  color: #22d3ee;
-}
-
-html[data-theme="dark"] #navbar .nav-link .fa-gear {
-  color: #94a3b8;
-}
-
-
 /* ============================================================
    ADMIN ICONS
 ============================================================ */
-
-#navbar .nav-link .fa-chart-pie {
-  color: #6366f1;
+#navbar .nav-link > i.fa-chart-pie {
+  color: #6366f1 !important;
 }
-
-#navbar .nav-link .fa-users {
-  color: #06b6d4;
+#navbar .nav-link > i.fa-users {
+  color: #06b6d4 !important;
 }
-
-#navbar .nav-link .fa-box {
-  color: #8b5cf6;
+#navbar .nav-link > i.fa-box {
+  color: #8b5cf6 !important;
 }
-
-#navbar .nav-link .fa-receipt {
-  color: #f59e0b;
+#navbar .nav-link > i.fa-receipt {
+  color: #f59e0b !important;
 }
-
-#navbar .nav-link .fa-credit-card {
-  color: #10b981;
+#navbar .nav-link > i.fa-credit-card {
+  color: #10b981 !important;
 }
-
-#navbar .nav-link .fa-list {
-  color: #64748b;
+#navbar .nav-link > i.fa-list {
+  color: #64748b !important;
 }
-
-#navbar .nav-link .fa-robot {
-  color: #ec4899;
+#navbar .nav-link > i.fa-robot {
+  color: #ec4899 !important;
 }
-
-
 /* ============================================================
-   MOBILE BADGES
+   ICON HOVER
 ============================================================ */
-
+#navbar .nav-link:hover > i {
+  transform: scale(1.12) !important;
+  filter:
+    saturate(1.15)
+    brightness(1.08) !important;
+}
+/* ============================================================
+   ACTIVE
+   Jangan ubah icon menjadi cyan.
+   Tetap pertahankan warna masing-masing.
+============================================================ */
+#navbar .nav-link.active > i.fa-house {
+  color: #2563eb !important;
+}
+#navbar .nav-link.active > i.fa-store {
+  color: #7c3aed !important;
+}
+#navbar .nav-link.active > i.fa-paperclip {
+  color: #0891b2 !important;
+}
+#navbar .nav-link.active > i.fa-link {
+  color: #0d9488 !important;
+}
+#navbar .nav-link.active > i.fa-bag-shopping {
+  color: #ea580c !important;
+}
+#navbar .nav-link.active > i.fa-wallet {
+  color: #059669 !important;
+}
+#navbar .nav-link.active > i.fa-money-bill-transfer {
+  color: #16a34a !important;
+}
+#navbar .nav-link.active > i.fa-arrow-right-arrow-left {
+  color: #4f46e5 !important;
+}
+#navbar .nav-link.active > i.fa-crown {
+  color: #d97706 !important;
+}
+#navbar .nav-link.active > i.fa-gem {
+  color: #db2777 !important;
+}
+#navbar .nav-link.active > i.fa-bell {
+  color: #e11d48 !important;
+}
+#navbar .nav-link.active > i.fa-user {
+  color: #0284c7 !important;
+}
+#navbar .nav-link.active > i.fa-gear {
+  color: #475569 !important;
+}
+/* ============================================================
+   🌈 THEME BUTTON
+============================================================ */
+#navbar .nav-theme i {
+  color: #8b5cf6 !important;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+#navbar .nav-theme:hover i {
+  color: #ec4899 !important;
+  transform: rotate(18deg) scale(1.08) !important;
+}
+/* ============================================================
+   🌈 MOBILE MENU BUTTON
+============================================================ */
+#navbar .nav-toggle i {
+  color: #06b6d4 !important;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+#navbar .nav-toggle:hover i {
+  color: #8b5cf6 !important;
+  transform: scale(1.1) !important;
+}
+/* ============================================================
+   🌈 LOGOUT
+============================================================ */
+#navbar .nav-logout i {
+  color: #f43f5e !important;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+#navbar .nav-logout:hover i {
+  color: #ef4444 !important;
+  transform: translateX(2px) !important;
+}
+/* ============================================================
+   🌈 ACCOUNT AVATAR
+============================================================ */
+#navbar .nav-avatar i {
+  color: #06b6d4 !important;
+}
+/* ============================================================
+   🌈 SOCIAL ICONS
+============================================================ */
+#navbar .nav-extra a:nth-of-type(1) i {
+  color: #229ed9 !important;
+}
+#navbar .nav-extra a:nth-of-type(2) i {
+  color: #1877f2 !important;
+}
+#navbar .nav-extra a:nth-of-type(3) i {
+  color: #ff0050 !important;
+}
+#navbar .nav-extra a:nth-of-type(4) i {
+  color: #25d366 !important;
+}
+#navbar .nav-extra a:nth-of-type(5) i {
+  color: #8b5cf6 !important;
+}
+#navbar .nav-extra a:hover i {
+  transform: scale(1.12) !important;
+}
+/* ============================================================
+   DARK MODE — MAIN ICONS
+============================================================ */
+html[data-theme="dark"] #navbar .nav-link > i.fa-house {
+  color: #60a5fa !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-store {
+  color: #a78bfa !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-paperclip {
+  color: #22d3ee !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-link {
+  color: #2dd4bf !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-bag-shopping {
+  color: #fb923c !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-wallet {
+  color: #34d399 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-money-bill-transfer {
+  color: #4ade80 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-arrow-right-arrow-left {
+  color: #818cf8 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-crown {
+  color: #fbbf24 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-gem {
+  color: #f472b6 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-bell {
+  color: #fb7185 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-user {
+  color: #38bdf8 !important;
+}
+html[data-theme="dark"] #navbar .nav-link > i.fa-gear {
+  color: #94a3b8 !important;
+}
+/* ============================================================
+   DARK MODE — TREND
+============================================================ */
+html[data-theme="dark"] #navbar .nav-badge.nav-trend {
+  color: #f9a8d4 !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(236, 72, 153, .22),
+      rgba(244, 63, 94, .13)
+    ) !important;
+  border-color:
+    rgba(244, 114, 182, .30) !important;
+  box-shadow:
+    0 4px 15px rgba(236, 72, 153, .18) !important;
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-trend i {
+  color: #f472b6 !important;
+  text-shadow:
+    0 0 8px rgba(244, 114, 182, .40) !important;
+}
+/* ============================================================
+   DARK MODE — HOT
+============================================================ */
+html[data-theme="dark"] #navbar .nav-badge.nav-hot {
+  color: #fcd34d !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 158, 11, .20),
+      rgba(251, 191, 36, .10)
+    ) !important;
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-hot i {
+  color: #fbbf24 !important;
+}
+/* ============================================================
+   DARK MODE — NEW
+============================================================ */
+html[data-theme="dark"] #navbar .nav-badge.nav-new {
+  color: #6ee7b7 !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(16, 185, 129, .20),
+      rgba(52, 211, 153, .10)
+    ) !important;
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-new i {
+  color: #34d399 !important;
+}
+/* ============================================================
+   MOBILE
+============================================================ */
 @media (max-width: 480px) {
-
   #navbar .nav-badge {
-    min-height: 20px;
-
-    padding: 3px 7px;
-
+    min-width: 37px !important;
+    min-height: 20px !important;
+    padding: 3px 6px !important;
     font-size: 8px !important;
   }
-
   #navbar .nav-badge i {
     font-size: 7px !important;
   }
 }
-
-
 /* ============================================================
    REDUCED MOTION
 ============================================================ */
-
 @media (prefers-reduced-motion: reduce) {
-
   #navbar .nav-badge.nav-trend {
-    animation: none;
+    animation: none !important;
   }
-
-  #navbar .nav-badge {
-    transition: none;
+  #navbar .nav-badge,
+  #navbar .nav-link i,
+  #navbar .nav-theme i,
+  #navbar .nav-toggle i,
+  #navbar .nav-logout i {
+    transition: none !important;
   }
 }
