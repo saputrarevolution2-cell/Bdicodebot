@@ -1,7 +1,7 @@
 /* ============================================================
-   PASTELE — NAVBAR
-   Premium • Colorful • Clean • Responsive
-   Compatible with dynamic navbar.js
+   PASTELE — NAVBAR COLORFUL FINAL
+   Premium • Colorful Icons • Clean • Responsive
+   Compatible with latest dynamic navbar.js
 ============================================================ */
 /* ============================================================
    VARIABLES
@@ -22,7 +22,7 @@
   --nav-ease: 180ms ease;
 }
 /* ============================================================
-   DARK MODE
+   DARK MODE VARIABLES
 ============================================================ */
 html[data-theme="dark"] {
   --nav-bg: #070b14;
@@ -133,7 +133,8 @@ html[data-theme="dark"] {
   box-shadow:
     0 7px 20px rgba(0, 184, 255, 0.20);
 }
-#navbar .brand-mark i {
+#navbar .brand-mark > i {
+  color: #ffffff;
   font-size: 18px;
 }
 /* ============================================================
@@ -164,7 +165,7 @@ html[data-theme="dark"] {
   color: var(--nav-text);
 }
 /* ============================================================
-   AVATAR
+   AVATAR ICON
 ============================================================ */
 #navbar .nav-avatar {
   width: 35px;
@@ -176,15 +177,21 @@ html[data-theme="dark"] {
   background:
     linear-gradient(
       145deg,
-      rgba(0, 234, 255, 0.14),
-      rgba(0, 201, 139, 0.09)
+      rgba(6, 182, 212, 0.14),
+      rgba(16, 185, 129, 0.10)
     );
-  border: 1px solid rgba(0, 184, 255, 0.14);
-  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.18);
 }
 #navbar .nav-avatar > i {
-  font-size: 14px;
   color: #06b6d4;
+  font-size: 14px;
+  transition:
+    transform var(--nav-ease),
+    color var(--nav-ease);
+}
+#navbar .nav-avatar:hover > i {
+  color: #8b5cf6;
+  transform: scale(1.08);
 }
 /* ============================================================
    ACCOUNT NAME
@@ -224,8 +231,8 @@ html[data-theme="dark"] {
   white-space: nowrap;
   padding: 5px 6px;
   border-radius: 7px;
-  background: rgba(0, 201, 139, 0.08);
-  color: var(--nav-green);
+  background: rgba(16, 185, 129, 0.09);
+  color: #10b981;
   font-size: 9.5px;
   font-weight: 750;
   line-height: 1.2;
@@ -249,7 +256,6 @@ html[data-theme="dark"] {
   cursor: pointer;
   transition:
     background-color var(--nav-ease),
-    color var(--nav-ease),
     border-color var(--nav-ease),
     transform var(--nav-ease);
 }
@@ -262,12 +268,15 @@ html[data-theme="dark"] {
 }
 #navbar .nav-theme:hover {
   background: var(--nav-hover);
-  border-color: rgba(139, 92, 246, 0.20);
+  border-color:
+    rgba(139, 92, 246, 0.22);
   transform: translateY(-1px);
 }
 #navbar .nav-theme:hover > i {
   color: #ec4899;
-  transform: rotate(18deg) scale(1.08);
+  transform:
+    rotate(18deg)
+    scale(1.08);
 }
 /* ============================================================
    NAVIGATION
@@ -323,7 +332,9 @@ html[data-theme="dark"] {
 }
 /* ============================================================
    MAIN ICON
-   KHUSUS .nav-main-icon
+   PENTING:
+   HANYA .nav-main-icon
+   TIDAK MEMAKAI .nav-link i
 ============================================================ */
 #navbar .nav-link > .nav-main-icon {
   width: 18px;
@@ -332,12 +343,11 @@ html[data-theme="dark"] {
   font-size: 13px;
   text-align: center;
   transition:
-    color var(--nav-ease),
     transform var(--nav-ease),
     filter var(--nav-ease);
 }
 /* ============================================================
-   MENU LABEL
+   LABEL
 ============================================================ */
 #navbar .nav-link > .nav-label {
   min-width: 0;
@@ -347,49 +357,62 @@ html[data-theme="dark"] {
   white-space: nowrap;
 }
 /* ============================================================
-   🌈 USER ICON COLORS
+   🌈 USER MENU ICONS
 ============================================================ */
+/* Dashboard */
 #navbar .nav-main-icon.fa-house {
   color: #3b82f6;
 }
+/* Marketplace */
 #navbar .nav-main-icon.fa-store {
   color: #8b5cf6;
 }
+/* Create */
 #navbar .nav-main-icon.fa-paperclip {
   color: #06b6d4;
 }
+/* My Links */
 #navbar .nav-main-icon.fa-link {
   color: #14b8a6;
 }
+/* Purchases */
 #navbar .nav-main-icon.fa-bag-shopping {
   color: #f97316;
 }
+/* Wallet */
 #navbar .nav-main-icon.fa-wallet {
   color: #10b981;
 }
+/* Withdraw */
 #navbar .nav-main-icon.fa-money-bill-transfer {
   color: #22c55e;
 }
+/* Transactions */
 #navbar .nav-main-icon.fa-arrow-right-arrow-left {
   color: #6366f1;
 }
+/* Subscription */
 #navbar .nav-main-icon.fa-crown {
   color: #f59e0b;
 }
+/* Premium */
 #navbar .nav-main-icon.fa-gem {
   color: #ec4899;
 }
+/* Notifications */
 #navbar .nav-main-icon.fa-bell {
   color: #f43f5e;
 }
+/* Profile */
 #navbar .nav-main-icon.fa-user {
   color: #0ea5e9;
 }
+/* Settings */
 #navbar .nav-main-icon.fa-gear {
   color: #64748b;
 }
 /* ============================================================
-   🌈 ADMIN ICON COLORS
+   🌈 ADMIN ICONS
 ============================================================ */
 #navbar .nav-main-icon.fa-chart-pie {
   color: #6366f1;
@@ -406,6 +429,12 @@ html[data-theme="dark"] {
 #navbar .nav-main-icon.fa-credit-card {
   color: #10b981;
 }
+#navbar .nav-main-icon.fa-money-bill-transfer {
+  color: #22c55e;
+}
+#navbar .nav-main-icon.fa-arrow-right-arrow-left {
+  color: #6366f1;
+}
 #navbar .nav-main-icon.fa-robot {
   color: #ec4899;
 }
@@ -414,7 +443,7 @@ html[data-theme="dark"] {
 }
 /* ============================================================
    HOVER
-   TIDAK MENIMPA WARNA ICON
+   WARNA ICON TIDAK DIGANTI
 ============================================================ */
 #navbar .nav-link:hover {
   color: var(--nav-text);
@@ -424,15 +453,15 @@ html[data-theme="dark"] {
 #navbar .nav-link:hover > .nav-main-icon {
   transform: scale(1.10);
   filter:
-    saturate(1.12)
+    saturate(1.18)
     brightness(1.08);
 }
 /* ============================================================
    ACTIVE
-   ICON TETAP WARNA-WARNI
+   ICON TETAP WARNA ASLINYA
 ============================================================ */
 #navbar .nav-link.active {
-  color: var(--nav-accent);
+  color: var(--nav-text);
   background:
     linear-gradient(
       90deg,
@@ -447,18 +476,21 @@ html[data-theme="dark"] {
   top: 7px;
   bottom: 7px;
   width: 3px;
-  border-radius: 0 5px 5px 0;
+  border-radius:
+    0 5px 5px 0;
   background: var(--nav-accent);
   box-shadow:
-    0 0 9px rgba(0, 234, 255, 0.42);
+    0 0 9px
+    rgba(0, 234, 255, 0.42);
 }
 #navbar .nav-link.active > .nav-main-icon {
+  transform: scale(1.04);
   filter:
-    saturate(1.10)
-    brightness(1.06);
+    saturate(1.15)
+    brightness(1.08);
 }
 /* ============================================================
-   BADGE
+   BADGES
 ============================================================ */
 #navbar .nav-badge {
   display: inline-flex;
@@ -522,7 +554,8 @@ html[data-theme="dark"] {
   border-color:
     rgba(245, 158, 11, .25);
   box-shadow:
-    0 3px 9px rgba(245, 158, 11, .14);
+    0 3px 9px
+    rgba(245, 158, 11, .14);
 }
 #navbar .nav-badge.nav-hot > .nav-badge-icon {
   color: #f59e0b;
@@ -541,7 +574,8 @@ html[data-theme="dark"] {
   border-color:
     rgba(16, 185, 129, .22);
   box-shadow:
-    0 3px 9px rgba(16, 185, 129, .13);
+    0 3px 9px
+    rgba(16, 185, 129, .13);
 }
 #navbar .nav-badge.nav-new > .nav-badge-icon {
   color: #10b981;
@@ -561,14 +595,16 @@ html[data-theme="dark"] {
   border-color:
     rgba(236, 72, 153, .30);
   box-shadow:
-    0 3px 12px rgba(236, 72, 153, .18);
+    0 3px 12px
+    rgba(236, 72, 153, .18);
   animation:
     navTrendPulse 2.2s ease-in-out infinite;
 }
 #navbar .nav-badge.nav-trend > .nav-badge-icon {
   color: #ec4899;
   text-shadow:
-    0 0 6px rgba(236, 72, 153, .28);
+    0 0 6px
+    rgba(236, 72, 153, .28);
 }
 /* ============================================================
    BADGE HOVER
@@ -578,15 +614,18 @@ html[data-theme="dark"] {
 }
 #navbar .nav-link:hover .nav-badge.nav-hot {
   box-shadow:
-    0 5px 14px rgba(245, 158, 11, .22);
+    0 5px 14px
+    rgba(245, 158, 11, .22);
 }
 #navbar .nav-link:hover .nav-badge.nav-new {
   box-shadow:
-    0 5px 14px rgba(16, 185, 129, .20);
+    0 5px 14px
+    rgba(16, 185, 129, .20);
 }
 #navbar .nav-link:hover .nav-badge.nav-trend {
   box-shadow:
-    0 5px 17px rgba(236, 72, 153, .28);
+    0 5px 17px
+    rgba(236, 72, 153, .28);
 }
 /* ============================================================
    TREND ANIMATION
@@ -643,28 +682,31 @@ html[data-theme="dark"] {
     color var(--nav-ease),
     transform var(--nav-ease);
 }
-#navbar .nav-extra a > i {
+#navbar .nav-extra a > .nav-social-icon {
   width: 17px;
   flex: 0 0 17px;
   font-size: 12px;
   text-align: center;
   transition:
-    transform 180ms ease,
-    color 180ms ease;
+    transform var(--nav-ease),
+    filter var(--nav-ease);
 }
-#navbar .nav-extra a:nth-of-type(1) > i {
+/* ============================================================
+   SOCIAL COLORS
+============================================================ */
+#navbar .nav-extra a:nth-of-type(1) > .nav-social-icon {
   color: #229ed9;
 }
-#navbar .nav-extra a:nth-of-type(2) > i {
+#navbar .nav-extra a:nth-of-type(2) > .nav-social-icon {
   color: #1877f2;
 }
-#navbar .nav-extra a:nth-of-type(3) > i {
+#navbar .nav-extra a:nth-of-type(3) > .nav-social-icon {
   color: #ff0050;
 }
-#navbar .nav-extra a:nth-of-type(4) > i {
+#navbar .nav-extra a:nth-of-type(4) > .nav-social-icon {
   color: #25d366;
 }
-#navbar .nav-extra a:nth-of-type(5) > i {
+#navbar .nav-extra a:nth-of-type(5) > .nav-social-icon {
   color: #8b5cf6;
 }
 #navbar .nav-extra a:hover {
@@ -672,8 +714,11 @@ html[data-theme="dark"] {
   background: var(--nav-hover);
   transform: translateX(2px);
 }
-#navbar .nav-extra a:hover > i {
+#navbar .nav-extra a:hover > .nav-social-icon {
   transform: scale(1.10);
+  filter:
+    saturate(1.15)
+    brightness(1.08);
 }
 /* ============================================================
    LOGOUT
@@ -693,7 +738,9 @@ html[data-theme="dark"] {
   justify-content: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid rgba(239, 68, 68, .12);
+  border:
+    1px solid
+    rgba(239, 68, 68, .12);
   border-radius: 10px;
   background: transparent;
   color: #ef5b63;
@@ -709,12 +756,14 @@ html[data-theme="dark"] {
 #navbar .nav-logout > i {
   color: #f43f5e;
   transition:
-    color 180ms ease,
-    transform 180ms ease;
+    color var(--nav-ease),
+    transform var(--nav-ease);
 }
 #navbar .nav-logout:hover {
-  background: rgba(239, 68, 68, .07);
-  border-color: rgba(239, 68, 68, .20);
+  background:
+    rgba(239, 68, 68, .07);
+  border-color:
+    rgba(239, 68, 68, .20);
   transform: translateY(-1px);
 }
 #navbar .nav-logout:hover > i {
@@ -727,6 +776,7 @@ html[data-theme="dark"] {
 #navbar .nav-logout:disabled {
   opacity: .55;
   cursor: wait;
+  transform: none;
 }
 /* ============================================================
    MOBILE TOGGLE
@@ -741,16 +791,18 @@ html[data-theme="dark"] {
   place-items: center;
   padding: 0;
   z-index: 1200;
-  border: 1px solid var(--nav-border);
+  border:
+    1px solid
+    var(--nav-border);
   border-radius: 12px;
   background: var(--nav-bg);
   color: var(--nav-text);
   box-shadow:
-    0 8px 25px rgba(0, 0, 0, .10);
+    0 8px 25px
+    rgba(0, 0, 0, .10);
   cursor: pointer;
   transition:
     background-color var(--nav-ease),
-    color var(--nav-ease),
     border-color var(--nav-ease),
     transform var(--nav-ease);
 }
@@ -758,8 +810,8 @@ html[data-theme="dark"] {
   color: #06b6d4;
   font-size: 16px;
   transition:
-    color 180ms ease,
-    transform 180ms ease;
+    color var(--nav-ease),
+    transform var(--nav-ease);
 }
 #navbar .nav-toggle:hover > i {
   color: #8b5cf6;
@@ -772,7 +824,8 @@ html[data-theme="dark"] {
   position: fixed;
   inset: 0;
   z-index: 1050;
-  background: rgba(2, 6, 15, .55);
+  background:
+    rgba(2, 6, 15, .55);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -796,23 +849,33 @@ html[data-theme="dark"] {
   }
   #navbar .navbar {
     width: var(--nav-width);
-    transform: translateX(-105%);
+    transform:
+      translateX(-105%);
   }
   #navbar .navbar.nav-open {
-    transform: translateX(0);
+    transform:
+      translateX(0);
   }
   #navbar .nav-toggle {
     display: grid;
   }
   #navbar .navbar.nav-open ~ .nav-toggle {
-    left: calc(var(--nav-width) - 56px);
-    background: var(--nav-surface);
-    color: var(--nav-text);
+    left:
+      calc(
+        var(--nav-width) - 56px
+      );
+    background:
+      var(--nav-surface);
+    color:
+      var(--nav-text);
   }
   #navbar .nav-inner {
     padding:
       16px 13px
-      calc(16px + env(safe-area-inset-bottom));
+      calc(
+        16px +
+        env(safe-area-inset-bottom)
+      );
   }
   #navbar .nav-links {
     gap: 14px;
@@ -839,7 +902,10 @@ html[data-theme="dark"] {
     height: 42px;
   }
   #navbar .navbar.nav-open ~ .nav-toggle {
-    left: calc(var(--nav-width) - 54px);
+    left:
+      calc(
+        var(--nav-width) - 54px
+      );
   }
   #navbar .nav-inner {
     padding-left: 12px;
@@ -857,7 +923,8 @@ html[data-theme="dark"] {
   #navbar .nav-badge {
     min-width: 37px;
     height: 20px;
-    padding: 0 6px;
+    padding:
+      0 6px;
     gap: 3px;
     font-size: 7.5px;
   }
@@ -901,7 +968,9 @@ html[data-theme="dark"] {
 #navbar .nav-theme:focus-visible,
 #navbar .nav-logout:focus-visible,
 #navbar .nav-toggle:focus-visible {
-  outline: 2px solid var(--nav-accent);
+  outline:
+    2px solid
+    var(--nav-accent);
   outline-offset: 2px;
 }
 /* ============================================================
@@ -911,86 +980,96 @@ body.nav-menu-open {
   overflow: hidden;
 }
 /* ============================================================
-   DARK MODE
+   DARK MODE — MAIN ICONS
 ============================================================ */
-html[data-theme="dark"] #navbar .brand-mark {
-  box-shadow:
-    0 0 22px rgba(0, 234, 255, .20);
-}
-html[data-theme="dark"] #navbar .nav-account {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .02);
-}
-/* ============================================================
-   DARK MODE — ICON COLORS
-============================================================ */
-html[data-theme="dark"] #navbar .nav-main-icon.fa-house {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-house {
   color: #60a5fa;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-store {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-store {
   color: #a78bfa;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-paperclip {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-paperclip {
   color: #22d3ee;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-link {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-link {
   color: #2dd4bf;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-bag-shopping {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-bag-shopping {
   color: #fb923c;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-wallet {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-wallet {
   color: #34d399;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-money-bill-transfer {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-money-bill-transfer {
   color: #4ade80;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-arrow-right-arrow-left {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-arrow-right-arrow-left {
   color: #818cf8;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-crown {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-crown {
   color: #fbbf24;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-gem {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-gem {
   color: #f472b6;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-bell {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-bell {
   color: #fb7185;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-user {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-user {
   color: #38bdf8;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-gear {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-gear {
   color: #94a3b8;
 }
 /* ============================================================
-   DARK MODE — ADMIN ICONS
+   DARK MODE — ADMIN
 ============================================================ */
-html[data-theme="dark"] #navbar .nav-main-icon.fa-chart-pie {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-chart-pie {
   color: #818cf8;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-users {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-users {
   color: #22d3ee;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-box {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-box {
   color: #a78bfa;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-receipt {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-receipt {
   color: #fbbf24;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-credit-card {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-credit-card {
   color: #34d399;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-robot {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-robot {
   color: #f472b6;
 }
-html[data-theme="dark"] #navbar .nav-main-icon.fa-list {
+html[data-theme="dark"]
+#navbar .nav-main-icon.fa-list {
   color: #94a3b8;
 }
 /* ============================================================
    DARK MODE — BADGES
 ============================================================ */
-html[data-theme="dark"] #navbar .nav-badge.nav-hot {
+html[data-theme="dark"]
+#navbar .nav-badge.nav-hot {
   color: #fcd34d;
   background:
     linear-gradient(
@@ -1001,12 +1080,15 @@ html[data-theme="dark"] #navbar .nav-badge.nav-hot {
   border-color:
     rgba(251, 191, 36, .20);
   box-shadow:
-    0 3px 11px rgba(245, 158, 11, .12);
+    0 3px 11px
+    rgba(245, 158, 11, .12);
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-hot > .nav-badge-icon {
+html[data-theme="dark"]
+#navbar .nav-badge.nav-hot > .nav-badge-icon {
   color: #fbbf24;
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-new {
+html[data-theme="dark"]
+#navbar .nav-badge.nav-new {
   color: #6ee7b7;
   background:
     linear-gradient(
@@ -1017,12 +1099,15 @@ html[data-theme="dark"] #navbar .nav-badge.nav-new {
   border-color:
     rgba(52, 211, 153, .20);
   box-shadow:
-    0 3px 11px rgba(16, 185, 129, .12);
+    0 3px 11px
+    rgba(16, 185, 129, .12);
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-new > .nav-badge-icon {
+html[data-theme="dark"]
+#navbar .nav-badge.nav-new > .nav-badge-icon {
   color: #34d399;
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-trend {
+html[data-theme="dark"]
+#navbar .nav-badge.nav-trend {
   color: #f9a8d4;
   background:
     linear-gradient(
@@ -1033,24 +1118,56 @@ html[data-theme="dark"] #navbar .nav-badge.nav-trend {
   border-color:
     rgba(244, 114, 182, .30);
   box-shadow:
-    0 3px 13px rgba(236, 72, 153, .18);
+    0 3px 13px
+    rgba(236, 72, 153, .18);
 }
-html[data-theme="dark"] #navbar .nav-badge.nav-trend > .nav-badge-icon {
+html[data-theme="dark"]
+#navbar .nav-badge.nav-trend > .nav-badge-icon {
   color: #f472b6;
   text-shadow:
-    0 0 8px rgba(244, 114, 182, .38);
+    0 0 8px
+    rgba(244, 114, 182, .38);
+}
+/* ============================================================
+   DARK MODE — AVATAR / THEME
+============================================================ */
+html[data-theme="dark"]
+#navbar .nav-avatar > i {
+  color: #22d3ee;
+}
+html[data-theme="dark"]
+#navbar .nav-theme > i {
+  color: #a78bfa;
+}
+/* ============================================================
+   DARK MODE — BRAND
+============================================================ */
+html[data-theme="dark"]
+#navbar .brand-mark {
+  box-shadow:
+    0 0 22px
+    rgba(0, 234, 255, .20);
+}
+html[data-theme="dark"]
+#navbar .nav-account {
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, .02);
 }
 /* ============================================================
    REDUCED MOTION
 ============================================================ */
 @media (prefers-reduced-motion: reduce) {
+  #navbar .navbar,
+  #navbar .nav-backdrop,
   #navbar .nav-link,
   #navbar .nav-main-icon,
   #navbar .nav-badge,
+  #navbar .nav-extra a,
+  #navbar .nav-social-icon,
   #navbar .nav-theme,
   #navbar .nav-toggle,
-  #navbar .nav-logout,
-  #navbar .nav-extra a {
+  #navbar .nav-logout {
     transition: none;
   }
   #navbar .nav-badge.nav-trend {
