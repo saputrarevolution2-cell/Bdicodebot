@@ -1,511 +1,438 @@
 /* ============================================================
    PASTELE — NAVBAR
-   Clean / Premium / Responsive
+   Premium • Colorful • Clean • Responsive
    Compatible with dynamic navbar.js
 ============================================================ */
-
 /* ============================================================
    VARIABLES
 ============================================================ */
-
 :root {
   --nav-width: 270px;
-
   --nav-bg: #ffffff;
   --nav-surface: #f7f9fc;
   --nav-border: rgba(15, 23, 42, 0.08);
-
   --nav-text: #172033;
   --nav-muted: #7d8799;
-
   --nav-hover: #f1f5f9;
   --nav-active: rgba(0, 184, 255, 0.09);
-
   --nav-accent: #00b8ff;
   --nav-accent-strong: #009fe0;
   --nav-green: #00c98b;
-
   --nav-shadow: 8px 0 35px rgba(15, 23, 42, 0.06);
-
   --nav-ease: 180ms ease;
 }
-
 /* ============================================================
    DARK MODE
 ============================================================ */
-
 html[data-theme="dark"] {
   --nav-bg: #070b14;
   --nav-surface: #0d131f;
   --nav-border: rgba(255, 255, 255, 0.075);
-
   --nav-text: #f3f7ff;
   --nav-muted: #8994a8;
-
   --nav-hover: rgba(255, 255, 255, 0.055);
   --nav-active: rgba(0, 234, 255, 0.09);
-
   --nav-accent: #00eaff;
   --nav-accent-strong: #00bce9;
   --nav-green: #00ffae;
-
   --nav-shadow: 8px 0 40px rgba(0, 0, 0, 0.32);
 }
-
 /* ============================================================
-   NAVBAR ROOT
+   ROOT
 ============================================================ */
-
 #navbar {
   position: relative;
   z-index: 1000;
 }
-
 #navbar,
 #navbar * {
   box-sizing: border-box;
 }
-
 /* ============================================================
    SIDEBAR
 ============================================================ */
-
 #navbar .navbar {
   position: fixed;
-
   top: 0;
   left: 0;
   bottom: 0;
-
   width: var(--nav-width);
-
   background: var(--nav-bg);
   color: var(--nav-text);
-
   border-right: 1px solid var(--nav-border);
-
   box-shadow: var(--nav-shadow);
-
   z-index: 1000;
-
   overflow: hidden;
-
   transform: translateX(0);
-
   transition:
     transform var(--nav-ease),
     background-color var(--nav-ease),
     border-color var(--nav-ease);
-
   isolation: isolate;
 }
-
 /* ============================================================
    INNER
 ============================================================ */
-
 #navbar .nav-inner {
   width: 100%;
   height: 100%;
-
   display: flex;
   flex-direction: column;
-
   padding: 18px 13px;
-
   overflow-x: hidden;
   overflow-y: auto;
-
   scrollbar-width: thin;
   scrollbar-color:
     rgba(0, 184, 255, 0.25)
     transparent;
 }
-
 #navbar .nav-inner::-webkit-scrollbar {
   width: 4px;
 }
-
 #navbar .nav-inner::-webkit-scrollbar-track {
   background: transparent;
 }
-
 #navbar .nav-inner::-webkit-scrollbar-thumb {
   background: rgba(0, 184, 255, 0.22);
   border-radius: 999px;
 }
-
 /* ============================================================
    BRAND
 ============================================================ */
-
 #navbar .brand {
   display: flex;
   align-items: center;
-
   gap: 10px;
-
   min-height: 46px;
-
   padding: 4px 7px;
   margin-bottom: 16px;
-
   color: var(--nav-text);
   text-decoration: none;
-
   font-size: 18px;
   font-weight: 800;
-
   letter-spacing: -0.35px;
-
   flex-shrink: 0;
 }
-
 #navbar .brand:hover {
   color: var(--nav-text);
 }
-
 #navbar .brand-mark {
   width: 37px;
   height: 37px;
-
   display: grid;
   place-items: center;
-
   flex-shrink: 0;
-
   border-radius: 11px;
-
   background:
     linear-gradient(
       145deg,
       var(--nav-accent),
       var(--nav-accent-strong)
     );
-
   color: #ffffff;
-
   box-shadow:
     0 7px 20px rgba(0, 184, 255, 0.20);
 }
-
 #navbar .brand-mark i {
   font-size: 18px;
 }
-
 /* ============================================================
    ACCOUNT
 ============================================================ */
-
 #navbar .nav-account {
   display: flex;
   align-items: center;
-
   gap: 7px;
-
   width: 100%;
-
   padding: 9px;
-
   margin-bottom: 15px;
-
   background: var(--nav-surface);
-
   border: 1px solid var(--nav-border);
   border-radius: 15px;
-
   flex-shrink: 0;
 }
-
-/* Account clickable area */
-
 #navbar .nav-account-info {
   min-width: 0;
   flex: 1;
-
   display: flex;
   align-items: center;
-
   gap: 9px;
-
   color: var(--nav-text);
   text-decoration: none;
 }
-
 #navbar .nav-account-info:hover {
   color: var(--nav-text);
 }
-
-/* Avatar */
-
+/* ============================================================
+   AVATAR
+============================================================ */
 #navbar .nav-avatar {
   width: 35px;
   height: 35px;
-
   display: grid;
   place-items: center;
-
   flex-shrink: 0;
-
   border-radius: 10px;
-
   background:
     linear-gradient(
       145deg,
       rgba(0, 234, 255, 0.14),
       rgba(0, 201, 139, 0.09)
     );
-
   border: 1px solid rgba(0, 184, 255, 0.14);
-
-  color: var(--nav-accent);
+  color: #06b6d4;
 }
-
-#navbar .nav-avatar i {
+#navbar .nav-avatar > i {
   font-size: 14px;
+  color: #06b6d4;
 }
-
-/* Name */
-
+/* ============================================================
+   ACCOUNT NAME
+============================================================ */
 #navbar .nav-name {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
-
   line-height: 1.2;
 }
-
 #navbar .nav-name b {
   display: block;
-
   max-width: 105px;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-
   color: var(--nav-text);
-
   font-size: 12px;
   font-weight: 750;
 }
-
 #navbar .nav-name small {
   display: block;
-
   margin-top: 3px;
-
   color: var(--nav-muted);
-
   font-size: 9.5px;
   font-weight: 500;
-
   white-space: nowrap;
 }
-
 /* ============================================================
    BALANCE
 ============================================================ */
-
 #navbar .nav-balance {
   display: block;
-
   max-width: 82px;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-
   padding: 5px 6px;
-
   border-radius: 7px;
-
   background: rgba(0, 201, 139, 0.08);
-
   color: var(--nav-green);
-
   font-size: 9.5px;
   font-weight: 750;
-
   line-height: 1.2;
-
   text-align: right;
-
   flex-shrink: 1;
 }
-
 /* ============================================================
    THEME BUTTON
 ============================================================ */
-
 #navbar .nav-theme {
   width: 31px;
   height: 31px;
-
   display: grid;
   place-items: center;
-
   flex-shrink: 0;
-
   padding: 0;
-
   border: 1px solid var(--nav-border);
   border-radius: 9px;
-
   background: transparent;
-
   color: var(--nav-muted);
-
   cursor: pointer;
-
   transition:
     background-color var(--nav-ease),
     color var(--nav-ease),
     border-color var(--nav-ease),
     transform var(--nav-ease);
 }
-
+#navbar .nav-theme > i {
+  color: #8b5cf6;
+  font-size: 13px;
+  transition:
+    color var(--nav-ease),
+    transform var(--nav-ease);
+}
 #navbar .nav-theme:hover {
-  color: var(--nav-accent);
-
   background: var(--nav-hover);
-
-  border-color: rgba(0, 184, 255, 0.20);
-
+  border-color: rgba(139, 92, 246, 0.20);
   transform: translateY(-1px);
 }
-
-#navbar .nav-theme:active {
-  transform: scale(0.94);
+#navbar .nav-theme:hover > i {
+  color: #ec4899;
+  transform: rotate(18deg) scale(1.08);
 }
-
 /* ============================================================
    NAVIGATION
 ============================================================ */
-
 #navbar .nav-links {
   display: flex;
   flex-direction: column;
-
   gap: 16px;
-
   width: 100%;
-
   flex: 1;
 }
-
 /* ============================================================
    GROUP
 ============================================================ */
-
 #navbar .nav-group {
   display: flex;
   flex-direction: column;
-
   gap: 2px;
-
   width: 100%;
 }
-
 #navbar .nav-group-title {
   display: block;
-
   padding: 0 9px;
-
   margin-bottom: 5px;
-
   color: var(--nav-muted);
-
   font-size: 8.5px;
   font-weight: 800;
-
   letter-spacing: 0.85px;
-
   line-height: 1.4;
-
   text-transform: uppercase;
 }
-
 /* ============================================================
    NAV LINK
 ============================================================ */
-
 #navbar .nav-link {
   position: relative;
-
   display: flex;
   align-items: center;
-
   width: 100%;
   min-height: 39px;
-
   gap: 10px;
-
   padding: 8px 10px;
-
   border-radius: 10px;
-
   color: var(--nav-muted);
-
   text-decoration: none;
-
   font-size: 11.5px;
   font-weight: 650;
-
   line-height: 1;
-
   transition:
     background-color var(--nav-ease),
     color var(--nav-ease),
     transform var(--nav-ease);
 }
-
-#navbar .nav-link i {
+/* ============================================================
+   MAIN ICON
+   KHUSUS .nav-main-icon
+============================================================ */
+#navbar .nav-link > .nav-main-icon {
   width: 18px;
-
+  min-width: 18px;
   flex: 0 0 18px;
-
-  color: currentColor;
-
   font-size: 13px;
-
   text-align: center;
-
   transition:
     color var(--nav-ease),
-    transform var(--nav-ease);
+    transform var(--nav-ease),
+    filter var(--nav-ease);
 }
-
-#navbar .nav-link span {
+/* ============================================================
+   MENU LABEL
+============================================================ */
+#navbar .nav-link > .nav-label {
   min-width: 0;
-
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
+/* ============================================================
+   🌈 USER ICON COLORS
+============================================================ */
+#navbar .nav-main-icon.fa-house {
+  color: #3b82f6;
+}
+#navbar .nav-main-icon.fa-store {
+  color: #8b5cf6;
+}
+#navbar .nav-main-icon.fa-paperclip {
+  color: #06b6d4;
+}
+#navbar .nav-main-icon.fa-link {
+  color: #14b8a6;
+}
+#navbar .nav-main-icon.fa-bag-shopping {
+  color: #f97316;
+}
+#navbar .nav-main-icon.fa-wallet {
+  color: #10b981;
+}
+#navbar .nav-main-icon.fa-money-bill-transfer {
+  color: #22c55e;
+}
+#navbar .nav-main-icon.fa-arrow-right-arrow-left {
+  color: #6366f1;
+}
+#navbar .nav-main-icon.fa-crown {
+  color: #f59e0b;
+}
+#navbar .nav-main-icon.fa-gem {
+  color: #ec4899;
+}
+#navbar .nav-main-icon.fa-bell {
+  color: #f43f5e;
+}
+#navbar .nav-main-icon.fa-user {
+  color: #0ea5e9;
+}
+#navbar .nav-main-icon.fa-gear {
+  color: #64748b;
+}
+/* ============================================================
+   🌈 ADMIN ICON COLORS
+============================================================ */
+#navbar .nav-main-icon.fa-chart-pie {
+  color: #6366f1;
+}
+#navbar .nav-main-icon.fa-users {
+  color: #06b6d4;
+}
+#navbar .nav-main-icon.fa-box {
+  color: #8b5cf6;
+}
+#navbar .nav-main-icon.fa-receipt {
+  color: #f59e0b;
+}
+#navbar .nav-main-icon.fa-credit-card {
+  color: #10b981;
+}
+#navbar .nav-main-icon.fa-robot {
+  color: #ec4899;
+}
+#navbar .nav-main-icon.fa-list {
+  color: #64748b;
+}
+/* ============================================================
+   HOVER
+   TIDAK MENIMPA WARNA ICON
+============================================================ */
 #navbar .nav-link:hover {
   color: var(--nav-text);
-
   background: var(--nav-hover);
-
   transform: translateX(2px);
 }
-
-#navbar .nav-link:hover i {
-  color: var(--nav-accent);
-
-  transform: scale(1.05);
+#navbar .nav-link:hover > .nav-main-icon {
+  transform: scale(1.10);
+  filter:
+    saturate(1.12)
+    brightness(1.08);
 }
-
 /* ============================================================
-   ACTIVE LINK
+   ACTIVE
+   ICON TETAP WARNA-WARNI
 ============================================================ */
-
 #navbar .nav-link.active {
   color: var(--nav-accent);
-
   background:
     linear-gradient(
       90deg,
@@ -513,409 +440,460 @@ html[data-theme="dark"] {
       transparent
     );
 }
-
 #navbar .nav-link.active::before {
   content: "";
-
   position: absolute;
-
   left: 0;
   top: 7px;
   bottom: 7px;
-
   width: 3px;
-
   border-radius: 0 5px 5px 0;
-
   background: var(--nav-accent);
-
   box-shadow:
     0 0 9px rgba(0, 234, 255, 0.42);
 }
-
-#navbar .nav-link.active i {
-  color: var(--nav-accent);
+#navbar .nav-link.active > .nav-main-icon {
+  filter:
+    saturate(1.10)
+    brightness(1.06);
 }
-
+/* ============================================================
+   BADGE
+============================================================ */
+#navbar .nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .15px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+/* ============================================================
+   BADGE TEXT
+============================================================ */
+#navbar .nav-badge-text {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1;
+}
+/* ============================================================
+   BADGE ICON
+============================================================ */
+#navbar .nav-badge > .nav-badge-icon {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  font-size: 7px;
+  line-height: 1;
+  text-align: center;
+  transform: none;
+}
+/* ============================================================
+   🔥 HOT
+============================================================ */
+#navbar .nav-badge.nav-hot {
+  color: #a16207;
+  background:
+    linear-gradient(
+      135deg,
+      #fff8dc,
+      #ffe9a8
+    );
+  border-color:
+    rgba(245, 158, 11, .25);
+  box-shadow:
+    0 3px 9px rgba(245, 158, 11, .14);
+}
+#navbar .nav-badge.nav-hot > .nav-badge-icon {
+  color: #f59e0b;
+}
+/* ============================================================
+   ✨ NEW
+============================================================ */
+#navbar .nav-badge.nav-new {
+  color: #047857;
+  background:
+    linear-gradient(
+      135deg,
+      #effdf7,
+      #c9f6df
+    );
+  border-color:
+    rgba(16, 185, 129, .22);
+  box-shadow:
+    0 3px 9px rgba(16, 185, 129, .13);
+}
+#navbar .nav-badge.nav-new > .nav-badge-icon {
+  color: #10b981;
+}
+/* ============================================================
+   💗 TREND
+============================================================ */
+#navbar .nav-badge.nav-trend {
+  color: #be185d;
+  background:
+    linear-gradient(
+      135deg,
+      #fff2f8 0%,
+      #ffd5e6 55%,
+      #fbcfe8 100%
+    );
+  border-color:
+    rgba(236, 72, 153, .30);
+  box-shadow:
+    0 3px 12px rgba(236, 72, 153, .18);
+  animation:
+    navTrendPulse 2.2s ease-in-out infinite;
+}
+#navbar .nav-badge.nav-trend > .nav-badge-icon {
+  color: #ec4899;
+  text-shadow:
+    0 0 6px rgba(236, 72, 153, .28);
+}
+/* ============================================================
+   BADGE HOVER
+============================================================ */
+#navbar .nav-link:hover .nav-badge {
+  transform: translateY(-1px);
+}
+#navbar .nav-link:hover .nav-badge.nav-hot {
+  box-shadow:
+    0 5px 14px rgba(245, 158, 11, .22);
+}
+#navbar .nav-link:hover .nav-badge.nav-new {
+  box-shadow:
+    0 5px 14px rgba(16, 185, 129, .20);
+}
+#navbar .nav-link:hover .nav-badge.nav-trend {
+  box-shadow:
+    0 5px 17px rgba(236, 72, 153, .28);
+}
+/* ============================================================
+   TREND ANIMATION
+============================================================ */
+@keyframes navTrendPulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+}
 /* ============================================================
    SOCIAL
 ============================================================ */
-
 #navbar .nav-extra {
   display: flex;
   flex-direction: column;
-
   gap: 2px;
-
   width: 100%;
-
   margin-top: 14px;
   padding-top: 13px;
-
   border-top: 1px solid var(--nav-border);
-
   flex-shrink: 0;
 }
-
 #navbar .nav-extra:empty {
   display: none;
 }
-
 #navbar .nav-extra small {
   display: block;
-
   padding: 0 9px;
-
   margin-bottom: 4px;
-
   color: var(--nav-muted);
-
   font-size: 8.5px;
   font-weight: 800;
-
-  letter-spacing: 0.8px;
-
+  letter-spacing: .8px;
   text-transform: uppercase;
 }
-
 #navbar .nav-extra a {
   display: flex;
   align-items: center;
-
   gap: 9px;
-
   width: 100%;
   min-height: 34px;
-
   padding: 7px 9px;
-
   border-radius: 9px;
-
   color: var(--nav-muted);
-
   text-decoration: none;
-
   font-size: 10.5px;
   font-weight: 600;
-
   transition:
     background-color var(--nav-ease),
     color var(--nav-ease),
     transform var(--nav-ease);
 }
-
-#navbar .nav-extra a i {
+#navbar .nav-extra a > i {
   width: 17px;
-
   flex: 0 0 17px;
-
   font-size: 12px;
-
   text-align: center;
+  transition:
+    transform 180ms ease,
+    color 180ms ease;
 }
-
+#navbar .nav-extra a:nth-of-type(1) > i {
+  color: #229ed9;
+}
+#navbar .nav-extra a:nth-of-type(2) > i {
+  color: #1877f2;
+}
+#navbar .nav-extra a:nth-of-type(3) > i {
+  color: #ff0050;
+}
+#navbar .nav-extra a:nth-of-type(4) > i {
+  color: #25d366;
+}
+#navbar .nav-extra a:nth-of-type(5) > i {
+  color: #8b5cf6;
+}
 #navbar .nav-extra a:hover {
   color: var(--nav-text);
-
   background: var(--nav-hover);
-
   transform: translateX(2px);
 }
-
-#navbar .nav-extra a:hover i {
-  color: var(--nav-accent);
+#navbar .nav-extra a:hover > i {
+  transform: scale(1.10);
 }
-
 /* ============================================================
    LOGOUT
 ============================================================ */
-
 #navbar .nav-tools {
   width: 100%;
-
   margin-top: 9px;
   padding-top: 11px;
-
   border-top: 1px solid var(--nav-border);
-
   flex-shrink: 0;
 }
-
 #navbar .nav-logout {
   width: 100%;
   min-height: 39px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 8px;
-
   padding: 8px 10px;
-
-  border: 1px solid rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, .12);
   border-radius: 10px;
-
   background: transparent;
-
   color: #ef5b63;
-
   font: inherit;
   font-size: 10.5px;
   font-weight: 700;
-
   cursor: pointer;
-
   transition:
     background-color var(--nav-ease),
     border-color var(--nav-ease),
     transform var(--nav-ease);
 }
-
+#navbar .nav-logout > i {
+  color: #f43f5e;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
 #navbar .nav-logout:hover {
-  background: rgba(239, 68, 68, 0.07);
-
-  border-color: rgba(239, 68, 68, 0.20);
-
+  background: rgba(239, 68, 68, .07);
+  border-color: rgba(239, 68, 68, .20);
   transform: translateY(-1px);
 }
-
+#navbar .nav-logout:hover > i {
+  color: #ef4444;
+  transform: translateX(2px);
+}
 #navbar .nav-logout:active {
-  transform: scale(0.98);
+  transform: scale(.98);
 }
-
 #navbar .nav-logout:disabled {
-  opacity: 0.55;
-
+  opacity: .55;
   cursor: wait;
-
-  transform: none;
 }
-
 /* ============================================================
    MOBILE TOGGLE
 ============================================================ */
-
 #navbar .nav-toggle {
   position: fixed;
-
   top: 13px;
   left: 13px;
-
   width: 43px;
   height: 43px;
-
   display: none;
   place-items: center;
-
   padding: 0;
-
   z-index: 1200;
-
   border: 1px solid var(--nav-border);
   border-radius: 12px;
-
   background: var(--nav-bg);
-
   color: var(--nav-text);
-
   box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.10);
-
+    0 8px 25px rgba(0, 0, 0, .10);
   cursor: pointer;
-
   transition:
     background-color var(--nav-ease),
     color var(--nav-ease),
     border-color var(--nav-ease),
     transform var(--nav-ease);
 }
-
-#navbar .nav-toggle i {
+#navbar .nav-toggle > i {
+  color: #06b6d4;
   font-size: 16px;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
 }
-
-#navbar .nav-toggle:hover {
-  color: var(--nav-accent);
-
-  border-color: rgba(0, 184, 255, 0.22);
+#navbar .nav-toggle:hover > i {
+  color: #8b5cf6;
+  transform: scale(1.08);
 }
-
-#navbar .nav-toggle:active {
-  transform: scale(0.93);
-}
-
 /* ============================================================
    BACKDROP
 ============================================================ */
-
 #navbar .nav-backdrop {
   position: fixed;
-
   inset: 0;
-
   z-index: 1050;
-
-  background: rgba(2, 6, 15, 0.55);
-
+  background: rgba(2, 6, 15, .55);
   opacity: 0;
   visibility: hidden;
-
   pointer-events: none;
-
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
-
   transition:
     opacity 180ms ease,
     visibility 180ms ease;
 }
-
 #navbar .nav-backdrop.show {
   opacity: 1;
-
   visibility: visible;
-
   pointer-events: auto;
 }
-
 /* ============================================================
    MOBILE
 ============================================================ */
-
 @media (max-width: 900px) {
-
   :root {
     --nav-width: min(285px, 86vw);
   }
-
   #navbar .navbar {
     width: var(--nav-width);
-
     transform: translateX(-105%);
   }
-
   #navbar .navbar.nav-open {
     transform: translateX(0);
   }
-
   #navbar .nav-toggle {
     display: grid;
   }
-
-  /*
-     Toggle tetap di atas sidebar
-     ketika menu terbuka.
-  */
-
   #navbar .navbar.nav-open ~ .nav-toggle {
     left: calc(var(--nav-width) - 56px);
-
     background: var(--nav-surface);
-
     color: var(--nav-text);
   }
-
   #navbar .nav-inner {
     padding:
       16px 13px
       calc(16px + env(safe-area-inset-bottom));
   }
-
   #navbar .nav-links {
     gap: 14px;
   }
-
   #navbar .nav-link {
     min-height: 42px;
-
     font-size: 12px;
   }
-
   #navbar .nav-group-title {
     font-size: 9px;
   }
 }
-
 /* ============================================================
    SMALL PHONE
 ============================================================ */
-
 @media (max-width: 480px) {
-
   :root {
     --nav-width: min(300px, 88vw);
   }
-
   #navbar .nav-toggle {
     top: 11px;
     left: 11px;
-
     width: 42px;
     height: 42px;
   }
-
   #navbar .navbar.nav-open ~ .nav-toggle {
     left: calc(var(--nav-width) - 54px);
   }
-
   #navbar .nav-inner {
     padding-left: 12px;
     padding-right: 12px;
   }
-
   #navbar .nav-account {
     padding: 8px;
   }
-
   #navbar .nav-name b {
     max-width: 125px;
   }
-
   #navbar .nav-balance {
     max-width: 85px;
   }
+  #navbar .nav-badge {
+    min-width: 37px;
+    height: 20px;
+    padding: 0 6px;
+    gap: 3px;
+    font-size: 7.5px;
+  }
+  #navbar .nav-badge > .nav-badge-icon {
+    font-size: 6.5px;
+  }
 }
-
 /* ============================================================
    VERY SMALL PHONE
 ============================================================ */
-
 @media (max-width: 360px) {
-
   :root {
     --nav-width: 90vw;
   }
-
   #navbar .nav-account {
     gap: 5px;
   }
-
   #navbar .nav-avatar {
     width: 33px;
     height: 33px;
   }
-
   #navbar .nav-name b {
     max-width: 95px;
   }
-
   #navbar .nav-balance {
     max-width: 72px;
-
     font-size: 9px;
   }
-
   #navbar .nav-theme {
     width: 29px;
     height: 29px;
   }
 }
-
 /* ============================================================
    FOCUS
 ============================================================ */
-
 #navbar .brand:focus-visible,
 #navbar .nav-account-info:focus-visible,
 #navbar .nav-link:focus-visible,
@@ -926,45 +904,156 @@ html[data-theme="dark"] {
   outline: 2px solid var(--nav-accent);
   outline-offset: 2px;
 }
-
 /* ============================================================
-   MOBILE BODY LOCK
+   BODY LOCK
 ============================================================ */
-
 body.nav-menu-open {
   overflow: hidden;
 }
-
 /* ============================================================
    DARK MODE
 ============================================================ */
-
 html[data-theme="dark"] #navbar .brand-mark {
   box-shadow:
-    0 0 22px rgba(0, 234, 255, 0.20);
+    0 0 22px rgba(0, 234, 255, .20);
 }
-
 html[data-theme="dark"] #navbar .nav-account {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    inset 0 1px 0 rgba(255, 255, 255, .02);
 }
-
+/* ============================================================
+   DARK MODE — ICON COLORS
+============================================================ */
+html[data-theme="dark"] #navbar .nav-main-icon.fa-house {
+  color: #60a5fa;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-store {
+  color: #a78bfa;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-paperclip {
+  color: #22d3ee;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-link {
+  color: #2dd4bf;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-bag-shopping {
+  color: #fb923c;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-wallet {
+  color: #34d399;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-money-bill-transfer {
+  color: #4ade80;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-arrow-right-arrow-left {
+  color: #818cf8;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-crown {
+  color: #fbbf24;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-gem {
+  color: #f472b6;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-bell {
+  color: #fb7185;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-user {
+  color: #38bdf8;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-gear {
+  color: #94a3b8;
+}
+/* ============================================================
+   DARK MODE — ADMIN ICONS
+============================================================ */
+html[data-theme="dark"] #navbar .nav-main-icon.fa-chart-pie {
+  color: #818cf8;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-users {
+  color: #22d3ee;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-box {
+  color: #a78bfa;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-receipt {
+  color: #fbbf24;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-credit-card {
+  color: #34d399;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-robot {
+  color: #f472b6;
+}
+html[data-theme="dark"] #navbar .nav-main-icon.fa-list {
+  color: #94a3b8;
+}
+/* ============================================================
+   DARK MODE — BADGES
+============================================================ */
+html[data-theme="dark"] #navbar .nav-badge.nav-hot {
+  color: #fcd34d;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 158, 11, .20),
+      rgba(251, 191, 36, .09)
+    );
+  border-color:
+    rgba(251, 191, 36, .20);
+  box-shadow:
+    0 3px 11px rgba(245, 158, 11, .12);
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-hot > .nav-badge-icon {
+  color: #fbbf24;
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-new {
+  color: #6ee7b7;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(16, 185, 129, .20),
+      rgba(52, 211, 153, .08)
+    );
+  border-color:
+    rgba(52, 211, 153, .20);
+  box-shadow:
+    0 3px 11px rgba(16, 185, 129, .12);
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-new > .nav-badge-icon {
+  color: #34d399;
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-trend {
+  color: #f9a8d4;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(236, 72, 153, .22),
+      rgba(244, 63, 94, .11)
+    );
+  border-color:
+    rgba(244, 114, 182, .30);
+  box-shadow:
+    0 3px 13px rgba(236, 72, 153, .18);
+}
+html[data-theme="dark"] #navbar .nav-badge.nav-trend > .nav-badge-icon {
+  color: #f472b6;
+  text-shadow:
+    0 0 8px rgba(244, 114, 182, .38);
+}
 /* ============================================================
    REDUCED MOTION
 ============================================================ */
-
 @media (prefers-reduced-motion: reduce) {
-
-  #navbar .navbar,
-  #navbar .nav-backdrop,
   #navbar .nav-link,
-  #navbar .nav-extra a,
+  #navbar .nav-main-icon,
+  #navbar .nav-badge,
   #navbar .nav-theme,
+  #navbar .nav-toggle,
   #navbar .nav-logout,
-  #navbar .nav-toggle {
-    transition: none !important;
+  #navbar .nav-extra a {
+    transition: none;
+  }
+  #navbar .nav-badge.nav-trend {
+    animation: none;
   }
 }
-
-.nav-badge{font-style:normal;font-size:8px!important;line-height:1;padding:3px 5px;border-radius:999px;margin-left:auto;display:inline-flex;align-items:center;gap:3px}.nav-hot{background:#fff2b8;color:#d79a00}.nav-new{background:#dff9ea;color:#149b59}
-\n.nav-badge.nav-trend{color:#fff;background:#ff1f3d;box-shadow:0 0 12px rgba(255,31,61,.75);animation:navTrendPulse 1.3s infinite}.nav-badge.nav-trend i{color:#fff}@keyframes navTrendPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35);transform:scale(1.03)}}\n
