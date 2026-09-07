@@ -1,7 +1,401 @@
 <!DOCTYPE html>
-<html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Product</title><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script>
-<script src="/js/debug-panel.js"></script><script src="/js/auth.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
-  <link rel="stylesheet" href="css/footer.css?v=20260905"><link rel="stylesheet" href="css/public-view.css?v=20260905"><script src="js/public-view.js?v=20260905"></script><link rel="stylesheet" href="css/product.css?v=20260905-channelfix">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
-</head><body class="app-page"><div id="publicNavbar"></div><main><section class="section"><div class="container"><span class="badge"><i class="fa-solid fa-cube"></i> Product</span><h1>Product</h1><p class="muted">Detail produk dan akses.</p><div class="card" id="content"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div></div></div></section></main><div id="toast"></div><script src="js/product.js?v=20260905-channelfix"></script><script src="js/footer.js?v=20260904"></script></body></html>
+<html lang="id">
+<head>
+    <script src="js/theme-preload.js"></script>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <meta
+        name="description"
+        content="Detail produk dan akses PasTele."
+    >
+
+    <meta name="theme-color" content="#ffffff">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <title>Product — PasTele</title>
+
+    <!-- =====================================================
+         SUPABASE
+         ===================================================== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="/js/config.js?v=20260908"></script>
+    <script src="/js/supabase.js?v=20260908"></script>
+
+    <!-- =====================================================
+         CORE
+         ===================================================== -->
+    <script src="/js/debug-panel.js"></script>
+    <script src="/js/auth.js"></script>
+
+    <!-- =====================================================
+         ICONS
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+    <!-- =====================================================
+         GLOBAL STYLES
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/app.css?v=20260908"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/navbar.css?v=20260908"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/footer.css?v=20260908"
+    >
+
+    <!-- =====================================================
+         PUBLIC VIEW
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/public-view.css?v=20260908"
+    >
+
+    <script src="js/public-view.js?v=20260908"></script>
+
+    <!-- =====================================================
+         PRODUCT
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/product.css?v=20260908"
+    >
+
+    <!-- =====================================================
+         FINAL SAAS POLISH
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/saas-final.css?v=20260908"
+    >
+</head>
+
+<body class="app-page product-page">
+
+    <!-- =====================================================
+         PUBLIC NAVBAR
+         ===================================================== -->
+    <div id="publicNavbar"></div>
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+    <main id="main-content">
+
+        <section class="section product-section">
+
+            <div class="container product-container">
+
+                <!-- =================================================
+                     PRODUCT HEADER
+                     ================================================= -->
+                <header class="product-page-header">
+
+                    <div class="product-badge badge">
+                        <i
+                            class="fa-solid fa-cube"
+                            aria-hidden="true"
+                        ></i>
+
+                        <span>Product</span>
+                    </div>
+
+                    <h1 class="product-page-title">
+                        Product
+                    </h1>
+
+                    <p class="muted product-page-subtitle">
+                        Detail produk dan akses.
+                    </p>
+
+                </header>
+
+
+                <!-- =================================================
+                     PRODUCT CONTENT
+                     ================================================= -->
+                <div
+                    class="card product-content-card"
+                    id="content"
+                    aria-live="polite"
+                    aria-busy="true"
+                >
+
+                    <div class="empty product-loading">
+
+                        <i
+                            class="fa-solid fa-spinner fa-spin"
+                            aria-hidden="true"
+                        ></i>
+
+                        <span>
+                            Memuat data produk...
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SOCIAL / ENGAGEMENT
+                     Like + Comment untuk semua pengunjung
+                     ================================================= -->
+                <section
+                    class="product-engagement"
+                    id="productEngagement"
+                    aria-label="Interaksi produk"
+                >
+
+                    <!-- =============================================
+                         LIKE BAR
+                         ============================================= -->
+                    <div class="product-social-bar">
+
+                        <button
+                            type="button"
+                            class="product-like-button"
+                            id="productLikeBtn"
+                            aria-label="Sukai produk"
+                            aria-pressed="false"
+                        >
+
+                            <i
+                                class="fa-regular fa-heart"
+                                id="productLikeIcon"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span
+                                class="product-like-label"
+                                id="productLikeLabel"
+                            >
+                                Suka
+                            </span>
+
+                            <span
+                                class="product-like-count"
+                                id="productLikeCount"
+                            >
+                                0
+                            </span>
+
+                        </button>
+
+
+                        <div class="product-comment-summary">
+
+                            <i
+                                class="fa-regular fa-comment"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span id="productCommentCount">
+                                0
+                            </span>
+
+                            <span>
+                                Komentar
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         COMMENTS
+                         ============================================= -->
+                    <div
+                        class="product-comments card"
+                        id="productComments"
+                    >
+
+                        <div class="product-comments-header">
+
+                            <div>
+                                <span class="product-comments-badge">
+                                    <i
+                                        class="fa-regular fa-comments"
+                                        aria-hidden="true"
+                                    ></i>
+
+                                    Komentar
+                                </span>
+
+                                <h2>
+                                    Apa pendapat kamu?
+                                </h2>
+
+                                <p class="muted">
+                                    Siapa pun bisa memberikan komentar.
+                                    Tidak perlu login.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <!-- =========================================
+                             COMMENT FORM
+                             ========================================= -->
+                        <form
+                            id="productCommentForm"
+                            class="product-comment-form"
+                            autocomplete="off"
+                        >
+
+                            <div class="product-comment-field">
+
+                                <label for="commentName">
+                                    Nama
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="commentName"
+                                    name="name"
+                                    maxlength="50"
+                                    placeholder="Nama kamu"
+                                    autocomplete="name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="product-comment-field">
+
+                                <label for="commentText">
+                                    Komentar
+                                </label>
+
+                                <textarea
+                                    id="commentText"
+                                    name="comment"
+                                    rows="4"
+                                    maxlength="500"
+                                    placeholder="Tulis komentar kamu..."
+                                    required
+                                ></textarea>
+
+                                <div class="product-comment-counter">
+                                    <span id="commentCharCount">
+                                        0
+                                    </span>
+                                    / 500
+                                </div>
+
+                            </div>
+
+
+                            <div class="product-comment-actions">
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary"
+                                    id="productCommentSubmit"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-paper-plane"
+                                        aria-hidden="true"
+                                    ></i>
+
+                                    <span>
+                                        Kirim Komentar
+                                    </span>
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+
+                        <!-- =========================================
+                             COMMENT LIST
+                             ========================================= -->
+                        <div
+                            class="product-comment-list"
+                            id="productCommentList"
+                            aria-live="polite"
+                        >
+
+                            <div
+                                class="product-comments-loading"
+                                id="productCommentsLoading"
+                            >
+
+                                <i
+                                    class="fa-solid fa-spinner fa-spin"
+                                    aria-hidden="true"
+                                ></i>
+
+                                <span>
+                                    Memuat komentar...
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         TOAST
+         ===================================================== -->
+    <div
+        id="toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+
+    <!-- =====================================================
+         PRODUCT SCRIPT
+         ===================================================== -->
+    <script src="js/product.js?v=20260908"></script>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+    <script src="js/footer.js?v=20260908"></script>
+
+</body>
+</html>
