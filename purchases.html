@@ -1,7 +1,710 @@
 <!DOCTYPE html>
-<html lang="id"><head><script src="js/theme-preload.js"></script><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Purchases</title><script src="/js/config.js?v=20260831"></script><script src="/js/supabase.js?v=20260831"></script>
-<script src="/js/debug-panel.js"></script><script src="/js/auth.js"></script><script src="/js/navbar.js?v=20260906-final"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
-  <link rel="stylesheet" href="css/footer.css?v=20260905"><link rel="stylesheet" href="css/purchases.css?v=20260904"><link rel="stylesheet" href="css/final-polish.css?v=20260906-final">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
-</head><body class="app-page"><div id="navbar"></div><main><section class="section"><div class="container"><span class="badge"><i class="fa-solid fa-cart-shopping"></i> Purchases</span><h1>Purchases</h1><p class="muted">Riwayat pembelian dan akses produk.</p><div class="card" id="content"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div></div></div></section></main><div id="toast"></div><script src="js/purchases.js?v=20260904"></script><script src="js/footer.js?v=20260904"></script></body></html>
+<html lang="id">
+
+<head>
+
+  <!-- =====================================================
+       THEME PRELOAD
+       ===================================================== -->
+  <script src="js/theme-preload.js"></script>
+
+
+  <!-- =====================================================
+       META
+       ===================================================== -->
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="description"
+    content="Kelola riwayat pembelian, status transaksi, dan akses produk kamu di PasTele."
+  >
+
+  <meta
+    name="theme-color"
+    content="#ffffff"
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+
+  <!-- =====================================================
+       FONTS
+       ===================================================== -->
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+  <title>Purchases — PasTele</title>
+
+
+  <!-- =====================================================
+       CORE
+       ===================================================== -->
+  <script src="/js/config.js?v=20260908"></script>
+
+  <script src="/js/supabase.js?v=20260908"></script>
+
+  <script src="/js/debug-panel.js?v=20260908"></script>
+
+  <script src="/js/auth.js?v=20260908"></script>
+
+  <script src="/js/navbar.js?v=20260908"></script>
+
+
+  <!-- =====================================================
+       ICONS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+
+
+  <!-- =====================================================
+       GLOBAL CSS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/footer.css?v=20260908"
+  >
+
+
+  <!-- =====================================================
+       PAGE CSS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/purchases.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/final-polish.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/saas-final.css?v=20260908"
+  >
+
+</head>
+
+
+<body class="app-page purchases-page">
+
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+  <div id="navbar"></div>
+
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+  <main
+    id="main-content"
+    class="purchases-main"
+  >
+
+    <section
+      class="section purchases-section"
+      aria-labelledby="purchasesTitle"
+    >
+
+      <div class="container purchases-container">
+
+
+        <!-- =================================================
+             PAGE HEADER
+             ================================================= -->
+        <header class="purchases-header">
+
+          <div class="purchases-header-main">
+
+            <div
+              class="purchases-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+
+
+            <div class="purchases-heading">
+
+              <span class="purchases-eyebrow">
+
+                <i
+                  class="fa-solid fa-receipt"
+                  aria-hidden="true"
+                ></i>
+
+                MY ACCOUNT
+
+              </span>
+
+
+              <h1 id="purchasesTitle">
+                Purchases
+              </h1>
+
+
+              <p>
+                Riwayat pembelian dan akses produk kamu.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <!-- ===============================================
+               HEADER ACTIONS
+               =============================================== -->
+          <div class="purchases-header-actions">
+
+            <button
+              type="button"
+              class="purchases-action-btn"
+              id="refreshPurchases"
+              title="Refresh pembelian"
+              aria-label="Refresh pembelian"
+            >
+
+              <i
+                class="fa-solid fa-rotate"
+                aria-hidden="true"
+              ></i>
+
+              <span>
+                Refresh
+              </span>
+
+            </button>
+
+
+            <a
+              href="marketplace.html"
+              class="purchases-market-btn"
+              id="marketplaceBtn"
+            >
+
+              <i
+                class="fa-solid fa-store"
+                aria-hidden="true"
+              ></i>
+
+              <span>
+                Marketplace
+              </span>
+
+            </a>
+
+          </div>
+
+        </header>
+
+
+        <!-- =================================================
+             SUMMARY
+             ================================================= -->
+        <div
+          class="purchases-summary"
+          id="purchaseSummary"
+          aria-label="Ringkasan pembelian"
+        >
+
+
+          <!-- Total -->
+          <article class="purchase-stat-card">
+
+            <div class="purchase-stat-icon">
+              <i
+                class="fa-solid fa-bag-shopping"
+                aria-hidden="true"
+              ></i>
+            </div>
+
+            <div class="purchase-stat-content">
+
+              <span>
+                Total Pembelian
+              </span>
+
+              <strong id="totalPurchases">
+                —
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <!-- Success -->
+          <article class="purchase-stat-card">
+
+            <div class="purchase-stat-icon success">
+              <i
+                class="fa-solid fa-circle-check"
+                aria-hidden="true"
+              ></i>
+            </div>
+
+            <div class="purchase-stat-content">
+
+              <span>
+                Berhasil
+              </span>
+
+              <strong id="successfulPurchases">
+                —
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <!-- Pending -->
+          <article class="purchase-stat-card">
+
+            <div class="purchase-stat-icon pending">
+              <i
+                class="fa-solid fa-clock"
+                aria-hidden="true"
+              ></i>
+            </div>
+
+            <div class="purchase-stat-content">
+
+              <span>
+                Pending
+              </span>
+
+              <strong id="pendingPurchases">
+                —
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <!-- Spending -->
+          <article class="purchase-stat-card">
+
+            <div class="purchase-stat-icon money">
+              <i
+                class="fa-solid fa-wallet"
+                aria-hidden="true"
+              ></i>
+            </div>
+
+            <div class="purchase-stat-content">
+
+              <span>
+                Total Pengeluaran
+              </span>
+
+              <strong id="totalSpent">
+                —
+              </strong>
+
+            </div>
+
+          </article>
+
+        </div>
+
+
+        <!-- =================================================
+             TOOLBAR
+             ================================================= -->
+        <div class="purchases-toolbar">
+
+
+          <!-- Search -->
+          <div class="purchases-search">
+
+            <i
+              class="fa-solid fa-magnifying-glass"
+              aria-hidden="true"
+            ></i>
+
+            <input
+              type="search"
+              id="purchaseSearch"
+              name="purchaseSearch"
+              placeholder="Cari produk atau transaksi..."
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Cari pembelian"
+            >
+
+            <button
+              type="button"
+              id="clearPurchaseSearch"
+              class="search-clear"
+              aria-label="Hapus pencarian"
+              title="Hapus pencarian"
+              hidden
+            >
+
+              <i
+                class="fa-solid fa-xmark"
+                aria-hidden="true"
+              ></i>
+
+            </button>
+
+          </div>
+
+
+          <!-- Status -->
+          <div class="purchases-filter">
+
+            <label
+              for="purchaseStatus"
+              class="sr-only"
+            >
+              Filter status
+            </label>
+
+            <select
+              id="purchaseStatus"
+              name="purchaseStatus"
+              aria-label="Filter status pembelian"
+            >
+
+              <option value="all">
+                Semua Status
+              </option>
+
+              <option value="paid">
+                Berhasil
+              </option>
+
+              <option value="pending">
+                Pending
+              </option>
+
+              <option value="failed">
+                Gagal
+              </option>
+
+              <option value="cancelled">
+                Dibatalkan
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- Type -->
+          <div class="purchases-filter">
+
+            <label
+              for="purchaseType"
+              class="sr-only"
+            >
+              Filter jenis produk
+            </label>
+
+            <select
+              id="purchaseType"
+              name="purchaseType"
+              aria-label="Filter jenis produk"
+            >
+
+              <option value="all">
+                Semua Produk
+              </option>
+
+              <option value="link">
+                PasteLink
+              </option>
+
+              <option value="code">
+                Code
+              </option>
+
+              <option value="channel">
+                Channel
+              </option>
+
+              <option value="group">
+                Group
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- Sort -->
+          <div class="purchases-filter">
+
+            <label
+              for="purchaseSort"
+              class="sr-only"
+            >
+              Urutkan pembelian
+            </label>
+
+            <select
+              id="purchaseSort"
+              name="purchaseSort"
+              aria-label="Urutkan pembelian"
+            >
+
+              <option value="newest">
+                Terbaru
+              </option>
+
+              <option value="oldest">
+                Terlama
+              </option>
+
+              <option value="price-high">
+                Harga Tertinggi
+              </option>
+
+              <option value="price-low">
+                Harga Terendah
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- Reset -->
+          <button
+            type="button"
+            class="purchases-reset-btn"
+            id="resetPurchaseFilters"
+            title="Reset filter"
+          >
+
+            <i
+              class="fa-solid fa-filter-circle-xmark"
+              aria-hidden="true"
+            ></i>
+
+            <span>
+              Reset
+            </span>
+
+          </button>
+
+        </div>
+
+
+        <!-- =================================================
+             RESULT BAR
+             ================================================= -->
+        <div
+          class="purchases-result-bar"
+          id="purchaseResultBar"
+        >
+
+          <div class="purchases-result-info">
+
+            <i
+              class="fa-solid fa-layer-group"
+              aria-hidden="true"
+            ></i>
+
+            <span id="purchaseResultText">
+              Menampilkan pembelian
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PURCHASE CONTENT
+             ================================================= -->
+        <div
+          class="purchases-card card"
+          id="content"
+          aria-live="polite"
+          aria-busy="true"
+        >
+
+          <div class="purchases-loading">
+
+            <div
+              class="purchases-loading-icon"
+              aria-hidden="true"
+            >
+
+              <i class="fa-solid fa-spinner fa-spin"></i>
+
+            </div>
+
+
+            <div class="purchases-loading-text">
+
+              <strong>
+                Memuat pembelian
+              </strong>
+
+              <span>
+                Sedang mengambil riwayat pembelian kamu...
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PAGINATION
+             ================================================= -->
+        <nav
+          class="purchase-pagination"
+          id="purchasePagination"
+          aria-label="Halaman pembelian"
+        ></nav>
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+             ================================================= -->
+        <section
+          class="purchases-quick-actions"
+          aria-label="Aksi cepat"
+        >
+
+          <a
+            href="marketplace.html"
+            class="purchase-quick-card"
+          >
+
+            <span class="purchase-quick-icon">
+              <i
+                class="fa-solid fa-store"
+                aria-hidden="true"
+              ></i>
+            </span>
+
+            <span class="purchase-quick-content">
+
+              <strong>
+                Jelajahi Marketplace
+              </strong>
+
+              <small>
+                Temukan produk dan konten menarik.
+              </small>
+
+            </span>
+
+            <i
+              class="fa-solid fa-chevron-right purchase-quick-arrow"
+              aria-hidden="true"
+            ></i>
+
+          </a>
+
+
+          <a
+            href="my-products.html"
+            class="purchase-quick-card"
+          >
+
+            <span class="purchase-quick-icon">
+              <i
+                class="fa-solid fa-box-open"
+                aria-hidden="true"
+              ></i>
+            </span>
+
+            <span class="purchase-quick-content">
+
+              <strong>
+                Produk Saya
+              </strong>
+
+              <small>
+                Kelola produk yang kamu buat.
+              </small>
+
+            </span>
+
+            <i
+              class="fa-solid fa-chevron-right purchase-quick-arrow"
+              aria-hidden="true"
+            ></i>
+
+          </a>
+
+        </section>
+
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =====================================================
+       PAGE SCRIPTS
+       ===================================================== -->
+  <script src="js/purchases.js?v=20260908"></script>
+
+  <script src="js/footer.js?v=20260908"></script>
+
+</body>
+
+</html>
