@@ -4,6 +4,7 @@
   <script src="js/theme-preload.js"></script>
 
   <meta charset="utf-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -14,10 +15,22 @@
     content="Buat dan publikasikan produk kamu ke Marketplace PasTele."
   >
 
-  <meta name="theme-color" content="#ffffff">
+  <meta
+    name="theme-color"
+    content="#ffffff"
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -43,17 +56,40 @@
   <!-- =====================================================
        GLOBAL STYLES
        ===================================================== -->
-  <link rel="stylesheet" href="css/app.css?v=20260908">
-  <link rel="stylesheet" href="css/navbar.css?v=20260908">
-  <link rel="stylesheet" href="css/footer.css?v=20260908">
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/footer.css?v=20260908"
+  >
 
   <!-- =====================================================
        PAGE STYLES
        ===================================================== -->
-  <link rel="stylesheet" href="css/create-product.css?v=20260908">
-  <link rel="stylesheet" href="css/final-polish.css?v=20260908">
-  <link rel="stylesheet" href="css/saas-final.css?v=20260908">
+  <link
+    rel="stylesheet"
+    href="css/create-product.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/final-polish.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/saas-final.css?v=20260908"
+  >
 </head>
+
 
 <body class="app-page create-product-page">
 
@@ -62,12 +98,19 @@
        ===================================================== -->
   <div id="navbar"></div>
 
+
   <!-- =====================================================
        MAIN
        ===================================================== -->
-  <main class="create-main">
+  <main
+    class="create-main"
+    id="main-content"
+  >
 
-    <section class="create-section">
+    <section
+      class="create-section"
+      aria-labelledby="createTitle"
+    >
 
       <div class="create-container">
 
@@ -88,11 +131,17 @@
             <div class="create-heading">
 
               <span class="create-eyebrow">
-                <i class="fa-solid fa-store"></i>
+                <i
+                  class="fa-solid fa-store"
+                  aria-hidden="true"
+                ></i>
+
                 MARKETPLACE
               </span>
 
-              <h1>Create Product</h1>
+              <h1 id="createTitle">
+                Create Product
+              </h1>
 
               <p>
                 Buat dan publikasikan produk kamu ke Marketplace PasTele.
@@ -102,13 +151,20 @@
 
           </div>
 
+
           <a
             class="back-btn"
             href="my-products.html"
             aria-label="Kembali ke My Products"
           >
-            <i class="fa-solid fa-box-open"></i>
-            <span>My Products</span>
+            <i
+              class="fa-solid fa-box-open"
+              aria-hidden="true"
+            ></i>
+
+            <span>
+              My Products
+            </span>
           </a>
 
         </header>
@@ -121,6 +177,7 @@
           class="create-layout"
           id="f"
           novalidate
+          autocomplete="off"
         >
 
           <!-- =================================================
@@ -128,7 +185,9 @@
                ================================================= -->
           <div class="create-form-panel">
 
-            <!-- PANEL HEADER -->
+            <!-- =================================================
+                 PANEL HEADER
+                 ================================================= -->
             <div class="panel-heading">
 
               <div>
@@ -137,7 +196,9 @@
                   PRODUCT INFORMATION
                 </span>
 
-                <h2>Informasi Produk</h2>
+                <h2>
+                  Informasi Produk
+                </h2>
 
                 <p>
                   Lengkapi informasi dasar produk yang akan
@@ -260,12 +321,32 @@
                     name="type"
                     required
                   >
-                    <option value="link">Link</option>
-                    <option value="paste">Paste</option>
-                    <option value="pastelink">Paste Link</option>
-                    <option value="code">Code</option>
-                    <option value="channel">Channel</option>
-                    <option value="group">Group</option>
+                    <option value="link">
+                      Link
+                    </option>
+
+                    <option value="paste">
+                      Paste
+                    </option>
+
+                    <option
+                      value="pastelink"
+                      selected
+                    >
+                      Paste Link
+                    </option>
+
+                    <option value="code">
+                      Code
+                    </option>
+
+                    <option value="channel">
+                      Channel
+                    </option>
+
+                    <option value="group">
+                      Group
+                    </option>
                   </select>
 
                 </div>
@@ -294,11 +375,53 @@
                     name="access"
                     required
                   >
-                    <option value="free">Free</option>
-                    <option value="paid">Paid</option>
+                    <option
+                      value="free"
+                      selected
+                    >
+                      Free
+                    </option>
+
+                    <option value="paid">
+                      Paid
+                    </option>
                   </select>
 
                 </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 GUEST ACCESS INFO
+                 ================================================= -->
+            <div
+              class="create-access-info"
+              id="guestAccessInfo"
+              role="status"
+              aria-live="polite"
+            >
+
+              <div
+                class="create-access-info-icon"
+                aria-hidden="true"
+              >
+                <i class="fa-solid fa-circle-info"></i>
+              </div>
+
+              <div>
+
+                <strong>
+                  Mode Guest
+                </strong>
+
+                <span>
+                  Guest hanya dapat membuat
+                  <b>PasteLink Free</b>.
+                  Untuk fitur lainnya, silakan masuk atau daftar.
+                </span>
 
               </div>
 
@@ -311,11 +434,13 @@
             <div class="form-field price-field">
 
               <label for="price">
+
                 Harga
 
                 <span class="optional-label">
                   IDR
                 </span>
+
               </label>
 
               <div class="input-wrap">
@@ -354,11 +479,13 @@
             <div class="form-field">
 
               <label for="thumb">
+
                 Thumbnail URL
 
                 <span class="optional-label">
                   Opsional
                 </span>
+
               </label>
 
               <div class="input-wrap">
@@ -395,6 +522,7 @@
                   src=""
                   alt="Preview thumbnail"
                   loading="lazy"
+                  decoding="async"
                   referrerpolicy="no-referrer"
                 >
 
@@ -421,11 +549,13 @@
             <div class="form-field">
 
               <label for="desc">
+
                 Deskripsi
 
                 <span class="optional-label">
                   Opsional
                 </span>
+
               </label>
 
               <div class="textarea-wrap">
@@ -640,7 +770,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-link"></i>
+                  <i
+                    class="fa-solid fa-link"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     <strong>PasteLink</strong>
@@ -651,7 +784,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-code"></i>
+                  <i
+                    class="fa-solid fa-code"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     <strong>Code</strong>
@@ -662,7 +798,10 @@
 
                 <li>
 
-                  <i class="fa-brands fa-telegram"></i>
+                  <i
+                    class="fa-brands fa-telegram"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     <strong>Channel</strong>
@@ -673,7 +812,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-users"></i>
+                  <i
+                    class="fa-solid fa-users"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     <strong>Group</strong>
@@ -720,7 +862,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-check"></i>
+                  <i
+                    class="fa-solid fa-check"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     Gunakan judul yang jelas dan menarik.
@@ -730,7 +875,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-check"></i>
+                  <i
+                    class="fa-solid fa-check"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     Gunakan slug sederhana dan mudah diingat.
@@ -740,7 +888,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-check"></i>
+                  <i
+                    class="fa-solid fa-check"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     Tambahkan deskripsi agar pembeli memahami produk.
@@ -750,7 +901,10 @@
 
                 <li>
 
-                  <i class="fa-solid fa-check"></i>
+                  <i
+                    class="fa-solid fa-check"
+                    aria-hidden="true"
+                  ></i>
 
                   <span>
                     Pastikan content delivery sudah benar.
@@ -780,8 +934,8 @@
                 </strong>
 
                 <span>
-                  Produk akan tersimpan di database PasTele
-                  menggunakan akun kamu.
+                  Produk akun akan tersimpan dengan aman
+                  di database PasTele.
                 </span>
 
               </div>
@@ -801,6 +955,122 @@
 
 
   <!-- =====================================================
+       AUTH REQUIRED MODAL
+       ===================================================== -->
+  <div
+    class="auth-required-modal"
+    id="authRequiredModal"
+    hidden
+    aria-hidden="true"
+  >
+
+    <div
+      class="auth-required-backdrop"
+      data-auth-close
+    ></div>
+
+
+    <div
+      class="auth-required-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="authRequiredTitle"
+      aria-describedby="authRequiredText"
+    >
+
+      <button
+        type="button"
+        class="auth-required-close"
+        id="authRequiredClose"
+        aria-label="Tutup"
+        data-auth-close
+      >
+        <i
+          class="fa-solid fa-xmark"
+          aria-hidden="true"
+        ></i>
+      </button>
+
+
+      <div
+        class="auth-required-icon"
+        aria-hidden="true"
+      >
+        <i class="fa-solid fa-lock"></i>
+      </div>
+
+
+      <div class="auth-required-content">
+
+        <span class="auth-required-kicker">
+          ACCOUNT REQUIRED
+        </span>
+
+        <h2 id="authRequiredTitle">
+          Masuk untuk melanjutkan
+        </h2>
+
+        <p id="authRequiredText">
+          Fitur ini membutuhkan akun PasTele.
+          Silakan masuk atau daftar terlebih dahulu
+          untuk menggunakan fitur tersebut.
+        </p>
+
+      </div>
+
+
+      <div class="auth-required-actions">
+
+        <a
+          href="login.html"
+          class="auth-required-login"
+          id="authLoginBtn"
+        >
+          <i
+            class="fa-solid fa-right-to-bracket"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Masuk
+          </span>
+        </a>
+
+
+        <a
+          href="register.html"
+          class="auth-required-register"
+          id="authRegisterBtn"
+        >
+          <i
+            class="fa-solid fa-user-plus"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Daftar
+          </span>
+        </a>
+
+      </div>
+
+
+      <p class="auth-required-note">
+        <i
+          class="fa-solid fa-shield-halved"
+          aria-hidden="true"
+        ></i>
+
+        Akun diperlukan untuk membuat produk berbayar
+        dan produk selain PasteLink.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
        TOAST
        ===================================================== -->
   <div
@@ -815,6 +1085,7 @@
        PAGE SCRIPTS
        ===================================================== -->
   <script src="js/create-product.js?v=20260908"></script>
+
   <script src="js/footer.js?v=20260908"></script>
 
 </body>
