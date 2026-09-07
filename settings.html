@@ -1,62 +1,297 @@
 <!doctype html>
 <html lang="id">
+
 <head>
   <script src="js/theme-preload.js"></script>
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
+  <meta
+    name="description"
+    content="Kelola profil, keamanan, pembayaran, tampilan, notifikasi, dan akun PasTele."
+  >
+
+  <meta
+    name="theme-color"
+    content="#ffffff"
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/config.js?v=20260831"></script>
-  <script src="/js/supabase.js?v=20260831"></script>
-  <script src="/js/auth.js"></script>
-  <script src="/js/navbar.js?v=20260906-final"></script>
+
+  <script src="/js/config.js?v=20260908"></script>
+  <script src="/js/supabase.js?v=20260908"></script>
+  <script src="/js/auth.js?v=20260908"></script>
+  <script src="/js/navbar.js?v=20260908"></script>
+
+
   <title>Settings — PasTele</title>
+
+
+  <!-- =====================================================
+       ICONS
+       ===================================================== -->
+
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
-  <link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
-  <link rel="stylesheet" href="css/settings.css?v=20260905">
-<link rel="stylesheet" href="css/final-polish.css?v=20260906-final">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
+
+
+  <!-- =====================================================
+       CORE CSS
+       ===================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/footer.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/settings.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/final-polish.css?v=20260908"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/saas-final.css?v=20260908"
+  >
+
 </head>
-<body class="app-page">
+
+
+<body class="app-page settings-page-body">
+
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+
   <div id="navbar"></div>
-  <main>
+
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+
+  <main id="main-content">
+
     <section class="section settings-section">
-      <div class="container">
-        <!-- Header -->
-        <div class="settings-header">
-          <div>
+
+      <div class="container settings-container">
+
+
+        <!-- =================================================
+             HEADER
+             ================================================= -->
+
+        <header class="settings-header">
+
+          <div class="settings-header-main">
+
             <span class="badge">
-              <i class="fa-solid fa-gear"></i>
+              <i class="fa-solid fa-sliders"></i>
               SETTINGS
             </span>
+
             <h1>Pengaturan akun</h1>
+
             <p class="muted">
-              Kelola profil, keamanan, dan rekening penerimaan akunmu.
+              Kelola profil, keamanan, pembayaran, tampilan,
+              notifikasi, dan akun PasTele kamu.
             </p>
+
           </div>
-        </div>
+
+
+          <div class="settings-header-actions">
+
+            <a
+              class="btn"
+              href="profile.html"
+            >
+              <i class="fa-solid fa-user"></i>
+              <span>Profile</span>
+            </a>
+
+          </div>
+
+        </header>
+
+
+        <!-- =================================================
+             QUICK SETTINGS
+             ================================================= -->
+
+        <section
+          class="settings-quick-grid"
+          aria-label="Pengaturan cepat"
+        >
+
+          <a
+            href="#profileSettings"
+            class="settings-quick-card settings-quick-profile"
+          >
+
+            <span class="settings-quick-icon">
+              <i class="fa-solid fa-user-pen"></i>
+            </span>
+
+            <span class="settings-quick-copy">
+              <strong>Profil</strong>
+              <small>
+                Identitas akun
+              </small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right"></i>
+
+          </a>
+
+
+          <a
+            href="#paymentSettings"
+            class="settings-quick-card settings-quick-payment"
+          >
+
+            <span class="settings-quick-icon">
+              <i class="fa-solid fa-wallet"></i>
+            </span>
+
+            <span class="settings-quick-copy">
+              <strong>Payment</strong>
+              <small>
+                Rekening penerimaan
+              </small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right"></i>
+
+          </a>
+
+
+          <a
+            href="#securitySettings"
+            class="settings-quick-card settings-quick-security"
+          >
+
+            <span class="settings-quick-icon">
+              <i class="fa-solid fa-shield-halved"></i>
+            </span>
+
+            <span class="settings-quick-copy">
+              <strong>Keamanan</strong>
+              <small>
+                Password & sesi
+              </small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right"></i>
+
+          </a>
+
+
+          <a
+            href="#appearanceSettings"
+            class="settings-quick-card settings-quick-display"
+          >
+
+            <span class="settings-quick-icon">
+              <i class="fa-solid fa-palette"></i>
+            </span>
+
+            <span class="settings-quick-copy">
+              <strong>Tampilan</strong>
+              <small>
+                Theme aplikasi
+              </small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right"></i>
+
+          </a>
+
+        </section>
+
+
+        <!-- =================================================
+             SETTINGS GRID
+             ================================================= -->
+
         <div class="settings-grid">
-          <!-- =========================
+
+
+          <!-- =================================================
                PROFILE
-          ========================== -->
-          <section class="card settings-card">
+               ================================================= -->
+
+          <section
+            class="card settings-card"
+            id="profileSettings"
+          >
+
             <div class="card-heading">
+
               <div class="heading-icon">
                 <i class="fa-solid fa-user"></i>
               </div>
+
               <div>
                 <h2>Profil</h2>
-                <p>Informasi dasar akunmu.</p>
+
+                <p>
+                  Informasi dasar akunmu.
+                </p>
               </div>
+
             </div>
-            <form id="profileForm" class="settings-form">
+
+
+            <form
+              id="profileForm"
+              class="settings-form"
+              novalidate
+            >
+
+
+              <!-- Username -->
+
               <label class="field">
+
                 <span>Username</span>
+
                 <div class="input-wrap">
+
                   <i class="fa-solid fa-at"></i>
+
                   <input
                     class="input"
                     id="username"
@@ -64,14 +299,30 @@
                     type="text"
                     autocomplete="username"
                     maxlength="50"
+                    minlength="3"
                     required
+                    placeholder="username"
                   >
+
                 </div>
+
+                <small class="field-hint">
+                  Username digunakan sebagai identitas publik profil.
+                </small>
+
               </label>
+
+
+              <!-- Telegram -->
+
               <label class="field">
+
                 <span>Username Telegram</span>
+
                 <div class="input-wrap">
+
                   <i class="fa-brands fa-telegram"></i>
+
                   <input
                     class="input"
                     id="telegram_username"
@@ -81,12 +332,22 @@
                     maxlength="64"
                     placeholder="@username"
                   >
+
                 </div>
+
               </label>
+
+
+              <!-- WhatsApp -->
+
               <label class="field">
+
                 <span>No. WhatsApp aktif</span>
+
                 <div class="input-wrap">
+
                   <i class="fa-brands fa-whatsapp"></i>
+
                   <input
                     class="input"
                     id="whatsapp_number"
@@ -94,12 +355,32 @@
                     type="tel"
                     autocomplete="tel"
                     maxlength="30"
+                    inputmode="tel"
                     placeholder="+62..."
                   >
+
                 </div>
+
               </label>
+
+
+              <!-- Bio -->
+
               <label class="field">
-                <span>Bio</span>
+
+                <div class="field-label-row">
+
+                  <span>Bio</span>
+
+                  <small
+                    id="bioCounter"
+                    class="field-counter"
+                  >
+                    0/500
+                  </small>
+
+                </div>
+
                 <textarea
                   class="input textarea"
                   id="bio"
@@ -108,35 +389,85 @@
                   rows="4"
                   placeholder="Ceritakan sedikit tentang kamu..."
                 ></textarea>
+
                 <small class="field-hint">
                   Maksimal 500 karakter.
                 </small>
+
               </label>
-              <button class="btn primary submit-btn" type="submit" id="saveProfile">
+
+
+              <!-- Save -->
+
+              <button
+                class="btn primary submit-btn"
+                type="submit"
+                id="saveProfile"
+              >
+
                 <i class="fa-solid fa-floppy-disk"></i>
-                <span>Simpan profil</span>
+
+                <span class="submit-text">
+                  Simpan profil
+                </span>
+
+                <span
+                  class="submit-loading"
+                  hidden
+                >
+                  <i class="fa-solid fa-circle-notch fa-spin"></i>
+                  Menyimpan...
+                </span>
+
               </button>
+
             </form>
+
           </section>
-          <!-- =========================
-               PASSWORD
-          ========================== -->
-          <section class="card settings-card">
+
+
+          <!-- =================================================
+               PASSWORD / SECURITY
+               ================================================= -->
+
+          <section
+            class="card settings-card"
+            id="securitySettings"
+          >
+
             <div class="card-heading">
+
               <div class="heading-icon">
-                <i class="fa-solid fa-lock"></i>
+                <i class="fa-solid fa-shield-halved"></i>
               </div>
+
               <div>
-                <h2>Password</h2>
-                <p>Perbarui password akun secara aman.</p>
+                <h2>Password & keamanan</h2>
+
+                <p>
+                  Perbarui password akun secara aman.
+                </p>
               </div>
+
             </div>
-            <form id="passForm" class="settings-form">
+
+
+            <form
+              id="passForm"
+              class="settings-form"
+              novalidate
+            >
+
               <label class="field">
+
                 <span>Password baru</span>
+
                 <div class="password-row">
+
                   <div class="input-wrap">
+
                     <i class="fa-solid fa-key"></i>
+
                     <input
                       class="input"
                       id="newpass"
@@ -148,119 +479,320 @@
                       type="password"
                       required
                     >
+
                   </div>
+
+
                   <button
                     class="btn icon-btn"
                     type="button"
                     data-toggle-pass="newpass"
                     aria-label="Tampilkan password"
                     title="Tampilkan password"
+                    aria-pressed="false"
                   >
+
                     <i class="fa-solid fa-eye"></i>
+
                   </button>
+
                 </div>
+
+
+                <div
+                  class="password-strength"
+                  id="passwordStrength"
+                  aria-live="polite"
+                ></div>
+
               </label>
+
+
               <div class="security-note">
+
                 <i class="fa-solid fa-shield-halved"></i>
+
                 <span>
+                  Gunakan password unik minimal 6 karakter.
                   Jangan gunakan password yang sama dengan akun penting lainnya.
                 </span>
+
               </div>
-              <button class="btn primary submit-btn" type="submit" id="changePassword">
+
+
+              <button
+                class="btn primary submit-btn"
+                type="submit"
+                id="changePassword"
+              >
+
                 <i class="fa-solid fa-key"></i>
-                <span>Ubah password</span>
+
+                <span class="submit-text">
+                  Ubah password
+                </span>
+
+                <span
+                  class="submit-loading"
+                  hidden
+                >
+                  <i class="fa-solid fa-circle-notch fa-spin"></i>
+                  Menyimpan...
+                </span>
+
               </button>
+
             </form>
+
+
+            <!-- Security status -->
+
+            <div class="security-status-grid">
+
+              <div class="security-status-item">
+
+                <span class="security-status-icon">
+                  <i class="fa-solid fa-lock"></i>
+                </span>
+
+                <div>
+                  <small>Status sesi</small>
+
+                  <strong id="sessionStatus">
+                    Memuat...
+                  </strong>
+                </div>
+
+              </div>
+
+
+              <div class="security-status-item">
+
+                <span class="security-status-icon">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </span>
+
+                <div>
+                  <small>Login terakhir</small>
+
+                  <strong id="lastLogin">
+                    Memuat...
+                  </strong>
+                </div>
+
+              </div>
+
+            </div>
+
           </section>
-          <!-- =========================
+
+
+          <!-- =================================================
                PAYMENT
-          ========================== -->
-          <section class="card settings-card payment-card">
+               ================================================= -->
+
+          <section
+            class="card settings-card payment-card"
+            id="paymentSettings"
+          >
+
             <div class="card-heading">
+
               <div class="heading-icon">
                 <i class="fa-solid fa-money-check-dollar"></i>
               </div>
+
               <div>
                 <h2>Payment / rekening penerimaan</h2>
+
                 <p>
                   Rekening yang dapat digunakan untuk menerima withdrawal.
                 </p>
               </div>
+
             </div>
+
+
             <div class="payment-info">
+
               <i class="fa-solid fa-circle-info"></i>
+
               <span>
-                Data payment disimpan di database akunmu dan dapat digunakan
-                saat proses withdraw.
+                Data payment disimpan di database akunmu dan
+                dapat digunakan saat proses withdraw.
               </span>
+
             </div>
-            <form id="payForm" class="settings-form">
+
+
+            <form
+              id="payForm"
+              class="settings-form"
+              novalidate
+            >
+
+
               <!-- Method -->
+
               <div class="field">
+
                 <span>Metode pembayaran</span>
-                <div class="pay-tabs" role="tablist">
+
+                <div
+                  class="pay-tabs"
+                  role="tablist"
+                  aria-label="Metode pembayaran"
+                >
+
                   <button
                     type="button"
                     class="btn payment-tab active"
                     data-method="ewallet"
                     aria-selected="true"
+                    role="tab"
                   >
+
                     <i class="fa-solid fa-wallet"></i>
+
                     <span>E-Wallet</span>
+
                   </button>
+
+
                   <button
                     type="button"
                     class="btn payment-tab"
                     data-method="bank"
                     aria-selected="false"
+                    role="tab"
                   >
+
                     <i class="fa-solid fa-building-columns"></i>
+
                     <span>Bank</span>
+
                   </button>
+
                 </div>
+
               </div>
+
+
               <!-- Country + Provider -->
+
               <div class="form-grid-2">
+
                 <label class="field">
+
                   <span>Negara</span>
+
                   <div class="input-wrap select-wrap">
+
                     <i class="fa-solid fa-earth-asia"></i>
-                    <select class="select" id="country" name="country">
-                      <option value="ID">Indonesia</option>
-                      <option value="US">United States</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="SG">Singapore</option>
-                      <option value="MY">Malaysia</option>
-                      <option value="PH">Philippines</option>
-                      <option value="TH">Thailand</option>
-                      <option value="AU">Australia</option>
-                      <option value="JP">Japan</option>
-                      <option value="CA">Canada</option>
-                      <option value="IN">India</option>
-                      <option value="CN">China</option>
-                      <option value="AE">United Arab Emirates</option>
-                      <option value="OTHER">Other</option>
+
+                    <select
+                      class="select"
+                      id="country"
+                      name="country"
+                    >
+
+                      <option value="ID">
+                        Indonesia
+                      </option>
+
+                      <option value="US">
+                        United States
+                      </option>
+
+                      <option value="GB">
+                        United Kingdom
+                      </option>
+
+                      <option value="SG">
+                        Singapore
+                      </option>
+
+                      <option value="MY">
+                        Malaysia
+                      </option>
+
+                      <option value="PH">
+                        Philippines
+                      </option>
+
+                      <option value="TH">
+                        Thailand
+                      </option>
+
+                      <option value="AU">
+                        Australia
+                      </option>
+
+                      <option value="JP">
+                        Japan
+                      </option>
+
+                      <option value="CA">
+                        Canada
+                      </option>
+
+                      <option value="IN">
+                        India
+                      </option>
+
+                      <option value="CN">
+                        China
+                      </option>
+
+                      <option value="AE">
+                        United Arab Emirates
+                      </option>
+
+                      <option value="OTHER">
+                        Other
+                      </option>
+
                     </select>
+
                   </div>
+
                 </label>
+
+
                 <label class="field">
+
                   <span>Provider</span>
+
                   <div class="input-wrap select-wrap">
+
                     <i class="fa-solid fa-building-columns"></i>
+
                     <select
                       class="select"
                       id="provider"
                       name="provider"
                       required
                     ></select>
+
                   </div>
+
                 </label>
+
               </div>
+
+
               <!-- Account name -->
+
               <label class="field">
-                <span>Nama pemegang rekening / e-wallet</span>
+
+                <span>
+                  Nama pemegang rekening / e-wallet
+                </span>
+
                 <div class="input-wrap">
+
                   <i class="fa-solid fa-user"></i>
+
                   <input
                     class="input"
                     id="pname"
@@ -271,13 +803,24 @@
                     placeholder="Nama sesuai rekening"
                     required
                   >
+
                 </div>
+
               </label>
+
+
               <!-- Account number -->
+
               <label class="field">
-                <span>Nomor rekening / e-wallet</span>
+
+                <span>
+                  Nomor rekening / e-wallet
+                </span>
+
                 <div class="input-wrap">
+
                   <i class="fa-solid fa-hashtag"></i>
+
                   <input
                     class="input"
                     id="pnumber"
@@ -289,84 +832,751 @@
                     placeholder="Nomor rekening / nomor e-wallet"
                     required
                   >
+
                 </div>
+
               </label>
-              <button class="btn primary submit-btn" type="submit" id="savePayment">
+
+
+              <!-- Save payment -->
+
+              <button
+                class="btn primary submit-btn"
+                type="submit"
+                id="savePayment"
+              >
+
                 <i class="fa-solid fa-circle-check"></i>
-                <span>Simpan payment</span>
+
+                <span class="submit-text">
+                  Simpan payment
+                </span>
+
+                <span
+                  class="submit-loading"
+                  hidden
+                >
+                  <i class="fa-solid fa-circle-notch fa-spin"></i>
+                  Menyimpan...
+                </span>
+
               </button>
+
             </form>
-            <!-- Saved payment -->
+
+
+            <!-- =================================================
+                 SAVED PAYMENT
+                 ================================================= -->
+
             <div class="saved-section">
+
               <div class="saved-header">
+
                 <div>
-                  <h3>Payment tersimpan</h3>
-                  <p class="muted">Rekening yang sudah ditambahkan.</p>
+
+                  <h3>
+                    Payment tersimpan
+                  </h3>
+
+                  <p class="muted">
+                    Rekening yang sudah ditambahkan.
+                  </p>
+
                 </div>
-                <span class="saved-count" id="savedPaymentCount">0</span>
+
+                <span
+                  class="saved-count"
+                  id="savedPaymentCount"
+                >
+                  0
+                </span>
+
               </div>
-              <div id="savedPayments" class="saved-payments">
+
+
+              <div
+                id="savedPayments"
+                class="saved-payments"
+              >
+
                 <div class="payment-loading">
+
                   <i class="fa-solid fa-spinner fa-spin"></i>
-                  Memuat payment...
+
+                  <span>
+                    Memuat payment...
+                  </span>
+
                 </div>
+
               </div>
+
             </div>
+
           </section>
-          <!-- =========================
-               ACCOUNT
-          ========================== -->
-          <section class="card settings-card account-card">
+
+
+          <!-- =================================================
+               APPEARANCE
+               ================================================= -->
+
+          <section
+            class="card settings-card"
+            id="appearanceSettings"
+          >
+
             <div class="card-heading">
+
+              <div class="heading-icon">
+                <i class="fa-solid fa-palette"></i>
+              </div>
+
+              <div>
+                <h2>Tampilan</h2>
+
+                <p>
+                  Atur tampilan PasTele sesuai preferensimu.
+                </p>
+              </div>
+
+            </div>
+
+
+            <div class="appearance-options">
+
+              <button
+                type="button"
+                class="appearance-option"
+                data-theme-option="light"
+              >
+
+                <span class="appearance-option-icon">
+                  <i class="fa-solid fa-sun"></i>
+                </span>
+
+                <span>
+                  <strong>Light</strong>
+                  <small>
+                    Tampilan terang
+                  </small>
+                </span>
+
+                <span class="appearance-check">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                class="appearance-option"
+                data-theme-option="dark"
+              >
+
+                <span class="appearance-option-icon">
+                  <i class="fa-solid fa-moon"></i>
+                </span>
+
+                <span>
+                  <strong>Dark</strong>
+                  <small>
+                    Tampilan gelap
+                  </small>
+                </span>
+
+                <span class="appearance-check">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                class="appearance-option"
+                data-theme-option="system"
+              >
+
+                <span class="appearance-option-icon">
+                  <i class="fa-solid fa-desktop"></i>
+                </span>
+
+                <span>
+                  <strong>System</strong>
+                  <small>
+                    Mengikuti perangkat
+                  </small>
+                </span>
+
+                <span class="appearance-check">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+
+              </button>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               NOTIFICATIONS
+               ================================================= -->
+
+          <section
+            class="card settings-card"
+            id="notificationSettings"
+          >
+
+            <div class="card-heading">
+
+              <div class="heading-icon">
+                <i class="fa-solid fa-bell"></i>
+              </div>
+
+              <div>
+                <h2>Notifikasi</h2>
+
+                <p>
+                  Atur pemberitahuan penting akun.
+                </p>
+              </div>
+
+            </div>
+
+
+            <div class="settings-toggle-list">
+
+
+              <label class="settings-toggle-row">
+
+                <span class="settings-toggle-icon">
+                  <i class="fa-solid fa-wallet"></i>
+                </span>
+
+                <span class="settings-toggle-copy">
+
+                  <strong>
+                    Aktivitas wallet
+                  </strong>
+
+                  <small>
+                    Notifikasi saldo, withdrawal, dan pembayaran.
+                  </small>
+
+                </span>
+
+                <input
+                  type="checkbox"
+                  id="notifyWallet"
+                  checked
+                >
+
+                <span class="toggle-ui"></span>
+
+              </label>
+
+
+              <label class="settings-toggle-row">
+
+                <span class="settings-toggle-icon">
+                  <i class="fa-solid fa-cart-shopping"></i>
+                </span>
+
+                <span class="settings-toggle-copy">
+
+                  <strong>
+                    Penjualan & pembelian
+                  </strong>
+
+                  <small>
+                    Pemberitahuan transaksi produk.
+                  </small>
+
+                </span>
+
+                <input
+                  type="checkbox"
+                  id="notifySales"
+                  checked
+                >
+
+                <span class="toggle-ui"></span>
+
+              </label>
+
+
+              <label class="settings-toggle-row">
+
+                <span class="settings-toggle-icon">
+                  <i class="fa-solid fa-user-plus"></i>
+                </span>
+
+                <span class="settings-toggle-copy">
+
+                  <strong>
+                    Pengikut
+                  </strong>
+
+                  <small>
+                    Pemberitahuan ketika ada yang mengikuti profil.
+                  </small>
+
+                </span>
+
+                <input
+                  type="checkbox"
+                  id="notifyFollowers"
+                  checked
+                >
+
+                <span class="toggle-ui"></span>
+
+              </label>
+
+
+              <label class="settings-toggle-row">
+
+                <span class="settings-toggle-icon">
+                  <i class="fa-solid fa-bullhorn"></i>
+                </span>
+
+                <span class="settings-toggle-copy">
+
+                  <strong>
+                    Pengumuman PasTele
+                  </strong>
+
+                  <small>
+                    Informasi fitur dan pembaruan penting.
+                  </small>
+
+                </span>
+
+                <input
+                  type="checkbox"
+                  id="notifyAnnouncements"
+                  checked
+                >
+
+                <span class="toggle-ui"></span>
+
+              </label>
+
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               ACCOUNT INFORMATION
+               ================================================= -->
+
+          <section
+            class="card settings-card account-card"
+            id="accountSettings"
+          >
+
+            <div class="card-heading">
+
               <div class="heading-icon">
                 <i class="fa-solid fa-circle-info"></i>
               </div>
+
               <div>
                 <h2>Akun</h2>
-                <p>Informasi akun dan akses lainnya.</p>
+
+                <p>
+                  Informasi akun dan akses lainnya.
+                </p>
               </div>
+
             </div>
+
+
             <div class="account-list">
+
+
+              <!-- Email -->
+
               <div class="account-item">
+
                 <div class="account-item-icon">
                   <i class="fa-solid fa-envelope"></i>
                 </div>
+
                 <div class="account-item-content">
-                  <small>Gmail / Email</small>
-                  <strong id="email">Memuat...</strong>
+
+                  <small>
+                    Gmail / Email
+                  </small>
+
+                  <strong id="email">
+                    Memuat...
+                  </strong>
+
                 </div>
+
               </div>
+
+
+              <!-- Account status -->
+
+              <div class="account-item">
+
+                <div class="account-item-icon account-status-icon">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div class="account-item-content">
+
+                  <small>
+                    Status akun
+                  </small>
+
+                  <strong id="accountStatus">
+                    Memuat...
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <!-- Account role -->
+
+              <div class="account-item">
+
+                <div class="account-item-icon account-role-icon">
+                  <i class="fa-solid fa-user-shield"></i>
+                </div>
+
+                <div class="account-item-content">
+
+                  <small>
+                    Peran akun
+                  </small>
+
+                  <strong id="accountRole">
+                    Memuat...
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <!-- Premium -->
+
+              <div class="account-item">
+
+                <div class="account-item-icon account-premium-icon">
+                  <i class="fa-solid fa-crown"></i>
+                </div>
+
+                <div class="account-item-content">
+
+                  <small>
+                    Status Premium
+                  </small>
+
+                  <strong id="premiumStatus">
+                    Memuat...
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <!-- Admin -->
+
               <a
                 class="account-action admin-action"
                 id="adminBtn"
                 href="admin/index.html"
                 hidden
               >
+
                 <span>
+
                   <i class="fa-solid fa-shield-halved"></i>
-                  <span>Panel Admin</span>
+
+                  <span>
+                    Panel Admin
+                  </span>
+
                 </span>
+
                 <i class="fa-solid fa-chevron-right"></i>
+
               </a>
+
+
+              <!-- Profile -->
+
+              <a
+                class="account-action"
+                href="profile.html"
+              >
+
+                <span>
+
+                  <i class="fa-solid fa-user"></i>
+
+                  <span>
+                    Lihat profil
+                  </span>
+
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+
+              </a>
+
+
+              <!-- Wallet -->
+
+              <a
+                class="account-action"
+                href="wallet.html"
+              >
+
+                <span>
+
+                  <i class="fa-solid fa-wallet"></i>
+
+                  <span>
+                    Wallet
+                  </span>
+
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+
+              </a>
+
+
+              <!-- Products -->
+
+              <a
+                class="account-action"
+                href="my-products.html"
+              >
+
+                <span>
+
+                  <i class="fa-solid fa-box-open"></i>
+
+                  <span>
+                    Produk saya
+                  </span>
+
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+
+              </a>
+
+
+              <!-- Purchases -->
+
+              <a
+                class="account-action"
+                href="purchases.html"
+              >
+
+                <span>
+
+                  <i class="fa-solid fa-bag-shopping"></i>
+
+                  <span>
+                    Pembelian
+                  </span>
+
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+
+              </a>
+
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               DANGER ZONE
+               ================================================= -->
+
+          <section
+            class="card settings-card danger-card"
+            id="dangerSettings"
+          >
+
+            <div class="card-heading">
+
+              <div class="heading-icon danger-heading-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+
+              <div>
+
+                <h2>
+                  Zona akun
+                </h2>
+
+                <p>
+                  Tindakan yang memengaruhi sesi akun.
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="danger-actions">
+
               <button
+                type="button"
                 class="account-action logout-action"
                 id="logout"
-                type="button"
               >
+
                 <span>
+
                   <i class="fa-solid fa-right-from-bracket"></i>
-                  <span>Log out</span>
+
+                  <span>
+
+                    <strong>
+                      Log out
+                    </strong>
+
+                    <small>
+                      Keluar dari akun PasTele.
+                    </small>
+
+                  </span>
+
                 </span>
+
                 <i class="fa-solid fa-chevron-right"></i>
+
               </button>
+
             </div>
+
+
+            <div class="danger-note">
+
+              <i class="fa-solid fa-circle-info"></i>
+
+              <span>
+                Logout hanya mengakhiri sesi pada perangkat ini.
+                Data akun dan konten tidak akan dihapus.
+              </span>
+
+            </div>
+
           </section>
+
+
         </div>
+
       </div>
+
     </section>
+
   </main>
-  <div id="toast"></div>
-  <script src="js/settings.js?v=20260905"></script>
-  <script src="js/footer.js?v=20260904"></script>
+
+
+  <!-- =====================================================
+       LOGOUT CONFIRM MODAL
+       ===================================================== -->
+
+  <div
+    class="settings-modal"
+    id="logoutModal"
+    hidden
+    aria-hidden="true"
+  >
+
+    <div
+      class="settings-modal-backdrop"
+      data-close-logout
+    ></div>
+
+    <section
+      class="settings-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="logoutModalTitle"
+    >
+
+      <div class="settings-modal-icon">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </div>
+
+      <h2 id="logoutModalTitle">
+        Keluar dari akun?
+      </h2>
+
+      <p>
+        Sesi PasTele di perangkat ini akan diakhiri.
+        Kamu dapat login kembali kapan saja.
+      </p>
+
+      <div class="settings-modal-actions">
+
+        <button
+          type="button"
+          class="btn"
+          id="logoutCancel"
+        >
+          Batal
+        </button>
+
+        <button
+          type="button"
+          class="btn danger"
+          id="logoutConfirm"
+        >
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </section>
+
+  </div>
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =====================================================
+       SCRIPTS
+       ===================================================== -->
+
+  <script src="js/settings.js?v=20260908"></script>
+
+  <script src="js/footer.js?v=20260908"></script>
+
 </body>
+
 </html>
