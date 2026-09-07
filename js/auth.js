@@ -1,709 +1,962 @@
 /* =========================================================
-   PasTele — REGISTER
-   PRODUCTION + SUPABASE + CLOUDFLARE TURNSTILE
+   PasTele — AUTH CORE
+   PRODUCTION + SUPABASE + GOOGLE OAUTH
    ========================================================= */
-document.addEventListener("DOMContentLoaded", () => {
+
+(function () {
   "use strict";
-  /* =======================================================
-     DOM
-     ======================================================= */
-  const form = document.getElementById("reg");
-  const errorBox = document.getElementById("authError");
-  const noticeBox = document.getElementById("authNotice");
-  const submit = document.getElementById("submit");
-  const google = document.getElementById("google");
-  const turnstileContainer =
-    document.getElementById("registerTurnstile");
-  const securityStatus =
-    document.getElementById("registerSecurityStatus");
-  const progress =
-    document.getElementById("regProgress");
-  if (!form) {
-    console.error("[PasTele] Register form tidak ditemukan.");
-    return;
-  }
-  if (!submit) {
-    console.error("[PasTele] Register button tidak ditemukan.");
-    return;
-  }
-  /* =======================================================
-     STATE
-     ======================================================= */
-  let turnstileWidgetId = null;
-  let turnstileToken = "";
-  let turnstileRendering = false;
-  let submitting = false;
-  const siteKey = String(
-    turnstileContainer?.dataset?.sitekey ||
-    window.PASTELE_TURNSTILE_SITE_KEY ||
-    ""
-  ).trim();
+
+  /*
+   * Jangan tunggu DOMContentLoaded.
+   * login.js / register.js bisa langsung memakai window.Auth
+   * setelah file ini selesai dimuat.
+   */
+
+  const AUTH_CONFIG = {
+    callbackPath: "/auth-callback.html",
+    dashboardPath: "/dashboard.html",
+    loginPath: "/login.html",
+    registerPath: "/register.html"
+  };
+
   /* =======================================================
      HELPERS
-     ======================================================= */
-  const hide = (element) => {
-    if (!element) return;
-    element.classList.add("hidden");
-  };
-  const show = (element, message) => {
-    if (!element) return;
-    element.textContent = String(message || "");
-    element.classList.remove("hidden");
-    element.classList.add("floating-notice", "show");
-    clearTimeout(element._timer);
-    element._timer = setTimeout(() => {
-      element.classList.remove("show");
-      setTimeout(() => {
-        element.classList.add("hidden");
-      }, 220);
-    }, 5000);
-  };
-  /* =======================================================
-     TOAST
-     ======================================================= */
-  const toast = (
-    message,
-    type = "success",
-    duration = 5000
-  ) => {
-    let box = document.getElementById("pastele-toast");
-    if (!box) {
-      box = document.createElement("div");
-      box.id = "pastele-toast";
-      box.className = "pastele-toast";
-      document.body.appendChild(box);
+  ======================================================= */
+
+  function getSupabase() {
+    if (window.sb) {
+      return window.sb;
     }
-    const icon =
-      type === "success"
-        ? '<i class="fa-solid fa-check"></i>'
-        : '<i class="fa-solid fa-circle-exclamation"></i>';
-    box.className = `pastele-toast ${type}`;
-    box.innerHTML = `
-      <span class="pastele-toast-icon">
-        ${icon}
-      </span>
-      <span>${escapeHTML(message)}</span>
-    `;
-    requestAnimationFrame(() => {
-      box.classList.add("show");
-    });
-    clearTimeout(box._timer);
-    box._timer = setTimeout(() => {
-      box.classList.remove("show");
-    }, duration);
-  };
-  /* =======================================================
-     ESCAPE
-     ======================================================= */
-  function escapeHTML(value) {
-    return String(value ?? "").replace(
-      /[&<>"']/g,
-      (char) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      })[char]
+
+    if (window.supabaseClient) {
+      return window.supabaseClient;
+    }
+
+    throw new Error(
+      "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
     );
   }
-  /* =======================================================
-     SECURITY STATUS
-     ======================================================= */
-  function updateSecurityStatus(
-    verified = false,
-    message = ""
-  ) {
-    if (!securityStatus) return;
-    securityStatus.textContent =
-      message ||
-      (
-        verified
-          ? "Verifikasi keamanan berhasil."
-          : "Selesaikan verifikasi keamanan terlebih dahulu."
-      );
-    securityStatus.classList.remove(
-      "success",
-      "error"
+
+  function normalizeEmail(email) {
+    return String(email || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function normalizeUsername(username) {
+    return String(username || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function getCallbackUrl() {
+    return new URL(
+      AUTH_CONFIG.callbackPath,
+      window.location.origin
+    ).href;
+  }
+
+  function getDashboardUrl() {
+    return new URL(
+      AUTH_CONFIG.dashboardPath,
+      window.location.origin
+    ).href;
+  }
+
+  function getErrorMessage(error) {
+    if (!error) {
+      return "Terjadi kesalahan autentikasi.";
+    }
+
+    if (typeof error === "string") {
+      return error;
+    }
+
+    return (
+      error.message ||
+      error.error_description ||
+      error.msg ||
+      "Terjadi kesalahan autentikasi."
     );
-    if (verified) {
-      securityStatus.classList.add("success");
-    }
   }
-  /* =======================================================
-     SUBMIT STATE
-     ======================================================= */
-  function setSubmitEnabled(enabled) {
-    if (submitting) return;
-    const state = Boolean(enabled);
-    submit.disabled = !state;
-    submit.setAttribute(
-      "aria-disabled",
-      state ? "false" : "true"
-    );
-  }
-  /* =======================================================
-     TURNSTILE SUCCESS
-     ======================================================= */
-  function onTurnstileSuccess(token) {
-    turnstileToken = String(token || "").trim();
-    window.__pasTeleRegisterTurnstileToken =
-      turnstileToken;
-    if (turnstileToken) {
-      updateSecurityStatus(
-        true,
-        "Verifikasi keamanan berhasil."
+
+  function assertSupabase() {
+    const client = getSupabase();
+
+    if (!client || !client.auth) {
+      throw new Error(
+        "Supabase Auth belum tersedia."
       );
-      setSubmitEnabled(true);
-      updateProgress();
     }
+
+    return client;
   }
+
   /* =======================================================
-     TURNSTILE EXPIRED
-     ======================================================= */
-  function onTurnstileExpired() {
-    turnstileToken = "";
-    window.__pasTeleRegisterTurnstileToken = "";
-    setSubmitEnabled(false);
-    updateSecurityStatus(
-      false,
-      "Verifikasi kedaluwarsa. Silakan verifikasi kembali."
-    );
-    updateProgress();
-  }
-  /* =======================================================
-     TURNSTILE ERROR
-     ======================================================= */
-  function onTurnstileError(errorCode) {
-    console.error(
-      "[PasTele] Turnstile error:",
-      errorCode
-    );
-    turnstileToken = "";
-    window.__pasTeleRegisterTurnstileToken = "";
-    setSubmitEnabled(false);
-    updateSecurityStatus(
-      false,
-      "Verifikasi keamanan gagal dimuat. Silakan coba lagi."
-    );
-    updateProgress();
-  }
-  /* =======================================================
-     GET TURNSTILE TOKEN
-     ======================================================= */
-  function getTurnstileToken() {
-    const local = String(
-      turnstileToken || ""
-    ).trim();
-    if (local) return local;
-    const global = String(
-      window.__pasTeleRegisterTurnstileToken || ""
-    ).trim();
-    if (global) return global;
-    if (
-      window.turnstile &&
-      turnstileWidgetId !== null
-    ) {
-      try {
-        const response =
-          window.turnstile.getResponse(
-            turnstileWidgetId
-          );
-        if (response) {
-          return String(response).trim();
-        }
-      } catch (error) {
-        console.warn(
-          "[PasTele] getResponse error:",
-          error
-        );
-      }
-    }
-    const textarea =
-      document.querySelector(
-        'textarea[name="cf-turnstile-response"]'
-      );
-    return String(
-      textarea?.value || ""
-    ).trim();
-  }
-  /* =======================================================
-     RESET TURNSTILE
-     ======================================================= */
-  function resetTurnstile() {
-    turnstileToken = "";
-    window.__pasTeleRegisterTurnstileToken = "";
-    setSubmitEnabled(false);
-    if (
-      window.turnstile &&
-      turnstileWidgetId !== null
-    ) {
-      try {
-        window.turnstile.reset(
-          turnstileWidgetId
-        );
-      } catch (error) {
-        console.warn(
-          "[PasTele] Turnstile reset error:",
-          error
-        );
-      }
-    }
-    updateSecurityStatus(
-      false,
-      "Selesaikan verifikasi keamanan terlebih dahulu."
-    );
-    updateProgress();
-  }
-  /* =======================================================
-     WAIT TURNSTILE
-     ======================================================= */
-  function waitForTurnstile(timeout = 20000) {
-    return new Promise((resolve) => {
-      const started = Date.now();
-      const check = () => {
-        if (
-          window.turnstile &&
-          typeof window.turnstile.render === "function"
-        ) {
-          resolve(true);
-          return;
-        }
-        if (Date.now() - started >= timeout) {
-          resolve(false);
-          return;
-        }
-        setTimeout(check, 200);
-      };
-      check();
-    });
-  }
-  /* =======================================================
-     RENDER TURNSTILE
-     ======================================================= */
-  async function renderTurnstile() {
-    if (!turnstileContainer) {
-      console.error(
-        "[PasTele] #registerTurnstile tidak ditemukan."
-      );
-      return;
-    }
-    if (!siteKey) {
-      console.error(
-        "[PasTele] Turnstile sitekey tidak ditemukan."
-      );
-      updateSecurityStatus(
-        false,
-        "Konfigurasi verifikasi keamanan belum tersedia."
-      );
-      setSubmitEnabled(false);
-      return;
-    }
-    if (turnstileWidgetId !== null) {
-      return;
-    }
-    if (turnstileRendering) {
-      return;
-    }
-    turnstileRendering = true;
-    try {
-      updateSecurityStatus(
-        false,
-        "Memuat verifikasi keamanan..."
-      );
-      const ready =
-        await waitForTurnstile();
-      if (!ready) {
-        throw new Error(
-          "Cloudflare Turnstile belum tersedia."
-        );
-      }
-      if (turnstileWidgetId !== null) {
-        return;
-      }
-      turnstileWidgetId =
-        window.turnstile.render(
-          turnstileContainer,
-          {
-            sitekey: siteKey,
-            theme: "auto",
-            language: "id",
-            size: "flexible",
-            action: "register",
-            callback: onTurnstileSuccess,
-            "expired-callback":
-              onTurnstileExpired,
-            "error-callback":
-              onTurnstileError,
-            "timeout-callback":
-              onTurnstileExpired
-          }
-        );
+     AUTH OBJECT
+  ======================================================= */
+
+  const Auth = {
+
+    /* =====================================================
+       GOOGLE LOGIN / REGISTER
+       ===================================================== */
+
+    async google() {
+      const client = assertSupabase();
+
       console.log(
-        "[PasTele] Turnstile rendered:",
-        turnstileWidgetId
+        "[PasTele Auth] Memulai Google OAuth..."
       );
-      updateSecurityStatus(
-        false,
-        "Selesaikan verifikasi keamanan terlebih dahulu."
-      );
-    } catch (error) {
-      console.error(
-        "[PasTele] Turnstile render error:",
-        error
-      );
-      updateSecurityStatus(
-        false,
-        "Verifikasi keamanan tidak dapat dimuat."
-      );
-      setSubmitEnabled(false);
-    } finally {
-      turnstileRendering = false;
-    }
-  }
-  /* =======================================================
-     PROGRESS
-     ======================================================= */
-  const fields = [
-    "username",
-    "email",
-    "password",
-    "confirm"
-  ]
-    .map((id) =>
-      document.getElementById(id)
-    )
-    .filter(Boolean);
-  function updateProgress() {
-    const username =
-      document.getElementById("username")
-        ?.value.trim() || "";
-    const email =
-      document.getElementById("email")
-        ?.value.trim() || "";
-    const password =
-      document.getElementById("password")
-        ?.value || "";
-    const confirm =
-      document.getElementById("confirm")
-        ?.value || "";
-    let score = 0;
-    if (username.length >= 3) {
-      score++;
-    }
-    if (
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
-      score++;
-    }
-    if (password.length >= 6) {
-      score++;
-    }
-    if (
-      confirm.length >= 6 &&
-      password === confirm
-    ) {
-      score++;
-    }
-    if (password && confirm && password === confirm) {
-      score++;
-    }
-    if (getTurnstileToken()) {
-      score++;
-    }
-    const percentage = Math.min(
-      100,
-      Math.round((score / 6) * 100)
-    );
-    if (progress) {
-      progress.style.width =
-        `${percentage}%`;
-    }
-  }
-  fields.forEach((field) => {
-    field.addEventListener(
-      "input",
-      updateProgress
-    );
-    field.addEventListener(
-      "change",
-      updateProgress
-    );
-  });
-  /* =======================================================
-     PASSWORD TOGGLE
-     ======================================================= */
-  document
-    .querySelectorAll(".toggle")
-    .forEach((button) => {
-      button.addEventListener(
-        "click",
-        () => {
-          const target =
-            button.dataset.t;
-          const input =
-            document.getElementById(target);
-          if (!input) return;
-          const visible =
-            input.type === "password";
-          input.type =
-            visible
-              ? "text"
-              : "password";
-          button.innerHTML =
-            visible
-              ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>'
-              : '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
-          button.setAttribute(
-            "aria-label",
-            visible
-              ? "Sembunyikan kata sandi"
-              : "Tampilkan kata sandi"
-          );
+
+      const redirectTo = getCallbackUrl();
+
+      const { data, error } =
+        await client.auth.signInWithOAuth({
+          provider: "google",
+
+          options: {
+            redirectTo,
+
+            queryParams: {
+              access_type: "offline",
+              prompt: "select_account"
+            }
+          }
+        });
+
+      if (error) {
+        console.error(
+          "[PasTele Auth] Google OAuth error:",
+          error
+        );
+
+        throw new Error(
+          getErrorMessage(error)
+        );
+      }
+
+      console.log(
+        "[PasTele Auth] Google OAuth started.",
+        {
+          redirectTo,
+          data
         }
       );
-    });
-  /* =======================================================
-     FORM SUBMIT
-     ======================================================= */
-  form.addEventListener(
-    "submit",
-    async (event) => {
-      event.preventDefault();
-      if (submitting) return;
-      hide(errorBox);
-      hide(noticeBox);
-      const username =
-        document.getElementById("username")
-          ?.value.trim() || "";
-      const email =
-        document.getElementById("email")
-          ?.value.trim()
-          .toLowerCase() || "";
-      const password =
-        document.getElementById("password")
-          ?.value || "";
-      const confirm =
-        document.getElementById("confirm")
-          ?.value || "";
-      /* VALIDATION */
+
+      return data;
+    },
+
+    /* =====================================================
+       LOGIN
+       ===================================================== */
+
+    async login(identifier, password) {
+      const client = assertSupabase();
+
+      const value =
+        String(identifier || "").trim();
+
+      const pass =
+        String(password || "");
+
+      if (!value) {
+        throw new Error(
+          "Username atau Gmail wajib diisi."
+        );
+      }
+
+      if (!pass) {
+        throw new Error(
+          "Kata sandi wajib diisi."
+        );
+      }
+
+      /*
+       * Kalau identifier berupa email,
+       * login langsung menggunakan email.
+       */
+
+      let email = "";
+
       if (
-        !/^[A-Za-z0-9_]{3,32}$/.test(
-          username
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+      ) {
+        email = normalizeEmail(value);
+      } else {
+        /*
+         * Login menggunakan username.
+         * Cari email akun melalui RPC / tabel profiles.
+         */
+
+        const username =
+          normalizeUsername(value);
+
+        try {
+          if (
+            typeof client.rpc === "function"
+          ) {
+            const { data, error } =
+              await client.rpc(
+                "resolve_username_login",
+                {
+                  p_username: username
+                }
+              );
+
+            if (!error && data) {
+              const row =
+                Array.isArray(data)
+                  ? data[0]
+                  : data;
+
+              email =
+                row?.auth_email ||
+                row?.email ||
+                row?.login_email ||
+                "";
+            }
+          }
+        } catch (error) {
+          console.warn(
+            "[PasTele Auth] RPC username lookup gagal:",
+            error
+          );
+        }
+
+        /*
+         * Fallback menggunakan tabel profiles.
+         */
+
+        if (!email) {
+          try {
+            const { data, error } =
+              await client
+                .from("profiles")
+                .select(
+                  "auth_email,email,username"
+                )
+                .eq(
+                  "username",
+                  username
+                )
+                .maybeSingle();
+
+            if (!error && data) {
+              email =
+                data.auth_email ||
+                data.email ||
+                "";
+            }
+          } catch (error) {
+            console.warn(
+              "[PasTele Auth] Profile lookup gagal:",
+              error
+            );
+          }
+        }
+      }
+
+      if (!email) {
+        throw new Error(
+          "Akun tidak ditemukan."
+        );
+      }
+
+      email = normalizeEmail(email);
+
+      console.log(
+        "[PasTele Auth] Login:",
+        email
+      );
+
+      const { data, error } =
+        await client.auth.signInWithPassword({
+          email,
+          password: pass
+        });
+
+      if (error) {
+        console.error(
+          "[PasTele Auth] Login error:",
+          error
+        );
+
+        throw new Error(
+          getErrorMessage(error)
+        );
+      }
+
+      if (!data?.user) {
+        throw new Error(
+          "Login gagal. User tidak ditemukan."
+        );
+      }
+
+      /*
+       * Cek status user jika tersedia.
+       */
+
+      await this.ensureUserAllowed(
+        data.user
+      );
+
+      return data;
+    },
+
+    /* =====================================================
+       REGISTER
+       ===================================================== */
+
+    async register(
+      username,
+      email,
+      password,
+      turnstileToken = ""
+    ) {
+      const client = assertSupabase();
+
+      const cleanUsername =
+        normalizeUsername(username);
+
+      const cleanEmail =
+        normalizeEmail(email);
+
+      const cleanPassword =
+        String(password || "");
+
+      const token =
+        String(turnstileToken || "").trim();
+
+      /* VALIDASI */
+
+      if (
+        !/^[a-z0-9_]{3,32}$/i.test(
+          cleanUsername
         )
       ) {
-        show(
-          errorBox,
+        throw new Error(
           "Username hanya boleh berisi huruf, angka, dan underscore."
         );
-        return;
       }
+
       if (
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-          email
+          cleanEmail
         )
       ) {
-        show(
-          errorBox,
+        throw new Error(
           "Email tidak valid."
         );
-        return;
       }
-      if (password.length < 6) {
-        show(
-          errorBox,
+
+      if (cleanPassword.length < 6) {
+        throw new Error(
           "Kata sandi minimal 6 karakter."
         );
-        return;
       }
-      if (password !== confirm) {
-        show(
-          errorBox,
-          "Konfirmasi kata sandi tidak cocok."
-        );
-        return;
-      }
-      if (!window.sb) {
-        show(
-          errorBox,
-          "Supabase belum terkonfigurasi."
-        );
-        return;
-      }
-      /* TURNSTILE */
-      const token =
-        getTurnstileToken();
-      if (!token) {
-        show(
-          errorBox,
-          "Selesaikan verifikasi keamanan terlebih dahulu."
-        );
-        setSubmitEnabled(false);
-        return;
-      }
-      /* SUBMIT */
-      submitting = true;
-      submit.disabled = true;
-      submit.setAttribute(
-        "aria-disabled",
-        "true"
-      );
-      submit.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i><span>Membuat akun...</span>';
+
+      /*
+       * Cek username terlebih dahulu.
+       */
+
       try {
-        if (
-          !window.Auth ||
-          typeof window.Auth.register !==
-            "function"
-        ) {
+        const available =
+          await this.checkUsername(
+            cleanUsername
+          );
+
+        if (available === false) {
           throw new Error(
-            "Sistem autentikasi belum siap."
+            "Username sudah digunakan."
           );
         }
-        const data =
-          await window.Auth.register(
-            username,
-            email,
-            password,
-            token
+      } catch (error) {
+        /*
+         * Jangan menggagalkan register hanya karena
+         * endpoint pengecekan username tidak tersedia.
+         */
+
+        if (
+          String(error?.message || "")
+            .toLowerCase()
+            .includes("sudah digunakan")
+        ) {
+          throw error;
+        }
+
+        console.warn(
+          "[PasTele Auth] Username availability check dilewati:",
+          error
+        );
+      }
+
+      /*
+       * Metadata akan dipakai trigger Supabase
+       * untuk membuat profile user.
+       */
+
+      const options = {
+        emailRedirectTo:
+          getCallbackUrl(),
+
+        data: {
+          username: cleanUsername,
+          display_name: cleanUsername
+        }
+      };
+
+      /*
+       * Turnstile dikirim sebagai captcha token
+       * jika tersedia.
+       */
+
+      if (token) {
+        options.captchaToken = token;
+      }
+
+      console.log(
+        "[PasTele Auth] Register:",
+        {
+          username: cleanUsername,
+          email: cleanEmail,
+          hasTurnstile: Boolean(token)
+        }
+      );
+
+      const { data, error } =
+        await client.auth.signUp({
+          email: cleanEmail,
+          password: cleanPassword,
+          options
+        });
+
+      if (error) {
+        console.error(
+          "[PasTele Auth] Register error:",
+          error
+        );
+
+        throw new Error(
+          getErrorMessage(error)
+        );
+      }
+
+      /*
+       * Jika session langsung tersedia,
+       * user sudah bisa masuk.
+       *
+       * Jika session null, kemungkinan email confirmation
+       * Supabase sedang aktif.
+       */
+
+      return data;
+    },
+
+    /* =====================================================
+       LOOKUP USERNAME
+       ===================================================== */
+
+    async lookup(identifier) {
+      const client = assertSupabase();
+
+      const value =
+        String(identifier || "")
+          .trim()
+          .toLowerCase();
+
+      if (!value) {
+        return null;
+      }
+
+      /*
+       * Jika email, coba resolve berdasarkan email.
+       */
+
+      if (
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+      ) {
+        try {
+          const { data, error } =
+            await client
+              .from("profiles")
+              .select(
+                "id,username,display_name,auth_email,email,role,status,is_admin,is_banned"
+              )
+              .or(
+                `auth_email.eq.${value},email.eq.${value}`
+              )
+              .maybeSingle();
+
+          if (!error && data) {
+            return data;
+          }
+        } catch (error) {
+          console.warn(
+            "[PasTele Auth] Email lookup gagal:",
+            error
           );
-        if (data?.session) {
-          toast(
-            "Akun PasTele berhasil dibuat. Selamat datang!",
-            "success"
-          );
-          submit.innerHTML =
-            '<i class="fa-solid fa-check"></i><span>Berhasil</span>';
-          setTimeout(() => {
-            location.replace(
-              "dashboard.html"
+        }
+
+        return {
+          auth_email: value,
+          email: value
+        };
+      }
+
+      /*
+       * Username RPC.
+       */
+
+      try {
+        if (
+          typeof client.rpc === "function"
+        ) {
+          const { data, error } =
+            await client.rpc(
+              "resolve_username_login",
+              {
+                p_username: value
+              }
             );
-          }, 900);
-          return;
+
+          if (!error && data) {
+            return Array.isArray(data)
+              ? data[0] || null
+              : data;
+          }
         }
-        toast(
-          "Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele.",
-          "success"
-        );
-        show(
-          noticeBox,
-          "Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele."
-        );
-        form.reset();
-        resetTurnstile();
-        updateProgress();
       } catch (error) {
-        console.error(
-          "[PasTele] REGISTER ERROR:",
+        console.warn(
+          "[PasTele Auth] Username RPC error:",
           error
         );
-        const message =
-          error?.message ||
-          "Registrasi gagal.";
-        toast(
-          message,
-          "error"
-        );
-        show(
-          errorBox,
-          message
-        );
-        resetTurnstile();
-      } finally {
-        submitting = false;
-        submit.innerHTML =
-          '<i class="fa-solid fa-user-plus"></i><span>Register</span>';
-        if (getTurnstileToken()) {
-          setSubmitEnabled(true);
-        } else {
-          setSubmitEnabled(false);
-        }
-        updateProgress();
       }
-    }
-  );
-  /* =======================================================
-     GOOGLE REGISTER
-     ======================================================= */
-  google?.addEventListener(
-    "click",
-    async () => {
-      if (submitting) return;
-      hide(errorBox);
-      hide(noticeBox);
-      const originalHTML =
-        google.innerHTML;
-      google.disabled = true;
-      google.setAttribute(
-        "aria-disabled",
-        "true"
-      );
-      google.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i><span>Menghubungkan Google...</span>';
+
+      /*
+       * Fallback profiles.
+       */
+
       try {
+        const { data, error } =
+          await client
+            .from("profiles")
+            .select(
+              "id,username,display_name,auth_email,email,role,status,is_admin,is_banned"
+            )
+            .eq(
+              "username",
+              value
+            )
+            .maybeSingle();
+
+        if (!error && data) {
+          return data;
+        }
+      } catch (error) {
+        console.warn(
+          "[PasTele Auth] Profile username lookup error:",
+          error
+        );
+      }
+
+      return null;
+    },
+
+    /* =====================================================
+       CHECK USERNAME
+       ===================================================== */
+
+    async checkUsername(username) {
+      const client = assertSupabase();
+
+      const value =
+        normalizeUsername(username);
+
+      if (!value) {
+        return false;
+      }
+
+      /*
+       * Coba RPC terlebih dahulu jika tersedia.
+       */
+
+      try {
+        const { data, error } =
+          await client.rpc(
+            "check_username_available",
+            {
+              p_username: value
+            }
+          );
+
+        if (!error) {
+          if (typeof data === "boolean") {
+            return data;
+          }
+
+          if (
+            Array.isArray(data) &&
+            data.length
+          ) {
+            const row = data[0];
+
+            if (
+              typeof row === "boolean"
+            ) {
+              return row;
+            }
+
+            if (
+              typeof row?.available ===
+              "boolean"
+            ) {
+              return row.available;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(
+          "[PasTele Auth] Username availability RPC tidak tersedia."
+        );
+      }
+
+      /*
+       * Fallback query profiles.
+       */
+
+      try {
+        const { data, error } =
+          await client
+            .from("profiles")
+            .select("id")
+            .eq(
+              "username",
+              value
+            )
+            .limit(1);
+
+        if (error) {
+          throw error;
+        }
+
+        return !(
+          Array.isArray(data) &&
+          data.length > 0
+        );
+      } catch (error) {
+        console.warn(
+          "[PasTele Auth] Username availability check error:",
+          error
+        );
+
+        /*
+         * Jangan menganggap username sudah tersedia
+         * jika database tidak bisa diperiksa.
+         */
+
+        return true;
+      }
+    },
+
+    /* =====================================================
+       CURRENT USER
+       ===================================================== */
+
+    async getUser() {
+      const client = assertSupabase();
+
+      const { data, error } =
+        await client.auth.getUser();
+
+      if (error) {
+        throw error;
+      }
+
+      return data?.user || null;
+    },
+
+    /* =====================================================
+       SESSION
+       ===================================================== */
+
+    async getSession() {
+      const client = assertSupabase();
+
+      const { data, error } =
+        await client.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      return data?.session || null;
+    },
+
+    /* =====================================================
+       LOGOUT
+       ===================================================== */
+
+    async logout() {
+      const client = assertSupabase();
+
+      const { error } =
+        await client.auth.signOut();
+
+      if (error) {
+        throw new Error(
+          getErrorMessage(error)
+        );
+      }
+
+      return true;
+    },
+
+    /* =====================================================
+       RESET PASSWORD
+       ===================================================== */
+
+    async resetPassword(email) {
+      const client = assertSupabase();
+
+      const cleanEmail =
+        normalizeEmail(email);
+
+      if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          cleanEmail
+        )
+      ) {
+        throw new Error(
+          "Masukkan alamat Gmail yang valid."
+        );
+      }
+
+      const redirectTo =
+        new URL(
+          "/reset-password.html",
+          window.location.origin
+        ).href;
+
+      const { data, error } =
+        await client.auth.resetPasswordForEmail(
+          cleanEmail,
+          {
+            redirectTo
+          }
+        );
+
+      if (error) {
+        throw new Error(
+          getErrorMessage(error)
+        );
+      }
+
+      return data;
+    },
+
+    /* =====================================================
+       UPDATE PASSWORD
+       ===================================================== */
+
+    async updatePassword(password) {
+      const client = assertSupabase();
+
+      const cleanPassword =
+        String(password || "");
+
+      if (cleanPassword.length < 6) {
+        throw new Error(
+          "Kata sandi minimal 6 karakter."
+        );
+      }
+
+      const { data, error } =
+        await client.auth.updateUser({
+          password: cleanPassword
+        });
+
+      if (error) {
+        throw new Error(
+          getErrorMessage(error)
+        );
+      }
+
+      return data;
+    },
+
+    /* =====================================================
+       ENSURE USER ALLOWED
+       ===================================================== */
+
+    async ensureUserAllowed(user) {
+      if (!user) {
+        return true;
+      }
+
+      const client = assertSupabase();
+
+      try {
+        const { data, error } =
+          await client
+            .from("profiles")
+            .select(
+              "status,is_banned"
+            )
+            .eq(
+              "id",
+              user.id
+            )
+            .maybeSingle();
+
+        if (error || !data) {
+          return true;
+        }
+
         if (
-          !window.Auth ||
-          typeof window.Auth.google !==
-            "function"
+          data.is_banned === true
         ) {
+          await client.auth.signOut();
+
           throw new Error(
-            "Sistem Google Authentication belum siap."
+            "Akun kamu telah diblokir."
           );
         }
-        await window.Auth.google();
+
+        if (
+          data.status &&
+          [
+            "banned",
+            "blocked",
+            "disabled",
+            "suspended"
+          ].includes(
+            String(data.status)
+              .toLowerCase()
+          )
+        ) {
+          await client.auth.signOut();
+
+          throw new Error(
+            "Akun kamu sedang dinonaktifkan."
+          );
+        }
+
+        return true;
+
       } catch (error) {
-        console.error(
-          "[PasTele] GOOGLE REGISTER ERROR:",
+
+        if (
+          String(error?.message || "")
+            .toLowerCase()
+            .includes("diblokir")
+        ) {
+          throw error;
+        }
+
+        if (
+          String(error?.message || "")
+            .toLowerCase()
+            .includes("dinonaktifkan")
+        ) {
+          throw error;
+        }
+
+        /*
+         * Jangan membuat login gagal hanya karena
+         * tabel profiles/RLS belum tersedia.
+         */
+
+        console.warn(
+          "[PasTele Auth] Status profile tidak dapat diperiksa:",
           error
         );
-        const message =
-          error?.message ||
-          "Google register gagal.";
-        toast(
-          message,
-          "error"
-        );
-        show(
-          errorBox,
-          message
-        );
-        google.disabled = false;
-        google.setAttribute(
-          "aria-disabled",
-          "false"
-        );
-        google.innerHTML =
-          originalHTML;
+
+        return true;
       }
-    }
-  );
-  /* =======================================================
-     INITIAL
-     ======================================================= */
-  setSubmitEnabled(false);
-  updateSecurityStatus(
-    false,
-    "Memuat verifikasi keamanan..."
-  );
-  updateProgress();
-  /* =======================================================
-     START TURNSTILE
-     ======================================================= */
-  renderTurnstile();
-  console.log(
-    "[PasTele] Register initialized.",
-    {
-      turnstileContainer:
-        Boolean(turnstileContainer),
-      turnstileSiteKey:
-        Boolean(siteKey),
-      turnstileLoaded:
-        Boolean(window.turnstile),
-      supabase:
-        Boolean(window.sb),
-      authRegister:
-        typeof window.Auth?.register ===
+    },
+
+    /* =====================================================
+       AUTH STATE LISTENER
+       ===================================================== */
+
+    onAuthStateChange(callback) {
+      const client = assertSupabase();
+
+      if (
+        typeof callback !==
         "function"
+      ) {
+        throw new Error(
+          "Callback auth harus berupa function."
+        );
+      }
+
+      return client.auth.onAuthStateChange(
+        async (
+          event,
+          session
+        ) => {
+          try {
+            callback(
+              event,
+              session
+            );
+          } catch (error) {
+            console.error(
+              "[PasTele Auth] Auth state callback error:",
+              error
+            );
+          }
+        }
+      );
+    },
+
+    /* =====================================================
+       REDIRECT HELPER
+       ===================================================== */
+
+    redirectToDashboard() {
+      window.location.replace(
+        getDashboardUrl()
+      );
+    },
+
+    /* =====================================================
+       DEBUG
+       ===================================================== */
+
+    isReady() {
+      return Boolean(
+        window.sb &&
+        window.sb.auth
+      );
+    }
+  };
+
+  /* =======================================================
+     EXPORT GLOBAL
+     ======================================================= */
+
+  window.Auth = Auth;
+
+  /*
+   * Alias supaya kompatibel dengan kode lama.
+   */
+
+  window.PasTeleAuth = Auth;
+
+  console.log(
+    "[PasTele Auth] Auth Core loaded successfully.",
+    {
+      supabase: Boolean(
+        window.sb
+      ),
+      google: typeof Auth.google === "function",
+      login: typeof Auth.login === "function",
+      register: typeof Auth.register === "function",
+      lookup: typeof Auth.lookup === "function"
     }
   );
-});
+
+})();
