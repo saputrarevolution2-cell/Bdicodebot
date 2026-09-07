@@ -1660,3 +1660,6 @@ body.theme-dark.my-products-page {
     }
 
 }
+/* FINAL MY LINKS ACTIONS */
+.my-row-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.my-row-actions .btn{min-height:36px;padding:8px 10px;font-size:10px}.my-row-actions .btn i{font-size:10px}.my-row-actions .btn.danger{color:#c53d3d}.my-row-actions .btn:hover{transform:translateY(-1px)}
+@media(max-width:600px){.my-row-actions{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.my-row-actions .btn{width:100%;padding-inline:6px}.my-row-actions .btn span{font-size:9px}}
