@@ -2,194 +2,1000 @@
 <html lang="id">
 <head>
   <script src="js/theme-preload.js"></script>
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="description"
+    content="Kelola profil, konten, keamanan, dan aktivitas akun PasTele."
+  >
+  <meta name="theme-color" content="#ffffff">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/config.js?v=20260831"></script>
-  <script src="/js/supabase.js?v=20260831"></script>
-  <script src="/js/auth.js"></script>
-  <script src="/js/navbar.js?v=20260906-final"></script>
+  <script src="/js/config.js?v=20260908"></script>
+  <script src="/js/supabase.js?v=20260908"></script>
+  <script src="/js/auth.js?v=20260908"></script>
+  <script src="/js/navbar.js?v=20260908"></script>
+
   <title>Profile — PasTele</title>
+
+  <!-- Icons -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
-  <link rel="stylesheet" href="css/app.css?v=20260907">
-  <link rel="stylesheet" href="css/navbar.css?v=20260907">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
-  <link rel="stylesheet" href="css/profile.css?v=20260907">
-<link rel="stylesheet" href="css/final-polish.css?v=20260906-final">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
+
+  <!-- Core -->
+  <link rel="stylesheet" href="css/app.css?v=20260908">
+  <link rel="stylesheet" href="css/navbar.css?v=20260908">
+  <link rel="stylesheet" href="css/footer.css?v=20260908">
+
+  <!-- Page -->
+  <link rel="stylesheet" href="css/profile.css?v=20260908">
+
+  <!-- Global polish -->
+  <link rel="stylesheet" href="css/final-polish.css?v=20260908">
+  <link rel="stylesheet" href="css/saas-final.css?v=20260908">
 </head>
-<body class="app-page">
+
+<body class="app-page profile-page-body">
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
   <div id="navbar"></div>
-  <main>
-    <section class="section">
+
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+  <main id="main-content">
+
+    <section class="section profile-section-page">
+
       <div class="container profile-page">
-        <!-- PROFILE HEADER -->
+
+
+        <!-- =================================================
+             PROFILE HERO
+             ================================================= -->
         <section class="profile-hero">
-          <div class="profile-avatar" id="avatar">P</div>
+
+          <!-- Avatar -->
+          <div
+            class="profile-avatar"
+            id="avatar"
+            aria-label="Avatar profil"
+          >
+            P
+          </div>
+
+
+          <!-- Identity -->
           <div class="profile-heading">
-            <span class="profile-eyebrow"><i class="fa-solid fa-user-circle"></i> PROFILE</span>
-            <h1 id="name">Profile <span id="profileVerify" class="profile-verify" hidden></span></h1>
-            <p id="bio" class="muted">Kelola identitasmu.</p>
-            <div class="profile-handle" id="handle">@username</div>
+
+            <span class="profile-eyebrow">
+              <i class="fa-solid fa-user-circle"></i>
+              PROFILE
+            </span>
+
+            <h1 id="name">
+              Profile
+
+              <span
+                id="profileVerify"
+                class="profile-verify"
+                hidden
+                title="Akun terverifikasi"
+                aria-label="Akun terverifikasi"
+              >
+                <i class="fa-solid fa-circle-check"></i>
+              </span>
+            </h1>
+
+            <p
+              id="bio"
+              class="muted"
+            >
+              Kelola identitasmu.
+            </p>
+
+            <div
+              class="profile-handle"
+              id="handle"
+            >
+              @username
+            </div>
+
           </div>
+
+
+          <!-- Hero Actions -->
           <div class="profile-actions">
-            <button class="btn primary" id="followBtn" hidden><i class="fa-solid fa-user-plus"></i><span>Ikuti</span></button>
-            <a class="btn" href="settings.html" id="settingsBtn"><i class="fa-solid fa-gear"></i> Settings</a>
-            <a class="btn primary" id="adminBtn" href="admin/index.html" hidden><i class="fa-solid fa-shield-halved"></i> Admin Panel</a>
+
+            <button
+              type="button"
+              class="btn primary"
+              id="followBtn"
+              hidden
+            >
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Ikuti</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn profile-share-btn"
+              id="shareProfileBtn"
+            >
+              <i class="fa-solid fa-share-nodes"></i>
+              <span>Bagikan</span>
+            </button>
+
+            <a
+              class="btn"
+              href="settings.html"
+              id="settingsBtn"
+            >
+              <i class="fa-solid fa-gear"></i>
+              <span>Settings</span>
+            </a>
+
+            <a
+              class="btn primary"
+              id="adminBtn"
+              href="admin/index.html"
+              hidden
+            >
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Admin Panel</span>
+            </a>
+
           </div>
+
         </section>
-        <section class="profile-social-stats" id="socialStats">
-          <div><strong id="followersCount">0</strong><span>Pengikut</span></div>
-          <div><strong id="followingCount">0</strong><span>Mengikuti</span></div>
-          <div><strong id="totalLikes">0</strong><span>Total Like</span></div>
-          <div><strong id="totalContent">0</strong><span>Konten</span></div>
+
+
+        <!-- =================================================
+             SOCIAL STATS
+             ================================================= -->
+        <section
+          class="profile-social-stats"
+          id="socialStats"
+          aria-label="Statistik profil"
+        >
+
+          <button
+            type="button"
+            class="profile-stat-card"
+            id="followersStat"
+          >
+            <strong id="followersCount">0</strong>
+            <span>Pengikut</span>
+          </button>
+
+          <button
+            type="button"
+            class="profile-stat-card"
+            id="followingStat"
+          >
+            <strong id="followingCount">0</strong>
+            <span>Mengikuti</span>
+          </button>
+
+          <div class="profile-stat-card">
+            <strong id="totalLikes">0</strong>
+            <span>Total Like</span>
+          </div>
+
+          <div class="profile-stat-card">
+            <strong id="totalContent">0</strong>
+            <span>Konten</span>
+          </div>
+
         </section>
-        <!-- PROFILE INFORMATION -->
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+             ================================================= -->
+        <section
+          class="profile-quick-actions"
+          aria-label="Aksi cepat"
+        >
+
+          <a
+            href="settings.html"
+            class="profile-quick-card profile-quick-settings"
+          >
+            <span class="profile-quick-icon">
+              <i class="fa-solid fa-user-pen"></i>
+            </span>
+
+            <span class="profile-quick-copy">
+              <strong>Edit profil</strong>
+              <small>Nama, username & bio</small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
+          </a>
+
+
+          <a
+            href="wallet.html"
+            class="profile-quick-card profile-quick-wallet"
+          >
+            <span class="profile-quick-icon">
+              <i class="fa-solid fa-wallet"></i>
+            </span>
+
+            <span class="profile-quick-copy">
+              <strong>Wallet</strong>
+              <small>Saldo & penarikan</small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
+          </a>
+
+
+          <a
+            href="purchases.html"
+            class="profile-quick-card profile-quick-purchases"
+          >
+            <span class="profile-quick-icon">
+              <i class="fa-solid fa-bag-shopping"></i>
+            </span>
+
+            <span class="profile-quick-copy">
+              <strong>Pembelian</strong>
+              <small>Riwayat konten dibeli</small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
+          </a>
+
+
+          <a
+            href="my-products.html"
+            class="profile-quick-card profile-quick-products"
+          >
+            <span class="profile-quick-icon">
+              <i class="fa-solid fa-box-open"></i>
+            </span>
+
+            <span class="profile-quick-copy">
+              <strong>Produk saya</strong>
+              <small>Kelola konten & penjualan</small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
+          </a>
+
+
+          <a
+            href="my-links.html"
+            class="profile-quick-card profile-quick-links"
+          >
+            <span class="profile-quick-icon">
+              <i class="fa-solid fa-link"></i>
+            </span>
+
+            <span class="profile-quick-copy">
+              <strong>Link saya</strong>
+              <small>Kelola PasteLink</small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
+          </a>
+
+        </section>
+
+
+        <!-- =================================================
+             PROFILE INFORMATION GRID
+             ================================================= -->
         <div class="profile-grid">
-          <!-- DETAILS -->
+
+
+          <!-- ===============================================
+               DETAILS
+               =============================================== -->
           <section class="profile-section">
+
             <div class="section-heading">
+
               <div class="section-icon">
                 <i class="fa-solid fa-id-card"></i>
               </div>
+
               <div>
                 <h2>Detail profil</h2>
                 <p>Informasi akun kamu.</p>
               </div>
+
             </div>
+
+
             <div
               class="profile-details"
               id="details"
             >
+
               <div class="profile-loading">
-                <i class="fa-solid fa-circle-notch"></i>
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
                 <span>Memuat profil...</span>
               </div>
+
             </div>
+
           </section>
-          <!-- CONTENT -->
+
+
+          <!-- ===============================================
+               CONTENT SUMMARY
+               =============================================== -->
           <section class="profile-section">
+
             <div class="section-heading">
+
               <div class="section-icon">
-                <i class="fa-solid fa-layer-group"></i>
+                <i class="fa-solid fa-chart-simple"></i>
               </div>
+
               <div>
-                <h2>Konten</h2>
-                <p>Konten yang kamu buat.</p>
+                <h2>Ringkasan konten</h2>
+                <p>Statistik konten yang kamu buat.</p>
               </div>
+
             </div>
+
+
             <div
               class="content-counts"
               id="counts"
             >
+
               <div class="profile-loading">
-                <i class="fa-solid fa-circle-notch"></i>
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
                 <span>Memuat statistik...</span>
               </div>
+
             </div>
+
           </section>
+
         </div>
-        <!-- PUBLIC CONTENT -->
-        <section class="profile-section public-content-section" id="publicContentSection">
+
+
+        <!-- =================================================
+             PUBLIC CONTENT
+             ================================================= -->
+        <section
+          class="profile-section public-content-section"
+          id="publicContentSection"
+        >
+
           <div class="section-heading">
-            <div class="section-icon"><i class="fa-solid fa-layer-group"></i></div>
-            <div><h2>Konten</h2><p>Link, Code, Channel & Group creator ini.</p></div>
+
+            <div class="section-icon">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+
+            <div>
+              <h2>Konten</h2>
+              <p>
+                Link, Code, Channel & Group creator ini.
+              </p>
+            </div>
+
           </div>
-          <div class="profile-content-tabs" id="profileContentTabs">
-            <button class="active" data-type="all">Semua</button><button data-type="link">Link</button><button data-type="code">Code</button><button data-type="channel">Channel</button><button data-type="group">Group</button>
+
+
+          <!-- Content toolbar -->
+          <div class="profile-content-toolbar">
+
+            <!-- Tabs -->
+            <div
+              class="profile-content-tabs"
+              id="profileContentTabs"
+              role="tablist"
+              aria-label="Filter tipe konten"
+            >
+
+              <button
+                type="button"
+                class="active"
+                data-type="all"
+                role="tab"
+                aria-selected="true"
+              >
+                Semua
+              </button>
+
+              <button
+                type="button"
+                data-type="link"
+                role="tab"
+                aria-selected="false"
+              >
+                <i class="fa-solid fa-link"></i>
+                Link
+              </button>
+
+              <button
+                type="button"
+                data-type="code"
+                role="tab"
+                aria-selected="false"
+              >
+                <i class="fa-solid fa-code"></i>
+                Code
+              </button>
+
+              <button
+                type="button"
+                data-type="channel"
+                role="tab"
+                aria-selected="false"
+              >
+                <i class="fa-brands fa-telegram"></i>
+                Channel
+              </button>
+
+              <button
+                type="button"
+                data-type="group"
+                role="tab"
+                aria-selected="false"
+              >
+                <i class="fa-solid fa-users"></i>
+                Group
+              </button>
+
+            </div>
+
+
+            <!-- Search -->
+            <div class="profile-content-search">
+
+              <i class="fa-solid fa-magnifying-glass"></i>
+
+              <input
+                type="search"
+                id="profileContentSearch"
+                placeholder="Cari konten..."
+                autocomplete="off"
+                aria-label="Cari konten profil"
+              >
+
+              <button
+                type="button"
+                id="clearProfileContentSearch"
+                aria-label="Hapus pencarian"
+                hidden
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+
+            </div>
+
+
+            <!-- Sort -->
+            <div class="profile-content-sort">
+
+              <label
+                for="profileContentSort"
+                class="sr-only"
+              >
+                Urutkan konten
+              </label>
+
+              <select id="profileContentSort">
+
+                <option value="newest">
+                  Terbaru
+                </option>
+
+                <option value="oldest">
+                  Terlama
+                </option>
+
+                <option value="popular">
+                  Paling populer
+                </option>
+
+                <option value="sales">
+                  Penjualan terbanyak
+                </option>
+
+              </select>
+
+            </div>
+
           </div>
-          <div class="profile-content-list" id="profileContentList"><div class="profile-loading"><i class="fa-solid fa-circle-notch fa-spin"></i><span>Memuat konten...</span></div></div>
-          <div class="profile-pagination" id="profilePagination"></div>
+
+
+          <!-- Result -->
+          <div
+            class="profile-content-result"
+            id="profileContentResult"
+          >
+            Menampilkan konten
+          </div>
+
+
+          <!-- Content list -->
+          <div
+            class="profile-content-list"
+            id="profileContentList"
+          >
+
+            <div class="profile-loading">
+
+              <i class="fa-solid fa-circle-notch fa-spin"></i>
+
+              <span>
+                Memuat konten...
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- Pagination -->
+          <div
+            class="profile-pagination"
+            id="profilePagination"
+            aria-label="Pagination konten"
+          ></div>
+
         </section>
-        <!-- PASSWORD -->
+
+
+        <!-- =================================================
+             PASSWORD
+             ================================================= -->
         <section class="profile-section password-section">
+
           <div class="section-heading">
+
             <div class="section-icon">
               <i class="fa-solid fa-key"></i>
             </div>
+
             <div>
               <h2>Kata sandi</h2>
-              <p>Perbarui password akun kamu.</p>
+              <p>
+                Perbarui password akun kamu.
+              </p>
             </div>
+
           </div>
+
+
           <form
             id="profilePass"
             class="password-form"
+            novalidate
           >
+
             <div class="password-input">
+
               <i class="fa-solid fa-lock"></i>
+
               <input
                 class="input"
                 id="profileNewPass"
+                name="new_password"
                 minlength="6"
+                maxlength="128"
                 autocomplete="new-password"
                 placeholder="Password baru"
                 type="password"
                 required
               >
+
               <button
                 type="button"
                 class="password-toggle"
                 id="profilePassToggle"
                 aria-label="Tampilkan password"
+                aria-pressed="false"
               >
                 <i class="fa-solid fa-eye"></i>
               </button>
+
             </div>
+
+
+            <div
+              class="password-strength"
+              id="profilePasswordStrength"
+              aria-live="polite"
+            ></div>
+
+
             <button
               class="btn primary password-submit"
+              id="profilePasswordSubmit"
               type="submit"
             >
+
               <i class="fa-solid fa-floppy-disk"></i>
-              <span>Ubah password</span>
+
+              <span class="password-submit-text">
+                Ubah password
+              </span>
+
+              <span
+                class="password-submit-loading"
+                hidden
+              >
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                Menyimpan...
+              </span>
+
             </button>
+
           </form>
+
+
           <div class="security-note">
+
             <i class="fa-solid fa-circle-info"></i>
+
             <span>
               Password saat ini tidak pernah ditampilkan demi keamanan.
             </span>
+
           </div>
+
         </section>
-        <!-- LOGIN SECURITY -->
+
+
+        <!-- =================================================
+             LOGIN SECURITY
+             ================================================= -->
         <section class="profile-section">
+
           <div class="section-heading">
+
             <div class="section-icon">
               <i class="fa-solid fa-shield-halved"></i>
             </div>
+
             <div>
               <h2>Keamanan login</h2>
-              <p>Aktivitas login akun.</p>
+              <p>
+                Informasi sesi dan aktivitas login akun.
+              </p>
             </div>
+
           </div>
+
+
           <div class="login-grid">
+
+
+            <!-- Current -->
             <div class="login-item">
+
               <span class="login-icon">
                 <i class="fa-solid fa-right-to-bracket"></i>
               </span>
+
               <div>
                 <small>Login saat ini</small>
-                <b id="currentLogin">Memuat...</b>
+
+                <b id="currentLogin">
+                  Memuat...
+                </b>
               </div>
+
             </div>
+
+
+            <!-- Last login -->
             <div class="login-item">
+
               <span class="login-icon">
                 <i class="fa-solid fa-clock-rotate-left"></i>
               </span>
+
               <div>
                 <small>Login terakhir</small>
-                <b id="lastLogin">Belum ada</b>
+
+                <b id="lastLogin">
+                  Belum ada
+                </b>
               </div>
+
             </div>
+
+
+            <!-- Account status -->
+            <div class="login-item">
+
+              <span class="login-icon login-icon-status">
+                <i class="fa-solid fa-circle-check"></i>
+              </span>
+
+              <div>
+                <small>Status akun</small>
+
+                <b id="accountStatus">
+                  Memuat...
+                </b>
+              </div>
+
+            </div>
+
+
+            <!-- Session -->
+            <div class="login-item">
+
+              <span class="login-icon">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+
+              <div>
+                <small>Status sesi</small>
+
+                <b id="sessionStatus">
+                  Memuat...
+                </b>
+              </div>
+
+            </div>
+
           </div>
+
         </section>
+
+
+        <!-- =================================================
+             ACCOUNT ACTIONS
+             ================================================= -->
+        <section class="profile-section profile-account-actions">
+
+          <div class="section-heading">
+
+            <div class="section-icon">
+              <i class="fa-solid fa-user-gear"></i>
+            </div>
+
+            <div>
+              <h2>Akun</h2>
+              <p>
+                Pengaturan dan tindakan akun.
+              </p>
+            </div>
+
+          </div>
+
+
+          <div class="account-action-grid">
+
+            <a
+              class="account-action-card"
+              href="settings.html"
+            >
+              <span class="account-action-icon">
+                <i class="fa-solid fa-sliders"></i>
+              </span>
+
+              <span>
+                <strong>Pengaturan akun</strong>
+                <small>
+                  Kelola preferensi dan identitas akun.
+                </small>
+              </span>
+
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+
+
+            <a
+              class="account-action-card"
+              href="payment-methods.html"
+            >
+              <span class="account-action-icon">
+                <i class="fa-solid fa-credit-card"></i>
+              </span>
+
+              <span>
+                <strong>Metode pembayaran</strong>
+                <small>
+                  Kelola rekening dan e-wallet.
+                </small>
+              </span>
+
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+
+
+            <button
+              type="button"
+              class="account-action-card account-logout"
+              id="profileLogoutBtn"
+            >
+              <span class="account-action-icon">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              </span>
+
+              <span>
+                <strong>Keluar</strong>
+                <small>
+                  Keluar dari akun PasTele.
+                </small>
+              </span>
+
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+          </div>
+
+        </section>
+
+
       </div>
+
     </section>
+
   </main>
-  <div id="toast"></div>
-  <script src="js/profile.js?v=20260904"></script>
-  <script src="js/footer.js?v=20260904"></script>
+
+
+  <!-- =====================================================
+       SHARE PROFILE MODAL
+       ===================================================== -->
+  <div
+    class="profile-modal"
+    id="profileShareModal"
+    hidden
+    aria-hidden="true"
+  >
+
+    <div
+      class="profile-modal-backdrop"
+      data-close-profile-modal
+    ></div>
+
+    <section
+      class="profile-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profileShareTitle"
+    >
+
+      <header class="profile-modal-header">
+
+        <div class="profile-modal-title">
+
+          <span class="profile-modal-icon">
+            <i class="fa-solid fa-share-nodes"></i>
+          </span>
+
+          <div>
+            <h2 id="profileShareTitle">
+              Bagikan profil
+            </h2>
+
+            <p>
+              Bagikan profil creator ini.
+            </p>
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          class="profile-modal-close"
+          id="profileShareClose"
+          aria-label="Tutup"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </header>
+
+
+      <div class="profile-share-body">
+
+        <div class="profile-share-preview">
+
+          <div
+            class="profile-share-avatar"
+            id="shareProfileAvatar"
+          >
+            P
+          </div>
+
+          <div>
+            <strong id="shareProfileName">
+              Profile
+            </strong>
+
+            <span id="shareProfileHandle">
+              @username
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="profile-share-url">
+
+          <input
+            type="text"
+            id="profileShareUrl"
+            readonly
+            aria-label="URL profil"
+          >
+
+          <button
+            type="button"
+            id="copyProfileUrl"
+            class="btn primary"
+          >
+            <i class="fa-solid fa-copy"></i>
+            <span>Salin</span>
+          </button>
+
+        </div>
+
+
+        <div class="profile-share-actions">
+
+          <button
+            type="button"
+            class="profile-share-action"
+            id="nativeShareProfile"
+          >
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            <span>Share</span>
+          </button>
+
+          <button
+            type="button"
+            class="profile-share-action"
+            id="copyProfileShare"
+          >
+            <i class="fa-solid fa-link"></i>
+            <span>Copy link</span>
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =====================================================
+       SCRIPTS
+       ===================================================== -->
+  <script src="js/profile.js?v=20260908"></script>
+  <script src="js/footer.js?v=20260908"></script>
+
 </body>
 </html>
