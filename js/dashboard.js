@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? null
       : date;
   };
+  const performanceSnapshot = {views:{},sales:{},share:{},revenue:{}};
   /* =======================================================
      AUTH
      ======================================================= */
@@ -1103,6 +1104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const previousData = {
       views: 0,
       sales: 0,
+      share: 0,
       revenue: 0
     };
     /* -----------------------------------------------------
@@ -1129,9 +1131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         normalize(
           event.event_type
         );
-      if (type === 'view') {
-        previousData.views++;
-      }
+      if (type === 'view') previousData.views++;
+      if (type === 'share') previousData.share++;
       /*
        * paid event tidak dihitung sebagai sales.
        */
@@ -1197,6 +1198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentData = {
       views: 0,
       sales: 0,
+      share: 0,
       revenue: 0
     };
     currentDays.forEach(
@@ -1209,10 +1211,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           Number(
             item?.views || 0
           );
-        currentData.sales +=
-          Number(
-            item?.sales || 0
-          );
+        currentData.sales += Number(item?.sales || 0);
+        currentData.share += Number(item?.share || 0);
         currentData.revenue +=
           Number(
             item?.revenue || 0
@@ -1232,11 +1232,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentData.sales,
         previousData.sales
       );
-    const revenueTrend =
-      calculateTrend(
-        currentData.revenue,
-        previousData.revenue
-      );
+    const shareTrend = calculateTrend(currentData.share, previousData.share);
+    const revenueTrend = calculateTrend(currentData.revenue, previousData.revenue);
     /*
      * Old / alternative IDs.
      */
@@ -1269,6 +1266,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     );
+
+    performanceSnapshot.views = {label:'View',value:currentData.views,trend:viewsTrend};
+    performanceSnapshot.sales = {label:'Terjual',value:currentData.sales,trend:salesTrend};
+    performanceSnapshot.share = {label:'Share',value:currentData.share,trend:shareTrend};
+    performanceSnapshot.revenue = {label:'Pendapatan',value:currentData.revenue,trend:revenueTrend};
+    if ($('revenueTrendValue')) $('revenueTrendValue').textContent = money(currentData.revenue);
+    if ($('revenueTrendChange')) renderTrend('revenueTrendChange', revenueTrend);
+    if ($('revenueBars')) {
+      const maxRevenue = Math.max(1, ...currentDays.map(day => Number(chartData[dateKey(day)]?.revenue || 0)));
+      $('revenueBars').innerHTML = currentDays.map(day => {
+        const item=chartData[dateKey(day)]||{};
+        const h=Number(item.revenue||0)>0 ? Math.max(3,Number(item.revenue)/maxRevenue*100) : 2;
+        return `<div class="revenue-bar"><i style="height:${h}%"></i><small>${esc(formatDay(day).split(' ')[0])}</small></div>`;
+      }).join('');
+    }
+
     /* =====================================================
        PERFORMANCE SUMMARY
        ===================================================== */
@@ -1284,12 +1297,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentData.sales
         );
     }
-    if ($('performanceRevenue')) {
-      $('performanceRevenue').textContent =
-        money(
-          currentData.revenue
-        );
-    }
+    if ($('performanceShare')) $('performanceShare').textContent = number(currentData.share);
+    if ($('performanceRevenue')) $('performanceRevenue').textContent = money(currentData.revenue);
     /* =====================================================
        PERFORMANCE PERIOD
        ===================================================== */
@@ -1475,66 +1484,25 @@ document.addEventListener('DOMContentLoaded', async () => {
           return dateB - dateA;
         }
       )
-      .slice(0, 8);
-    if ($('recentLinks')) {
-      $('recentLinks').innerHTML =
-        recentRows.length
-          ? recentRows
-              .map(
-                (item) => `
-                  <div class="recent-item">
-                    <span class="recent-icon">
-                      <i
-                        class="fa-solid ${esc(
-                          item.icon
-                        )}"
-                        aria-hidden="true"
-                      ></i>
-                    </span>
-                    <div>
-                      <b>
-                        ${esc(
-                          item.title
-                        )}
-                      </b>
-                      <small>
-                        ${esc(
-                          String(
-                            item.type ||
-                            'content'
-                          )
-                        )}
-                        ·
-                        ${esc(
-                          formatDate(
-                            item.date
-                          )
-                        )}
-                      </small>
-                    </div>
-                    <strong>
-                      ${
-                        item.price > 0
-                          ? esc(
-                              money(
-                                item.price
-                              )
-                            )
-                          : `${number(
-                              item.views
-                            )} views`
-                      }
-                    </strong>
-                  </div>
-                `
-              )
-              .join('')
-          : `
-              <div class="empty">
-                Belum ada konten.
-              </div>
-            `;
-    }
+    ;
+    const recentPageSize = 5;
+    let recentPage = 1;
+    const renderRecent = () => {
+      const totalPages = Math.max(1, Math.ceil(recentRows.length / recentPageSize));
+      recentPage = Math.min(recentPage, totalPages);
+      const rows = recentRows.slice((recentPage-1)*recentPageSize, recentPage*recentPageSize);
+      if ($('recentLinks')) {
+        $('recentLinks').innerHTML = rows.length ? rows.map((item) => `
+          <div class="recent-item">
+            <span class="recent-icon"><i class="fa-solid ${esc(item.icon)}" aria-hidden="true"></i></span>
+            <div><b>${esc(item.title)}</b><small>${esc(String(item.type || 'content'))} · ${esc(formatDate(item.date))}</small></div>
+            <strong>${item.price > 0 ? esc(money(item.price)) : `${number(item.views)} views`}</strong>
+          </div>`).join('') : `<div class="empty">Belum ada konten.</div>`;
+      }
+      renderPager('recentPagination', recentPage, totalPages, (p)=>{recentPage=p;renderRecent();});
+    };
+    renderRecent();
+
     /* =====================================================
        ACTIVITY
        ===================================================== */
@@ -1587,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           return dateB - dateA;
         }
       )
-      .slice(0, 8);
+    ;
     const activityIcon = (
       type
     ) => {
@@ -1615,50 +1583,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           return 'fa-bolt';
       }
     };
-    if ($('activity')) {
-      $('activity').innerHTML =
-        activities.length
-          ? activities
-              .map(
-                (item) => `
-                  <div class="activity-row">
-                    <span>
-                      <i
-                        class="fa-solid ${esc(
-                          activityIcon(
-                            item.type
-                          )
-                        )}"
-                        aria-hidden="true"
-                      ></i>
-                    </span>
-                    <div>
-                      <b>
-                        ${esc(
-                          String(
-                            item.type ||
-                            'activity'
-                          ).toUpperCase()
-                        )}
-                      </b>
-                      <small>
-                        ${esc(
-                          formatDateTime(
-                            item.date
-                          )
-                        )}
-                      </small>
-                    </div>
-                  </div>
-                `
-              )
-              .join('')
-          : `
-              <div class="empty">
-                Belum ada aktivitas.
-              </div>
-            `;
-    }
+    const activityPageSize = 5;
+    let activityPage = 1;
+    const renderActivity = () => {
+      const totalPages = Math.max(1, Math.ceil(activities.length / activityPageSize));
+      activityPage = Math.min(activityPage, totalPages);
+      const rows = activities.slice((activityPage-1)*activityPageSize, activityPage*activityPageSize);
+      if ($('activity')) {
+        $('activity').innerHTML = rows.length ? rows.map((item) => `
+          <div class="activity-row">
+            <span><i class="fa-solid ${esc(activityIcon(item.type))}" aria-hidden="true"></i></span>
+            <div><b>${esc(String(item.type || 'activity').toUpperCase())}</b><small>${esc(formatDateTime(item.date))}</small></div>
+          </div>`).join('') : `<div class="empty">Belum ada aktivitas.</div>`;
+      }
+      renderPager('activityPagination', activityPage, totalPages, (p)=>{activityPage=p;renderActivity();});
+    };
+    renderActivity();
+
     /* =====================================================
        GREETING
        ===================================================== */
@@ -1721,4 +1662,75 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
     }
   }
+
+  /* =======================================================
+     PAGINATION
+  ======================================================= */
+  function renderPager(id, page, total, onChange) {
+    const host = $(id);
+    if (!host) return;
+    if (total <= 1) { host.innerHTML = ''; return; }
+    const buttons = [];
+    buttons.push(`<button type="button" ${page===1?'disabled':''} data-p="${page-1}" aria-label="Halaman sebelumnya">‹</button>`);
+    for (let i=1;i<=total;i++) {
+      if (total > 7 && i > 2 && i < total-1 && Math.abs(i-page)>1) {
+        if (i === 3 || i === total-2) buttons.push(`<span>…</span>`);
+        continue;
+      }
+      buttons.push(`<button type="button" class="${i===page?'active':''}" data-p="${i}">${i}</button>`);
+    }
+    buttons.push(`<button type="button" ${page===total?'disabled':''} data-p="${page+1}" aria-label="Halaman berikutnya">›</button>`);
+    host.innerHTML = buttons.join('');
+    host.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => onChange(Number(btn.dataset.p))));
+  }
+
+  /* =======================================================
+     PERFORMANCE CLICK NOTIFICATIONS
+  ======================================================= */
+  const notifyPerformance = (key) => {
+    const item = performanceSnapshot[key];
+    if (!item || !window.TC?.toast) return;
+    const trend = item.trend?.label || '0%';
+    TC.toast(`${item.label}: ${key==='revenue' ? money(item.value) : number(item.value)} · Performa ${trend}`, item.trend?.direction === 'down' ? 'error' : 'success');
+  };
+  document.querySelectorAll('[data-performance]').forEach(el => {
+    el.addEventListener('click', () => notifyPerformance(el.dataset.performance));
+  });
+
+  /* =======================================================
+     FOLLOWER COUNTRY STATISTICS
+  ======================================================= */
+  async function loadFollowerStats() {
+    const list = $('followerCountries');
+    if (!list || !window.sb) return;
+    try {
+      const { data, error } = await sb.from('creator_followers')
+        .select('follower_id,created_at,profiles:follower_id(country)')
+        .eq('creator_id', user.id);
+      if (error) throw error;
+      const rows = Array.isArray(data) ? data : [];
+      const total = rows.length;
+      if ($('followerTotal')) $('followerTotal').textContent = number(total);
+      const counts = {};
+      rows.forEach(r => {
+        const c = String(r?.profiles?.country || 'Indonesia').trim() || 'Indonesia';
+        counts[c] = (counts[c] || 0) + 1;
+      });
+      const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      const colors = ['#229ed9','#8065d8','#21a66c','#d65d9a','#efb13b','#4f7df0','#8b95a5','#ef8b3a'];
+      const gradient = [];
+      let cursor = 0;
+      sorted.forEach(([_,n],i)=>{ const pct=total? n/total*100:0; gradient.push(`${colors[i]} ${cursor}% ${cursor+pct}%`); cursor+=pct; });
+      if ($('followerDonut')) $('followerDonut').style.background = total ? `conic-gradient(${gradient.join(',')})` : 'conic-gradient(#dfe7ec 0 100%)';
+      list.innerHTML = sorted.length ? sorted.map(([country,n],i)=>{
+        const pct=total ? n/total*100 : 0;
+        return `<div class="country-row"><span>${esc(country)}</span><div class="bar"><i style="width:${pct}%"></i></div><b>${pct.toFixed(0)}%</b></div>`;
+      }).join('') : `<div class="empty">Belum ada pengikut.</div>`;
+    } catch (e) {
+      console.warn('Follower stats unavailable:',e);
+      if ($('followerCountries')) $('followerCountries').innerHTML = `<div class="empty">Statistik negara belum tersedia. Tambahkan negara pada profil pengikut.</div>`;
+    }
+  }
+  loadFollowerStats();
+
 });

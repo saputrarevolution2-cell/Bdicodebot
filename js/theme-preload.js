@@ -2,9 +2,8 @@
 (() => {
   try {
     const saved = localStorage.getItem('pastele-theme');
-    const theme = saved === 'dark' || saved === 'light'
-      ? saved
-      : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const systemTheme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const theme = saved === 'dark' || saved === 'light' ? saved : systemTheme;
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
   } catch (_) {}

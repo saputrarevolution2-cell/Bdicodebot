@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const $ = (id) => document.getElementById(id);
   let filter = "all";
   let items = [];
+  let page = 1;
+  const pageSize = 5;
   const q = $("q");
   const market = $("market");
   /* =======================================================
@@ -203,6 +205,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-user"></i>
             <span>${esc(creator)}</span>
           </div>
+          <div class="market-card-stats">
+            <span><i class="fa-solid fa-eye"></i> ${viewsText(item)}</span>
+            <span class="like"><i class="fa-solid fa-heart"></i> ${number(item?.likes_count)}</span>
+            <span class="comment"><i class="fa-solid fa-comment"></i> ${number(item?.comments_count)}</span>
+            <span class="share"><i class="fa-solid fa-share-nodes"></i> ${number(item?.shares_count)}</span>
+          </div>
           <div class="product-bottom">
             <div class="product-stats">
               <span>
@@ -317,9 +325,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             new Date(a.created_at || 0)
         );
     updateResult(filtered.length);
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    page = Math.min(page, totalPages);
+    const pageItems = filtered.slice((page-1)*pageSize, page*pageSize);
     market.innerHTML =
-      filtered.length
-        ? filtered.map(card).join("")
+      pageItems.length
+        ? pageItems.map(card).join("")
         : `
           <div class="market-empty">
             <span>
@@ -343,7 +354,24 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
           </div>
         `;
+    renderPager(totalPages);
     renderTopLists();
+  }
+  function renderPager(totalPages) {
+    const host = $("marketPagination");
+    if (!host || totalPages <= 1) { if (host) host.innerHTML = ""; return; }
+    const btns = [];
+    btns.push(`<button type="button" ${page===1?'disabled':''} data-page="${page-1}">‹</button>`);
+    for (let i=1;i<=totalPages;i++) {
+      if (totalPages>9 && i>2 && i<totalPages-1 && Math.abs(i-page)>1) {
+        if (i===3 || i===totalPages-2) btns.push(`<span>…</span>`);
+        continue;
+      }
+      btns.push(`<button type="button" class="${i===page?'active':''}" data-page="${i}">${i}</button>`);
+    }
+    btns.push(`<button type="button" ${page===totalPages?'disabled':''} data-page="${page+1}">›</button>`);
+    host.innerHTML = btns.join("");
+    host.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{page=Number(b.dataset.page);render();window.scrollTo({top:document.querySelector(".marketplace-page")?.offsetTop||0,behavior:"smooth"});}));
   }
   /* =======================================================
      TOP LISTS
@@ -522,9 +550,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (result.error) {
         throw result.error;
       }
-      items = Array.isArray(result.data)
-        ? result.data
-        : [];
+      items = Array.isArray(result.data) ? result.data : [];
+      page = 1;
+      const ids = items.map(x => x.id).filter(Boolean);
+      if (ids.length) {
+        const [likes, comments, shares] = await Promise.all([
+          sb.from("content_likes").select("target_id").in("target_id", ids),
+          sb.from("content_comments").select("target_id").in("target_id", ids),
+          sb.from("analytics_events").select("target_id").in("target_id", ids).eq("event_type","share")
+        ]);
+        const countBy = (rows) => {
+          const map={}; (rows?.data||[]).forEach(r=>{map[r.target_id]=(map[r.target_id]||0)+1;}); return map;
+        };
+        const lm=countBy(likes), cm=countBy(comments), sm=countBy(shares);
+        items = items.map(x=>({...x,likes_count:lm[x.id]||0,comments_count:cm[x.id]||0,shares_count:sm[x.id]||0}));
+      }
       render();
     } catch (error) {
       console.error(
@@ -560,9 +600,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           button.classList.add(
             "active"
           );
-          filter =
-            button.dataset.v ||
-            "all";
+          filter = button.dataset.v || "all";
+          page = 1;
           render();
         }
       );
@@ -574,6 +613,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     "input",
     () => {
       updateSearchButton();
+      page = 1;
       render();
     }
   );
@@ -593,6 +633,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         q.value = "";
       }
       updateSearchButton();
+      page = 1;
       render();
       q?.focus();
     }
@@ -618,6 +659,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           );
         });
       updateSearchButton();
+      page = 1;
       render();
     }
   );
