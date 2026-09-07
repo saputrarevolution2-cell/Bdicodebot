@@ -259,6 +259,8 @@ create policy telegram_products_own_update on public.telegram_products for updat
 create policy telegram_channels_public_or_own on public.telegram_channels for select using (is_published=true or auth.uid()=owner_id);
 create policy telegram_channels_own_insert on public.telegram_channels for insert with check (auth.uid()=owner_id);
 create policy telegram_channels_own_update on public.telegram_channels for update using (auth.uid()=owner_id) with check (auth.uid()=owner_id);
+create policy telegram_products_own_delete on public.telegram_products for delete using (auth.uid()=owner_id);
+create policy telegram_channels_own_delete on public.telegram_channels for delete using (auth.uid()=owner_id);
 create policy approved_bots_active_read on public.approved_bots for select using (is_active=true);
 
 -- No direct browser write policies for payments/admin_logs/wallets/wallet_transactions.
