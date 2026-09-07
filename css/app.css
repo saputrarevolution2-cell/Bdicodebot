@@ -820,3 +820,44 @@ html[data-theme="dark"] .code-preview,html[data-theme="dark"] pre,html[data-them
 .table-wrap{max-width:100%;-webkit-overflow-scrolling:touch}
 button:disabled,.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
 :focus-visible{outline:3px solid rgba(42,171,238,.28);outline-offset:2px}
+
+
+/* ============================================================
+   GLOBAL THEME — SYSTEM AUTO + MANUAL TOGGLE
+============================================================ */
+html[data-theme="dark"] {
+  --app-bg:#07131d;
+  --surface:#0c1b27;
+  --surface-soft:#10212d;
+  --surface-blue:rgba(41,167,223,.10);
+  --text:#dce8ee;
+  --muted:#8ea5b4;
+  --line:#1b3443;
+  --line-strong:#284556;
+  --blue:#29a7df;
+  --blue-dark:#43b5e8;
+  --cyan:#29a7df;
+  --green:#5cdaa0;
+  --blue-soft:rgba(41,167,223,.10);
+  --success:#5cdaa0;
+  --warning:#efc967;
+  --danger:#ff969e;
+  --shadow-sm:0 3px 16px rgba(0,0,0,.18);
+  --shadow:0 10px 32px rgba(0,0,0,.24);
+}
+html[data-theme="dark"] body {
+  background:var(--app-bg);
+  color:var(--text);
+}
+html[data-theme="dark"] .input,
+html[data-theme="dark"] .select,
+html[data-theme="dark"] .textarea,
+html[data-theme="dark"] .composer {
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--line-strong);
+}
+html[data-theme="dark"] .field label { color:var(--muted); }
+html[data-theme="dark"] .table th { background:var(--surface-soft); color:var(--muted); }
+html[data-theme="dark"] .table tbody tr:hover td { background:#10212d; }
+html[data-theme="dark"] .btn:not(.primary) { background:var(--surface); color:var(--text); border-color:var(--line-strong); }

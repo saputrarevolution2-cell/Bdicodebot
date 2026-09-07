@@ -636,3 +636,14 @@ body.theme-dark .product-thumb {
     height: 145px;
   }
 }
+
+/* Marketplace upgrade: social stats + pagination */
+.market-card-stats { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:9px; color:var(--muted,#7d8799); font-size:10px; }
+.market-card-stats span { display:inline-flex; align-items:center; gap:4px; }
+.market-card-stats .like i { color:#ef5d83; }
+.market-card-stats .comment i { color:#8065d8; }
+.market-card-stats .share i { color:#21a66c; }
+.market-pagination { display:flex; justify-content:center; align-items:center; gap:6px; padding:18px 0 10px; }
+.market-pagination button { min-width:32px; height:32px; border:1px solid var(--line,#e3e9ee); border-radius:9px; background:var(--surface,#fff); color:var(--text,#17212b); cursor:pointer; font-size:11px; font-weight:800; }
+.market-pagination button.active { background:var(--blue,#2aabee); color:#fff; border-color:var(--blue,#2aabee); }
+.market-pagination button:disabled { opacity:.45; cursor:not-allowed; }
