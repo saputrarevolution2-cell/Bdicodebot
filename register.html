@@ -80,41 +80,33 @@ content=”#ffffff”
     href="/css/saas-final.css?v=20260907"
   >
   <!-- =====================================================
-       REGISTER TURNSTILE UI
+       TURNSTILE ONLY
+       Tidak mengubah ukuran card/form utama
        ===================================================== -->
   <style>
-    /* -----------------------------------------------------
-       REGISTER SECURITY
-       ----------------------------------------------------- */
     .register-security {
       width: 100%;
-      margin: 4px 0 2px;
+      margin: 8px 0 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 6px;
     }
     #registerTurnstile {
-      width: 100%;
-      min-height: 65px;
       display: flex;
-      justify-content: center;
       align-items: center;
-      overflow: hidden;
-    }
-    #registerTurnstile iframe {
-      max-width: 100%;
+      justify-content: center;
+      min-height: 65px;
     }
     .register-security-status {
       width: 100%;
       min-height: 18px;
+      margin: 0;
       text-align: center;
       font-size: 12px;
-      line-height: 1.45;
-      opacity: .72;
-      transition:
-        color .2s ease,
-        opacity .2s ease;
+      line-height: 1.4;
+      opacity: .7;
     }
     .register-security-status.success {
       opacity: 1;
@@ -122,9 +114,10 @@ content=”#ffffff”
     .register-security-status.error {
       opacity: 1;
     }
-    /* -----------------------------------------------------
-       REGISTER BUTTON
-       ----------------------------------------------------- */
+    /*
+     * Hanya mengatur state tombol.
+     * Tidak mengubah ukuran tombol atau form.
+     */
     #submit:disabled {
       opacity: .55;
       cursor: not-allowed;
@@ -134,17 +127,6 @@ content=”#ffffff”
     }
     #submit:not(:disabled) {
       cursor: pointer;
-    }
-    /* -----------------------------------------------------
-       MOBILE
-       ----------------------------------------------------- */
-    @media (max-width: 480px) {
-      #registerTurnstile {
-        min-height: 70px;
-      }
-      .register-security-status {
-        font-size: 11px;
-      }
     }
   </style>
 </head>
@@ -318,13 +300,13 @@ content=”#ffffff”
     </div>
     <!-- =================================================
          CLOUDFLARE TURNSTILE
-         =================================================
-         IMPORTANT:
-         - Container sengaja kosong.
-         - Tidak menggunakan class cf-turnstile.
-         - register.js melakukan turnstile.render().
          ================================================= -->
     <div class="register-security">
+      <!--
+        IMPORTANT:
+        Container sengaja kosong.
+        register.js yang melakukan turnstile.render().
+      -->
       <div
         id="registerTurnstile"
         data-sitekey="0x4AAAAAAErjLed781i5lbu8"
@@ -356,7 +338,9 @@ content=”#ffffff”
         class="fa-solid fa-user-plus"
         aria-hidden="true"
       ></i>
-      <span>Register</span>
+      <span>
+        Register
+      </span>
     </button>
   </form>
   <!-- =================================================
@@ -371,7 +355,9 @@ content=”#ffffff”
       class="fa-brands fa-google"
       aria-hidden="true"
     ></i>
-    <span>Daftar dengan Google</span>
+    <span>
+      Daftar dengan Google
+    </span>
   </button>
   <!-- =================================================
        FOOTER
