@@ -1,173 +1,890 @@
 <!doctype html>
 <html lang="id">
+
 <head>
+
+    <!-- =====================================================
+         THEME PRELOAD
+         ===================================================== -->
     <script src="js/theme-preload.js"></script>
+
+
+    <!-- =====================================================
+         META
+         ===================================================== -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <meta
+        name="description"
+        content="Kelola saldo, pendapatan, transaksi, dan penarikan dana di PasTele."
+    >
+
+    <meta
+        name="theme-color"
+        content="#ffffff"
+    >
+
+    <meta
+        name="color-scheme"
+        content="light dark"
+    >
+
+
+    <!-- =====================================================
+         SUPABASE
+         ===================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/config.js?v=20260831"></script>
-    <script src="/js/supabase.js?v=20260831"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/navbar.js?v=20260906-final"></script>
+
+    <script src="/js/config.js?v=20260908"></script>
+
+    <script src="/js/supabase.js?v=20260908"></script>
+
+    <script src="/js/auth.js?v=20260908"></script>
+
+    <script src="/js/navbar.js?v=20260908"></script>
+
+
+    <!-- =====================================================
+         TITLE
+         ===================================================== -->
     <title>Wallet — PasTele</title>
+
+
+    <!-- =====================================================
+         ICONS
+         ===================================================== -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
-    <link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
-    <link rel="stylesheet" href="css/wallet.css?v=20260904">
-<link rel="stylesheet" href="css/final-polish.css?v=20260906-final">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
+
+
+    <!-- =====================================================
+         GLOBAL CSS
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/app.css?v=20260908"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/navbar.css?v=20260908"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/footer.css?v=20260908"
+    >
+
+
+    <!-- =====================================================
+         PAGE CSS
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/wallet.css?v=20260908"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/final-polish.css?v=20260908"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/saas-final.css?v=20260908"
+    >
+
 </head>
+
+
 <body class="app-page wallet-page">
+
+
+    <!-- =====================================================
+         NAVBAR
+         ===================================================== -->
     <div id="navbar"></div>
-    <main>
-        <section class="section wallet-section">
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+    <main
+        id="main-content"
+        class="wallet-main"
+    >
+
+        <section
+            class="section wallet-section"
+            aria-labelledby="walletTitle"
+        >
+
             <div class="container wallet-container">
-                <!-- Heading -->
-                <div class="wallet-heading">
-                    <div>
-                        <span class="badge wallet-badge">
+
+
+                <!-- =================================================
+                     HEADER
+                     ================================================= -->
+                <header class="wallet-heading">
+
+                    <div class="wallet-heading-main">
+
+                        <div
+                            class="wallet-heading-icon"
+                            aria-hidden="true"
+                        >
                             <i class="fa-solid fa-wallet"></i>
-                            WALLET
-                        </span>
-                        <h1>Keuangan</h1>
-                        <p class="muted">
-                            Pantau saldo, pendapatan, dan aktivitas keuanganmu.
-                        </p>
-                    </div>
-                    <a
-                        href="transactions.html"
-                        class="btn wallet-history-btn"
-                    >
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        <span>Riwayat Transaksi</span>
-                    </a>
-                </div>
-                <!-- Balance cards -->
-                <div class="wallet-stats">
-                    <div class="wallet-card wallet-card-primary">
-                        <div class="wallet-card-top">
-                            <span class="wallet-card-icon">
-                                <i class="fa-solid fa-circle-check"></i>
+                        </div>
+
+
+                        <div class="wallet-heading-copy">
+
+                            <span class="badge wallet-badge">
+
+                                <i
+                                    class="fa-solid fa-wallet"
+                                    aria-hidden="true"
+                                ></i>
+
+                                WALLET
+
                             </span>
+
+
+                            <h1 id="walletTitle">
+                                Keuangan
+                            </h1>
+
+
+                            <p class="muted">
+                                Pantau saldo, pendapatan, dan aktivitas keuanganmu.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         HEADER ACTIONS
+                         ============================================= -->
+                    <div class="wallet-heading-actions">
+
+                        <button
+                            type="button"
+                            class="wallet-refresh-btn"
+                            id="refreshWallet"
+                            title="Refresh wallet"
+                            aria-label="Refresh wallet"
+                        >
+
+                            <i
+                                class="fa-solid fa-rotate"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span>
+                                Refresh
+                            </span>
+
+                        </button>
+
+
+                        <a
+                            href="transactions.html"
+                            class="btn wallet-history-btn"
+                        >
+
+                            <i
+                                class="fa-solid fa-clock-rotate-left"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span>
+                                Riwayat Transaksi
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                </header>
+
+
+                <!-- =================================================
+                     BALANCE HERO
+                     ================================================= -->
+                <section
+                    class="wallet-balance-hero"
+                    aria-label="Saldo wallet"
+                >
+
+                    <div class="wallet-balance-content">
+
+                        <span class="wallet-balance-label">
+                            Saldo tersedia
+                        </span>
+
+
+                        <div class="wallet-balance-value-row">
+
+                            <strong
+                                id="available"
+                                class="wallet-balance-value"
+                            >
+                                Rp0
+                            </strong>
+
+
+                            <button
+                                type="button"
+                                class="wallet-copy-btn"
+                                id="copyBalance"
+                                title="Salin saldo"
+                                aria-label="Salin saldo"
+                            >
+
+                                <i
+                                    class="fa-regular fa-copy"
+                                    aria-hidden="true"
+                                ></i>
+
+                            </button>
+
+                        </div>
+
+
+                        <span class="wallet-balance-note">
+                            Saldo yang dapat digunakan atau ditarik.
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="wallet-balance-icon"
+                        aria-hidden="true"
+                    >
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     BALANCE STATS
+                     ================================================= -->
+                <div
+                    class="wallet-stats"
+                    aria-label="Ringkasan keuangan"
+                >
+
+
+                    <!-- Available -->
+                    <article class="wallet-card wallet-card-primary">
+
+                        <div class="wallet-card-top">
+
+                            <span
+                                class="wallet-card-icon wallet-icon-green"
+                                aria-hidden="true"
+                            >
+
+                                <i class="fa-solid fa-circle-check"></i>
+
+                            </span>
+
+
                             <span class="wallet-card-label">
                                 Tersedia
                             </span>
+
                         </div>
+
+
                         <strong id="available">
                             Rp0
                         </strong>
+
+
                         <small>
                             Saldo yang dapat digunakan
                         </small>
-                    </div>
-                    <button type="button" class="wallet-card wallet-pending-click" id="pendingCard" aria-label="Lihat detail saldo tertunda">
+
+                    </article>
+
+
+                    <!-- Pending -->
+                    <button
+                        type="button"
+                        class="wallet-card wallet-pending-click"
+                        id="pendingCard"
+                        aria-label="Lihat detail saldo tertunda"
+                    >
+
                         <div class="wallet-card-top">
-                            <span class="wallet-card-icon">
+
+                            <span
+                                class="wallet-card-icon wallet-icon-amber"
+                                aria-hidden="true"
+                            >
+
                                 <i class="fa-solid fa-clock"></i>
+
                             </span>
+
+
                             <span class="wallet-card-label">
                                 Tertunda
                             </span>
+
                         </div>
+
+
                         <strong id="pending">
                             Rp0
                         </strong>
+
+
                         <small>
                             Menunggu verifikasi
                         </small>
+
+
                         <em>
-                            <i class="fa-solid fa-circle-info"></i>
+
+                            <i
+                                class="fa-solid fa-circle-info"
+                                aria-hidden="true"
+                            ></i>
+
                             H1 / H2 sesuai waktu penjualan
+
                         </em>
+
                     </button>
-                    <div class="wallet-card">
+
+
+                    <!-- Income -->
+                    <article class="wallet-card">
+
                         <div class="wallet-card-top">
-                            <span class="wallet-card-icon">
+
+                            <span
+                                class="wallet-card-icon wallet-icon-purple"
+                                aria-hidden="true"
+                            >
+
                                 <i class="fa-solid fa-chart-line"></i>
+
                             </span>
+
+
                             <span class="wallet-card-label">
                                 Total Pendapatan
                             </span>
+
                         </div>
+
+
                         <strong id="income">
                             Rp0
                         </strong>
+
+
                         <small>
                             Pendapatan berhasil
                         </small>
-                    </div>
-                    <div class="wallet-card">
+
+                    </article>
+
+
+                    <!-- Today -->
+                    <article class="wallet-card">
+
                         <div class="wallet-card-top">
-                            <span class="wallet-card-icon">
+
+                            <span
+                                class="wallet-card-icon wallet-icon-blue"
+                                aria-hidden="true"
+                            >
+
                                 <i class="fa-solid fa-calendar-day"></i>
+
                             </span>
+
+
                             <span class="wallet-card-label">
                                 Hari Ini
                             </span>
+
                         </div>
+
+
                         <strong id="today">
                             Rp0
                         </strong>
+
+
                         <small>
                             Pendapatan hari ini
                         </small>
-                    </div>
+
+                    </article>
+
                 </div>
-                <!-- Income breakdown -->
+
+
+                <!-- =================================================
+                     QUICK ACTIONS
+                     ================================================= -->
+                <section
+                    class="wallet-quick-actions"
+                    aria-label="Aksi wallet"
+                >
+
+
+                    <!-- Withdraw -->
+                    <a
+                        href="withdraw.html"
+                        class="wallet-quick-card wallet-quick-withdraw"
+                        id="withdrawBtn"
+                    >
+
+                        <span
+                            class="wallet-quick-icon wallet-quick-green"
+                            aria-hidden="true"
+                        >
+
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+
+                        </span>
+
+
+                        <span class="wallet-quick-content">
+
+                            <strong>
+                                Tarik Saldo
+                            </strong>
+
+                            <small>
+                                Cairkan saldo yang tersedia
+                            </small>
+
+                        </span>
+
+
+                        <i
+                            class="fa-solid fa-chevron-right wallet-quick-arrow"
+                            aria-hidden="true"
+                        ></i>
+
+                    </a>
+
+
+                    <!-- Payment Methods -->
+                    <a
+                        href="payment-methods.html"
+                        class="wallet-quick-card"
+                        id="paymentMethodBtn"
+                    >
+
+                        <span
+                            class="wallet-quick-icon wallet-quick-purple"
+                            aria-hidden="true"
+                        >
+
+                            <i class="fa-solid fa-credit-card"></i>
+
+                        </span>
+
+
+                        <span class="wallet-quick-content">
+
+                            <strong>
+                                Metode Pembayaran
+                            </strong>
+
+                            <small>
+                                Kelola rekening atau tujuan dana
+                            </small>
+
+                        </span>
+
+
+                        <i
+                            class="fa-solid fa-chevron-right wallet-quick-arrow"
+                            aria-hidden="true"
+                        ></i>
+
+                    </a>
+
+
+                    <!-- Transactions -->
+                    <a
+                        href="transactions.html"
+                        class="wallet-quick-card"
+                    >
+
+                        <span
+                            class="wallet-quick-icon wallet-quick-blue"
+                            aria-hidden="true"
+                        >
+
+                            <i class="fa-solid fa-receipt"></i>
+
+                        </span>
+
+
+                        <span class="wallet-quick-content">
+
+                            <strong>
+                                Semua Transaksi
+                            </strong>
+
+                            <small>
+                                Lihat pemasukan dan pengeluaran
+                            </small>
+
+                        </span>
+
+
+                        <i
+                            class="fa-solid fa-chevron-right wallet-quick-arrow"
+                            aria-hidden="true"
+                        ></i>
+
+                    </a>
+
+
+                    <!-- My Products -->
+                    <a
+                        href="my-products.html"
+                        class="wallet-quick-card"
+                    >
+
+                        <span
+                            class="wallet-quick-icon wallet-quick-orange"
+                            aria-hidden="true"
+                        >
+
+                            <i class="fa-solid fa-box-open"></i>
+
+                        </span>
+
+
+                        <span class="wallet-quick-content">
+
+                            <strong>
+                                Produk Saya
+                            </strong>
+
+                            <small>
+                                Kelola produk dan pendapatan
+                            </small>
+
+                        </span>
+
+
+                        <i
+                            class="fa-solid fa-chevron-right wallet-quick-arrow"
+                            aria-hidden="true"
+                        ></i>
+
+                    </a>
+
+                </section>
+
+
+                <!-- =================================================
+                     INCOME BREAKDOWN
+                     ================================================= -->
                 <section class="wallet-panel">
+
                     <div class="wallet-panel-heading">
-                        <div>
-                            <div class="wallet-panel-title">
-                                <span class="panel-icon">
-                                    <i class="fa-solid fa-chart-column"></i>
-                                </span>
-                                <div>
-                                    <h2>Statistik Pendapatan</h2>
-                                    <p>
-                                        Ringkasan pendapatan berdasarkan jenis konten.
-                                    </p>
-                                </div>
+
+                        <div class="wallet-panel-title">
+
+                            <span
+                                class="panel-icon wallet-panel-blue"
+                                aria-hidden="true"
+                            >
+
+                                <i class="fa-solid fa-chart-column"></i>
+
+                            </span>
+
+
+                            <div>
+
+                                <h2>
+                                    Statistik Pendapatan
+                                </h2>
+
+
+                                <p>
+                                    Ringkasan pendapatan berdasarkan jenis konten.
+                                </p>
+
                             </div>
+
                         </div>
+
+
                         <a
                             href="transactions.html"
                             class="wallet-view-all"
                         >
+
                             Lihat semua
-                            <i class="fa-solid fa-arrow-right"></i>
+
+                            <i
+                                class="fa-solid fa-arrow-right"
+                                aria-hidden="true"
+                            ></i>
+
                         </a>
+
                     </div>
+
+
                     <div
                         class="income-grid"
                         id="breakdown"
+                        aria-live="polite"
+                        aria-busy="true"
                     >
+
                         <div class="wallet-loading">
-                            <i class="fa-solid fa-spinner fa-spin"></i>
-                            <span>Memuat statistik...</span>
+
+                            <span class="wallet-loading-icon">
+
+                                <i
+                                    class="fa-solid fa-spinner fa-spin"
+                                    aria-hidden="true"
+                                ></i>
+
+                            </span>
+
+
+                            <span>
+                                Memuat statistik...
+                            </span>
+
                         </div>
+
                     </div>
+
                 </section>
-                <!-- Info -->
-                <div class="wallet-info">
-                    <div class="wallet-info-icon">
-                        <i class="fa-solid fa-shield-halved"></i>
+
+
+                <!-- =================================================
+                     RECENT ACTIVITY
+                     ================================================= -->
+                <section
+                    class="wallet-panel wallet-activity-panel"
+                    id="recentActivityPanel"
+                >
+
+                    <div class="wallet-panel-heading">
+
+                        <div class="wallet-panel-title">
+
+                            <span
+                                class="panel-icon wallet-panel-purple"
+                                aria-hidden="true"
+                            >
+
+                                <i class="fa-solid fa-bolt"></i>
+
+                            </span>
+
+
+                            <div>
+
+                                <h2>
+                                    Aktivitas Terbaru
+                                </h2>
+
+
+                                <p>
+                                    Ringkasan aktivitas keuangan terbaru.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <a
+                            href="transactions.html"
+                            class="wallet-view-all"
+                        >
+
+                            Semua aktivitas
+
+                            <i
+                                class="fa-solid fa-arrow-right"
+                                aria-hidden="true"
+                            ></i>
+
+                        </a>
+
                     </div>
+
+
+                    <div
+                        class="wallet-activity-list"
+                        id="recentActivity"
+                        aria-live="polite"
+                        aria-busy="true"
+                    >
+
+                        <div class="wallet-loading">
+
+                            <span class="wallet-loading-icon">
+
+                                <i
+                                    class="fa-solid fa-spinner fa-spin"
+                                    aria-hidden="true"
+                                ></i>
+
+                            </span>
+
+
+                            <span>
+                                Memuat aktivitas...
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     WITHDRAW STATUS
+                     ================================================= -->
+                <section
+                    class="wallet-withdraw-panel"
+                    id="withdrawStatusPanel"
+                >
+
+                    <div class="wallet-withdraw-icon">
+
+                        <i
+                            class="fa-solid fa-money-bill-transfer"
+                            aria-hidden="true"
+                        ></i>
+
+                    </div>
+
+
+                    <div class="wallet-withdraw-content">
+
+                        <span class="wallet-withdraw-label">
+                            PENARIKAN DANA
+                        </span>
+
+
+                        <strong>
+                            Siap mencairkan saldo?
+                        </strong>
+
+
+                        <p>
+                            Gunakan saldo tersedia untuk melakukan penarikan
+                            ke metode pembayaran yang sudah terdaftar.
+                        </p>
+
+                    </div>
+
+
+                    <a
+                        href="withdraw.html"
+                        class="wallet-withdraw-btn"
+                    >
+
+                        Tarik Saldo
+
+                        <i
+                            class="fa-solid fa-arrow-right"
+                            aria-hidden="true"
+                        ></i>
+
+                    </a>
+
+                </section>
+
+
+                <!-- =================================================
+                     SECURITY INFO
+                     ================================================= -->
+                <div class="wallet-info">
+
+                    <div
+                        class="wallet-info-icon"
+                        aria-hidden="true"
+                    >
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+
                     <div>
-                        <strong>Keuangan kamu tetap aman</strong>
+
+                        <strong>
+                            Keuangan kamu tetap aman
+                        </strong>
+
+
                         <p>
                             Saldo dan riwayat pendapatan ditampilkan langsung
-                            dari database akunmu.
+                            dari database akunmu. Jangan pernah membagikan
+                            informasi pembayaran atau kode keamanan kepada orang lain.
                         </p>
+
                     </div>
+
                 </div>
+
+
             </div>
+
         </section>
+
     </main>
-    <div id="toast"></div>
-    <script src="js/wallet.js?v=20260904"></script>
-    <script src="js/footer.js?v=20260904"></script>
+
+
+    <!-- =====================================================
+         TOAST
+         ===================================================== -->
+    <div
+        id="toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+
+    <!-- =====================================================
+         PAGE SCRIPTS
+         ===================================================== -->
+    <script src="js/wallet.js?v=20260908"></script>
+
+    <script src="js/footer.js?v=20260908"></script>
+
+
 </body>
 </html>
