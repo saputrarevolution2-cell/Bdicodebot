@@ -2,47 +2,66 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
+
   <meta
     name="color-scheme"
     content="light dark"
   >
+
   <meta
     name="theme-color"
     content="#ffffff"
   >
+
   <!-- =====================================================
        THEME PRELOAD
        ===================================================== -->
   <script src="js/theme-preload.js"></script>
+
   <!-- =====================================================
        FONT PRECONNECT
        ===================================================== -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
   <!-- =====================================================
        SUPABASE
        ===================================================== -->
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
   ></script>
+
   <title>Dashboard — PasTele</title>
+
   <!-- =====================================================
        CORE CONFIG
        ===================================================== -->
   <script src="/js/config.js?v=20260831"></script>
   <script src="/js/supabase.js?v=20260831"></script>
+
   <!-- =====================================================
        AUTH
        ===================================================== -->
   <script src="/js/auth.js"></script>
+
   <!-- =====================================================
        NAVBAR
        ===================================================== -->
   <script src="/js/navbar.js?v=20260906-final"></script>
+
   <!-- =====================================================
        FONT AWESOME
        ===================================================== -->
@@ -50,6 +69,7 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
+
   <!-- =====================================================
        APP CSS
        ===================================================== -->
@@ -57,22 +77,34 @@
     rel="stylesheet"
     href="css/app.css?v=20260904"
   >
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260906-final"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/footer.css?v=20260905"
+  >
+
   <!-- =====================================================
        DASHBOARD CSS
        ===================================================== -->
   <link
     rel="stylesheet"
-    href="css/dashboard.css?v=20260904"
+    href="css/dashboard.css?v=20260908"
   >
-
 </head>
+
 <body class="app-page dashboard-page">
+
   <!-- =====================================================
        NAVBAR
        ===================================================== -->
   <div id="navbar"></div>
+
+
   <!-- =====================================================
        MAIN DASHBOARD
        ===================================================== -->
@@ -80,47 +112,62 @@
     class="dashboard-fixed"
     id="dashboardMain"
   >
+
     <div class="dash-container">
+
       <!-- ===================================================
            DASHBOARD HEADER
            =================================================== -->
       <header class="dash-head">
+
         <div class="dash-title">
+
           <div
             class="dash-logo"
             aria-hidden="true"
           >
             <i class="fa-solid fa-chart-pie"></i>
           </div>
+
           <div class="dash-heading-content">
+
             <span class="eyebrow">
               WORKSPACE
             </span>
+
             <h1>
               Dashboard
             </h1>
+
             <p>
               Halo,
               <strong id="helloName">User</strong>
-              👋
+              <span aria-hidden="true">👋</span>
             </p>
+
           </div>
         </div>
-        <!-- ===============================================
+
+
+        <!-- =================================================
              CONTENT FILTER
-             =============================================== -->
+             ================================================= -->
         <div class="dash-controls">
+
           <label
             class="sr-only"
             for="scope"
           >
             Filter jenis konten
           </label>
+
           <div class="select-wrap">
+
             <i
               class="fa-solid fa-filter"
               aria-hidden="true"
             ></i>
+
             <select
               class="select"
               id="scope"
@@ -130,22 +177,30 @@
               <option value="all">
                 Semua konten
               </option>
+
               <option value="paste">
                 Pastelink
               </option>
+
               <option value="code">
                 Code
               </option>
+
               <option value="channel">
                 Channel
               </option>
+
               <option value="group">
                 Group
               </option>
             </select>
+
           </div>
         </div>
+
       </header>
+
+
       <!-- ===================================================
            MAIN STATISTICS
            =================================================== -->
@@ -154,9 +209,8 @@
         id="contentStats"
         aria-label="Statistik utama"
       >
-        <!-- ===============================================
-             TOTAL CREATED
-             =============================================== -->
+
+        <!-- TOTAL CREATED -->
         <a
           class="dash-stat cyan"
           href="my-products.html"
@@ -164,19 +218,22 @@
           <span aria-hidden="true">
             <i class="fa-solid fa-layer-group"></i>
           </span>
+
           <small>
             Total dibuat
           </small>
+
           <strong id="created">
             0
           </strong>
+
           <em>
             Semua konten
           </em>
         </a>
-        <!-- ===============================================
-             TOTAL VIEWS
-             =============================================== -->
+
+
+        <!-- TOTAL VIEWS -->
         <a
           class="dash-stat blue"
           href="my-products.html"
@@ -184,19 +241,22 @@
           <span aria-hidden="true">
             <i class="fa-solid fa-eye"></i>
           </span>
+
           <small>
             Total view
           </small>
+
           <strong id="views">
             0
           </strong>
+
           <em>
             Aktivitas view
           </em>
         </a>
-        <!-- ===============================================
-             TOTAL SALES
-             =============================================== -->
+
+
+        <!-- TOTAL SALES -->
         <a
           class="dash-stat violet"
           href="purchases.html"
@@ -204,19 +264,22 @@
           <span aria-hidden="true">
             <i class="fa-solid fa-bag-shopping"></i>
           </span>
+
           <small>
             Total paid
           </small>
+
           <strong id="sales">
             0
           </strong>
+
           <em>
             Pembelian berhasil
           </em>
         </a>
-        <!-- ===============================================
-             REVENUE
-             =============================================== -->
+
+
+        <!-- REVENUE -->
         <a
           class="dash-stat pink"
           href="wallet.html"
@@ -224,17 +287,23 @@
           <span aria-hidden="true">
             <i class="fa-solid fa-wallet"></i>
           </span>
+
           <small>
             Pendapatan
           </small>
+
           <strong id="revenue">
             Rp0
           </strong>
+
           <em>
             Wallet income
           </em>
         </a>
+
       </section>
+
+
       <!-- ===================================================
            CONTENT COUNTERS
            =================================================== -->
@@ -242,6 +311,7 @@
         class="count-grid"
         aria-label="Jumlah konten"
       >
+
         <!-- LINK -->
         <a
           class="count-card"
@@ -251,13 +321,17 @@
             class="fa-solid fa-link"
             aria-hidden="true"
           ></i>
+
           <b id="totalLink">
             0
           </b>
+
           <small>
             Total Link
           </small>
         </a>
+
+
         <!-- CODE -->
         <a
           class="count-card"
@@ -267,13 +341,17 @@
             class="fa-solid fa-code"
             aria-hidden="true"
           ></i>
+
           <b id="totalCode">
             0
           </b>
+
           <small>
             Total Code
           </small>
         </a>
+
+
         <!-- CHANNEL -->
         <a
           class="count-card"
@@ -283,18 +361,24 @@
             class="fa-brands fa-telegram"
             aria-hidden="true"
           ></i>
+
           <b id="totalChannel">
             0
           </b>
+
           <small>
             Total Channel
           </small>
         </a>
+
       </section>
+
+
       <!-- ===================================================
            INTERACTION + PERFORMANCE
            =================================================== -->
       <section class="dash-two">
+
         <!-- =================================================
              INTERACTIONS
              ================================================= -->
@@ -302,89 +386,124 @@
           class="panel interaction-panel"
           aria-labelledby="interactionTitle"
         >
+
           <div class="panel-head">
+
             <div>
               <span class="panel-kicker">
                 ENGAGEMENT
               </span>
+
               <h2 id="interactionTitle">
                 Interaksi
               </h2>
+
               <p>
                 Ringkasan engagement akun
               </p>
             </div>
-            <span class="panel-icon">
-              <i
-                class="fa-solid fa-chart-simple"
-                aria-hidden="true"
-              ></i>
+
+            <span
+              class="panel-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-chart-simple"></i>
             </span>
+
           </div>
-          <!-- Dynamic interaction statistics -->
+
+
+          <!-- DYNAMIC INTERACTION STATISTICS -->
           <div
             class="circle-stats"
             id="interactions"
             aria-live="polite"
           >
+
             <div class="circle-stat blue">
-              <div class="circle">
-                <i
-                  class="fa-solid fa-eye"
-                  aria-hidden="true"
-                ></i>
+
+              <div
+                class="circle"
+                aria-hidden="true"
+              >
+                <i class="fa-solid fa-eye"></i>
               </div>
+
               <strong>
                 0
               </strong>
+
               <span>
                 Views
               </span>
+
             </div>
+
+
             <div class="circle-stat pink">
-              <div class="circle">
-                <i
-                  class="fa-solid fa-heart"
-                  aria-hidden="true"
-                ></i>
+
+              <div
+                class="circle"
+                aria-hidden="true"
+              >
+                <i class="fa-solid fa-heart"></i>
               </div>
+
               <strong>
                 0
               </strong>
+
               <span>
                 Like
               </span>
+
             </div>
+
+
             <div class="circle-stat violet">
-              <div class="circle">
-                <i
-                  class="fa-solid fa-share-nodes"
-                  aria-hidden="true"
-                ></i>
+
+              <div
+                class="circle"
+                aria-hidden="true"
+              >
+                <i class="fa-solid fa-share-nodes"></i>
               </div>
+
               <strong>
                 0
               </strong>
+
               <span>
                 Share
               </span>
+
             </div>
+
+
             <div class="circle-stat green">
-              <div class="circle">
-                <i
-                  class="fa-solid fa-user-plus"
-                  aria-hidden="true"
-                ></i>
+
+              <div
+                class="circle"
+                aria-hidden="true"
+              >
+                <i class="fa-solid fa-user-plus"></i>
               </div>
+
               <strong>
                 0
               </strong>
+
               <span>
                 Follower
               </span>
+
             </div>
+
           </div>
+
         </section>
+
+
         <!-- =================================================
              PERFORMANCE
              ================================================= -->
@@ -392,54 +511,71 @@
           class="panel performance-panel"
           aria-labelledby="performanceTitle"
         >
-          <!-- ===============================================
-               PERFORMANCE HEADER
-               =============================================== -->
+
+          <!-- PERFORMANCE HEADER -->
           <div class="panel-head performance-head">
+
             <div>
+
               <span class="panel-kicker">
                 ANALYTICS
               </span>
+
               <h2 id="performanceTitle">
                 Performa 7 Hari
               </h2>
+
               <p id="performancePeriod">
                 7 hari terakhir
               </p>
+
             </div>
+
             <span
               class="period-badge"
               id="periodBadge"
             >
               7 Hari
             </span>
+
           </div>
-          <!-- ===============================================
-               PERFORMANCE SUMMARY
-               =============================================== -->
+
+
+          <!-- PERFORMANCE SUMMARY -->
           <div
             class="performance-summary"
             aria-label="Ringkasan performa 7 hari"
           >
+
             <!-- VIEWS -->
-            <button type="button" class="performance-stat performance-stat-views" data-performance="views">
+            <button
+              type="button"
+              class="performance-stat performance-stat-views"
+              data-performance="views"
+            >
+
               <div class="performance-stat-top">
-                <span class="performance-stat-icon">
-                  <i
-                    class="fa-solid fa-eye"
-                    aria-hidden="true"
-                  ></i>
+
+                <span
+                  class="performance-stat-icon"
+                  aria-hidden="true"
+                >
+                  <i class="fa-solid fa-eye"></i>
                 </span>
+
                 <span class="performance-stat-label">
                   Views
                 </span>
+
               </div>
+
               <strong
                 id="performanceViews"
                 class="performance-value"
               >
                 0
               </strong>
+
               <span
                 id="performanceViewsTrend"
                 class="trend trend-stable"
@@ -448,30 +584,44 @@
                   class="fa-solid fa-minus"
                   aria-hidden="true"
                 ></i>
+
                 <span>
                   0%
                 </span>
               </span>
+
             </button>
+
+
             <!-- SALES -->
-            <button type="button" class="performance-stat performance-stat-sales" data-performance="sales">
+            <button
+              type="button"
+              class="performance-stat performance-stat-sales"
+              data-performance="sales"
+            >
+
               <div class="performance-stat-top">
-                <span class="performance-stat-icon">
-                  <i
-                    class="fa-solid fa-cart-shopping"
-                    aria-hidden="true"
-                  ></i>
+
+                <span
+                  class="performance-stat-icon"
+                  aria-hidden="true"
+                >
+                  <i class="fa-solid fa-cart-shopping"></i>
                 </span>
+
                 <span class="performance-stat-label">
                   Sales
                 </span>
+
               </div>
+
               <strong
                 id="performanceSales"
                 class="performance-value"
               >
                 0
               </strong>
+
               <span
                 id="performanceSalesTrend"
                 class="trend trend-stable"
@@ -480,39 +630,90 @@
                   class="fa-solid fa-minus"
                   aria-hidden="true"
                 ></i>
+
                 <span>
                   0%
                 </span>
               </span>
+
             </button>
+
+
             <!-- SHARE -->
-            <button type="button" class="performance-stat performance-stat-share" data-performance="share">
+            <button
+              type="button"
+              class="performance-stat performance-stat-share"
+              data-performance="share"
+            >
+
               <div class="performance-stat-top">
-                <span class="performance-stat-icon"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></span>
-                <span class="performance-stat-label">Share</span>
-              </div>
-              <strong id="performanceShare" class="performance-value">0</strong>
-              <span id="performanceShareTrend" class="trend trend-stable"><i class="fa-solid fa-minus"></i><span>0%</span></span>
-            </button>
-            <!-- REVENUE -->
-            <button type="button" class="performance-stat performance-stat-revenue" data-performance="revenue">
-              <div class="performance-stat-top">
-                <span class="performance-stat-icon">
-                  <i
-                    class="fa-solid fa-wallet"
-                    aria-hidden="true"
-                  ></i>
+
+                <span
+                  class="performance-stat-icon"
+                  aria-hidden="true"
+                >
+                  <i class="fa-solid fa-share-nodes"></i>
                 </span>
+
+                <span class="performance-stat-label">
+                  Share
+                </span>
+
+              </div>
+
+              <strong
+                id="performanceShare"
+                class="performance-value"
+              >
+                0
+              </strong>
+
+              <span
+                id="performanceShareTrend"
+                class="trend trend-stable"
+              >
+                <i
+                  class="fa-solid fa-minus"
+                  aria-hidden="true"
+                ></i>
+
+                <span>
+                  0%
+                </span>
+              </span>
+
+            </button>
+
+
+            <!-- REVENUE -->
+            <button
+              type="button"
+              class="performance-stat performance-stat-revenue"
+              data-performance="revenue"
+            >
+
+              <div class="performance-stat-top">
+
+                <span
+                  class="performance-stat-icon"
+                  aria-hidden="true"
+                >
+                  <i class="fa-solid fa-wallet"></i>
+                </span>
+
                 <span class="performance-stat-label">
                   Revenue
                 </span>
+
               </div>
+
               <strong
                 id="performanceRevenue"
                 class="performance-value performance-money"
               >
                 Rp0
               </strong>
+
               <span
                 id="performanceRevenueTrend"
                 class="trend trend-stable"
@@ -521,73 +722,94 @@
                   class="fa-solid fa-minus"
                   aria-hidden="true"
                 ></i>
+
                 <span>
                   0%
                 </span>
               </span>
+
             </button>
+
           </div>
-          <!-- ===============================================
-               TREND DETAILS
-               =============================================== -->
+
+
+          <!-- TREND DETAILS -->
           <div class="performance-meta">
+
             <div class="performance-meta-item">
+
               <i
                 class="fa-solid fa-calendar-days"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Dibandingkan 7 hari sebelumnya
               </span>
+
             </div>
+
+
             <div class="performance-meta-item">
+
               <i
                 class="fa-solid fa-arrow-trend-up"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Trend otomatis
               </span>
+
             </div>
+
           </div>
-          <!-- ===============================================
-               CHART LEGEND
-               =============================================== -->
+
+
+          <!-- CHART LEGEND -->
           <div
             class="legend"
             aria-label="Legenda grafik performa"
           >
+
             <span class="legend-item legend-views">
-              <i
-                aria-hidden="true"
-              ></i>
+
+              <i aria-hidden="true"></i>
+
               <span>
                 Views
               </span>
+
             </span>
+
+
             <span class="legend-item legend-sales">
-              <i
-                aria-hidden="true"
-              ></i>
+
+              <i aria-hidden="true"></i>
+
               <span>
                 Sales
               </span>
+
             </span>
+
+
             <span class="legend-item legend-share">
-              <i
-                aria-hidden="true"
-              ></i>
+
+              <i aria-hidden="true"></i>
+
               <span>
                 Share
               </span>
+
             </span>
+
           </div>
-          <!-- ===============================================
-               CHART
-               =============================================== -->
-          <div
-            class="chart-wrapper"
-          >
+
+
+          <!-- CHART -->
+          <div class="chart-wrapper">
+
             <div
               class="chart-y-labels"
               aria-hidden="true"
@@ -595,81 +817,211 @@
               <span>
                 Tinggi
               </span>
+
               <span>
                 Sedang
               </span>
+
               <span>
                 Rendah
               </span>
             </div>
+
+
             <div
               class="chart-fixed"
               id="chart"
               role="img"
               aria-label="Grafik performa 7 hari"
             >
-              <!-- JS akan mengisi grafik -->
+
               <div class="chart-empty-state">
+
                 <i
                   class="fa-solid fa-chart-line"
                   aria-hidden="true"
                 ></i>
+
                 <span>
                   Memuat performa...
                 </span>
+
               </div>
+
             </div>
+
           </div>
-          <!-- ===============================================
-               PERFORMANCE FOOTER
-               =============================================== -->
+
+
+          <!-- PERFORMANCE FOOTER -->
           <div class="performance-footer">
+
             <div class="performance-footer-item">
+
               <i
                 class="fa-solid fa-circle-info"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Data diambil dari aktivitas dan transaksi
                 akun kamu.
               </span>
+
             </div>
+
           </div>
+
         </section>
+
       </section>
+
+
       <!-- ===================================================
-           FOLLOWER GEOGRAPHY + REVENUE TREND
+           FOLLOWER + REVENUE TREND
            =================================================== -->
       <section class="dash-two dashboard-extra-grid">
-        <section class="panel follower-panel" aria-labelledby="followerStatsTitle">
+
+        <!-- FOLLOWER -->
+        <section
+          class="panel follower-panel"
+          aria-labelledby="followerStatsTitle"
+        >
+
           <div class="panel-head">
+
             <div>
-              <span class="panel-kicker">AUDIENCE</span>
-              <h2 id="followerStatsTitle">Statistik Pengikut</h2>
-              <p>Distribusi negara berdasarkan pengikut yang tercatat</p>
+
+              <span class="panel-kicker">
+                AUDIENCE
+              </span>
+
+              <h2 id="followerStatsTitle">
+                Statistik Pengikut
+              </h2>
+
+              <p>
+                Ringkasan pengikut yang tercatat
+              </p>
+
             </div>
-            <span class="panel-icon"><i class="fa-solid fa-earth-asia"></i></span>
+
+            <span
+              class="panel-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-earth-asia"></i>
+            </span>
+
           </div>
+
+
           <div class="follower-stat-layout">
-            <div class="follower-donut" id="followerDonut"><span id="followerTotal">0</span><small>Pengikut</small></div>
-            <div class="follower-country-list" id="followerCountries">
-              <div class="empty">Memuat statistik pengikut...</div>
+
+            <div
+              class="follower-donut"
+              id="followerDonut"
+              aria-label="Total pengikut"
+            >
+
+              <span id="followerTotal">
+                0
+              </span>
+
+              <small>
+                Pengikut
+              </small>
+
             </div>
+
+
+            <div
+              class="follower-country-list"
+              id="followerCountries"
+              aria-live="polite"
+            >
+
+              <div class="empty">
+                Memuat statistik pengikut...
+              </div>
+
+            </div>
+
           </div>
+
         </section>
-        <section class="panel revenue-trend-panel" aria-labelledby="revenueTrendTitle">
+
+
+        <!-- REVENUE TREND -->
+        <section
+          class="panel revenue-trend-panel"
+          aria-labelledby="revenueTrendTitle"
+        >
+
           <div class="panel-head">
+
             <div>
-              <span class="panel-kicker">FINANCE</span>
-              <h2 id="revenueTrendTitle">Pendapatan</h2>
-              <p>Naik turun pendapatan 7 hari terakhir</p>
+
+              <span class="panel-kicker">
+                FINANCE
+              </span>
+
+              <h2 id="revenueTrendTitle">
+                Pendapatan
+              </h2>
+
+              <p>
+                Naik turun pendapatan 7 hari terakhir
+              </p>
+
             </div>
-            <span class="panel-icon"><i class="fa-solid fa-chart-line"></i></span>
+
+            <span
+              class="panel-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-chart-line"></i>
+            </span>
+
           </div>
-          <div class="revenue-trend-value"><strong id="revenueTrendValue">Rp0</strong><span id="revenueTrendChange" class="trend trend-stable"><i class="fa-solid fa-minus"></i><span>0%</span></span></div>
-          <div class="revenue-bars" id="revenueBars"></div>
+
+
+          <div class="revenue-trend-value">
+
+            <strong id="revenueTrendValue">
+              Rp0
+            </strong>
+
+            <span
+              id="revenueTrendChange"
+              class="trend trend-stable"
+            >
+
+              <i
+                class="fa-solid fa-minus"
+                aria-hidden="true"
+              ></i>
+
+              <span>
+                0%
+              </span>
+
+            </span>
+
+          </div>
+
+
+          <div
+            class="revenue-bars"
+            id="revenueBars"
+            aria-label="Grafik pendapatan 7 hari"
+          ></div>
+
         </section>
+
       </section>
+
+
       <!-- ===================================================
            DETAIL STATISTICS
            =================================================== -->
@@ -677,116 +1029,198 @@
         class="panel dashboard-detail-panel"
         aria-labelledby="detailStatsTitle"
       >
+
         <div class="panel-head">
+
           <div>
+
             <span class="panel-kicker">
               OVERVIEW
             </span>
+
             <h2 id="detailStatsTitle">
               Detail Statistik
             </h2>
+
             <p>
               Ringkasan seluruh konten dan aktivitas kamu
             </p>
+
           </div>
-          <span class="panel-icon">
-            <i
-              class="fa-solid fa-chart-column"
-              aria-hidden="true"
-            ></i>
+
+          <span
+            class="panel-icon"
+            aria-hidden="true"
+          >
+            <i class="fa-solid fa-chart-column"></i>
           </span>
+
         </div>
+
+
         <div class="detail-stats-grid">
+
           <!-- DETAIL VIEWS -->
-          <a class="detail-stat-card" href="my-products.html" title="Lihat detail views">
-            <div class="detail-stat-icon">
-              <i
-                class="fa-solid fa-eye"
-                aria-hidden="true"
-              ></i>
+          <a
+            class="detail-stat-card"
+            href="my-products.html"
+            title="Lihat detail views"
+          >
+
+            <div
+              class="detail-stat-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-eye"></i>
             </div>
+
             <div class="detail-stat-content">
+
               <span>
                 Total Views
               </span>
+
               <strong id="detailViews">
                 0
               </strong>
+
               <small>
                 Semua aktivitas view
               </small>
+
             </div>
-            <i class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+
+            <i
+              class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square"
+              aria-hidden="true"
+            ></i>
+
           </a>
+
+
           <!-- DETAIL SALES -->
-          <a class="detail-stat-card" href="purchases.html" title="Lihat detail sales">
-            <div class="detail-stat-icon">
-              <i
-                class="fa-solid fa-cart-shopping"
-                aria-hidden="true"
-              ></i>
+          <a
+            class="detail-stat-card"
+            href="purchases.html"
+            title="Lihat detail sales"
+          >
+
+            <div
+              class="detail-stat-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-cart-shopping"></i>
             </div>
+
             <div class="detail-stat-content">
+
               <span>
                 Total Sales
               </span>
+
               <strong id="detailSales">
                 0
               </strong>
+
               <small>
                 Pembelian berhasil
               </small>
+
             </div>
-            <i class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+
+            <i
+              class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square"
+              aria-hidden="true"
+            ></i>
+
           </a>
+
+
           <!-- DETAIL REVENUE -->
-          <a class="detail-stat-card" href="wallet.html" title="Lihat detail pendapatan">
-            <div class="detail-stat-icon">
-              <i
-                class="fa-solid fa-money-bill-wave"
-                aria-hidden="true"
-              ></i>
+          <a
+            class="detail-stat-card"
+            href="wallet.html"
+            title="Lihat detail pendapatan"
+          >
+
+            <div
+              class="detail-stat-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-money-bill-wave"></i>
             </div>
+
             <div class="detail-stat-content">
+
               <span>
                 Total Revenue
               </span>
+
               <strong id="detailRevenue">
                 Rp0
               </strong>
+
               <small>
                 Pendapatan tercatat
               </small>
+
             </div>
-            <i class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+
+            <i
+              class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square"
+              aria-hidden="true"
+            ></i>
+
           </a>
+
+
           <!-- DETAIL CONTENT -->
-          <a class="detail-stat-card" href="my-products.html" title="Lihat semua konten">
-            <div class="detail-stat-icon">
-              <i
-                class="fa-solid fa-layer-group"
-                aria-hidden="true"
-              ></i>
+          <a
+            class="detail-stat-card"
+            href="my-products.html"
+            title="Lihat semua konten"
+          >
+
+            <div
+              class="detail-stat-icon"
+              aria-hidden="true"
+            >
+              <i class="fa-solid fa-layer-group"></i>
             </div>
+
             <div class="detail-stat-content">
+
               <span>
                 Total Content
               </span>
+
               <strong id="detailContent">
                 0
               </strong>
+
               <small>
                 Semua konten aktif
               </small>
+
             </div>
-            <i class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+
+            <i
+              class="detail-stat-arrow fa-solid fa-arrow-up-right-from-square"
+              aria-hidden="true"
+            ></i>
+
           </a>
+
         </div>
+
       </section>
+
+
       <!-- ===================================================
            RECENT CONTENT + ACTIVITY
            =================================================== -->
       <section class="dash-two">
+
         <!-- =================================================
              RECENT CONTENT
              ================================================= -->
@@ -794,49 +1228,77 @@
           class="panel"
           aria-labelledby="recentContentTitle"
         >
+
           <div class="panel-head">
+
             <div>
+
               <span class="panel-kicker">
                 CONTENT
               </span>
+
               <h2 id="recentContentTitle">
                 Recent Content
               </h2>
+
               <p>
                 Konten terbaru kamu
               </p>
+
             </div>
+
+
             <a
               class="mini-btn"
               href="my-products.html"
               aria-label="Lihat semua konten"
             >
+
               <i
                 class="fa-solid fa-arrow-up-right-from-square"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Lihat semua
               </span>
+
             </a>
+
           </div>
+
+
           <div
             class="recent-list"
             id="recentLinks"
             aria-live="polite"
           >
+
             <div class="empty">
+
               <i
                 class="fa-solid fa-spinner fa-spin"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Memuat konten...
               </span>
+
             </div>
+
           </div>
-          <div class="dash-pagination" id="recentPagination" aria-label="Halaman recent content"></div>
+
+
+          <div
+            class="dash-pagination"
+            id="recentPagination"
+            aria-label="Halaman recent content"
+          ></div>
+
         </section>
+
+
         <!-- =================================================
              ACTIVITY
              ================================================= -->
@@ -844,52 +1306,83 @@
           class="panel"
           aria-labelledby="activityTitle"
         >
+
           <div class="panel-head">
+
             <div>
+
               <span class="panel-kicker">
                 ACTIVITY
               </span>
+
               <h2 id="activityTitle">
                 Aktivitas
               </h2>
+
               <p>
                 Event terbaru akun
               </p>
+
             </div>
+
+
             <a
               class="mini-btn"
               href="notifications.html"
               aria-label="Buka notifikasi"
             >
+
               <i
                 class="fa-solid fa-bell"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Notifikasi
               </span>
+
             </a>
+
           </div>
+
+
           <div
             class="activity-list"
             id="activity"
             aria-live="polite"
           >
+
             <div class="empty">
+
               <i
                 class="fa-solid fa-spinner fa-spin"
                 aria-hidden="true"
               ></i>
+
               <span>
                 Memuat aktivitas...
               </span>
+
             </div>
+
           </div>
-          <div class="dash-pagination" id="activityPagination" aria-label="Halaman aktivitas"></div>
+
+
+          <div
+            class="dash-pagination"
+            id="activityPagination"
+            aria-label="Halaman aktivitas"
+          ></div>
+
         </section>
+
       </section>
+
     </div>
+
   </main>
+
+
   <!-- =====================================================
        TOAST
        ===================================================== -->
@@ -899,13 +1392,18 @@
     aria-live="polite"
     aria-atomic="true"
   ></div>
+
+
   <!-- =====================================================
        DASHBOARD JS
        ===================================================== -->
-  <script src="js/dashboard.js?v=20260907"></script>
+  <script src="js/dashboard.js?v=20260908"></script>
+
+
   <!-- =====================================================
        SITE SHELL
        ===================================================== -->
   <script src="js/footer.js?v=20260904"></script>
+
 </body>
 </html>
