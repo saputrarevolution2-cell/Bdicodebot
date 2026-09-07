@@ -1,18 +1,303 @@
-/* PasTele universal footer. Loaded once on every page. */
-(()=>{
- if(window.__PASTELE_SITE_SHELL__) return; window.__PASTELE_SITE_SHELL__=true;
- const mount=()=>{
-  if(document.getElementById('pasteleFooter')) return;
-  const admin=location.pathname.includes('/admin/'),base=admin?'../':'';
-  const f=document.createElement('footer');f.id='pasteleFooter';f.className='pastele-footer';
-  f.innerHTML=`<div class="container footer-grid">
-   <div class="footer-brand-block"><a class="brand" href="${base}index.html"><span class="brand-mark"><i class="fa-brands fa-telegram"></i></span><span>PasTele</span></a><p>Platform digital untuk publish, discover, share, dan monetize Link, Code, Channel &amp; Group Telegram.</p><span class="footer-status"><i class="fa-solid fa-circle-check"></i> Platform ready</span></div>
-   <div><b>Platform</b><a href="${base}index.html"><i class="fa-solid fa-house"></i> Beranda</a><a href="${base}marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a><a href="${base}paste.html"><i class="fa-solid fa-plus"></i> Create</a></div>
-   <div><b>Akun</b><a href="${base}dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a><a href="${base}subscription.html"><i class="fa-solid fa-crown"></i> Langganan</a><a href="${base}premium.html"><i class="fa-solid fa-gem"></i> Premium</a><a href="${base}profile.html"><i class="fa-solid fa-user"></i> Profile</a><a href="${base}settings.html"><i class="fa-solid fa-gear"></i> Settings</a></div>
-   <div><b>Support</b><a href="${base}notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a><a href="${base}my-products.html"><i class="fa-solid fa-link"></i> My Links</a><button type="button" data-footer-logout><i class="fa-solid fa-right-from-bracket"></i> Log out</button></div>
-  </div><div class="container footer-bottom"><span>© 2026 PasTele. All rights reserved.</span><span>Secure · Responsive · Database driven</span></div>`;
-  document.body.appendChild(f);
-  f.querySelector('[data-footer-logout]')?.addEventListener('click',async()=>{try{await Auth.logout()}catch(e){window.TC?.toast?.(e.message,'error')}});
- };
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+/* =========================================================
+   PasTele — Universal Footer
+   PREMIUM / CLEAN / RESPONSIVE
+   Terms / Privacy / About / Support
+   Automatic Year
+   Loaded once on every page
+   ========================================================= */
+
+(() => {
+  'use strict';
+
+  /* =======================================================
+     PREVENT DUPLICATE FOOTER
+     ======================================================= */
+
+  if (window.__PASTELE_FOOTER__) {
+    return;
+  }
+
+  window.__PASTELE_FOOTER__ = true;
+
+  /* =======================================================
+     HELPERS
+     ======================================================= */
+
+  const getBasePath = () => {
+    const path = window.location.pathname || '';
+
+    return path.includes('/admin/')
+      ? '../'
+      : '';
+  };
+
+  const base = getBasePath();
+
+  const currentYear =
+    new Date().getFullYear();
+
+  const safePath = (file) =>
+    `${base}${file}`;
+
+  /* =======================================================
+     FOOTER MOUNT
+     ======================================================= */
+
+  const mountFooter = () => {
+
+    /* Jangan membuat footer kedua */
+    if (
+      document.getElementById(
+        'pasteleFooter'
+      )
+    ) {
+      return;
+    }
+
+    /* Pastikan body tersedia */
+    if (!document.body) {
+      return;
+    }
+
+    /* =====================================================
+       FOOTER
+       ===================================================== */
+
+    const footer =
+      document.createElement('footer');
+
+    footer.id =
+      'pasteleFooter';
+
+    footer.className =
+      'pastele-footer';
+
+    footer.setAttribute(
+      'role',
+      'contentinfo'
+    );
+
+    footer.innerHTML = `
+
+      <!-- =================================================
+           MAIN FOOTER
+           ================================================= -->
+
+      <div class="container footer-container">
+
+        <!-- BRAND -->
+        <div class="footer-brand">
+
+          <a
+            href="${safePath('index.html')}"
+            class="footer-brand-link"
+            aria-label="PasTele Beranda"
+          >
+
+            <span class="footer-brand-mark">
+              <i class="fa-brands fa-telegram"></i>
+            </span>
+
+            <span class="footer-brand-name">
+              PasTele
+            </span>
+
+          </a>
+
+
+          <p class="footer-description">
+            Platform digital untuk publish,
+            discover, share, dan monetize
+            Link, Code, Channel &amp; Group Telegram.
+          </p>
+
+
+          <div
+            class="footer-platform-status"
+            aria-label="Status platform"
+          >
+
+            <span
+              class="footer-status-indicator"
+              aria-hidden="true"
+            ></span>
+
+            <span>
+              Platform ready
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- PLATFORM -->
+        <div class="footer-column">
+
+          <h3>
+            Platform
+          </h3>
+
+          <a
+            href="${safePath('index.html')}"
+          >
+            <i class="fa-solid fa-house"></i>
+            <span>Beranda</span>
+          </a>
+
+          <a
+            href="${safePath('marketplace.html')}"
+          >
+            <i class="fa-solid fa-store"></i>
+            <span>Marketplace</span>
+          </a>
+
+        </div>
+
+
+        <!-- INFORMASI -->
+        <div class="footer-column">
+
+          <h3>
+            Informasi
+          </h3>
+
+          <a
+            href="${safePath('about.html')}"
+          >
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Tentang PasTele</span>
+          </a>
+
+          <a
+            href="${safePath('terms.html')}"
+          >
+            <i class="fa-solid fa-file-contract"></i>
+            <span>Terms of Service</span>
+          </a>
+
+          <a
+            href="${safePath('privacy.html')}"
+          >
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Privacy Policy</span>
+          </a>
+
+        </div>
+
+
+        <!-- BANTUAN -->
+        <div class="footer-column">
+
+          <h3>
+            Bantuan
+          </h3>
+
+          <a
+            href="${safePath('notifications.html')}"
+          >
+            <i class="fa-solid fa-bell"></i>
+            <span>Notifications</span>
+          </a>
+
+          <a
+            href="${safePath('settings.html')}"
+          >
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+          </a>
+
+          <a
+            href="mailto:support@pastele.com"
+          >
+            <i class="fa-solid fa-headset"></i>
+            <span>Contact Support</span>
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           FOOTER BOTTOM
+           ================================================= -->
+
+      <div class="container footer-bottom">
+
+        <div class="footer-copyright">
+
+          <span>
+            © ${currentYear} PasTele
+          </span>
+
+          <span
+            class="footer-dot"
+            aria-hidden="true"
+          >
+            ·
+          </span>
+
+          <span>
+            All rights reserved.
+          </span>
+
+        </div>
+
+
+        <div class="footer-meta">
+
+          <span>
+            <i class="fa-solid fa-lock"></i>
+            Secure
+          </span>
+
+          <span>
+            <i class="fa-solid fa-mobile-screen-button"></i>
+            Responsive
+          </span>
+
+          <span>
+            <i class="fa-solid fa-database"></i>
+            Database driven
+          </span>
+
+        </div>
+
+      </div>
+
+    `;
+
+    /* =====================================================
+       APPEND
+       ===================================================== */
+
+    document.body.appendChild(
+      footer
+    );
+  };
+
+  /* =======================================================
+     DOM READY
+     ======================================================= */
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      mountFooter,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    mountFooter();
+
+  }
+
 })();
