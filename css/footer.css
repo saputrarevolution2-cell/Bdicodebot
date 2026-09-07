@@ -1,24 +1,663 @@
-/* PasTele — shared footer stylesheet. Extracted from app.css; page logic unchanged. */
-/* ===== footer.css ===== */
-/* Shared footer + responsive polish */
-.pastele-footer{margin-top:48px;background:linear-gradient(180deg,#0b1622,#07111b);color:#d9e7f2;border-top:1px solid rgba(255,255,255,.08);padding:42px 0 0}
-.pastele-footer .footer-grid{display:grid;grid-template-columns:1.7fr 1fr 1fr 1.2fr;gap:28px}
-.pastele-footer .brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:800;font-size:20px}
-.pastele-footer .brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#229ed9;color:#fff}
-.pastele-footer p{max-width:420px;color:#91a8ba;line-height:1.7}
-.pastele-footer b{display:block;color:#fff;margin-bottom:12px}
-.pastele-footer a,.pastele-footer button{display:flex;align-items:center;gap:9px;color:#9fb5c5;text-decoration:none;margin:9px 0;background:none;border:0;padding:0;font:inherit;cursor:pointer}
-.pastele-footer a:hover,.pastele-footer button:hover{color:#fff}
-.pastele-footer .footer-status{display:inline-flex;gap:8px;align-items:center;font-size:12px;color:#72d69b}
-.pastele-footer .footer-bottom{margin-top:30px;padding:18px 0;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:16px;color:#71889a;font-size:12px}
-@media(max-width:850px){.pastele-footer .footer-grid{grid-template-columns:1fr 1fr}.pastele-footer .footer-brand-block{grid-column:1/-1}}
-@media(max-width:520px){.pastele-footer .footer-grid{grid-template-columns:1fr}.pastele-footer .footer-bottom{flex-direction:column}}
-
-.footer-social{min-width:0}.footer-social a{display:flex!important}.nav-tools{display:flex;gap:8px;align-items:center;margin-top:12px}.nav-theme,.nav-logout{width:100%;min-height:42px;border-radius:12px!important}.nav-theme{display:flex;align-items:center;gap:10px;padding:0 13px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#9fb5c5;cursor:pointer}.nav-theme:hover{color:#fff;background:rgba(255,255,255,.08)}
-@media(max-width:700px){.footer-grid{gap:20px!important}.pastele-footer{padding-top:32px}.nav-tools{display:grid;grid-template-columns:1fr 1fr}}
+/* =========================================================
+   PasTele — Universal Footer
+   PREMIUM / CLEAN / COMPACT / RESPONSIVE
+   Compatible with all PasTele pages
+   ========================================================= */
 
 
+/* =========================================================
+   FOOTER ROOT
+   ========================================================= */
 
-/* Final dark-theme footer normalization */
-html[data-theme="dark"] .footer,html[data-theme="dark"] .pastele-footer{background:var(--surface,#111c27)!important;color:var(--muted,#91a4b2)!important;border-color:var(--line,#273947)!important}
-html[data-theme="dark"] .footer h4,html[data-theme="dark"] .pastele-footer b,html[data-theme="dark"] .pastele-footer .brand{color:var(--text,#edf4f8)!important}
+.pastele-footer {
+  --footer-primary: #229ed9;
+  --footer-primary-soft: color-mix(
+    in srgb,
+    #229ed9 9%,
+    transparent
+  );
+
+  --footer-bg: #ffffff;
+  --footer-soft: #f6f9fb;
+
+  --footer-text: #17212b;
+  --footer-muted: #7b8a96;
+
+  --footer-border: rgba(20, 40, 55, .075);
+
+  --footer-radius: 16px;
+
+  position: relative;
+  width: 100%;
+  margin-top: 42px;
+
+  background: var(--footer-bg);
+  color: var(--footer-text);
+
+  border-top: 1px solid var(--footer-border);
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+html[data-theme="dark"] .pastele-footer,
+html.theme-dark .pastele-footer,
+body.theme-dark .pastele-footer {
+  --footer-bg: #0d151c;
+  --footer-soft: #131e26;
+
+  --footer-text: #edf4f8;
+  --footer-muted: #8495a1;
+
+  --footer-border: rgba(255, 255, 255, .075);
+
+  background: var(--footer-bg);
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.pastele-footer .footer-container {
+  width: min(
+    1180px,
+    calc(100% - 32px)
+  );
+
+  margin-inline: auto;
+
+  padding-top: 34px;
+  padding-bottom: 28px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(250px, 1.7fr)
+    repeat(3, minmax(130px, .75fr));
+
+  gap: 34px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.pastele-footer .footer-brand {
+  min-width: 0;
+}
+
+.pastele-footer .footer-brand-link {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 9px;
+
+  color: var(--footer-text);
+
+  text-decoration: none;
+
+  transition:
+    opacity .18s ease,
+    transform .18s ease;
+}
+
+.pastele-footer .footer-brand-link:hover {
+  opacity: .88;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   BRAND MARK
+   ========================================================= */
+
+.pastele-footer .footer-brand-mark {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--footer-primary) 11%,
+      transparent
+    );
+
+  color: var(--footer-primary);
+
+  font-size: 16px;
+}
+
+
+/* =========================================================
+   BRAND NAME
+   ========================================================= */
+
+.pastele-footer .footer-brand-name {
+  font-size: 16px;
+  line-height: 1;
+
+  font-weight: 850;
+
+  letter-spacing: -.025em;
+}
+
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.pastele-footer .footer-description {
+  max-width: 390px;
+
+  margin: 12px 0 13px;
+
+  color: var(--footer-muted);
+
+  font-size: 11px;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   PLATFORM STATUS
+   ========================================================= */
+
+.pastele-footer .footer-platform-status {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 6px 9px;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      #22c55e 15%,
+      var(--footer-border)
+    );
+
+  border-radius: 99px;
+
+  background:
+    color-mix(
+      in srgb,
+      #22c55e 5%,
+      transparent
+    );
+
+  color: #22c55e;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.pastele-footer .footer-status-indicator {
+  width: 6px;
+  height: 6px;
+
+  flex: 0 0 6px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+
+  box-shadow:
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      currentColor 10%,
+      transparent
+    );
+}
+
+
+/* =========================================================
+   FOOTER COLUMNS
+   ========================================================= */
+
+.pastele-footer .footer-column {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  gap: 8px;
+}
+
+
+/* =========================================================
+   COLUMN TITLE
+   ========================================================= */
+
+.pastele-footer .footer-column h3 {
+  margin: 1px 0 6px;
+
+  color: var(--footer-text);
+
+  font-size: 11px;
+
+  line-height: 1.2;
+
+  font-weight: 850;
+
+  letter-spacing: -.005em;
+}
+
+
+/* =========================================================
+   FOOTER LINKS
+   ========================================================= */
+
+.pastele-footer .footer-column a {
+  min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 8px;
+
+  color: var(--footer-muted);
+
+  text-decoration: none;
+
+  font-size: 10px;
+
+  line-height: 1.4;
+
+  transition:
+    color .18s ease,
+    transform .18s ease;
+}
+
+.pastele-footer .footer-column a:hover {
+  color: var(--footer-primary);
+
+  transform: translateX(2px);
+}
+
+.pastele-footer .footer-column a i {
+  width: 15px;
+
+  text-align: center;
+
+  color: color-mix(
+    in srgb,
+    var(--footer-primary) 72%,
+    var(--footer-muted)
+  );
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   BOTTOM BAR
+   ========================================================= */
+
+.pastele-footer .footer-bottom {
+  width: min(
+    1180px,
+    calc(100% - 32px)
+  );
+
+  margin-inline: auto;
+
+  min-height: 52px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 16px;
+
+  border-top: 1px solid
+    var(--footer-border);
+
+  color: var(--footer-muted);
+
+  font-size: 9px;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   COPYRIGHT
+   ========================================================= */
+
+.pastele-footer .footer-copyright {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.pastele-footer .footer-copyright span {
+  white-space: nowrap;
+}
+
+.pastele-footer .footer-dot {
+  opacity: .5;
+}
+
+
+/* =========================================================
+   META
+   ========================================================= */
+
+.pastele-footer .footer-meta {
+  display: flex;
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 13px;
+
+  min-width: 0;
+}
+
+.pastele-footer .footer-meta span {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  white-space: nowrap;
+}
+
+.pastele-footer .footer-meta i {
+  color: var(--footer-primary);
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   ADMIN PATH SAFETY
+   ========================================================= */
+
+body.admin-page .pastele-footer,
+body[class*="admin"] .pastele-footer {
+  margin-top: 32px;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .pastele-footer {
+    margin-top: 34px;
+  }
+
+  .pastele-footer .footer-container {
+    grid-template-columns:
+      minmax(220px, 1.5fr)
+      repeat(3, minmax(110px, 1fr));
+
+    gap: 22px;
+
+    padding-top: 29px;
+    padding-bottom: 23px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  .pastele-footer {
+    margin-top: 28px;
+  }
+
+  .pastele-footer .footer-container {
+    width: min(
+      100% - 22px,
+      560px
+    );
+
+    grid-template-columns:
+      1fr 1fr;
+
+    gap: 24px 18px;
+
+    padding-top: 26px;
+    padding-bottom: 22px;
+  }
+
+  .pastele-footer .footer-brand {
+    grid-column: 1 / -1;
+  }
+
+  .pastele-footer .footer-description {
+    max-width: 520px;
+  }
+
+  .pastele-footer .footer-bottom {
+    width: min(
+      100% - 22px,
+      560px
+    );
+
+    min-height: 0;
+
+    padding-top: 15px;
+    padding-bottom: 18px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 9px;
+  }
+
+  .pastele-footer .footer-meta {
+    justify-content: flex-start;
+
+    flex-wrap: wrap;
+
+    gap: 8px 13px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL PHONE
+   ========================================================= */
+
+@media (max-width: 430px) {
+
+  .pastele-footer {
+    margin-top: 23px;
+  }
+
+  .pastele-footer .footer-container {
+    width: calc(100% - 18px);
+
+    padding-top: 23px;
+    padding-bottom: 20px;
+
+    gap: 20px 14px;
+  }
+
+  .pastele-footer .footer-brand-mark {
+    width: 35px;
+    height: 35px;
+
+    flex-basis: 35px;
+
+    border-radius: 11px;
+
+    font-size: 14px;
+  }
+
+  .pastele-footer .footer-brand-name {
+    font-size: 15px;
+  }
+
+  .pastele-footer .footer-description {
+    margin-top: 10px;
+
+    font-size: 10px;
+
+    line-height: 1.6;
+  }
+
+  .pastele-footer .footer-column {
+    gap: 7px;
+  }
+
+  .pastele-footer .footer-column h3 {
+    margin-bottom: 5px;
+
+    font-size: 10px;
+  }
+
+  .pastele-footer .footer-column a {
+    font-size: 9px;
+  }
+
+  .pastele-footer .footer-column a i {
+    font-size: 9px;
+  }
+
+  .pastele-footer .footer-bottom {
+    width: calc(100% - 18px);
+
+    padding-top: 13px;
+    padding-bottom: 16px;
+
+    font-size: 8px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONE
+   ========================================================= */
+
+@media (max-width: 350px) {
+
+  .pastele-footer .footer-container {
+    grid-template-columns: 1fr;
+
+    gap: 19px;
+  }
+
+  .pastele-footer .footer-brand,
+  .pastele-footer .footer-column {
+    grid-column: auto;
+  }
+
+  .pastele-footer .footer-meta {
+    gap: 7px 10px;
+  }
+
+  .pastele-footer .footer-meta span:nth-child(3) {
+    display: none;
+  }
+
+}
+
+
+/* =========================================================
+   SAFE AREA
+   ========================================================= */
+
+@supports (padding: max(0px)) {
+
+  .pastele-footer .footer-bottom {
+    padding-bottom:
+      max(
+        16px,
+        env(safe-area-inset-bottom)
+      );
+  }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+.pastele-footer a:focus-visible {
+  outline: 3px solid
+    color-mix(
+      in srgb,
+      var(--footer-primary) 20%,
+      transparent
+    );
+
+  outline-offset: 3px;
+
+  border-radius: 5px;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .pastele-footer *,
+  .pastele-footer *::before,
+  .pastele-footer *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+}
+
+
+/* =========================================================
+   PRINT
+   ========================================================= */
+
+@media print {
+
+  .pastele-footer {
+    display: none !important;
+  }
+
+}
