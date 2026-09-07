@@ -2,9 +2,6 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <!-- =====================================================
-       VIEWPORT
-       ===================================================== -->
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -22,18 +19,20 @@
        ===================================================== -->
   <script src="/js/theme-preload.js?v=20260907"></script>
   <!-- =====================================================
-       FONT PRECONNECT
+       FONTS
        ===================================================== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
   <!-- =====================================================
        SUPABASE
        ===================================================== -->
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
   ></script>
-  <!-- =====================================================
-       PAGE TITLE
-       ===================================================== -->
   <title>Register — PasTele</title>
   <!-- =====================================================
        CLOUDFLARE TURNSTILE
@@ -62,7 +61,7 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
   <!-- =====================================================
-       GLOBAL CSS
+       STYLES
        ===================================================== -->
   <link
     rel="stylesheet"
@@ -78,68 +77,106 @@
   >
   <link
     rel="stylesheet"
+    href="/css/register.css?v=20260907"
+  >
+  <link
+    rel="stylesheet"
     href="/css/saas-final.css?v=20260907"
   >
   <!-- =====================================================
-       REGISTER CSS
-       MUST BE LAST
+       REGISTER SECURITY
        ===================================================== -->
-  <link
-    rel="stylesheet"
-    href="/css/register.css?v=20260907"
-  >
+  <style>
+    .register-security {
+      width: 100%;
+      margin: 10px 0 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    #registerTurnstile {
+      width: 100%;
+      min-height: 65px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+    }
+    #registerTurnstile > div {
+      max-width: 100%;
+    }
+    .register-security-status {
+      width: 100%;
+      min-height: 18px;
+      margin: 0;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.4;
+      opacity: .7;
+    }
+    .register-security-status.success {
+      opacity: 1;
+    }
+    .register-security-status.error {
+      opacity: 1;
+    }
+    #submit:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: saturate(.65);
+      transform: none;
+    }
+    #submit:not(:disabled) {
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    #google:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+    @media (max-width: 480px) {
+      #registerTurnstile {
+        min-height: 65px;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- =====================================================
-       REGISTER AUTH SHELL
+       AUTH SHELL
        ===================================================== -->
   <main class="auth-shell">
-    <!-- ===================================================
-         REGISTER CARD
-         =================================================== -->
-    <section
-      class="card auth-card"
-      aria-labelledby="registerTitle"
-    >
-      <!-- =================================================
-           LOGO
-           ================================================= -->
+    <div class="card auth-card">
+      <!-- LOGO -->
       <div
         class="auth-logo"
         aria-hidden="true"
       >
         <i class="fa-solid fa-user-plus"></i>
       </div>
-      <!-- =================================================
-           TITLE
-           ================================================= -->
-      <h1 id="registerTitle">
-        Buat akun PasTele
-      </h1>
+      <!-- TITLE -->
+      <h1>Buat akun PasTele</h1>
       <p class="muted">
         Mulai publish, share, dan monetize konten digital kamu.
       </p>
-      <!-- =================================================
-           ERROR MESSAGE
-           ================================================= -->
+      <!-- AUTH ERROR -->
       <div
         class="auth-error hidden"
         id="authError"
         role="alert"
         aria-live="polite"
       ></div>
-      <!-- =================================================
-           NOTICE MESSAGE
-           ================================================= -->
+      <!-- AUTH NOTICE -->
       <div
         class="notice hidden"
         id="authNotice"
         role="status"
         aria-live="polite"
       ></div>
-      <!-- =================================================
-           FORM PROGRESS
-           ================================================= -->
+      <!-- REGISTER PROGRESS -->
       <div
         class="auth-progress"
         aria-label="Kelengkapan formulir"
@@ -155,9 +192,7 @@
         autocomplete="on"
         novalidate
       >
-        <!-- ===============================================
-             USERNAME
-             =============================================== -->
+        <!-- USERNAME -->
         <div class="field">
           <label for="username">
             Username
@@ -178,9 +213,7 @@
             required
           >
         </div>
-        <!-- ===============================================
-             EMAIL
-             =============================================== -->
+        <!-- EMAIL -->
         <div class="field">
           <label for="email">
             Email
@@ -199,9 +232,7 @@
             required
           >
         </div>
-        <!-- ===============================================
-             PASSWORD
-             =============================================== -->
+        <!-- PASSWORD -->
         <div class="field">
           <label for="password">
             Kata sandi
@@ -232,9 +263,7 @@
             </button>
           </div>
         </div>
-        <!-- ===============================================
-             CONFIRM PASSWORD
-             =============================================== -->
+        <!-- CONFIRM PASSWORD -->
         <div class="field">
           <label for="confirm">
             Konfirmasi kata sandi
@@ -265,9 +294,9 @@
             </button>
           </div>
         </div>
-        <!-- ===============================================
+        <!-- =================================================
              CLOUDFLARE TURNSTILE
-             =============================================== -->
+             ================================================= -->
         <div class="register-security">
           <div
             id="registerTurnstile"
@@ -283,12 +312,10 @@
             role="status"
             aria-live="polite"
           >
-            Selesaikan verifikasi keamanan terlebih dahulu.
+            Memuat verifikasi keamanan...
           </div>
         </div>
-        <!-- ===============================================
-             REGISTER BUTTON
-             =============================================== -->
+        <!-- REGISTER -->
         <button
           class="btn primary"
           id="submit"
@@ -305,9 +332,7 @@
           </span>
         </button>
       </form>
-      <!-- =================================================
-           GOOGLE REGISTER
-           ================================================= -->
+      <!-- GOOGLE REGISTER -->
       <button
         class="btn page-style-1"
         id="google"
@@ -321,9 +346,7 @@
           Daftar dengan Google
         </span>
       </button>
-      <!-- =================================================
-           AUTH FOOTER
-           ================================================= -->
+      <!-- FOOTER -->
       <div class="auth-footer">
         <p class="muted page-style-2">
           <span>
@@ -355,7 +378,7 @@
           </span>
         </a>
       </div>
-    </section>
+    </div>
   </main>
   <!-- =====================================================
        REGISTER LOGIC
