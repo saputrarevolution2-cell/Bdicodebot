@@ -9,11 +9,15 @@
 document.addEventListener("DOMContentLoaded", async () => {
     "use strict";
 
+
     /* =====================================================
        DOM HELPERS
        ===================================================== */
 
-    const $ = (id) => document.getElementById(id);
+    const $ = (id) => {
+        return document.getElementById(id);
+    };
+
 
     const $$ = (selector, root = document) => {
         try {
@@ -30,25 +34,29 @@ document.addEventListener("DOMContentLoaded", async () => {
        DOM
        ===================================================== */
 
-    const availableEl = $("available");
-    const availableEls = $$(
-        "#available"
-    );
+    const availableEl =
+        $("available");
 
-    /*
-     * HTML saat ini masih mempunyai duplicate id="available".
-     * Ambil semua elemen supaya keduanya tetap sinkron.
-     */
+    const availableCardEl =
+        $("availableCard");
+
     const balanceHeroValueEl =
         document.querySelector(
             ".wallet-balance-hero .wallet-balance-value"
         );
 
-    const pendingEl = $("pending");
-    const incomeEl = $("income");
-    const todayEl = $("today");
+    const pendingEl =
+        $("pending");
 
-    const breakdownEl = $("breakdown");
+    const incomeEl =
+        $("income");
+
+    const todayEl =
+        $("today");
+
+    const breakdownEl =
+        $("breakdown");
+
     const recentActivityEl =
         $("recentActivity");
 
@@ -70,14 +78,17 @@ document.addEventListener("DOMContentLoaded", async () => {
        ===================================================== */
 
     let profile = null;
+
     let wallet = null;
 
     let walletRows = [];
+
     let transactionRows = [];
 
     let allRows = [];
 
     let isLoading = false;
+
     let pendingModal = null;
 
 
@@ -113,14 +124,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 ? number
                 : 0;
 
-        const TC = getTC();
+        const TC =
+            getTC();
 
         if (
             typeof TC.money ===
             "function"
         ) {
             try {
-                return TC.money(amount);
+                return TC.money(
+                    amount
+                );
             } catch {}
         }
 
@@ -144,20 +158,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         type = "info"
     ) => {
 
-        const TC = getTC();
+        const TC =
+            getTC();
 
         if (
             typeof TC.toast ===
             "function"
         ) {
             try {
+
                 TC.toast(
                     message,
                     type
                 );
+
                 return;
+
             } catch {}
         }
+
 
         const toast =
             $("toast");
@@ -166,25 +185,31 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
+
         toast.textContent =
             String(
                 message || ""
             );
 
+
         toast.classList.add(
             "show"
         );
+
 
         clearTimeout(
             toast._walletTimer
         );
 
+
         toast._walletTimer =
             setTimeout(
                 () => {
+
                     toast.classList.remove(
                         "show"
                     );
+
                 },
                 2800
             );
@@ -197,20 +222,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const esc = (value) => {
 
-        const TC = getTC();
+        const TC =
+            getTC();
 
         if (
             typeof TC.esc ===
             "function"
         ) {
             try {
+
                 return TC.esc(
                     String(
                         value ?? ""
                     )
                 );
+
             } catch {}
         }
+
 
         return String(
             value ?? ""
@@ -289,9 +318,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             ) ||
             type.includes(
                 "paste_link"
-            ) ||
-            type.includes(
-                "pastelink"
             ) ||
             type === "link"
         ) {
@@ -460,7 +486,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             "success",
             "successful",
             "succeeded"
-        ].includes(status)
+        ].includes(
+            status
+        )
         &&
         amountOf(row) > 0;
     };
@@ -479,7 +507,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             "hold",
             "held",
             "processing"
-        ].includes(status)
+        ].includes(
+            status
+        )
         &&
         amountOf(row) > 0;
     };
@@ -514,8 +544,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             return "-";
         }
 
+
         const date =
             new Date(value);
+
 
         if (
             Number.isNaN(
@@ -524,6 +556,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ) {
             return "-";
         }
+
 
         return date.toLocaleString(
             "id-ID",
@@ -543,8 +576,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             return false;
         }
 
+
         const date =
             new Date(value);
+
 
         if (
             Number.isNaN(
@@ -554,8 +589,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             return false;
         }
 
+
         const now =
             new Date();
+
 
         return (
             date.getFullYear() ===
@@ -576,11 +613,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const getProfile = async () => {
 
-        const TC = getTC();
+        const TC =
+            getTC();
 
-        /*
-         * Prefer existing application profile helper.
-         */
+
         if (
             typeof TC.profile ===
             "function"
@@ -590,16 +626,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const result =
                     await TC.profile();
 
+
                 if (
                     result?.id
                 ) {
                     return result;
                 }
 
-                /*
-                 * Some helpers may return
-                 * { profile: {...} }.
-                 */
+
                 if (
                     result?.profile?.id
                 ) {
@@ -617,11 +651,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
 
-        /*
-         * Supabase auth fallback.
-         */
         const sb =
             getSB();
+
 
         if (
             sb?.auth?.getUser
@@ -633,11 +665,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             } =
                 await sb.auth.getUser();
 
-            if (
-                error
-            ) {
+
+            if (error) {
                 throw error;
             }
+
 
             if (
                 data?.user?.id
@@ -668,15 +700,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             refreshBtn.disabled =
                 isLoading;
 
+
             refreshBtn.classList.toggle(
                 "is-loading",
                 isLoading
             );
 
+
             const icon =
                 refreshBtn.querySelector(
                     "i"
                 );
+
 
             if (icon) {
 
@@ -692,6 +727,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             pendingCard.disabled =
                 isLoading;
+
 
             pendingCard.classList.toggle(
                 "is-loading",
@@ -729,12 +765,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const renderLoading = () => {
 
-        availableEls.forEach(
-            (el) => {
-                el.textContent =
-                    "—";
-            }
-        );
+        if (availableEl) {
+            availableEl.textContent =
+                "—";
+        }
+
+
+        if (availableCardEl) {
+            availableCardEl.textContent =
+                "—";
+        }
 
 
         if (pendingEl) {
@@ -755,24 +795,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
 
-        if (
-            balanceHeroValueEl
-        ) {
-            balanceHeroValueEl.textContent =
-                "—";
-        }
-
-
         if (breakdownEl) {
 
             breakdownEl.innerHTML = `
                 <div class="wallet-loading">
 
                     <span class="wallet-loading-icon">
+
                         <i
                             class="fa-solid fa-spinner fa-spin"
                             aria-hidden="true"
                         ></i>
+
                     </span>
 
                     <span>
@@ -790,10 +824,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="wallet-loading">
 
                     <span class="wallet-loading-icon">
+
                         <i
                             class="fa-solid fa-spinner fa-spin"
                             aria-hidden="true"
                         ></i>
+
                     </span>
 
                     <span>
@@ -814,12 +850,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         message
     ) => {
 
-        availableEls.forEach(
-            (el) => {
-                el.textContent =
-                    "—";
-            }
-        );
+        if (availableEl) {
+            availableEl.textContent =
+                "—";
+        }
+
+
+        if (availableCardEl) {
+            availableCardEl.textContent =
+                "—";
+        }
 
 
         if (pendingEl) {
@@ -840,29 +880,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
 
-        if (
-            balanceHeroValueEl
-        ) {
-            balanceHeroValueEl.textContent =
-                "—";
-        }
-
-
         if (breakdownEl) {
 
             breakdownEl.innerHTML = `
                 <div class="wallet-state">
 
                     <div class="wallet-state-icon">
+
                         <i
                             class="fa-solid fa-triangle-exclamation"
                             aria-hidden="true"
                         ></i>
+
                     </div>
+
 
                     <strong>
                         Wallet gagal dimuat
                     </strong>
+
 
                     <span>
                         ${esc(
@@ -871,17 +907,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                         )}
                     </span>
 
+
                     <button
                         class="btn primary"
                         id="walletRetry"
                         type="button"
                     >
+
                         <i
                             class="fa-solid fa-rotate"
                             aria-hidden="true"
                         ></i>
 
                         Coba Lagi
+
                     </button>
 
                 </div>
@@ -903,11 +942,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     </span>
 
+
                     <div>
 
                         <strong>
                             Aktivitas tidak tersedia
                         </strong>
+
 
                         <span>
                             Muat ulang halaman untuk mencoba lagi.
@@ -938,6 +979,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const sb =
                 getSB();
 
+
             if (!sb) {
 
                 throw new Error(
@@ -957,8 +999,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             /*
              * Release matured wallet balances.
              *
-             * Failure is non-blocking because the
-             * RPC may not be available to every role.
+             * Non-blocking because this RPC
+             * may not be available for every role.
              */
             try {
 
@@ -968,6 +1010,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     await sb.rpc(
                         "release_matured_wallet"
                     );
+
 
                 if (error) {
 
@@ -1003,6 +1046,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         )
                         .maybeSingle(),
 
+
                     sb
                         .from(
                             "wallet_transactions"
@@ -1020,6 +1064,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             }
                         )
                         .limit(500),
+
 
                     sb
                         .from("transactions")
@@ -1066,12 +1111,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     walletResponse?.data ||
                     null,
 
+
                 walletRows:
                     Array.isArray(
                         walletTransactionsResponse?.data
                     )
                         ? walletTransactionsResponse.data
                         : [],
+
 
                 transactionRows:
                     Array.isArray(
@@ -1127,26 +1174,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             );
 
 
-        /*
-         * Sync every element that currently
-         * uses id="available".
-         */
-        availableEls.forEach(
-            (el) => {
+        if (availableEl) {
 
-                el.textContent =
-                    money(
-                        available
-                    );
-            }
-        );
+            availableEl.textContent =
+                money(
+                    available
+                );
+        }
 
 
-        if (
-            balanceHeroValueEl
-        ) {
+        if (availableCardEl) {
 
-            balanceHeroValueEl.textContent =
+            availableCardEl.textContent =
                 money(
                     available
                 );
@@ -1179,14 +1218,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const amount =
             amountOf(row);
 
+
         if (amount <= 0) {
             return false;
         }
 
 
-        /*
-         * Positive completed transaction.
-         */
         if (
             isGoodTransaction(row)
         ) {
@@ -1194,15 +1231,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
 
-        /*
-         * wallet_transactions may not
-         * always have a standard status.
-         */
         const type =
             String(
                 row?.type ||
                 ""
-            ).toLowerCase();
+            )
+                .trim()
+                .toLowerCase();
 
 
         if (
@@ -1211,7 +1246,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "failed",
                 "cancelled",
                 "canceled",
-                "rejected"
+                "rejected",
+                "declined",
+                "expired"
             ].includes(
                 statusOf(row)
             )
@@ -1261,8 +1298,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     .filter(
                         value =>
                             value !==
-                            undefined &&
-                            value !== null
+                                undefined &&
+                            value !==
+                                null
                     )
                     .join("|");
 
@@ -1285,10 +1323,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
         /*
-         * Add sell_* rows from transactions.
-         *
-         * Skip obvious duplicates where the same
-         * reference already exists in wallet rows.
+         * transactions sell_*.
          */
         for (
             const row of transactionRows
@@ -1347,17 +1382,32 @@ document.addEventListener("DOMContentLoaded", async () => {
                         }
 
 
-                        const sameTime =
-                            existing?.created_at &&
-                            row?.created_at &&
-                            Math.abs(
-                                new Date(
+                        const existingTime =
+                            existing?.created_at
+                                ? new Date(
                                     existing.created_at
                                 ).getTime()
-                                -
-                                new Date(
+                                : NaN;
+
+
+                        const rowTime =
+                            row?.created_at
+                                ? new Date(
                                     row.created_at
                                 ).getTime()
+                                : NaN;
+
+
+                        const sameTime =
+                            Number.isFinite(
+                                existingTime
+                            ) &&
+                            Number.isFinite(
+                                rowTime
+                            ) &&
+                            Math.abs(
+                                existingTime -
+                                rowTime
                             ) < 1500;
 
 
@@ -1418,6 +1468,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         total +
                         amountOf(row)
                     );
+
                 },
                 0
             );
@@ -1441,6 +1492,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             total +
                             amountOf(row)
                         );
+
                     },
                     0
                 );
@@ -1547,6 +1599,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                         sum +
                                         amountOf(row)
                                     );
+
                                 },
                                 0
                             );
@@ -1584,6 +1637,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                             item.label
                                         )}
                                     </b>
+
 
                                     <small>
                                         ${count.toLocaleString(
@@ -1659,11 +1713,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 0
                             ).getTime();
 
+
                         const bTime =
                             new Date(
                                 b?.created_at ||
                                 0
                             ).getTime();
+
 
                         return (
                             bTime -
@@ -1704,6 +1760,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             Belum ada aktivitas
                         </strong>
 
+
                         <span>
                             Aktivitas keuangan akan muncul di sini.
                         </span>
@@ -1718,6 +1775,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "aria-busy",
                 "false"
             );
+
 
             return;
         }
@@ -1777,8 +1835,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         let stateClass =
             "activity-neutral";
 
+
         let statusText =
             "Aktivitas";
+
 
         let statusIcon =
             "fa-circle-info";
@@ -1931,20 +1991,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         buttons.forEach(
             btn => {
 
+                const disabled =
+                    available <= 0;
+
+
                 btn.classList.toggle(
                     "is-disabled",
-                    available <= 0
+                    disabled
                 );
 
 
-                if (
-                    available <= 0
-                ) {
+                if (disabled) {
 
                     btn.setAttribute(
                         "aria-disabled",
                         "true"
                     );
+
 
                     btn.title =
                         "Belum ada saldo yang dapat ditarik.";
@@ -1954,6 +2017,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     btn.removeAttribute(
                         "aria-disabled"
                     );
+
 
                     btn.title =
                         `Tarik ${money(
@@ -1974,6 +2038,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const sb =
                 getSB();
+
 
             if (!sb) {
 
@@ -1998,6 +2063,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     pendingCard.classList.add(
                         "is-loading"
                     );
+
 
                     pendingCard.disabled =
                         true;
@@ -2082,6 +2148,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                                     amount
                                                 )}
                                             </strong>
+
 
                                             <span>
                                                 ${esc(
@@ -2334,6 +2401,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         "is-loading"
                     );
 
+
                     pendingCard.disabled =
                         false;
                 }
@@ -2348,9 +2416,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const copyBalance =
         async () => {
 
-            /*
-             * Use the hero value first.
-             */
             const value =
                 balanceHeroValueEl?.textContent ||
                 availableEl?.textContent ||
@@ -2415,6 +2480,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
                     textarea.focus();
+
                     textarea.select();
 
 
@@ -2491,8 +2557,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         "click",
         event => {
 
+            const target =
+                event.target;
+
+
             const withdraw =
-                event.target.closest(
+                target?.closest?.(
                     "#withdrawBtn, .wallet-withdraw-btn"
                 );
 
@@ -2622,25 +2692,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
             /*
-             * Keep original raw rows for activity.
+             * Activity data.
+             *
+             * Keep wallet transactions and
+             * sell_* transaction records.
              */
             allRows = [
                 ...walletRows,
-                ...transactionRows
-                    .filter(
-                        row =>
-                            /^sell_/i.test(
-                                String(
-                                    row?.type ||
-                                    ""
-                                )
+                ...transactionRows.filter(
+                    row =>
+                        /^sell_/i.test(
+                            String(
+                                row?.type ||
+                                ""
                             )
-                    )
+                        )
+                )
             ];
 
 
             /*
-             * Build deduplicated income rows
+             * Deduplicated income rows
              * for financial statistics.
              */
             const incomeRows =
@@ -2670,7 +2742,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             updateWithdrawState(
                 wallet
             );
-
 
         } catch (error) {
 
