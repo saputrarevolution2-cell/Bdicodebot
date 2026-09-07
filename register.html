@@ -2,15 +2,23 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-  <meta name="color-scheme" content="light dark">
+
+<meta
+name=“viewport”
+content=“width=device-width, initial-scale=1, viewport-fit=cover”
+
+<meta
+name=“color-scheme”
+content=“light dark”
+
+<meta
+name=“theme-color”
+content=”#ffffff”
+
   <!-- =====================================================
        THEME PRELOAD
        ===================================================== -->
-  <script src="js/theme-preload.js"></script>
+  <script src="/js/theme-preload.js?v=20260907"></script>
   <!-- =====================================================
        FONTS
        ===================================================== -->
@@ -18,18 +26,29 @@
   <!-- =====================================================
        SUPABASE
        ===================================================== -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
   <title>Register — PasTele</title>
+  <!-- =====================================================
+       CLOUDFLARE TURNSTILE
+       EXPLICIT RENDERING
+       ===================================================== -->
+  <script
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+    async
+    defer
+  ></script>
   <!-- =====================================================
        CORE CONFIGURATION
        ===================================================== -->
-  <script src="/js/config.js?v=20260831"></script>
-  <script src="/js/supabase.js?v=20260831"></script>
+  <script src="/js/config.js?v=20260907"></script>
+  <script src="/js/supabase.js?v=20260907"></script>
   <!-- =====================================================
        AUTHENTICATION
        ===================================================== -->
-  <script src="/js/debug-panel.js"></script>
-  <script src="/js/auth.js"></script>
+  <script src="/js/debug-panel.js?v=20260907"></script>
+  <script src="/js/auth.js?v=20260907"></script>
   <!-- =====================================================
        FONT AWESOME
        ===================================================== -->
@@ -42,229 +61,362 @@
        ===================================================== -->
   <link
     rel="stylesheet"
-    href="css/app.css?v=20260904"
+    href="/css/app.css?v=20260907"
   >
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
-  <link rel="stylesheet" href="css/footer.css?v=20260905">
   <link
     rel="stylesheet"
-    href="css/register.css?v=20260904"
+    href="/css/navbar.css?v=20260907"
   >
-  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
+  <link
+    rel="stylesheet"
+    href="/css/footer.css?v=20260907"
+  >
+  <link
+    rel="stylesheet"
+    href="/css/register.css?v=20260907"
+  >
+  <link
+    rel="stylesheet"
+    href="/css/saas-final.css?v=20260907"
+  >
+  <!-- =====================================================
+       REGISTER TURNSTILE UI
+       ===================================================== -->
+  <style>
+    /* -----------------------------------------------------
+       REGISTER SECURITY
+       ----------------------------------------------------- */
+    .register-security {
+      width: 100%;
+      margin: 4px 0 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #registerTurnstile {
+      width: 100%;
+      min-height: 65px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    #registerTurnstile iframe {
+      max-width: 100%;
+    }
+    .register-security-status {
+      width: 100%;
+      min-height: 18px;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.45;
+      opacity: .72;
+      transition:
+        color .2s ease,
+        opacity .2s ease;
+    }
+    .register-security-status.success {
+      opacity: 1;
+    }
+    .register-security-status.error {
+      opacity: 1;
+    }
+    /* -----------------------------------------------------
+       REGISTER BUTTON
+       ----------------------------------------------------- */
+    #submit:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: saturate(.65);
+      transform: none;
+    }
+    #submit:not(:disabled) {
+      cursor: pointer;
+    }
+    /* -----------------------------------------------------
+       MOBILE
+       ----------------------------------------------------- */
+    @media (max-width: 480px) {
+      #registerTurnstile {
+        min-height: 70px;
+      }
+      .register-security-status {
+        font-size: 11px;
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- =====================================================
+       AUTH SHELL
+       ===================================================== -->
   <main class="auth-shell">
-    <div class="card auth-card">
-      <!-- =================================================
-           LOGO
-           ================================================= -->
-      <div class="auth-logo" aria-hidden="true">
-        <i class="fa-solid fa-user-plus"></i>
-      </div>
-      <!-- =================================================
-           TITLE
-           ================================================= -->
-      <h1>Buat akun PasTele</h1>
-      <p class="muted">
-        Mulai publish, share, dan monetize konten digital kamu.
-      </p>
-      <!-- =================================================
-           AUTH ERROR
-           ================================================= -->
-      <div
-        class="auth-error hidden"
-        id="authError"
-        role="alert"
-        aria-live="polite"
-      ></div>
-      <!-- =================================================
-           AUTH NOTICE
-           ================================================= -->
-      <div
-        class="notice hidden"
-        id="authNotice"
-        role="status"
-        aria-live="polite"
-      ></div>
-      <!-- =================================================
-           REGISTER PROGRESS
-           ================================================= -->
-      <div
-        class="auth-progress"
-        aria-label="Kelengkapan formulir"
+<div class="card auth-card">
+  <!-- =================================================
+       LOGO
+       ================================================= -->
+  <div
+    class="auth-logo"
+    aria-hidden="true"
+  >
+    <i class="fa-solid fa-user-plus"></i>
+  </div>
+  <!-- =================================================
+       TITLE
+       ================================================= -->
+  <h1>Buat akun PasTele</h1>
+  <p class="muted">
+    Mulai publish, share, dan monetize konten digital kamu.
+  </p>
+  <!-- =================================================
+       AUTH ERROR
+       ================================================= -->
+  <div
+    class="auth-error hidden"
+    id="authError"
+    role="alert"
+    aria-live="polite"
+  ></div>
+  <!-- =================================================
+       AUTH NOTICE
+       ================================================= -->
+  <div
+    class="notice hidden"
+    id="authNotice"
+    role="status"
+    aria-live="polite"
+  ></div>
+  <!-- =================================================
+       REGISTER PROGRESS
+       ================================================= -->
+  <div
+    class="auth-progress"
+    aria-label="Kelengkapan formulir"
+  >
+    <i id="regProgress"></i>
+  </div>
+  <!-- =================================================
+       REGISTER FORM
+       ================================================= -->
+  <form
+    class="list"
+    id="reg"
+    autocomplete="on"
+    novalidate
+  >
+    <!-- =================================================
+         USERNAME
+         ================================================= -->
+    <div class="field">
+      <label for="username">
+        Username
+      </label>
+      <input
+        id="username"
+        name="username"
+        class="input"
+        type="text"
+        autocomplete="username"
+        maxlength="32"
+        minlength="3"
+        pattern="[A-Za-z0-9_]+"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        placeholder="username"
+        required
       >
-        <i id="regProgress"></i>
-      </div>
-      <!-- =================================================
-           REGISTER FORM
-           ================================================= -->
-      <form
-        class="list"
-        id="reg"
-        autocomplete="on"
-        novalidate
+    </div>
+    <!-- =================================================
+         EMAIL
+         ================================================= -->
+    <div class="field">
+      <label for="email">
+        Email
+      </label>
+      <input
+        id="email"
+        name="email"
+        class="input"
+        type="email"
+        autocomplete="email"
+        inputmode="email"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        placeholder="nama@email.com"
+        required
       >
-        <!-- Username -->
-        <div class="field">
-          <label for="username">
-            Username
-          </label>
-          <input
-            id="username"
-            name="username"
-            class="input"
-            type="text"
-            autocomplete="username"
-            maxlength="32"
-            minlength="3"
-            pattern="[A-Za-z0-9_]+"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
-            placeholder="username"
-            required
-          >
-        </div>
-        <!-- Email -->
-        <div class="field">
-          <label for="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            class="input"
-            type="email"
-            autocomplete="email"
-            inputmode="email"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
-            placeholder="nama@email.com"
-            required
-          >
-        </div>
-        <!-- Password -->
-        <div class="field">
-          <label for="password">
-            Kata sandi
-          </label>
-          <div class="row">
-            <input
-              id="password"
-              name="password"
-              class="input"
-              type="password"
-              autocomplete="new-password"
-              minlength="6"
-              placeholder="Minimal 6 karakter"
-              required
-            >
-            <button
-              class="btn toggle"
-              id="togglePassword"
-              type="button"
-              data-t="password"
-              aria-label="Tampilkan kata sandi"
-              title="Tampilkan kata sandi"
-            >
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-        <!-- Confirm Password -->
-        <div class="field">
-          <label for="confirm">
-            Konfirmasi kata sandi
-          </label>
-          <div class="row">
-            <input
-              id="confirm"
-              name="confirm"
-              class="input"
-              type="password"
-              autocomplete="new-password"
-              minlength="6"
-              placeholder="Ulangi kata sandi"
-              required
-            >
-            <button
-              class="btn toggle"
-              id="toggleConfirm"
-              type="button"
-              data-t="confirm"
-              aria-label="Tampilkan konfirmasi kata sandi"
-              title="Tampilkan konfirmasi kata sandi"
-            >
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-        <!-- Register -->
+    </div>
+    <!-- =================================================
+         PASSWORD
+         ================================================= -->
+    <div class="field">
+      <label for="password">
+        Kata sandi
+      </label>
+      <div class="row">
+        <input
+          id="password"
+          name="password"
+          class="input"
+          type="password"
+          autocomplete="new-password"
+          minlength="6"
+          placeholder="Minimal 6 karakter"
+          required
+        >
         <button
-          class="btn primary"
-          id="submit"
-          type="submit"
+          class="btn toggle"
+          id="togglePassword"
+          type="button"
+          data-t="password"
+          aria-label="Tampilkan kata sandi"
+          title="Tampilkan kata sandi"
         >
           <i
-            class="fa-solid fa-user-plus"
+            class="fa-solid fa-eye"
             aria-hidden="true"
           ></i>
-          <span>Register</span>
         </button>
-      </form>
-      <!-- =================================================
-           GOOGLE REGISTER
-           ================================================= -->
-      <button
-        class="btn page-style-1"
-        id="google"
-        type="button"
-      >
-        <i
-          class="fa-brands fa-google"
-          aria-hidden="true"
-        ></i>
-        <span>Daftar dengan Google</span>
-      </button>
-      <!-- =================================================
-           FOOTER
-           ================================================= -->
-      <div class="auth-footer">
-        <p class="muted page-style-2">
-          <span>Sudah punya akun?</span>
-          <a
-            class="page-style-3"
-            href="login.html"
-          >
-            <span>Login</span>
-            <i
-              class="fa-solid fa-arrow-right"
-              aria-hidden="true"
-            ></i>
-          </a>
-        </p>
-        <a
-          class="page-style-4"
-          href="index.html"
-        >
-          <i
-            class="fa-solid fa-arrow-left"
-            aria-hidden="true"
-          ></i>
-          <span>Kembali</span>
-        </a>
       </div>
     </div>
+    <!-- =================================================
+         CONFIRM PASSWORD
+         ================================================= -->
+    <div class="field">
+      <label for="confirm">
+        Konfirmasi kata sandi
+      </label>
+      <div class="row">
+        <input
+          id="confirm"
+          name="confirm"
+          class="input"
+          type="password"
+          autocomplete="new-password"
+          minlength="6"
+          placeholder="Ulangi kata sandi"
+          required
+        >
+        <button
+          class="btn toggle"
+          id="toggleConfirm"
+          type="button"
+          data-t="confirm"
+          aria-label="Tampilkan konfirmasi kata sandi"
+          title="Tampilkan konfirmasi kata sandi"
+        >
+          <i
+            class="fa-solid fa-eye"
+            aria-hidden="true"
+          ></i>
+        </button>
+      </div>
+    </div>
+    <!-- =================================================
+         CLOUDFLARE TURNSTILE
+         =================================================
+         IMPORTANT:
+         - Container sengaja kosong.
+         - Tidak menggunakan class cf-turnstile.
+         - register.js melakukan turnstile.render().
+         ================================================= -->
+    <div class="register-security">
+      <div
+        id="registerTurnstile"
+        data-sitekey="0x4AAAAAAErjLed781i5lbu8"
+        data-theme="auto"
+        data-language="id"
+        data-action="register"
+        aria-label="Verifikasi keamanan pendaftaran"
+      ></div>
+      <div
+        id="registerSecurityStatus"
+        class="register-security-status"
+        role="status"
+        aria-live="polite"
+      >
+        Selesaikan verifikasi keamanan terlebih dahulu.
+      </div>
+    </div>
+    <!-- =================================================
+         REGISTER
+         ================================================= -->
+    <button
+      class="btn primary"
+      id="submit"
+      type="submit"
+      disabled
+      aria-disabled="true"
+    >
+      <i
+        class="fa-solid fa-user-plus"
+        aria-hidden="true"
+      ></i>
+      <span>Register</span>
+    </button>
+  </form>
+  <!-- =================================================
+       GOOGLE REGISTER
+       ================================================= -->
+  <button
+    class="btn page-style-1"
+    id="google"
+    type="button"
+  >
+    <i
+      class="fa-brands fa-google"
+      aria-hidden="true"
+    ></i>
+    <span>Daftar dengan Google</span>
+  </button>
+  <!-- =================================================
+       FOOTER
+       ================================================= -->
+  <div class="auth-footer">
+    <p class="muted page-style-2">
+      <span>
+        Sudah punya akun?
+      </span>
+      <a
+        class="page-style-3"
+        href="login.html"
+      >
+        <span>
+          Login
+        </span>
+        <i
+          class="fa-solid fa-arrow-right"
+          aria-hidden="true"
+        ></i>
+      </a>
+    </p>
+    <a
+      class="page-style-4"
+      href="index.html"
+    >
+      <i
+        class="fa-solid fa-arrow-left"
+        aria-hidden="true"
+      ></i>
+      <span>
+        Kembali
+      </span>
+    </a>
+  </div>
+</div>
   </main>
   <!-- =====================================================
-       REGISTER
+       REGISTER LOGIC
        ===================================================== -->
-  <script src="js/register.js?v=20260904"></script>
+  <script src="/js/register.js?v=20260907"></script>
   <!-- =====================================================
        SITE SHELL
        ===================================================== -->
-  <script src="js/footer.js?v=20260904"></script>
-  <script src="js/navbar.js?v=20260906-final"></script>
+  <script src="/js/footer.js?v=20260907"></script>
+  <script src="/js/navbar.js?v=20260907"></script>
 </body>
 </html>
