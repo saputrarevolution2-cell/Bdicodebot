@@ -1,1117 +1,709 @@
 /* =========================================================
-   PasTele Authentication
+   PasTele — REGISTER
    PRODUCTION + SUPABASE + CLOUDFLARE TURNSTILE
    ========================================================= */
-
-(() => {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
-
-
   /* =======================================================
-     SUPABASE CLIENT
+     DOM
      ======================================================= */
-
-  const requireClient = () => {
-    if (!window.sb) {
-      throw new Error(
-        "Supabase belum terkonfigurasi. Pastikan js/config.js berisi Project URL dan anon/publishable key."
-      );
-    }
-
-    return window.sb;
+  const form = document.getElementById("reg");
+  const errorBox = document.getElementById("authError");
+  const noticeBox = document.getElementById("authNotice");
+  const submit = document.getElementById("submit");
+  const google = document.getElementById("google");
+  const turnstileContainer =
+    document.getElementById("registerTurnstile");
+  const securityStatus =
+    document.getElementById("registerSecurityStatus");
+  const progress =
+    document.getElementById("regProgress");
+  if (!form) {
+    console.error("[PasTele] Register form tidak ditemukan.");
+    return;
+  }
+  if (!submit) {
+    console.error("[PasTele] Register button tidak ditemukan.");
+    return;
+  }
+  /* =======================================================
+     STATE
+     ======================================================= */
+  let turnstileWidgetId = null;
+  let turnstileToken = "";
+  let turnstileRendering = false;
+  let submitting = false;
+  const siteKey = String(
+    turnstileContainer?.dataset?.sitekey ||
+    window.PASTELE_TURNSTILE_SITE_KEY ||
+    ""
+  ).trim();
+  /* =======================================================
+     HELPERS
+     ======================================================= */
+  const hide = (element) => {
+    if (!element) return;
+    element.classList.add("hidden");
   };
-
-
+  const show = (element, message) => {
+    if (!element) return;
+    element.textContent = String(message || "");
+    element.classList.remove("hidden");
+    element.classList.add("floating-notice", "show");
+    clearTimeout(element._timer);
+    element._timer = setTimeout(() => {
+      element.classList.remove("show");
+      setTimeout(() => {
+        element.classList.add("hidden");
+      }, 220);
+    }, 5000);
+  };
   /* =======================================================
-     NORMALIZE
+     TOAST
      ======================================================= */
-
-  const normalize = (value) =>
-    String(value ?? "")
-      .trim()
-      .toLowerCase();
-
-
-  /* =======================================================
-     EMAIL VALIDATOR
-     ======================================================= */
-
-  const isEmail = (value) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-      String(value ?? "").trim()
-    );
-
-
-  /* =======================================================
-     GET CAPTCHA TOKEN
-     ======================================================= */
-
-  const getCaptchaToken = (
-    explicitToken = null
+  const toast = (
+    message,
+    type = "success",
+    duration = 5000
   ) => {
-
-    /*
-     * Priority:
-     *
-     * 1. Token dari Auth.login()
-     * 2. Token global login.js
-     * 3. Token dari textarea Turnstile
-     */
-
-    const directToken =
-      String(
-        explicitToken ?? ""
-      ).trim();
-
-    if (directToken) {
-      return directToken;
+    let box = document.getElementById("pastele-toast");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "pastele-toast";
+      box.className = "pastele-toast";
+      document.body.appendChild(box);
     }
-
-
-    const globalToken =
-      String(
-        window.__pasTeleTurnstileToken ?? ""
-      ).trim();
-
-    if (globalToken) {
-      return globalToken;
+    const icon =
+      type === "success"
+        ? '<i class="fa-solid fa-check"></i>'
+        : '<i class="fa-solid fa-circle-exclamation"></i>';
+    box.className = `pastele-toast ${type}`;
+    box.innerHTML = `
+      <span class="pastele-toast-icon">
+        ${icon}
+      </span>
+      <span>${escapeHTML(message)}</span>
+    `;
+    requestAnimationFrame(() => {
+      box.classList.add("show");
+    });
+    clearTimeout(box._timer);
+    box._timer = setTimeout(() => {
+      box.classList.remove("show");
+    }, duration);
+  };
+  /* =======================================================
+     ESCAPE
+     ======================================================= */
+  function escapeHTML(value) {
+    return String(value ?? "").replace(
+      /[&<>"']/g,
+      (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]
+    );
+  }
+  /* =======================================================
+     SECURITY STATUS
+     ======================================================= */
+  function updateSecurityStatus(
+    verified = false,
+    message = ""
+  ) {
+    if (!securityStatus) return;
+    securityStatus.textContent =
+      message ||
+      (
+        verified
+          ? "Verifikasi keamanan berhasil."
+          : "Selesaikan verifikasi keamanan terlebih dahulu."
+      );
+    securityStatus.classList.remove(
+      "success",
+      "error"
+    );
+    if (verified) {
+      securityStatus.classList.add("success");
     }
-
-
+  }
+  /* =======================================================
+     SUBMIT STATE
+     ======================================================= */
+  function setSubmitEnabled(enabled) {
+    if (submitting) return;
+    const state = Boolean(enabled);
+    submit.disabled = !state;
+    submit.setAttribute(
+      "aria-disabled",
+      state ? "false" : "true"
+    );
+  }
+  /* =======================================================
+     TURNSTILE SUCCESS
+     ======================================================= */
+  function onTurnstileSuccess(token) {
+    turnstileToken = String(token || "").trim();
+    window.__pasTeleRegisterTurnstileToken =
+      turnstileToken;
+    if (turnstileToken) {
+      updateSecurityStatus(
+        true,
+        "Verifikasi keamanan berhasil."
+      );
+      setSubmitEnabled(true);
+      updateProgress();
+    }
+  }
+  /* =======================================================
+     TURNSTILE EXPIRED
+     ======================================================= */
+  function onTurnstileExpired() {
+    turnstileToken = "";
+    window.__pasTeleRegisterTurnstileToken = "";
+    setSubmitEnabled(false);
+    updateSecurityStatus(
+      false,
+      "Verifikasi kedaluwarsa. Silakan verifikasi kembali."
+    );
+    updateProgress();
+  }
+  /* =======================================================
+     TURNSTILE ERROR
+     ======================================================= */
+  function onTurnstileError(errorCode) {
+    console.error(
+      "[PasTele] Turnstile error:",
+      errorCode
+    );
+    turnstileToken = "";
+    window.__pasTeleRegisterTurnstileToken = "";
+    setSubmitEnabled(false);
+    updateSecurityStatus(
+      false,
+      "Verifikasi keamanan gagal dimuat. Silakan coba lagi."
+    );
+    updateProgress();
+  }
+  /* =======================================================
+     GET TURNSTILE TOKEN
+     ======================================================= */
+  function getTurnstileToken() {
+    const local = String(
+      turnstileToken || ""
+    ).trim();
+    if (local) return local;
+    const global = String(
+      window.__pasTeleRegisterTurnstileToken || ""
+    ).trim();
+    if (global) return global;
+    if (
+      window.turnstile &&
+      turnstileWidgetId !== null
+    ) {
+      try {
+        const response =
+          window.turnstile.getResponse(
+            turnstileWidgetId
+          );
+        if (response) {
+          return String(response).trim();
+        }
+      } catch (error) {
+        console.warn(
+          "[PasTele] getResponse error:",
+          error
+        );
+      }
+    }
     const textarea =
       document.querySelector(
         'textarea[name="cf-turnstile-response"]'
       );
-
-    if (
-      textarea &&
-      textarea.value
-    ) {
-      return String(
-        textarea.value
-      ).trim();
-    }
-
-
-    return "";
-  };
-
-
+    return String(
+      textarea?.value || ""
+    ).trim();
+  }
   /* =======================================================
-     CLEAR CAPTCHA TOKEN
+     RESET TURNSTILE
      ======================================================= */
-
-  const clearCaptchaToken = () => {
-    try {
-      window.__pasTeleTurnstileToken = "";
-    } catch (_) {
-      /* ignore */
-    }
-  };
-
-
-  /* =======================================================
-     AUTH ERROR NORMALIZER
-     ======================================================= */
-
-  const authError = (error) => {
-
-    const msg =
-      String(
-        error?.message ||
-        error ||
-        ""
-      ).trim();
-
-    const low =
-      msg.toLowerCase();
-
-
-    /* =====================================================
-       CAPTCHA / TURNSTILE
-       ===================================================== */
-
+  function resetTurnstile() {
+    turnstileToken = "";
+    window.__pasTeleRegisterTurnstileToken = "";
+    setSubmitEnabled(false);
     if (
-      low.includes("captcha") ||
-      low.includes("turnstile")
+      window.turnstile &&
+      turnstileWidgetId !== null
     ) {
-      return new Error(
-        "Verifikasi keamanan gagal atau sudah kedaluwarsa. Silakan verifikasi kembali."
-      );
-    }
-
-
-    /* =====================================================
-       INVALID LOGIN
-       ===================================================== */
-
-    if (
-      low.includes(
-        "invalid login credentials"
-      ) ||
-      low.includes(
-        "invalid credentials"
-      ) ||
-      low.includes(
-        "invalid login"
-      )
-    ) {
-      return new Error(
-        "Username/Gmail atau kata sandi salah."
-      );
-    }
-
-
-    /* =====================================================
-       EMAIL NOT CONFIRMED
-       ===================================================== */
-
-    if (
-      low.includes(
-        "email not confirmed"
-      )
-    ) {
-      return new Error(
-        "Email belum dikonfirmasi. Cek inbox Gmail kamu terlebih dahulu."
-      );
-    }
-
-
-    /* =====================================================
-       ALREADY REGISTERED
-       ===================================================== */
-
-    if (
-      low.includes(
-        "user already registered"
-      ) ||
-      low.includes(
-        "already registered"
-      ) ||
-      low.includes(
-        "already been registered"
-      )
-    ) {
-      return new Error(
-        "Email sudah terdaftar."
-      );
-    }
-
-
-    /* =====================================================
-       PASSWORD
-       ===================================================== */
-
-    if (
-      low.includes(
-        "password should be at least"
-      )
-    ) {
-      return new Error(
-        "Kata sandi terlalu pendek."
-      );
-    }
-
-
-    /* =====================================================
-       RATE LIMIT
-       ===================================================== */
-
-    if (
-      low.includes(
-        "rate limit"
-      ) ||
-      low.includes(
-        "too many requests"
-      )
-    ) {
-      return new Error(
-        "Terlalu banyak percobaan. Silakan tunggu beberapa saat lalu coba lagi."
-      );
-    }
-
-
-    /* =====================================================
-       DEFAULT
-       ===================================================== */
-
-    if (
-      error instanceof Error
-    ) {
-      return error;
-    }
-
-
-    return new Error(
-      msg ||
-      "Autentikasi gagal."
-    );
-  };
-
-
-  /* =======================================================
-     PROFILE BAN CHECK
-     ======================================================= */
-
-  const checkProfileBan = async (
-    sb,
-    userId
-  ) => {
-
-    if (!userId) {
-      return;
-    }
-
-
-    const {
-      data: profile,
-      error: profileError
-    } =
-      await sb
-        .from("profiles")
-        .select("is_banned")
-        .eq("id", userId)
-        .maybeSingle();
-
-
-    /*
-     * Jangan menggagalkan login hanya karena
-     * query profile gagal.
-     */
-
-    if (profileError) {
-
-      console.error(
-        "[PasTele] PROFILE CHECK ERROR:",
-        profileError
-      );
-
-      return;
-    }
-
-
-    if (
-      profile?.is_banned === true
-    ) {
-
       try {
-        await sb.auth.signOut();
-      } catch (_) {
-        /* ignore */
-      }
-
-      throw new Error(
-        "Akun ini sedang diblokir."
-      );
-    }
-  };
-
-
-  /* =======================================================
-     RECORD LOGIN HISTORY
-     ======================================================= */
-
-  const recordLogin = async (
-    sb
-  ) => {
-
-    try {
-
-      let geo = {};
-
-
-      /* ===================================================
-         GEOLOCATION
-      =================================================== */
-
-      try {
-
-        const response =
-          await fetch(
-            "https://ipapi.co/json/",
-            {
-              cache: "no-store"
-            }
-          );
-
-
-        if (
-          response.ok
-        ) {
-          geo =
-            await response.json();
-        }
-
-      } catch (_) {
-        geo = {};
-      }
-
-
-      /* ===================================================
-         RECORD LOGIN
-      =================================================== */
-
-      const {
-        error
-      } =
-        await sb.rpc(
-          "record_login",
-          {
-            p_city:
-              geo.city ||
-              null,
-
-            p_region:
-              geo.region ||
-              null,
-
-            p_country:
-              geo.country_name ||
-              null,
-
-            p_latitude:
-              geo.latitude != null
-                ? Number(
-                    geo.latitude
-                  )
-                : null,
-
-            p_longitude:
-              geo.longitude != null
-                ? Number(
-                    geo.longitude
-                  )
-                : null,
-
-            p_user_agent:
-              navigator.userAgent
-          }
+        window.turnstile.reset(
+          turnstileWidgetId
         );
-
-
-      if (error) {
+      } catch (error) {
         console.warn(
-          "[PasTele] record_login RPC error:",
+          "[PasTele] Turnstile reset error:",
           error
         );
       }
-
-    } catch (error) {
-
-      /*
-       * Login tetap berhasil jika
-       * history gagal.
-       */
-
-      console.warn(
-        "[PasTele] Login history could not be recorded:",
-        error
-      );
     }
-  };
-
-
+    updateSecurityStatus(
+      false,
+      "Selesaikan verifikasi keamanan terlebih dahulu."
+    );
+    updateProgress();
+  }
   /* =======================================================
-     AUTH API
+     WAIT TURNSTILE
      ======================================================= */
-
-  window.Auth = {
-
-
-    /* =====================================================
-       LOOKUP USERNAME / EMAIL
-       ===================================================== */
-
-    lookup: async (
-      identifier
-    ) => {
-
-      const sb =
-        requireClient();
-
-
-      const value =
-        normalize(
-          identifier
+  function waitForTurnstile(timeout = 20000) {
+    return new Promise((resolve) => {
+      const started = Date.now();
+      const check = () => {
+        if (
+          window.turnstile &&
+          typeof window.turnstile.render === "function"
+        ) {
+          resolve(true);
+          return;
+        }
+        if (Date.now() - started >= timeout) {
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 200);
+      };
+      check();
+    });
+  }
+  /* =======================================================
+     RENDER TURNSTILE
+     ======================================================= */
+  async function renderTurnstile() {
+    if (!turnstileContainer) {
+      console.error(
+        "[PasTele] #registerTurnstile tidak ditemukan."
+      );
+      return;
+    }
+    if (!siteKey) {
+      console.error(
+        "[PasTele] Turnstile sitekey tidak ditemukan."
+      );
+      updateSecurityStatus(
+        false,
+        "Konfigurasi verifikasi keamanan belum tersedia."
+      );
+      setSubmitEnabled(false);
+      return;
+    }
+    if (turnstileWidgetId !== null) {
+      return;
+    }
+    if (turnstileRendering) {
+      return;
+    }
+    turnstileRendering = true;
+    try {
+      updateSecurityStatus(
+        false,
+        "Memuat verifikasi keamanan..."
+      );
+      const ready =
+        await waitForTurnstile();
+      if (!ready) {
+        throw new Error(
+          "Cloudflare Turnstile belum tersedia."
         );
-
-
-      if (!value) {
-        return null;
       }
-
-
-      const {
-        data,
-        error
-      } =
-        await sb.rpc(
-          "resolve_username_login",
+      if (turnstileWidgetId !== null) {
+        return;
+      }
+      turnstileWidgetId =
+        window.turnstile.render(
+          turnstileContainer,
           {
-            p_username:
-              value
+            sitekey: siteKey,
+            theme: "auto",
+            language: "id",
+            size: "flexible",
+            action: "register",
+            callback: onTurnstileSuccess,
+            "expired-callback":
+              onTurnstileExpired,
+            "error-callback":
+              onTurnstileError,
+            "timeout-callback":
+              onTurnstileExpired
           }
         );
-
-
-      if (error) {
-
-        console.error(
-          "[PasTele] ACCOUNT LOOKUP ERROR:",
-          error
-        );
-
-        throw authError(
-          error
-        );
-      }
-
-
-      const row =
-        Array.isArray(data)
-          ? data[0]
-          : data;
-
-
-      if (
-        !row?.auth_email
-      ) {
-        return null;
-      }
-
-
-      return {
-
-        auth_email:
-          normalize(
-            row.auth_email
-          ),
-
-        username:
-          String(
-            row.username ||
-            row.display_name ||
-            ""
-          ).trim(),
-
-        display_name:
-          String(
-            row.display_name ||
-            ""
-          ).trim(),
-
-        is_banned:
-          row.is_banned === true,
-
-        status:
-          String(
-            row.status ||
-            ""
-          ).trim()
-
-      };
-    },
-
-
-    /* =====================================================
-       LOGIN
-       ===================================================== */
-
-    login: async (
-      identifier,
-      password,
-      captchaToken = null
-    ) => {
-
-      const sb =
-        requireClient();
-
-
-      /* ===================================================
-         RAW VALUES
-      =================================================== */
-
-      const raw =
-        String(
-          identifier ?? ""
-        ).trim();
-
-
-      const pass =
-        String(
-          password ?? ""
-        );
-
-
-      /* ===================================================
-         PASSWORD REQUIRED
-      =================================================== */
-
-      if (!pass) {
-        throw new Error(
-          "Kata sandi wajib diisi."
-        );
-      }
-
-
-      /* ===================================================
-         CAPTCHA TOKEN
-      =================================================== */
-
-      const token =
-        getCaptchaToken(
-          captchaToken
-        );
-
-
-      if (!token) {
-        throw new Error(
-          "Selesaikan verifikasi keamanan terlebih dahulu."
-        );
-      }
-
-
-      let email = "";
-
-
-      /* ===================================================
-         EMAIL LOGIN
-      =================================================== */
-
-      if (
-        isEmail(raw)
-      ) {
-
-        email =
-          normalize(
-            raw
-          );
-
-      }
-
-
-      /* ===================================================
-         USERNAME LOGIN
-      =================================================== */
-
-      else {
-
-        const found =
-          await window.Auth.lookup(
-            raw
-          );
-
-
-        if (
-          !found?.auth_email
-        ) {
-          throw new Error(
-            "Akun tidak ditemukan."
+      console.log(
+        "[PasTele] Turnstile rendered:",
+        turnstileWidgetId
+      );
+      updateSecurityStatus(
+        false,
+        "Selesaikan verifikasi keamanan terlebih dahulu."
+      );
+    } catch (error) {
+      console.error(
+        "[PasTele] Turnstile render error:",
+        error
+      );
+      updateSecurityStatus(
+        false,
+        "Verifikasi keamanan tidak dapat dimuat."
+      );
+      setSubmitEnabled(false);
+    } finally {
+      turnstileRendering = false;
+    }
+  }
+  /* =======================================================
+     PROGRESS
+     ======================================================= */
+  const fields = [
+    "username",
+    "email",
+    "password",
+    "confirm"
+  ]
+    .map((id) =>
+      document.getElementById(id)
+    )
+    .filter(Boolean);
+  function updateProgress() {
+    const username =
+      document.getElementById("username")
+        ?.value.trim() || "";
+    const email =
+      document.getElementById("email")
+        ?.value.trim() || "";
+    const password =
+      document.getElementById("password")
+        ?.value || "";
+    const confirm =
+      document.getElementById("confirm")
+        ?.value || "";
+    let score = 0;
+    if (username.length >= 3) {
+      score++;
+    }
+    if (
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      score++;
+    }
+    if (password.length >= 6) {
+      score++;
+    }
+    if (
+      confirm.length >= 6 &&
+      password === confirm
+    ) {
+      score++;
+    }
+    if (password && confirm && password === confirm) {
+      score++;
+    }
+    if (getTurnstileToken()) {
+      score++;
+    }
+    const percentage = Math.min(
+      100,
+      Math.round((score / 6) * 100)
+    );
+    if (progress) {
+      progress.style.width =
+        `${percentage}%`;
+    }
+  }
+  fields.forEach((field) => {
+    field.addEventListener(
+      "input",
+      updateProgress
+    );
+    field.addEventListener(
+      "change",
+      updateProgress
+    );
+  });
+  /* =======================================================
+     PASSWORD TOGGLE
+     ======================================================= */
+  document
+    .querySelectorAll(".toggle")
+    .forEach((button) => {
+      button.addEventListener(
+        "click",
+        () => {
+          const target =
+            button.dataset.t;
+          const input =
+            document.getElementById(target);
+          if (!input) return;
+          const visible =
+            input.type === "password";
+          input.type =
+            visible
+              ? "text"
+              : "password";
+          button.innerHTML =
+            visible
+              ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>'
+              : '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
+          button.setAttribute(
+            "aria-label",
+            visible
+              ? "Sembunyikan kata sandi"
+              : "Tampilkan kata sandi"
           );
         }
-
-
-        if (
-          found.is_banned === true ||
-          String(
-            found.status || ""
-          ).toLowerCase() ===
-            "banned"
-        ) {
-          throw new Error(
-            "Akun ini sedang diblokir."
-          );
-        }
-
-
-        email =
-          normalize(
-            found.auth_email
-          );
-      }
-
-
-      /* ===================================================
-         FINAL EMAIL VALIDATION
-      =================================================== */
-
-      if (
-        !isEmail(email)
-      ) {
-        throw new Error(
-          "Email akun tidak valid."
-        );
-      }
-
-
-      /* ===================================================
-         SUPABASE PASSWORD LOGIN
-         + CLOUDFLARE TURNSTILE
-      =================================================== */
-
-      let data = null;
-      let error = null;
-
-
-      try {
-
-        const result =
-          await sb.auth.signInWithPassword({
-
-            email:
-              email,
-
-            password:
-              pass,
-
-            options: {
-              captchaToken:
-                token
-            }
-
-          });
-
-
-        data =
-          result?.data ||
-          null;
-
-        error =
-          result?.error ||
-          null;
-
-      } catch (requestError) {
-
-        /*
-         * Network / client exception.
-         */
-
-        clearCaptchaToken();
-
-        throw authError(
-          requestError
-        );
-
-      } finally {
-
-        /*
-         * Token hanya digunakan untuk
-         * request login ini.
-         */
-
-        clearCaptchaToken();
-      }
-
-
-      /* ===================================================
-         SUPABASE ERROR
-      =================================================== */
-
-      if (error) {
-
-        console.error(
-          "[PasTele] SUPABASE LOGIN ERROR:",
-          error
-        );
-
-        throw authError(
-          error
-        );
-      }
-
-
-      /* ===================================================
-         SESSION + USER VALIDATION
-      =================================================== */
-
-      if (
-        !data?.session ||
-        !data?.user
-      ) {
-
-        throw new Error(
-          "Login belum membuat session. Jika konfirmasi email aktif, konfirmasi email terlebih dahulu."
-        );
-      }
-
-
-      /* ===================================================
-         PROFILE BAN CHECK
-      =================================================== */
-
-      await checkProfileBan(
-        sb,
-        data.user.id
       );
-
-
-      /* ===================================================
-         SESSION PERSISTENCE CHECK
-      =================================================== */
-
-      const sessionCheck =
-        await sb.auth.getSession();
-
-
+    });
+  /* =======================================================
+     FORM SUBMIT
+     ======================================================= */
+  form.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+      hide(errorBox);
+      hide(noticeBox);
+      const username =
+        document.getElementById("username")
+          ?.value.trim() || "";
+      const email =
+        document.getElementById("email")
+          ?.value.trim()
+          .toLowerCase() || "";
+      const password =
+        document.getElementById("password")
+          ?.value || "";
+      const confirm =
+        document.getElementById("confirm")
+          ?.value || "";
+      /* VALIDATION */
       if (
-        !sessionCheck.data?.session
-      ) {
-
-        throw new Error(
-          "Login berhasil tetapi session tidak tersimpan. Periksa konfigurasi Auth/Site URL Supabase."
-        );
-      }
-
-
-      /* ===================================================
-         LOGIN HISTORY
-      =================================================== */
-
-      await recordLogin(
-        sb
-      );
-
-
-      /* ===================================================
-         RETURN
-      =================================================== */
-
-      return {
-
-        user:
-          data.user,
-
-        session:
-          sessionCheck.data.session
-
-      };
-    },
-
-
-    /* =====================================================
-       REGISTER
-       ===================================================== */
-
-    register: async (
-      username,
-      email,
-      password
-    ) => {
-
-      const sb =
-        requireClient();
-
-
-      const cleanUsername =
-        normalize(
+        !/^[A-Za-z0-9_]{3,32}$/.test(
           username
-        );
-
-      const cleanEmail =
-        normalize(
-          email
-        );
-
-      const cleanPassword =
-        String(
-          password ?? ""
-        );
-
-
-      /* ===================================================
-         USERNAME VALIDATION
-      =================================================== */
-
-      if (
-        !/^[a-z0-9_]{3,32}$/.test(
-          cleanUsername
         )
       ) {
-        throw new Error(
-          "Username hanya boleh berisi huruf, angka, dan underscore (3–32 karakter)."
+        show(
+          errorBox,
+          "Username hanya boleh berisi huruf, angka, dan underscore."
         );
+        return;
       }
-
-
-      /* ===================================================
-         EMAIL VALIDATION
-      =================================================== */
-
       if (
-        !isEmail(
-          cleanEmail
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          email
         )
       ) {
-        throw new Error(
+        show(
+          errorBox,
           "Email tidak valid."
         );
+        return;
       }
-
-
-      /* ===================================================
-         PASSWORD VALIDATION
-      =================================================== */
-
-      if (
-        cleanPassword.length < 6
-      ) {
-        throw new Error(
+      if (password.length < 6) {
+        show(
+          errorBox,
           "Kata sandi minimal 6 karakter."
         );
+        return;
       }
-
-
-      /* ===================================================
-         USERNAME AVAILABILITY
-      =================================================== */
-
-      const {
-        data: available,
-        error: availableError
-      } =
-        await sb.rpc(
-          "username_available",
-          {
-            p_username:
-              cleanUsername
-          }
+      if (password !== confirm) {
+        show(
+          errorBox,
+          "Konfirmasi kata sandi tidak cocok."
         );
-
-
-      if (availableError) {
-
-        console.error(
-          "[PasTele] USERNAME CHECK ERROR:",
-          availableError
-        );
-
-        throw authError(
-          availableError
-        );
+        return;
       }
-
-
-      if (
-        available !== true
-      ) {
-        throw new Error(
-          "Username sudah digunakan."
-        );
-      }
-
-
-      /* ===================================================
-         SUPABASE REGISTER
-      =================================================== */
-
-      const {
-        data,
-        error
-      } =
-        await sb.auth.signUp({
-
-          email:
-            cleanEmail,
-
-          password:
-            cleanPassword,
-
-          options: {
-
-            data: {
-              username:
-                cleanUsername
-            }
-
-          }
-
-        });
-
-
-      if (error) {
-
-        console.error(
-          "[PasTele] SUPABASE REGISTER ERROR:",
-          error
-        );
-
-        throw authError(
-          error
-        );
-      }
-
-
-      return data;
-    },
-
-
-    /* =====================================================
-       GOOGLE LOGIN
-       ===================================================== */
-
-    google: async () => {
-
-      const sb =
-        requireClient();
-
-
-      const {
-        error
-      } =
-        await sb.auth.signInWithOAuth({
-
-          provider:
-            "google",
-
-          options: {
-
-            redirectTo:
-              `${location.origin}/auth-callback.html`
-
-          }
-
-        });
-
-
-      if (error) {
-
-        console.error(
-          "[PasTele] GOOGLE LOGIN ERROR:",
-          error
-        );
-
-        throw authError(
-          error
-        );
-      }
-    },
-
-
-    /* =====================================================
-       LOGOUT
-       ===================================================== */
-
-    logout: async () => {
-
-      const sb =
-        requireClient();
-
-
-      const {
-        error
-      } =
-        await sb.auth.signOut();
-
-
-      if (error) {
-        throw authError(
-          error
-        );
-      }
-
-
-      clearCaptchaToken();
-
-
-      location.replace(
-        "login.html"
-      );
-    },
-
-
-    /* =====================================================
-       GET SESSION
-       ===================================================== */
-
-    session: async () => {
-
       if (!window.sb) {
-        return null;
+        show(
+          errorBox,
+          "Supabase belum terkonfigurasi."
+        );
+        return;
       }
-
-
-      const {
-        data,
-        error
-      } =
-        await window.sb.auth.getSession();
-
-
-      if (error) {
-
+      /* TURNSTILE */
+      const token =
+        getTurnstileToken();
+      if (!token) {
+        show(
+          errorBox,
+          "Selesaikan verifikasi keamanan terlebih dahulu."
+        );
+        setSubmitEnabled(false);
+        return;
+      }
+      /* SUBMIT */
+      submitting = true;
+      submit.disabled = true;
+      submit.setAttribute(
+        "aria-disabled",
+        "true"
+      );
+      submit.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i><span>Membuat akun...</span>';
+      try {
+        if (
+          !window.Auth ||
+          typeof window.Auth.register !==
+            "function"
+        ) {
+          throw new Error(
+            "Sistem autentikasi belum siap."
+          );
+        }
+        const data =
+          await window.Auth.register(
+            username,
+            email,
+            password,
+            token
+          );
+        if (data?.session) {
+          toast(
+            "Akun PasTele berhasil dibuat. Selamat datang!",
+            "success"
+          );
+          submit.innerHTML =
+            '<i class="fa-solid fa-check"></i><span>Berhasil</span>';
+          setTimeout(() => {
+            location.replace(
+              "dashboard.html"
+            );
+          }, 900);
+          return;
+        }
+        toast(
+          "Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele.",
+          "success"
+        );
+        show(
+          noticeBox,
+          "Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele."
+        );
+        form.reset();
+        resetTurnstile();
+        updateProgress();
+      } catch (error) {
         console.error(
-          "[PasTele] GET SESSION ERROR:",
+          "[PasTele] REGISTER ERROR:",
           error
         );
-
-        return null;
+        const message =
+          error?.message ||
+          "Registrasi gagal.";
+        toast(
+          message,
+          "error"
+        );
+        show(
+          errorBox,
+          message
+        );
+        resetTurnstile();
+      } finally {
+        submitting = false;
+        submit.innerHTML =
+          '<i class="fa-solid fa-user-plus"></i><span>Register</span>';
+        if (getTurnstileToken()) {
+          setSubmitEnabled(true);
+        } else {
+          setSubmitEnabled(false);
+        }
+        updateProgress();
       }
-
-
-      return (
-        data?.session ||
-        null
-      );
-    },
-
-
-    /* =====================================================
-       GET USER
-       ===================================================== */
-
-    user: async () => {
-
-      if (!window.sb) {
-        return null;
-      }
-
-
-      const {
-        data,
-        error
-      } =
-        await window.sb.auth.getUser();
-
-
-      if (error) {
-        return null;
-      }
-
-
-      return (
-        data?.user ||
-        null
-      );
-    }
-
-  };
-
-
-  /* =======================================================
-     DEBUG
-     ======================================================= */
-
-  console.log(
-    "[PasTele] Auth initialized.",
-    {
-      supabase:
-        Boolean(window.sb),
-
-      authLogin:
-        typeof window.Auth.login ===
-        "function",
-
-      authLookup:
-        typeof window.Auth.lookup ===
-        "function",
-
-      authGoogle:
-        typeof window.Auth.google ===
-        "function",
-
-      captchaLoginSupported:
-        true
     }
   );
-
-})();
+  /* =======================================================
+     GOOGLE REGISTER
+     ======================================================= */
+  google?.addEventListener(
+    "click",
+    async () => {
+      if (submitting) return;
+      hide(errorBox);
+      hide(noticeBox);
+      const originalHTML =
+        google.innerHTML;
+      google.disabled = true;
+      google.setAttribute(
+        "aria-disabled",
+        "true"
+      );
+      google.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i><span>Menghubungkan Google...</span>';
+      try {
+        if (
+          !window.Auth ||
+          typeof window.Auth.google !==
+            "function"
+        ) {
+          throw new Error(
+            "Sistem Google Authentication belum siap."
+          );
+        }
+        await window.Auth.google();
+      } catch (error) {
+        console.error(
+          "[PasTele] GOOGLE REGISTER ERROR:",
+          error
+        );
+        const message =
+          error?.message ||
+          "Google register gagal.";
+        toast(
+          message,
+          "error"
+        );
+        show(
+          errorBox,
+          message
+        );
+        google.disabled = false;
+        google.setAttribute(
+          "aria-disabled",
+          "false"
+        );
+        google.innerHTML =
+          originalHTML;
+      }
+    }
+  );
+  /* =======================================================
+     INITIAL
+     ======================================================= */
+  setSubmitEnabled(false);
+  updateSecurityStatus(
+    false,
+    "Memuat verifikasi keamanan..."
+  );
+  updateProgress();
+  /* =======================================================
+     START TURNSTILE
+     ======================================================= */
+  renderTurnstile();
+  console.log(
+    "[PasTele] Register initialized.",
+    {
+      turnstileContainer:
+        Boolean(turnstileContainer),
+      turnstileSiteKey:
+        Boolean(siteKey),
+      turnstileLoaded:
+        Boolean(window.turnstile),
+      supabase:
+        Boolean(window.sb),
+      authRegister:
+        typeof window.Auth?.register ===
+        "function"
+    }
+  );
+});
