@@ -13,10 +13,12 @@
   ========================================================== -->
   <script src="js/theme-preload.js"></script>
 
+
   <!-- =========================================================
        FONTS
   ========================================================== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+
 
   <!-- =========================================================
        SUPABASE
@@ -25,7 +27,9 @@
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
   ></script>
 
+
   <title>Login — PasTele</title>
+
 
   <!-- =========================================================
        CORE CONFIGURATION
@@ -33,113 +37,29 @@
   <script src="/js/config.js?v=20260907"></script>
   <script src="/js/supabase.js?v=20260907"></script>
 
+
   <!-- =========================================================
        AUTHENTICATION
   ========================================================== -->
   <script src="/js/debug-panel.js?v=20260907"></script>
   <script src="/js/auth.js?v=20260907"></script>
 
-  <!-- =========================================================
-       TURNSTILE CALLBACK STORAGE
-       Dibuat sebelum API Turnstile dimuat supaya callback
-       selalu tersedia.
-  ========================================================== -->
-  <script>
-    window.__pasTeleTurnstileToken = "";
-
-    window.onPasTeleTurnstileSuccess = function (token) {
-      window.__pasTeleTurnstileToken =
-        String(token || "").trim();
-
-      const status =
-        document.getElementById("loginSecurityStatus");
-
-      if (status) {
-        status.classList.add("verified");
-
-        const icon =
-          status.querySelector("i");
-
-        const text =
-          status.querySelector("span");
-
-        if (icon) {
-          icon.className =
-            "fa-solid fa-circle-check";
-        }
-
-        if (text) {
-          text.textContent =
-            "Verifikasi keamanan berhasil.";
-        }
-      }
-    };
-
-    window.onPasTeleTurnstileExpired = function () {
-      window.__pasTeleTurnstileToken = "";
-
-      const status =
-        document.getElementById("loginSecurityStatus");
-
-      if (status) {
-        status.classList.remove("verified");
-
-        const icon =
-          status.querySelector("i");
-
-        const text =
-          status.querySelector("span");
-
-        if (icon) {
-          icon.className =
-            "fa-solid fa-shield-halved";
-        }
-
-        if (text) {
-          text.textContent =
-            "Verifikasi kedaluwarsa. Silakan verifikasi kembali.";
-        }
-      }
-    };
-
-    window.onPasTeleTurnstileError = function () {
-      window.__pasTeleTurnstileToken = "";
-
-      const status =
-        document.getElementById("loginSecurityStatus");
-
-      if (status) {
-        status.classList.remove("verified");
-
-        const icon =
-          status.querySelector("i");
-
-        const text =
-          status.querySelector("span");
-
-        if (icon) {
-          icon.className =
-            "fa-solid fa-triangle-exclamation";
-        }
-
-        if (text) {
-          text.textContent =
-            "Verifikasi keamanan gagal. Silakan coba lagi.";
-        }
-      }
-    };
-  </script>
 
   <!-- =========================================================
        CLOUDFLARE TURNSTILE
-       Site Key boleh di frontend.
-       Secret Key JANGAN pernah ditaruh di frontend.
+       
+       IMPORTANT:
+       - Explicit rendering digunakan.
+       - login.js yang melakukan render.
+       - Site Key boleh berada di frontend.
+       - Secret Key JANGAN pernah dimasukkan ke sini.
   ========================================================== -->
   <script
-    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
     async
     defer
   ></script>
+
 
   <!-- =========================================================
        FONT AWESOME
@@ -148,6 +68,7 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
+
 
   <!-- =========================================================
        STYLES
@@ -176,455 +97,18 @@
     rel="stylesheet"
     href="css/saas-final.css?v=20260907"
   >
-</head>
-
-<body>
-
-  <!-- =========================================================
-       LOGIN
-  ========================================================== -->
-  <main class="auth-shell">
-
-    <section
-      class="card auth-card"
-      aria-labelledby="loginTitle"
-    >
-
-      <!-- =====================================================
-           LOGO
-      ====================================================== -->
-      <div
-        class="auth-logo"
-        aria-hidden="true"
-      >
-        <i class="fa-solid fa-bolt"></i>
-      </div>
-
-
-      <!-- =====================================================
-           TITLE
-      ====================================================== -->
-      <h1 id="loginTitle">
-        Masuk ke PasTele
-      </h1>
-
-      <p class="muted">
-        Gunakan username atau Gmail.
-      </p>
-
-
-      <!-- =====================================================
-           STEP 1
-           USERNAME / GMAIL
-      ====================================================== -->
-      <form
-        class="list"
-        id="loginStep1"
-        autocomplete="on"
-        novalidate
-      >
-
-        <div class="field">
-
-          <label for="identifier">
-            Username / Gmail
-          </label>
-
-          <div
-            class="identifier-wrap"
-            id="identifierWrap"
-          >
-
-            <input
-              id="identifier"
-              name="identifier"
-              class="input"
-              type="text"
-              inputmode="email"
-              autocomplete="username"
-              autocapitalize="none"
-              spellcheck="false"
-              placeholder="Masukkan username atau Gmail"
-              required
-              aria-describedby="loginIdentifierHelp"
-            >
-
-            <span
-              class="identifier-status"
-              id="identifierStatus"
-              aria-hidden="true"
-            >
-              <i class="fa-solid fa-check"></i>
-            </span>
-
-          </div>
-
-
-          <div
-            class="login-verified-state hidden"
-            id="loginVerifiedState"
-            aria-live="polite"
-          >
-
-            <i
-              class="fa-solid fa-circle-check"
-              aria-hidden="true"
-            ></i>
-
-            <span>
-              Masuk dengan username yang terdaftar
-            </span>
-
-          </div>
-
-
-          <small
-            id="loginIdentifierHelp"
-            class="field-help"
-          >
-            Masukkan username atau alamat Gmail akun kamu.
-          </small>
-
-        </div>
-
-
-        <!-- ===================================================
-             CONTINUE
-        ==================================================== -->
-        <button
-          type="submit"
-          class="btn primary"
-          id="continueLogin"
-        >
-
-          <i
-            class="fa-solid fa-arrow-right"
-            aria-hidden="true"
-          ></i>
-
-          <span>
-            Lanjut
-          </span>
-
-        </button>
-
-      </form>
-
-
-      <!-- =====================================================
-           STEP 2
-           PASSWORD + TURNSTILE
-      ========================================================== -->
-      <form
-        class="list hidden"
-        id="loginStep2"
-        autocomplete="on"
-        novalidate
-      >
-
-        <!-- ===================================================
-             PASSWORD HEADER
-        ==================================================== -->
-        <div class="password-heading">
-
-          <span
-            class="password-heading-icon"
-            aria-hidden="true"
-          >
-            <i class="fa-solid fa-lock"></i>
-          </span>
-
-          <div>
-
-            <strong>
-              Masukkan kata sandi
-            </strong>
-
-            <span>
-              Gunakan kata sandi akun kamu untuk masuk.
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <!-- ===================================================
-             PASSWORD
-        ==================================================== -->
-        <div class="field">
-
-          <label for="password">
-            Kata sandi
-          </label>
-
-          <div class="password-wrap">
-
-            <input
-              id="password"
-              name="password"
-              class="input"
-              type="password"
-              autocomplete="current-password"
-              placeholder="Masukkan kata sandi"
-              required
-            >
-
-            <button
-              type="button"
-              class="password-toggle"
-              id="toggle"
-              aria-label="Tampilkan kata sandi"
-              title="Tampilkan kata sandi"
-            >
-
-              <i
-                class="fa-solid fa-eye"
-                aria-hidden="true"
-              ></i>
-
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <!-- ===================================================
-             CLOUDFLARE TURNSTILE
-             Turnstile sengaja ditempatkan di STEP 2.
-             Token akan digunakan langsung untuk login.
-        ==================================================== -->
-        <div
-          class="turnstile-wrap"
-          id="loginTurnstile"
-          aria-label="Verifikasi keamanan"
-        >
-
-          <div
-            class="cf-turnstile"
-            data-sitekey="0x4AAAAAAErjLed781i5lbu8"
-            data-theme="auto"
-            data-language="id"
-            data-action="login"
-            data-callback="onPasTeleTurnstileSuccess"
-            data-expired-callback="onPasTeleTurnstileExpired"
-            data-error-callback="onPasTeleTurnstileError"
-          ></div>
-
-        </div>
-
-
-        <!-- ===================================================
-             SECURITY STATUS
-        ==================================================== -->
-        <div
-          class="login-security-status"
-          id="loginSecurityStatus"
-          aria-live="polite"
-        >
-
-          <i
-            class="fa-solid fa-shield-halved"
-            aria-hidden="true"
-          ></i>
-
-          <span>
-            Selesaikan verifikasi keamanan sebelum masuk.
-          </span>
-
-        </div>
-
-
-        <!-- ===================================================
-             LOGIN
-        ==================================================== -->
-        <button
-          type="submit"
-          class="btn primary"
-          id="loginSubmit"
-        >
-
-          <i
-            class="fa-solid fa-right-to-bracket"
-            aria-hidden="true"
-          ></i>
-
-          <span>
-            Masuk
-          </span>
-
-        </button>
-
-
-        <!-- ===================================================
-             FORGOT PASSWORD
-        ==================================================== -->
-        <a
-          class="forgot-link"
-          href="#"
-          id="forgot"
-        >
-
-          <i
-            class="fa-solid fa-key"
-            aria-hidden="true"
-          ></i>
-
-          <span>
-            Lupa kata sandi?
-          </span>
-
-        </a>
-
-
-        <!-- ===================================================
-             CHANGE ACCOUNT
-        ==================================================== -->
-        <button
-          type="button"
-          class="account-change-login"
-          id="changeAccount"
-        >
-
-          <i
-            class="fa-solid fa-arrow-left"
-            aria-hidden="true"
-          ></i>
-
-          <span>
-            Ganti akun
-          </span>
-
-        </button>
-
-      </form>
-
-
-      <!-- =====================================================
-           DIVIDER
-      ========================================================== -->
-      <div
-        class="auth-divider auth-or"
-        aria-hidden="true"
-      >
-
-        <span>
-          atau
-        </span>
-
-      </div>
-
-
-      <!-- =====================================================
-           GOOGLE LOGIN
-      ========================================================== -->
-      <button
-        type="button"
-        class="btn google-login-btn"
-        id="google"
-      >
-
-        <span
-          class="google-icon"
-          aria-hidden="true"
-        >
-
-          <i class="fa-brands fa-google"></i>
-
-        </span>
-
-        <span>
-          Login dengan Gmail
-        </span>
-
-      </button>
-
-
-      <!-- =====================================================
-           FOOTER
-      ========================================================== -->
-      <div class="auth-footer">
-
-        <div class="register-prompt">
-
-          <span>
-            Belum punya akun?
-          </span>
-
-          <a
-            class="register-link"
-            href="register.html"
-          >
-
-            <span>
-              Register
-            </span>
-
-            <i
-              class="fa-solid fa-arrow-right"
-              aria-hidden="true"
-            ></i>
-
-          </a>
-
-        </div>
-
-
-        <a
-          class="back-link"
-          href="index.html"
-        >
-
-          <i
-            class="fa-solid fa-arrow-left"
-            aria-hidden="true"
-          ></i>
-
-          <span>
-            Kembali
-          </span>
-
-        </a>
-
-      </div>
-
-    </section>
-
-  </main>
 
 
   <!-- =========================================================
-       GLOBAL TOAST
-  ========================================================== -->
-  <div
-    id="toast"
-    role="alert"
-    aria-live="polite"
-    aria-atomic="true"
-  ></div>
-
-
-  <!-- =========================================================
-       LOGIN SCRIPT
-  ========================================================== -->
-  <script src="js/login.js?v=20260907"></script>
-
-
-  <!-- =========================================================
-       SITE SHELL
-  ========================================================== -->
-  <script src="js/footer.js?v=20260907"></script>
-  <script src="js/navbar.js?v=20260907"></script>
-
-
-  <!-- =========================================================
-       TURNSTILE / LOGIN PRESENTATION
+       LOGIN SECURITY PRESENTATION
+       
+       Ditaruh di head agar tidak terjadi flash style
+       ketika Step 2 dan Turnstile ditampilkan.
   ========================================================== -->
   <style>
 
     /* =======================================================
-       TURNSTILE
+       TURNSTILE WRAPPER
     ======================================================= */
 
     .turnstile-wrap {
@@ -641,12 +125,13 @@
     }
 
 
-    .turnstile-wrap .cf-turnstile {
-      width: 100%;
+    /*
+     * Explicit Turnstile membuat iframe di dalam container.
+     * Jangan mengubah ukuran iframe secara manual.
+     */
 
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    .turnstile-wrap > iframe {
+      max-width: 100%;
     }
 
 
@@ -657,7 +142,6 @@
     .login-security-status {
       display: flex;
       align-items: center;
-
       gap: 8px;
 
       width: 100%;
@@ -709,6 +193,26 @@
 
     .login-security-status.verified i {
       color: #22c55e;
+    }
+
+
+    /* =======================================================
+       LOGIN BUTTON DISABLED
+    ======================================================= */
+
+    #loginSubmit:disabled {
+      opacity: .55;
+
+      cursor: not-allowed;
+
+      filter: saturate(.65);
+
+      transform: none;
+    }
+
+
+    #loginSubmit:not(:disabled) {
+      cursor: pointer;
     }
 
 
@@ -780,15 +284,522 @@
         margin-bottom: 5px;
 
         min-height: 65px;
-      }
 
-      .turnstile-wrap .cf-turnstile {
-        transform-origin: center center;
+        overflow: visible;
       }
 
     }
 
   </style>
+
+</head>
+
+
+<body>
+
+
+  <!-- =========================================================
+       LOGIN
+  ========================================================== -->
+
+  <main class="auth-shell">
+
+    <section
+      class="card auth-card"
+      aria-labelledby="loginTitle"
+    >
+
+
+      <!-- =====================================================
+           LOGO
+      ====================================================== -->
+
+      <div
+        class="auth-logo"
+        aria-hidden="true"
+      >
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+
+
+      <!-- =====================================================
+           TITLE
+      ====================================================== -->
+
+      <h1 id="loginTitle">
+        Masuk ke PasTele
+      </h1>
+
+      <p class="muted">
+        Gunakan username atau Gmail.
+      </p>
+
+
+      <!-- =====================================================
+           STEP 1
+           USERNAME / GMAIL
+      ====================================================== -->
+
+      <form
+        class="list"
+        id="loginStep1"
+        autocomplete="on"
+        novalidate
+      >
+
+        <div class="field">
+
+          <label for="identifier">
+            Username / Gmail
+          </label>
+
+
+          <div
+            class="identifier-wrap"
+            id="identifierWrap"
+          >
+
+            <input
+              id="identifier"
+              name="identifier"
+              class="input"
+              type="text"
+              inputmode="email"
+              autocomplete="username"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="Masukkan username atau Gmail"
+              required
+              aria-describedby="loginIdentifierHelp"
+            >
+
+
+            <span
+              class="identifier-status"
+              id="identifierStatus"
+              aria-hidden="true"
+            >
+
+              <i
+                class="fa-solid fa-check"
+                aria-hidden="true"
+              ></i>
+
+            </span>
+
+          </div>
+
+
+          <!-- =================================================
+               ACCOUNT FOUND STATE
+          ================================================== -->
+
+          <div
+            class="login-verified-state hidden"
+            id="loginVerifiedState"
+            aria-live="polite"
+          >
+
+            <i
+              class="fa-solid fa-circle-check"
+              aria-hidden="true"
+            ></i>
+
+            <span>
+              Masuk dengan username yang terdaftar
+            </span>
+
+          </div>
+
+
+          <!-- =================================================
+               HELP
+          ================================================== -->
+
+          <small
+            id="loginIdentifierHelp"
+            class="field-help"
+          >
+            Masukkan username atau alamat Gmail akun kamu.
+          </small>
+
+        </div>
+
+
+        <!-- ===================================================
+             CONTINUE
+        ==================================================== -->
+
+        <button
+          type="submit"
+          class="btn primary"
+          id="continueLogin"
+        >
+
+          <i
+            class="fa-solid fa-arrow-right"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Lanjut
+          </span>
+
+        </button>
+
+      </form>
+
+
+      <!-- =====================================================
+           STEP 2
+           PASSWORD + TURNSTILE
+           
+           Awalnya hidden.
+           login.js akan membuka Step 2 setelah Auth.lookup()
+           menemukan akun.
+      ====================================================== -->
+
+      <form
+        class="list hidden"
+        id="loginStep2"
+        autocomplete="on"
+        novalidate
+      >
+
+
+        <!-- ===================================================
+             PASSWORD HEADER
+        ==================================================== -->
+
+        <div class="password-heading">
+
+          <span
+            class="password-heading-icon"
+            aria-hidden="true"
+          >
+
+            <i
+              class="fa-solid fa-lock"
+              aria-hidden="true"
+            ></i>
+
+          </span>
+
+
+          <div>
+
+            <strong>
+              Masukkan kata sandi
+            </strong>
+
+            <span>
+              Gunakan kata sandi akun kamu untuk masuk.
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===================================================
+             PASSWORD
+        ==================================================== -->
+
+        <div class="field">
+
+          <label for="password">
+            Kata sandi
+          </label>
+
+
+          <div class="password-wrap">
+
+            <input
+              id="password"
+              name="password"
+              class="input"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Masukkan kata sandi"
+              required
+            >
+
+
+            <button
+              type="button"
+              class="password-toggle"
+              id="toggle"
+              aria-label="Tampilkan kata sandi"
+              title="Tampilkan kata sandi"
+            >
+
+              <i
+                class="fa-solid fa-eye"
+                aria-hidden="true"
+              ></i>
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===================================================
+             CLOUDFLARE TURNSTILE
+             
+             IMPORTANT:
+             Container HARUS kosong.
+
+             login.js akan melakukan:
+             
+             turnstile.render(
+               container,
+               {
+                 sitekey: ...
+               }
+             );
+
+             Jangan menambahkan .cf-turnstile di sini.
+        ==================================================== -->
+
+        <div
+          class="turnstile-wrap"
+          id="loginTurnstile"
+          data-sitekey="0x4AAAAAAErjLed781i5lbu8"
+          data-theme="auto"
+          data-language="id"
+          data-action="login"
+          aria-label="Verifikasi keamanan"
+        ></div>
+
+
+        <!-- ===================================================
+             SECURITY STATUS
+        ==================================================== -->
+
+        <div
+          class="login-security-status"
+          id="loginSecurityStatus"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+
+          <i
+            class="fa-solid fa-shield-halved"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Selesaikan verifikasi keamanan sebelum masuk.
+          </span>
+
+        </div>
+
+
+        <!-- ===================================================
+             LOGIN
+             
+             Disabled sampai Turnstile berhasil.
+        ==================================================== -->
+
+        <button
+          type="submit"
+          class="btn primary"
+          id="loginSubmit"
+          disabled
+          aria-disabled="true"
+        >
+
+          <i
+            class="fa-solid fa-right-to-bracket"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Masuk
+          </span>
+
+        </button>
+
+
+        <!-- ===================================================
+             FORGOT PASSWORD
+        ==================================================== -->
+
+        <a
+          class="forgot-link"
+          href="#"
+          id="forgot"
+        >
+
+          <i
+            class="fa-solid fa-key"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Lupa kata sandi?
+          </span>
+
+        </a>
+
+
+        <!-- ===================================================
+             CHANGE ACCOUNT
+        ==================================================== -->
+
+        <button
+          type="button"
+          class="account-change-login"
+          id="changeAccount"
+        >
+
+          <i
+            class="fa-solid fa-arrow-left"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Ganti akun
+          </span>
+
+        </button>
+
+      </form>
+
+
+      <!-- =====================================================
+           DIVIDER
+      ====================================================== -->
+
+      <div
+        class="auth-divider auth-or"
+        aria-hidden="true"
+      >
+
+        <span>
+          atau
+        </span>
+
+      </div>
+
+
+      <!-- =====================================================
+           GOOGLE LOGIN
+      ====================================================== -->
+
+      <button
+        type="button"
+        class="btn google-login-btn"
+        id="google"
+      >
+
+        <span
+          class="google-icon"
+          aria-hidden="true"
+        >
+
+          <i
+            class="fa-brands fa-google"
+            aria-hidden="true"
+          ></i>
+
+        </span>
+
+        <span>
+          Login dengan Gmail
+        </span>
+
+      </button>
+
+
+      <!-- =====================================================
+           FOOTER
+      ====================================================== -->
+
+      <div class="auth-footer">
+
+
+        <!-- REGISTER -->
+
+        <div class="register-prompt">
+
+          <span>
+            Belum punya akun?
+          </span>
+
+
+          <a
+            class="register-link"
+            href="register.html"
+          >
+
+            <span>
+              Register
+            </span>
+
+            <i
+              class="fa-solid fa-arrow-right"
+              aria-hidden="true"
+            ></i>
+
+          </a>
+
+        </div>
+
+
+        <!-- BACK -->
+
+        <a
+          class="back-link"
+          href="index.html"
+        >
+
+          <i
+            class="fa-solid fa-arrow-left"
+            aria-hidden="true"
+          ></i>
+
+          <span>
+            Kembali
+          </span>
+
+        </a>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================================================
+       GLOBAL TOAST
+  ========================================================== -->
+
+  <div
+    id="toast"
+    role="alert"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =========================================================
+       LOGIN SCRIPT
+  ========================================================== -->
+
+  <script src="js/login.js?v=20260907"></script>
+
+
+  <!-- =========================================================
+       SITE SHELL
+  ========================================================== -->
+
+  <script src="js/footer.js?v=20260907"></script>
+  <script src="js/navbar.js?v=20260907"></script>
+
 
 </body>
 </html>
