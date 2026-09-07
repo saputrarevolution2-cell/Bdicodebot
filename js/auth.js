@@ -1,10 +1,11 @@
 /* =========================================================
    PasTele Authentication
-   PRODUCTION + CLOUDFLARE TURNSTILE
+   PRODUCTION + SUPABASE + CLOUDFLARE TURNSTILE
    ========================================================= */
 
 (() => {
   "use strict";
+
 
   /* =======================================================
      SUPABASE CLIENT
@@ -42,7 +43,7 @@
 
 
   /* =======================================================
-     TURNSTILE TOKEN
+     GET CAPTCHA TOKEN
      ======================================================= */
 
   const getCaptchaToken = (
@@ -50,20 +51,20 @@
   ) => {
 
     /*
-     * Prioritas:
+     * Priority:
      *
-     * 1. Token yang diberikan Auth.login()
-     * 2. Token global dari login.js
-     * 3. Token textarea Turnstile
+     * 1. Token dari Auth.login()
+     * 2. Token global login.js
+     * 3. Token dari textarea Turnstile
      */
 
-    const direct =
+    const directToken =
       String(
         explicitToken ?? ""
       ).trim();
 
-    if (direct) {
-      return direct;
+    if (directToken) {
+      return directToken;
     }
 
 
@@ -86,7 +87,6 @@
       textarea &&
       textarea.value
     ) {
-
       return String(
         textarea.value
       ).trim();
@@ -98,15 +98,15 @@
 
 
   /* =======================================================
-     CLEAR TURNSTILE TOKEN
+     CLEAR CAPTCHA TOKEN
      ======================================================= */
 
   const clearCaptchaToken = () => {
-
     try {
       window.__pasTeleTurnstileToken = "";
-    } catch (_) {}
-
+    } catch (_) {
+      /* ignore */
+    }
   };
 
 
@@ -127,24 +127,23 @@
       msg.toLowerCase();
 
 
-    /*
-     * CAPTCHA / TURNSTILE
-     */
+    /* =====================================================
+       CAPTCHA / TURNSTILE
+       ===================================================== */
 
     if (
       low.includes("captcha") ||
       low.includes("turnstile")
     ) {
-
       return new Error(
         "Verifikasi keamanan gagal atau sudah kedaluwarsa. Silakan verifikasi kembali."
       );
     }
 
 
-    /*
-     * INVALID LOGIN
-     */
+    /* =====================================================
+       INVALID LOGIN
+       ===================================================== */
 
     if (
       low.includes(
@@ -157,32 +156,30 @@
         "invalid login"
       )
     ) {
-
       return new Error(
         "Username/Gmail atau kata sandi salah."
       );
     }
 
 
-    /*
-     * EMAIL NOT CONFIRMED
-     */
+    /* =====================================================
+       EMAIL NOT CONFIRMED
+       ===================================================== */
 
     if (
       low.includes(
         "email not confirmed"
       )
     ) {
-
       return new Error(
         "Email belum dikonfirmasi. Cek inbox Gmail kamu terlebih dahulu."
       );
     }
 
 
-    /*
-     * ALREADY REGISTERED
-     */
+    /* =====================================================
+       ALREADY REGISTERED
+       ===================================================== */
 
     if (
       low.includes(
@@ -195,32 +192,30 @@
         "already been registered"
       )
     ) {
-
       return new Error(
         "Email sudah terdaftar."
       );
     }
 
 
-    /*
-     * PASSWORD
-     */
+    /* =====================================================
+       PASSWORD
+       ===================================================== */
 
     if (
       low.includes(
         "password should be at least"
       )
     ) {
-
       return new Error(
         "Kata sandi terlalu pendek."
       );
     }
 
 
-    /*
-     * RATE LIMIT
-     */
+    /* =====================================================
+       RATE LIMIT
+       ===================================================== */
 
     if (
       low.includes(
@@ -230,30 +225,32 @@
         "too many requests"
       )
     ) {
-
       return new Error(
         "Terlalu banyak percobaan. Silakan tunggu beberapa saat lalu coba lagi."
       );
     }
 
 
-    /*
-     * DEFAULT
-     */
+    /* =====================================================
+       DEFAULT
+       ===================================================== */
 
-    return (
+    if (
       error instanceof Error
-        ? error
-        : new Error(
-            msg ||
-            "Autentikasi gagal."
-          )
+    ) {
+      return error;
+    }
+
+
+    return new Error(
+      msg ||
+      "Autentikasi gagal."
     );
   };
 
 
   /* =======================================================
-     CHECK PROFILE BAN
+     PROFILE BAN CHECK
      ======================================================= */
 
   const checkProfileBan = async (
@@ -277,17 +274,17 @@
         .maybeSingle();
 
 
+    /*
+     * Jangan menggagalkan login hanya karena
+     * query profile gagal.
+     */
+
     if (profileError) {
 
       console.error(
-        "PROFILE CHECK ERROR:",
+        "[PasTele] PROFILE CHECK ERROR:",
         profileError
       );
-
-      /*
-       * Jangan menggagalkan login hanya karena
-       * query profile mengalami masalah jaringan.
-       */
 
       return;
     }
@@ -299,7 +296,9 @@
 
       try {
         await sb.auth.signOut();
-      } catch (_) {}
+      } catch (_) {
+        /* ignore */
+      }
 
       throw new Error(
         "Akun ini sedang diblokir."
@@ -321,12 +320,9 @@
       let geo = {};
 
 
-      /*
-       * Public IP geolocation.
-       *
-       * Tidak memblokir login jika service
-       * geolocation sedang gagal.
-       */
+      /* ===================================================
+         GEOLOCATION
+      =================================================== */
 
       try {
 
@@ -339,7 +335,9 @@
           );
 
 
-        if (response.ok) {
+        if (
+          response.ok
+        ) {
           geo =
             await response.json();
         }
@@ -349,45 +347,60 @@
       }
 
 
-      await sb.rpc(
-        "record_login",
-        {
-          p_city:
-            geo.city ||
-            null,
+      /* ===================================================
+         RECORD LOGIN
+      =================================================== */
 
-          p_region:
-            geo.region ||
-            null,
+      const {
+        error
+      } =
+        await sb.rpc(
+          "record_login",
+          {
+            p_city:
+              geo.city ||
+              null,
 
-          p_country:
-            geo.country_name ||
-            null,
+            p_region:
+              geo.region ||
+              null,
 
-          p_latitude:
-            geo.latitude != null
-              ? Number(
-                  geo.latitude
-                )
-              : null,
+            p_country:
+              geo.country_name ||
+              null,
 
-          p_longitude:
-            geo.longitude != null
-              ? Number(
-                  geo.longitude
-                )
-              : null,
+            p_latitude:
+              geo.latitude != null
+                ? Number(
+                    geo.latitude
+                  )
+                : null,
 
-          p_user_agent:
-            navigator.userAgent
-        }
-      );
+            p_longitude:
+              geo.longitude != null
+                ? Number(
+                    geo.longitude
+                  )
+                : null,
+
+            p_user_agent:
+              navigator.userAgent
+          }
+        );
+
+
+      if (error) {
+        console.warn(
+          "[PasTele] record_login RPC error:",
+          error
+        );
+      }
 
     } catch (error) {
 
       /*
-       * Login tetap dianggap berhasil.
-       * History hanya fitur tambahan.
+       * Login tetap berhasil jika
+       * history gagal.
        */
 
       console.warn(
@@ -416,8 +429,11 @@
       const sb =
         requireClient();
 
+
       const value =
-        normalize(identifier);
+        normalize(
+          identifier
+        );
 
 
       if (!value) {
@@ -441,7 +457,7 @@
       if (error) {
 
         console.error(
-          "ACCOUNT LOOKUP ERROR:",
+          "[PasTele] ACCOUNT LOOKUP ERROR:",
           error
         );
 
@@ -511,6 +527,10 @@
         requireClient();
 
 
+      /* ===================================================
+         RAW VALUES
+      =================================================== */
+
       const raw =
         String(
           identifier ?? ""
@@ -523,21 +543,20 @@
         );
 
 
-      /*
-       * PASSWORD REQUIRED
-       */
+      /* ===================================================
+         PASSWORD REQUIRED
+      =================================================== */
 
       if (!pass) {
-
         throw new Error(
           "Kata sandi wajib diisi."
         );
       }
 
 
-      /*
-       * TURNSTILE REQUIRED
-       */
+      /* ===================================================
+         CAPTCHA TOKEN
+      =================================================== */
 
       const token =
         getCaptchaToken(
@@ -546,7 +565,6 @@
 
 
       if (!token) {
-
         throw new Error(
           "Selesaikan verifikasi keamanan terlebih dahulu."
         );
@@ -565,7 +583,9 @@
       ) {
 
         email =
-          normalize(raw);
+          normalize(
+            raw
+          );
 
       }
 
@@ -585,7 +605,6 @@
         if (
           !found?.auth_email
         ) {
-
           throw new Error(
             "Akun tidak ditemukan."
           );
@@ -599,7 +618,6 @@
           ).toLowerCase() ===
             "banned"
         ) {
-
           throw new Error(
             "Akun ini sedang diblokir."
           );
@@ -607,18 +625,19 @@
 
 
         email =
-          found.auth_email;
+          normalize(
+            found.auth_email
+          );
       }
 
 
-      /*
-       * EMAIL FINAL VALIDATION
-       */
+      /* ===================================================
+         FINAL EMAIL VALIDATION
+      =================================================== */
 
       if (
         !isEmail(email)
       ) {
-
         throw new Error(
           "Email akun tidak valid."
         );
@@ -630,35 +649,54 @@
          + CLOUDFLARE TURNSTILE
       =================================================== */
 
-      let data;
-      let error;
+      let data = null;
+      let error = null;
 
 
       try {
 
-        ({
-          data,
-          error
-        } =
-          await sb.auth
-            .signInWithPassword({
+        const result =
+          await sb.auth.signInWithPassword({
 
+            email:
               email,
 
-              password: pass,
+            password:
+              pass,
 
-              options: {
-                captchaToken:
-                  token
-              }
+            options: {
+              captchaToken:
+                token
+            }
 
-            }));
+          });
+
+
+        data =
+          result?.data ||
+          null;
+
+        error =
+          result?.error ||
+          null;
+
+      } catch (requestError) {
+
+        /*
+         * Network / client exception.
+         */
+
+        clearCaptchaToken();
+
+        throw authError(
+          requestError
+        );
 
       } finally {
 
         /*
-         * Token jangan disimpan setelah
-         * request login selesai.
+         * Token hanya digunakan untuk
+         * request login ini.
          */
 
         clearCaptchaToken();
@@ -666,13 +704,13 @@
 
 
       /* ===================================================
-         AUTH ERROR
+         SUPABASE ERROR
       =================================================== */
 
       if (error) {
 
         console.error(
-          "SUPABASE LOGIN ERROR:",
+          "[PasTele] SUPABASE LOGIN ERROR:",
           error
         );
 
@@ -683,7 +721,7 @@
 
 
       /* ===================================================
-         SESSION VALIDATION
+         SESSION + USER VALIDATION
       =================================================== */
 
       if (
@@ -765,10 +803,14 @@
 
 
       const cleanUsername =
-        normalize(username);
+        normalize(
+          username
+        );
 
       const cleanEmail =
-        normalize(email);
+        normalize(
+          email
+        );
 
       const cleanPassword =
         String(
@@ -776,55 +818,52 @@
         );
 
 
-      /*
-       * USERNAME
-       */
+      /* ===================================================
+         USERNAME VALIDATION
+      =================================================== */
 
       if (
         !/^[a-z0-9_]{3,32}$/.test(
           cleanUsername
         )
       ) {
-
         throw new Error(
           "Username hanya boleh berisi huruf, angka, dan underscore (3–32 karakter)."
         );
       }
 
 
-      /*
-       * EMAIL
-       */
+      /* ===================================================
+         EMAIL VALIDATION
+      =================================================== */
 
       if (
         !isEmail(
           cleanEmail
         )
       ) {
-
         throw new Error(
           "Email tidak valid."
         );
       }
 
 
-      /*
-       * PASSWORD
-       */
+      /* ===================================================
+         PASSWORD VALIDATION
+      =================================================== */
 
       if (
         cleanPassword.length < 6
       ) {
-
         throw new Error(
           "Kata sandi minimal 6 karakter."
         );
       }
 
 
-      /*
-       * USERNAME AVAILABILITY
-       */
+      /* ===================================================
+         USERNAME AVAILABILITY
+      =================================================== */
 
       const {
         data: available,
@@ -842,7 +881,7 @@
       if (availableError) {
 
         console.error(
-          "USERNAME CHECK ERROR:",
+          "[PasTele] USERNAME CHECK ERROR:",
           availableError
         );
 
@@ -855,16 +894,15 @@
       if (
         available !== true
       ) {
-
         throw new Error(
           "Username sudah digunakan."
         );
       }
 
 
-      /*
-       * REGISTER
-       */
+      /* ===================================================
+         SUPABASE REGISTER
+      =================================================== */
 
       const {
         data,
@@ -893,7 +931,7 @@
       if (error) {
 
         console.error(
-          "SUPABASE REGISTER ERROR:",
+          "[PasTele] SUPABASE REGISTER ERROR:",
           error
         );
 
@@ -920,26 +958,25 @@
       const {
         error
       } =
-        await sb.auth
-          .signInWithOAuth({
+        await sb.auth.signInWithOAuth({
 
-            provider:
-              "google",
+          provider:
+            "google",
 
-            options: {
+          options: {
 
-              redirectTo:
-                `${location.origin}/auth-callback.html`
+            redirectTo:
+              `${location.origin}/auth-callback.html`
 
-            }
+          }
 
-          });
+        });
 
 
       if (error) {
 
         console.error(
-          "GOOGLE LOGIN ERROR:",
+          "[PasTele] GOOGLE LOGIN ERROR:",
           error
         );
 
@@ -967,7 +1004,6 @@
 
 
       if (error) {
-
         throw authError(
           error
         );
@@ -984,7 +1020,7 @@
 
 
     /* =====================================================
-       SESSION
+       GET SESSION
        ===================================================== */
 
     session: async () => {
@@ -998,14 +1034,13 @@
         data,
         error
       } =
-        await window.sb.auth
-          .getSession();
+        await window.sb.auth.getSession();
 
 
       if (error) {
 
         console.error(
-          "GET SESSION ERROR:",
+          "[PasTele] GET SESSION ERROR:",
           error
         );
 
@@ -1021,7 +1056,7 @@
 
 
     /* =====================================================
-       USER
+       GET USER
        ===================================================== */
 
     user: async () => {
@@ -1035,8 +1070,7 @@
         data,
         error
       } =
-        await window.sb.auth
-          .getUser();
+        await window.sb.auth.getUser();
 
 
       if (error) {
@@ -1051,5 +1085,33 @@
     }
 
   };
+
+
+  /* =======================================================
+     DEBUG
+     ======================================================= */
+
+  console.log(
+    "[PasTele] Auth initialized.",
+    {
+      supabase:
+        Boolean(window.sb),
+
+      authLogin:
+        typeof window.Auth.login ===
+        "function",
+
+      authLookup:
+        typeof window.Auth.lookup ===
+        "function",
+
+      authGoogle:
+        typeof window.Auth.google ===
+        "function",
+
+      captchaLoginSupported:
+        true
+    }
+  );
 
 })();
