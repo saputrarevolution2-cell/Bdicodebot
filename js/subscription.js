@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async()=>{const status=document.getElementById('planStatus');let profile=await TC.profile().catch(()=>null);if(!profile){location.href='login.html';return}
+const escPlan=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));document.addEventListener('DOMContentLoaded', async()=>{const status=document.getElementById('planStatus');let profile=await TC.profile().catch(()=>null);if(!profile){location.href='login.html';return}const n=profile.display_name||profile.username||profile.email?.split('@')[0]||'User';document.getElementById('planName')&&(document.getElementById('planName').innerHTML=escPlan(n)+' <span class="verify-badge green"><i class="fa-solid fa-check"></i></span>');document.getElementById('planUsername')&&(document.getElementById('planUsername').textContent='@'+(profile.username||'user'));document.getElementById('planAvatar')&&(document.getElementById('planAvatar').textContent=n.trim().slice(0,1).toUpperCase());
 const statusBox=document.getElementById('planStatus');
 if(profile.subscription_until){
   const d=new Date(profile.subscription_until);

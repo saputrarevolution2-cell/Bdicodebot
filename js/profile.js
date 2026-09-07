@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     profile=await TC.profile(); isOwn=true;
     if(!profile){location.replace("login.html");return}
   }
-  const name=profile.display_name||profile.username||"User";
+  const name=profile.display_name||profile.username||"User";const verify=$("profileVerify");if(verify){const premium=profile.is_premium===true;const subscribed=!premium&&profile.subscription_until&&new Date(profile.subscription_until)>new Date();if(premium){verify.hidden=false;verify.className="profile-verify blue";verify.innerHTML='<i class="fa-solid fa-check"></i>';verify.title="Premium";}else if(subscribed){verify.hidden=false;verify.className="profile-verify green";verify.innerHTML='<i class="fa-solid fa-check"></i>';verify.title="Langganan aktif";}}
   $("name").textContent=name;$("avatar").textContent=name.trim().slice(0,1).toUpperCase()||"U";$("bio").textContent=profile.bio||"Creator PasTele";$("handle").textContent=`@${profile.username||"user"}`;document.title=`${name} — PasTele`;
   if(!isOwn){$("settingsBtn")?.setAttribute("hidden","");$("adminBtn")?.setAttribute("hidden","");$("followBtn")?.removeAttribute("hidden")}else{$("followBtn")?.setAttribute("hidden","");if(profile.is_admin||profile.role==="admin")$("adminBtn")?.removeAttribute("hidden")}
   async function counts(){
