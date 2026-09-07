@@ -3,101 +3,150 @@
 
 <head>
 
+    <!-- =====================================================
+         THEME PRELOAD
+         ===================================================== -->
     <script src="js/theme-preload.js"></script>
 
+
+    <!-- =====================================================
+         META
+         ===================================================== -->
     <meta charset="utf-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
     >
 
-    <!-- =========================================================
+    <meta
+        name="description"
+        content="Kelola saldo dan lakukan penarikan dana PasTele dengan aman."
+    >
+
+    <meta
+        name="theme-color"
+        content="#ffffff"
+    >
+
+    <meta
+        name="color-scheme"
+        content="light dark"
+    >
+
+
+    <!-- =====================================================
          SUPABASE
-    ========================================================== -->
+         ===================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
-    <!-- =========================================================
+    <!-- =====================================================
          APP CORE
-    ========================================================== -->
-    <script src="/js/config.js?v=20260831"></script>
-    <script src="/js/supabase.js?v=20260831"></script>
-    <script src="/js/debug-panel.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/navbar.js?v=20260906-final"></script>
+         ===================================================== -->
+    <script src="/js/config.js?v=20260908"></script>
+    <script src="/js/supabase.js?v=20260908"></script>
+    <script src="/js/debug-panel.js?v=20260908"></script>
+    <script src="/js/auth.js?v=20260908"></script>
+    <script src="/js/navbar.js?v=20260908"></script>
 
 
-    <!-- =========================================================
+    <!-- =====================================================
          PAGE TITLE
-    ========================================================== -->
+         ===================================================== -->
     <title>Withdraw — PasTele</title>
 
 
-    <!-- =========================================================
+    <!-- =====================================================
          FONT AWESOME
-    ========================================================== -->
+         ===================================================== -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
 
 
-    <!-- =========================================================
-         STYLES
-    ========================================================== -->
+    <!-- =====================================================
+         GLOBAL CSS
+         ===================================================== -->
     <link
         rel="stylesheet"
-        href="css/app.css?v=20260904"
+        href="css/app.css?v=20260908"
     >
 
     <link
         rel="stylesheet"
-        href="css/navbar.css?v=20260906-final"
+        href="css/navbar.css?v=20260908"
     >
 
     <link
         rel="stylesheet"
-        href="css/footer.css?v=20260905"
+        href="css/footer.css?v=20260908"
+    >
+
+
+    <!-- =====================================================
+         PAGE CSS
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="css/withdrawals.css?v=20260908"
     >
 
     <link
         rel="stylesheet"
-        href="css/withdrawals.css?v=20260905"
+        href="css/final-polish.css?v=20260908"
     >
 
-<link rel="stylesheet" href="css/final-polish.css?v=20260906-final">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
+    <link
+        rel="stylesheet"
+        href="css/saas-final.css?v=20260908"
+    >
+
 </head>
 
 
 <body class="app-page withdrawals-page">
 
-    <!-- =========================================================
+
+    <!-- =====================================================
          NAVBAR
-    ========================================================== -->
+         ===================================================== -->
     <div id="navbar"></div>
 
 
-    <!-- =========================================================
+    <!-- =====================================================
          MAIN CONTENT
-    ========================================================== -->
-    <main>
+         ===================================================== -->
+    <main
+        id="main-content"
+        class="withdrawals-main"
+    >
 
-        <section class="section withdrawals-section">
+        <section
+            class="section withdrawals-section"
+            aria-labelledby="withdrawTitle"
+        >
 
             <div class="container withdrawals-container">
 
 
                 <!-- =================================================
                      HEADER
-                ================================================== -->
+                     ================================================= -->
                 <header class="withdraw-header">
 
                     <div class="withdraw-heading">
 
-                        <div class="withdraw-heading-icon">
+                        <div
+                            class="withdraw-heading-icon"
+                            aria-hidden="true"
+                        >
+
                             <i class="fa-solid fa-money-bill-transfer"></i>
+
                         </div>
+
 
                         <div>
 
@@ -105,11 +154,15 @@
                                 KEUANGAN
                             </span>
 
-                            <h1>Tarik saldo</h1>
+
+                            <h1 id="withdrawTitle">
+                                Tarik saldo
+                            </h1>
+
 
                             <p>
                                 Tarik penghasilanmu ke rekening
-                                atau e-wallet.
+                                atau e-wallet dengan aman.
                             </p>
 
                         </div>
@@ -117,32 +170,66 @@
                     </div>
 
 
-                    <a
-                        href="settings.html"
-                        class="withdraw-settings"
-                    >
+                    <!-- Header actions -->
+                    <div class="withdraw-header-actions">
 
-                        <i class="fa-solid fa-gear"></i>
+                        <button
+                            type="button"
+                            class="withdraw-refresh"
+                            id="refreshWithdraw"
+                            title="Refresh data withdraw"
+                            aria-label="Refresh data withdraw"
+                        >
 
-                        <span>
-                            Pengaturan pembayaran
-                        </span>
+                            <i
+                                class="fa-solid fa-rotate"
+                                aria-hidden="true"
+                            ></i>
 
-                    </a>
+                            <span>
+                                Refresh
+                            </span>
+
+                        </button>
+
+
+                        <a
+                            href="settings.html"
+                            class="withdraw-settings"
+                        >
+
+                            <i
+                                class="fa-solid fa-gear"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span>
+                                Pengaturan pembayaran
+                            </span>
+
+                        </a>
+
+                    </div>
 
                 </header>
 
 
                 <!-- =================================================
                      BALANCE
-                ================================================== -->
-                <section class="balance-panel">
+                     ================================================= -->
+                <section
+                    class="balance-panel"
+                    aria-label="Saldo tersedia"
+                >
 
                     <div class="balance-main">
 
                         <span class="balance-label">
 
-                            <i class="fa-solid fa-wallet"></i>
+                            <i
+                                class="fa-solid fa-wallet"
+                                aria-hidden="true"
+                            ></i>
 
                             Saldo tersedia
 
@@ -165,7 +252,10 @@
 
                         <a href="wallet.html">
 
-                            <i class="fa-solid fa-arrow-left"></i>
+                            <i
+                                class="fa-solid fa-arrow-left"
+                                aria-hidden="true"
+                            ></i>
 
                             Wallet
 
@@ -178,15 +268,25 @@
 
                 <!-- =================================================
                      STATISTICS
-                ================================================== -->
-                <div class="withdraw-stats">
+                     ================================================= -->
+                <div
+                    class="withdraw-stats"
+                    aria-label="Ringkasan penarikan"
+                >
+
 
                     <!-- Pending -->
-                    <div class="withdraw-stat">
+                    <article class="withdraw-stat">
 
-                        <span class="stat-icon pending">
+                        <span
+                            class="stat-icon pending"
+                            aria-hidden="true"
+                        >
+
                             <i class="fa-solid fa-clock"></i>
+
                         </span>
+
 
                         <div>
 
@@ -194,21 +294,28 @@
                                 Saldo pengajuan
                             </small>
 
+
                             <strong id="req">
                                 Rp0
                             </strong>
 
                         </div>
 
-                    </div>
+                    </article>
 
 
                     <!-- Completed -->
-                    <div class="withdraw-stat">
+                    <article class="withdraw-stat">
 
-                        <span class="stat-icon success">
+                        <span
+                            class="stat-icon success"
+                            aria-hidden="true"
+                        >
+
                             <i class="fa-solid fa-circle-check"></i>
+
                         </span>
+
 
                         <div>
 
@@ -216,21 +323,28 @@
                                 Total sudah ditarik
                             </small>
 
+
                             <strong id="done">
                                 Rp0
                             </strong>
 
                         </div>
 
-                    </div>
+                    </article>
 
 
                     <!-- Daily limit -->
-                    <div class="withdraw-stat">
+                    <article class="withdraw-stat">
 
-                        <span class="stat-icon limit">
+                        <span
+                            class="stat-icon limit"
+                            aria-hidden="true"
+                        >
+
                             <i class="fa-solid fa-gauge-high"></i>
+
                         </span>
+
 
                         <div>
 
@@ -238,21 +352,25 @@
                                 Limit instant hari ini
                             </small>
 
-                            <strong>
+
+                            <strong id="dailyLimitValue">
                                 Rp500.000
                             </strong>
 
                         </div>
 
-                    </div>
+                    </article>
 
                 </div>
 
 
                 <!-- =================================================
                      DAILY INSTANT LIMIT
-                ================================================== -->
-                <section class="daily-limit">
+                     ================================================= -->
+                <section
+                    class="daily-limit"
+                    aria-label="Limit WD Instant hari ini"
+                >
 
                     <div class="daily-top">
 
@@ -260,7 +378,10 @@
 
                             <span>
 
-                                <i class="fa-solid fa-chart-simple"></i>
+                                <i
+                                    class="fa-solid fa-chart-simple"
+                                    aria-hidden="true"
+                                ></i>
 
                                 WD Instant hari ini
 
@@ -281,7 +402,14 @@
                     </div>
 
 
-                    <div class="progress">
+                    <div
+                        class="progress"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="500000"
+                        aria-valuenow="0"
+                        aria-label="Penggunaan limit WD Instant"
+                    >
 
                         <i id="dailyBar"></i>
 
@@ -292,22 +420,26 @@
 
                 <!-- =================================================
                      WITHDRAW METHODS
-                ================================================== -->
+                     ================================================= -->
                 <div class="withdraw-layout">
 
 
                     <!-- =================================================
                          WD INSTANT
-                    ================================================== -->
+                         ================================================= -->
                     <section
                         class="withdraw-box instant-box"
                         id="instantBox"
+                        aria-labelledby="instantTitle"
                     >
 
                         <!-- Heading -->
                         <div class="box-heading">
 
-                            <div class="box-heading-icon instant">
+                            <div
+                                class="box-heading-icon instant"
+                                aria-hidden="true"
+                            >
 
                                 <i class="fa-solid fa-bolt"></i>
 
@@ -316,9 +448,10 @@
 
                             <div>
 
-                                <h2>
+                                <h2 id="instantTitle">
                                     WD Instant
                                 </h2>
+
 
                                 <p>
                                     Tarik cepat kapan saja,
@@ -332,16 +465,19 @@
 
                         <!-- =================================================
                              INSTANT STATUS
-                        ================================================== -->
+                             ================================================= -->
                         <div
                             class="withdraw-status instant-status"
                             id="instantStatus"
                             data-state="open"
+                            role="status"
+                            aria-live="polite"
                         >
 
                             <i
                                 class="fa-solid fa-circle-check"
                                 id="instantStatusIcon"
+                                aria-hidden="true"
                             ></i>
 
 
@@ -364,13 +500,15 @@
 
                         <!-- =================================================
                              INSTANT RULES
-                             Tidak menampilkan fee
-                        ================================================== -->
+                             ================================================= -->
                         <div class="rule-info">
 
                             <div>
 
-                                <i class="fa-solid fa-circle-info"></i>
+                                <i
+                                    class="fa-solid fa-circle-info"
+                                    aria-hidden="true"
+                                ></i>
 
                                 <span>
                                     Maks. Rp250.000 sekali transaksi
@@ -381,7 +519,10 @@
 
                             <div>
 
-                                <i class="fa-solid fa-calendar-day"></i>
+                                <i
+                                    class="fa-solid fa-calendar-day"
+                                    aria-hidden="true"
+                                ></i>
 
                                 <span>
                                     Maks. Rp500.000 per hari
@@ -394,7 +535,7 @@
 
                         <!-- =================================================
                              AMOUNT
-                        ================================================== -->
+                             ================================================= -->
                         <div class="field-label">
                             Pilih nominal
                         </div>
@@ -403,11 +544,15 @@
                         <div
                             class="instant-actions"
                             id="instantBtns"
+                            aria-label="Pilihan nominal WD Instant"
                         >
 
                             <div class="inline-loading">
 
-                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <i
+                                    class="fa-solid fa-spinner fa-spin"
+                                    aria-hidden="true"
+                                ></i>
 
                                 Memuat...
 
@@ -431,6 +576,16 @@
                         </div>
 
 
+                        <!-- Instant validation -->
+                        <div
+                            class="withdraw-validation"
+                            id="instantValidation"
+                            role="status"
+                            aria-live="polite"
+                            hidden
+                        ></div>
+
+
                         <!-- Submit -->
                         <button
                             class="withdraw-submit primary"
@@ -438,7 +593,11 @@
                             type="button"
                         >
 
-                            <i class="fa-solid fa-bolt"></i>
+                            <i
+                                class="fa-solid fa-bolt"
+                                aria-hidden="true"
+                            ></i>
+
 
                             <span>
                                 Ajukan WD Instant
@@ -451,16 +610,20 @@
 
                     <!-- =================================================
                          WD MANUAL
-                    ================================================== -->
+                         ================================================= -->
                     <section
                         class="withdraw-box manual-box"
                         id="manualBox"
+                        aria-labelledby="manualTitle"
                     >
 
                         <!-- Heading -->
                         <div class="box-heading">
 
-                            <div class="box-heading-icon manual">
+                            <div
+                                class="box-heading-icon manual"
+                                aria-hidden="true"
+                            >
 
                                 <i class="fa-solid fa-building-columns"></i>
 
@@ -469,9 +632,10 @@
 
                             <div>
 
-                                <h2>
+                                <h2 id="manualTitle">
                                     WD Manual
                                 </h2>
+
 
                                 <p>
                                     Penarikan manual ke rekening
@@ -485,16 +649,19 @@
 
                         <!-- =================================================
                              MANUAL STATUS
-                        ================================================== -->
+                             ================================================= -->
                         <div
                             class="withdraw-status manual-status"
                             id="manualStatus"
                             data-state="checking"
+                            role="status"
+                            aria-live="polite"
                         >
 
                             <i
                                 class="fa-solid fa-clock"
                                 id="manualStatusIcon"
+                                aria-hidden="true"
                             ></i>
 
 
@@ -516,14 +683,17 @@
 
                         <!-- =================================================
                              MANUAL CLOSED NOTICE
-                        ================================================== -->
+                             ================================================= -->
                         <div
                             class="manual-closed-notice"
                             id="manualClosedNotice"
-                            style="display:none;"
+                            hidden
                         >
 
-                            <div class="manual-closed-icon">
+                            <div
+                                class="manual-closed-icon"
+                                aria-hidden="true"
+                            >
 
                                 <i class="fa-solid fa-lock"></i>
 
@@ -549,13 +719,15 @@
 
                         <!-- =================================================
                              MANUAL RULES
-                             Tidak menampilkan fee
-                        ================================================== -->
+                             ================================================= -->
                         <div class="rule-info">
 
                             <div>
 
-                                <i class="fa-solid fa-arrow-down-1-9"></i>
+                                <i
+                                    class="fa-solid fa-arrow-down-1-9"
+                                    aria-hidden="true"
+                                ></i>
 
                                 <span>
                                     Minimum Rp100.000
@@ -566,7 +738,10 @@
 
                             <div>
 
-                                <i class="fa-solid fa-list-check"></i>
+                                <i
+                                    class="fa-solid fa-list-check"
+                                    aria-hidden="true"
+                                ></i>
 
                                 <span>
                                     Maks. 5 pengajuan
@@ -579,20 +754,23 @@
 
                         <!-- =================================================
                              SAVED PAYMENT METHODS
-                        ================================================== -->
+                             ================================================= -->
                         <div
                             id="savedMethods"
                             class="saved-methods hidden"
+                            aria-live="polite"
                         ></div>
 
 
                         <!-- =================================================
                              MANUAL FORM
-                        ================================================== -->
+                             ================================================= -->
                         <form
                             id="wd"
                             class="withdraw-form"
+                            novalidate
                         >
+
 
                             <!-- Amount -->
                             <div class="field">
@@ -612,19 +790,22 @@
                                     <input
                                         class="input"
                                         id="amount"
+                                        name="amount"
                                         type="number"
                                         min="100000"
+                                        max="500000"
                                         step="50000"
                                         inputmode="numeric"
                                         required
                                         placeholder="100000"
                                         autocomplete="off"
+                                        aria-describedby="amountHint"
                                     >
 
                                 </div>
 
 
-                                <small>
+                                <small id="amountHint">
                                     Minimum penarikan Rp100.000
                                 </small>
 
@@ -644,6 +825,7 @@
                                     <select
                                         class="select"
                                         id="method"
+                                        name="method"
                                         required
                                     >
 
@@ -658,7 +840,10 @@
                                     </select>
 
 
-                                    <i class="fa-solid fa-chevron-down"></i>
+                                    <i
+                                        class="fa-solid fa-chevron-down"
+                                        aria-hidden="true"
+                                    ></i>
 
                                 </div>
 
@@ -667,6 +852,7 @@
 
                             <!-- Account information -->
                             <div class="form-grid">
+
 
                                 <!-- Account name -->
                                 <div class="field">
@@ -679,7 +865,10 @@
                                     <input
                                         class="input"
                                         id="aname"
+                                        name="account_name"
                                         type="text"
+                                        minlength="2"
+                                        maxlength="100"
                                         required
                                         autocomplete="name"
                                         placeholder="Nama sesuai rekening"
@@ -699,7 +888,10 @@
                                     <input
                                         class="input"
                                         id="anum"
+                                        name="account_number"
                                         type="text"
+                                        minlength="5"
+                                        maxlength="40"
                                         required
                                         inputmode="numeric"
                                         autocomplete="tel"
@@ -711,10 +903,20 @@
                             </div>
 
 
+                            <!-- Manual validation -->
+                            <div
+                                class="withdraw-validation"
+                                id="withdrawValidation"
+                                role="status"
+                                aria-live="polite"
+                                hidden
+                            ></div>
+
+
                             <!-- =================================================
                                  WITHDRAW PREVIEW
                                  Fee hanya muncul di sini
-                            ================================================== -->
+                            ================================================= -->
                             <div
                                 class="withdraw-fee-preview"
                                 id="withdrawFeePreview"
@@ -725,7 +927,10 @@
 
                                     <span>
 
-                                        <i class="fa-solid fa-receipt"></i>
+                                        <i
+                                            class="fa-solid fa-receipt"
+                                            aria-hidden="true"
+                                        ></i>
 
                                         Fee penarikan
 
@@ -744,7 +949,10 @@
 
                                     <span>
 
-                                        <i class="fa-solid fa-wallet"></i>
+                                        <i
+                                            class="fa-solid fa-wallet"
+                                            aria-hidden="true"
+                                        ></i>
 
                                         Saldo diterima
 
@@ -767,7 +975,11 @@
                                 type="submit"
                             >
 
-                                <i class="fa-solid fa-paper-plane"></i>
+                                <i
+                                    class="fa-solid fa-paper-plane"
+                                    aria-hidden="true"
+                                ></i>
+
 
                                 <span>
                                     Ajukan WD Manual
@@ -784,10 +996,13 @@
 
                 <!-- =================================================
                      EMERGENCY ADMIN
-                ================================================== -->
+                     ================================================= -->
                 <section class="admin-request">
 
-                    <div class="admin-request-icon">
+                    <div
+                        class="admin-request-icon"
+                        aria-hidden="true"
+                    >
 
                         <i class="fa-solid fa-headset"></i>
 
@@ -819,7 +1034,11 @@
                             Hubungi Admin
                         </span>
 
-                        <i class="fa-solid fa-arrow-right"></i>
+
+                        <i
+                            class="fa-solid fa-arrow-right"
+                            aria-hidden="true"
+                        ></i>
 
                     </button>
 
@@ -828,15 +1047,22 @@
 
                 <!-- =================================================
                      WITHDRAW HISTORY
-                ================================================== -->
-                <section class="history-panel">
+                     ================================================= -->
+                <section
+                    class="history-panel"
+                    aria-labelledby="historyTitle"
+                >
+
 
                     <!-- History heading -->
                     <div class="history-heading">
 
                         <div>
 
-                            <span class="history-icon">
+                            <span
+                                class="history-icon"
+                                aria-hidden="true"
+                            >
 
                                 <i class="fa-solid fa-clock-rotate-left"></i>
 
@@ -845,7 +1071,7 @@
 
                             <div>
 
-                                <h2>
+                                <h2 id="historyTitle">
                                     Riwayat penarikan
                                 </h2>
 
@@ -869,19 +1095,201 @@
                     </div>
 
 
+                    <!-- =================================================
+                         HISTORY TOOLBAR
+                         ================================================= -->
+                    <div class="history-toolbar">
+
+
+                        <!-- Search -->
+                        <div class="history-search">
+
+                            <i
+                                class="fa-solid fa-magnifying-glass"
+                                aria-hidden="true"
+                            ></i>
+
+
+                            <input
+                                type="search"
+                                id="historySearch"
+                                placeholder="Cari withdraw..."
+                                autocomplete="off"
+                                aria-label="Cari riwayat withdraw"
+                            >
+
+
+                            <button
+                                type="button"
+                                id="clearHistorySearch"
+                                aria-label="Hapus pencarian"
+                                title="Hapus pencarian"
+                            >
+
+                                <i
+                                    class="fa-solid fa-xmark"
+                                    aria-hidden="true"
+                                ></i>
+
+                            </button>
+
+                        </div>
+
+
+                        <!-- Status -->
+                        <div class="history-filter">
+
+                            <label
+                                class="sr-only"
+                                for="historyStatus"
+                            >
+                                Filter status
+                            </label>
+
+
+                            <select
+                                id="historyStatus"
+                                aria-label="Filter status withdraw"
+                            >
+
+                                <option value="all">
+                                    Semua status
+                                </option>
+
+                                <option value="pending">
+                                    Pending
+                                </option>
+
+                                <option value="processing">
+                                    Diproses
+                                </option>
+
+                                <option value="completed">
+                                    Berhasil
+                                </option>
+
+                                <option value="rejected">
+                                    Ditolak
+                                </option>
+
+                                <option value="failed">
+                                    Gagal
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- Sort -->
+                        <div class="history-filter">
+
+                            <label
+                                class="sr-only"
+                                for="historySort"
+                            >
+                                Urutkan riwayat
+                            </label>
+
+
+                            <select
+                                id="historySort"
+                                aria-label="Urutkan riwayat"
+                            >
+
+                                <option value="newest">
+                                    Terbaru
+                                </option>
+
+                                <option value="oldest">
+                                    Terlama
+                                </option>
+
+                                <option value="highest">
+                                    Nominal terbesar
+                                </option>
+
+                                <option value="lowest">
+                                    Nominal terkecil
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- History result -->
+                    <div
+                        class="history-result"
+                        id="historyResult"
+                        aria-live="polite"
+                    >
+                        Menampilkan 0 transaksi
+                    </div>
+
+
                     <!-- History list -->
                     <div
                         class="history-list"
                         id="history"
+                        aria-live="polite"
+                        aria-busy="true"
                     >
 
                         <div class="history-loading">
 
-                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <i
+                                class="fa-solid fa-spinner fa-spin"
+                                aria-hidden="true"
+                            ></i>
 
                             Memuat riwayat...
 
                         </div>
+
+                    </div>
+
+
+                    <!-- Pagination -->
+                    <nav
+                        class="history-pagination"
+                        id="historyPagination"
+                        aria-label="Pagination riwayat withdraw"
+                    ></nav>
+
+                </section>
+
+
+                <!-- =================================================
+                     SECURITY NOTICE
+                     ================================================= -->
+                <section class="withdraw-security">
+
+                    <div
+                        class="withdraw-security-icon"
+                        aria-hidden="true"
+                    >
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Keamanan penarikan
+                        </strong>
+
+
+                        <p>
+                            Pastikan nama dan nomor tujuan sudah benar
+                            sebelum mengajukan withdraw. Jangan pernah
+                            memberikan kode OTP atau informasi keamanan akun
+                            kepada siapa pun.
+                        </p>
 
                     </div>
 
@@ -895,16 +1303,234 @@
 
 
     <!-- =========================================================
+         WITHDRAW CONFIRMATION MODAL
+         ========================================================= -->
+    <div
+        class="withdraw-modal"
+        id="withdrawConfirmModal"
+        hidden
+        aria-hidden="true"
+    >
+
+        <div
+            class="withdraw-modal-backdrop"
+            data-withdraw-close
+        ></div>
+
+
+        <div
+            class="withdraw-modal-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdrawConfirmTitle"
+        >
+
+
+            <!-- Close -->
+            <button
+                type="button"
+                class="withdraw-modal-close"
+                id="withdrawConfirmClose"
+                aria-label="Tutup konfirmasi"
+            >
+
+                <i
+                    class="fa-solid fa-xmark"
+                    aria-hidden="true"
+                ></i>
+
+            </button>
+
+
+            <!-- Icon -->
+            <div
+                class="withdraw-modal-icon"
+                aria-hidden="true"
+            >
+
+                <i class="fa-solid fa-money-bill-transfer"></i>
+
+            </div>
+
+
+            <span class="withdraw-modal-badge">
+                KONFIRMASI PENARIKAN
+            </span>
+
+
+            <h2 id="withdrawConfirmTitle">
+                Pastikan data withdraw sudah benar
+            </h2>
+
+
+            <p>
+                Periksa kembali nominal dan tujuan dana sebelum
+                pengajuan diproses.
+            </p>
+
+
+            <!-- Summary -->
+            <div class="withdraw-confirm-summary">
+
+
+                <div>
+
+                    <span>
+                        Nominal withdraw
+                    </span>
+
+
+                    <strong id="confirmAmount">
+                        Rp0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Fee
+                    </span>
+
+
+                    <strong id="confirmFee">
+                        Rp0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Saldo diterima
+                    </span>
+
+
+                    <strong id="confirmNet">
+                        Rp0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Metode
+                    </span>
+
+
+                    <strong id="confirmMethod">
+                        -
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Nama pemegang
+                    </span>
+
+
+                    <strong id="confirmAccountName">
+                        -
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Nomor tujuan
+                    </span>
+
+
+                    <strong id="confirmAccount">
+                        -
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Warning -->
+            <div class="withdraw-modal-warning">
+
+                <i
+                    class="fa-solid fa-shield-halved"
+                    aria-hidden="true"
+                ></i>
+
+
+                <span>
+                    Pastikan nama pemegang dan nomor tujuan sudah benar.
+                    Kesalahan data dapat menyebabkan proses pencairan gagal.
+                </span>
+
+            </div>
+
+
+            <!-- Actions -->
+            <div class="withdraw-modal-actions">
+
+                <button
+                    type="button"
+                    class="withdraw-modal-secondary"
+                    id="withdrawConfirmCancel"
+                >
+                    Batal
+                </button>
+
+
+                <button
+                    type="button"
+                    class="withdraw-modal-primary"
+                    id="withdrawConfirmSubmit"
+                >
+
+                    <i
+                        class="fa-solid fa-paper-plane"
+                        aria-hidden="true"
+                    ></i>
+
+
+                    <span>
+                        Konfirmasi Withdraw
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
          TOAST
-    ========================================================== -->
-    <div id="toast"></div>
+         ========================================================== -->
+    <div
+        id="toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
 
 
     <!-- =========================================================
          PAGE SCRIPTS
-    ========================================================== -->
-    <script src="js/withdrawals.js?v=20260905"></script>
-    <script src="js/footer.js?v=20260905"></script>
+         ========================================================== -->
+    <script src="js/withdrawals.js?v=20260908"></script>
+
+    <script src="js/footer.js?v=20260908"></script>
+
 
 </body>
 
