@@ -8,89 +8,9 @@ document.addEventListener("DOMContentLoaded", async () => {
        PAID CHECKOUT + CASHI QRIS
        ========================================================= */
 
-    const qs = new URLSearchParams(window.location.search);
-
-    const initialId = qs.get("id");
-    const slug = qs.get("slug");
-    const type = normalizeType(qs.get("type") || "link");
-
-    const box = document.getElementById("content");
-
-    const likeBtn = document.getElementById("productLikeBtn");
-    const likeIcon = document.getElementById("productLikeIcon");
-    const likeLabel = document.getElementById("productLikeLabel");
-    const likeCount = document.getElementById("productLikeCount");
-
-    const commentCount = document.getElementById("productCommentCount");
-    const commentForm = document.getElementById("productCommentForm");
-    const commentName = document.getElementById("commentName");
-    const commentText = document.getElementById("commentText");
-    const commentCharCount = document.getElementById("commentCharCount");
-    const commentSubmit = document.getElementById("productCommentSubmit");
-    const commentList = document.getElementById("productCommentList");
-    const commentsLoading = document.getElementById("productCommentsLoading");
-
-    const sbClient = window.sb;
-
-    let productId = initialId || null;
-    let product = null;
-
     /* =========================================================
-       HELPERS
+       HELPERS — HARUS DIDEFINISIKAN SEBELUM DIGUNAKAN
        ========================================================= */
-
-    const esc = (value) => {
-        const v = String(value ?? "");
-
-        if (window.TC?.esc) {
-            return window.TC.esc(v);
-        }
-
-        return v.replace(/[&<>"']/g, (char) => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[char]));
-    };
-
-    const toast = (message, type = "info") => {
-        if (window.TC?.toast) {
-            window.TC.toast(message, type);
-            return;
-        }
-
-        const toastBox = document.getElementById("toast");
-
-        if (!toastBox) {
-            alert(message);
-            return;
-        }
-
-        toastBox.textContent = message;
-        toastBox.className = `show ${type}`;
-
-        window.clearTimeout(toastBox.__timer);
-
-        toastBox.__timer = window.setTimeout(() => {
-            toastBox.className = "";
-        }, 3000);
-    };
-
-    const money = (value) => {
-        const amount = Number(value || 0);
-
-        if (window.TC?.money) {
-            return window.TC.money(amount);
-        }
-
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            maximumFractionDigits: 0
-        }).format(amount);
-    };
 
     const normalizeType = (value) => {
         const t = String(value || "link")
@@ -117,90 +37,323 @@ document.addEventListener("DOMContentLoaded", async () => {
         return t;
     };
 
+    const qs = new URLSearchParams(
+        window.location.search
+    );
+
+    const initialId = qs.get("id");
+    const slug = qs.get("slug");
+    const type = normalizeType(
+        qs.get("type") || "link"
+    );
+
+    const box =
+        document.getElementById("content");
+
+    const likeBtn =
+        document.getElementById(
+            "productLikeBtn"
+        );
+
+    const likeIcon =
+        document.getElementById(
+            "productLikeIcon"
+        );
+
+    const likeLabel =
+        document.getElementById(
+            "productLikeLabel"
+        );
+
+    const likeCount =
+        document.getElementById(
+            "productLikeCount"
+        );
+
+    const commentCount =
+        document.getElementById(
+            "productCommentCount"
+        );
+
+    const commentForm =
+        document.getElementById(
+            "productCommentForm"
+        );
+
+    const commentName =
+        document.getElementById(
+            "commentName"
+        );
+
+    const commentText =
+        document.getElementById(
+            "commentText"
+        );
+
+    const commentCharCount =
+        document.getElementById(
+            "commentCharCount"
+        );
+
+    const commentSubmit =
+        document.getElementById(
+            "productCommentSubmit"
+        );
+
+    const commentList =
+        document.getElementById(
+            "productCommentList"
+        );
+
+    const commentsLoading =
+        document.getElementById(
+            "productCommentsLoading"
+        );
+
+    const sbClient = window.sb;
+
+    let productId =
+        initialId || null;
+
+    let product = null;
+
+    /* =========================================================
+       ESCAPE
+       ========================================================= */
+
+    const esc = (value) => {
+        const v = String(value ?? "");
+
+        if (window.TC?.esc) {
+            return window.TC.esc(v);
+        }
+
+        return v.replace(
+            /[&<>"']/g,
+            (char) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            }[char])
+        );
+    };
+
+    /* =========================================================
+       TOAST
+       ========================================================= */
+
+    const toast = (
+        message,
+        type = "info"
+    ) => {
+
+        if (window.TC?.toast) {
+            window.TC.toast(
+                message,
+                type
+            );
+            return;
+        }
+
+        const toastBox =
+            document.getElementById(
+                "toast"
+            );
+
+        if (!toastBox) {
+            console.log(message);
+            return;
+        }
+
+        toastBox.textContent =
+            message;
+
+        toastBox.className =
+            `show ${type}`;
+
+        clearTimeout(
+            toastBox.__timer
+        );
+
+        toastBox.__timer =
+            setTimeout(() => {
+                toastBox.className = "";
+            }, 3000);
+    };
+
+    /* =========================================================
+       MONEY
+       ========================================================= */
+
+    const money = (value) => {
+
+        const amount =
+            Number(value || 0);
+
+        if (window.TC?.money) {
+            return window.TC.money(
+                amount
+            );
+        }
+
+        return new Intl.NumberFormat(
+            "id-ID",
+            {
+                style: "currency",
+                currency: "IDR",
+                maximumFractionDigits: 0
+            }
+        ).format(amount);
+    };
+
+    /* =========================================================
+       ICON
+       ========================================================= */
+
     const getIcon = (t) => {
+
         if (t === "code") {
             return "fa-solid fa-code";
         }
 
-        if (t === "channel") {
-            return "fa-brands fa-telegram";
-        }
-
-        if (t === "group") {
+        if (
+            t === "channel" ||
+            t === "group"
+        ) {
             return "fa-brands fa-telegram";
         }
 
         return "fa-solid fa-link";
     };
 
-    const formatNumber = (value) => {
-        return Number(value || 0).toLocaleString("id-ID");
-    };
+    /* =========================================================
+       NUMBER
+       ========================================================= */
 
-    const formatDate = (value) => {
-        if (!value) return "";
+    const formatNumber = (
+        value
+    ) => {
 
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "";
-        }
-
-        return new Intl.DateTimeFormat("id-ID", {
-            dateStyle: "medium",
-            timeStyle: "short"
-        }).format(date);
+        return Number(
+            value || 0
+        ).toLocaleString(
+            "id-ID"
+        );
     };
 
     /* =========================================================
-       URL HELPERS
+       DATE
        ========================================================= */
 
-    const safeUrl = (value) => {
-        let s = String(value || "").trim();
+    const formatDate = (
+        value
+    ) => {
+
+        if (!value) {
+            return "";
+        }
+
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "";
+        }
+
+        return new Intl.DateTimeFormat(
+            "id-ID",
+            {
+                dateStyle: "medium",
+                timeStyle: "short"
+            }
+        ).format(date);
+    };
+
+    /* =========================================================
+       URL
+       ========================================================= */
+
+    const safeUrl = (
+        value
+    ) => {
+
+        let s =
+            String(value || "")
+                .trim();
 
         if (!s) {
             return "";
         }
 
-        if (/^www\./i.test(s)) {
-            s = "https://" + s;
+        if (
+            /^www\./i.test(s)
+        ) {
+            s =
+                "https://" + s;
         }
 
-        if (/^https?:\/\//i.test(s)) {
+        if (
+            /^https?:\/\//i.test(s)
+        ) {
             try {
-                const url = new URL(s);
+
+                const url =
+                    new URL(s);
 
                 if (
-                    url.protocol !== "http:" &&
-                    url.protocol !== "https:"
+                    url.protocol !==
+                        "http:" &&
+                    url.protocol !==
+                        "https:"
                 ) {
                     return "";
                 }
 
                 return url.href;
+
             } catch {
                 return "";
             }
         }
 
-        if (/^t\.me\//i.test(s)) {
-            return "https://" + s;
+        if (
+            /^t\.me\//i.test(s)
+        ) {
+            return (
+                "https://" + s
+            );
         }
 
-        if (/^@[\w\d_]{3,}$/i.test(s)) {
-            return "https://t.me/" + s.slice(1);
+        if (
+            /^@[\w\d_]{3,}$/i.test(s)
+        ) {
+            return (
+                "https://t.me/" +
+                s.slice(1)
+            );
         }
 
         return "";
     };
 
-    const telegramUrl = (value) => {
-        const url = safeUrl(value);
+    const telegramUrl = (
+        value
+    ) => {
+
+        const url =
+            safeUrl(value);
 
         if (
             url &&
-            /(?:t\.me|telegram\.me)/i.test(url)
+            /(?:t\.me|telegram\.me)/i.test(
+                url
+            )
         ) {
             return url;
         }
@@ -209,75 +362,155 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /* =========================================================
-       HTML / CONTENT HELPERS
+       HTML TEXT
        ========================================================= */
 
-    const textFromHtml = (html) => {
-        const doc = new DOMParser().parseFromString(
-            String(html || ""),
-            "text/html"
-        );
+    const textFromHtml = (
+        html
+    ) => {
+
+        const doc =
+            new DOMParser()
+                .parseFromString(
+                    String(
+                        html || ""
+                    ),
+                    "text/html"
+                );
 
         doc
             .querySelectorAll(
                 "script,iframe,object,embed,style"
             )
-            .forEach((element) => element.remove());
+            .forEach(
+                (element) =>
+                    element.remove()
+            );
 
-        return doc.body?.textContent || "";
+        return (
+            doc.body?.textContent ||
+            ""
+        );
     };
 
-    const codeText = (html) => {
-        return textFromHtml(html)
-            .replace(/\u00a0/g, " ")
+    const codeText = (
+        html
+    ) => {
+
+        return textFromHtml(
+            html
+        )
+            .replace(
+                /\u00a0/g,
+                " "
+            )
             .trim();
     };
 
-    const linkifyHtml = (raw) => {
-        const doc = new DOMParser().parseFromString(
-            String(raw || ""),
-            "text/html"
-        );
+    /* =========================================================
+       LINKIFY
+       ========================================================= */
+
+    const linkifyHtml = (
+        raw
+    ) => {
+
+        const doc =
+            new DOMParser()
+                .parseFromString(
+                    String(
+                        raw || ""
+                    ),
+                    "text/html"
+                );
 
         doc
             .querySelectorAll(
                 "script,iframe,object,embed,style"
             )
-            .forEach((element) => element.remove());
+            .forEach(
+                (element) =>
+                    element.remove()
+            );
 
         doc
             .querySelectorAll("*")
-            .forEach((element) => {
-                [...element.attributes].forEach((attr) => {
-                    if (
-                        attr.name.toLowerCase().startsWith("on")
-                    ) {
-                        element.removeAttribute(attr.name);
+            .forEach(
+                (element) => {
+
+                    [
+                        ...element.attributes
+                    ].forEach(
+                        (attr) => {
+
+                            if (
+                                attr.name
+                                    .toLowerCase()
+                                    .startsWith(
+                                        "on"
+                                    )
+                            ) {
+                                element.removeAttribute(
+                                    attr.name
+                                );
+                            }
+                        }
+                    );
+                }
+            );
+
+        doc
+            .querySelectorAll("a")
+            .forEach(
+                (a) => {
+
+                    const href =
+                        safeUrl(
+                            a.getAttribute(
+                                "href"
+                            )
+                        );
+
+                    if (href) {
+
+                        a.setAttribute(
+                            "href",
+                            href
+                        );
+
+                        a.setAttribute(
+                            "target",
+                            "_blank"
+                        );
+
+                        a.setAttribute(
+                            "rel",
+                            "noopener noreferrer"
+                        );
+
+                    } else {
+
+                        a.removeAttribute(
+                            "href"
+                        );
                     }
-                });
-            });
+                }
+            );
 
-        doc.querySelectorAll("a").forEach((a) => {
-            const href = safeUrl(a.getAttribute("href"));
-
-            if (href) {
-                a.setAttribute("href", href);
-                a.setAttribute("target", "_blank");
-                a.setAttribute("rel", "noopener noreferrer");
-            } else {
-                a.removeAttribute("href");
-            }
-        });
-
-        const walker = doc.createTreeWalker(
-            doc.body,
-            NodeFilter.SHOW_TEXT
-        );
+        const walker =
+            doc.createTreeWalker(
+                doc.body,
+                NodeFilter.SHOW_TEXT
+            );
 
         const nodes = [];
 
-        while (walker.nextNode()) {
-            const node = walker.currentNode;
+        while (
+            walker.nextNode()
+        ) {
+
+            const node =
+                walker.currentNode;
 
             if (
                 !node.parentElement?.closest(
@@ -291,77 +524,133 @@ document.addEventListener("DOMContentLoaded", async () => {
         const regex =
             /((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
 
-        nodes.forEach((node) => {
-            const text = node.nodeValue || "";
-            const fragment = document.createDocumentFragment();
+        nodes.forEach(
+            (node) => {
 
-            let lastIndex = 0;
-            let match;
+                const text =
+                    node.nodeValue ||
+                    "";
 
-            regex.lastIndex = 0;
+                const fragment =
+                    document.createDocumentFragment();
 
-            while ((match = regex.exec(text))) {
-                let url = match[1];
-                let trailing = "";
+                let lastIndex = 0;
+                let match;
+
+                regex.lastIndex = 0;
 
                 while (
-                    /[.,!?;:)\]}]$/.test(url)
+                    (match =
+                        regex.exec(text))
                 ) {
-                    trailing =
-                        url.slice(-1) + trailing;
 
-                    url = url.slice(0, -1);
-                }
+                    let url =
+                        match[1];
 
-                if (match.index > lastIndex) {
-                    fragment.appendChild(
-                        document.createTextNode(
-                            text.slice(
-                                lastIndex,
-                                match.index
+                    let trailing =
+                        "";
+
+                    while (
+                        /[.,!?;:)\]}]$/.test(
+                            url
+                        )
+                    ) {
+
+                        trailing =
+                            url.slice(-1) +
+                            trailing;
+
+                        url =
+                            url.slice(
+                                0,
+                                -1
+                            );
+                    }
+
+                    if (
+                        match.index >
+                        lastIndex
+                    ) {
+
+                        fragment.appendChild(
+                            document.createTextNode(
+                                text.slice(
+                                    lastIndex,
+                                    match.index
+                                )
                             )
-                        )
-                    );
-                }
+                        );
+                    }
 
-                const a = document.createElement("a");
+                    const a =
+                        document.createElement(
+                            "a"
+                        );
 
-                const href = safeUrl(url);
+                    const href =
+                        safeUrl(url);
 
-                if (href) {
-                    a.href = href;
-                    a.target = "_blank";
-                    a.rel = "noopener noreferrer";
-                }
+                    if (href) {
 
-                a.textContent = url;
+                        a.href =
+                            href;
 
-                fragment.appendChild(a);
+                        a.target =
+                            "_blank";
 
-                if (trailing) {
+                        a.rel =
+                            "noopener noreferrer";
+                    }
+
+                    a.textContent =
+                        url;
+
                     fragment.appendChild(
-                        document.createTextNode(trailing)
+                        a
                     );
+
+                    if (trailing) {
+
+                        fragment.appendChild(
+                            document.createTextNode(
+                                trailing
+                            )
+                        );
+                    }
+
+                    lastIndex =
+                        match.index +
+                        match[1].length;
                 }
 
-                lastIndex =
-                    match.index + match[1].length;
-            }
+                if (
+                    lastIndex > 0
+                ) {
 
-            if (lastIndex > 0) {
-                if (lastIndex < text.length) {
-                    fragment.appendChild(
-                        document.createTextNode(
-                            text.slice(lastIndex)
-                        )
+                    if (
+                        lastIndex <
+                        text.length
+                    ) {
+
+                        fragment.appendChild(
+                            document.createTextNode(
+                                text.slice(
+                                    lastIndex
+                                )
+                            )
+                        );
+                    }
+
+                    node.replaceWith(
+                        fragment
                     );
                 }
-
-                node.replaceWith(fragment);
             }
-        });
+        );
 
-        return doc.body.innerHTML;
+        return (
+            doc.body.innerHTML
+        );
     };
 
     /* =========================================================
@@ -369,44 +658,65 @@ document.addEventListener("DOMContentLoaded", async () => {
        ========================================================= */
 
     async function resolveSlug() {
-        if (productId || !slug) {
+
+        if (
+            productId ||
+            !slug
+        ) {
             return;
         }
 
         let table = null;
 
-        if (type === "code") {
-            table = "telegram_products";
+        if (
+            type === "code"
+        ) {
+
+            table =
+                "telegram_products";
+
         } else if (
             type === "channel" ||
             type === "group"
         ) {
-            table = "telegram_channels";
+
+            table =
+                "telegram_channels";
         }
 
         if (!table) {
+
             throw new Error(
                 "Produk tidak ditemukan."
             );
         }
 
-        const { data, error } = await sbClient
-            .from(table)
-            .select("id")
-            .eq("slug", slug)
-            .maybeSingle();
+        const {
+            data,
+            error
+        } =
+            await sbClient
+                .from(table)
+                .select("id")
+                .eq(
+                    "slug",
+                    slug
+                )
+                .maybeSingle();
 
         if (error) {
             throw error;
         }
 
         if (!data?.id) {
+
             throw new Error(
                 "Link tidak ditemukan atau sudah tidak tersedia."
             );
         }
 
-        productId = data.id;
+        productId =
+            data.id;
     }
 
     /* =========================================================
@@ -414,52 +724,107 @@ document.addEventListener("DOMContentLoaded", async () => {
        ========================================================= */
 
     async function loadProduct() {
+
         if (!sbClient) {
+
             throw new Error(
-                "Supabase belum dikonfigurasi."
+                "Supabase belum siap. Pastikan js/supabase.js berhasil dimuat."
             );
         }
 
         await resolveSlug();
 
         if (!productId) {
+
             throw new Error(
-                "Produk tidak ditemukan."
+                "ID produk tidak ditemukan."
             );
         }
 
-        const { data, error } =
+        console.log(
+            "[PasTele Product] Loading:",
+            {
+                id: productId,
+                type
+            }
+        );
+
+        const {
+            data,
+            error
+        } =
             await sbClient.rpc(
                 "get_market_item_detail",
                 {
-                    p_type: type,
-                    p_id: productId
+                    p_type:
+                        type,
+
+                    p_id:
+                        productId
                 }
             );
 
         if (error) {
+
+            console.error(
+                "[PasTele Product] RPC error:",
+                error
+            );
+
             throw error;
         }
 
         if (!data) {
+
             throw new Error(
                 "Produk tidak ditemukan atau belum dipublikasikan."
             );
         }
 
-        product = data;
+        /*
+         * Beberapa RPC PostgreSQL dapat mengembalikan
+         * array walaupun hanya satu item.
+         */
+
+        product =
+            Array.isArray(data)
+                ? data[0]
+                : data;
+
+        if (!product) {
+
+            throw new Error(
+                "Data produk kosong."
+            );
+        }
+
+        console.log(
+            "[PasTele Product] Loaded:",
+            product
+        );
 
         try {
+
             await sbClient.rpc(
                 "record_content_view",
                 {
-                    p_owner: product.owner_id,
-                    p_target_type: type,
-                    p_target_id: productId
+                    p_owner:
+                        product.owner_id,
+
+                    p_target_type:
+                        type,
+
+                    p_target_id:
+                        productId
                 }
             );
-        } catch (_) {
-            /* View tracking tidak boleh memblokir halaman. */
+
+        } catch (error) {
+
+            console.warn(
+                "[PasTele Product] View tracking failed:",
+                error
+            );
         }
 
         return product;
@@ -470,19 +835,26 @@ document.addEventListener("DOMContentLoaded", async () => {
        ========================================================= */
 
     function renderProduct(x) {
-        const price = Number(x.price || 0);
-        const canAccess = x.can_access === true;
+
+        const price =
+            Number(
+                x.price || 0
+            );
+
+        const canAccess =
+            x.can_access === true;
 
         let body = "";
 
-        /* -----------------------------------------------------
+        /* =====================================================
            TELEGRAM
-           ----------------------------------------------------- */
+           ===================================================== */
 
         if (
             type === "channel" ||
             type === "group"
         ) {
+
             const raw =
                 x.channel_link ||
                 x.telegram_channel_id ||
@@ -495,23 +867,30 @@ document.addEventListener("DOMContentLoaded", async () => {
                 safeUrl(raw);
 
             if (!canAccess) {
+
                 body = `
                     <div class="telegram-locked">
+
                         <i class="fa-solid fa-lock"></i>
 
                         <div>
+
                             <strong>
                                 Akses Telegram terkunci
                             </strong>
 
                             <span>
-                                Bayar atau ambil akses untuk
-                                membuka link.
+                                Bayar atau ambil akses
+                                untuk membuka link.
                             </span>
+
                         </div>
+
                     </div>
                 `;
+
             } else if (raw) {
+
                 body = `
                     <div class="telegram-access-card">
 
@@ -562,13 +941,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     </div>
                 `;
+
             } else {
+
                 body = `
                     <div class="telegram-empty">
 
                         <i class="fa-solid fa-link-slash"></i>
 
                         <div>
+
                             <strong>
                                 Link belum tersedia
                             </strong>
@@ -577,21 +959,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 Creator belum menyimpan
                                 link Telegram.
                             </span>
+
                         </div>
 
                     </div>
                 `;
             }
 
-        /* -----------------------------------------------------
+        /* =====================================================
            CODE
-           ----------------------------------------------------- */
+           ===================================================== */
 
-        } else if (type === "code") {
+        } else if (
+            type === "code"
+        ) {
 
-            const raw = canAccess
-                ? codeText(x.content || "")
-                : "Kode berbayar. Buka akses untuk melihat kode lengkap.";
+            const raw =
+                canAccess
+                    ? codeText(
+                        x.content || ""
+                    )
+                    : "Kode berbayar. Buka akses untuk melihat kode lengkap.";
 
             const botUser =
                 x.bot_username ||
@@ -599,10 +987,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "";
 
             const botHref =
-                telegramUrl(botUser) ||
-                safeUrl(botUser);
+                telegramUrl(
+                    botUser
+                ) ||
+                safeUrl(
+                    botUser
+                );
 
             if (canAccess) {
+
                 body = `
                     <div class="code-viewer">
 
@@ -624,7 +1017,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         </div>
 
-                        <pre><code>${esc(raw)}</code></pre>
+                        <pre><code>${esc(
+                            raw
+                        )}</code></pre>
 
                         ${
                             botHref
@@ -635,19 +1030,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >
+
                                         <i class="fa-brands fa-telegram"></i>
 
                                         <span>
+
                                             <b>
                                                 Bot Telegram
                                             </b>
 
                                             <small>
-                                                ${esc(botUser)}
+                                                ${esc(
+                                                    botUser
+                                                )}
                                             </small>
+
                                         </span>
 
                                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
+
                                     </a>
                                 `
                                 : ""
@@ -655,13 +1056,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     </div>
                 `;
+
             } else {
+
                 body = `
                     <div class="code-locked">
 
                         <i class="fa-solid fa-lock"></i>
 
                         <div>
+
                             <b>
                                 Kode terkunci
                             </b>
@@ -670,20 +1074,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 Bayar untuk membuka dan
                                 menyalin kode lengkap.
                             </span>
+
                         </div>
 
                     </div>
                 `;
             }
 
-        /* -----------------------------------------------------
-           LINK / PASTELINK
-           ----------------------------------------------------- */
+        /* =====================================================
+           LINK
+           ===================================================== */
 
         } else {
 
             body = `
                 <div class="rich-output-view">
+
                     ${
                         canAccess
                             ? linkifyHtml(
@@ -697,13 +1103,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 "Konten berbayar. Buka akses untuk melihat isi lengkap."
                             )
                     }
+
                 </div>
             `;
         }
 
-        /* -----------------------------------------------------
+        /* =====================================================
            ACCESS NOTE
-           ----------------------------------------------------- */
+           ===================================================== */
 
         const accessHint =
             x.access_reason ===
@@ -756,33 +1163,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 : "";
 
-        /* -----------------------------------------------------
-           PRODUCT HTML
-           ----------------------------------------------------- */
+        /* =====================================================
+           PRODUCT CARD
+           ===================================================== */
 
         box.innerHTML = `
             <article class="product-detail premium-view">
 
                 <div class="product-detail-icon">
+
                     <i class="${getIcon(type)}"></i>
+
                 </div>
 
                 <span class="badge">
+
                     ${esc(
                         String(
-                            x.access_type || "free"
+                            x.access_type ||
+                            "free"
                         ).toUpperCase()
                     )}
+
                 </span>
 
                 <h1>
                     ${esc(
-                        x.title || "Untitled"
+                        x.title ||
+                        "Untitled"
                     )}
                 </h1>
 
                 <p class="muted">
+
                     Oleh
+
                     <b>
                         ${esc(
                             x.creator_name ||
@@ -792,7 +1207,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     ·
 
-                    ${formatNumber(x.views)} views
+                    ${formatNumber(
+                        x.views
+                    )}
+                    views
+
                 </p>
 
                 ${accessHint}
@@ -820,11 +1239,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                     </button>
 
                     <b class="price">
+
                         ${
                             price
                                 ? money(price)
                                 : "FREE"
                         }
+
                     </b>
 
                     <button
@@ -832,6 +1253,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         class="btn primary"
                         id="buy"
                     >
+
                         ${
                             canAccess
                                 ? `
@@ -848,6 +1270,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     Ambil akses
                                 `
                         }
+
                     </button>
 
                 </div>
@@ -856,40 +1279,50 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
 
         const buyButton =
-            document.getElementById("buy");
+            document.getElementById(
+                "buy"
+            );
 
-        if (canAccess && buyButton) {
-            buyButton.disabled = true;
+        if (
+            canAccess &&
+            buyButton
+        ) {
+            buyButton.disabled =
+                true;
         }
 
         bindProductActions(x);
     }
 
     /* =========================================================
-       PRODUCT ACTIONS
+       BIND PRODUCT ACTIONS
        ========================================================= */
 
     function bindProductActions(x) {
 
-        /* -----------------------------------------------------
-           COPY CODE
-           ----------------------------------------------------- */
+        /* COPY CODE */
 
         document
-            .getElementById("copyCode")
+            .getElementById(
+                "copyCode"
+            )
             ?.addEventListener(
                 "click",
                 async () => {
 
                     const text =
                         codeText(
-                            x.content || ""
+                            x.content ||
+                            ""
                         );
 
                     try {
-                        await navigator.clipboard.writeText(
-                            text
-                        );
+
+                        await navigator
+                            .clipboard
+                            .writeText(
+                                text
+                            );
 
                         toast(
                             "Kode berhasil disalin",
@@ -906,9 +1339,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             );
 
-        /* -----------------------------------------------------
-           COPY TELEGRAM
-           ----------------------------------------------------- */
+        /* COPY TELEGRAM */
 
         document
             .querySelector(
@@ -916,16 +1347,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             )
             ?.addEventListener(
                 "click",
-                async (event) => {
+                async (
+                    event
+                ) => {
 
                     const value =
-                        event.currentTarget.dataset.copy ||
+                        event.currentTarget
+                            .dataset
+                            .copy ||
                         "";
 
                     try {
-                        await navigator.clipboard.writeText(
-                            value
-                        );
+
+                        await navigator
+                            .clipboard
+                            .writeText(
+                                value
+                            );
 
                         toast(
                             "Link berhasil disalin",
@@ -942,34 +1380,34 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             );
 
-        /* -----------------------------------------------------
-           SHARE
-           ----------------------------------------------------- */
+        /* SHARE */
 
         document
-            .getElementById("share")
+            .getElementById(
+                "share"
+            )
             ?.addEventListener(
                 "click",
                 shareProduct
             );
 
-        /* -----------------------------------------------------
-           LIKE
-           ----------------------------------------------------- */
+        /* LIKE */
 
         document
-            .getElementById("like")
+            .getElementById(
+                "like"
+            )
             ?.addEventListener(
                 "click",
                 toggleLike
             );
 
-        /* -----------------------------------------------------
-           BUY
-           ----------------------------------------------------- */
+        /* BUY */
 
         document
-            .getElementById("buy")
+            .getElementById(
+                "buy"
+            )
             ?.addEventListener(
                 "click",
                 handlePurchase
@@ -999,14 +1437,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (
                 navigator.share
             ) {
+
                 await navigator.share(
                     shareData
                 );
+
             } else {
 
-                await navigator.clipboard.writeText(
-                    window.location.href
-                );
+                await navigator
+                    .clipboard
+                    .writeText(
+                        window.location.href
+                    );
 
                 toast(
                     "Link berhasil disalin",
@@ -1020,20 +1462,26 @@ document.addEventListener("DOMContentLoaded", async () => {
                 error?.name !==
                 "AbortError"
             ) {
+
                 try {
-                    await navigator.clipboard.writeText(
-                        window.location.href
-                    );
+
+                    await navigator
+                        .clipboard
+                        .writeText(
+                            window.location.href
+                        );
 
                     toast(
                         "Link berhasil disalin",
                         "success"
                     );
+
                 } catch (_) {}
             }
         }
 
         try {
+
             await sbClient.rpc(
                 "track_analytics",
                 {
@@ -1050,6 +1498,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         productId
                 }
             );
+
         } catch (_) {}
     }
 
@@ -1066,7 +1515,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        likeBtn.disabled = true;
+        likeBtn.disabled =
+            true;
 
         try {
 
@@ -1103,7 +1553,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 Number(
                     data?.count ??
                     data?.like_count ??
-                    likeCount?.textContent ??
                     0
                 );
 
@@ -1115,7 +1564,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (error) {
 
             console.error(
-                "LIKE ERROR:",
+                "[PasTele Like]",
                 error
             );
 
@@ -1127,7 +1576,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         } finally {
 
-            likeBtn.disabled = false;
+            likeBtn.disabled =
+                false;
         }
     }
 
@@ -1137,6 +1587,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ) {
 
         if (likeBtn) {
+
             likeBtn.setAttribute(
                 "aria-pressed",
                 liked
@@ -1146,6 +1597,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (likeIcon) {
+
             likeIcon.className =
                 liked
                     ? "fa-solid fa-heart"
@@ -1153,6 +1605,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (likeLabel) {
+
             likeLabel.textContent =
                 liked
                     ? "Disukai"
@@ -1160,13 +1613,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (likeCount) {
+
             likeCount.textContent =
-                formatNumber(count);
+                formatNumber(
+                    count
+                );
         }
     }
 
     /* =========================================================
-       LOAD LIKE COUNT
+       LOAD LIKE
        ========================================================= */
 
     async function loadLikeState() {
@@ -1177,19 +1633,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
 
-            /*
-             * Kita ambil data like dari content_likes.
-             * Jika query ditolak RLS, halaman produk tetap
-             * berjalan tanpa mengganggu detail produk.
-             */
-
-            const { data, error } =
+            const {
+                data,
+                error
+            } =
                 await sbClient
-                    .from("content_likes")
-                    .select("*", {
-                        count: "exact",
-                        head: false
-                    })
+                    .from(
+                        "content_likes"
+                    )
+                    .select(
+                        "*"
+                    )
                     .eq(
                         "owner_id",
                         product.owner_id
@@ -1204,36 +1658,35 @@ document.addEventListener("DOMContentLoaded", async () => {
                     );
 
             if (error) {
+
                 console.warn(
-                    "LIKE COUNT:",
+                    "[PasTele Like Count]",
                     error
                 );
 
                 return;
             }
 
-            const total =
+            const rows =
                 Array.isArray(data)
-                    ? data.length
-                    : 0;
+                    ? data
+                    : [];
 
-            let liked = false;
-
-            /*
-             * Untuk user login, cek apakah ada
-             * baris milik user tersebut.
-             */
+            let liked =
+                false;
 
             try {
 
                 const user =
-                    await window.TC?.user?.();
+                    await window
+                        .TC
+                        ?.user
+                        ?.();
 
                 if (user?.id) {
 
                     liked =
-                        Array.isArray(data) &&
-                        data.some(
+                        rows.some(
                             (row) =>
                                 row.user_id ===
                                 user.id
@@ -1244,13 +1697,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             updateLikeUI(
                 liked,
-                total
+                rows.length
             );
 
         } catch (error) {
 
             console.warn(
-                "Unable to load likes:",
+                "[PasTele Like Load]",
                 error
             );
         }
@@ -1267,6 +1720,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (commentsLoading) {
+
             commentsLoading.style.display =
                 "flex";
         }
@@ -1277,41 +1731,41 @@ document.addEventListener("DOMContentLoaded", async () => {
                 data,
                 error,
                 count
-            } = await sbClient
-                .from("content_comments")
-                .select(
-                    "id,owner_id,target_type,target_id,name,content,created_at",
-                    {
-                        count: "exact"
-                    }
-                )
-                .eq(
-                    "owner_id",
-                    product.owner_id
-                )
-                .eq(
-                    "target_type",
-                    type
-                )
-                .eq(
-                    "target_id",
-                    productId
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                )
-                .limit(50);
+            } =
+                await sbClient
+                    .from(
+                        "content_comments"
+                    )
+                    .select(
+                        "id,owner_id,target_type,target_id,name,content,created_at",
+                        {
+                            count:
+                                "exact"
+                        }
+                    )
+                    .eq(
+                        "owner_id",
+                        product.owner_id
+                    )
+                    .eq(
+                        "target_type",
+                        type
+                    )
+                    .eq(
+                        "target_id",
+                        productId
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending:
+                                false
+                        }
+                    )
+                    .limit(50);
 
             if (error) {
                 throw error;
-            }
-
-            if (commentsLoading) {
-                commentsLoading.style.display =
-                    "none";
             }
 
             const comments =
@@ -1319,7 +1773,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ? data
                     : [];
 
+            if (commentsLoading) {
+
+                commentsLoading.style.display =
+                    "none";
+            }
+
             if (commentCount) {
+
                 commentCount.textContent =
                     formatNumber(
                         count ??
@@ -1334,30 +1795,33 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (error) {
 
             console.warn(
-                "COMMENT LOAD:",
+                "[PasTele Comments]",
                 error
             );
 
             if (commentsLoading) {
+
                 commentsLoading.style.display =
                     "none";
             }
 
-            commentCount.textContent =
-                "0";
+            if (commentCount) {
+                commentCount.textContent =
+                    "0";
+            }
 
             commentList.innerHTML = `
                 <div class="product-comments-empty">
 
-                    <i class="fa-solid fa-comments"></i>
+                    <i class="fa-regular fa-comment-dots"></i>
 
                     <strong>
                         Belum ada komentar
                     </strong>
 
                     <span>
-                        Jadilah yang pertama memberikan
-                        komentar.
+                        Jadilah yang pertama
+                        memberikan komentar.
                     </span>
 
                 </div>
@@ -1385,8 +1849,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     </strong>
 
                     <span>
-                        Jadilah yang pertama memberikan
-                        komentar.
+                        Jadilah yang pertama
+                        memberikan komentar.
                     </span>
 
                 </div>
@@ -1405,22 +1869,24 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 comment.name ||
                                 "Pengunjung"
                             )
-                            .trim()
-                            .slice(
-                                0,
-                                50
-                            );
+                                .trim()
+                                .slice(
+                                    0,
+                                    50
+                                );
 
                         const content =
                             String(
                                 comment.content ||
                                 ""
                             )
-                            .trim();
+                                .trim();
 
                         const initial =
                             name
-                                .charAt(0)
+                                .charAt(
+                                    0
+                                )
                                 .toUpperCase() ||
                             "?";
 
@@ -1433,7 +1899,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                             >
 
                                 <div class="product-comment-avatar">
-                                    ${esc(initial)}
+                                    ${esc(
+                                        initial
+                                    )}
                                 </div>
 
                                 <div class="product-comment-body">
@@ -1441,7 +1909,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     <div class="product-comment-meta">
 
                                         <strong>
-                                            ${esc(name)}
+                                            ${esc(
+                                                name
+                                            )}
                                         </strong>
 
                                         <time
@@ -1460,7 +1930,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     </div>
 
                                     <p>
-                                        ${esc(content)}
+                                        ${esc(
+                                            content
+                                        )}
                                     </p>
 
                                 </div>
@@ -1486,6 +1958,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             commentText.value.length;
 
         if (commentCharCount) {
+
             commentCharCount.textContent =
                 String(length);
         }
@@ -1495,6 +1968,82 @@ document.addEventListener("DOMContentLoaded", async () => {
         "input",
         updateCommentCounter
     );
+
+    /* =========================================================
+       CREATE COMMENT ELEMENT
+       ========================================================= */
+
+    function createCommentElement(
+        comment
+    ) {
+
+        const article =
+            document.createElement(
+                "article"
+            );
+
+        article.className =
+            "product-comment-item";
+
+        article.dataset.commentId =
+            comment.id || "";
+
+        const name =
+            String(
+                comment.name ||
+                "Pengunjung"
+            )
+                .trim()
+                .slice(
+                    0,
+                    50
+                );
+
+        const content =
+            String(
+                comment.content ||
+                ""
+            )
+                .trim();
+
+        const initial =
+            name
+                .charAt(0)
+                .toUpperCase() ||
+            "?";
+
+        article.innerHTML = `
+            <div class="product-comment-avatar">
+                ${esc(initial)}
+            </div>
+
+            <div class="product-comment-body">
+
+                <div class="product-comment-meta">
+
+                    <strong>
+                        ${esc(name)}
+                    </strong>
+
+                    <time>
+                        ${esc(
+                            formatDate(
+                                comment.created_at
+                            )
+                        )}
+                    </time>
+
+                </div>
+
+                <p>
+                    ${esc(content)}
+                </p>
+
+            </div>
+        `;
+
+        return article;
+    }
 
     /* =========================================================
        SUBMIT COMMENT
@@ -1512,18 +2061,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const name =
                 String(
-                    commentName?.value || ""
+                    commentName?.value ||
+                    ""
                 )
-                .trim()
-                .replace(/\s+/g, " ");
+                    .trim()
+                    .replace(
+                        /\s+/g,
+                        " "
+                    );
 
             const content =
                 String(
-                    commentText?.value || ""
+                    commentText?.value ||
+                    ""
                 )
-                .trim();
+                    .trim();
 
             if (!name) {
+
                 toast(
                     "Masukkan nama terlebih dahulu.",
                     "error"
@@ -1535,6 +2090,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             if (name.length < 2) {
+
                 toast(
                     "Nama minimal 2 karakter.",
                     "error"
@@ -1546,6 +2102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             if (!content) {
+
                 toast(
                     "Tulis komentar terlebih dahulu.",
                     "error"
@@ -1557,6 +2114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             if (content.length < 2) {
+
                 toast(
                     "Komentar terlalu pendek.",
                     "error"
@@ -1567,7 +2125,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            if (name.length > 50) {
+            if (
+                name.length > 50
+            ) {
+
                 toast(
                     "Nama maksimal 50 karakter.",
                     "error"
@@ -1576,7 +2137,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            if (content.length > 500) {
+            if (
+                content.length > 500
+            ) {
+
                 toast(
                     "Komentar maksimal 500 karakter.",
                     "error"
@@ -1585,10 +2149,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            commentSubmit.disabled = true;
+            if (!commentSubmit) {
+                return;
+            }
 
             const originalHTML =
                 commentSubmit.innerHTML;
+
+            commentSubmit.disabled =
+                true;
 
             commentSubmit.innerHTML = `
                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -1598,14 +2167,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
 
                 /*
-                 * Guest comment:
-                 * tidak memanggil TC.user()
-                 * dan tidak memaksa autentikasi.
+                 * PUBLIC COMMENT
+                 * Tidak membutuhkan login.
                  */
 
-                const { data, error } =
+                const {
+                    data,
+                    error
+                } =
                     await sbClient
-                        .from("content_comments")
+                        .from(
+                            "content_comments"
+                        )
                         .insert({
                             owner_id:
                                 product.owner_id,
@@ -1648,11 +2221,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     "success"
                 );
 
-                /*
-                 * Tambahkan komentar baru langsung
-                 * agar terasa realtime.
-                 */
-
                 if (data) {
 
                     const empty =
@@ -1664,35 +2232,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                         empty.remove();
                     }
 
-                    const article =
+                    const element =
                         createCommentElement(
                             data
                         );
 
-                    if (
-                        commentList.firstChild
-                    ) {
-                        commentList.insertBefore(
-                            article,
-                            commentList.firstChild
-                        );
-                    } else {
-                        commentList.appendChild(
-                            article
-                        );
-                    }
+                    commentList.prepend(
+                        element
+                    );
                 }
-
-                /*
-                 * Refresh jumlah komentar dari database.
-                 */
 
                 await refreshCommentCount();
 
             } catch (error) {
 
                 console.error(
-                    "COMMENT INSERT:",
+                    "[PasTele Comment Insert]",
                     error
                 );
 
@@ -1713,90 +2268,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     );
 
-    function createCommentElement(
-        comment
-    ) {
-
-        const article =
-            document.createElement(
-                "article"
-            );
-
-        article.className =
-            "product-comment-item";
-
-        article.dataset.commentId =
-            comment.id || "";
-
-        const name =
-            String(
-                comment.name ||
-                "Pengunjung"
-            )
-            .trim()
-            .slice(0, 50);
-
-        const content =
-            String(
-                comment.content ||
-                ""
-            )
-            .trim();
-
-        const initial =
-            name
-                .charAt(0)
-                .toUpperCase() ||
-            "?";
-
-        article.innerHTML = `
-            <div class="product-comment-avatar">
-                ${esc(initial)}
-            </div>
-
-            <div class="product-comment-body">
-
-                <div class="product-comment-meta">
-
-                    <strong>
-                        ${esc(name)}
-                    </strong>
-
-                    <time>
-                        ${esc(
-                            formatDate(
-                                comment.created_at
-                            )
-                        )}
-                    </time>
-
-                </div>
-
-                <p>
-                    ${esc(content)}
-                </p>
-
-            </div>
-        `;
-
-        return article;
-    }
-
     /* =========================================================
-       REFRESH COMMENT COUNT
+       COMMENT COUNT
        ========================================================= */
 
     async function refreshCommentCount() {
 
         try {
 
-            const { count, error } =
+            const {
+                count,
+                error
+            } =
                 await sbClient
-                    .from("content_comments")
-                    .select("id", {
-                        count: "exact",
-                        head: true
-                    })
+                    .from(
+                        "content_comments"
+                    )
+                    .select(
+                        "id",
+                        {
+                            count:
+                                "exact",
+                            head:
+                                true
+                        }
+                    )
                     .eq(
                         "owner_id",
                         product.owner_id
@@ -1815,6 +2311,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             if (commentCount) {
+
                 commentCount.textContent =
                     formatNumber(
                         count || 0
@@ -1824,7 +2321,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (error) {
 
             console.warn(
-                "COMMENT COUNT:",
+                "[PasTele Comment Count]",
                 error
             );
         }
@@ -1860,17 +2357,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        /*
-         * Paid product:
-         * wajib login ketika akan membeli.
-         */
-
         let user = null;
 
         try {
+
             user =
-                await window.TC?.user?.();
+                await window
+                    .TC
+                    ?.user
+                    ?.();
+
         } catch (_) {}
+
+        /*
+         * Paid / protected purchase
+         * requires login.
+         */
 
         if (!user) {
 
@@ -1885,13 +2387,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        /* -----------------------------------------------------
+        /* =====================================================
            FREE ACCESS
-           ----------------------------------------------------- */
+           ===================================================== */
 
         if (!price) {
 
-            buy.disabled = true;
+            buy.disabled =
+                true;
 
             buy.innerHTML = `
                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -1921,7 +2424,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     "success"
                 );
 
-                window.setTimeout(
+                setTimeout(
                     () => {
                         window.location.reload();
                     },
@@ -1931,7 +2434,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             } catch (error) {
 
                 console.error(
-                    "FREE ACCESS:",
+                    "[PasTele Free Access]",
                     error
                 );
 
@@ -1953,11 +2456,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        /* -----------------------------------------------------
-           PAID
-           ----------------------------------------------------- */
+        /* =====================================================
+           PAID CHECKOUT
+           ===================================================== */
 
-        buy.disabled = true;
+        buy.disabled =
+            true;
 
         buy.innerHTML = `
             <i class="fa-solid fa-spinner fa-spin"></i>
@@ -1978,7 +2482,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     }
                 );
 
-            if (orderResult.error) {
+            if (
+                orderResult.error
+            ) {
                 throw orderResult.error;
             }
 
@@ -1989,7 +2495,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ? orderResult.data[0]
                     : orderResult.data;
 
-            if (!order?.order_id) {
+            if (
+                !order?.order_id
+            ) {
+
                 throw new Error(
                     "Order pembayaran tidak berhasil dibuat."
                 );
@@ -2007,12 +2516,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 String(
                     config.SUPABASE_URL ||
                     ""
-                ).replace(
-                    /\/$/,
-                    ""
-                );
+                )
+                    .replace(
+                        /\/$/,
+                        ""
+                    );
 
             if (!supabaseUrl) {
+
                 throw new Error(
                     "SUPABASE_URL belum dikonfigurasi."
                 );
@@ -2026,7 +2537,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 await fetch(
                     functionUrl,
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
                         headers: {
                             "Content-Type":
@@ -2060,6 +2572,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     );
 
             if (!response.ok) {
+
                 throw new Error(
                     payload.error ||
                     payload.message ||
@@ -2075,7 +2588,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (error) {
 
             console.error(
-                "PAYMENT ERROR:",
+                "[PasTele Payment]",
                 error
             );
 
@@ -2085,7 +2598,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "error"
             );
 
-            buy.disabled = false;
+            buy.disabled =
+                false;
 
             buy.innerHTML = `
                 <i class="fa-solid fa-qrcode"></i>
@@ -2095,7 +2609,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* =========================================================
-       CASHI PAYMENT MODAL
+       CASHI MODAL
        ========================================================= */
 
     function showPaymentModal(
@@ -2173,7 +2687,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                         qrImage
                             ? `
                                 <img
-                                    src="${esc(qrImage)}"
+                                    src="${esc(
+                                        qrImage
+                                    )}"
                                     alt="QRIS Cashi"
                                 >
                             `
@@ -2227,17 +2743,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             modal
         );
 
-        const close =
-            modal.querySelector(
+        modal
+            .querySelector(
                 ".cashi-close"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+                    modal.remove();
+                }
             );
-
-        close?.addEventListener(
-            "click",
-            () => {
-                modal.remove();
-            }
-        );
 
         modal.addEventListener(
             "click",
@@ -2248,27 +2763,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     modal
                 ) {
                     modal.remove();
-                }
-            }
-        );
-
-        document.addEventListener(
-            "keydown",
-            function escapeHandler(
-                event
-            ) {
-
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
-
-                    modal.remove();
-
-                    document.removeEventListener(
-                        "keydown",
-                        escapeHandler
-                    );
                 }
             }
         );
@@ -2300,7 +2794,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             30 * 60 * 1000;
 
         const timer =
-            window.setInterval(
+            setInterval(
                 async () => {
 
                     if (
@@ -2308,11 +2802,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                             started >
                         maxDuration
                     ) {
-                        window.clearInterval(
+
+                        clearInterval(
                             timer
                         );
 
                         if (status) {
+
                             status.innerHTML = `
                                 <i class="fa-solid fa-clock"></i>
                                 Waktu pembayaran berakhir.
@@ -2350,11 +2846,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                             "paid"
                         ) {
 
-                            window.clearInterval(
+                            clearInterval(
                                 timer
                             );
 
                             if (status) {
+
                                 status.innerHTML = `
                                     <i class="fa-solid fa-circle-check"></i>
                                     Pembayaran berhasil.
@@ -2367,7 +2864,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 "success"
                             );
 
-                            window.setTimeout(
+                            setTimeout(
                                 () => {
                                     window.location.reload();
                                 },
@@ -2379,11 +2876,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                             "expired"
                         ) {
 
-                            window.clearInterval(
+                            clearInterval(
                                 timer
                             );
 
                             if (status) {
+
                                 status.innerHTML = `
                                     <i class="fa-solid fa-circle-xmark"></i>
                                     Pembayaran kedaluwarsa.
@@ -2391,9 +2889,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             }
                         }
 
-                    } catch (_) {
-                        /* Polling failure is intentionally silent. */
-                    }
+                    } catch (_) {}
                 },
                 2500
             );
@@ -2406,18 +2902,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
 
         if (!box) {
+            console.error(
+                "[PasTele Product] #content tidak ditemukan."
+            );
             return;
         }
 
+        box.setAttribute(
+            "aria-busy",
+            "true"
+        );
+
         if (!sbClient) {
 
-            box.innerHTML = `
-                <div class="empty">
-                    Supabase belum dikonfigurasi.
-                </div>
-            `;
-
-            return;
+            throw new Error(
+                "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
+            );
         }
 
         const loaded =
@@ -2433,9 +2933,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
 
         /*
-         * Load engagement setelah produk
-         * sudah tampil supaya UI utama
-         * tidak menunggu komentar/like.
+         * Engagement dimuat setelah produk
+         * berhasil tampil.
          */
 
         await Promise.allSettled([
@@ -2446,7 +2945,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) {
 
         console.error(
-            "PRODUCT LOAD ERROR:",
+            "[PasTele Product] FATAL:",
             error
         );
 
@@ -2469,7 +2968,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <span>
                         ${esc(
                             error?.message ||
-                            "Produk tidak ditemukan."
+                            "Produk tidak dapat dimuat."
                         )}
                     </span>
 
@@ -2477,14 +2976,29 @@ document.addEventListener("DOMContentLoaded", async () => {
             `;
         }
 
+        /*
+         * Komentar tidak boleh ikut membuat
+         * halaman terlihat loading selamanya.
+         */
+
+        if (commentsLoading) {
+            commentsLoading.style.display =
+                "none";
+        }
+
         if (commentList) {
+
             commentList.innerHTML = `
                 <div class="product-comments-empty">
 
                     <i class="fa-solid fa-comments"></i>
 
+                    <strong>
+                        Komentar belum dapat dimuat
+                    </strong>
+
                     <span>
-                        Komentar belum dapat dimuat.
+                        Coba refresh halaman kembali.
                     </span>
 
                 </div>
