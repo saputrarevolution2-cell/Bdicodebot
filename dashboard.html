@@ -422,7 +422,7 @@
             aria-label="Ringkasan performa 7 hari"
           >
             <!-- VIEWS -->
-            <article class="performance-stat performance-stat-views">
+            <button type="button" class="performance-stat performance-stat-views" data-performance="views">
               <div class="performance-stat-top">
                 <span class="performance-stat-icon">
                   <i
@@ -452,9 +452,9 @@
                   0%
                 </span>
               </span>
-            </article>
+            </button>
             <!-- SALES -->
-            <article class="performance-stat performance-stat-sales">
+            <button type="button" class="performance-stat performance-stat-sales" data-performance="sales">
               <div class="performance-stat-top">
                 <span class="performance-stat-icon">
                   <i
@@ -484,9 +484,18 @@
                   0%
                 </span>
               </span>
-            </article>
+            </button>
+            <!-- SHARE -->
+            <button type="button" class="performance-stat performance-stat-share" data-performance="share">
+              <div class="performance-stat-top">
+                <span class="performance-stat-icon"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></span>
+                <span class="performance-stat-label">Share</span>
+              </div>
+              <strong id="performanceShare" class="performance-value">0</strong>
+              <span id="performanceShareTrend" class="trend trend-stable"><i class="fa-solid fa-minus"></i><span>0%</span></span>
+            </button>
             <!-- REVENUE -->
-            <article class="performance-stat performance-stat-revenue">
+            <button type="button" class="performance-stat performance-stat-revenue" data-performance="revenue">
               <div class="performance-stat-top">
                 <span class="performance-stat-icon">
                   <i
@@ -516,7 +525,7 @@
                   0%
                 </span>
               </span>
-            </article>
+            </button>
           </div>
           <!-- ===============================================
                TREND DETAILS
@@ -626,6 +635,39 @@
               </span>
             </div>
           </div>
+        </section>
+      </section>
+      <!-- ===================================================
+           FOLLOWER GEOGRAPHY + REVENUE TREND
+           =================================================== -->
+      <section class="dash-two dashboard-extra-grid">
+        <section class="panel follower-panel" aria-labelledby="followerStatsTitle">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">AUDIENCE</span>
+              <h2 id="followerStatsTitle">Statistik Pengikut</h2>
+              <p>Distribusi negara berdasarkan pengikut yang tercatat</p>
+            </div>
+            <span class="panel-icon"><i class="fa-solid fa-earth-asia"></i></span>
+          </div>
+          <div class="follower-stat-layout">
+            <div class="follower-donut" id="followerDonut"><span id="followerTotal">0</span><small>Pengikut</small></div>
+            <div class="follower-country-list" id="followerCountries">
+              <div class="empty">Memuat statistik pengikut...</div>
+            </div>
+          </div>
+        </section>
+        <section class="panel revenue-trend-panel" aria-labelledby="revenueTrendTitle">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">FINANCE</span>
+              <h2 id="revenueTrendTitle">Pendapatan</h2>
+              <p>Naik turun pendapatan 7 hari terakhir</p>
+            </div>
+            <span class="panel-icon"><i class="fa-solid fa-chart-line"></i></span>
+          </div>
+          <div class="revenue-trend-value"><strong id="revenueTrendValue">Rp0</strong><span id="revenueTrendChange" class="trend trend-stable"><i class="fa-solid fa-minus"></i><span>0%</span></span></div>
+          <div class="revenue-bars" id="revenueBars"></div>
         </section>
       </section>
       <!-- ===================================================
@@ -789,6 +831,7 @@
               </span>
             </div>
           </div>
+          <div class="dash-pagination" id="recentPagination" aria-label="Halaman recent content"></div>
         </section>
         <!-- =================================================
              ACTIVITY
@@ -838,6 +881,7 @@
               </span>
             </div>
           </div>
+          <div class="dash-pagination" id="activityPagination" aria-label="Halaman aktivitas"></div>
         </section>
       </section>
     </div>
@@ -854,7 +898,7 @@
   <!-- =====================================================
        DASHBOARD JS
        ===================================================== -->
-  <script src="js/dashboard.js?v=20260904"></script>
+  <script src="js/dashboard.js?v=20260907"></script>
   <!-- =====================================================
        SITE SHELL
        ===================================================== -->

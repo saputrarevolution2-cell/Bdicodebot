@@ -14,10 +14,10 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
   >
-  <link rel="stylesheet" href="css/app.css?v=20260904">
-  <link rel="stylesheet" href="css/navbar.css?v=20260906-final">
+  <link rel="stylesheet" href="css/app.css?v=20260907">
+  <link rel="stylesheet" href="css/navbar.css?v=20260907">
   <link rel="stylesheet" href="css/footer.css?v=20260905">
-  <link rel="stylesheet" href="css/profile.css?v=20260904">
+  <link rel="stylesheet" href="css/profile.css?v=20260907">
 <link rel="stylesheet" href="css/final-polish.css?v=20260906-final">  <link rel="stylesheet" href="css/saas-final.css?v=20260906-final2">
 </head>
 <body class="app-page">
@@ -27,37 +27,24 @@
       <div class="container profile-page">
         <!-- PROFILE HEADER -->
         <section class="profile-hero">
-          <div class="profile-avatar" id="avatar">
-            P
-          </div>
+          <div class="profile-avatar" id="avatar">P</div>
           <div class="profile-heading">
-            <span class="profile-eyebrow">
-              <i class="fa-solid fa-user-circle"></i>
-              ACCOUNT PROFILE
-            </span>
+            <span class="profile-eyebrow"><i class="fa-solid fa-user-circle"></i> PROFILE</span>
             <h1 id="name">Profile</h1>
-            <p id="bio" class="muted">
-              Kelola identitas dan kontenmu.
-            </p>
+            <p id="bio" class="muted">Kelola identitasmu.</p>
+            <div class="profile-handle" id="handle">@username</div>
           </div>
           <div class="profile-actions">
-            <a
-              class="btn"
-              href="settings.html"
-            >
-              <i class="fa-solid fa-gear"></i>
-              Settings
-            </a>
-            <a
-              class="btn primary"
-              id="adminBtn"
-              href="admin/index.html"
-              hidden
-            >
-              <i class="fa-solid fa-shield-halved"></i>
-              Admin Panel
-            </a>
+            <button class="btn primary" id="followBtn" hidden><i class="fa-solid fa-user-plus"></i><span>Ikuti</span></button>
+            <a class="btn" href="settings.html" id="settingsBtn"><i class="fa-solid fa-gear"></i> Settings</a>
+            <a class="btn primary" id="adminBtn" href="admin/index.html" hidden><i class="fa-solid fa-shield-halved"></i> Admin Panel</a>
           </div>
+        </section>
+        <section class="profile-social-stats" id="socialStats">
+          <div><strong id="followersCount">0</strong><span>Pengikut</span></div>
+          <div><strong id="followingCount">0</strong><span>Mengikuti</span></div>
+          <div><strong id="totalLikes">0</strong><span>Total Like</span></div>
+          <div><strong id="totalContent">0</strong><span>Konten</span></div>
         </section>
         <!-- PROFILE INFORMATION -->
         <div class="profile-grid">
@@ -104,6 +91,18 @@
             </div>
           </section>
         </div>
+        <!-- PUBLIC CONTENT -->
+        <section class="profile-section public-content-section" id="publicContentSection">
+          <div class="section-heading">
+            <div class="section-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <div><h2>Konten</h2><p>Link, Code, Channel & Group creator ini.</p></div>
+          </div>
+          <div class="profile-content-tabs" id="profileContentTabs">
+            <button class="active" data-type="all">Semua</button><button data-type="link">Link</button><button data-type="code">Code</button><button data-type="channel">Channel</button><button data-type="group">Group</button>
+          </div>
+          <div class="profile-content-list" id="profileContentList"><div class="profile-loading"><i class="fa-solid fa-circle-notch fa-spin"></i><span>Memuat konten...</span></div></div>
+          <div class="profile-pagination" id="profilePagination"></div>
+        </section>
         <!-- PASSWORD -->
         <section class="profile-section password-section">
           <div class="section-heading">
