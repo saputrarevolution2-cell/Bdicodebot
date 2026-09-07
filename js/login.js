@@ -426,7 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (
       !siteKey ||
-      siteKey === "PASTE_TURNSTILE_SITE_KEY"
+      siteKey === "0x4AAAAAAErjLed781i5lbu8"
     ) {
 
       console.error(
