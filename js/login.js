@@ -18,22 +18,15 @@
         ↓
    Auth.login(email, password, captchaToken)
         ↓
+   Supabase signInWithPassword()
+        ↓
    Dashboard
 
    IMPORTANT:
-   - Auth.lookup() tetap digunakan
-   - Auth.login() tetap digunakan
-   - Auth.google() tetap digunakan
-   - Supabase reset password tetap digunakan
-   - CAPTCHA token dikirim ke Auth.login()
-   - auth.js wajib meneruskan captchaToken ke:
-       sb.auth.signInWithPassword({
-         email,
-         password,
-         options: {
-           captchaToken
-         }
-       })
+   - Step 1 TIDAK membutuhkan Turnstile
+   - Turnstile hanya aktif di Step 2
+   - Explicit Turnstile rendering
+   - Token tidak pernah ditampilkan di console
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -43,24 +36,44 @@ document.addEventListener("DOMContentLoaded", () => {
      ELEMENTS
      ======================================================= */
 
-  const step1 = document.getElementById("loginStep1");
-  const step2 = document.getElementById("loginStep2");
+  const step1 =
+    document.getElementById("loginStep1");
 
-  const identifier = document.getElementById("identifier");
-  const identifierWrap = document.getElementById("identifierWrap");
-  const identifierStatus = document.getElementById("identifierStatus");
-  const loginVerifiedState = document.getElementById("loginVerifiedState");
+  const step2 =
+    document.getElementById("loginStep2");
 
-  const continueLogin = document.getElementById("continueLogin");
+  const identifier =
+    document.getElementById("identifier");
 
-  const password = document.getElementById("password");
-  const toggle = document.getElementById("toggle");
+  const identifierWrap =
+    document.getElementById("identifierWrap");
 
-  const google = document.getElementById("google");
-  const forgot = document.getElementById("forgot");
-  const changeAccount = document.getElementById("changeAccount");
+  const identifierStatus =
+    document.getElementById("identifierStatus");
 
-  const toastElement = document.getElementById("toast");
+  const loginVerifiedState =
+    document.getElementById("loginVerifiedState");
+
+  const continueLogin =
+    document.getElementById("continueLogin");
+
+  const password =
+    document.getElementById("password");
+
+  const toggle =
+    document.getElementById("toggle");
+
+  const google =
+    document.getElementById("google");
+
+  const forgot =
+    document.getElementById("forgot");
+
+  const changeAccount =
+    document.getElementById("changeAccount");
+
+  const toastElement =
+    document.getElementById("toast");
 
   const securityStatus =
     document.getElementById("loginSecurityStatus");
@@ -104,29 +117,6 @@ document.addEventListener("DOMContentLoaded", () => {
      TURNSTILE SITE KEY
      ======================================================= */
 
-  /*
-   * Ambil dari data-sitekey HTML jika tersedia.
-   *
-   * HTML yang direkomendasikan:
-   *
-   * <div id="loginTurnstile"></div>
-   *
-   * lalu tambahkan:
-   *
-   * data-sitekey="SITE_KEY_KAMU"
-   *
-   * pada container.
-   *
-   * Contoh:
-   *
-   * <div
-   *   id="loginTurnstile"
-   *   data-sitekey="0x4AAAA..."
-   * ></div>
-   *
-   * Jangan pernah masukkan SECRET KEY di frontend.
-   */
-
   const TURNSTILE_SITE_KEY =
     String(
       turnstileContainer?.dataset?.sitekey ||
@@ -136,28 +126,73 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =======================================================
+     HELPERS
+     ======================================================= */
+
+  function getLoginButton() {
+    return (
+      step2?.querySelector(
+        'button[type="submit"]'
+      ) || null
+    );
+  }
+
+
+  function setLoginButtonEnabled(enabled) {
+    const button =
+      getLoginButton();
+
+    if (!button) {
+      return;
+    }
+
+    if (loginSubmitting) {
+      return;
+    }
+
+    button.disabled =
+      !Boolean(enabled);
+
+    button.setAttribute(
+      "aria-disabled",
+      enabled ? "false" : "true"
+    );
+  }
+
+
+  /* =======================================================
      TOAST
      ======================================================= */
 
-  function showToast(message, type = "error") {
+  function showToast(
+    message,
+    type = "error"
+  ) {
     const el =
       toastElement ||
       document.getElementById("toast");
 
     if (!el) {
-      console.log(`[${type}] ${message}`);
+      console.log(
+        `[${type}] ${message}`
+      );
+
       return;
     }
 
-    clearTimeout(window.__loginToastTimer);
+    clearTimeout(
+      window.__loginToastTimer
+    );
 
-    el.textContent = String(message || "");
+    el.textContent =
+      String(message || "");
 
     el.className = "";
 
     void el.offsetWidth;
 
-    el.className = `show ${type}`;
+    el.className =
+      `show ${type}`;
 
     window.__loginToastTimer =
       setTimeout(() => {
@@ -169,7 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showError(message) {
     showToast(
-      message || "Terjadi kesalahan.",
+      message ||
+      "Terjadi kesalahan.",
       "error"
     );
   }
@@ -177,7 +213,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showSuccess(message) {
     showToast(
-      message || "Berhasil.",
+      message ||
+      "Berhasil.",
       "success"
     );
   }
@@ -212,6 +249,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loading) {
       button.disabled = true;
 
+      button.setAttribute(
+        "aria-disabled",
+        "true"
+      );
+
       button.dataset.originalHtml =
         button.innerHTML;
 
@@ -222,16 +264,23 @@ document.addEventListener("DOMContentLoaded", () => {
         ></i>
         <span>${loadingText}</span>
       `;
-    } else {
-      button.disabled = false;
 
-      button.innerHTML =
-        originalHTML ||
-        button.dataset.originalHtml ||
-        button.innerHTML;
-
-      delete button.dataset.originalHtml;
+      return;
     }
+
+    button.disabled = false;
+
+    button.setAttribute(
+      "aria-disabled",
+      "false"
+    );
+
+    button.innerHTML =
+      originalHTML ||
+      button.dataset.originalHtml ||
+      button.innerHTML;
+
+    delete button.dataset.originalHtml;
   }
 
 
@@ -255,7 +304,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ></i>
 
         <span>
-          ${message || "Verifikasi keamanan berhasil."}
+          ${
+            message ||
+            "Verifikasi keamanan berhasil."
+          }
         </span>
       `;
 
@@ -273,7 +325,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ></i>
 
       <span>
-        ${message || "Selesaikan verifikasi keamanan sebelum masuk."}
+        ${
+          message ||
+          "Selesaikan verifikasi keamanan sebelum masuk."
+        }
       </span>
     `;
 
@@ -284,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =======================================================
-     WAIT TURNSTILE
+     WAIT TURNSTILE API
      ======================================================= */
 
   function waitForTurnstile(
@@ -293,7 +348,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return new Promise((resolve) => {
       if (
         window.turnstile &&
-        typeof window.turnstile.render === "function"
+        typeof window.turnstile.render ===
+          "function"
       ) {
         resolve(true);
         return;
@@ -306,7 +362,8 @@ document.addEventListener("DOMContentLoaded", () => {
         setInterval(() => {
           if (
             window.turnstile &&
-            typeof window.turnstile.render === "function"
+            typeof window.turnstile.render ===
+              "function"
           ) {
             clearInterval(timer);
             resolve(true);
@@ -314,7 +371,8 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           if (
-            Date.now() - started >= timeout
+            Date.now() - started >=
+            timeout
           ) {
             clearInterval(timer);
             resolve(false);
@@ -325,31 +383,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =======================================================
-     TURNSTILE CALLBACK
+     TURNSTILE SUCCESS
      ======================================================= */
 
-  function onTurnstileSuccess(token) {
+  function onTurnstileSuccess(
+    token
+  ) {
     turnstileToken =
       String(token || "").trim();
 
     window.__pasTeleTurnstileToken =
       turnstileToken;
 
+    const verified =
+      Boolean(turnstileToken);
+
     updateSecurityStatus(
-      Boolean(turnstileToken),
-      "Verifikasi keamanan berhasil."
+      verified,
+      verified
+        ? "Verifikasi keamanan berhasil."
+        : "Selesaikan verifikasi keamanan sebelum masuk."
+    );
+
+    /*
+     * IMPORTANT:
+     * Tombol Masuk baru aktif setelah
+     * Turnstile menghasilkan token.
+     */
+    setLoginButtonEnabled(
+      verified
     );
   }
 
 
+  /* =======================================================
+     TURNSTILE EXPIRED
+     ======================================================= */
+
   function onTurnstileExpired() {
     turnstileToken = "";
 
-    window.__pasTeleTurnstileToken = "";
+    window.__pasTeleTurnstileToken =
+      "";
 
     updateSecurityStatus(
       false,
       "Verifikasi kedaluwarsa. Silakan verifikasi kembali."
+    );
+
+    setLoginButtonEnabled(
+      false
     );
 
     showError(
@@ -358,14 +441,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+  /* =======================================================
+     TURNSTILE TIMEOUT
+     ======================================================= */
+
   function onTurnstileTimeout() {
     turnstileToken = "";
 
-    window.__pasTeleTurnstileToken = "";
+    window.__pasTeleTurnstileToken =
+      "";
 
     updateSecurityStatus(
       false,
       "Verifikasi timeout. Silakan coba lagi."
+    );
+
+    setLoginButtonEnabled(
+      false
     );
 
     showError(
@@ -374,14 +466,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function onTurnstileError(errorCode) {
+  /* =======================================================
+     TURNSTILE ERROR
+     ======================================================= */
+
+  function onTurnstileError(
+    errorCode
+  ) {
     turnstileToken = "";
 
-    window.__pasTeleTurnstileToken = "";
+    window.__pasTeleTurnstileToken =
+      "";
 
     updateSecurityStatus(
       false,
       "Verifikasi keamanan gagal."
+    );
+
+    setLoginButtonEnabled(
+      false
     );
 
     console.error(
@@ -409,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /*
-     * Jangan render ulang.
+     * Jangan render dua kali.
      */
 
     if (
@@ -418,8 +521,12 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     }
 
+    /*
+     * Hindari render bersamaan.
+     */
+
     if (turnstileRendering) {
-      return true;
+      return false;
     }
 
     /*
@@ -436,6 +543,10 @@ document.addEventListener("DOMContentLoaded", () => {
         "Cloudflare Turnstile belum dikonfigurasi."
       );
 
+      setLoginButtonEnabled(
+        false
+      );
+
       showError(
         "Cloudflare Turnstile belum dikonfigurasi."
       );
@@ -443,9 +554,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return false;
     }
 
-    turnstileRendering = true;
+    turnstileRendering =
+      true;
 
     try {
+      /*
+       * Tunggu API Cloudflare selesai
+       * dimuat oleh browser.
+       */
+
       const ready =
         await waitForTurnstile();
 
@@ -459,6 +576,10 @@ document.addEventListener("DOMContentLoaded", () => {
           "Verifikasi keamanan gagal dimuat."
         );
 
+        setLoginButtonEnabled(
+          false
+        );
+
         showError(
           "Cloudflare Turnstile gagal dimuat. Refresh halaman dan coba lagi."
         );
@@ -467,19 +588,36 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       /*
-       * Pastikan container bersih.
+       * Pastikan tombol tetap disabled
+       * sebelum callback success.
        */
 
-      turnstileContainer.innerHTML = "";
+      setLoginButtonEnabled(
+        false
+      );
+
+      /*
+       * Container harus kosong karena
+       * menggunakan explicit rendering.
+       */
+
+      turnstileContainer.innerHTML =
+        "";
+
+      /*
+       * Reset token lama.
+       */
+
+      turnstileToken = "";
+
+      window.__pasTeleTurnstileToken =
+        "";
 
       /*
        * Explicit rendering.
-       *
-       * Ini lebih stabil karena Step 2
-       * awalnya hidden.
        */
 
-      turnstileWidgetId =
+      const widgetId =
         window.turnstile.render(
           turnstileContainer,
           {
@@ -512,14 +650,33 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         );
 
+      /*
+       * Cloudflare biasanya mengembalikan
+       * widget ID berupa string.
+       */
+
+      if (
+        widgetId === null ||
+        widgetId === undefined
+      ) {
+        throw new Error(
+          "Turnstile widget ID tidak tersedia."
+        );
+      }
+
+      turnstileWidgetId =
+        widgetId;
+
       updateSecurityStatus(
+        false,
+        "Selesaikan verifikasi keamanan sebelum masuk."
+      );
+
+      setLoginButtonEnabled(
         false
       );
 
-      return (
-        turnstileWidgetId !== null &&
-        turnstileWidgetId !== undefined
-      );
+      return true;
 
     } catch (error) {
       console.error(
@@ -527,21 +684,33 @@ document.addEventListener("DOMContentLoaded", () => {
         error
       );
 
-      turnstileWidgetId = null;
+      turnstileWidgetId =
+        null;
+
+      turnstileToken =
+        "";
+
+      window.__pasTeleTurnstileToken =
+        "";
 
       updateSecurityStatus(
         false,
         "Gagal memuat verifikasi keamanan."
       );
 
+      setLoginButtonEnabled(
+        false
+      );
+
       showError(
-        "Gagal memuat verifikasi keamanan."
+        "Gagal memuat verifikasi keamanan. Silakan refresh halaman."
       );
 
       return false;
 
     } finally {
-      turnstileRendering = false;
+      turnstileRendering =
+        false;
     }
   }
 
@@ -552,15 +721,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getTurnstileToken() {
     /*
-     * Prioritas:
      * 1. Local state
-     * 2. Global state
-     * 3. Hidden textarea
      */
 
     if (turnstileToken) {
       return turnstileToken;
     }
+
+    /*
+     * 2. Global state
+     */
 
     const globalToken =
       String(
@@ -574,6 +744,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return turnstileToken;
     }
+
+    /*
+     * 3. Textarea di widget
+     */
 
     const textarea =
       turnstileContainer?.querySelector(
@@ -593,6 +767,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return turnstileToken;
     }
+
+    /*
+     * 4. Fallback global textarea.
+     */
 
     const fallbackTextarea =
       document.querySelector(
@@ -622,10 +800,24 @@ document.addEventListener("DOMContentLoaded", () => {
      ======================================================= */
 
   function resetTurnstile() {
-    turnstileToken = "";
+    turnstileToken =
+      "";
 
     window.__pasTeleTurnstileToken =
       "";
+
+    /*
+     * Tombol login harus kembali
+     * disabled setelah reset.
+     */
+
+    setLoginButtonEnabled(
+      false
+    );
+
+    /*
+     * Reset widget Cloudflare.
+     */
 
     if (
       window.turnstile &&
@@ -644,7 +836,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateSecurityStatus(
-      false
+      false,
+      "Selesaikan verifikasi keamanan sebelum masuk."
     );
   }
 
@@ -658,6 +851,10 @@ document.addEventListener("DOMContentLoaded", () => {
       getTurnstileToken();
 
     if (!token) {
+      setLoginButtonEnabled(
+        false
+      );
+
       showError(
         "Selesaikan verifikasi Cloudflare terlebih dahulu."
       );
@@ -683,9 +880,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    continueLogin.hidden = false;
+    continueLogin.hidden =
+      false;
 
-    continueLogin.disabled = false;
+    continueLogin.disabled =
+      false;
 
     continueLogin.classList.remove(
       "login-continue-hidden"
@@ -695,7 +894,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "aria-hidden"
     );
 
-    continueLogin.style.display = "";
+    continueLogin.style.display =
+      "";
   }
 
 
@@ -704,9 +904,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    continueLogin.hidden = true;
+    continueLogin.hidden =
+      true;
 
-    continueLogin.disabled = true;
+    continueLogin.disabled =
+      true;
 
     continueLogin.classList.add(
       "login-continue-hidden"
@@ -730,14 +932,16 @@ document.addEventListener("DOMContentLoaded", () => {
     clearValue = true
   ) {
     if (identifier) {
-      identifier.disabled = false;
+      identifier.disabled =
+        false;
 
       identifier.removeAttribute(
         "aria-readonly"
       );
 
       if (clearValue) {
-        identifier.value = "";
+        identifier.value =
+          "";
       }
     }
 
@@ -762,8 +966,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function resetPasswordUI() {
     if (password) {
-      password.value = "";
-      password.type = "password";
+      password.value =
+        "";
+
+      password.type =
+        "password";
     }
 
     if (toggle) {
@@ -790,11 +997,17 @@ document.addEventListener("DOMContentLoaded", () => {
   function showInitialState(
     clearIdentifier = true
   ) {
-    currentEmail = "";
-    currentUsername = "";
+    currentEmail =
+      "";
 
-    accountFound = false;
-    loginSubmitting = false;
+    currentUsername =
+      "";
+
+    accountFound =
+      false;
+
+    loginSubmitting =
+      false;
 
     resetIdentifierUI(
       clearIdentifier
@@ -815,7 +1028,8 @@ document.addEventListener("DOMContentLoaded", () => {
     resetTurnstile();
 
     updateSecurityStatus(
-      false
+      false,
+      "Selesaikan verifikasi keamanan sebelum masuk."
     );
   }
 
@@ -872,7 +1086,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     hideContinueButton();
 
-    accountFound = true;
+    accountFound =
+      true;
   }
 
 
@@ -930,12 +1145,8 @@ document.addEventListener("DOMContentLoaded", () => {
         /*
          * IMPORTANT:
          *
-         * Step 1 TIDAK lagi membutuhkan
-         * Turnstile login.
-         *
-         * Turnstile hanya digunakan pada
-         * password login agar token dikirim
-         * ke Supabase signInWithPassword().
+         * Step 1 TIDAK menggunakan
+         * Turnstile.
          */
 
         const found =
@@ -956,10 +1167,14 @@ document.addEventListener("DOMContentLoaded", () => {
           !found ||
           !found.auth_email
         ) {
-          currentEmail = "";
-          currentUsername = "";
+          currentEmail =
+            "";
 
-          accountFound = false;
+          currentUsername =
+            "";
+
+          accountFound =
+            false;
 
           step2?.classList.add(
             "hidden"
@@ -986,12 +1201,17 @@ document.addEventListener("DOMContentLoaded", () => {
           found.is_banned === true ||
           String(
             found.status || ""
-          ).toLowerCase() === "banned"
+          ).toLowerCase() ===
+            "banned"
         ) {
-          currentEmail = "";
-          currentUsername = "";
+          currentEmail =
+            "";
 
-          accountFound = false;
+          currentUsername =
+            "";
+
+          accountFound =
+            false;
 
           step2?.classList.add(
             "hidden"
@@ -1017,13 +1237,16 @@ document.addEventListener("DOMContentLoaded", () => {
         currentEmail =
           String(
             found.auth_email
-          ).trim()
-          .toLowerCase();
+          )
+            .trim()
+            .toLowerCase();
 
         if (!currentEmail) {
-          currentEmail = "";
+          currentEmail =
+            "";
 
-          accountFound = false;
+          accountFound =
+            false;
 
           resetIdentifierUI(
             false
@@ -1059,19 +1282,32 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         /*
-         * Turnstile baru dirender
-         * setelah Step 2 visible.
+         * Password login belum boleh
+         * dilakukan sebelum Turnstile.
          */
+
+        setLoginButtonEnabled(
+          false
+        );
 
         updateSecurityStatus(
           false,
           "Selesaikan verifikasi keamanan sebelum masuk."
         );
 
+        /*
+         * Render Turnstile setelah Step 2
+         * sudah terlihat.
+         */
+
         const turnstileReady =
           await renderTurnstile();
 
         if (!turnstileReady) {
+          setLoginButtonEnabled(
+            false
+          );
+
           showError(
             "Verifikasi keamanan belum siap. Silakan refresh halaman."
           );
@@ -1088,7 +1324,8 @@ document.addEventListener("DOMContentLoaded", () => {
          */
 
         if (password) {
-          password.value = "";
+          password.value =
+            "";
 
           setTimeout(() => {
             password.focus();
@@ -1101,10 +1338,14 @@ document.addEventListener("DOMContentLoaded", () => {
           error
         );
 
-        currentEmail = "";
-        currentUsername = "";
+        currentEmail =
+          "";
 
-        accountFound = false;
+        currentUsername =
+          "";
+
+        accountFound =
+          false;
 
         resetIdentifierUI(
           false
@@ -1203,15 +1444,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const button =
-        step2.querySelector(
-          "button[type='submit']"
-        );
+        getLoginButton();
 
       if (!button) {
         return;
       }
 
-      loginSubmitting = true;
+      loginSubmitting =
+        true;
 
       const originalHTML =
         button.innerHTML;
@@ -1229,8 +1469,9 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         /*
-         * Pastikan token terbaru tersedia
-         * secara global.
+         * Token tersedia untuk Auth.login().
+         *
+         * Jangan pernah console.log(token).
          */
 
         window.__pasTeleTurnstileToken =
@@ -1238,9 +1479,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /*
          * IMPORTANT:
-         *
-         * Auth.login() harus menerima
-         * parameter ketiga captchaToken.
          *
          * Auth.login(
          *   email,
@@ -1264,8 +1502,9 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         /*
-         * Sedikit delay agar toast
-         * sempat terlihat.
+         * Jangan reset Turnstile setelah
+         * login berhasil karena halaman
+         * akan pindah.
          */
 
         setTimeout(() => {
@@ -1286,23 +1525,42 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         /*
-         * Turnstile token jangan dipakai
-         * ulang setelah request login.
-         *
-         * Reset agar mendapatkan token baru.
+         * Token Turnstile jangan dipakai
+         * kembali setelah request gagal.
          */
 
         resetTurnstile();
 
-        setButtonLoading(
-          button,
-          false,
-          "",
-          originalHTML
+        /*
+         * Kembalikan tombol tetapi tetap
+         * disabled karena token sudah reset.
+         */
+
+        button.innerHTML =
+          originalHTML;
+
+        button.disabled =
+          true;
+
+        button.setAttribute(
+          "aria-disabled",
+          "true"
         );
 
       } finally {
-        loginSubmitting = false;
+        loginSubmitting =
+          false;
+
+        /*
+         * Kalau login gagal, tetap disabled
+         * sampai Turnstile diverifikasi ulang.
+         */
+
+        if (!turnstileToken) {
+          setLoginButtonEnabled(
+            false
+          );
+        }
       }
     }
   );
@@ -1351,11 +1609,6 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       try {
-        /*
-         * Google OAuth tetap menggunakan
-         * Auth.google().
-         */
-
         await Auth.google();
 
       } catch (error) {
@@ -1395,8 +1648,8 @@ document.addEventListener("DOMContentLoaded", () => {
         currentEmail;
 
       /*
-       * Kalau user sudah lookup,
-       * gunakan email yang sudah ditemukan.
+       * Jika akun sudah ditemukan,
+       * gunakan email tersebut.
        */
 
       if (!email) {
@@ -1496,10 +1749,6 @@ document.addEventListener("DOMContentLoaded", () => {
           Mengirim...
         `;
 
-        /*
-         * Supabase reset password.
-         */
-
         const {
           error
         } =
@@ -1592,30 +1841,42 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   updateSecurityStatus(
+    false,
+    "Selesaikan verifikasi keamanan sebelum masuk."
+  );
+
+  /*
+   * Pastikan tombol Masuk disabled
+   * saat halaman pertama kali dibuka.
+   */
+
+  setLoginButtonEnabled(
     false
   );
 
 
   /* =======================================================
-     DEBUG — DEVELOPMENT ONLY
+     DEBUG — NO TOKEN
      ======================================================= */
-
-  /*
-   * Jangan tampilkan token.
-   * Hanya status konfigurasi.
-   */
 
   console.log(
     "[PasTele] Login initialized.",
     {
-      supabase: Boolean(window.sb),
-      turnstileContainer: Boolean(
-        turnstileContainer
-      ),
+      supabase:
+        Boolean(window.sb),
+
+      turnstileContainer:
+        Boolean(
+          turnstileContainer
+        ),
+
       turnstileSiteKeyConfigured:
         Boolean(
           TURNSTILE_SITE_KEY
-        )
+        ),
+
+      turnstileExplicit:
+        true
     }
   );
 });
