@@ -1,11 +1,12 @@
 /* =========================================================
    PasTele — REGISTER PAGE
-   Canonical / Clean / Responsive
-   Turnstile-safe / Dark-mode-safe
+   FINAL PREMIUM AUTH UI
+   Android + Desktop
+   Clean / Responsive / Dark Mode / Turnstile Safe
    ========================================================= */
 
 /* =========================================================
-   THEME VARIABLES
+   THEME
    ========================================================= */
 
 html,
@@ -13,27 +14,27 @@ html[data-theme="light"],
 html:not([data-theme]) {
   --register-bg:
     radial-gradient(
-      circle at 12% 8%,
-      rgba(34, 158, 217, 0.14),
+      circle at 10% 5%,
+      rgba(34, 158, 217, .13),
       transparent 34%
     ),
     radial-gradient(
-      circle at 88% 92%,
-      rgba(111, 86, 210, 0.10),
-      transparent 32%
+      circle at 90% 95%,
+      rgba(111, 86, 210, .09),
+      transparent 34%
     ),
     #f5f8fb;
 
-  --register-card: rgba(255, 255, 255, 0.98);
+  --register-card: rgba(255, 255, 255, .98);
 
   --register-text: #172532;
   --register-heading: #10202c;
   --register-muted: #718391;
 
   --register-border: #dce7ee;
-  --register-border-soft: #e8eef2;
+  --register-border-hover: #bfd1dc;
 
-  --register-input: #ffffff;
+  --register-input: #fff;
   --register-input-text: #172532;
   --register-placeholder: #9aaab5;
 
@@ -41,13 +42,13 @@ html:not([data-theme]) {
   --register-primary-dark: #1688bf;
 
   --register-focus:
-    0 0 0 4px rgba(34, 158, 217, 0.12);
+    0 0 0 4px rgba(34, 158, 217, .12);
 
   --register-primary-shadow:
-    0 12px 28px rgba(34, 158, 217, 0.22);
+    0 12px 28px rgba(34, 158, 217, .22);
 
   --register-card-shadow:
-    0 24px 70px rgba(21, 48, 67, 0.12);
+    0 24px 70px rgba(21, 48, 67, .12);
 
   --register-error-bg: #fff1f1;
   --register-error-border: #ffd5d5;
@@ -60,16 +61,14 @@ html:not([data-theme]) {
   --register-success: #159447;
   --register-success-bg: #effaf3;
 
-  --register-divider: #e4ebf0;
-
-  --register-google-bg: #ffffff;
+  --register-google-bg: #fff;
   --register-google-text: #243747;
 
   --register-progress-bg: #e7eef3;
 }
 
 /* =========================================================
-   DARK THEME
+   DARK MODE
    ========================================================= */
 
 html[data-theme="dark"],
@@ -77,25 +76,25 @@ html.theme-dark,
 body.theme-dark {
   --register-bg:
     radial-gradient(
-      circle at 12% 8%,
-      rgba(34, 158, 217, 0.16),
+      circle at 10% 5%,
+      rgba(34, 158, 217, .16),
       transparent 34%
     ),
     radial-gradient(
-      circle at 88% 92%,
-      rgba(111, 86, 210, 0.14),
-      transparent 32%
+      circle at 90% 95%,
+      rgba(111, 86, 210, .13),
+      transparent 34%
     ),
     #07131f;
 
-  --register-card: rgba(13, 27, 40, 0.98);
+  --register-card: rgba(13, 27, 40, .98);
 
   --register-text: #e6f1f7;
   --register-heading: #f4f9fc;
   --register-muted: #91a8b9;
 
   --register-border: #263d4d;
-  --register-border-soft: #203543;
+  --register-border-hover: #385466;
 
   --register-input: #0a1723;
   --register-input-text: #e6f1f7;
@@ -105,26 +104,24 @@ body.theme-dark {
   --register-primary-dark: #35aee4;
 
   --register-focus:
-    0 0 0 4px rgba(34, 158, 217, 0.16);
+    0 0 0 4px rgba(34, 158, 217, .16);
 
   --register-primary-shadow:
-    0 14px 30px rgba(34, 158, 217, 0.18);
+    0 14px 30px rgba(34, 158, 217, .18);
 
   --register-card-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.40);
+    0 30px 80px rgba(0, 0, 0, .40);
 
-  --register-error-bg: rgba(190, 48, 48, 0.12);
-  --register-error-border: rgba(255, 110, 110, 0.22);
+  --register-error-bg: rgba(190, 48, 48, .12);
+  --register-error-border: rgba(255, 110, 110, .22);
   --register-error-text: #ff9b9b;
 
-  --register-notice-bg: rgba(34, 158, 217, 0.10);
-  --register-notice-border: rgba(34, 158, 217, 0.20);
+  --register-notice-bg: rgba(34, 158, 217, .10);
+  --register-notice-border: rgba(34, 158, 217, .20);
   --register-notice-text: #8fd9f5;
 
   --register-success: #5ee69a;
-  --register-success-bg: rgba(21, 148, 71, 0.10);
-
-  --register-divider: #29404f;
+  --register-success-bg: rgba(21, 148, 71, .10);
 
   --register-google-bg: #102332;
   --register-google-text: #dbeaf3;
@@ -133,7 +130,7 @@ body.theme-dark {
 }
 
 /* =========================================================
-   PAGE FOUNDATION
+   FOUNDATION
    ========================================================= */
 
 html {
@@ -143,12 +140,16 @@ html {
   text-size-adjust: 100%;
 }
 
+html,
+body {
+  width: 100%;
+}
+
 body {
   min-height: 100%;
   margin: 0 !important;
-  min-width: 0;
   overflow-x: hidden;
-  background: var(--register-bg);
+  background: var(--register-bg) !important;
   color: var(--register-text);
 }
 
@@ -169,7 +170,9 @@ body {
 
 .auth-shell {
   position: relative;
+
   width: 100%;
+  min-width: 0;
   min-height: 100vh;
   min-height: 100dvh;
 
@@ -179,9 +182,9 @@ body {
 
   padding:
     max(32px, env(safe-area-inset-top))
-    max(16px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-right))
     max(32px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+    max(20px, env(safe-area-inset-left));
 
   background: var(--register-bg);
 
@@ -192,7 +195,7 @@ body {
 }
 
 /* =========================================================
-   DECORATIVE BACKGROUND
+   BACKGROUND DECORATION
    ========================================================= */
 
 .auth-shell::before {
@@ -200,13 +203,13 @@ body {
 
   position: absolute;
 
-  width: 520px;
-  height: 520px;
+  width: 620px;
+  height: 620px;
 
-  top: -260px;
-  right: -220px;
+  top: -330px;
+  right: -280px;
 
-  border: 1px solid rgba(34, 158, 217, 0.08);
+  border: 1px solid rgba(34, 158, 217, .08);
   border-radius: 50%;
 
   pointer-events: none;
@@ -218,13 +221,13 @@ body {
 
   position: absolute;
 
-  width: 360px;
-  height: 360px;
+  width: 420px;
+  height: 420px;
 
-  bottom: -220px;
-  left: -180px;
+  bottom: -260px;
+  left: -220px;
 
-  border: 1px solid rgba(111, 86, 210, 0.07);
+  border: 1px solid rgba(111, 86, 210, .07);
   border-radius: 50%;
 
   pointer-events: none;
@@ -232,19 +235,20 @@ body {
 }
 
 /* =========================================================
-   AUTH CARD
+   MAIN CARD
    ========================================================= */
 
 .auth-shell > .auth-card {
   position: relative;
 
-  width: min(480px, 100%);
-  max-width: 480px;
+  width: min(100%, 500px);
+  max-width: 500px;
 
-  margin: 4vh auto 0;
-  padding: 34px;
+  margin: 28px auto 28px;
 
-  border-radius: 26px !important;
+  padding: 38px;
+
+  border-radius: 28px !important;
 
   background: var(--register-card) !important;
   border: 1px solid var(--register-border) !important;
@@ -253,14 +257,14 @@ body {
 
   box-shadow: var(--register-card-shadow);
 
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 
   z-index: 1;
 }
 
 /* =========================================================
-   CARD TOP ACCENT
+   TOP ACCENT
    ========================================================= */
 
 .auth-shell > .auth-card::before {
@@ -269,16 +273,21 @@ body {
   position: absolute;
 
   top: 0;
-  left: 22px;
-  right: 22px;
+  left: 24px;
+  right: 24px;
 
   height: 3px;
 
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 10px 10px;
 
-  background: var(--register-primary);
+  background:
+    linear-gradient(
+      90deg,
+      var(--register-primary),
+      #1688bf
+    );
 
-  opacity: 0.9;
+  opacity: .9;
 
   pointer-events: none;
 }
@@ -288,30 +297,30 @@ body {
    ========================================================= */
 
 .auth-card .auth-logo {
-  width: 64px;
-  height: 64px;
+  width: 68px;
+  height: 68px;
 
   display: grid;
   place-items: center;
 
   margin: 0 auto;
 
-  border-radius: 19px;
+  border-radius: 20px;
 
   background:
     linear-gradient(
       135deg,
       var(--register-primary),
-      #1688bf
+      var(--register-primary-dark)
     );
 
-  color: #ffffff;
+  color: #fff;
 
-  font-size: 26px;
+  font-size: 27px;
   line-height: 1;
 
   box-shadow:
-    0 12px 30px rgba(34, 158, 217, 0.26);
+    0 14px 32px rgba(34, 158, 217, .25);
 
   user-select: none;
 }
@@ -321,31 +330,36 @@ body {
 }
 
 /* =========================================================
-   TITLE / DESCRIPTION
+   TITLE
    ========================================================= */
 
 .auth-card h1 {
-  margin: 18px 0 6px;
+  margin: 20px 0 7px;
 
   color: var(--register-heading);
 
-  font-size: 29px;
-  line-height: 1.2;
+  font-size: 30px;
+  line-height: 1.18;
   font-weight: 800;
 
   text-align: center;
 
-  letter-spacing: -0.025em;
+  letter-spacing: -.025em;
 }
 
-.auth-card > p.muted {
-  margin: 0 auto 22px;
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
 
-  max-width: 390px;
+.auth-card > p.muted {
+  width: 100%;
+  max-width: 410px;
+
+  margin: 0 auto 24px;
 
   color: var(--register-muted) !important;
 
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
 
   text-align: center;
@@ -360,10 +374,10 @@ body {
 .auth-card .auth-notice {
   width: 100%;
 
-  margin: 0 0 14px;
-  padding: 12px 13px;
+  margin: 0 0 15px;
+  padding: 12px 14px;
 
-  border-radius: 12px;
+  border-radius: 13px;
 
   font-size: 13px;
   line-height: 1.5;
@@ -371,18 +385,14 @@ body {
 
 .auth-card .auth-error {
   color: var(--register-error-text);
-
   background: var(--register-error-bg);
-
   border: 1px solid var(--register-error-border);
 }
 
 .auth-card .notice,
 .auth-card .auth-notice {
   color: var(--register-notice-text);
-
   background: var(--register-notice-bg);
-
   border: 1px solid var(--register-notice-border);
 }
 
@@ -395,14 +405,14 @@ body {
 }
 
 /* =========================================================
-   REGISTER PROGRESS
+   PROGRESS
    ========================================================= */
 
 .auth-card .auth-progress {
   width: 100%;
   height: 4px;
 
-  margin: 0 0 22px;
+  margin: 0 0 24px;
 
   overflow: hidden;
 
@@ -422,8 +432,8 @@ body {
   background: var(--register-primary);
 
   transition:
-    width 0.25s ease,
-    background 0.25s ease;
+    width .25s ease,
+    background .25s ease;
 }
 
 /* =========================================================
@@ -436,9 +446,10 @@ body {
   display: flex;
   flex-direction: column;
 
-  gap: 16px;
+  gap: 17px;
 
   margin: 0;
+  padding: 0;
 }
 
 /* =========================================================
@@ -453,7 +464,7 @@ body {
 .auth-card .field label {
   display: block;
 
-  margin: 0 0 7px;
+  margin: 0 0 8px;
 
   color: var(--register-heading);
 
@@ -469,14 +480,15 @@ body {
 .auth-card .input {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
+  height: 52px;
+  min-height: 52px;
 
   display: block;
 
-  padding: 0 14px;
+  padding: 0 15px;
 
   border: 1px solid var(--register-border);
-  border-radius: 12px;
+  border-radius: 13px;
 
   outline: none;
 
@@ -484,7 +496,7 @@ body {
   color: var(--register-input-text) !important;
 
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 1.4;
 
@@ -492,9 +504,9 @@ body {
   -webkit-appearance: none;
 
   transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background-color 0.18s ease;
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
 }
 
 .auth-card .input::placeholder {
@@ -503,25 +515,27 @@ body {
 }
 
 .auth-card .input:hover {
-  border-color: #b9ccd8;
+  border-color: var(--register-border-hover);
 }
 
 .auth-card .input:focus {
   border-color: var(--register-primary);
-  box-shadow: var(--register-focus);
+
+  box-shadow:
+    var(--register-focus);
 }
 
 .auth-card .input:disabled {
-  opacity: 0.82;
+  opacity: .82;
   cursor: not-allowed;
 }
 
 /* =========================================================
-   INPUT VALIDATION
+   VALIDATION
    ========================================================= */
 
 .auth-card .input:invalid:not(:placeholder-shown) {
-  border-color: rgba(190, 48, 48, 0.45);
+  border-color: rgba(190, 48, 48, .45);
 }
 
 .auth-card .input:valid:not(:placeholder-shown) {
@@ -539,7 +553,7 @@ body {
   display: flex;
   align-items: stretch;
 
-  gap: 8px;
+  gap: 9px;
 }
 
 .auth-card .row .input {
@@ -552,11 +566,12 @@ body {
    ========================================================= */
 
 .auth-card .toggle {
-  flex: 0 0 48px;
+  flex: 0 0 52px;
 
-  width: 48px;
-  min-width: 48px;
-  min-height: 48px;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  min-height: 52px;
 
   display: grid;
   place-items: center;
@@ -565,7 +580,7 @@ body {
   padding: 0;
 
   border: 1px solid var(--register-border) !important;
-  border-radius: 12px !important;
+  border-radius: 13px !important;
 
   background: var(--register-google-bg) !important;
   color: var(--register-muted) !important;
@@ -580,10 +595,10 @@ body {
   -webkit-appearance: none;
 
   transition:
-    color 0.18s ease,
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    transform 0.18s ease;
+    color .18s ease,
+    border-color .18s ease,
+    background-color .18s ease,
+    transform .18s ease;
 }
 
 .auth-card .toggle:hover {
@@ -592,7 +607,7 @@ body {
 }
 
 .auth-card .toggle:active {
-  transform: scale(0.96);
+  transform: scale(.96);
 }
 
 .auth-card .toggle:focus-visible {
@@ -600,27 +615,12 @@ body {
 
   border-color: var(--register-primary) !important;
 
-  box-shadow: var(--register-focus) !important;
-}
-
-.auth-card .toggle i {
-  display: block;
-
-  width: 16px;
-  height: 16px;
-
-  line-height: 16px;
-
-  text-align: center;
+  box-shadow:
+    var(--register-focus) !important;
 }
 
 /* =========================================================
-   TURNSTILE SECURITY
-   IMPORTANT:
-   - Does NOT resize auth-card
-   - Does NOT force iframe width
-   - Does NOT use overflow:hidden
-   - Keeps widget centered
+   TURNSTILE
    ========================================================= */
 
 .auth-card .register-security {
@@ -635,14 +635,10 @@ body {
 
   gap: 6px;
 
-  margin: -2px 0 0;
+  margin: -1px 0 0;
   padding: 0;
 }
 
-/*
- * Turnstile container must remain naturally sized.
- * Do NOT set width:100% here.
- */
 .auth-card #registerTurnstile {
   width: auto;
   max-width: 100%;
@@ -660,12 +656,11 @@ body {
   overflow: visible;
 }
 
-/*
- * Turnstile can inject iframe/content.
- * Never force iframe width from this stylesheet.
- */
 .auth-card #registerTurnstile iframe {
   display: block;
+
+  max-width: 100%;
+
   border: 0;
 }
 
@@ -689,8 +684,8 @@ body {
   text-align: center;
 
   transition:
-    color 0.18s ease,
-    opacity 0.18s ease;
+    color .18s ease,
+    opacity .18s ease;
 }
 
 .auth-card .register-security-status.success {
@@ -704,12 +699,12 @@ body {
 }
 
 /* =========================================================
-   PRIMARY REGISTER BUTTON
+   REGISTER BUTTON
    ========================================================= */
 
 .auth-card #submit {
   width: 100%;
-  min-height: 50px;
+  min-height: 52px;
 
   display: flex;
   align-items: center;
@@ -721,7 +716,7 @@ body {
   padding: 0 18px;
 
   border: 0 !important;
-  border-radius: 13px !important;
+  border-radius: 14px !important;
 
   background:
     linear-gradient(
@@ -730,36 +725,37 @@ body {
       var(--register-primary-dark)
     ) !important;
 
-  color: #ffffff !important;
+  color: #fff !important;
 
   font-size: 14px;
   font-weight: 800;
 
-  box-shadow: var(--register-primary-shadow);
+  box-shadow:
+    var(--register-primary-shadow);
 
   cursor: pointer;
 
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    filter 0.18s ease,
-    opacity 0.18s ease;
+    transform .18s ease,
+    box-shadow .18s ease,
+    filter .18s ease,
+    opacity .18s ease;
 }
 
 .auth-card #submit:hover:not(:disabled) {
   filter: brightness(1.04);
 
   box-shadow:
-    0 15px 32px rgba(34, 158, 217, 0.27);
+    0 16px 34px rgba(34, 158, 217, .27);
 
   transform: translateY(-1px);
 }
 
 .auth-card #submit:active:not(:disabled) {
-  transform: translateY(0) scale(0.99);
+  transform: scale(.99);
 
   box-shadow:
-    0 8px 18px rgba(34, 158, 217, 0.18);
+    0 8px 18px rgba(34, 158, 217, .18);
 }
 
 .auth-card #submit:focus-visible {
@@ -771,7 +767,7 @@ body {
 }
 
 .auth-card #submit:disabled {
-  opacity: 0.55;
+  opacity: .55;
 
   cursor: not-allowed;
 
@@ -779,16 +775,16 @@ body {
 
   transform: none;
 
-  filter: saturate(0.65);
+  filter: saturate(.65);
 }
 
 /* =========================================================
-   GOOGLE BUTTON
+   GOOGLE
    ========================================================= */
 
 .auth-card #google {
   width: 100%;
-  min-height: 48px;
+  min-height: 50px;
 
   display: flex;
   align-items: center;
@@ -796,11 +792,11 @@ body {
 
   gap: 10px;
 
-  margin: 16px 0 0 !important;
+  margin: 17px 0 0 !important;
   padding: 0 16px;
 
   border: 1px solid var(--register-border) !important;
-  border-radius: 13px !important;
+  border-radius: 14px !important;
 
   background: var(--register-google-bg) !important;
   color: var(--register-google-text) !important;
@@ -813,23 +809,23 @@ body {
   cursor: pointer;
 
   transition:
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    border-color .18s ease,
+    background-color .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease;
 }
 
 .auth-card #google:hover {
-  border-color: #b9ccd8 !important;
+  border-color: var(--register-border-hover) !important;
 
   box-shadow:
-    0 7px 18px rgba(21, 48, 67, 0.08) !important;
+    0 8px 20px rgba(21, 48, 67, .08) !important;
 
   transform: translateY(-1px);
 }
 
 .auth-card #google:active {
-  transform: translateY(0) scale(0.99);
+  transform: scale(.99);
 }
 
 .auth-card #google:focus-visible {
@@ -837,7 +833,8 @@ body {
 
   border-color: var(--register-primary) !important;
 
-  box-shadow: var(--register-focus) !important;
+  box-shadow:
+    var(--register-focus) !important;
 }
 
 .auth-card #google i {
@@ -857,9 +854,9 @@ body {
 
   align-items: center;
 
-  gap: 12px;
+  gap: 13px;
 
-  margin-top: 22px;
+  margin-top: 24px;
 }
 
 .auth-card .page-style-2 {
@@ -888,8 +885,8 @@ body {
   text-decoration: none;
 
   transition:
-    color 0.18s ease,
-    opacity 0.18s ease;
+    color .18s ease,
+    opacity .18s ease;
 }
 
 .auth-card .page-style-3:hover,
@@ -904,7 +901,7 @@ body {
 }
 
 /* =========================================================
-   ACCESSIBILITY / FOCUS
+   ACCESSIBILITY
    ========================================================= */
 
 .auth-card button,
@@ -918,7 +915,8 @@ body {
 
   border-radius: 7px;
 
-  box-shadow: var(--register-focus);
+  box-shadow:
+    var(--register-focus);
 }
 
 .auth-card input:focus-visible {
@@ -942,7 +940,7 @@ body {
 }
 
 /* =========================================================
-   LOADING STATE
+   LOADING
    ========================================================= */
 
 .auth-card.is-loading #submit {
@@ -950,12 +948,29 @@ body {
 }
 
 .auth-card.is-loading #submit i {
-  animation: register-spin 0.8s linear infinite;
+  animation:
+    register-spin .8s linear infinite;
 }
 
 @keyframes register-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+  .auth-shell {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .auth-shell > .auth-card {
+    width: min(100%, 500px);
   }
 }
 
@@ -969,72 +984,72 @@ body {
     align-items: flex-start;
 
     padding:
-      max(22px, env(safe-area-inset-top))
+      max(18px, env(safe-area-inset-top))
       max(12px, env(safe-area-inset-right))
-      max(22px, env(safe-area-inset-bottom))
+      max(18px, env(safe-area-inset-bottom))
       max(12px, env(safe-area-inset-left));
   }
 
   .auth-shell > .auth-card {
     width: 100%;
-    max-width: 480px;
+    max-width: 500px;
 
-    margin-top: 1vh;
+    margin: 8px auto 18px;
 
-    padding: 25px 20px;
+    padding: 28px 22px;
 
-    border-radius: 22px !important;
+    border-radius: 23px !important;
   }
 
   .auth-card .auth-logo {
-    width: 58px;
-    height: 58px;
+    width: 60px;
+    height: 60px;
 
-    border-radius: 17px;
+    border-radius: 18px;
 
     font-size: 24px;
   }
 
   .auth-card h1 {
-    margin-top: 16px;
-    font-size: 25px;
+    margin-top: 17px;
+
+    font-size: 26px;
   }
 
   .auth-card > p.muted {
-    margin-bottom: 20px;
+    margin-bottom: 22px;
+
     font-size: 13px;
   }
 
+  .auth-card form.list {
+    gap: 16px;
+  }
+
   .auth-card .input {
-    min-height: 50px;
+    height: 52px;
+    min-height: 52px;
+
     font-size: 16px;
   }
 
   .auth-card .toggle {
-    flex-basis: 50px;
+    flex-basis: 52px;
 
-    width: 50px;
-    min-width: 50px;
-    min-height: 50px;
+    width: 52px;
+    min-width: 52px;
+
+    height: 52px;
+    min-height: 52px;
   }
 
   .auth-card #submit,
   .auth-card #google {
-    min-height: 50px;
-    font-size: 14px;
-  }
-
-  /* Turnstile tetap di tengah tanpa mengecilkan card */
-  .auth-card .register-security {
-    width: 100%;
-  }
-
-  .auth-card #registerTurnstile {
-    max-width: 100%;
+    min-height: 52px;
   }
 
   .auth-card .auth-footer {
-    margin-top: 20px;
+    margin-top: 21px;
   }
 }
 
@@ -1045,18 +1060,30 @@ body {
 @media (max-width: 380px) {
 
   .auth-shell {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 9px;
+    padding-right: 9px;
   }
 
   .auth-shell > .auth-card {
-    padding: 22px 16px;
-    border-radius: 20px !important;
+    width: 100%;
+
+    margin-top: 5px;
+
+    padding: 24px 16px;
+
+    border-radius: 21px !important;
+  }
+
+  .auth-shell > .auth-card::before {
+    left: 20px;
+    right: 20px;
   }
 
   .auth-card .auth-logo {
-    width: 54px;
-    height: 54px;
+    width: 55px;
+    height: 55px;
+
+    border-radius: 17px;
 
     font-size: 22px;
   }
@@ -1083,7 +1110,28 @@ body {
 }
 
 /* =========================================================
-   SHORT SCREEN / LANDSCAPE
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 340px) {
+
+  .auth-shell {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .auth-shell > .auth-card {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .auth-card h1 {
+    font-size: 22px;
+  }
+}
+
+/* =========================================================
+   LANDSCAPE / SHORT SCREEN
    ========================================================= */
 
 @media (max-height: 700px) {
@@ -1109,9 +1157,9 @@ body {
   .auth-card *::after {
     scroll-behavior: auto !important;
 
-    transition-duration: 0.01ms !important;
+    transition-duration: .01ms !important;
 
-    animation-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
 
     animation-iteration-count: 1 !important;
   }
