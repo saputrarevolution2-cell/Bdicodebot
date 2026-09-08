@@ -289,14 +289,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     if (!siteKey) {
-      console.error(
-        "[PasTele] Turnstile sitekey tidak ditemukan."
-      );
       updateSecurityStatus(
-        false,
-        "Konfigurasi verifikasi keamanan belum tersedia."
+        true,
+        "Verifikasi keamanan opsional — Turnstile belum dikonfigurasi."
       );
-      setSubmitEnabled(false);
+      setSubmitEnabled(true);
       return;
     }
     if (turnstileWidgetId !== null) {
@@ -680,10 +677,10 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =======================================================
      INITIAL
      ======================================================= */
-  setSubmitEnabled(false);
+  setSubmitEnabled(!siteKey);
   updateSecurityStatus(
-    false,
-    "Memuat verifikasi keamanan..."
+    !siteKey,
+    siteKey ? "Memuat verifikasi keamanan..." : "Verifikasi keamanan opsional — Turnstile belum dikonfigurasi."
   );
   updateProgress();
   /* =======================================================

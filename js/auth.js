@@ -285,15 +285,6 @@
         options.captchaToken = token;
       }
 
-      console.log(
-        "[PasTele Auth] Register:",
-        {
-          username: cleanUsername,
-          email: cleanEmail,
-          hasTurnstile: Boolean(token)
-        }
-      );
-
       const { data, error } =
         await client.auth.signUp({
           email: cleanEmail,
@@ -466,7 +457,7 @@
         return !(Array.isArray(data) && data.length > 0);
       } catch (e) {
         // Never tell the UI that a username is available when the DB cannot be checked.
-        throw new Error("Database username belum dapat diperiksa. Jalankan AUTH_REGISTER_LOGIN_FINAL_PATCH.sql di Supabase.");
+        throw new Error("Database username belum dapat diperiksa. Jalankan SUPABASE_MASTER_FINAL.sql di Supabase.");
       }
     },
 
