@@ -1,19 +1,24 @@
 /* =========================================================
    PasTele — CREATE PRODUCT
-   Premium / Clean / Responsive / Dark Mode
-   FINAL UI
-   Compatible with create.html + create-product.js
+   FINAL SYNC
+   Compatible with:
+   - create-product.html
+   - create-product.js
+   - Free / Paid
+   - Link / Paste / PasteLink
+   - Code / Channel / Group
+   - Light / Dark
+   - Android / iPhone / Desktop
    ========================================================= */
 
 
 /* =========================================================
-   THEME VARIABLES
+   THEME
    ========================================================= */
 
 html,
 html[data-theme="light"],
 html:not([data-theme]) {
-
   --create-bg:
     radial-gradient(
       circle at 8% 0%,
@@ -45,10 +50,16 @@ html:not([data-theme]) {
   --create-red-bg: #fff1f2;
 
   --create-purple: #6957d8;
+  --create-purple-dark: #5543c7;
   --create-purple-soft: #f2efff;
 
   --create-orange: #e98b2a;
+  --create-orange-dark: #d87517;
   --create-orange-soft: #fff5e8;
+
+  --create-pink: #d65f91;
+  --create-pink-dark: #bd477b;
+  --create-pink-soft: #fff0f6;
 
   --create-shadow:
     0 10px 30px rgba(15, 40, 60, .055);
@@ -71,7 +82,6 @@ html:not([data-theme]) {
 html[data-theme="dark"],
 html.theme-dark,
 body.theme-dark {
-
   --create-bg:
     radial-gradient(
       circle at 8% 0%,
@@ -93,7 +103,7 @@ body.theme-dark {
   --create-border-soft: #1c3241;
 
   --create-primary: #2ca8df;
-  --create-primary-dark: #4bb8e7;
+  --create-primary-dark: #1688bf;
   --create-primary-soft: rgba(34, 158, 217, .12);
 
   --create-green: #5bdda1;
@@ -103,10 +113,16 @@ body.theme-dark {
   --create-red-bg: rgba(220, 91, 103, .13);
 
   --create-purple: #9d91ff;
+  --create-purple-dark: #8175ed;
   --create-purple-soft: rgba(105, 87, 216, .14);
 
   --create-orange: #ffb45d;
+  --create-orange-dark: #ec9136;
   --create-orange-soft: rgba(233, 139, 42, .13);
+
+  --create-pink: #f18ab5;
+  --create-pink-dark: #d96699;
+  --create-pink-soft: rgba(214, 95, 145, .13);
 
   --create-shadow:
     0 16px 40px rgba(0, 0, 0, .23);
@@ -123,16 +139,16 @@ body.theme-dark {
 
 
 /* =========================================================
-   FOUNDATION
+   PAGE FOUNDATION
    ========================================================= */
 
 .create-product-page {
-
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
 
   margin: 0;
+  padding: 0;
 
   background: var(--create-bg);
   color: var(--create-text);
@@ -149,15 +165,20 @@ body.theme-dark {
   box-sizing: border-box;
 }
 
-.create-product-page a {
-  -webkit-tap-highlight-color: transparent;
-}
-
 .create-product-page button,
 .create-product-page input,
 .create-product-page textarea,
 .create-product-page select {
   font: inherit;
+}
+
+.create-product-page button,
+.create-product-page a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.create-product-page img {
+  max-width: 100%;
 }
 
 
@@ -176,7 +197,7 @@ body.theme-dark {
   padding:
     30px
     0
-    max(35px, env(safe-area-inset-bottom));
+    35px;
 }
 
 .create-container {
@@ -186,10 +207,7 @@ body.theme-dark {
   margin: 0 auto;
 
   padding:
-    0
-    max(20px, env(safe-area-inset-right))
-    0
-    max(20px, env(safe-area-inset-left));
+    0 20px;
 }
 
 
@@ -268,6 +286,7 @@ body.theme-dark {
   font-weight: 800;
 
   letter-spacing: .13em;
+  text-transform: uppercase;
 }
 
 .create-eyebrow i {
@@ -329,6 +348,8 @@ body.theme-dark {
   box-shadow:
     0 5px 16px rgba(15, 40, 60, .035);
 
+  cursor: pointer;
+
   transition:
     border-color .18s ease,
     color .18s ease,
@@ -338,14 +359,9 @@ body.theme-dark {
 }
 
 .back-btn:hover {
-  border-color:
-    rgba(34, 158, 217, .35);
-
-  color:
-    var(--create-primary);
-
-  background:
-    var(--create-primary-soft);
+  border-color: rgba(34, 158, 217, .35);
+  color: var(--create-primary);
+  background: var(--create-primary-soft);
 
   text-decoration: none;
 
@@ -363,8 +379,7 @@ body.theme-dark {
   outline: none;
 
   box-shadow:
-    0 0 0 3px
-    rgba(34, 158, 217, .14);
+    0 0 0 3px rgba(34, 158, 217, .14);
 }
 
 
@@ -397,17 +412,21 @@ body.theme-dark {
 
   padding: 22px;
 
-  border: 1px solid var(--create-border);
+  border:
+    1px solid var(--create-border);
+
   border-radius: 18px;
 
-  background: var(--create-card);
+  background:
+    var(--create-card);
 
-  box-shadow: var(--create-shadow);
+  box-shadow:
+    var(--create-shadow);
 }
 
 
 /* =========================================================
-   PANEL HEADING
+   PANEL HEADER
    ========================================================= */
 
 .panel-heading {
@@ -442,6 +461,7 @@ body.theme-dark {
   font-weight: 800;
 
   letter-spacing: .14em;
+  text-transform: uppercase;
 }
 
 .panel-heading h2 {
@@ -473,12 +493,16 @@ body.theme-dark {
   display: grid;
   place-items: center;
 
-  border: 1px solid var(--create-border-soft);
+  border:
+    1px solid var(--create-border-soft);
+
   border-radius: 10px;
 
-  background: var(--create-primary-soft);
+  background:
+    var(--create-primary-soft);
 
-  color: var(--create-primary);
+  color:
+    var(--create-primary);
 
   font-size: 13px;
 }
@@ -512,7 +536,7 @@ body.theme-dark {
 }
 
 .form-field > label > span:first-child {
-  color: var(--create-red);
+  color: var(--create-heading);
 }
 
 .form-field > label .optional-label {
@@ -522,21 +546,28 @@ body.theme-dark {
   font-weight: 600;
 }
 
-
-/* =========================================================
-   INPUT WRAPPER
-   ========================================================= */
-
-.input-wrap,
-.textarea-wrap {
-  position: relative;
-
-  width: 100%;
+.form-field > label .required-mark {
+  color: var(--create-red);
+  font-weight: 800;
 }
 
 
 /* =========================================================
-   FIELD ICON
+   INPUT WRAPPERS
+   ========================================================= */
+
+.input-wrap,
+.textarea-wrap,
+.select-wrap {
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+}
+
+
+/* =========================================================
+   INPUT ICON
    ========================================================= */
 
 .input-wrap > i,
@@ -567,9 +598,14 @@ body.theme-dark {
   transform: none;
 }
 
+.input-wrap:focus-within > i,
+.textarea-wrap:focus-within > i {
+  color: var(--create-primary);
+}
+
 
 /* =========================================================
-   INPUTS
+   INPUT / SELECT / TEXTAREA
    ========================================================= */
 
 .input,
@@ -578,17 +614,19 @@ body.theme-dark {
   width: 100%;
   max-width: 100%;
 
-  border: 1px solid var(--create-border);
+  border:
+    1px solid var(--create-border);
+
   outline: none;
 
-  background: var(--create-card-soft);
-  color: var(--create-text);
+  background:
+    var(--create-card-soft);
+
+  color:
+    var(--create-text);
 
   font-family: inherit;
   font-size: 12px;
-
-  -webkit-appearance: none;
-  appearance: none;
 
   transition:
     border-color .18s ease,
@@ -602,10 +640,7 @@ body.theme-dark {
   min-height: 43px;
 
   padding:
-    0
-    13px
-    0
-    36px;
+    0 13px 0 36px;
 
   border-radius: 10px;
 }
@@ -614,10 +649,7 @@ body.theme-dark {
   min-height: 120px;
 
   padding:
-    13px
-    13px
-    13px
-    36px;
+    13px 13px 13px 36px;
 
   border-radius: 11px;
 
@@ -653,12 +685,6 @@ body.theme-dark {
     rgba(34, 158, 217, .10);
 }
 
-.input-wrap:focus-within > i,
-.textarea-wrap:focus-within > i {
-  color:
-    var(--create-primary);
-}
-
 .input:focus-visible,
 .select:focus-visible,
 .textarea:focus-visible {
@@ -669,6 +695,15 @@ body.theme-dark {
 /* =========================================================
    SELECT
    ========================================================= */
+
+.select {
+  padding-right: 38px;
+
+  cursor: pointer;
+
+  -webkit-appearance: none;
+  appearance: none;
+}
 
 .select-wrap::after {
   content: "";
@@ -694,15 +729,9 @@ body.theme-dark {
     rotate(45deg);
 }
 
-.select {
-  padding-right: 36px;
-
-  cursor: pointer;
-}
-
 
 /* =========================================================
-   TWO COLUMN FORM
+   FORM ROW
    ========================================================= */
 
 .form-row {
@@ -724,12 +753,42 @@ body.theme-dark {
    ========================================================= */
 
 .price-field {
-  max-width: 100%;
+  min-width: 0;
 }
 
 #price {
-  font-variant-numeric:
-    tabular-nums;
+  font-variant-numeric: tabular-nums;
+}
+
+#price::-webkit-inner-spin-button,
+#price::-webkit-outer-spin-button {
+  margin: 0;
+}
+
+
+/* =========================================================
+   PRICE HINT
+   ========================================================= */
+
+#priceHint {
+  display: block;
+
+  min-height: 14px;
+
+  margin-top: 5px;
+
+  color: var(--create-muted-2);
+
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+#priceHint[data-state="paid"] {
+  color: var(--create-primary);
+}
+
+#priceHint[data-state="error"] {
+  color: var(--create-red);
 }
 
 
@@ -751,9 +810,7 @@ body.theme-dark {
 .form-field code {
   display: inline-block;
 
-  padding:
-    1px
-    4px;
+  padding: 1px 4px;
 
   border-radius: 4px;
 
@@ -768,7 +825,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   GUEST ACCESS INFO
+   ACCESS INFO
    ========================================================= */
 
 .create-access-info {
@@ -780,13 +837,14 @@ body.theme-dark {
   gap: 10px;
 
   margin:
-    -3px
-    0
-    16px;
+    -3px 0 16px;
 
-  padding: 11px 12px;
+  padding:
+    11px 12px;
 
-  border: 1px solid var(--create-border-soft);
+  border:
+    1px solid var(--create-border-soft);
+
   border-radius: 11px;
 
   background:
@@ -794,11 +852,6 @@ body.theme-dark {
 
   color:
     var(--create-text);
-
-  transition:
-    border-color .18s ease,
-    background-color .18s ease,
-    color .18s ease;
 }
 
 .create-access-info[hidden] {
@@ -860,7 +913,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   GUEST ALLOWED STATE
+   ACCESS STATES
    ========================================================= */
 
 .create-access-info[data-state="allowed"] {
@@ -872,18 +925,13 @@ body.theme-dark {
 }
 
 .create-access-info[data-state="allowed"]
-  .create-access-info-icon {
+.create-access-info-icon {
   background:
     rgba(32, 165, 107, .11);
 
   color:
     var(--create-green);
 }
-
-
-/* =========================================================
-   GUEST AUTH REQUIRED STATE
-   ========================================================= */
 
 .create-access-info[data-state="required"] {
   border-color:
@@ -894,7 +942,7 @@ body.theme-dark {
 }
 
 .create-access-info[data-state="required"]
-  .create-access-info-icon {
+.create-access-info-icon {
   background:
     rgba(220, 91, 103, .10);
 
@@ -904,17 +952,28 @@ body.theme-dark {
 
 
 /* =========================================================
-   BODY AUTH REQUIRED STATE
+   AUTH PAGE STATE
    ========================================================= */
 
-.create-product-page[data-auth-required="true"]
-  .submit-btn {
+.create-product-page[data-auth-required="true"] .submit-btn {
   position: relative;
+}
+
+.create-product-page[data-auth-required="true"] .submit-btn::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  border-radius: inherit;
+
+  pointer-events: none;
 }
 
 
 /* =========================================================
-   THUMBNAIL PREVIEW
+   THUMBNAIL
    ========================================================= */
 
 .thumb-preview {
@@ -984,7 +1043,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   DESCRIPTION FOOTER
+   DESCRIPTION COUNTER
    ========================================================= */
 
 .field-bottom {
@@ -1015,16 +1074,23 @@ body.theme-dark {
 
 
 /* =========================================================
-   CONTENT / CODE FIELD
+   CONTENT
    ========================================================= */
 
 #content {
   font-variant-ligatures: none;
 }
 
-.create-product-page[data-product-type="code"]
-  #content {
+.create-product-page[data-product-type="link"] #content {
+  min-height: 90px;
+}
 
+.create-product-page[data-product-type="paste"] #content,
+.create-product-page[data-product-type="pastelink"] #content {
+  min-height: 180px;
+}
+
+.create-product-page[data-product-type="code"] #content {
   min-height: 240px;
 
   font-family:
@@ -1042,11 +1108,19 @@ body.theme-dark {
   tab-size: 2;
 }
 
-.create-product-page[data-product-type="channel"]
-  #content,
-.create-product-page[data-product-type="group"]
-  #content {
+.create-product-page[data-product-type="channel"] #content,
+.create-product-page[data-product-type="group"] #content {
   min-height: 88px;
+}
+
+
+/* =========================================================
+   CONTENT HINT
+   ========================================================= */
+
+#contentHint {
+  color:
+    var(--create-muted-2);
 }
 
 
@@ -1120,21 +1194,14 @@ body.theme-dark {
   background:
     var(--create-card);
 
-  text-decoration: none;
-
-  transform: translateY(-1px);
+  transform:
+    translateY(-1px);
 }
 
-.cancel-btn:active {
-  transform: translateY(0);
-}
-
-.cancel-btn:focus-visible {
-  outline: none;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(34, 158, 217, .13);
+.cancel-btn:active,
+.submit-btn:active {
+  transform:
+    translateY(0);
 }
 
 .submit-btn {
@@ -1150,7 +1217,8 @@ body.theme-dark {
       var(--create-primary-dark)
     );
 
-  color: #fff;
+  color:
+    #fff;
 
   box-shadow:
     0 7px 18px
@@ -1166,19 +1234,13 @@ body.theme-dark {
     rgba(34, 158, 217, .23);
 }
 
-.submit-btn:active {
-  transform:
-    translateY(0);
-}
-
-.submit-btn:focus-visible {
+.submit-btn:focus-visible,
+.cancel-btn:focus-visible {
   outline: none;
 
   box-shadow:
     0 0 0 3px
-    rgba(34, 158, 217, .14),
-    0 8px 22px
-    rgba(34, 158, 217, .20);
+    rgba(34, 158, 217, .14);
 }
 
 .submit-btn:disabled {
@@ -1324,7 +1386,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   SIDE HEADER
+   SIDEBAR HEADER
    ========================================================= */
 
 .side-card-header {
@@ -1342,7 +1404,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   TIPS / PRODUCT TYPES
+   TIPS LIST
    ========================================================= */
 
 .tips-list {
@@ -1399,59 +1461,12 @@ body.theme-dark {
 
 
 /* =========================================================
-   PRODUCT TYPE ICON COLORS
+   PRODUCT TYPE COLORS
    ========================================================= */
 
-.create-product-page[data-product-type="code"]
-  .create-icon {
+/* LINK */
 
-  background:
-    linear-gradient(
-      135deg,
-      #6957d8,
-      #5543c7
-    );
-
-  box-shadow:
-    0 9px 22px
-    rgba(105, 87, 216, .20);
-}
-
-.create-product-page[data-product-type="pastelink"]
-  .create-icon {
-
-  background:
-    linear-gradient(
-      135deg,
-      #e99a3a,
-      #db7b22
-    );
-
-  box-shadow:
-    0 9px 22px
-    rgba(233, 139, 42, .18);
-}
-
-.create-product-page[data-product-type="paste"]
-  .create-icon {
-
-  background:
-    linear-gradient(
-      135deg,
-      #d65f91,
-      #bd477b
-    );
-
-  box-shadow:
-    0 9px 22px
-    rgba(214, 95, 145, .18);
-}
-
-.create-product-page[data-product-type="channel"]
-  .create-icon,
-.create-product-page[data-product-type="group"]
-  .create-icon {
-
+.create-product-page[data-product-type="link"] .create-icon {
   background:
     linear-gradient(
       135deg,
@@ -1461,86 +1476,58 @@ body.theme-dark {
 }
 
 
-/* =========================================================
-   CODE TYPE FIELD
-   ========================================================= */
+/* PASTE */
 
-.create-product-page[data-product-type="code"]
-  .panel-kicker,
-.create-product-page[data-product-type="code"]
-  .side-kicker {
-
-  color:
-    var(--create-purple);
-}
-
-.create-product-page[data-product-type="code"]
-  .panel-heading-icon {
-
-  color:
-    var(--create-purple);
-
-  background:
-    var(--create-purple-soft);
-}
-
-.create-product-page[data-product-type="code"]
-  .submit-btn {
-
+.create-product-page[data-product-type="paste"] .create-icon {
   background:
     linear-gradient(
       135deg,
-      #6957d8,
-      #5543c7
+      var(--create-pink),
+      var(--create-pink-dark)
     );
 
-  border-color:
-    #6957d8;
-
   box-shadow:
-    0 7px 18px
-    rgba(105, 87, 216, .18);
+    0 9px 22px
+    rgba(214, 95, 145, .18);
 }
 
-.create-product-page[data-product-type="code"]
-  .input:focus,
-.create-product-page[data-product-type="code"]
-  .textarea:focus {
-
-  border-color:
-    var(--create-purple);
-
-  box-shadow:
-    0 0 0 3px
-    rgba(105, 87, 216, .10);
-}
-
-.create-product-page[data-product-type="code"]
-  .input-wrap:focus-within > i,
-.create-product-page[data-product-type="code"]
-  .textarea-wrap:focus-within > i {
-
+.create-product-page[data-product-type="paste"] .panel-kicker,
+.create-product-page[data-product-type="paste"] .side-kicker {
   color:
-    var(--create-purple);
+    var(--create-pink);
+}
+
+.create-product-page[data-product-type="paste"] .panel-heading-icon {
+  color:
+    var(--create-pink);
+
+  background:
+    var(--create-pink-soft);
 }
 
 
-/* =========================================================
-   PASTELINK TYPE FIELD
-   ========================================================= */
+/* PASTELINK */
 
-.create-product-page[data-product-type="pastelink"]
-  .panel-kicker,
-.create-product-page[data-product-type="pastelink"]
-  .side-kicker {
+.create-product-page[data-product-type="pastelink"] .create-icon {
+  background:
+    linear-gradient(
+      135deg,
+      var(--create-orange),
+      var(--create-orange-dark)
+    );
 
+  box-shadow:
+    0 9px 22px
+    rgba(233, 139, 42, .18);
+}
+
+.create-product-page[data-product-type="pastelink"] .panel-kicker,
+.create-product-page[data-product-type="pastelink"] .side-kicker {
   color:
     var(--create-orange);
 }
 
-.create-product-page[data-product-type="pastelink"]
-  .panel-heading-icon {
-
+.create-product-page[data-product-type="pastelink"] .panel-heading-icon {
   color:
     var(--create-orange);
 
@@ -1549,20 +1536,125 @@ body.theme-dark {
 }
 
 
-/* =========================================================
-   TELEGRAM TYPE
-   ========================================================= */
+/* CODE */
 
-.create-product-page[data-product-type="channel"]
-  .panel-heading-icon,
-.create-product-page[data-product-type="group"]
-  .panel-heading-icon {
+.create-product-page[data-product-type="code"] .create-icon {
+  background:
+    linear-gradient(
+      135deg,
+      var(--create-purple),
+      var(--create-purple-dark)
+    );
 
+  box-shadow:
+    0 9px 22px
+    rgba(105, 87, 216, .20);
+}
+
+.create-product-page[data-product-type="code"] .panel-kicker,
+.create-product-page[data-product-type="code"] .side-kicker {
+  color:
+    var(--create-purple);
+}
+
+.create-product-page[data-product-type="code"] .panel-heading-icon {
+  color:
+    var(--create-purple);
+
+  background:
+    var(--create-purple-soft);
+}
+
+.create-product-page[data-product-type="code"] .submit-btn {
+  background:
+    linear-gradient(
+      135deg,
+      var(--create-purple),
+      var(--create-purple-dark)
+    );
+
+  border-color:
+    var(--create-purple);
+
+  box-shadow:
+    0 7px 18px
+    rgba(105, 87, 216, .18);
+}
+
+.create-product-page[data-product-type="code"] .input:focus,
+.create-product-page[data-product-type="code"] .select:focus,
+.create-product-page[data-product-type="code"] .textarea:focus {
+  border-color:
+    var(--create-purple);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(105, 87, 216, .10);
+}
+
+.create-product-page[data-product-type="code"] .input-wrap:focus-within > i,
+.create-product-page[data-product-type="code"] .textarea-wrap:focus-within > i {
+  color:
+    var(--create-purple);
+}
+
+
+/* CHANNEL / GROUP */
+
+.create-product-page[data-product-type="channel"] .create-icon,
+.create-product-page[data-product-type="group"] .create-icon {
+  background:
+    linear-gradient(
+      135deg,
+      var(--create-primary),
+      var(--create-primary-dark)
+    );
+}
+
+.create-product-page[data-product-type="channel"] .panel-heading-icon,
+.create-product-page[data-product-type="group"] .panel-heading-icon {
   color:
     var(--create-primary);
 
   background:
     var(--create-primary-soft);
+}
+
+
+/* =========================================================
+   ACCESS TYPE VISUAL STATES
+   ========================================================= */
+
+.create-product-page[data-access-type="paid"] .create-access-info {
+  border-color:
+    rgba(34, 158, 217, .20);
+
+  background:
+    var(--create-primary-soft);
+}
+
+.create-product-page[data-access-type="paid"] .create-access-info-icon {
+  color:
+    var(--create-primary);
+
+  background:
+    rgba(34, 158, 217, .10);
+}
+
+.create-product-page[data-access-type="free"] .create-access-info {
+  border-color:
+    rgba(32, 165, 107, .18);
+
+  background:
+    var(--create-green-bg);
+}
+
+.create-product-page[data-access-type="free"] .create-access-info-icon {
+  color:
+    var(--create-green);
+
+  background:
+    rgba(32, 165, 107, .10);
 }
 
 
@@ -1626,16 +1718,12 @@ body.theme-dark {
 
 
 /* =========================================================
-   INVALID STATE
+   INVALID
    ========================================================= */
 
-.create-product-page
-  .input.invalid,
-.create-product-page
-  .select.invalid,
-.create-product-page
-  .textarea.invalid {
-
+.create-product-page .input.invalid,
+.create-product-page .select.invalid,
+.create-product-page .textarea.invalid {
   border-color:
     var(--create-red) !important;
 
@@ -1647,13 +1735,9 @@ body.theme-dark {
     rgba(220, 91, 103, .08);
 }
 
-.create-product-page
-  .input.invalid:focus,
-.create-product-page
-  .select.invalid:focus,
-.create-product-page
-  .textarea.invalid:focus {
-
+.create-product-page .input.invalid:focus,
+.create-product-page .select.invalid:focus,
+.create-product-page .textarea.invalid:focus {
   border-color:
     var(--create-red) !important;
 
@@ -1667,13 +1751,8 @@ body.theme-dark {
    AUTOFILL
    ========================================================= */
 
-.create-product-page
-  .input:-webkit-autofill,
-.create-product-page
-  .textarea:-webkit-autofill,
-.create-product-page
-  .select:-webkit-autofill {
-
+.create-product-page .input:-webkit-autofill,
+.create-product-page .textarea:-webkit-autofill {
   -webkit-text-fill-color:
     var(--create-text);
 
@@ -1688,13 +1767,9 @@ body.theme-dark {
    DISABLED
    ========================================================= */
 
-.create-product-page
-  .input:disabled,
-.create-product-page
-  .select:disabled,
-.create-product-page
-  .textarea:disabled {
-
+.create-product-page .input:disabled,
+.create-product-page .select:disabled,
+.create-product-page .textarea:disabled {
   opacity: .6;
 
   cursor: not-allowed;
@@ -1702,9 +1777,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   =========================================================
-   AUTH REQUIRED MODAL
-   =========================================================
+   AUTH MODAL
    ========================================================= */
 
 .auth-required-modal {
@@ -1717,11 +1790,7 @@ body.theme-dark {
   display: grid;
   place-items: center;
 
-  padding:
-    20px
-    max(20px, env(safe-area-inset-right))
-    max(20px, env(safe-area-inset-bottom))
-    max(20px, env(safe-area-inset-left));
+  padding: 20px;
 
   isolation: isolate;
 }
@@ -1732,7 +1801,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   MODAL BACKDROP
+   BACKDROP
    ========================================================= */
 
 .auth-required-backdrop {
@@ -1755,7 +1824,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   MODAL DIALOG
+   DIALOG
    ========================================================= */
 
 .auth-required-dialog {
@@ -1763,10 +1832,8 @@ body.theme-dark {
 
   z-index: 2;
 
-  width: min(
-    100%,
-    410px
-  );
+  width:
+    min(100%, 410px);
 
   max-height:
     min(
@@ -1783,7 +1850,8 @@ body.theme-dark {
   border:
     1px solid var(--create-border);
 
-  border-radius: 20px;
+  border-radius:
+    20px;
 
   background:
     var(--create-card);
@@ -1794,7 +1862,8 @@ body.theme-dark {
   box-shadow:
     var(--create-modal-shadow);
 
-  text-align: center;
+  text-align:
+    center;
 
   animation:
     authDialogIn .22s
@@ -1810,7 +1879,7 @@ body.theme-dark {
 
 
 /* =========================================================
-   MODAL CLOSE
+   CLOSE
    ========================================================= */
 
 .auth-required-close {
@@ -1894,7 +1963,8 @@ body.theme-dark {
   border:
     1px solid rgba(34, 158, 217, .12);
 
-  border-radius: 16px;
+  border-radius:
+    16px;
 
   background:
     linear-gradient(
@@ -1938,6 +2008,8 @@ body.theme-dark {
   font-weight: 850;
 
   letter-spacing: .16em;
+
+  text-transform: uppercase;
 }
 
 .auth-required-content h2 {
@@ -1960,7 +2032,8 @@ body.theme-dark {
   margin:
     7px auto 0;
 
-  max-width: 330px;
+  max-width:
+    330px;
 
   color:
     var(--create-muted);
@@ -1997,15 +2070,22 @@ body.theme-dark {
   gap: 7px;
 
   padding:
-    0
-    12px;
+    0 12px;
 
-  border-radius: 10px;
+  border-radius:
+    10px;
 
-  font-size: 11px;
-  font-weight: 750;
+  font-size:
+    11px;
 
-  text-decoration: none;
+  font-weight:
+    750;
+
+  text-decoration:
+    none;
+
+  cursor:
+    pointer;
 
   transition:
     transform .18s ease,
@@ -2098,14 +2178,17 @@ body.theme-dark {
   margin:
     13px auto 0;
 
-  max-width: 330px;
+  max-width:
+    330px;
 
   color:
     var(--create-muted-2);
 
-  font-size: 8px;
+  font-size:
+    8px;
 
-  line-height: 1.45;
+  line-height:
+    1.45;
 }
 
 .auth-required-note i {
@@ -2116,21 +2199,23 @@ body.theme-dark {
   color:
     var(--create-primary);
 
-  font-size: 9px;
+  font-size:
+    9px;
 }
 
 
 /* =========================================================
-   BODY LOCK WHEN MODAL OPEN
+   BODY LOCK
    ========================================================= */
 
 body.auth-modal-open {
-  overflow: hidden;
+  overflow:
+    hidden;
 }
 
 
 /* =========================================================
-   MODAL ANIMATION
+   ANIMATION
    ========================================================= */
 
 @keyframes authBackdropIn {
@@ -2146,6 +2231,7 @@ body.auth-modal-open {
 @keyframes authDialogIn {
   from {
     opacity: 0;
+
     transform:
       translateY(12px)
       scale(.975);
@@ -2153,6 +2239,7 @@ body.auth-modal-open {
 
   to {
     opacity: 1;
+
     transform:
       translateY(0)
       scale(1);
@@ -2173,10 +2260,7 @@ body.auth-modal-open {
 
   .create-side {
     grid-template-columns:
-      repeat(
-        2,
-        minmax(0, 1fr)
-      );
+      repeat(2, minmax(0, 1fr));
   }
 
   .side-note {
@@ -2328,7 +2412,7 @@ body.auth-modal-open {
   .cancel-btn,
   .submit-btn {
     flex:
-      1;
+      1 1 0;
   }
 
   .submit-btn {
@@ -2347,6 +2431,9 @@ body.auth-modal-open {
   .auth-required-dialog {
     width:
       100%;
+
+    max-height:
+      calc(100dvh - 28px);
 
     padding:
       23px 17px 17px;
@@ -2448,9 +2535,7 @@ body.auth-modal-open {
       11px;
   }
 
-  .create-product-page[data-product-type="code"]
-    #content {
-
+  .create-product-page[data-product-type="code"] #content {
     min-height:
       210px;
 
@@ -2703,6 +2788,20 @@ body.auth-modal-open {
       );
   }
 
+  .create-container {
+    padding-left:
+      max(
+        7px,
+        env(safe-area-inset-left)
+      );
+
+    padding-right:
+      max(
+        7px,
+        env(safe-area-inset-right)
+      );
+  }
+
   .auth-required-modal {
     padding-top:
       max(
@@ -2740,7 +2839,6 @@ body.auth-modal-open {
   .create-product-page *,
   .create-product-page *::before,
   .create-product-page *::after {
-
     transition-duration:
       .01ms !important;
 
