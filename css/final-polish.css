@@ -96,13 +96,13 @@ body.app-page .plans-section{
   width:min(100%,680px);
   margin:18px auto 0;
 }
-.cashi-plan-box{
+.BAYARGG-plan-box{
   max-height:min(92dvh,760px);
   overflow:auto;
   box-shadow:0 25px 80px rgba(0,0,0,.28);
 }
-.cashi-plan-box .btn{margin-top:6px}
-.cashi-plan-box img{display:block;object-fit:contain;background:#fff;padding:8px}
+.BAYARGG-plan-box .btn{margin-top:6px}
+.BAYARGG-plan-box img{display:block;object-fit:contain;background:#fff;padding:8px}
 
 /* Wallet pending card: visibly actionable. */
 .wallet-pending-click{

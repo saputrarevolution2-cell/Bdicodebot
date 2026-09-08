@@ -3,7 +3,7 @@
    Premium Product Detail
    Responsive Android + Desktop
    Like + Comment Public
-   Cashi QRIS Modal
+   BAYARGG QRIS Modal
    ========================================================= */
 
 
@@ -1129,10 +1129,10 @@
 
 
 /* =========================================================
-   CASHI MODAL
+   BAYARGG MODAL
    ========================================================= */
 
-.cashi-modal-backdrop {
+.BAYARGG-modal-backdrop {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -1151,10 +1151,10 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 
-    animation: cashiBackdropIn .18s ease both;
+    animation: BAYARGGBackdropIn .18s ease both;
 }
 
-@keyframes cashiBackdropIn {
+@keyframes BAYARGGBackdropIn {
     from {
         opacity: 0;
     }
@@ -1164,7 +1164,7 @@
     }
 }
 
-.cashi-modal {
+.BAYARGG-modal {
     position: relative;
 
     width: min(100%, 430px);
@@ -1184,10 +1184,10 @@
     box-shadow:
         0 30px 90px rgba(0, 0, 0, .25);
 
-    animation: cashiModalIn .22s ease both;
+    animation: BAYARGGModalIn .22s ease both;
 }
 
-@keyframes cashiModalIn {
+@keyframes BAYARGGModalIn {
     from {
         opacity: 0;
         transform: translateY(12px) scale(.98);
@@ -1199,7 +1199,7 @@
     }
 }
 
-.cashi-close {
+.BAYARGG-close {
     position: absolute;
     top: 13px;
     right: 13px;
@@ -1222,29 +1222,29 @@
     line-height: 1;
 }
 
-.cashi-close:hover {
+.BAYARGG-close:hover {
     background: rgba(100, 116, 139, .14);
 }
 
-.cashi-close:focus-visible {
+.BAYARGG-close:focus-visible {
     outline: 3px solid rgba(34, 158, 217, .18);
     outline-offset: 2px;
 }
 
-.cashi-modal > .badge {
+.BAYARGG-modal > .badge {
     display: inline-flex;
 
     margin-bottom: 10px;
 }
 
-.cashi-modal h2 {
+.BAYARGG-modal h2 {
     margin: 0 45px 6px 0;
 
     font-size: 25px;
     letter-spacing: -.025em;
 }
 
-.cashi-modal > p.muted {
+.BAYARGG-modal > p.muted {
     margin: 0;
 
     font-size: 13px;
@@ -1253,10 +1253,10 @@
 
 
 /* =========================================================
-   CASHI QR
+   BAYARGG QR
    ========================================================= */
 
-.cashi-qr {
+.BAYARGG-qr {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1276,7 +1276,7 @@
     overflow: hidden;
 }
 
-.cashi-qr img {
+.BAYARGG-qr img {
     display: block;
 
     width: min(100%, 280px);
@@ -1315,14 +1315,14 @@
     word-break: break-all;
 }
 
-.cashi-modal > .btn {
+.BAYARGG-modal > .btn {
     width: 100%;
     justify-content: center;
 
     min-height: 46px;
 }
 
-.cashi-status {
+.BAYARGG-status {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1419,8 +1419,8 @@
     background: rgba(34, 158, 217, .07);
 }
 
-[data-theme="dark"] .product-page .cashi-qr,
-.dark .product-page .cashi-qr {
+[data-theme="dark"] .product-page .BAYARGG-qr,
+.dark .product-page .BAYARGG-qr {
     background: #fff;
 }
 
@@ -1643,7 +1643,7 @@
         font-size: 12px;
     }
 
-    .cashi-modal {
+    .BAYARGG-modal {
         width: 100%;
         max-height: calc(100dvh - 24px);
 
@@ -1652,18 +1652,18 @@
         border-radius: 21px;
     }
 
-    .cashi-modal h2 {
+    .BAYARGG-modal h2 {
         font-size: 22px;
     }
 
-    .cashi-qr {
+    .BAYARGG-qr {
         min-height: 210px;
 
         margin: 16px 0;
         padding: 13px;
     }
 
-    .cashi-qr img {
+    .BAYARGG-qr img {
         width: min(100%, 245px);
     }
 }
