@@ -12,7 +12,7 @@
 
   <meta
     name="description"
-    content="Buat dan publikasikan produk kamu ke Marketplace PasTele."
+    content="Buat dan publikasikan produk Free atau Paid ke Marketplace PasTele."
   >
 
   <meta
@@ -25,12 +25,20 @@
     content="light dark"
   >
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
   <link
     rel="preconnect"
     href="https://fonts.gstatic.com"
     crossorigin
   >
+
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -39,15 +47,16 @@
   <!-- =====================================================
        CORE
        ===================================================== -->
-  <script src="js/config.js?v=20260908"></script>
-  <script src="js/supabase.js?v=20260908"></script>
-  
-  <script src="js/auth.js?v=20260908"></script>
-  <script src="js/navbar.js?v=20260908"></script>
+
+  <script src="js/config.js?v=20260909"></script>
+  <script src="js/supabase.js?v=20260909"></script>
+  <script src="js/auth.js?v=20260909"></script>
+  <script src="js/navbar.js?v=20260909"></script>
 
   <!-- =====================================================
        ICONS
        ===================================================== -->
+
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -56,41 +65,60 @@
   <!-- =====================================================
        GLOBAL STYLES
        ===================================================== -->
+
   <link
     rel="stylesheet"
-    href="css/app.css?v=20260908"
+    href="css/app.css?v=20260909"
   >
 
   <link
     rel="stylesheet"
-    href="css/navbar.css?v=20260908"
+    href="css/navbar.css?v=20260909"
   >
 
   <link
     rel="stylesheet"
-    href="css/footer.css?v=20260908"
+    href="css/footer.css?v=20260909"
   >
 
   <!-- =====================================================
        PAGE STYLES
        ===================================================== -->
+
   <link
     rel="stylesheet"
-    href="css/create-product.css?v=20260908"
+    href="css/create-product.css?v=20260909"
   >
 
   <link
     rel="stylesheet"
-    href="css/final-polish.css?v=20260908"
+    href="css/final-polish.css?v=20260909"
   >
 
   <link
     rel="stylesheet"
-    href="css/saas-final.css?v=20260908"
+    href="css/saas-final.css?v=20260909"
   >
-<link rel="stylesheet" href="css/dashboard-theme.css?v=20260909"><link rel="stylesheet" href="css/theme-universal.css?v=20260908-auto-theme">
-  
-<link rel="stylesheet" href="css/final-fixes.css?v=20260909-full"><script>document.documentElement.classList.add("pastele-ready");</script></head>
+
+  <link
+    rel="stylesheet"
+    href="css/dashboard-theme.css?v=20260909"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/theme-universal.css?v=20260909-auto-theme"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/final-fixes.css?v=20260909-full"
+  >
+
+  <script>
+    document.documentElement.classList.add("pastele-ready");
+  </script>
+</head>
 
 
 <body class="app-page create-product-page">
@@ -98,12 +126,14 @@
   <!-- =====================================================
        NAVBAR
        ===================================================== -->
+
   <div id="navbar"></div>
 
 
   <!-- =====================================================
        MAIN
        ===================================================== -->
+
   <main
     class="create-main"
     id="main-content"
@@ -119,6 +149,7 @@
         <!-- =================================================
              PAGE HEADER
              ================================================= -->
+
         <header class="create-header">
 
           <div class="create-header-main">
@@ -133,12 +164,14 @@
             <div class="create-heading">
 
               <span class="create-eyebrow">
+
                 <i
                   class="fa-solid fa-store"
                   aria-hidden="true"
                 ></i>
 
                 MARKETPLACE
+
               </span>
 
               <h1 id="createTitle">
@@ -146,7 +179,8 @@
               </h1>
 
               <p>
-                Buat dan publikasikan produk kamu ke Marketplace PasTele.
+                Buat dan publikasikan produk Free atau Paid
+                ke Marketplace PasTele.
               </p>
 
             </div>
@@ -159,6 +193,7 @@
             href="my-products.html"
             aria-label="Kembali ke My Products"
           >
+
             <i
               class="fa-solid fa-box-open"
               aria-hidden="true"
@@ -167,6 +202,7 @@
             <span>
               My Products
             </span>
+
           </a>
 
         </header>
@@ -175,6 +211,7 @@
         <!-- =================================================
              CREATE FORM
              ================================================= -->
+
         <form
           class="create-layout"
           id="f"
@@ -185,11 +222,13 @@
           <!-- =================================================
                LEFT — FORM PANEL
                ================================================= -->
+
           <div class="create-form-panel">
 
             <!-- =================================================
                  PANEL HEADER
                  ================================================= -->
+
             <div class="panel-heading">
 
               <div>
@@ -203,8 +242,8 @@
                 </h2>
 
                 <p>
-                  Lengkapi informasi dasar produk yang akan
-                  ditampilkan di Marketplace.
+                  Lengkapi informasi produk sebelum
+                  dipublikasikan ke Marketplace.
                 </p>
 
               </div>
@@ -213,7 +252,11 @@
                 class="panel-heading-icon"
                 aria-hidden="true"
               >
-                <i class="fa-solid fa-pen-to-square"></i>
+
+                <i
+                  class="fa-solid fa-pen-to-square"
+                ></i>
+
               </span>
 
             </div>
@@ -222,11 +265,17 @@
             <!-- =================================================
                  TITLE
                  ================================================= -->
+
             <div class="form-field">
 
               <label for="title">
+
                 Judul Produk
-                <span aria-hidden="true">*</span>
+
+                <span aria-hidden="true">
+                  *
+                </span>
+
               </label>
 
               <div class="input-wrap">
@@ -251,7 +300,8 @@
               </div>
 
               <small>
-                Gunakan judul yang singkat, jelas, dan mudah dipahami.
+                Gunakan judul yang singkat,
+                jelas, dan mudah dipahami.
               </small>
 
             </div>
@@ -260,11 +310,17 @@
             <!-- =================================================
                  SLUG
                  ================================================= -->
+
             <div class="form-field">
 
               <label for="slug">
+
                 Slug
-                <span aria-hidden="true">*</span>
+
+                <span aria-hidden="true">
+                  *
+                </span>
+
               </label>
 
               <div class="input-wrap">
@@ -290,7 +346,9 @@
               </div>
 
               <small>
-                Gunakan hanya huruf kecil, angka, dan tanda
+                Slug otomatis dibuat dari judul.
+                Kamu juga bisa mengubahnya sendiri.
+                Hanya huruf kecil, angka, dan tanda
                 <code>-</code>.
               </small>
 
@@ -300,14 +358,21 @@
             <!-- =================================================
                  TYPE + ACCESS
                  ================================================= -->
+
             <div class="form-row">
 
               <!-- TYPE -->
+
               <div class="form-field">
 
                 <label for="type">
+
                   Tipe Produk
-                  <span aria-hidden="true">*</span>
+
+                  <span aria-hidden="true">
+                    *
+                  </span>
+
                 </label>
 
                 <div class="input-wrap select-wrap">
@@ -323,6 +388,7 @@
                     name="type"
                     required
                   >
+
                     <option value="link">
                       Link
                     </option>
@@ -335,7 +401,7 @@
                       value="pastelink"
                       selected
                     >
-                      Paste Link
+                      PasteLink
                     </option>
 
                     <option value="code">
@@ -349,6 +415,7 @@
                     <option value="group">
                       Group
                     </option>
+
                   </select>
 
                 </div>
@@ -357,11 +424,17 @@
 
 
               <!-- ACCESS -->
+
               <div class="form-field">
 
                 <label for="access">
+
                   Akses
-                  <span aria-hidden="true">*</span>
+
+                  <span aria-hidden="true">
+                    *
+                  </span>
+
                 </label>
 
                 <div class="input-wrap select-wrap">
@@ -377,16 +450,18 @@
                     name="access"
                     required
                   >
+
                     <option
                       value="free"
                       selected
                     >
-                      Free
+                      Free — Rp0
                     </option>
 
                     <option value="paid">
-                      Paid
+                      Paid — Rp5.000–Rp150.000
                     </option>
+
                   </select>
 
                 </div>
@@ -397,8 +472,9 @@
 
 
             <!-- =================================================
-                 GUEST ACCESS INFO
+                 ACCESS INFO
                  ================================================= -->
+
             <div
               class="create-access-info"
               id="guestAccessInfo"
@@ -410,19 +486,25 @@
                 class="create-access-info-icon"
                 aria-hidden="true"
               >
-                <i class="fa-solid fa-circle-info"></i>
+
+                <i
+                  class="fa-solid fa-circle-info"
+                ></i>
+
               </div>
 
               <div>
 
                 <strong>
-                  Mode Guest
+                  Free & Paid tersedia
                 </strong>
 
                 <span>
-                  Guest hanya dapat membuat
-                  <b>PasteLink Free</b>.
-                  Untuk fitur lainnya, silakan masuk atau daftar.
+                  Semua tipe produk dapat dibuat
+                  <b>Free</b> atau <b>Paid</b>.
+                  Produk Free memiliki harga Rp0,
+                  sedangkan Paid memiliki harga
+                  Rp5.000 sampai Rp150.000.
                 </span>
 
               </div>
@@ -433,7 +515,10 @@
             <!-- =================================================
                  PRICE
                  ================================================= -->
-            <div class="form-field price-field">
+
+            <div
+              class="form-field price-field"
+            >
 
               <label for="price">
 
@@ -458,18 +543,19 @@
                   name="price"
                   type="number"
                   min="0"
-                  max="100000000"
+                  max="150000"
                   step="1000"
                   value="0"
                   placeholder="0"
                   inputmode="numeric"
                   autocomplete="off"
+                  aria-describedby="priceHint"
                 >
 
               </div>
 
               <small id="priceHint">
-                Produk gratis tidak dikenakan biaya.
+                Produk Free tidak dikenakan biaya.
               </small>
 
             </div>
@@ -478,6 +564,7 @@
             <!-- =================================================
                  THUMBNAIL
                  ================================================= -->
+
             <div class="form-field">
 
               <label for="thumb">
@@ -513,6 +600,7 @@
 
 
               <!-- THUMBNAIL PREVIEW -->
+
               <div
                 class="thumb-preview"
                 id="thumbPreview"
@@ -535,7 +623,8 @@
                   </strong>
 
                   <small>
-                    Gambar yang akan digunakan pada produk.
+                    Gambar yang akan digunakan
+                    pada produk.
                   </small>
 
                 </div>
@@ -548,6 +637,7 @@
             <!-- =================================================
                  DESCRIPTION
                  ================================================= -->
+
             <div class="form-field">
 
               <label for="desc">
@@ -582,7 +672,8 @@
               <div class="field-bottom">
 
                 <small>
-                  Jelaskan manfaat, fitur, atau isi produk.
+                  Jelaskan manfaat, fitur,
+                  atau isi produk.
                 </small>
 
                 <span id="descCounter">
@@ -597,6 +688,7 @@
             <!-- =================================================
                  CONTENT / DELIVERY
                  ================================================= -->
+
             <div class="form-field">
 
               <label for="content">
@@ -605,13 +697,18 @@
                   Content / Delivery
                 </span>
 
-                <span class="optional-label">
-                  Opsional
+                <span
+                  class="required-label"
+                  aria-hidden="true"
+                >
+                  *
                 </span>
 
               </label>
 
-              <div class="textarea-wrap content-wrap">
+              <div
+                class="textarea-wrap content-wrap"
+              >
 
                 <i
                   class="fa-solid fa-file-arrow-down"
@@ -623,14 +720,18 @@
                   id="content"
                   name="content"
                   rows="8"
+                  maxlength="1000000"
                   placeholder="Masukkan content atau delivery produk..."
                   spellcheck="false"
+                  required
+                  aria-describedby="contentHint"
                 ></textarea>
 
               </div>
 
               <small id="contentHint">
-                Content ini akan disimpan sebagai delivery produk.
+                Content ini akan disimpan sebagai
+                delivery produk.
               </small>
 
             </div>
@@ -639,6 +740,7 @@
             <!-- =================================================
                  FORM ACTIONS
                  ================================================= -->
+
             <div class="form-actions">
 
               <a
@@ -646,6 +748,7 @@
                 class="cancel-btn"
                 id="cancelBtn"
               >
+
                 <i
                   class="fa-solid fa-arrow-left"
                   aria-hidden="true"
@@ -654,6 +757,7 @@
                 <span>
                   Batal
                 </span>
+
               </a>
 
 
@@ -663,7 +767,9 @@
                 type="submit"
               >
 
-                <span class="submit-normal">
+                <span
+                  class="submit-normal"
+                >
 
                   <i
                     class="fa-solid fa-cloud-arrow-up"
@@ -703,22 +809,32 @@
           <!-- =================================================
                RIGHT — SIDEBAR
                ================================================= -->
+
           <aside class="create-side">
 
 
             <!-- =================================================
                  PUBLISH STATUS
                  ================================================= -->
-            <div class="side-card publish-card">
+
+            <div
+              class="side-card publish-card"
+            >
 
               <div
                 class="side-card-icon"
                 aria-hidden="true"
               >
-                <i class="fa-solid fa-rocket"></i>
+
+                <i
+                  class="fa-solid fa-rocket"
+                ></i>
+
               </div>
 
-              <div class="side-card-content">
+              <div
+                class="side-card-content"
+              >
 
                 <span class="side-kicker">
                   PUBLISH
@@ -729,7 +845,8 @@
                 </h3>
 
                 <p>
-                  Produk akan dibuat dengan status
+                  Produk akan langsung dibuat
+                  dengan status
                   <strong>Published</strong>
                   setelah berhasil disimpan.
                 </p>
@@ -740,17 +857,114 @@
 
 
             <!-- =================================================
-                 PRODUCT TYPES
+                 ACCESS TYPES
                  ================================================= -->
+
             <div class="side-card">
 
-              <div class="side-card-header">
+              <div
+                class="side-card-header"
+              >
 
                 <span
                   class="side-icon"
                   aria-hidden="true"
                 >
-                  <i class="fa-solid fa-cubes"></i>
+
+                  <i
+                    class="fa-solid fa-tags"
+                  ></i>
+
+                </span>
+
+                <div>
+
+                  <span class="side-kicker">
+                    FREE / PAID
+                  </span>
+
+                  <h3>
+                    Pilih akses produk
+                  </h3>
+
+                </div>
+
+              </div>
+
+
+              <div class="tips-list">
+
+                <li>
+
+                  <i
+                    class="fa-solid fa-gift"
+                    aria-hidden="true"
+                  ></i>
+
+                  <span>
+
+                    <strong>
+                      Free
+                    </strong>
+
+                    <br>
+
+                    Produk gratis dengan harga
+                    <strong>Rp0</strong>.
+
+                  </span>
+
+                </li>
+
+
+                <li>
+
+                  <i
+                    class="fa-solid fa-coins"
+                    aria-hidden="true"
+                  ></i>
+
+                  <span>
+
+                    <strong>
+                      Paid
+                    </strong>
+
+                    <br>
+
+                    Harga mulai
+                    <strong>Rp5.000</strong>
+                    sampai
+                    <strong>Rp150.000</strong>.
+
+                  </span>
+
+                </li>
+
+              </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PRODUCT TYPES
+                 ================================================= -->
+
+            <div class="side-card">
+
+              <div
+                class="side-card-header"
+              >
+
+                <span
+                  class="side-icon"
+                  aria-hidden="true"
+                >
+
+                  <i
+                    class="fa-solid fa-cubes"
+                  ></i>
+
                 </span>
 
                 <div>
@@ -760,7 +974,7 @@
                   </span>
 
                   <h3>
-                    Pilih tipe yang sesuai
+                    Semua tipe didukung
                   </h3>
 
                 </div>
@@ -778,11 +992,57 @@
                   ></i>
 
                   <span>
-                    <strong>PasteLink</strong>
-                    untuk membagikan halaman atau link.
+
+                    <strong>
+                      Link
+                    </strong>
+
+                    untuk membagikan URL.
+
                   </span>
 
                 </li>
+
+
+                <li>
+
+                  <i
+                    class="fa-solid fa-file-lines"
+                    aria-hidden="true"
+                  ></i>
+
+                  <span>
+
+                    <strong>
+                      Paste
+                    </strong>
+
+                    untuk content teks.
+
+                  </span>
+
+                </li>
+
+
+                <li>
+
+                  <i
+                    class="fa-solid fa-link"
+                    aria-hidden="true"
+                  ></i>
+
+                  <span>
+
+                    <strong>
+                      PasteLink
+                    </strong>
+
+                    untuk halaman atau link.
+
+                  </span>
+
+                </li>
+
 
                 <li>
 
@@ -792,11 +1052,17 @@
                   ></i>
 
                   <span>
-                    <strong>Code</strong>
+
+                    <strong>
+                      Code
+                    </strong>
+
                     untuk source code atau script.
+
                   </span>
 
                 </li>
+
 
                 <li>
 
@@ -806,11 +1072,17 @@
                   ></i>
 
                   <span>
-                    <strong>Channel</strong>
-                    untuk produk channel Telegram.
+
+                    <strong>
+                      Channel
+                    </strong>
+
+                    untuk produk Channel Telegram.
+
                   </span>
 
                 </li>
+
 
                 <li>
 
@@ -820,8 +1092,13 @@
                   ></i>
 
                   <span>
-                    <strong>Group</strong>
-                    untuk produk group Telegram.
+
+                    <strong>
+                      Group
+                    </strong>
+
+                    untuk produk Group Telegram.
+
                   </span>
 
                 </li>
@@ -834,15 +1111,22 @@
             <!-- =================================================
                  TIPS
                  ================================================= -->
+
             <div class="side-card">
 
-              <div class="side-card-header">
+              <div
+                class="side-card-header"
+              >
 
                 <span
                   class="side-icon"
                   aria-hidden="true"
                 >
-                  <i class="fa-solid fa-lightbulb"></i>
+
+                  <i
+                    class="fa-solid fa-lightbulb"
+                  ></i>
+
                 </span>
 
                 <div>
@@ -870,10 +1154,12 @@
                   ></i>
 
                   <span>
-                    Gunakan judul yang jelas dan menarik.
+                    Gunakan judul yang jelas
+                    dan menarik.
                   </span>
 
                 </li>
+
 
                 <li>
 
@@ -883,10 +1169,12 @@
                   ></i>
 
                   <span>
-                    Gunakan slug sederhana dan mudah diingat.
+                    Gunakan slug sederhana
+                    dan mudah diingat.
                   </span>
 
                 </li>
+
 
                 <li>
 
@@ -896,10 +1184,12 @@
                   ></i>
 
                   <span>
-                    Tambahkan deskripsi agar pembeli memahami produk.
+                    Tambahkan deskripsi agar
+                    pembeli memahami produk.
                   </span>
 
                 </li>
+
 
                 <li>
 
@@ -909,7 +1199,8 @@
                   ></i>
 
                   <span>
-                    Pastikan content delivery sudah benar.
+                    Pastikan content delivery
+                    sudah benar.
                   </span>
 
                 </li>
@@ -922,6 +1213,7 @@
             <!-- =================================================
                  SECURITY
                  ================================================= -->
+
             <div class="side-note">
 
               <i
@@ -936,14 +1228,13 @@
                 </strong>
 
                 <span>
-                  Produk akun akan tersimpan dengan aman
-                  di database PasTele.
+                  Produk akun disimpan secara
+                  aman di database PasTele.
                 </span>
 
               </div>
 
             </div>
-
 
           </aside>
 
@@ -959,6 +1250,7 @@
   <!-- =====================================================
        AUTH REQUIRED MODAL
        ===================================================== -->
+
   <div
     class="auth-required-modal"
     id="authRequiredModal"
@@ -987,10 +1279,12 @@
         aria-label="Tutup"
         data-auth-close
       >
+
         <i
           class="fa-solid fa-xmark"
           aria-hidden="true"
         ></i>
+
       </button>
 
 
@@ -998,36 +1292,47 @@
         class="auth-required-icon"
         aria-hidden="true"
       >
-        <i class="fa-solid fa-lock"></i>
+
+        <i
+          class="fa-solid fa-lock"
+        ></i>
+
       </div>
 
 
-      <div class="auth-required-content">
+      <div
+        class="auth-required-content"
+      >
 
-        <span class="auth-required-kicker">
+        <span
+          class="auth-required-kicker"
+        >
           ACCOUNT REQUIRED
         </span>
 
         <h2 id="authRequiredTitle">
-          Masuk untuk melanjutkan
+          Masuk untuk membuat produk
         </h2>
 
         <p id="authRequiredText">
-          Fitur ini membutuhkan akun PasTele.
-          Silakan masuk atau daftar terlebih dahulu
-          untuk menggunakan fitur tersebut.
+          Kamu harus masuk atau membuat
+          akun PasTele terlebih dahulu
+          sebelum dapat membuat produk.
         </p>
 
       </div>
 
 
-      <div class="auth-required-actions">
+      <div
+        class="auth-required-actions"
+      >
 
         <a
           href="login.html"
           class="auth-required-login"
           id="authLoginBtn"
         >
+
           <i
             class="fa-solid fa-right-to-bracket"
             aria-hidden="true"
@@ -1036,6 +1341,7 @@
           <span>
             Masuk
           </span>
+
         </a>
 
 
@@ -1044,6 +1350,7 @@
           class="auth-required-register"
           id="authRegisterBtn"
         >
+
           <i
             class="fa-solid fa-user-plus"
             aria-hidden="true"
@@ -1052,19 +1359,24 @@
           <span>
             Daftar
           </span>
+
         </a>
 
       </div>
 
 
       <p class="auth-required-note">
+
         <i
           class="fa-solid fa-shield-halved"
           aria-hidden="true"
         ></i>
 
-        Akun diperlukan untuk membuat produk berbayar
-        dan produk selain PasteLink.
+        <span>
+          Login diperlukan untuk membuat
+          dan mempublikasikan produk.
+        </span>
+
       </p>
 
     </div>
@@ -1075,6 +1387,7 @@
   <!-- =====================================================
        TOAST
        ===================================================== -->
+
   <div
     id="toast"
     role="status"
@@ -1086,9 +1399,12 @@
   <!-- =====================================================
        PAGE SCRIPTS
        ===================================================== -->
-  <script src="js/create-product.js?v=20260908"></script>
 
-  <script src="js/footer.js?v=20260908"></script>
+  <script src="js/create-product.js?v=20260909"></script>
 
-<script src="js/theme.js?v=20260909"></script></body>
+  <script src="js/footer.js?v=20260909"></script>
+
+  <script src="js/theme.js?v=20260909"></script>
+
+</body>
 </html>
