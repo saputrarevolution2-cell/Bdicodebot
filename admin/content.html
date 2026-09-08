@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <script src="../js/theme-preload.js?v=20260908"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>Admin · Content · PasTele</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js?v=20260908"></script>
+  <script src="../js/supabase.js?v=20260908"></script>
+  <script src="../js/debug-panel.js?v=20260908"></script>
+  <script src="../js/auth.js?v=20260908"></script>
+  <script src="../js/navbar.js?v=20260908"></script>
+  <link rel="stylesheet" href="../css/app.css?v=20260908">
+  <link rel="stylesheet" href="../css/navbar.css?v=20260908">
+  <link rel="stylesheet" href="../css/footer.css?v=20260908">
+  <link rel="stylesheet" href="admin.css?v=20260908">
+  <link rel="stylesheet" href="content.css?v=20260908">
+</head>
+<body class="app-page admin-page">
+  <div id="navbar"></div>
+  <main class="admin-main">
+    <section class="section">
+      <div class="container admin-layout">
+        <aside class="card admin-side">
+          <div class="admin-nav">
+            <a href="index.html"><i class="fa-solid fa-chart-pie"></i> Overview</a>
+            <a href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+            <a href="products.html"><i class="fa-solid fa-box"></i> Products</a>
+            <a class="active" href="content.html"><i class="fa-solid fa-layer-group"></i> Content</a>
+            <a href="orders.html"><i class="fa-solid fa-receipt"></i> Orders</a>
+            <a href="payments.html"><i class="fa-solid fa-credit-card"></i> Payments</a>
+            <a href="withdrawals.html"><i class="fa-solid fa-money-bill-transfer"></i> Withdrawals</a>
+            <a href="transactions.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Transactions</a>
+            <a href="pastes.html"><i class="fa-solid fa-file-lines"></i> Pastes</a>
+            <a href="bots.html"><i class="fa-solid fa-robot"></i> Bots</a>
+            <a href="logs.html"><i class="fa-solid fa-list"></i> Logs</a>
+          </div>
+        </aside>
+
+        <div class="admin-content">
+          <div class="admin-title">
+            <div>
+              <span class="badge"><i class="fa-solid fa-layer-group"></i> Admin</span>
+              <h1>Content Manager</h1>
+              <p>Lihat creator, status, harga, engagement, edit, publish, dan hapus konten dari satu tempat.</p>
+            </div>
+            <button class="btn" id="refreshContent" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+
+          <div class="content-kpis" id="contentKpis"></div>
+
+          <div class="card content-toolbar">
+            <div class="content-search">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input id="contentSearch" type="search" placeholder="Cari judul, slug, creator, username..." autocomplete="off">
+              <button id="clearContentSearch" type="button" aria-label="Hapus pencarian"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <select id="contentType" class="select">
+              <option value="all">Semua tipe</option>
+              <option value="link">PasteLink</option>
+              <option value="code">Code</option>
+              <option value="channel">Channel</option>
+              <option value="group">Group</option>
+              <option value="product">Product</option>
+            </select>
+            <select id="contentStatus" class="select">
+              <option value="all">Semua status</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+              <option value="rejected">Rejected</option>
+              <option value="hidden">Hidden</option>
+            </select>
+            <select id="contentSort" class="select">
+              <option value="newest">Terbaru</option>
+              <option value="oldest">Terlama</option>
+              <option value="views">Views tertinggi</option>
+              <option value="sales">Sales tertinggi</option>
+              <option value="price">Harga tertinggi</option>
+            </select>
+          </div>
+
+          <div class="content-resultbar">
+            <span id="contentResult">Memuat konten...</span>
+            <button class="btn" id="resetContentFilters" type="button"><i class="fa-solid fa-filter-circle-xmark"></i> Reset</button>
+          </div>
+
+          <div class="content-list" id="contentList">
+            <div class="card admin-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat konten...</div>
+          </div>
+
+          <div class="content-pagination" id="contentPagination" hidden></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="content-modal" id="contentModal" hidden aria-hidden="true">
+    <div class="content-modal-backdrop" data-close-content></div>
+    <div class="content-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="contentModalTitle">
+      <div class="content-modal-head">
+        <div>
+          <span class="eyebrow"><i class="fa-solid fa-pen-to-square"></i> Admin Editor</span>
+          <h2 id="contentModalTitle">Edit Content</h2>
+        </div>
+        <button class="content-modal-close" id="contentModalClose" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="contentEditForm">
+        <input id="editId" type="hidden">
+        <input id="editSource" type="hidden">
+        <label>Judul / Nama<input id="editTitle" class="input" required maxlength="180"></label>
+        <label>Slug<input id="editSlug" class="input" maxlength="180"></label>
+        <div class="edit-grid">
+          <label>Harga<input id="editPrice" class="input" type="number" min="0" step="100" inputmode="numeric"></label>
+          <label>Status<select id="editStatus" class="select"><option value="published">Published</option><option value="draft">Draft</option><option value="rejected">Rejected</option><option value="hidden">Hidden</option></select></label>
+        </div>
+        <label>Deskripsi<textarea id="editDescription" class="textarea" rows="5" maxlength="5000"></textarea></label>
+        <div class="content-editor-note" id="editNote"></div>
+        <div class="content-modal-actions">
+          <button class="btn danger" id="deleteContent" type="button"><i class="fa-solid fa-trash"></i> Hapus</button>
+          <span></span>
+          <button class="btn" id="cancelContentEdit" type="button">Batal</button>
+          <button class="btn primary" id="saveContentEdit" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="../js/admin/admin.js?v=20260908"></script>
+  <script src="content.js?v=20260908"></script>
+  <script src="../js/footer.js?v=20260908"></script>
+</body>
+</html>
