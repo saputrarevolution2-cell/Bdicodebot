@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
         amount,
         description: String(order.item_title || "Pembayaran PasTele").slice(0, 180),
         payment_url: paymentUrl,
-        payment_method: "qris_bayar_gg",
+        payment_method: "qris",
         order_id: reference,
       }),
     });
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       expires_at: d?.expires_at ?? null,
       status: String(d?.status || "pending").toLowerCase(),
       provider: "BAYAR.GG",
-      payment_method: d?.payment_method || "qris_bayar_gg",
+      payment_method: d?.payment_method || "qris",
     });
   } catch (e) {
     console.error("create-bayargg-payment", e);
