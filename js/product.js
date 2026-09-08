@@ -1,2877 +1,459 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    "use strict";
-
-    /* =========================================================
-       PasTele — PRODUCT
-       PUBLIC PRODUCT DETAIL
-       LIKE + COMMENT FOR EVERYONE
-       PAID CHECKOUT + BAYAR.GG QRIS
-       ========================================================= */
-
-    /* =========================================================
-       HELPERS — HARUS DIDEFINISIKAN SEBELUM DIGUNAKAN
-       ========================================================= */
-
-    const normalizeType = (value) => {
-        const t = String(value || "link")
-            .trim()
-            .toLowerCase();
-
-        if (
-            t === "paste" ||
-            t === "pastelink" ||
-            t === "paste-link" ||
-            t === "paste_link"
-        ) {
-            return "link";
-        }
-
-        if (t === "telegram_channel") {
-            return "channel";
-        }
-
-        if (t === "telegram_group") {
-            return "group";
-        }
-
-        return t;
-    };
-
-    const qs = new URLSearchParams(
-        window.location.search
-    );
-
-    const initialId = qs.get("id");
-    const slug = qs.get("slug");
-    const type = normalizeType(
-        qs.get("type") || "link"
-    );
-
-    const box =
-        document.getElementById("content");
-
-    const likeBtn =
-        document.getElementById(
-            "productLikeBtn"
-        );
-
-    const likeIcon =
-        document.getElementById(
-            "productLikeIcon"
-        );
-
-    const likeLabel =
-        document.getElementById(
-            "productLikeLabel"
-        );
-
-    const likeCount =
-        document.getElementById(
-            "productLikeCount"
-        );
-
-    const commentCount =
-        document.getElementById(
-            "productCommentCount"
-        );
-
-    const commentForm =
-        document.getElementById(
-            "productCommentForm"
-        );
-
-    const commentName =
-        document.getElementById(
-            "commentName"
-        );
-
-    const commentText =
-        document.getElementById(
-            "commentText"
-        );
-
-    const commentCharCount =
-        document.getElementById(
-            "commentCharCount"
-        );
-
-    const commentSubmit =
-        document.getElementById(
-            "productCommentSubmit"
-        );
-
-    const commentList =
-        document.getElementById(
-            "productCommentList"
-        );
-
-    const commentsLoading =
-        document.getElementById(
-            "productCommentsLoading"
-        );
-
-    const sbClient = window.sb;
-
-    let productId =
-        initialId || null;
-
-    let product = null;
-
-    /* =========================================================
-       ESCAPE
-       ========================================================= */
-
-    const esc = (value) => {
-        const v = String(value ?? "");
-
-        if (window.TC?.esc) {
-            return window.TC.esc(v);
-        }
-
-        return v.replace(
-            /[&<>"']/g,
-            (char) => ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#039;"
-            }[char])
-        );
-    };
-
-    /* =========================================================
-       TOAST
-       ========================================================= */
-
-    const toast = (
-        message,
-        type = "info"
-    ) => {
-
-        if (window.TC?.toast) {
-            window.TC.toast(
-                message,
-                type
-            );
-            return;
-        }
-
-        const toastBox =
-            document.getElementById(
-                "toast"
-            );
-
-        if (!toastBox) {
-            console.log(message);
-            return;
-        }
-
-        toastBox.textContent =
-            message;
-
-        toastBox.className =
-            `show ${type}`;
-
-        clearTimeout(
-            toastBox.__timer
-        );
-
-        toastBox.__timer =
-            setTimeout(() => {
-                toastBox.className = "";
-            }, 3000);
-    };
-
-    /* =========================================================
-       MONEY
-       ========================================================= */
-
-    const money = (value) => {
-
-        const amount =
-            Number(value || 0);
-
-        if (window.TC?.money) {
-            return window.TC.money(
-                amount
-            );
-        }
-
-        return new Intl.NumberFormat(
-            "id-ID",
-            {
-                style: "currency",
-                currency: "IDR",
-                maximumFractionDigits: 0
-            }
-        ).format(amount);
-    };
-
-    /* =========================================================
-       ICON
-       ========================================================= */
-
-    const getIcon = (t) => {
-
-        if (t === "code") {
-            return "fa-solid fa-code";
-        }
-
-        if (
-            t === "channel" ||
-            t === "group"
-        ) {
-            return "fa-brands fa-telegram";
-        }
-
-        return "fa-solid fa-link";
-    };
-
-    /* =========================================================
-       NUMBER
-       ========================================================= */
-
-    const formatNumber = (
-        value
-    ) => {
-
-        return Number(
-            value || 0
-        ).toLocaleString(
-            "id-ID"
-        );
-    };
-
-    /* =========================================================
-       DATE
-       ========================================================= */
-
-    const formatDate = (
-        value
-    ) => {
-
-        if (!value) {
-            return "";
-        }
-
-        const date =
-            new Date(value);
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "";
-        }
-
-        return new Intl.DateTimeFormat(
-            "id-ID",
-            {
-                dateStyle: "medium",
-                timeStyle: "short"
-            }
-        ).format(date);
-    };
-
-    /* =========================================================
-       URL
-       ========================================================= */
-
-    const safeUrl = (
-        value
-    ) => {
-
-        let s =
-            String(value || "")
-                .trim();
-
-        if (!s) {
-            return "";
-        }
-
-        if (
-            /^www\./i.test(s)
-        ) {
-            s =
-                "https://" + s;
-        }
-
-        if (
-            /^https?:\/\//i.test(s)
-        ) {
-            try {
-
-                const url =
-                    new URL(s);
-
-                if (
-                    url.protocol !==
-                        "http:" &&
-                    url.protocol !==
-                        "https:"
-                ) {
-                    return "";
-                }
-
-                return url.href;
-
-            } catch {
-                return "";
-            }
-        }
-
-        if (
-            /^t\.me\//i.test(s)
-        ) {
-            return (
-                "https://" + s
-            );
-        }
-
-        if (
-            /^@[\w\d_]{3,}$/i.test(s)
-        ) {
-            return (
-                "https://t.me/" +
-                s.slice(1)
-            );
-        }
-
-        return "";
-    };
-
-    const telegramUrl = (
-        value
-    ) => {
-
-        const url =
-            safeUrl(value);
-
-        if (
-            url &&
-            /(?:t\.me|telegram\.me)/i.test(
-                url
-            )
-        ) {
-            return url;
-        }
-
-        return "";
-    };
-
-    /* =========================================================
-       HTML TEXT
-       ========================================================= */
-
-    const textFromHtml = (
-        html
-    ) => {
-
-        const doc =
-            new DOMParser()
-                .parseFromString(
-                    String(
-                        html || ""
-                    ),
-                    "text/html"
-                );
-
-        doc
-            .querySelectorAll(
-                "script,iframe,object,embed,style"
-            )
-            .forEach(
-                (element) =>
-                    element.remove()
-            );
-
-        return (
-            doc.body?.textContent ||
-            ""
-        );
-    };
-
-    const codeText = (
-        html
-    ) => {
-
-        return textFromHtml(
-            html
-        )
-            .replace(
-                /\u00a0/g,
-                " "
-            )
-            .trim();
-    };
-
-    /* =========================================================
-       LINKIFY
-       ========================================================= */
-
-    const linkifyHtml = (
-        raw
-    ) => {
-
-        const doc =
-            new DOMParser()
-                .parseFromString(
-                    String(
-                        raw || ""
-                    ),
-                    "text/html"
-                );
-
-        doc
-            .querySelectorAll(
-                "script,iframe,object,embed,style"
-            )
-            .forEach(
-                (element) =>
-                    element.remove()
-            );
-
-        doc
-            .querySelectorAll("*")
-            .forEach(
-                (element) => {
-
-                    [
-                        ...element.attributes
-                    ].forEach(
-                        (attr) => {
-
-                            if (
-                                attr.name
-                                    .toLowerCase()
-                                    .startsWith(
-                                        "on"
-                                    )
-                            ) {
-                                element.removeAttribute(
-                                    attr.name
-                                );
-                            }
-                        }
-                    );
-                }
-            );
-
-        doc
-            .querySelectorAll("a")
-            .forEach(
-                (a) => {
-
-                    const href =
-                        safeUrl(
-                            a.getAttribute(
-                                "href"
-                            )
-                        );
-
-                    if (href) {
-
-                        a.setAttribute(
-                            "href",
-                            href
-                        );
-
-                        a.setAttribute(
-                            "target",
-                            "_blank"
-                        );
-
-                        a.setAttribute(
-                            "rel",
-                            "noopener noreferrer"
-                        );
-
-                    } else {
-
-                        a.removeAttribute(
-                            "href"
-                        );
-                    }
-                }
-            );
-
-        const walker =
-            doc.createTreeWalker(
-                doc.body,
-                NodeFilter.SHOW_TEXT
-            );
-
-        const nodes = [];
-
-        while (
-            walker.nextNode()
-        ) {
-
-            const node =
-                walker.currentNode;
-
-            if (
-                !node.parentElement?.closest(
-                    "a,pre,code"
-                )
-            ) {
-                nodes.push(node);
-            }
-        }
-
-        const regex =
-            /((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
-
-        nodes.forEach(
-            (node) => {
-
-                const text =
-                    node.nodeValue ||
-                    "";
-
-                const fragment =
-                    document.createDocumentFragment();
-
-                let lastIndex = 0;
-                let match;
-
-                regex.lastIndex = 0;
-
-                while (
-                    (match =
-                        regex.exec(text))
-                ) {
-
-                    let url =
-                        match[1];
-
-                    let trailing =
-                        "";
-
-                    while (
-                        /[.,!?;:)\]}]$/.test(
-                            url
-                        )
-                    ) {
-
-                        trailing =
-                            url.slice(-1) +
-                            trailing;
-
-                        url =
-                            url.slice(
-                                0,
-                                -1
-                            );
-                    }
-
-                    if (
-                        match.index >
-                        lastIndex
-                    ) {
-
-                        fragment.appendChild(
-                            document.createTextNode(
-                                text.slice(
-                                    lastIndex,
-                                    match.index
-                                )
-                            )
-                        );
-                    }
-
-                    const a =
-                        document.createElement(
-                            "a"
-                        );
-
-                    const href =
-                        safeUrl(url);
-
-                    if (href) {
-
-                        a.href =
-                            href;
-
-                        a.target =
-                            "_blank";
-
-                        a.rel =
-                            "noopener noreferrer";
-                    }
-
-                    a.textContent =
-                        url;
-
-                    fragment.appendChild(
-                        a
-                    );
-
-                    if (trailing) {
-
-                        fragment.appendChild(
-                            document.createTextNode(
-                                trailing
-                            )
-                        );
-                    }
-
-                    lastIndex =
-                        match.index +
-                        match[1].length;
-                }
-
-                if (
-                    lastIndex > 0
-                ) {
-
-                    if (
-                        lastIndex <
-                        text.length
-                    ) {
-
-                        fragment.appendChild(
-                            document.createTextNode(
-                                text.slice(
-                                    lastIndex
-                                )
-                            )
-                        );
-                    }
-
-                    node.replaceWith(
-                        fragment
-                    );
-                }
-            }
-        );
-
-        return (
-            doc.body.innerHTML
-        );
-    };
-
-    /* =========================================================
-       RESOLVE SLUG
-       ========================================================= */
-
-    async function resolveSlug() {
-
-        if (
-            productId ||
-            !slug
-        ) {
-            return;
-        }
-
-        let table = null;
-
-        if (
-            type === "code"
-        ) {
-
-            table =
-                "telegram_products";
-
-        } else if (
-            type === "channel" ||
-            type === "group"
-        ) {
-
-            table =
-                "telegram_channels";
-        }
-
-        if (!table) {
-
-            throw new Error(
-                "Produk tidak ditemukan."
-            );
-        }
-
-        const {
-            data,
-            error
-        } =
-            await sbClient
-                .from(table)
-                .select("id")
-                .eq(
-                    "slug",
-                    slug
-                )
-                .maybeSingle();
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data?.id) {
-
-            throw new Error(
-                "Link tidak ditemukan atau sudah tidak tersedia."
-            );
-        }
-
-        productId =
-            data.id;
-    }
-
-    /* =========================================================
-       LOAD PRODUCT
-       ========================================================= */
-
-    async function loadProduct() {
-
-        if (!sbClient) {
-
-            throw new Error(
-                "Supabase belum siap. Pastikan js/supabase.js berhasil dimuat."
-            );
-        }
-
-        await resolveSlug();
-
-        if (!productId) {
-
-            throw new Error(
-                "ID produk tidak ditemukan."
-            );
-        }
-
-        console.log(
-            "[PasTele Product] Loading:",
-            {
-                id: productId,
-                type
-            }
-        );
-
-        const {
-            data,
-            error
-        } =
-            await sbClient.rpc(
-                "get_market_item_detail",
-                {
-                    p_type:
-                        type,
-
-                    p_id:
-                        productId
-                }
-            );
-
-        if (error) {
-
-            console.error(
-                "[PasTele Product] RPC error:",
-                error
-            );
-
-            throw error;
-        }
-
-        if (!data) {
-
-            throw new Error(
-                "Produk tidak ditemukan atau belum dipublikasikan."
-            );
-        }
-
-        /*
-         * Beberapa RPC PostgreSQL dapat mengembalikan
-         * array walaupun hanya satu item.
-         */
-
-        product =
-            Array.isArray(data)
-                ? data[0]
-                : data;
-
-        if (!product) {
-
-            throw new Error(
-                "Data produk kosong."
-            );
-        }
-
-        console.log(
-            "[PasTele Product] Loaded:",
-            product
-        );
-
-        try {
-
-            await sbClient.rpc(
-                "record_content_view",
-                {
-                    p_owner:
-                        product.owner_id,
-
-                    p_target_type:
-                        type,
-
-                    p_target_id:
-                        productId
-                }
-            );
-
-        } catch (error) {
-
-            console.warn(
-                "[PasTele Product] View tracking failed:",
-                error
-            );
-        }
-
-        return product;
-    }
-
-    /* =========================================================
-       RENDER PRODUCT
-       ========================================================= */
-
-    function renderProduct(x) {
-
-        const price =
-            Number(
-                x.price || 0
-            );
-
-        const canAccess =
-            x.can_access === true;
-
-        let body = "";
-
-        /* =====================================================
-           TELEGRAM
-           ===================================================== */
-
-        if (
-            type === "channel" ||
-            type === "group"
-        ) {
-
-            const raw =
-                x.channel_link ||
-                x.telegram_channel_id ||
-                x.content ||
-                x.username ||
-                "";
-
-            const href =
-                telegramUrl(raw) ||
-                safeUrl(raw);
-
-            if (!canAccess) {
-
-                body = `
-                    <div class="telegram-locked">
-
-                        <i class="fa-solid fa-lock"></i>
-
-                        <div>
-
-                            <strong>
-                                Akses Telegram terkunci
-                            </strong>
-
-                            <span>
-                                Bayar atau ambil akses
-                                untuk membuka link.
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-
-            } else if (raw) {
-
-                body = `
-                    <div class="telegram-access-card">
-
-                        <div class="telegram-access-icon">
-                            <i class="fa-brands fa-telegram"></i>
-                        </div>
-
-                        <div class="telegram-access-info">
-
-                            <span>
-                                TELEGRAM ${
-                                    type === "group"
-                                        ? "GROUP"
-                                        : "CHANNEL"
-                                }
-                            </span>
-
-                            <strong>
-                                ${esc(raw)}
-                            </strong>
-
-                        </div>
-
-                        ${
-                            href
-                                ? `
-                                    <a
-                                        class="btn primary telegram-open-btn"
-                                        href="${esc(href)}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <i class="fa-brands fa-telegram"></i>
-                                        Buka Telegram
-                                    </a>
-                                `
-                                : `
-                                    <button
-                                        type="button"
-                                        class="btn primary telegram-copy-btn"
-                                        data-copy="${esc(raw)}"
-                                    >
-                                        <i class="fa-solid fa-copy"></i>
-                                        Salin
-                                    </button>
-                                `
-                        }
-
-                    </div>
-                `;
-
-            } else {
-
-                body = `
-                    <div class="telegram-empty">
-
-                        <i class="fa-solid fa-link-slash"></i>
-
-                        <div>
-
-                            <strong>
-                                Link belum tersedia
-                            </strong>
-
-                            <span>
-                                Creator belum menyimpan
-                                link Telegram.
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-            }
-
-        /* =====================================================
-           CODE
-           ===================================================== */
-
-        } else if (
-            type === "code"
-        ) {
-
-            const raw =
-                canAccess
-                    ? codeText(
-                        x.content || ""
-                    )
-                    : "Kode berbayar. Buka akses untuk melihat kode lengkap.";
-
-            const botUser =
-                x.bot_username ||
-                x.bot ||
-                "";
-
-            const botHref =
-                telegramUrl(
-                    botUser
-                ) ||
-                safeUrl(
-                    botUser
-                );
-
-            if (canAccess) {
-
-                body = `
-                    <div class="code-viewer">
-
-                        <div class="code-head">
-
-                            <span>
-                                <i class="fa-solid fa-code"></i>
-                                CODE
-                            </span>
-
-                            <button
-                                type="button"
-                                class="code-copy"
-                                id="copyCode"
-                            >
-                                <i class="fa-solid fa-copy"></i>
-                                Salin
-                            </button>
-
-                        </div>
-
-                        <pre><code>${esc(
-                            raw
-                        )}</code></pre>
-
-                        ${
-                            botHref
-                                ? `
-                                    <a
-                                        class="telegram-bot-card"
-                                        href="${esc(botHref)}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-
-                                        <i class="fa-brands fa-telegram"></i>
-
-                                        <span>
-
-                                            <b>
-                                                Bot Telegram
-                                            </b>
-
-                                            <small>
-                                                ${esc(
-                                                    botUser
-                                                )}
-                                            </small>
-
-                                        </span>
-
-                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
-
-                                    </a>
-                                `
-                                : ""
-                        }
-
-                    </div>
-                `;
-
-            } else {
-
-                body = `
-                    <div class="code-locked">
-
-                        <i class="fa-solid fa-lock"></i>
-
-                        <div>
-
-                            <b>
-                                Kode terkunci
-                            </b>
-
-                            <span>
-                                Bayar untuk membuka dan
-                                menyalin kode lengkap.
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-            }
-
-        /* =====================================================
-           LINK
-           ===================================================== */
-
-        } else {
-
-            body = `
-                <div class="rich-output-view">
-
-                    ${
-                        canAccess
-                            ? linkifyHtml(
-                                x.content_html ||
-                                x.content ||
-                                x.description ||
-                                "Tidak ada konten."
-                            )
-                            : linkifyHtml(
-                                x.description ||
-                                "Konten berbayar. Buka akses untuk melihat isi lengkap."
-                            )
-                    }
-
-                </div>
-            `;
-        }
-
-        /* =====================================================
-           ACCESS NOTE
-           ===================================================== */
-
-        const accessHint =
-            x.access_reason ===
-            "subscription_limit"
-
-                ? `
-                    <div class="access-limit-note">
-
-                        <i class="fa-solid fa-clock"></i>
-
-                        <span>
-                            Batas Langganan 5x Code hari ini
-                            sudah tercapai. Kamu bisa mencoba
-                            lagi besok atau upgrade Premium.
-                        </span>
-
-                    </div>
-                `
-
-                : x.access_reason ===
-                  "subscription"
-
-                ? `
-                    <div class="access-limit-note">
-
-                        <i class="fa-solid fa-gem"></i>
-
-                        <span>
-                            Akses dibuka dengan Langganan
-                            · maksimal 5 Code Paid per hari.
-                        </span>
-
-                    </div>
-                `
-
-                : x.access_reason ===
-                  "premium"
-
-                ? `
-                    <div class="access-limit-note premium-access-note">
-
-                        <i class="fa-solid fa-circle-check"></i>
-
-                        <span>
-                            Premium aktif · akses Paid terbuka.
-                        </span>
-
-                    </div>
-                `
-
-                : "";
-
-        /* =====================================================
-           PRODUCT CARD
-           ===================================================== */
-
-        box.innerHTML = `
-            <article class="product-detail premium-view">
-
-                <div class="product-detail-icon">
-
-                    <i class="${getIcon(type)}"></i>
-
-                </div>
-
-                <span class="badge">
-
-                    ${esc(
-                        String(
-                            x.access_type ||
-                            "free"
-                        ).toUpperCase()
-                    )}
-
-                </span>
-
-                <h1>
-                    ${esc(
-                        x.title ||
-                        "Untitled"
-                    )}
-                </h1>
-
-                <p class="muted">
-
-                    Oleh
-
-                    <b>
-                        ${esc(
-                            x.creator_name ||
-                            "Creator"
-                        )}
-                    </b>
-
-                    ·
-
-                    ${formatNumber(
-                        x.views
-                    )}
-                    views
-
-                </p>
-
-                ${accessHint}
-
-                ${body}
-
-                <div class="detail-actions">
-
-                    <button
-                        type="button"
-                        class="btn"
-                        id="like"
-                    >
-                        <i class="fa-regular fa-heart"></i>
-                        Like
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn"
-                        id="share"
-                    >
-                        <i class="fa-solid fa-share-nodes"></i>
-                        Share
-                    </button>
-
-                    <b class="price">
-
-                        ${
-                            price
-                                ? money(price)
-                                : "FREE"
-                        }
-
-                    </b>
-
-                    <button
-                        type="button"
-                        class="btn primary"
-                        id="buy"
-                    >
-
-                        ${
-                            canAccess
-                                ? `
-                                    <i class="fa-solid fa-circle-check"></i>
-                                    Sudah diakses
-                                `
-                                : price
-                                ? `
-                                    <i class="fa-solid fa-qrcode"></i>
-                                    Bayar via Bayar.gg QRIS
-                                `
-                                : `
-                                    <i class="fa-solid fa-unlock"></i>
-                                    Ambil akses
-                                `
-                        }
-
-                    </button>
-
-                </div>
-
-            </article>
-        `;
-
+/* =========================================================
+   PasTele — PREMIUM / ACCOUNT PLAN
+   FINAL SQL SYNC
+   PROFILE:
+   - username
+   - display_name
+   - is_premium
+   - subscription_until
+   RPC:
+   create_account_plan_order(
+       p_plan text,
+       p_days integer,
+       p_amount numeric
+   )
+   PREMIUM:
+   plan   = premium
+   days   = 0
+   amount = 250000
+   RPC creates:
+   orders.item_type = account_plan
+   orders.item_id   = premium
+   orders.status    = pending
+   ========================================================= */
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+        "use strict";
+        /* ===================================================
+           DOM
+           =================================================== */
+        const $ = (id) =>
+            document.getElementById(id);
+        const status =
+            $("planStatus");
+        const planName =
+            $("planName");
+        const planUsername =
+            $("planUsername");
+        const planAvatar =
+            $("planAvatar");
         const buyButton =
-            document.getElementById(
-                "buy"
+            $("premiumBuy");
+        /* ===================================================
+           CLIENT
+           =================================================== */
+        const client =
+            window.sb ||
+            window.supabaseClient ||
+            window.supabase ||
+            null;
+        /* ===================================================
+           HELPERS
+           =================================================== */
+        const esc = (value) => {
+            if (window.TC?.esc) {
+                return TC.esc(
+                    String(
+                        value ?? ""
+                    )
+                );
+            }
+            return String(
+                value ?? ""
+            ).replace(
+                /[&<>"']/g,
+                (char) =>
+                    ({
+                        "&":
+                            "&amp;",
+                        "<":
+                            "&lt;",
+                        ">":
+                            "&gt;",
+                        '"':
+                            "&quot;",
+                        "'":
+                            "&#039;"
+                    })[char]
             );
-
-        if (
-            canAccess &&
-            buyButton
-        ) {
-            buyButton.disabled =
-                true;
-        }
-
-        bindProductActions(x);
-    }
-
-    /* =========================================================
-       BIND PRODUCT ACTIONS
-       ========================================================= */
-
-    function bindProductActions(x) {
-
-        /* COPY CODE */
-
-        document
-            .getElementById(
-                "copyCode"
-            )
-            ?.addEventListener(
-                "click",
-                async () => {
-
-                    const text =
-                        codeText(
-                            x.content ||
-                            ""
-                        );
-
-                    try {
-
-                        await navigator
-                            .clipboard
-                            .writeText(
-                                text
-                            );
-
-                        toast(
-                            "Kode berhasil disalin",
-                            "success"
-                        );
-
-                    } catch (_) {
-
-                        toast(
-                            "Gagal menyalin kode",
-                            "error"
-                        );
-                    }
-                }
-            );
-
-        /* COPY TELEGRAM */
-
-        document
-            .querySelector(
-                ".telegram-copy-btn"
-            )
-            ?.addEventListener(
-                "click",
-                async (
-                    event
-                ) => {
-
-                    const value =
-                        event.currentTarget
-                            .dataset
-                            .copy ||
-                        "";
-
-                    try {
-
-                        await navigator
-                            .clipboard
-                            .writeText(
-                                value
-                            );
-
-                        toast(
-                            "Link berhasil disalin",
-                            "success"
-                        );
-
-                    } catch (_) {
-
-                        toast(
-                            "Gagal menyalin link",
-                            "error"
-                        );
-                    }
-                }
-            );
-
-        /* SHARE */
-
-        document
-            .getElementById(
-                "share"
-            )
-            ?.addEventListener(
-                "click",
-                shareProduct
-            );
-
-        /* LIKE */
-
-        document
-            .getElementById(
-                "like"
-            )
-            ?.addEventListener(
-                "click",
-                toggleLike
-            );
-
-        /* BUY */
-
-        document
-            .getElementById(
-                "buy"
-            )
-            ?.addEventListener(
-                "click",
-                handlePurchase
-            );
-    }
-
-    /* =========================================================
-       SHARE
-       ========================================================= */
-
-    async function shareProduct() {
-
-        const shareData = {
-            title:
-                product?.title ||
-                "PasTele Product",
-
-            text:
-                "Lihat produk ini di PasTele.",
-
-            url:
-                window.location.href
         };
-
-        try {
-
+        const toast = (
+            message,
+            type = "error"
+        ) => {
             if (
-                navigator.share
+                window.TC &&
+                typeof TC.toast ===
+                    "function"
             ) {
-
-                await navigator.share(
-                    shareData
+                TC.toast(
+                    message,
+                    type
                 );
-
+                return;
+            }
+            if (
+                type === "error"
+            ) {
+                console.error(
+                    message
+                );
             } else {
-
-                await navigator
-                    .clipboard
-                    .writeText(
-                        window.location.href
-                    );
-
-                toast(
-                    "Link berhasil disalin",
-                    "success"
+                console.log(
+                    message
                 );
             }
-
-        } catch (error) {
-
-            if (
-                error?.name !==
-                "AbortError"
-            ) {
-
-                try {
-
-                    await navigator
-                        .clipboard
-                        .writeText(
-                            window.location.href
-                        );
-
-                    toast(
-                        "Link berhasil disalin",
-                        "success"
-                    );
-
-                } catch (_) {}
-            }
-        }
-
-        try {
-
-            await sbClient.rpc(
-                "track_analytics",
-                {
-                    p_owner:
-                        product.owner_id,
-
-                    p_event_type:
-                        "share",
-
-                    p_target_type:
-                        type,
-
-                    p_target_id:
-                        productId
+        };
+        const setButtonLoading =
+            (
+                loading
+            ) => {
+                if (!buyButton) {
+                    return;
                 }
-            );
-
-        } catch (_) {}
-    }
-
-    /* =========================================================
-       LIKE
-       ========================================================= */
-
-    async function toggleLike() {
-
-        if (
-            !product ||
-            !likeBtn
-        ) {
-            return;
-        }
-
-        likeBtn.disabled =
-            true;
-
-        try {
-
-            const result =
-                await sbClient.rpc(
-                    "toggle_content_like",
-                    {
-                        p_owner:
-                            product.owner_id,
-
-                        p_target_type:
-                            type,
-
-                        p_target_id:
-                            productId
+                if (loading) {
+                    buyButton.disabled =
+                        true;
+                    buyButton.dataset
+                        .originalHtml ??=
+                        buyButton.innerHTML;
+                    buyButton.innerHTML = `
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Menyiapkan checkout...
+                    `;
+                } else {
+                    buyButton.disabled =
+                        false;
+                    if (
+                        buyButton.dataset
+                            .originalHtml
+                    ) {
+                        buyButton.innerHTML =
+                            buyButton.dataset
+                                .originalHtml;
                     }
-                );
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            const data =
-                Array.isArray(
-                    result.data
-                )
-                    ? result.data[0]
-                    : result.data;
-
-            const liked =
-                data?.liked === true;
-
-            const total =
-                Number(
-                    data?.count ??
-                    data?.like_count ??
-                    0
-                );
-
-            updateLikeUI(
-                liked,
-                total
-            );
-
-        } catch (error) {
-
-            console.error(
-                "[PasTele Like]",
-                error
-            );
-
+                }
+            };
+        /* ===================================================
+           DATABASE CHECK
+           =================================================== */
+        if (!client) {
             toast(
-                error?.message ||
-                "Like gagal diproses.",
+                "Database belum terkonfigurasi.",
                 "error"
             );
-
-        } finally {
-
-            likeBtn.disabled =
-                false;
-        }
-    }
-
-    function updateLikeUI(
-        liked,
-        count
-    ) {
-
-        if (likeBtn) {
-
-            likeBtn.setAttribute(
-                "aria-pressed",
-                liked
-                    ? "true"
-                    : "false"
-            );
-        }
-
-        if (likeIcon) {
-
-            likeIcon.className =
-                liked
-                    ? "fa-solid fa-heart"
-                    : "fa-regular fa-heart";
-        }
-
-        if (likeLabel) {
-
-            likeLabel.textContent =
-                liked
-                    ? "Disukai"
-                    : "Suka";
-        }
-
-        if (likeCount) {
-
-            likeCount.textContent =
-                formatNumber(
-                    count
-                );
-        }
-    }
-
-    /* =========================================================
-       LOAD LIKE
-       ========================================================= */
-
-    async function loadLikeState() {
-
-        if (!product) {
             return;
         }
-
+        /* ===================================================
+           AUTH / PROFILE
+           =================================================== */
+        let profile = null;
         try {
-
-            const {
-                data,
-                error
-            } =
-                await sbClient
-                    .from(
-                        "content_likes"
-                    )
-                    .select(
-                        "*"
-                    )
-                    .eq(
-                        "owner_id",
-                        product.owner_id
-                    )
-                    .eq(
-                        "target_type",
-                        type
-                    )
-                    .eq(
-                        "target_id",
-                        productId
-                    );
-
-            if (error) {
-
-                console.warn(
-                    "[PasTele Like Count]",
-                    error
-                );
-
-                return;
-            }
-
-            const rows =
-                Array.isArray(data)
-                    ? data
-                    : [];
-
-            let liked =
-                false;
-
-            try {
-
-                const user =
-                    await window
-                        .TC
-                        ?.user
-                        ?.();
-
-                if (user?.id) {
-
-                    liked =
-                        rows.some(
-                            (row) =>
-                                row.user_id ===
-                                user.id
-                        );
-                }
-
-            } catch (_) {}
-
-            updateLikeUI(
-                liked,
-                rows.length
-            );
-
-        } catch (error) {
-
-            console.warn(
-                "[PasTele Like Load]",
-                error
-            );
-        }
-    }
-
-    /* =========================================================
-       COMMENTS
-       ========================================================= */
-
-    async function loadComments() {
-
-        if (!commentList) {
-            return;
-        }
-
-        if (commentsLoading) {
-
-            commentsLoading.style.display =
-                "flex";
-        }
-
-        try {
-
-            const {
-                data,
-                error,
-                count
-            } =
-                await sbClient
-                    .from(
-                        "content_comments"
-                    )
-                    .select(
-                        "id,owner_id,target_type,target_id,name,content,created_at",
-                        {
-                            count:
-                                "exact"
-                        }
-                    )
-                    .eq(
-                        "owner_id",
-                        product.owner_id
-                    )
-                    .eq(
-                        "target_type",
-                        type
-                    )
-                    .eq(
-                        "target_id",
-                        productId
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending:
-                                false
-                        }
-                    )
-                    .limit(50);
-
-            if (error) {
-                throw error;
-            }
-
-            const comments =
-                Array.isArray(data)
-                    ? data
-                    : [];
-
-            if (commentsLoading) {
-
-                commentsLoading.style.display =
-                    "none";
-            }
-
-            if (commentCount) {
-
-                commentCount.textContent =
-                    formatNumber(
-                        count ??
-                        comments.length
-                    );
-            }
-
-            renderComments(
-                comments
-            );
-
-        } catch (error) {
-
-            console.warn(
-                "[PasTele Comments]",
-                error
-            );
-
-            if (commentsLoading) {
-
-                commentsLoading.style.display =
-                    "none";
-            }
-
-            if (commentCount) {
-                commentCount.textContent =
-                    "0";
-            }
-
-            commentList.innerHTML = `
-                <div class="product-comments-empty">
-
-                    <i class="fa-regular fa-comment-dots"></i>
-
-                    <strong>
-                        Belum ada komentar
-                    </strong>
-
-                    <span>
-                        Jadilah yang pertama
-                        memberikan komentar.
-                    </span>
-
-                </div>
-            `;
-        }
-    }
-
-    function renderComments(
-        comments
-    ) {
-
-        if (!commentList) {
-            return;
-        }
-
-        if (!comments.length) {
-
-            commentList.innerHTML = `
-                <div class="product-comments-empty">
-
-                    <i class="fa-regular fa-comment-dots"></i>
-
-                    <strong>
-                        Belum ada komentar
-                    </strong>
-
-                    <span>
-                        Jadilah yang pertama
-                        memberikan komentar.
-                    </span>
-
-                </div>
-            `;
-
-            return;
-        }
-
-        commentList.innerHTML =
-            comments
-                .map(
-                    (comment) => {
-
-                        const name =
-                            String(
-                                comment.name ||
-                                "Pengunjung"
-                            )
-                                .trim()
-                                .slice(
-                                    0,
-                                    50
-                                );
-
-                        const content =
-                            String(
-                                comment.content ||
-                                ""
-                            )
-                                .trim();
-
-                        const initial =
-                            name
-                                .charAt(
-                                    0
-                                )
-                                .toUpperCase() ||
-                            "?";
-
-                        return `
-                            <article
-                                class="product-comment-item"
-                                data-comment-id="${esc(
-                                    comment.id
-                                )}"
-                            >
-
-                                <div class="product-comment-avatar">
-                                    ${esc(
-                                        initial
-                                    )}
-                                </div>
-
-                                <div class="product-comment-body">
-
-                                    <div class="product-comment-meta">
-
-                                        <strong>
-                                            ${esc(
-                                                name
-                                            )}
-                                        </strong>
-
-                                        <time
-                                            datetime="${esc(
-                                                comment.created_at ||
-                                                ""
-                                            )}"
-                                        >
-                                            ${esc(
-                                                formatDate(
-                                                    comment.created_at
-                                                )
-                                            )}
-                                        </time>
-
-                                    </div>
-
-                                    <p>
-                                        ${esc(
-                                            content
-                                        )}
-                                    </p>
-
-                                </div>
-
-                            </article>
-                        `;
-                    }
-                )
-                .join("");
-    }
-
-    /* =========================================================
-       COMMENT COUNTER
-       ========================================================= */
-
-    function updateCommentCounter() {
-
-        if (!commentText) {
-            return;
-        }
-
-        const length =
-            commentText.value.length;
-
-        if (commentCharCount) {
-
-            commentCharCount.textContent =
-                String(length);
-        }
-    }
-
-    commentText?.addEventListener(
-        "input",
-        updateCommentCounter
-    );
-
-    /* =========================================================
-       CREATE COMMENT ELEMENT
-       ========================================================= */
-
-    function createCommentElement(
-        comment
-    ) {
-
-        const article =
-            document.createElement(
-                "article"
-            );
-
-        article.className =
-            "product-comment-item";
-
-        article.dataset.commentId =
-            comment.id || "";
-
-        const name =
-            String(
-                comment.name ||
-                "Pengunjung"
-            )
-                .trim()
-                .slice(
-                    0,
-                    50
-                );
-
-        const content =
-            String(
-                comment.content ||
-                ""
-            )
-                .trim();
-
-        const initial =
-            name
-                .charAt(0)
-                .toUpperCase() ||
-            "?";
-
-        article.innerHTML = `
-            <div class="product-comment-avatar">
-                ${esc(initial)}
-            </div>
-
-            <div class="product-comment-body">
-
-                <div class="product-comment-meta">
-
-                    <strong>
-                        ${esc(name)}
-                    </strong>
-
-                    <time>
-                        ${esc(
-                            formatDate(
-                                comment.created_at
-                            )
-                        )}
-                    </time>
-
-                </div>
-
-                <p>
-                    ${esc(content)}
-                </p>
-
-            </div>
-        `;
-
-        return article;
-    }
-
-    /* =========================================================
-       SUBMIT COMMENT
-       ========================================================= */
-
-    commentForm?.addEventListener(
-        "submit",
-        async (event) => {
-
-            event.preventDefault();
-
-            if (!product) {
-                return;
-            }
-
-            const name =
-                String(
-                    commentName?.value ||
-                    ""
-                )
-                    .trim()
-                    .replace(
-                        /\s+/g,
-                        " "
-                    );
-
-            const content =
-                String(
-                    commentText?.value ||
-                    ""
-                )
-                    .trim();
-
-            if (!name) {
-
-                toast(
-                    "Masukkan nama terlebih dahulu.",
-                    "error"
-                );
-
-                commentName?.focus();
-
-                return;
-            }
-
-            if (name.length < 2) {
-
-                toast(
-                    "Nama minimal 2 karakter.",
-                    "error"
-                );
-
-                commentName?.focus();
-
-                return;
-            }
-
-            if (!content) {
-
-                toast(
-                    "Tulis komentar terlebih dahulu.",
-                    "error"
-                );
-
-                commentText?.focus();
-
-                return;
-            }
-
-            if (content.length < 2) {
-
-                toast(
-                    "Komentar terlalu pendek.",
-                    "error"
-                );
-
-                commentText?.focus();
-
-                return;
-            }
-
             if (
-                name.length > 50
+                !window.TC ||
+                typeof TC.profile !==
+                    "function"
             ) {
-
-                toast(
-                    "Nama maksimal 50 karakter.",
-                    "error"
+                throw new Error(
+                    "Sesi login tidak tersedia."
                 );
-
-                return;
             }
-
-            if (
-                content.length > 500
-            ) {
-
-                toast(
-                    "Komentar maksimal 500 karakter.",
-                    "error"
-                );
-
-                return;
-            }
-
-            if (!commentSubmit) {
-                return;
-            }
-
-            const originalHTML =
-                commentSubmit.innerHTML;
-
-            commentSubmit.disabled =
-                true;
-
-            commentSubmit.innerHTML = `
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                <span>Mengirim...</span>
-            `;
-
-            try {
-
-                /*
-                 * PUBLIC COMMENT
-                 * Tidak membutuhkan login.
-                 */
-
-                const {
-                    data,
-                    error
-                } =
-                    await sbClient
-                        .from(
-                            "content_comments"
-                        )
-                        .insert({
-                            owner_id:
-                                product.owner_id,
-
-                            target_type:
-                                type,
-
-                            target_id:
-                                productId,
-
-                            name:
-                                name,
-
-                            content:
-                                content
-                        })
-                        .select(
-                            "id,owner_id,target_type,target_id,name,content,created_at"
-                        )
-                        .single();
-
-                if (error) {
-                    throw error;
-                }
-
-                if (commentName) {
-                    commentName.value =
-                        "";
-                }
-
-                if (commentText) {
-                    commentText.value =
-                        "";
-                }
-
-                updateCommentCounter();
-
-                toast(
-                    "Komentar berhasil dikirim.",
-                    "success"
-                );
-
-                if (data) {
-
-                    const empty =
-                        commentList.querySelector(
-                            ".product-comments-empty"
-                        );
-
-                    if (empty) {
-                        empty.remove();
-                    }
-
-                    const element =
-                        createCommentElement(
-                            data
-                        );
-
-                    commentList.prepend(
-                        element
-                    );
-                }
-
-                await refreshCommentCount();
-
-            } catch (error) {
-
-                console.error(
-                    "[PasTele Comment Insert]",
-                    error
-                );
-
-                toast(
-                    error?.message ||
-                    "Komentar gagal dikirim.",
-                    "error"
-                );
-
-            } finally {
-
-                commentSubmit.disabled =
-                    false;
-
-                commentSubmit.innerHTML =
-                    originalHTML;
-            }
-        }
-    );
-
-    /* =========================================================
-       COMMENT COUNT
-       ========================================================= */
-
-    async function refreshCommentCount() {
-
-        try {
-
-            const {
-                count,
-                error
-            } =
-                await sbClient
-                    .from(
-                        "content_comments"
-                    )
-                    .select(
-                        "id",
-                        {
-                            count:
-                                "exact",
-                            head:
-                                true
-                        }
-                    )
-                    .eq(
-                        "owner_id",
-                        product.owner_id
-                    )
-                    .eq(
-                        "target_type",
-                        type
-                    )
-                    .eq(
-                        "target_id",
-                        productId
-                    );
-
-            if (error) {
-                throw error;
-            }
-
-            if (commentCount) {
-
-                commentCount.textContent =
-                    formatNumber(
-                        count || 0
-                    );
-            }
-
+            profile =
+                await TC.profile();
         } catch (error) {
-
             console.warn(
-                "[PasTele Comment Count]",
+                "[Premium] Profile error:",
                 error
             );
-        }
-    }
-
-    /* =========================================================
-       PURCHASE
-       ========================================================= */
-
-    async function handlePurchase() {
-
-        const buy =
-            document.getElementById(
-                "buy"
-            );
-
-        if (
-            !buy ||
-            !product
-        ) {
-            return;
-        }
-
-        const price =
-            Number(
-                product.price || 0
-            );
-
-        const canAccess =
-            product.can_access === true;
-
-        if (canAccess) {
-            return;
-        }
-
-        let user = null;
-
-        try {
-
-            user =
-                await window
-                    .TC
-                    ?.user
-                    ?.();
-
-        } catch (_) {}
-
-        /*
-         * Paid / protected purchase
-         * requires login.
-         */
-
-        if (!user) {
-
             const next =
                 encodeURIComponent(
                     window.location.href
                 );
-
             window.location.href =
                 `login.html?redirect=${next}`;
-
             return;
         }
-
-        /* =====================================================
-           FREE ACCESS
-           ===================================================== */
-
-        if (!price) {
-
-            buy.disabled =
+        if (!profile?.id) {
+            const next =
+                encodeURIComponent(
+                    window.location.href
+                );
+            window.location.href =
+                `login.html?redirect=${next}`;
+            return;
+        }
+        /* ===================================================
+           PROFILE UI
+           =================================================== */
+        const name =
+            String(
+                profile.display_name ||
+                    profile.username ||
+                    "User"
+            )
+                .trim()
+                .slice(0, 100);
+        if (planName) {
+            planName.replaceChildren(
+                document.createTextNode(
+                    name
+                )
+            );
+            const badge =
+                document.createElement(
+                    "span"
+                );
+            badge.className =
+                "verify-badge blue";
+            badge.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+            `;
+            planName.appendChild(
+                badge
+            );
+        }
+        if (planUsername) {
+            planUsername.textContent =
+                profile.username
+                    ? `@${profile.username}`
+                    : "@user";
+        }
+        if (planAvatar) {
+            planAvatar.textContent =
+                name
+                    .charAt(0)
+                    .toUpperCase() ||
+                "U";
+        }
+        /* ===================================================
+           PREMIUM STATUS
+           =================================================== */
+        const premiumActive =
+            profile.is_premium === true;
+        if (
+            premiumActive &&
+            status
+        ) {
+            status.innerHTML = `
+                <div class="active-plan premium-active">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div>
+                        <b>
+                            Premium Aktif
+                        </b>
+                        <span>
+                            Semua akses Paid sudah terbuka.
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        /*
+         * If already premium, buying again
+         * should not create another account-plan
+         * order from this page.
+         */
+        if (
+            premiumActive &&
+            buyButton
+        ) {
+            buyButton.disabled =
                 true;
-
-            buy.innerHTML = `
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                Membuka akses...
+            buyButton.innerHTML = `
+                <i class="fa-solid fa-circle-check"></i>
+                Premium Sudah Aktif
             `;
-
-            try {
-
-                const result =
-                    await sbClient.rpc(
-                        "buy_market_item",
-                        {
-                            p_type:
-                                type,
-
-                            p_id:
-                                productId
-                        }
-                    );
-
-                if (result.error) {
-                    throw result.error;
-                }
-
-                toast(
-                    "Akses berhasil dibuka.",
-                    "success"
-                );
-
-                setTimeout(
-                    () => {
-                        window.location.reload();
-                    },
-                    600
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "[PasTele Free Access]",
-                    error
-                );
-
-                toast(
-                    error?.message ||
-                    "Akses gagal dibuka.",
-                    "error"
-                );
-
-                buy.disabled =
-                    false;
-
-                buy.innerHTML = `
-                    <i class="fa-solid fa-unlock"></i>
-                    Ambil akses
-                `;
-            }
-
-            return;
         }
-
-        /* =====================================================
-           PAID CHECKOUT
-           Dedicated checkout page
-           ===================================================== */
-
-        buy.disabled = true;
-        buy.innerHTML = `
-            <i class="fa-solid fa-arrow-right"></i>
-            Membuka checkout...
-        `;
-
-        const params = new URLSearchParams({
-            type: String(type || "link"),
-            id: String(productId || "")
-        });
-
-        window.location.href = `checkout.html?${params.toString()}`;
-
-        return;
-    }
-
-    /* =========================================================
-       BAYARGG MODAL
-       ========================================================= */
-
-    function showPaymentModal(
-        order,
-        payment
-    ) {
-
-        document
-            .getElementById(
-                "bayarggModal"
-            )
-            ?.remove();
-
-        const modal =
-            document.createElement(
-                "div"
-            );
-
-        modal.className =
-            "bayargg-modal-backdrop";
-
-        modal.id =
-            "bayarggModal";
-
-        const qrImage =
-            payment.qr_image ||
-            payment.qr_url ||
-            payment.qris_image ||
-            "";
-
-        const qrString =
-            payment.qr_string ||
-            payment.qris_string ||
-            "";
-
-        const paymentUrl =
-            payment.payment_url ||
-            payment.checkout_url ||
-            "";
-
-        modal.innerHTML = `
-            <div
-                class="bayargg-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="bayarggTitle"
-            >
-
-                <button
-                    type="button"
-                    class="bayargg-close"
-                    aria-label="Tutup"
-                >
-                    ×
-                </button>
-
-                <span class="badge">
-                    BAYAR.GG · QRIS
-                </span>
-
-                <h2 id="bayarggTitle">
-                    Bayar ${money(
-                        order.amount
-                    )}
-                </h2>
-
-                <p class="muted">
-                    Nominal pembayaran dikunci
-                    sesuai harga produk.
-                </p>
-
-                <div class="bayargg-qr">
-
-                    ${
-                        qrImage
-                            ? `
-                                <img
-                                    src="${esc(
-                                        qrImage
-                                    )}"
-                                    alt="QRIS Bayar.gg"
-                                >
-                            `
-                            : qrString
-                            ? `
-                                <div class="qr-text">
-                                    ${esc(
-                                        qrString
-                                    )}
-                                </div>
-                            `
-                            : `
-                                <div class="empty">
-                                    QR belum diterima dari Bayar.gg.
-                                </div>
-                            `
-                    }
-
-                </div>
-
-                ${
-                    paymentUrl
-                        ? `
-                            <a
-                                class="btn primary"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                href="${esc(
-                                    paymentUrl
-                                )}"
-                            >
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                Buka Pembayaran Bayar.gg
-                            </a>
-                        `
-                        : ""
-                }
-
-                <p
-                    class="bayargg-status"
-                    id="bayarggStatus"
-                >
-                    <i class="fa-solid fa-clock"></i>
-                    Menunggu pembayaran...
-                </p>
-
-            </div>
-        `;
-
-        document.body.appendChild(
-            modal
-        );
-
-        modal
-            .querySelector(
-                ".bayargg-close"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-                    modal.remove();
-                }
-            );
-
-        modal.addEventListener(
+        /* ===================================================
+           PREMIUM CHECKOUT
+           =================================================== */
+        buyButton?.addEventListener(
             "click",
-            (event) => {
-
+            async () => {
                 if (
-                    event.target ===
-                    modal
+                    buyButton.disabled
                 ) {
-                    modal.remove();
+                    return;
+                }
+                /*
+                 * Re-check profile before creating
+                 * the order so an already activated
+                 * account cannot accidentally create
+                 * another checkout.
+                 */
+                let latestProfile =
+                    profile;
+                try {
+                    if (
+                        typeof TC.profile ===
+                        "function"
+                    ) {
+                        const fresh =
+                            await TC.profile();
+                        if (fresh?.id) {
+                            latestProfile =
+                                fresh;
+                        }
+                    }
+                } catch {
+                    /* Keep existing profile */
+                }
+                if (
+                    latestProfile
+                        ?.is_premium ===
+                    true
+                ) {
+                    if (status) {
+                        status.innerHTML = `
+                            <div class="active-plan premium-active">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <div>
+                                    <b>
+                                        Premium Aktif
+                                    </b>
+                                    <span>
+                                        Semua akses Paid sudah terbuka.
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    buyButton.disabled =
+                        true;
+                    buyButton.innerHTML = `
+                        <i class="fa-solid fa-circle-check"></i>
+                        Premium Sudah Aktif
+                    `;
+                    toast(
+                        "Akun kamu sudah Premium.",
+                        "success"
+                    );
+                    return;
+                }
+                setButtonLoading(
+                    true
+                );
+                try {
+                    /*
+                     * SQL validates:
+                     *
+                     * p_plan   = premium
+                     * p_days   = 0
+                     * p_amount = 250000
+                     */
+                    const result =
+                        await client.rpc(
+                            "create_account_plan_order",
+                            {
+                                p_plan:
+                                    "premium",
+                                p_days:
+                                    0,
+                                p_amount:
+                                    250000
+                            }
+                        );
+                    if (
+                        result.error
+                    ) {
+                        throw result.error;
+                    }
+                    const data =
+                        Array.isArray(
+                            result.data
+                        )
+                            ? result.data[0]
+                            : result.data;
+                    if (
+                        !data?.order_id
+                    ) {
+                        throw new Error(
+                            "Order Premium tidak berhasil dibuat."
+                        );
+                    }
+                    /*
+                     * Optional sanity check.
+                     */
+                    const createdOrderId =
+                        String(
+                            data.order_id
+                        ).trim();
+                    if (
+                        !createdOrderId
+                    ) {
+                        throw new Error(
+                            "Order ID Premium tidak valid."
+                        );
+                    }
+                    /*
+                     * Continue to the same payment
+                     * page used by marketplace orders.
+                     */
+                    window.location.href =
+                        `payment.html?order_id=${encodeURIComponent(
+                            createdOrderId
+                        )}`;
+                } catch (
+                    error
+                ) {
+                    console.error(
+                        "[Premium] Checkout error:",
+                        error
+                    );
+                    const message =
+                        String(
+                            error?.message ||
+                                ""
+                        );
+                    if (
+                        message
+                            .toLowerCase()
+                            .includes(
+                                "invalid_plan_amount"
+                            )
+                    ) {
+                        toast(
+                            "Harga Premium tidak sesuai konfigurasi database.",
+                            "error"
+                        );
+                    } else if (
+                        message
+                            .toLowerCase()
+                            .includes(
+                                "invalid_plan"
+                            )
+                    ) {
+                        toast(
+                            "Paket Premium tidak valid.",
+                            "error"
+                        );
+                    } else if (
+                        message
+                            .toLowerCase()
+                            .includes(
+                                "login_required"
+                            )
+                    ) {
+                        const next =
+                            encodeURIComponent(
+                                window.location.href
+                            );
+                        window.location.href =
+                            `login.html?redirect=${next}`;
+                        return;
+                    } else {
+                        toast(
+                            message ||
+                                "Checkout Premium gagal dibuat.",
+                            "error"
+                        );
+                    }
+                    setButtonLoading(
+                        false
+                    );
                 }
             }
         );
-
-        pollPayment(
-            order.order_id,
-            modal
-        );
     }
-
-    /* =========================================================
-       PAYMENT POLLING
-       ========================================================= */
-
-    async function pollPayment(
-        orderId,
-        modal
-    ) {
-
-        const status =
-            modal.querySelector(
-                "#bayarggStatus"
-            );
-
-        const started =
-            Date.now();
-
-        const maxDuration =
-            30 * 60 * 1000;
-
-        const timer =
-            setInterval(
-                async () => {
-
-                    if (
-                        Date.now() -
-                            started >
-                        maxDuration
-                    ) {
-
-                        clearInterval(
-                            timer
-                        );
-
-                        if (status) {
-
-                            status.innerHTML = `
-                                <i class="fa-solid fa-clock"></i>
-                                Waktu pembayaran berakhir.
-                            `;
-                        }
-
-                        return;
-                    }
-
-                    try {
-
-                        const result =
-                            await sbClient
-                                .from("orders")
-                                .select(
-                                    "status,payment_reference,paid_at"
-                                )
-                                .eq(
-                                    "id",
-                                    orderId
-                                )
-                                .maybeSingle();
-
-                        if (
-                            result.error
-                        ) {
-                            return;
-                        }
-
-                        const current =
-                            result.data;
-
-                        if (
-                            current?.status ===
-                            "paid"
-                        ) {
-
-                            clearInterval(
-                                timer
-                            );
-
-                            if (status) {
-
-                                status.innerHTML = `
-                                    <i class="fa-solid fa-circle-check"></i>
-                                    Pembayaran berhasil.
-                                    Membuka akses...
-                                `;
-                            }
-
-                            toast(
-                                "Pembayaran berhasil.",
-                                "success"
-                            );
-
-                            setTimeout(
-                                () => {
-                                    window.location.reload();
-                                },
-                                800
-                            );
-
-                        } else if (
-                            current?.status ===
-                            "expired"
-                        ) {
-
-                            clearInterval(
-                                timer
-                            );
-
-                            if (status) {
-
-                                status.innerHTML = `
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                    Pembayaran kedaluwarsa.
-                                `;
-                            }
-                        }
-
-                    } catch (_) {}
-                },
-                2500
-            );
-    }
-
-    /* =========================================================
-       INITIAL LOAD
-       ========================================================= */
-
-    try {
-
-        if (!box) {
-            console.error(
-                "[PasTele Product] #content tidak ditemukan."
-            );
-            return;
-        }
-
-        box.setAttribute(
-            "aria-busy",
-            "true"
-        );
-
-        if (!sbClient) {
-
-            throw new Error(
-                "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
-            );
-        }
-
-        const loaded =
-            await loadProduct();
-
-        renderProduct(
-            loaded
-        );
-
-        box.setAttribute(
-            "aria-busy",
-            "false"
-        );
-
-        /*
-         * Engagement dimuat setelah produk
-         * berhasil tampil.
-         */
-
-        await Promise.allSettled([
-            loadLikeState(),
-            loadComments()
-        ]);
-
-    } catch (error) {
-
-        console.error(
-            "[PasTele Product] FATAL:",
-            error
-        );
-
-        if (box) {
-
-            box.setAttribute(
-                "aria-busy",
-                "false"
-            );
-
-            box.innerHTML = `
-                <div class="empty">
-
-                    <i class="fa-solid fa-circle-exclamation"></i>
-
-                    <strong>
-                        Gagal memuat produk
-                    </strong>
-
-                    <span>
-                        ${esc(
-                            error?.message ||
-                            "Produk tidak dapat dimuat."
-                        )}
-                    </span>
-
-                </div>
-            `;
-        }
-
-        /*
-         * Komentar tidak boleh ikut membuat
-         * halaman terlihat loading selamanya.
-         */
-
-        if (commentsLoading) {
-            commentsLoading.style.display =
-                "none";
-        }
-
-        if (commentList) {
-
-            commentList.innerHTML = `
-                <div class="product-comments-empty">
-
-                    <i class="fa-solid fa-comments"></i>
-
-                    <strong>
-                        Komentar belum dapat dimuat
-                    </strong>
-
-                    <span>
-                        Coba refresh halaman kembali.
-                    </span>
-
-                </div>
-            `;
-        }
-    }
-});
+);
