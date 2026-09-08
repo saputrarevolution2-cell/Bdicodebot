@@ -1488,7 +1488,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     p_owner:
                         product.owner_id,
 
-                    p_event:
+                    p_event_type:
                         "share",
 
                     p_target_type:

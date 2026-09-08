@@ -518,16 +518,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       .select(`
         id,
         product_id,
-        amount,
-        status,
-        created_at,
+        order_id,
         item_type,
         item_id,
         item_title,
-        products (
-          title,
-          type
-        )
+        amount,
+        status,
+        access_url,
+        created_at
       `)
       .eq("buyer_id", buyerId)
       .order("created_at", {
