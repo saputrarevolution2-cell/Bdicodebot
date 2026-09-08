@@ -888,8 +888,12 @@ BEGIN
      WHERE id=o.product_id;
    END IF;
 
-   INSERT INTO public.purchases(buyer_id,product_id,order_id,item_type,amount,status)
-   VALUES(o.buyer_id,o.product_id,o.id,o.item_type,o.amount,'completed');
+   INSERT INTO public.purchases(
+     buyer_id,product_id,order_id,item_type,item_id,item_title,amount,status
+   )
+   VALUES(
+     o.buyer_id,o.product_id,o.id,o.item_type,o.item_id,o.item_title,o.amount,'completed'
+   );
  END IF;
 
  RETURN true;
@@ -918,24 +922,77 @@ CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
-DECLARE r record;
+DECLARE
+  r record;
+  normalized text:=lower(btrim(coalesce(p_type,'')));
+  uid uuid:=auth.uid();
+  has_access boolean:=false;
 BEGIN
- IF lower(p_type) IN ('product','code') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name
-   INTO r FROM public.products p
-   LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
-   WHERE p.id=p_id;
- ELSIF lower(p_type)='telegram_product' THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name
-   INTO r FROM public.telegram_products p
-   LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-   WHERE p.id=p_id;
- ELSE
-   RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
- END IF;
+  IF p_id IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
 
- IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
- RETURN to_jsonb(r)||jsonb_build_object('found',true);
+  IF normalized IN ('product','code') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name
+    INTO r
+    FROM public.products p
+    LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
+    WHERE p.id=p_id
+      AND (p.status IN ('published','active') OR p.seller_id=uid OR p.creator_id=uid OR public.is_current_user_admin());
+
+  ELSIF normalized IN ('telegram_product','telegram-product') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name
+    INTO r
+    FROM public.telegram_products p
+    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+    WHERE p.id=p_id
+      AND (p.status IN ('published','active') OR p.owner_id=uid OR public.is_current_user_admin());
+
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name
+    INTO r
+    FROM public.telegram_channels p
+    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+    WHERE p.id=p_id
+      AND (p.status IN ('published','active') OR p.owner_id=uid OR public.is_current_user_admin());
+
+  ELSIF normalized IN ('link','paste','pastelink','paste-link','paste_link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name
+    INTO r
+    FROM public.pastelinks p
+    LEFT JOIN public.profiles pr ON pr.id=p.user_id
+    WHERE p.id=p_id
+      AND (p.visibility='public' OR p.user_id=uid OR public.is_current_user_admin());
+
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
+
+  IF uid IS NOT NULL THEN
+    SELECT EXISTS(
+      SELECT 1
+      FROM public.purchases pu
+      WHERE pu.buyer_id=uid
+        AND pu.product_id=p_id
+        AND lower(coalesce(pu.status,'')) IN ('paid','completed','success')
+    ) INTO has_access;
+
+    IF has_access OR public.is_current_user_admin() THEN
+      has_access:=true;
+    END IF;
+  END IF;
+
+  RETURN to_jsonb(r)
+    || jsonb_build_object(
+         'found',true,
+         'can_access',has_access,
+         'item_type',CASE
+           WHEN normalized IN ('paste','pastelink','paste-link','paste_link') THEN 'link'
+           WHEN normalized IN ('telegram_channel','telegram-channel') THEN 'channel'
+           WHEN normalized IN ('telegram_group','telegram-group') THEN 'group'
+           ELSE normalized
+         END
+       );
 END $$;
 
 -- ============================================================
@@ -1028,25 +1085,34 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
 DECLARE v bigint;
 BEGIN
- UPDATE public.pastelinks SET views=views+1 WHERE id=p_id RETURNING views INTO v;
+ UPDATE public.pastelinks SET views=coalesce(views,0)+1 WHERE id=p_id RETURNING views INTO v;
  RETURN coalesce(v,0);
 END $$;
 
-CREATE OR REPLACE FUNCTION public.record_content_view(p_target_id uuid,p_target_type text)
+CREATE OR REPLACE FUNCTION public.record_content_view(
+ p_target_id uuid,
+ p_target_type text,
+ p_owner uuid DEFAULT NULL
+)
 RETURNS boolean
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
 BEGIN
- INSERT INTO public.analytics_events(actor_id,event_type,target_type,target_id)
- VALUES(auth.uid(),'view',p_target_type,p_target_id);
+ INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
+ VALUES(coalesce(p_owner,auth.uid()),auth.uid(),'view',p_target_type,p_target_id);
  RETURN true;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.toggle_content_like(p_target_id uuid,p_target_type text)
+CREATE OR REPLACE FUNCTION public.toggle_content_like(
+ p_target_id uuid,
+ p_target_type text,
+ p_owner uuid DEFAULT NULL
+)
 RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
-DECLARE liked boolean;
+DECLARE
+  liked boolean;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
 
@@ -1059,27 +1125,29 @@ BEGIN
 
  IF liked THEN
    DELETE FROM public.content_likes
-   WHERE actor_id=auth.uid() AND target_id=p_target_id
+   WHERE actor_id=auth.uid()
+     AND target_id=p_target_id
      AND target_type=p_target_type;
    RETURN jsonb_build_object('liked',false);
  ELSE
-   INSERT INTO public.content_likes(
-     content_owner_id,actor_id,target_id,target_type
-   ) VALUES(auth.uid(),auth.uid(),p_target_id,p_target_type);
+   INSERT INTO public.content_likes(content_owner_id,actor_id,target_id,target_type)
+   VALUES(coalesce(p_owner,auth.uid()),auth.uid(),p_target_id,p_target_type);
    RETURN jsonb_build_object('liked',true);
  END IF;
 END $$;
 
 CREATE OR REPLACE FUNCTION public.track_analytics(
- p_event_type text,p_target_type text DEFAULT NULL,p_target_id uuid DEFAULT NULL
+ p_event_type text,
+ p_target_type text DEFAULT NULL,
+ p_target_id uuid DEFAULT NULL,
+ p_owner uuid DEFAULT NULL
 )
 RETURNS boolean
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
 BEGIN
- INSERT INTO public.analytics_events(
-   owner_id,actor_id,event_type,target_type,target_id
- ) VALUES(auth.uid(),auth.uid(),p_event_type,p_target_type,p_target_id);
+ INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
+ VALUES(coalesce(p_owner,auth.uid()),auth.uid(),p_event_type,p_target_type,p_target_id);
  RETURN true;
 END $$;
 
@@ -1191,10 +1259,49 @@ RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
-CREATE OR REPLACE FUNCTION public.admin_content(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
- SELECT to_jsonb(p) FROM public.products p
- ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
+CREATE OR REPLACE FUNCTION public.admin_content(
+ p_limit integer DEFAULT 50,
+ p_offset integer DEFAULT 0
+)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+  SELECT to_jsonb(x) FROM (
+    SELECT p.id,p.title,p.slug,p.price,p.status,p.description,p.views,p.sales_count,
+           p.creator_id,p.seller_id,NULL::uuid AS owner_id,NULL::uuid AS user_id,
+           'products'::text AS source,p.type,p.thumbnail_url,p.created_at,p.updated_at
+    FROM public.products p
+
+    UNION ALL
+
+    SELECT pl.id,pl.title,pl.slug,0::numeric AS price,
+           CASE WHEN pl.visibility='public' THEN 'published' ELSE pl.visibility END AS status,
+           pl.description,pl.views,0::bigint AS sales_count,
+           NULL::uuid AS creator_id,NULL::uuid AS seller_id,NULL::uuid AS owner_id,
+           pl.user_id,'pastelinks'::text AS source,'link'::text AS type,
+           NULL::text AS thumbnail_url,pl.created_at,pl.updated_at
+    FROM public.pastelinks pl
+
+    UNION ALL
+
+    SELECT tp.id,tp.title,tp.slug,tp.price,tp.status,tp.description,tp.views,tp.sales_count,
+           NULL::uuid AS creator_id,NULL::uuid AS seller_id,tp.owner_id,NULL::uuid AS user_id,
+           'telegram_products'::text AS source,'code'::text AS type,
+           tp.thumbnail_url,tp.created_at,tp.updated_at
+    FROM public.telegram_products tp
+
+    UNION ALL
+
+    SELECT tc.id,coalesce(tc.name,tc.title,'Telegram Channel') AS title,NULL::text AS slug,
+           tc.price,tc.status,tc.description,tc.views,tc.sales_count,
+           NULL::uuid AS creator_id,NULL::uuid AS seller_id,tc.owner_id,NULL::uuid AS user_id,
+           'telegram_channels'::text AS source,'channel'::text AS type,
+           NULL::text AS thumbnail_url,tc.created_at,tc.updated_at
+    FROM public.telegram_channels tc
+  ) x
+  ORDER BY x.created_at DESC
+  LIMIT greatest(1,least(p_limit,500))
+  OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_payment_methods(p_user uuid)
@@ -1355,25 +1462,88 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_update_content(
- p_id uuid,p_status text,p_title text,p_description text
+ p_id uuid,
+ p_status text DEFAULT NULL,
+ p_title text DEFAULT NULL,
+ p_description text DEFAULT NULL,
+ p_source text DEFAULT 'products',
+ p_slug text DEFAULT NULL,
+ p_price numeric DEFAULT NULL
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r public.products;
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r jsonb;
 BEGIN
- UPDATE public.products
- SET status=coalesce(p_status,status),
-     title=coalesce(p_title,title),
-     description=coalesce(p_description,description),
-     updated_at=now()
- WHERE id=p_id RETURNING * INTO r;
- IF r.id IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
- RETURN to_jsonb(r);
+  CASE lower(coalesce(p_source,'products'))
+    WHEN 'products' THEN
+      UPDATE public.products
+      SET status=coalesce(p_status,status),
+          title=coalesce(p_title,title),
+          slug=coalesce(nullif(p_slug,''),slug),
+          price=coalesce(p_price,price),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(products.*) INTO r;
+
+    WHEN 'pastelinks' THEN
+      UPDATE public.pastelinks
+      SET visibility=CASE
+            WHEN coalesce(p_status,'')='published' THEN 'public'
+            WHEN p_status IS NULL THEN visibility
+            ELSE p_status
+          END,
+          title=coalesce(p_title,title),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(pastelinks.*) INTO r;
+
+    WHEN 'telegram_products' THEN
+      UPDATE public.telegram_products
+      SET status=coalesce(p_status,status),
+          title=coalesce(p_title,title),
+          price=coalesce(p_price,price),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(telegram_products.*) INTO r;
+
+    WHEN 'telegram_channels' THEN
+      UPDATE public.telegram_channels
+      SET status=coalesce(p_status,status),
+          name=coalesce(p_title,name),
+          price=coalesce(p_price,price),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(telegram_channels.*) INTO r;
+
+    ELSE
+      RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
+  END CASE;
+
+  IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
+  RETURN r;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_delete_content(p_id uuid)
-RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
- DELETE FROM public.products WHERE id=p_id;
-$$;
+CREATE OR REPLACE FUNCTION public.admin_delete_content(
+ p_id uuid,
+ p_source text DEFAULT 'products'
+)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+  CASE lower(coalesce(p_source,'products'))
+    WHEN 'products' THEN DELETE FROM public.products WHERE id=p_id;
+    WHEN 'pastelinks' THEN DELETE FROM public.pastelinks WHERE id=p_id;
+    WHEN 'telegram_products' THEN DELETE FROM public.telegram_products WHERE id=p_id;
+    WHEN 'telegram_channels' THEN DELETE FROM public.telegram_channels WHERE id=p_id;
+    ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
+  END CASE;
+END $$;
 
 -- ============================================================
 -- RLS
@@ -1597,6 +1767,8 @@ GRANT SELECT,INSERT ON public.analytics_events TO authenticated;
 GRANT SELECT ON public.wallets,public.transactions,public.wallet_transactions,public.withdrawals,public.purchases,public.product_access TO authenticated;
 
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+GRANT EXECUTE ON FUNCTION public.resolve_username_login(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.check_username_available(text) TO anon;
 
 -- Service role can execute settlement.
 REVOKE ALL ON FUNCTION public.settle_bayargg_order(uuid,text,text,numeric,jsonb) FROM PUBLIC;
@@ -1609,7 +1781,7 @@ GRANT EXECUTE ON FUNCTION public.settle_bayargg_order(uuid,text,text,numeric,jso
 
 UPDATE public.profiles
 SET role='admin',is_admin=true,is_banned=false,updated_at=now()
-WHERE lower(btrim(username))='admim';
+WHERE lower(btrim(username)) IN ('admin','admim');
 
 -- ============================================================
 -- STATISTICS REFRESH
@@ -1703,16 +1875,49 @@ BEGIN
   RETURN to_jsonb(r);
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_content(p_limit integer, p_offset integer)
+CREATE OR REPLACE FUNCTION public.admin_content(
+ p_limit integer DEFAULT 50,
+ p_offset integer DEFAULT 0
+)
 RETURNS SETOF jsonb
 LANGUAGE sql SECURITY DEFINER SET search_path=public
 AS $$
   SELECT to_jsonb(x) FROM (
-    SELECT p.* FROM public.pastes p
-    ORDER BY p.created_at DESC
-    LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+    SELECT p.id,p.title,p.slug,p.price,p.status,p.description,p.views,p.sales_count,
+           p.creator_id,p.seller_id,NULL::uuid AS owner_id,NULL::uuid AS user_id,
+           'products'::text AS source,p.type,p.thumbnail_url,p.created_at,p.updated_at
+    FROM public.products p
+
+    UNION ALL
+
+    SELECT pl.id,pl.title,pl.slug,0::numeric AS price,
+           CASE WHEN pl.visibility='public' THEN 'published' ELSE pl.visibility END AS status,
+           pl.description,pl.views,0::bigint AS sales_count,
+           NULL::uuid AS creator_id,NULL::uuid AS seller_id,NULL::uuid AS owner_id,
+           pl.user_id,'pastelinks'::text AS source,'link'::text AS type,
+           NULL::text AS thumbnail_url,pl.created_at,pl.updated_at
+    FROM public.pastelinks pl
+
+    UNION ALL
+
+    SELECT tp.id,tp.title,tp.slug,tp.price,tp.status,tp.description,tp.views,tp.sales_count,
+           NULL::uuid AS creator_id,NULL::uuid AS seller_id,tp.owner_id,NULL::uuid AS user_id,
+           'telegram_products'::text AS source,'code'::text AS type,
+           tp.thumbnail_url,tp.created_at,tp.updated_at
+    FROM public.telegram_products tp
+
+    UNION ALL
+
+    SELECT tc.id,coalesce(tc.name,tc.title,'Telegram Channel') AS title,NULL::text AS slug,
+           tc.price,tc.status,tc.description,tc.views,tc.sales_count,
+           NULL::uuid AS creator_id,NULL::uuid AS seller_id,tc.owner_id,NULL::uuid AS user_id,
+           'telegram_channels'::text AS source,'channel'::text AS type,
+           NULL::text AS thumbnail_url,tc.created_at,tc.updated_at
+    FROM public.telegram_channels tc
   ) x
-  WHERE public.is_current_user_admin();
+  ORDER BY x.created_at DESC
+  LIMIT greatest(1,least(p_limit,500))
+  OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_bot(p_id uuid)
@@ -1724,13 +1929,21 @@ BEGIN
   DELETE FROM public.approved_bots WHERE id=p_id;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_delete_content(p_id uuid)
+CREATE OR REPLACE FUNCTION public.admin_delete_content(
+ p_id uuid,
+ p_source text DEFAULT 'products'
+)
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
 BEGIN
-  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
-  DELETE FROM public.pastes WHERE id=p_id;
+  CASE lower(coalesce(p_source,'products'))
+    WHEN 'products' THEN DELETE FROM public.products WHERE id=p_id;
+    WHEN 'pastelinks' THEN DELETE FROM public.pastelinks WHERE id=p_id;
+    WHEN 'telegram_products' THEN DELETE FROM public.telegram_products WHERE id=p_id;
+    WHEN 'telegram_channels' THEN DELETE FROM public.telegram_channels WHERE id=p_id;
+    ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
+  END CASE;
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_paste(p_id uuid)
@@ -1954,20 +2167,70 @@ AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_update_content(
-  p_id uuid, p_status text, p_title text, p_description text
-) RETURNS jsonb
+ p_id uuid,
+ p_status text DEFAULT NULL,
+ p_title text DEFAULT NULL,
+ p_description text DEFAULT NULL,
+ p_source text DEFAULT 'products',
+ p_slug text DEFAULT NULL,
+ p_price numeric DEFAULT NULL
+)
+RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
-DECLARE r public.pastes%ROWTYPE;
+DECLARE r jsonb;
 BEGIN
-  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
-  UPDATE public.pastes
-  SET title=coalesce(p_title,title),
-      content=coalesce(p_description,content),
-      updated_at=now()
-  WHERE id=p_id RETURNING * INTO r;
-  IF NOT FOUND THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
-  RETURN to_jsonb(r);
+  CASE lower(coalesce(p_source,'products'))
+    WHEN 'products' THEN
+      UPDATE public.products
+      SET status=coalesce(p_status,status),
+          title=coalesce(p_title,title),
+          slug=coalesce(nullif(p_slug,''),slug),
+          price=coalesce(p_price,price),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(products.*) INTO r;
+
+    WHEN 'pastelinks' THEN
+      UPDATE public.pastelinks
+      SET visibility=CASE
+            WHEN coalesce(p_status,'')='published' THEN 'public'
+            WHEN p_status IS NULL THEN visibility
+            ELSE p_status
+          END,
+          title=coalesce(p_title,title),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(pastelinks.*) INTO r;
+
+    WHEN 'telegram_products' THEN
+      UPDATE public.telegram_products
+      SET status=coalesce(p_status,status),
+          title=coalesce(p_title,title),
+          price=coalesce(p_price,price),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(telegram_products.*) INTO r;
+
+    WHEN 'telegram_channels' THEN
+      UPDATE public.telegram_channels
+      SET status=coalesce(p_status,status),
+          name=coalesce(p_title,name),
+          price=coalesce(p_price,price),
+          description=coalesce(p_description,description),
+          updated_at=now()
+      WHERE id=p_id
+      RETURNING to_jsonb(telegram_channels.*) INTO r;
+
+    ELSE
+      RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
+  END CASE;
+
+  IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
+  RETURN r;
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_update_product(
