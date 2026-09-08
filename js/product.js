@@ -2458,154 +2458,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         /* =====================================================
            PAID CHECKOUT
+           Dedicated checkout page
            ===================================================== */
 
-        buy.disabled =
-            true;
-
+        buy.disabled = true;
         buy.innerHTML = `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Menyiapkan QR...
+            <i class="fa-solid fa-arrow-right"></i>
+            Membuka checkout...
         `;
 
-        try {
+        const params = new URLSearchParams({
+            type: String(type || "link"),
+            id: String(productId || "")
+        });
 
-            const orderResult =
-                await sbClient.rpc(
-                    "create_checkout_order",
-                    {
-                        p_type:
-                            type,
+        window.location.href = `checkout.html?${params.toString()}`;
 
-                        p_id:
-                            productId
-                    }
-                );
-
-            if (
-                orderResult.error
-            ) {
-                throw orderResult.error;
-            }
-
-            const order =
-                Array.isArray(
-                    orderResult.data
-                )
-                    ? orderResult.data[0]
-                    : orderResult.data;
-
-            if (
-                !order?.order_id
-            ) {
-
-                throw new Error(
-                    "Order pembayaran tidak berhasil dibuat."
-                );
-            }
-
-            const config =
-                window.PASTELE_CONFIG ||
-                {};
-
-            const token =
-                config.SUPABASE_ANON_KEY ||
-                "";
-
-            const supabaseUrl =
-                String(
-                    config.SUPABASE_URL ||
-                    ""
-                )
-                    .replace(
-                        /\/$/,
-                        ""
-                    );
-
-            if (!supabaseUrl) {
-
-                throw new Error(
-                    "SUPABASE_URL belum dikonfigurasi."
-                );
-            }
-
-            const functionUrl =
-                supabaseUrl +
-                "/functions/v1/create-cashi-payment";
-
-            const response =
-                await fetch(
-                    functionUrl,
-                    {
-                        method:
-                            "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-
-                            Authorization:
-                                `Bearer ${token}`
-                        },
-
-                        body:
-                            JSON.stringify({
-                                order_id:
-                                    order.order_id,
-
-                                amount:
-                                    Number(
-                                        order.amount
-                                    ),
-
-                                title:
-                                    order.title
-                            })
-                    }
-                );
-
-            const payload =
-                await response
-                    .json()
-                    .catch(
-                        () => ({})
-                    );
-
-            if (!response.ok) {
-
-                throw new Error(
-                    payload.error ||
-                    payload.message ||
-                    "Gateway Cashi belum tersedia."
-                );
-            }
-
-            showPaymentModal(
-                order,
-                payload
-            );
-
-        } catch (error) {
-
-            console.error(
-                "[PasTele Payment]",
-                error
-            );
-
-            toast(
-                error?.message ||
-                "Pembayaran gagal dibuat.",
-                "error"
-            );
-
-            buy.disabled =
-                false;
-
-            buy.innerHTML = `
-                <i class="fa-solid fa-qrcode"></i>
-                Bayar via Cashi QRIS
-            `;
-        }
+        return;
     }
 
     /* =========================================================

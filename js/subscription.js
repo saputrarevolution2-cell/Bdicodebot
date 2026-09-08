@@ -1,10 +1,54 @@
-const escPlan=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));document.addEventListener('DOMContentLoaded', async()=>{const status=document.getElementById('planStatus');let profile=await TC.profile().catch(()=>null);if(!profile){location.href='login.html';return}const n=profile.display_name||profile.username||profile.email?.split('@')[0]||'User';document.getElementById('planName')&&(document.getElementById('planName').innerHTML=escPlan(n)+' <span class="verify-badge green"><i class="fa-solid fa-check"></i></span>');document.getElementById('planUsername')&&(document.getElementById('planUsername').textContent='@'+(profile.username||'user'));document.getElementById('planAvatar')&&(document.getElementById('planAvatar').textContent=n.trim().slice(0,1).toUpperCase());
-const statusBox=document.getElementById('planStatus');
-if(profile.subscription_until){
-  const d=new Date(profile.subscription_until);
-  if(d>new Date()) statusBox.innerHTML=`<div class="active-plan"><i class="fa-solid fa-circle-check"></i><div><b>Langganan Aktif</b><span>Berlaku sampai ${d.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}</span></div></div>`;
-}
-async function buy(btn){btn.disabled=true;const plan=btn.dataset.plan,days=Number(btn.dataset.days),amount=Number(btn.dataset.amount);try{const r=await sb.rpc('create_account_plan_order',{p_plan:plan,p_days:days,p_amount:amount});if(r.error)throw r.error;const order=r.data,cfg=window.PASTELE_CONFIG||{},url=(cfg.SUPABASE_URL||'').replace(/\/$/,'')+'/functions/v1/create-cashi-payment';const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${cfg.SUPABASE_ANON_KEY}`},body:JSON.stringify({order_id:order.order_id,amount, title:plan.replaceAll('_',' ').toUpperCase()})});const pay=await resp.json();if(!resp.ok)throw new Error(pay.error||'Gateway Cashi belum tersedia');showQR(order,pay)}catch(e){TC.toast(e.message||'Gagal membuat pembayaran','error');btn.disabled=false}}
-function showQR(order,pay){document.getElementById('planModal')?.remove();const m=document.createElement('div');m.id='planModal';m.className='cashi-plan-modal';m.innerHTML=`<div class="cashi-plan-box"><button class="cashi-plan-close">×</button><span class="badge">CASHI · QRIS</span><h2>Bayar ${TC.money(order.amount)}</h2><p class="muted">Scan QR untuk menyelesaikan upgrade.</p>${pay.qr_image?`<img src="${pay.qr_image}" alt="QRIS Cashi">`:pay.qr_string?`<div class="qr-text">${pay.qr_string}</div>`:'<p>QR belum diterima.</p>'}${pay.payment_url?`<a class="btn primary" target="_blank" href="${pay.payment_url}">Buka Pembayaran Cashi</a>`:''}<p id="payStatus">Menunggu pembayaran...</p></div>`;document.body.appendChild(m);m.querySelector('.cashi-plan-close').onclick=()=>m.remove();poll(order.order_id,m)}
-function poll(id,m){const t=setInterval(async()=>{const r=await sb.from('orders').select('status').eq('id',id).maybeSingle();if(r.data?.status==='paid'){clearInterval(t);m.querySelector('#payStatus').textContent='✓ Pembayaran berhasil. Akun sedang diupgrade...';setTimeout(()=>location.reload(),900)}},2500);setTimeout(()=>clearInterval(t),1800000)}
-document.querySelectorAll('.plan-buy').forEach(b=>b.onclick=()=>buy(b));})();
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  const status = document.getElementById("planStatus");
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+
+  const profile = await window.TC?.profile?.().catch(() => null);
+  if (!profile) {
+    const next = encodeURIComponent(window.location.href);
+    window.location.href = `login.html?redirect=${next}`;
+    return;
+  }
+
+  const name = profile.display_name || profile.username || profile.auth_email?.split("@")[0] || "User";
+  const nameEl = document.getElementById("planName");
+  const userEl = document.getElementById("planUsername");
+  const avatarEl = document.getElementById("planAvatar");
+  if (nameEl) nameEl.innerHTML = `${esc(name)} <span class="verify-badge green"><i class="fa-solid fa-check"></i></span>`;
+  if (userEl) userEl.textContent = `@${profile.username || "user"}`;
+  if (avatarEl) avatarEl.textContent = name.trim().slice(0, 1).toUpperCase();
+
+  if (profile.subscription_until) {
+    const until = new Date(profile.subscription_until);
+    if (until > new Date() && status) {
+      status.innerHTML = `<div class="active-plan"><i class="fa-solid fa-circle-check"></i><div><b>Langganan Aktif</b><span>Berlaku sampai ${until.toLocaleString("id-ID", {dateStyle:"medium", timeStyle:"short"})}</span></div></div>`;
+    }
+  }
+
+  for (const btn of document.querySelectorAll(".plan-buy")) {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const original = btn.innerHTML;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan checkout...`;
+      try {
+        const plan = btn.dataset.plan;
+        const days = Number(btn.dataset.days);
+        const amount = Number(btn.dataset.amount);
+        const result = await window.sb.rpc("create_account_plan_order", {
+          p_plan: plan,
+          p_days: days,
+          p_amount: amount
+        });
+        if (result.error) throw result.error;
+        const order = Array.isArray(result.data) ? result.data[0] : result.data;
+        if (!order?.order_id) throw new Error("Order pembayaran tidak berhasil dibuat.");
+        window.location.href = `payment.html?order_id=${encodeURIComponent(order.order_id)}`;
+      } catch (error) {
+        window.TC?.toast?.(error?.message || "Checkout gagal dibuat.", "error");
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    });
+  }
+});

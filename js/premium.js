@@ -1,4 +1,45 @@
-const escPlan=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));document.addEventListener('DOMContentLoaded',async()=>{let p=await TC.profile().catch(()=>null);if(!p){location.href='login.html';return}const n=p.display_name||p.username||p.email?.split('@')[0]||'User';document.getElementById('planName')&&(document.getElementById('planName').innerHTML=escPlan(n)+' <span class="verify-badge blue"><i class="fa-solid fa-check"></i></span>');document.getElementById('planUsername')&&(document.getElementById('planUsername').textContent='@'+(p.username||'user'));document.getElementById('planAvatar')&&(document.getElementById('planAvatar').textContent=n.trim().slice(0,1).toUpperCase());const statusBox=document.getElementById('planStatus');
-if(p.is_premium===true) statusBox.innerHTML='<div class="active-plan premium-active"><i class="fa-solid fa-circle-check"></i><div><b>Premium Aktif</b><span>Semua akses Paid sudah terbuka.</span></div></div>';
-const b=document.getElementById('premiumBuy');b.onclick=async()=>{b.disabled=true;try{const r=await sb.rpc('create_account_plan_order',{p_plan:'premium',p_days:0,p_amount:250000});if(r.error)throw r.error;const o=r.data,cfg=window.PASTELE_CONFIG||{},url=(cfg.SUPABASE_URL||'').replace(/\/$/,'')+'/functions/v1/create-cashi-payment';const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${cfg.SUPABASE_ANON_KEY}`},body:JSON.stringify({order_id:o.order_id,amount:250000,title:'UPGRADE PREMIUM'})});const pay=await resp.json();if(!resp.ok)throw new Error(pay.error||'Gateway Cashi belum tersedia');show(o,pay)}catch(e){TC.toast(e.message||'Gagal membuat pembayaran','error');b.disabled=false}}
-function show(o,pay){const m=document.createElement('div');m.className='cashi-plan-modal';m.innerHTML=`<div class="cashi-plan-box"><button class="cashi-plan-close">×</button><span class="badge">CASHI · QRIS</span><h2>Bayar ${TC.money(o.amount)}</h2><p class="muted">Scan QR untuk upgrade Premium.</p>${pay.qr_image?`<img src="${pay.qr_image}" alt="QRIS Cashi">`:pay.qr_string?`<div class="qr-text">${pay.qr_string}</div>`:'<p>QR belum diterima.</p>'}${pay.payment_url?`<a class="btn primary" target="_blank" href="${pay.payment_url}">Buka Pembayaran Cashi</a>`:''}<p id="payStatus">Menunggu pembayaran...</p></div>`;document.body.appendChild(m);m.querySelector('.cashi-plan-close').onclick=()=>m.remove();const t=setInterval(async()=>{const r=await sb.from('orders').select('status').eq('id',o.order_id).maybeSingle();if(r.data?.status==='paid'){clearInterval(t);m.querySelector('#payStatus').textContent='✓ Pembayaran berhasil. Premium aktif!';setTimeout(()=>location.reload(),900)}},2500);setTimeout(()=>clearInterval(t),1800000)}});
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  const status = document.getElementById("planStatus");
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+  const profile = await window.TC?.profile?.().catch(() => null);
+  if (!profile) {
+    const next = encodeURIComponent(window.location.href);
+    window.location.href = `login.html?redirect=${next}`;
+    return;
+  }
+
+  const name = profile.display_name || profile.username || profile.auth_email?.split("@")[0] || "User";
+  document.getElementById("planName")?.replaceChildren(document.createTextNode(name), (() => { const s=document.createElement("span"); s.className="verify-badge blue"; s.innerHTML='<i class="fa-solid fa-check"></i>'; return s; })());
+  const userEl = document.getElementById("planUsername");
+  const avatarEl = document.getElementById("planAvatar");
+  if (userEl) userEl.textContent = `@${profile.username || "user"}`;
+  if (avatarEl) avatarEl.textContent = name.trim().slice(0, 1).toUpperCase();
+
+  if (profile.is_premium === true && status) {
+    status.innerHTML = `<div class="active-plan premium-active"><i class="fa-solid fa-circle-check"></i><div><b>Premium Aktif</b><span>Semua akses Paid sudah terbuka.</span></div></div>`;
+  }
+
+  const btn = document.getElementById("premiumBuy");
+  btn?.addEventListener("click", async () => {
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan checkout...`;
+    try {
+      const result = await window.sb.rpc("create_account_plan_order", {
+        p_plan: "premium",
+        p_days: 0,
+        p_amount: 250000
+      });
+      if (result.error) throw result.error;
+      const order = Array.isArray(result.data) ? result.data[0] : result.data;
+      if (!order?.order_id) throw new Error("Order pembayaran tidak berhasil dibuat.");
+      window.location.href = `payment.html?order_id=${encodeURIComponent(order.order_id)}`;
+    } catch (error) {
+      window.TC?.toast?.(error?.message || "Checkout gagal dibuat.", "error");
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+});

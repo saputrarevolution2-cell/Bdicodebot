@@ -587,7 +587,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.search
       );
     } catch {
-      return "create.html";
+      return "create-product.html";
     }
   };
 

@@ -150,6 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             ["index.html", "fa-chart-pie", "Overview"],
             ["users.html", "fa-users", "Users"],
             ["products.html", "fa-box", "Products"],
+            ["content.html", "fa-layer-group", "Content"],
             ["orders.html", "fa-receipt", "Orders"]
           ]
         ],
