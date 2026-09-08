@@ -1,0 +1,11 @@
+# PasTele — Supabase Edge Functions
+# Bayar.gg payment flow. JWT is validated inside create/check functions.
+[functions.create-bayargg-payment]
+verify_jwt = false
+
+[functions.check-bayargg-payment]
+verify_jwt = false
+
+# Bayar.gg calls this endpoint server-to-server; it cannot send a Supabase user JWT.
+[functions.bayargg-webhook]
+verify_jwt = false
