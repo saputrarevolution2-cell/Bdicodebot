@@ -1066,7 +1066,7 @@ document.addEventListener('DOMContentLoaded', async () => {
          *
          * SQL memakai:
          * status
-         * BUKAN is_published
+         * BUKAN legacy_published_flag
          */
         fetchAll(() =>
           supabase
@@ -1106,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
          *
          * SQL memakai:
          * status
-         * BUKAN is_published
+         * BUKAN legacy_published_flag
          */
         fetchAll(() =>
           supabase

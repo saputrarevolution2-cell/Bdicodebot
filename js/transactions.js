@@ -282,7 +282,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         sb
           .from("orders")
           .select(
-            "id,product_id,order_id,item_type,item_id,item_title,amount,status,created_at"
+            "id,product_id,item_type,item_id,item_title,amount,status,created_at"
           )
           .eq("seller_id", profile.id)
           .order("created_at", { ascending: false })

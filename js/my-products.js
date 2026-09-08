@@ -10,7 +10,7 @@
    IMPORTANT:
    - No schema changes.
    - Uses real SQL FINAL columns.
-   - No is_published.
+   - No legacy_published_flag.
    - products owner = creator_id OR seller_id.
    - telegram_products owner = owner_id.
    - telegram_channels owner = owner_id.
@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", async () => {
          status = draft
          status = published
          status = active
-       Tidak menggunakan is_published.
+       Tidak menggunakan legacy_published_flag.
        */
     const statusOf = (
         item

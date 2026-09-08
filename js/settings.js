@@ -172,7 +172,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const isPremium =
     profile.is_premium === true ||
-    profile.premium === true ||
     profile.subscription_until &&
     new Date(profile.subscription_until).getTime() > Date.now();
 
@@ -205,11 +204,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (accountStatus) {
     accountStatus.textContent =
-      profile.status === 'banned'
+      profile.is_banned === true
         ? 'Banned'
-        : profile.status === 'suspended'
-          ? 'Suspended'
-          : 'Active';
+        : 'Active';
   }
 
   if (accountRole) {

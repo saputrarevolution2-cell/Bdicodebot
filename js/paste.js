@@ -11,7 +11,6 @@
    telegram_products / telegram_channels use:
    status = 'published'
    NOT:
-   is_published
    ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
     "use strict";

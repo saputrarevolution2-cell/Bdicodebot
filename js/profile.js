@@ -1405,8 +1405,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         : "Creator";
 
     const status =
-      profile.status ||
-      "active";
+      profile.is_banned === true
+        ? "banned"
+        : "active";
 
     const statusLabel =
       String(status).toLowerCase() === "active"
@@ -1446,9 +1447,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
       {
         label: "Creator",
-        value: profile.is_creator === true
-          ? "Aktif"
-          : "Creator PasTele"
+        value: "Creator / User"
       }
     ];
 
@@ -2710,8 +2709,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const status =
         String(
-          profile.status ||
-          "active"
+          profile.is_banned === true
+            ? "banned"
+            : "active"
         ).toLowerCase();
 
       if (status === "active") {

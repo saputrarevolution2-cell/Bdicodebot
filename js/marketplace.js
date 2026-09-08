@@ -16,7 +16,7 @@
    IMPORTANT:
    - Tidak menggunakan content_comments
    - Tidak mengambil content dari marketplace_public
-   - Tidak menggunakan kolom is_published
+   - Tidak menggunakan kolom legacy_published_flag
    - Tidak menggunakan kolom yang tidak ada di SQL
    ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
