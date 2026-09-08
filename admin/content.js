@@ -31,8 +31,7 @@
   const typeIcon = t => ({link:'fa-link',code:'fa-code',channel:'fa-broadcast-tower',group:'fa-users',product:'fa-box'})[t] || 'fa-layer-group';
   const statusOf = x => {
     if (x.source === 'pastelinks') return x.visibility === 'public' ? 'published' : String(x.visibility||'hidden').toLowerCase();
-    if (x.is_published === true) return 'published';
-    return String(x.status || (x.is_published === false ? 'draft' : 'published')).toLowerCase();
+    return String(x.status || 'draft').toLowerCase();
   };
   const creatorName = x => x.creator_name || x.display_name || x.creator_username || x.username || x.owner_username || x.seller_username || 'Unknown creator';
   const creatorId = x => x.creator_id || x.owner_id || x.user_id || x.seller_id || null;
@@ -57,8 +56,8 @@
     const configs = [
       ['products','product','id,title,slug,price,status,description,views,sales_count,creator_id,seller_id,created_at,updated_at,thumbnail_url'],
       ['pastelinks','link','id,title,slug,visibility,content_html,user_id,views,created_at,updated_at,expires_at'],
-      ['telegram_products','code','id,title,description,price,access_type,is_published,owner_id,created_at,updated_at'],
-      ['telegram_channels','channel','id,name,title,description,price,access_type,is_published,owner_id,created_at,updated_at']
+      ['telegram_products','code','id,title,description,price,access_type,status,owner_id,created_at,updated_at'],
+      ['telegram_channels','channel','id,name,description,price,access_type,status,owner_id,created_at,updated_at']
     ];
     const results = await Promise.all(configs.map(async ([source,type,select]) => {
       const q = await client.from(source).select(select).order('created_at',{ascending:false}).limit(500);
