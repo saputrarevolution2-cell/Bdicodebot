@@ -2693,7 +2693,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             await sbClient
                                 .from("orders")
                                 .select(
-                                    "status,payment_id,paid_at"
+                                    "status,payment_reference,paid_at"
                                 )
                                 .eq(
                                     "id",

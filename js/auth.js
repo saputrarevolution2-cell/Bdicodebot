@@ -179,22 +179,9 @@
           console.warn("[PasTele Auth] username RPC gagal:", e);
         }
 
-        // RLS-safe fallback for installations where the RPC was not deployed yet.
-        if (!email) {
-          try {
-            const { data, error } = await client.from("profiles")
-              .select("auth_email,is_banned")
-              .eq("username", username)
-              .maybeSingle();
-            if (!error && data) {
-              if (data.is_banned === true) throw new Error("Akun kamu telah diblokir.");
-              email = normalizeEmail(data.auth_email || "");
-            }
-          } catch (e) {
-            if (/diblokir/i.test(String(e?.message || ""))) throw e;
-            console.warn("[PasTele Auth] profile username fallback gagal:", e);
-          }
-        }
+        // Do not query auth_email from profiles here. The public client is
+        // intentionally not granted that private column. Username login must
+        // resolve through the SECURITY DEFINER RPC above.
       }
 
       if (!email) throw new Error("Username/Gmail tidak ditemukan. Periksa kembali data login kamu.");
@@ -267,35 +254,11 @@
        * Cek username terlebih dahulu.
        */
 
-      try {
-        const available =
-          await this.checkUsername(
-            cleanUsername
-          );
+      const available =
+        await this.checkUsername(cleanUsername);
 
-        if (available === false) {
-          throw new Error(
-            "Username sudah digunakan."
-          );
-        }
-      } catch (error) {
-        /*
-         * Jangan menggagalkan register hanya karena
-         * endpoint pengecekan username tidak tersedia.
-         */
-
-        if (
-          String(error?.message || "")
-            .toLowerCase()
-            .includes("sudah digunakan")
-        ) {
-          throw error;
-        }
-
-        console.warn(
-          "[PasTele Auth] Username availability check dilewati:",
-          error
-        );
+      if (available === false) {
+        throw new Error("Username sudah digunakan.");
       }
 
       /*
@@ -649,7 +612,7 @@
           await client
             .from("profiles")
             .select(
-              "status,is_banned"
+              "is_banned"
             )
             .eq(
               "id",
@@ -671,24 +634,6 @@
           );
         }
 
-        if (
-          data.status &&
-          [
-            "banned",
-            "blocked",
-            "disabled",
-            "suspended"
-          ].includes(
-            String(data.status)
-              .toLowerCase()
-          )
-        ) {
-          await client.auth.signOut();
-
-          throw new Error(
-            "Akun kamu sedang dinonaktifkan."
-          );
-        }
 
         return true;
 
