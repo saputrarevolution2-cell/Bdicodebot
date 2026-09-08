@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <script src="js/theme-preload.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Checkout — PasTele</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js?v=20260908"></script>
+  <script src="/js/supabase.js?v=20260908"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/navbar.js?v=20260908"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="css/app.css?v=20260908">
+  <link rel="stylesheet" href="css/navbar.css?v=20260908">
+  <link rel="stylesheet" href="css/footer.css?v=20260908">
+  <link rel="stylesheet" href="css/saas-final.css?v=20260908">
+  <link rel="stylesheet" href="css/checkout.css?v=20260908">
+</head>
+<body class="app-page checkout-page">
+  <div id="navbar"></div>
+  <main>
+    <section class="section checkout-section">
+      <div class="container checkout-container">
+        <header class="checkout-header">
+          <a class="checkout-back" href="marketplace.html"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
+          <span class="badge"><i class="fa-solid fa-lock"></i> CHECKOUT AMAN</span>
+          <h1>Konfirmasi Pembelian</h1>
+          <p class="muted">Periksa detail produk sebelum melanjutkan ke pembayaran Cashi.</p>
+        </header>
+        <div id="checkoutState" class="checkout-state"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat detail produk...</span></div>
+        <div id="checkoutContent" hidden>
+          <div class="checkout-grid">
+            <article class="card checkout-card checkout-product-card">
+              <div class="checkout-card-title"><i class="fa-solid fa-box"></i><div><span>Produk</span><h2 id="productTitle">—</h2></div></div>
+              <div class="checkout-meta" id="productMeta"></div>
+              <div class="checkout-divider"></div>
+              <div class="checkout-info-row"><span><i class="fa-solid fa-eye"></i> Dilihat</span><strong id="productViews">—</strong></div>
+              <div class="checkout-info-row"><span><i class="fa-solid fa-shield-halved"></i> Akses</span><strong id="productAccess">—</strong></div>
+            </article>
+            <aside class="card checkout-card checkout-summary">
+              <div class="checkout-card-title"><i class="fa-solid fa-receipt"></i><div><span>Ringkasan</span><h2>Pembayaran</h2></div></div>
+              <div class="checkout-summary-row"><span>Harga produk</span><strong id="productPrice">Rp0</strong></div>
+              <div class="checkout-summary-row"><span>Biaya layanan</span><strong id="serviceFee">Rp0</strong></div>
+              <div class="checkout-total"><span>Total</span><strong id="totalPrice">Rp0</strong></div>
+              <div class="checkout-payment-note"><i class="fa-solid fa-qrcode"></i><div><b>QRIS via Cashi</b><span>Pembayaran diverifikasi otomatis.</span></div></div>
+              <button class="btn primary checkout-pay" id="continuePayment"><i class="fa-solid fa-qrcode"></i> Lanjut ke Pembayaran</button>
+              <p class="checkout-secure"><i class="fa-solid fa-shield-check"></i> Nominal pembayaran dikunci dari harga produk.</p>
+            </aside>
+          </div>
+        </div>
+        <div id="checkoutError" class="checkout-error" hidden></div>
+      </div>
+    </section>
+  </main>
+  <div id="toast"></div>
+  <script src="js/checkout.js?v=20260908"></script>
+  <script src="js/footer.js?v=20260908"></script>
+</body>
+</html>
