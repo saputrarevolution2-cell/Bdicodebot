@@ -1,14 +1,20 @@
 -- ============================================================
 -- PasTele / Bdicodebot
--- DATABASE FULL FIX + FULL RLS + FULL RPC
--- DEVELOPMENT RESET / PRE-PUBLISH
---
--- IMPORTANT:
--- * Drops/recreates public application objects and DATA.
--- * Does NOT delete auth.users.
--- * Run in Supabase SQL Editor as postgres/service-role.
--- * Deploy the matching Edge Functions after this SQL.
--- * This script intentionally uses security_invoker for public views.
+-- ============================================================
+-- Bdicodebot / PasTele DATABASE FULL FIX FINAL
+-- AUTH + PROFILE + WALLET + MARKETPLACE + PAYMENT + WITHDRAW
+-- RLS + RPC + ADMIN + CONTENT + ANALYTICS
+-- ============================================================
+-- IMPORTANT / READ BEFORE RUNNING
+-- 1. THIS IS A FULL APPLICATION-DATABASE REBUILD.
+-- 2. It DROPS public application tables and their DATA.
+-- 3. It DOES NOT delete auth.users.
+-- 4. BACK UP your public schema/data before running this script.
+-- 5. Run in Supabase SQL Editor as postgres/service-role.
+-- 6. Deploy the matching Edge Functions after this SQL.
+-- 7. Configure payment/API secrets in Edge Functions, not here.
+-- 8. Existing auth.users are repaired into profiles/wallets afterward.
+-- 9. No hard-coded personal/admin email is inserted by this script.
 -- ============================================================
 
 BEGIN;
@@ -96,6 +102,7 @@ CREATE TABLE public.profiles (
   role text NOT NULL DEFAULT 'user',
   is_admin boolean NOT NULL DEFAULT false,
   is_banned boolean NOT NULL DEFAULT false,
+  status text NOT NULL DEFAULT 'active',
   balance numeric(18,2) NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -583,9 +590,11 @@ BEGIN
     SET auth_email=excluded.auth_email,
         updated_at=now();
 
-  INSERT INTO public.wallets(user_id)
-  VALUES(NEW.id)
-  ON CONFLICT(user_id) DO NOTHING;
+  IF to_regclass('public.wallets') IS NOT NULL THEN
+    INSERT INTO public.wallets(user_id)
+    VALUES(NEW.id)
+    ON CONFLICT(user_id) DO NOTHING;
+  END IF;
 
   RETURN NEW;
 END $$;
@@ -621,10 +630,11 @@ $$;
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.resolve_username_login(p_username text)
 RETURNS TABLE(auth_email text,is_banned boolean)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,auth
 AS $$
-  SELECT p.auth_email,p.is_banned
+  SELECT COALESCE(u.email,p.auth_email),p.is_banned
   FROM public.profiles p
+  LEFT JOIN auth.users u ON u.id=p.id
   WHERE lower(btrim(p.username))=lower(btrim(p_username))
   LIMIT 1;
 $$;
@@ -1794,21 +1804,50 @@ USING (public.is_current_user_admin())
 WITH CHECK (public.is_current_user_admin());
 
 -- ============================================================
--- SEED / ADMIN PROFILE REPAIR
+-- EXISTING AUTH USER REPAIR
 -- ============================================================
--- If the auth user already exists, this updates the matching profile.
-UPDATE public.profiles
-SET username='admim',
-    auth_email=coalesce(auth_email,'tzyfile91@gmail.com'),
-    role='admin',
-    is_admin=true,
-    is_banned=false,
-    updated_at=now()
-WHERE id='994411a4-957b-4e6d-8124-a5ae748b90f8'::uuid;
+DO $$
+DECLARE u record; base text; uname text; n integer;
+BEGIN
+  FOR u IN
+    SELECT au.id,au.email,au.raw_user_meta_data
+    FROM auth.users au
+    LEFT JOIN public.profiles p ON p.id=au.id
+    WHERE p.id IS NULL
+  LOOP
+    base := lower(regexp_replace(
+      coalesce(u.raw_user_meta_data->>'username',split_part(coalesce(u.email,''),'@',1),'user'),
+      '[^a-zA-Z0-9_]','','g'));
+    IF base='' THEN base:='user'; END IF;
+    base:=left(base,32); uname:=base; n:=0;
+    WHILE EXISTS(SELECT 1 FROM public.profiles p WHERE lower(p.username)=lower(uname)) LOOP
+      n:=n+1;
+      IF n>1000 THEN RAISE EXCEPTION 'Unable to create unique username for auth user %',u.id; END IF;
+      uname:=left(base,23)||'_'||lpad(n::text,8,'0');
+    END LOOP;
+    INSERT INTO public.profiles(id,username,auth_email,display_name)
+    VALUES(u.id,uname,coalesce(u.email,''),coalesce(u.raw_user_meta_data->>'display_name',uname))
+    ON CONFLICT(id) DO UPDATE SET auth_email=excluded.auth_email,updated_at=now();
+    INSERT INTO public.wallets(user_id) VALUES(u.id) ON CONFLICT(user_id) DO NOTHING;
+  END LOOP;
+END $$;
 
-INSERT INTO public.wallets(user_id)
-SELECT id FROM public.profiles
-ON CONFLICT(user_id) DO NOTHING;
+UPDATE public.profiles p
+SET auth_email=coalesce(u.email,p.auth_email),updated_at=now()
+FROM auth.users u
+WHERE u.id=p.id
+  AND coalesce(p.auth_email,'') IS DISTINCT FROM coalesce(u.email,'');
+
+-- Set your administrator manually after verifying the Auth UUID:
+-- UPDATE public.profiles SET is_admin=true, role='admin' WHERE id='YOUR-AUTH-USER-UUID';
+
+-- ============================================================
+-- FINAL AUTH GRANTS / SCHEMA RELOAD
+-- ============================================================
+GRANT EXECUTE ON FUNCTION public.resolve_username_login(text) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.check_username_available(text) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.is_current_user_admin() TO authenticated;
+NOTIFY pgrst,'reload schema';
 
 -- ============================================================
 -- SECURITY VERIFICATION
