@@ -1,0 +1,32 @@
+/* PasTele — SaaS Premium UI / responsive final layer */
+:root{
+  --saas-bg:#f5f7fb;--saas-surface:#fff;--saas-surface-2:#f8fafc;--saas-line:#e6eaf0;
+  --saas-text:#101828;--saas-muted:#667085;--saas-brand:#229ed9;--saas-brand-2:#1687bd;
+  --saas-radius:18px;--saas-shadow:0 12px 35px rgba(16,24,40,.07);--saas-shadow-lg:0 22px 70px rgba(16,24,40,.12)
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{background:var(--saas-bg);color:var(--saas-text);-webkit-font-smoothing:antialiased}
+img,video{max-width:100%;height:auto}.container,.dash-container{width:min(1180px,calc(100% - 32px));margin-inline:auto}
+.card,.panel,.box,.admin-card,.pt-data-card,.market-card,.product-card,.purchase-card,.wallet-card,.settings-card{border:1px solid var(--saas-line)!important;border-radius:var(--saas-radius)!important;background:var(--saas-surface)!important;box-shadow:var(--saas-shadow);}
+.btn,button,input,select,textarea{font:inherit}.btn,button{transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease}.btn:not(:disabled):hover,button:not(:disabled):hover{transform:translateY(-1px)}
+input,select,textarea{border:1px solid var(--saas-line);border-radius:12px;background:var(--saas-surface);color:var(--saas-text);outline:none}input:focus,select:focus,textarea:focus{border-color:rgba(34,158,217,.65);box-shadow:0 0 0 4px rgba(34,158,217,.11)}
+main{min-width:0}.section{padding-top:28px;padding-bottom:48px}.page-header,.market-header,.profile-header,.settings-header,.wallet-header{margin-bottom:20px}
+.table-wrap,.data-table,.table-responsive{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch}.table-wrap table,.data-table table{min-width:680px}
+.empty,.error-state,.loading-state{border:1px dashed var(--saas-line);border-radius:16px;background:var(--saas-surface);padding:34px 20px;text-align:center;color:var(--saas-muted)}
+.toast{font-size:13px!important;line-height:1.4!important;border-radius:14px!important;backdrop-filter:blur(14px)}
+/* touch-friendly controls */
+button,.btn,a{ -webkit-tap-highlight-color:transparent}button,.btn{min-height:40px}.icon-btn{min-width:40px;min-height:40px}
+/* admin */
+.admin-layout{gap:18px!important}.admin-side{border:1px solid var(--saas-line)!important;background:var(--saas-surface)!important;box-shadow:var(--saas-shadow)}
+/* auth */
+.auth-card,.login-card,.register-card{border:1px solid var(--saas-line)!important;border-radius:22px!important;box-shadow:var(--saas-shadow-lg)!important;background:var(--saas-surface)!important}
+/* modal */
+.modal,.dialog,[role="dialog"]{max-width:calc(100vw - 24px)}
+/* dark */
+html[data-theme="dark"]{--saas-bg:#0b1017;--saas-surface:#111923;--saas-surface-2:#151f2b;--saas-line:#253140;--saas-text:#edf4fa;--saas-muted:#94a3b8;--saas-shadow:0 14px 40px rgba(0,0,0,.22);--saas-shadow-lg:0 24px 75px rgba(0,0,0,.35)}
+html[data-theme="dark"] body{background:var(--saas-bg);color:var(--saas-text)}html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#0f1722;color:var(--saas-text);border-color:var(--saas-line)}
+/* responsive */
+@media(max-width:900px){.container,.dash-container{width:min(100% - 24px,720px)}.section{padding-top:20px;padding-bottom:34px}.pt-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-layout{grid-template-columns:1fr!important}.admin-side{position:relative!important;top:auto!important}}
+@media(max-width:640px){.container,.dash-container{width:calc(100% - 20px)}.section{padding-top:16px;padding-bottom:28px}.card,.panel,.box{border-radius:16px!important}.btn{min-height:44px}.market-header,.page-header,.profile-header,.settings-header,.wallet-header{display:grid;gap:12px}.pt-stat-grid{grid-template-columns:1fr 1fr!important}.admin-nav{grid-template-columns:1fr 1fr!important}.admin-main{padding-left:0!important;padding-right:0!important}.content-item{border-radius:14px!important}}
+@media(max-width:430px){.pt-stat-grid{grid-template-columns:1fr!important}.admin-nav{grid-template-columns:1fr!important}.container,.dash-container{width:calc(100% - 16px)}h1{font-size:clamp(24px,8vw,34px)}h2{font-size:clamp(19px,6vw,25px)}.btn{width:auto;max-width:100%}.form-actions,.actions,.toolbar-actions{display:grid!important;grid-template-columns:1fr!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+@media (hover:none){.btn:not(:disabled):hover,button:not(:disabled):hover{transform:none}}
