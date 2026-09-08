@@ -68,50 +68,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       qr.innerHTML = '<div class="qr-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Membuat QRIS Cashi...</span></div>';
 
-      const cfg = window.PASTELE_CONFIG || {};
-      const base = String(cfg.SUPABASE_URL || "").replace(/\/$/, "");
-      if (!base) throw new Error("SUPABASE_URL belum dikonfigurasi.");
+      if (!window.sb) throw new Error("Supabase client belum siap. Periksa js/config.js dan koneksi Supabase.");
 
-      const sessionResult = await window.sb.auth.getSession();
-      if (sessionResult.error) throw sessionResult.error;
-      const token = sessionResult.data?.session?.access_token || "";
-      if (!token) throw new Error("Sesi login tidak ditemukan. Silakan login ulang.");
+      // Use Supabase's official Functions client instead of a manual fetch.
+      // This automatically sends the current session/apikey and gives us
+      // a much more useful error object when the function is unavailable.
+      const result = await window.sb.functions.invoke("create-cashi-payment", {
+        body: { order_id: order.id },
+      });
 
-      let response;
-      try {
-        response = await fetch(`${base}/functions/v1/create-cashi-payment`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ order_id: order.id }),
-        });
-      } catch (networkError) {
-        throw new Error("Tidak bisa menghubungi server pembayaran. Pastikan Edge Function create-cashi-payment sudah di-deploy di Supabase.");
+      let p = result?.data || {};
+      const invokeError = result?.error || null;
+
+      if (invokeError) {
+        const status = Number(invokeError?.context?.status || invokeError?.status || 0);
+        let serverMessage = "";
+
+        // Supabase FunctionsHttpError can expose the Response in context.
+        try {
+          if (invokeError?.context && typeof invokeError.context.json === "function") {
+            const body = await invokeError.context.json();
+            serverMessage = body?.error || body?.message || "";
+            if (body && typeof body === "object") p = body;
+          }
+        } catch (_) {}
+
+        if (status === 404) {
+          throw new Error("Edge Function create-cashi-payment belum di-deploy ke project Supabase ini.");
+        }
+        if (status === 401) {
+          throw new Error(serverMessage || "Sesi login ditolak oleh server pembayaran. Silakan login ulang.");
+        }
+        if (status === 403) {
+          throw new Error(serverMessage || "Akses ke Edge Function pembayaran ditolak.");
+        }
+        if (status >= 500) {
+          throw new Error(serverMessage || "Server pembayaran mengalami error. Cek Supabase Edge Function Logs.");
+        }
+
+        throw new Error(serverMessage || invokeError?.message || "Tidak dapat menghubungi Edge Function pembayaran.");
       }
 
-      const raw = await response.text();
-      let p = {};
-      try { p = raw ? JSON.parse(raw) : {}; } catch { p = {}; }
-
-      if (response.status === 404) {
-        throw new Error("Edge Function create-cashi-payment belum di-deploy di Supabase.");
-      }
-      if (response.status === 401) {
-        throw new Error(p.error || "Sesi login ditolak oleh server pembayaran. Silakan login ulang.");
-      }
-      if (!response.ok || p?.success === false) {
-        throw new Error(p.error || p.message || `Server pembayaran gagal (HTTP ${response.status}).`);
+      if (!p || p.success === false) {
+        throw new Error(p?.error || p?.message || "Server pembayaran gagal membuat transaksi.");
       }
 
-      const qrUrl = p.qrUrl || "";
-      const paymentUrl = p.checkout_url || "";
+      const qrUrl = String(p.qrUrl || "").trim();
+      const paymentUrl = String(p.checkout_url || "").trim();
 
       if (qrUrl) {
+        // Cashi may return a data:image/... URL. It is safe to use as an image
+        // source after checking the protocol; external URLs are also allowed.
+        const safeQr = /^(data:image\/(?:png|jpeg|jpg|webp);base64,|https:\/\/)/i.test(qrUrl)
+          ? qrUrl
+          : "";
+
+        if (!safeQr) throw new Error("Cashi mengembalikan format QRIS yang tidak valid.");
+
         qr.innerHTML = `
           <div class="qr-title"><i class="fa-solid fa-qrcode"></i><span>Scan QRIS Cashi</span></div>
-          <img class="cashi-qr-image" src="${esc(qrUrl)}" alt="QRIS Cashi" loading="eager" decoding="async">
+          <img class="cashi-qr-image" src="${esc(safeQr)}" alt="QRIS Cashi" loading="eager" decoding="async">
           <small class="qr-hint">Buka aplikasi bank/e-wallet kamu lalu scan QR di atas.</small>
         `;
       } else if (paymentUrl) {
