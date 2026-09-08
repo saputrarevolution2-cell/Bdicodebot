@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
        PasTele — PRODUCT
        PUBLIC PRODUCT DETAIL
        LIKE + COMMENT FOR EVERYONE
-       PAID CHECKOUT + CASHI QRIS
+       PAID CHECKOUT + BAYARGG QRIS
        ========================================================= */
 
     /* =========================================================
@@ -1263,7 +1263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 : price
                                 ? `
                                     <i class="fa-solid fa-qrcode"></i>
-                                    Bayar via Cashi QRIS
+                                    Bayar via BAYARGG QRIS
                                 `
                                 : `
                                     <i class="fa-solid fa-unlock"></i>
@@ -2478,7 +2478,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* =========================================================
-       CASHI MODAL
+       BAYARGG MODAL
        ========================================================= */
 
     function showPaymentModal(
@@ -2488,7 +2488,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document
             .getElementById(
-                "cashiModal"
+                "BAYARGGModal"
             )
             ?.remove();
 
@@ -2498,10 +2498,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             );
 
         modal.className =
-            "cashi-modal-backdrop";
+            "BAYARGG-modal-backdrop";
 
         modal.id =
-            "cashiModal";
+            "BAYARGGModal";
 
         const qrImage =
             payment.qr_image ||
@@ -2521,25 +2521,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         modal.innerHTML = `
             <div
-                class="cashi-modal"
+                class="BAYARGG-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="cashiTitle"
+                aria-labelledby="BAYARGGTitle"
             >
 
                 <button
                     type="button"
-                    class="cashi-close"
+                    class="BAYARGG-close"
                     aria-label="Tutup"
                 >
                     ×
                 </button>
 
                 <span class="badge">
-                    CASHI · QRIS
+                    BAYARGG · QRIS
                 </span>
 
-                <h2 id="cashiTitle">
+                <h2 id="BAYARGGTitle">
                     Bayar ${money(
                         order.amount
                     )}
@@ -2550,7 +2550,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     sesuai harga produk.
                 </p>
 
-                <div class="cashi-qr">
+                <div class="BAYARGG-qr">
 
                     ${
                         qrImage
@@ -2559,7 +2559,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     src="${esc(
                                         qrImage
                                     )}"
-                                    alt="QRIS Cashi"
+                                    alt="QRIS BAYARGG"
                                 >
                             `
                             : qrString
@@ -2572,7 +2572,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             `
                             : `
                                 <div class="empty">
-                                    QR belum diterima dari Cashi.
+                                    QR belum diterima dari BAYARGG.
                                 </div>
                             `
                     }
@@ -2591,15 +2591,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 )}"
                             >
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                Buka Pembayaran Cashi
+                                Buka Pembayaran BAYARGG
                             </a>
                         `
                         : ""
                 }
 
                 <p
-                    class="cashi-status"
-                    id="cashiStatus"
+                    class="BAYARGG-status"
+                    id="BAYARGGStatus"
                 >
                     <i class="fa-solid fa-clock"></i>
                     Menunggu pembayaran...
@@ -2614,7 +2614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         modal
             .querySelector(
-                ".cashi-close"
+                ".BAYARGG-close"
             )
             ?.addEventListener(
                 "click",
@@ -2653,7 +2653,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const status =
             modal.querySelector(
-                "#cashiStatus"
+                "#BAYARGGStatus"
             );
 
         const started =
