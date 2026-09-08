@@ -1,241 +1,150 @@
 /* =========================================================
    PasTele — LOGIN
-   CLEAN + SUPABASE CAPTCHA + CLOUDFLARE TURNSTILE
-   =========================================================
+   FINAL SQL SYNC
+   SUPABASE AUTH + USERNAME RPC + CLOUDFLARE TURNSTILE
+   SQL RPC:
+     resolve_username_login(p_username text)
+       -> auth_email, is_banned
    FLOW:
-
-   Step 1
-   Username / Gmail
-        ↓
-   Auth.lookup()
-        ↓
-   Account Found
-        ↓
-   Step 2
-   Password
-        ↓
-   Cloudflare Turnstile
-        ↓
-   Auth.login(email, password, captchaToken)
-        ↓
-   Supabase signInWithPassword()
-        ↓
-   Dashboard
-
+     Step 1
+       Username / Gmail
+            ↓
+       Auth.lookup()
+            ↓
+       Account Found
+            ↓
+     Step 2
+       Password
+            ↓
+       Turnstile
+            ↓
+       Auth.login(email, password, captchaToken)
+            ↓
+       dashboard.html
    IMPORTANT:
-   - Step 1 TIDAK membutuhkan Turnstile
-   - Turnstile hanya aktif di Step 2
-   - Explicit Turnstile rendering
-   - Token tidak pernah ditampilkan di console
+   - Step 1 tidak membutuhkan Turnstile.
+   - Turnstile hanya digunakan pada Step 2.
+   - Token Turnstile tidak pernah ditampilkan di console.
    ========================================================= */
-
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
-
   /* =======================================================
      ELEMENTS
      ======================================================= */
-
-  const step1 =
-    document.getElementById("loginStep1");
-
-  const step2 =
-    document.getElementById("loginStep2");
-
-  const identifier =
-    document.getElementById("identifier");
-
-  const identifierWrap =
-    document.getElementById("identifierWrap");
-
-  const identifierStatus =
-    document.getElementById("identifierStatus");
-
-  const loginVerifiedState =
-    document.getElementById("loginVerifiedState");
-
-  const continueLogin =
-    document.getElementById("continueLogin");
-
-  const password =
-    document.getElementById("password");
-
-  const toggle =
-    document.getElementById("toggle");
-
-  const google =
-    document.getElementById("google");
-
-  const forgot =
-    document.getElementById("forgot");
-
-  const changeAccount =
-    document.getElementById("changeAccount");
-
-  const toastElement =
-    document.getElementById("toast");
-
-  const securityStatus =
-    document.getElementById("loginSecurityStatus");
-
-  const turnstileContainer =
-    document.getElementById("loginTurnstile");
-
-
+  const step1 = document.getElementById("loginStep1");
+  const step2 = document.getElementById("loginStep2");
+  const identifier = document.getElementById("identifier");
+  const identifierWrap = document.getElementById("identifierWrap");
+  const identifierStatus = document.getElementById("identifierStatus");
+  const loginVerifiedState = document.getElementById("loginVerifiedState");
+  const continueLogin = document.getElementById("continueLogin");
+  const password = document.getElementById("password");
+  const toggle = document.getElementById("toggle");
+  const google = document.getElementById("google");
+  const forgot = document.getElementById("forgot");
+  const changeAccount = document.getElementById("changeAccount");
+  const toastElement = document.getElementById("toast");
+  const securityStatus = document.getElementById("loginSecurityStatus");
+  const turnstileContainer = document.getElementById("loginTurnstile");
   /* =======================================================
-     SUPABASE CHECK
+     SUPABASE
      ======================================================= */
-
-  if (!window.sb) {
+  const supabase =
+    window.sb ||
+    window.supabaseClient ||
+    window.supabase ||
+    null;
+  if (!supabase?.auth) {
     showToast(
-      "Supabase belum terkonfigurasi. Isi js/config.js dengan Project URL dan anon/publishable key.",
+      "Supabase belum siap. Periksa js/config.js dan js/supabase.js.",
       "error"
     );
-
     return;
   }
-
-
+  if (!window.Auth) {
+    showToast(
+      "Auth Core belum dimuat. Pastikan js/auth.js dimuat sebelum js/login.js.",
+      "error"
+    );
+    return;
+  }
   /* =======================================================
      STATE
      ======================================================= */
-
   let currentEmail = "";
   let currentUsername = "";
-
   let accountFound = false;
-
+  let loginSubmitting = false;
   let turnstileToken = "";
   let turnstileWidgetId = null;
-
   let turnstileRendering = false;
-
-  let loginSubmitting = false;
-
-
   /* =======================================================
-     TURNSTILE SITE KEY
+     TURNSTILE CONFIG
      ======================================================= */
-
-  const TURNSTILE_SITE_KEY =
-    String(
-      turnstileContainer?.dataset?.sitekey ||
-      window.PASTELE_TURNSTILE_SITE_KEY ||
-      ""
-    ).trim();
-
-
+  const TURNSTILE_SITE_KEY = String(
+    turnstileContainer?.dataset?.sitekey ||
+    window.PASTELE_TURNSTILE_SITE_KEY ||
+    ""
+  ).trim();
   /* =======================================================
      HELPERS
      ======================================================= */
-
   function getLoginButton() {
     return (
-      step2?.querySelector(
-        'button[type="submit"]'
-      ) || null
+      step2?.querySelector('button[type="submit"]') ||
+      null
     );
   }
-
-
   function setLoginButtonEnabled(enabled) {
-    const button =
-      getLoginButton();
-
-    if (!button) {
+    const button = getLoginButton();
+    if (!button || loginSubmitting) {
       return;
     }
-
-    if (loginSubmitting) {
-      return;
-    }
-
-    button.disabled =
-      !Boolean(enabled);
-
+    button.disabled = !Boolean(enabled);
     button.setAttribute(
       "aria-disabled",
       enabled ? "false" : "true"
     );
   }
-
-
-  /* =======================================================
-     TOAST
-     ======================================================= */
-
-  function showToast(
-    message,
-    type = "error"
-  ) {
+  function showToast(message, type = "error") {
     const el =
       toastElement ||
       document.getElementById("toast");
-
     if (!el) {
-      console.log(
-        `[${type}] ${message}`
-      );
-
       return;
     }
-
-    clearTimeout(
-      window.__loginToastTimer
-    );
-
-    el.textContent =
-      String(message || "");
-
+    clearTimeout(window.__loginToastTimer);
+    el.textContent = String(message || "");
     el.className = "";
-
     void el.offsetWidth;
-
-    el.className =
-      `show ${type}`;
-
-    window.__loginToastTimer =
-      setTimeout(() => {
-        el.className = "";
-        el.textContent = "";
-      }, 4000);
+    el.className = `show ${type}`;
+    window.__loginToastTimer = setTimeout(() => {
+      el.className = "";
+      el.textContent = "";
+    }, 4000);
   }
-
-
   function showError(message) {
     showToast(
-      message ||
-      "Terjadi kesalahan.",
+      message || "Terjadi kesalahan.",
       "error"
     );
   }
-
-
   function showSuccess(message) {
     showToast(
-      message ||
-      "Berhasil.",
+      message || "Berhasil.",
       "success"
     );
   }
-
-
   function clearError() {
     if (toastElement) {
       toastElement.className = "";
       toastElement.textContent = "";
     }
-
-    clearTimeout(
-      window.__loginToastTimer
-    );
+    clearTimeout(window.__loginToastTimer);
   }
-
-
   /* =======================================================
      BUTTON LOADING
      ======================================================= */
-
   function setButtonLoading(
     button,
     loading,
@@ -245,18 +154,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!button) {
       return;
     }
-
     if (loading) {
       button.disabled = true;
-
       button.setAttribute(
         "aria-disabled",
         "true"
       );
-
       button.dataset.originalHtml =
         button.innerHTML;
-
       button.innerHTML = `
         <i
           class="fa-solid fa-spinner fa-spin"
@@ -264,30 +169,22 @@ document.addEventListener("DOMContentLoaded", () => {
         ></i>
         <span>${loadingText}</span>
       `;
-
       return;
     }
-
     button.disabled = false;
-
     button.setAttribute(
       "aria-disabled",
       "false"
     );
-
     button.innerHTML =
       originalHTML ||
       button.dataset.originalHtml ||
       button.innerHTML;
-
     delete button.dataset.originalHtml;
   }
-
-
   /* =======================================================
      SECURITY STATUS
      ======================================================= */
-
   function updateSecurityStatus(
     verified = false,
     message = ""
@@ -295,353 +192,200 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!securityStatus) {
       return;
     }
-
-    if (verified) {
-      securityStatus.innerHTML = `
+    securityStatus.innerHTML = verified
+      ? `
         <i
           class="fa-solid fa-circle-check"
           aria-hidden="true"
         ></i>
-
         <span>
-          ${
-            message ||
-            "Verifikasi keamanan berhasil."
-          }
+          ${message || "Verifikasi keamanan berhasil."}
+        </span>
+      `
+      : `
+        <i
+          class="fa-solid fa-shield-halved"
+          aria-hidden="true"
+        ></i>
+        <span>
+          ${message || "Selesaikan verifikasi keamanan sebelum masuk."}
         </span>
       `;
-
-      securityStatus.classList.add(
-        "verified"
-      );
-
-      return;
-    }
-
-    securityStatus.innerHTML = `
-      <i
-        class="fa-solid fa-shield-halved"
-        aria-hidden="true"
-      ></i>
-
-      <span>
-        ${
-          message ||
-          "Selesaikan verifikasi keamanan sebelum masuk."
-        }
-      </span>
-    `;
-
-    securityStatus.classList.remove(
-      "verified"
+    securityStatus.classList.toggle(
+      "verified",
+      verified
     );
   }
-
-
   /* =======================================================
-     WAIT TURNSTILE API
+     TURNSTILE API
      ======================================================= */
-
-  function waitForTurnstile(
-    timeout = 15000
-  ) {
+  function waitForTurnstile(timeout = 15000) {
     return new Promise((resolve) => {
       if (
         window.turnstile &&
-        typeof window.turnstile.render ===
-          "function"
+        typeof window.turnstile.render === "function"
       ) {
         resolve(true);
         return;
       }
-
-      const started =
-        Date.now();
-
-      const timer =
-        setInterval(() => {
-          if (
-            window.turnstile &&
-            typeof window.turnstile.render ===
-              "function"
-          ) {
-            clearInterval(timer);
-            resolve(true);
-            return;
-          }
-
-          if (
-            Date.now() - started >=
-            timeout
-          ) {
-            clearInterval(timer);
-            resolve(false);
-          }
-        }, 100);
+      const started = Date.now();
+      const timer = setInterval(() => {
+        if (
+          window.turnstile &&
+          typeof window.turnstile.render === "function"
+        ) {
+          clearInterval(timer);
+          resolve(true);
+          return;
+        }
+        if (Date.now() - started >= timeout) {
+          clearInterval(timer);
+          resolve(false);
+        }
+      }, 100);
     });
   }
-
-
   /* =======================================================
-     TURNSTILE SUCCESS
+     TURNSTILE CALLBACKS
      ======================================================= */
-
-  function onTurnstileSuccess(
-    token
-  ) {
+  function onTurnstileSuccess(token) {
     turnstileToken =
       String(token || "").trim();
-
-    window.__pasTeleTurnstileToken =
-      turnstileToken;
-
     const verified =
       Boolean(turnstileToken);
-
     updateSecurityStatus(
       verified,
       verified
         ? "Verifikasi keamanan berhasil."
         : "Selesaikan verifikasi keamanan sebelum masuk."
     );
-
-    /*
-     * IMPORTANT:
-     * Tombol Masuk baru aktif setelah
-     * Turnstile menghasilkan token.
-     */
-    setLoginButtonEnabled(
-      verified
-    );
+    setLoginButtonEnabled(verified);
   }
-
-
-  /* =======================================================
-     TURNSTILE EXPIRED
-     ======================================================= */
-
   function onTurnstileExpired() {
     turnstileToken = "";
-
-    window.__pasTeleTurnstileToken =
-      "";
-
     updateSecurityStatus(
       false,
       "Verifikasi kedaluwarsa. Silakan verifikasi kembali."
     );
-
-    setLoginButtonEnabled(
-      false
-    );
-
+    setLoginButtonEnabled(false);
     showError(
       "Verifikasi keamanan kedaluwarsa. Silakan verifikasi kembali."
     );
   }
-
-
-  /* =======================================================
-     TURNSTILE TIMEOUT
-     ======================================================= */
-
   function onTurnstileTimeout() {
     turnstileToken = "";
-
-    window.__pasTeleTurnstileToken =
-      "";
-
     updateSecurityStatus(
       false,
       "Verifikasi timeout. Silakan coba lagi."
     );
-
-    setLoginButtonEnabled(
-      false
-    );
-
+    setLoginButtonEnabled(false);
     showError(
       "Verifikasi keamanan timeout. Silakan coba lagi."
     );
   }
-
-
-  /* =======================================================
-     TURNSTILE ERROR
-     ======================================================= */
-
-  function onTurnstileError(
-    errorCode
-  ) {
+  function onTurnstileError(errorCode) {
     turnstileToken = "";
-
-    window.__pasTeleTurnstileToken =
-      "";
-
     updateSecurityStatus(
       false,
       "Verifikasi keamanan gagal."
     );
-
-    setLoginButtonEnabled(
-      false
-    );
-
+    setLoginButtonEnabled(false);
+    /*
+     * Jangan log token.
+     * Error code Turnstile boleh dicatat.
+     */
     console.error(
       "[PasTele] Turnstile error:",
       errorCode
     );
-
     showError(
       "Verifikasi keamanan gagal. Silakan coba lagi."
     );
   }
-
-
   /* =======================================================
      RENDER TURNSTILE
      ======================================================= */
-
   async function renderTurnstile() {
     if (!turnstileContainer) {
-      console.warn(
-        "[PasTele] #loginTurnstile tidak ditemukan."
+      /*
+       * Kalau Turnstile tidak dikonfigurasi,
+       * login tetap bisa berjalan.
+       */
+      if (!TURNSTILE_SITE_KEY) {
+        updateSecurityStatus(
+          true,
+          "Login aman tanpa verifikasi tambahan."
+        );
+        setLoginButtonEnabled(true);
+        return true;
+      }
+      showError(
+        "Elemen verifikasi keamanan tidak ditemukan."
       );
-
       return false;
     }
-
     /*
-     * Jangan render dua kali.
+     * Tidak render ulang widget yang sama.
      */
-
-    if (
-      turnstileWidgetId !== null
-    ) {
+    if (turnstileWidgetId !== null) {
       return true;
     }
-
-    /*
-     * Hindari render bersamaan.
-     */
-
     if (turnstileRendering) {
       return false;
     }
-
     /*
-     * Site key wajib.
+     * Turnstile optional.
      */
-
     if (!TURNSTILE_SITE_KEY) {
-      // Turnstile is an optional UI layer for login. Supabase signInWithPassword
-      // does not take a captcha token, so a missing site key must not brick login.
-      updateSecurityStatus(true, "Login aman tanpa verifikasi tambahan.");
+      updateSecurityStatus(
+        true,
+        "Login aman tanpa verifikasi tambahan."
+      );
       setLoginButtonEnabled(true);
       return true;
     }
-
-    turnstileRendering =
-      true;
-
+    turnstileRendering = true;
     try {
-      /*
-       * Tunggu API Cloudflare selesai
-       * dimuat oleh browser.
-       */
-
       const ready =
         await waitForTurnstile();
-
       if (!ready) {
-        console.error(
-          "[PasTele] Turnstile API gagal dimuat."
-        );
-
         updateSecurityStatus(
           false,
           "Verifikasi keamanan gagal dimuat."
         );
-
-        setLoginButtonEnabled(
-          false
-        );
-
+        setLoginButtonEnabled(false);
         showError(
           "Cloudflare Turnstile gagal dimuat. Refresh halaman dan coba lagi."
         );
-
         return false;
       }
-
-      /*
-       * Pastikan tombol tetap disabled
-       * sebelum callback success.
-       */
-
-      setLoginButtonEnabled(
-        false
-      );
-
-      /*
-       * Container harus kosong karena
-       * menggunakan explicit rendering.
-       */
-
-      turnstileContainer.innerHTML =
-        "";
-
-      /*
-       * Reset token lama.
-       */
-
+      setLoginButtonEnabled(false);
+      turnstileContainer.innerHTML = "";
       turnstileToken = "";
-
-      window.__pasTeleTurnstileToken =
-        "";
-
-      /*
-       * Explicit rendering.
-       */
-
       const widgetId =
         window.turnstile.render(
           turnstileContainer,
           {
-            sitekey:
-              TURNSTILE_SITE_KEY,
-
+            sitekey: TURNSTILE_SITE_KEY,
             theme:
               turnstileContainer.dataset.theme ||
               "auto",
-
             language:
               turnstileContainer.dataset.language ||
               "id",
-
             action:
               turnstileContainer.dataset.action ||
               "login",
-
             callback:
               onTurnstileSuccess,
-
             "expired-callback":
               onTurnstileExpired,
-
             "timeout-callback":
               onTurnstileTimeout,
-
             "error-callback":
               onTurnstileError
           }
         );
-
-      /*
-       * Cloudflare biasanya mengembalikan
-       * widget ID berupa string.
-       */
-
       if (
         widgetId === null ||
         widgetId === undefined
@@ -650,162 +394,68 @@ document.addEventListener("DOMContentLoaded", () => {
           "Turnstile widget ID tidak tersedia."
         );
       }
-
-      turnstileWidgetId =
-        widgetId;
-
+      turnstileWidgetId = widgetId;
       updateSecurityStatus(
         false,
         "Selesaikan verifikasi keamanan sebelum masuk."
       );
-
-      setLoginButtonEnabled(
-        false
-      );
-
+      setLoginButtonEnabled(false);
       return true;
-
     } catch (error) {
       console.error(
         "[PasTele] Turnstile render error:",
         error
       );
-
-      turnstileWidgetId =
-        null;
-
-      turnstileToken =
-        "";
-
-      window.__pasTeleTurnstileToken =
-        "";
-
+      turnstileWidgetId = null;
+      turnstileToken = "";
       updateSecurityStatus(
         false,
         "Gagal memuat verifikasi keamanan."
       );
-
-      setLoginButtonEnabled(
-        false
-      );
-
+      setLoginButtonEnabled(false);
       showError(
         "Gagal memuat verifikasi keamanan. Silakan refresh halaman."
       );
-
       return false;
-
     } finally {
-      turnstileRendering =
-        false;
+      turnstileRendering = false;
     }
   }
-
-
   /* =======================================================
      GET TURNSTILE TOKEN
      ======================================================= */
-
   function getTurnstileToken() {
-    /*
-     * 1. Local state
-     */
-
+    if (!TURNSTILE_SITE_KEY) {
+      return "";
+    }
     if (turnstileToken) {
       return turnstileToken;
     }
-
-    /*
-     * 2. Global state
-     */
-
-    const globalToken =
-      String(
-        window.__pasTeleTurnstileToken ||
-        ""
-      ).trim();
-
-    if (globalToken) {
-      turnstileToken =
-        globalToken;
-
-      return turnstileToken;
-    }
-
-    /*
-     * 3. Textarea di widget
-     */
-
     const textarea =
       turnstileContainer?.querySelector(
         'textarea[name="cf-turnstile-response"]'
       );
-
-    if (
-      textarea?.value
-    ) {
+    if (textarea?.value) {
       turnstileToken =
-        String(
-          textarea.value
-        ).trim();
-
-      window.__pasTeleTurnstileToken =
-        turnstileToken;
-
+        String(textarea.value).trim();
       return turnstileToken;
     }
-
-    /*
-     * 4. Fallback global textarea.
-     */
-
-    const fallbackTextarea =
+    const fallback =
       document.querySelector(
         'textarea[name="cf-turnstile-response"]'
       );
-
-    if (
-      fallbackTextarea?.value
-    ) {
+    if (fallback?.value) {
       turnstileToken =
-        String(
-          fallbackTextarea.value
-        ).trim();
-
-      window.__pasTeleTurnstileToken =
-        turnstileToken;
-
+        String(fallback.value).trim();
       return turnstileToken;
     }
-
     return "";
   }
-
-
   /* =======================================================
      RESET TURNSTILE
      ======================================================= */
-
   function resetTurnstile() {
-    turnstileToken =
-      "";
-
-    window.__pasTeleTurnstileToken =
-      "";
-
-    /*
-     * Tombol login harus kembali
-     * disabled setelah reset.
-     */
-
-    setLoginButtonEnabled(
-      false
-    );
-
-    /*
-     * Reset widget Cloudflare.
-     */
-
+    turnstileToken = "";
     if (
       window.turnstile &&
       turnstileWidgetId !== null
@@ -821,216 +471,167 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
     }
-
-    updateSecurityStatus(
-      false,
-      "Selesaikan verifikasi keamanan sebelum masuk."
-    );
+    if (TURNSTILE_SITE_KEY) {
+      updateSecurityStatus(
+        false,
+        "Selesaikan verifikasi keamanan sebelum masuk."
+      );
+      setLoginButtonEnabled(false);
+    } else {
+      updateSecurityStatus(
+        true,
+        "Login aman tanpa verifikasi tambahan."
+      );
+      setLoginButtonEnabled(true);
+    }
   }
-
-
   /* =======================================================
      REQUIRE TURNSTILE
      ======================================================= */
-
   function requireTurnstile() {
-    if (!TURNSTILE_SITE_KEY) return "";
-    const token = getTurnstileToken();
+    /*
+     * Site key tidak ada:
+     * Turnstile tidak diwajibkan.
+     */
+    if (!TURNSTILE_SITE_KEY) {
+      return "";
+    }
+    const token =
+      getTurnstileToken();
     if (!token) {
-      setLoginButtonEnabled(
-        false
-      );
-
+      setLoginButtonEnabled(false);
       showError(
         "Selesaikan verifikasi Cloudflare terlebih dahulu."
       );
-
       turnstileContainer?.scrollIntoView({
         behavior: "smooth",
         block: "center"
       });
-
       return null;
     }
-
     return token;
   }
-
-
   /* =======================================================
-     CONTINUE BUTTON
+     STEP 1 UI
      ======================================================= */
-
   function showContinueButton() {
     if (!continueLogin) {
       return;
     }
-
-    continueLogin.hidden =
-      false;
-
-    continueLogin.disabled =
-      false;
-
+    continueLogin.hidden = false;
+    continueLogin.disabled = false;
     continueLogin.classList.remove(
       "login-continue-hidden"
     );
-
     continueLogin.removeAttribute(
       "aria-hidden"
     );
-
-    continueLogin.style.display =
-      "";
+    continueLogin.style.display = "";
   }
-
-
   function hideContinueButton() {
     if (!continueLogin) {
       return;
     }
-
-    continueLogin.hidden =
-      true;
-
-    continueLogin.disabled =
-      true;
-
+    continueLogin.hidden = true;
+    continueLogin.disabled = true;
     continueLogin.classList.add(
       "login-continue-hidden"
     );
-
     continueLogin.setAttribute(
       "aria-hidden",
       "true"
     );
-
-    continueLogin.style.display =
-      "none";
+    continueLogin.style.display = "none";
   }
-
-
-  /* =======================================================
-     IDENTIFIER UI
-     ======================================================= */
-
   function resetIdentifierUI(
     clearValue = true
   ) {
     if (identifier) {
-      identifier.disabled =
-        false;
-
+      identifier.disabled = false;
       identifier.removeAttribute(
         "aria-readonly"
       );
-
       if (clearValue) {
-        identifier.value =
-          "";
+        identifier.value = "";
       }
     }
-
     identifierWrap?.classList.remove(
       "found"
     );
-
     identifierStatus?.setAttribute(
       "aria-hidden",
       "true"
     );
-
     loginVerifiedState?.classList.add(
       "hidden"
     );
   }
-
-
   /* =======================================================
      PASSWORD UI
      ======================================================= */
-
   function resetPasswordUI() {
     if (password) {
-      password.value =
-        "";
-
-      password.type =
-        "password";
+      password.value = "";
+      password.type = "password";
     }
-
     if (toggle) {
       toggle.innerHTML =
         '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
-
       toggle.setAttribute(
         "aria-label",
         "Tampilkan kata sandi"
       );
-
       toggle.setAttribute(
         "title",
         "Tampilkan kata sandi"
       );
     }
   }
-
-
   /* =======================================================
      INITIAL STATE
      ======================================================= */
-
   function showInitialState(
     clearIdentifier = true
   ) {
-    currentEmail =
-      "";
-
-    currentUsername =
-      "";
-
-    accountFound =
-      false;
-
-    loginSubmitting =
-      false;
-
+    currentEmail = "";
+    currentUsername = "";
+    accountFound = false;
+    loginSubmitting = false;
     resetIdentifierUI(
       clearIdentifier
     );
-
     resetPasswordUI();
-
     showContinueButton();
-
-    step1?.classList.remove(
-      "hidden"
-    );
-
-    step2?.classList.add(
-      "hidden"
-    );
-
+    step1?.classList.remove("hidden");
+    step2?.classList.add("hidden");
     resetTurnstile();
-
-    updateSecurityStatus(
-      false,
-      "Selesaikan verifikasi keamanan sebelum masuk."
-    );
+    if (TURNSTILE_SITE_KEY) {
+      updateSecurityStatus(
+        false,
+        "Selesaikan verifikasi keamanan sebelum masuk."
+      );
+    } else {
+      updateSecurityStatus(
+        true,
+        "Login aman tanpa verifikasi tambahan."
+      );
+    }
   }
-
-
   /* =======================================================
-     ACCOUNT FOUND
+     ACCOUNT FOUND UI
      ======================================================= */
-
-  function showAccountFound(
-    found
-  ) {
+  function showAccountFound(found) {
     if (!found) {
       return;
     }
-
+    /*
+     * resolve_username_login hanya mengembalikan:
+     * auth_email
+     * is_banned
+     *
+     * Jadi username ditampilkan dari input,
+     * bukan dari field yang tidak dijamin RPC.
+     */
     currentUsername =
       String(
         found.username ||
@@ -1038,316 +639,185 @@ document.addEventListener("DOMContentLoaded", () => {
         identifier?.value ||
         "Pengguna"
       ).trim();
-
     if (!currentUsername) {
-      currentUsername =
-        "Pengguna";
+      currentUsername = "Pengguna";
     }
-
     if (identifier) {
       identifier.value =
         currentUsername;
-
-      identifier.disabled =
-        true;
-
+      identifier.disabled = true;
       identifier.setAttribute(
         "aria-readonly",
         "true"
       );
     }
-
     identifierWrap?.classList.add(
       "found"
     );
-
     identifierStatus?.setAttribute(
       "aria-hidden",
       "false"
     );
-
     loginVerifiedState?.classList.remove(
       "hidden"
     );
-
     hideContinueButton();
-
-    accountFound =
-      true;
+    accountFound = true;
   }
-
-
   /* =======================================================
      STEP 1 — ACCOUNT LOOKUP
      ======================================================= */
-
   step1?.addEventListener(
     "submit",
     async (event) => {
       event.preventDefault();
-
       clearError();
-
       if (accountFound) {
         return;
       }
-
       const value =
         String(
-          identifier?.value ||
-          ""
+          identifier?.value || ""
         ).trim();
-
       if (!value) {
         showError(
           "Masukkan username atau Gmail terlebih dahulu."
         );
-
         identifier?.focus();
-
         return;
       }
-
       const button =
         continueLogin ||
         step1.querySelector(
           "button[type='submit'], button:not([type])"
         );
-
       if (!button) {
         return;
       }
-
       const originalHTML =
         button.innerHTML;
-
       setButtonLoading(
         button,
         true,
         "Memeriksa..."
       );
-
       try {
         /*
-         * IMPORTANT:
-         *
-         * Step 1 TIDAK menggunakan
-         * Turnstile.
+         * STEP 1 TIDAK menggunakan Turnstile.
          */
-
         const found =
-          await Auth.lookup(
-            value
-          );
-
-        console.log(
-          "[PasTele] LOGIN LOOKUP:",
-          found
-        );
-
+          await Auth.lookup(value);
         /*
-         * ACCOUNT NOT FOUND
+         * Jangan console.log(found).
+         * found dapat berisi auth_email.
          */
-
         if (
           !found ||
           !found.auth_email
         ) {
-          currentEmail =
-            "";
-
-          currentUsername =
-            "";
-
-          accountFound =
-            false;
-
-          step2?.classList.add(
-            "hidden"
-          );
-
-          resetIdentifierUI(
-            false
-          );
-
+          currentEmail = "";
+          currentUsername = "";
+          accountFound = false;
+          step2?.classList.add("hidden");
+          resetIdentifierUI(false);
           showContinueButton();
-
           showError(
             "Akun tidak ditemukan. Periksa kembali username atau Gmail kamu."
           );
-
           return;
         }
-
         /*
-         * ACCOUNT BANNED
+         * CHECK BANNED
          */
-
         if (
-          found.is_banned === true ||
-          String(
-            found.status || ""
-          ).toLowerCase() ===
-            "banned"
+          found.is_banned === true
         ) {
-          currentEmail =
-            "";
-
-          currentUsername =
-            "";
-
-          accountFound =
-            false;
-
-          step2?.classList.add(
-            "hidden"
-          );
-
-          resetIdentifierUI(
-            false
-          );
-
+          currentEmail = "";
+          currentUsername = "";
+          accountFound = false;
+          step2?.classList.add("hidden");
+          resetIdentifierUI(false);
           showContinueButton();
-
           showError(
             "Akun ini sedang diblokir dan tidak dapat digunakan untuk login."
           );
-
           return;
         }
-
         /*
          * AUTH EMAIL
          */
-
         currentEmail =
           String(
-            found.auth_email
+            found.auth_email || ""
           )
             .trim()
             .toLowerCase();
-
-        if (!currentEmail) {
-          currentEmail =
-            "";
-
-          accountFound =
-            false;
-
-          resetIdentifierUI(
-            false
-          );
-
+        if (
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            currentEmail
+          )
+        ) {
+          currentEmail = "";
+          accountFound = false;
+          resetIdentifierUI(false);
           showContinueButton();
-
           showError(
             "Email akun tidak valid."
           );
-
           return;
         }
-
         /*
          * ACCOUNT FOUND
          */
-
-        showAccountFound(
-          found
-        );
-
+        showAccountFound(found);
         /*
          * SHOW STEP 2
          */
-
-        step1?.classList.remove(
-          "hidden"
-        );
-
-        step2?.classList.remove(
-          "hidden"
-        );
-
+        step1?.classList.remove("hidden");
+        step2?.classList.remove("hidden");
         /*
-         * Password login belum boleh
-         * dilakukan sebelum Turnstile.
+         * Login disabled sampai Turnstile selesai.
          */
-
-        setLoginButtonEnabled(
-          false
-        );
-
-        updateSecurityStatus(
-          false,
-          "Selesaikan verifikasi keamanan sebelum masuk."
-        );
-
-        /*
-         * Render Turnstile setelah Step 2
-         * sudah terlihat.
-         */
-
-        const turnstileReady =
-          await renderTurnstile();
-
-        if (!turnstileReady) {
-          setLoginButtonEnabled(
-            false
+        if (TURNSTILE_SITE_KEY) {
+          setLoginButtonEnabled(false);
+          updateSecurityStatus(
+            false,
+            "Selesaikan verifikasi keamanan sebelum masuk."
           );
-
+        }
+        /*
+         * Render setelah Step 2 terlihat.
+         */
+        const ready =
+          await renderTurnstile();
+        if (!ready) {
+          setLoginButtonEnabled(false);
           showError(
             "Verifikasi keamanan belum siap. Silakan refresh halaman."
           );
-
           return;
         }
-
         showSuccess(
           "Akun ditemukan ✓"
         );
-
-        /*
-         * Fokus password.
-         */
-
-        if (password) {
-          password.value =
-            "";
-
-          setTimeout(() => {
-            password.focus();
-          }, 150);
-        }
-
+        setTimeout(() => {
+          password?.focus();
+        }, 150);
       } catch (error) {
         console.error(
           "[PasTele] LOGIN LOOKUP ERROR:",
           error
         );
-
-        currentEmail =
-          "";
-
-        currentUsername =
-          "";
-
-        accountFound =
-          false;
-
-        resetIdentifierUI(
-          false
-        );
-
-        step2?.classList.add(
-          "hidden"
-        );
-
+        currentEmail = "";
+        currentUsername = "";
+        accountFound = false;
+        resetIdentifierUI(false);
+        step2?.classList.add("hidden");
         showContinueButton();
-
         showError(
           error?.message ||
           "Terjadi kesalahan saat memeriksa akun."
         );
-
       } finally {
         if (!accountFound) {
           setButtonLoading(
@@ -1360,27 +830,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   );
-
-
   /* =======================================================
-     STEP 2 — PASSWORD LOGIN
+     STEP 2 — LOGIN
      ======================================================= */
-
   step2?.addEventListener(
     "submit",
     async (event) => {
       event.preventDefault();
-
       clearError();
-
       if (loginSubmitting) {
         return;
       }
-
-      /*
-       * Account belum ditemukan.
-       */
-
       if (
         !currentEmail ||
         !accountFound
@@ -1388,226 +848,130 @@ document.addEventListener("DOMContentLoaded", () => {
         showError(
           "Silakan masukkan username atau Gmail terlebih dahulu."
         );
-
-        showInitialState(
-          false
-        );
-
+        showInitialState(false);
         identifier?.focus();
-
         return;
       }
-
-      /*
-       * Password.
-       */
-
       const pass =
         String(
-          password?.value ||
-          ""
+          password?.value || ""
         );
-
       if (!pass) {
         showError(
           "Masukkan kata sandi."
         );
-
         password?.focus();
-
         return;
       }
-
-      /*
-       * Turnstile.
-       */
-
       const token =
         requireTurnstile();
-
-      if (!token) {
+      if (token === null) {
         return;
       }
-
       const button =
         getLoginButton();
-
       if (!button) {
         return;
       }
-
-      loginSubmitting =
-        true;
-
+      loginSubmitting = true;
       const originalHTML =
         button.innerHTML;
-
       setButtonLoading(
         button,
         true,
         "Masuk..."
       );
-
       try {
-        console.log(
-          "[PasTele] LOGIN EMAIL:",
-          currentEmail
-        );
-
         /*
-         * Token tersedia untuk Auth.login().
-         *
-         * Jangan pernah console.log(token).
+         * Jangan console.log token.
          */
-
-        window.__pasTeleTurnstileToken =
-          token;
-
-        /*
-         * IMPORTANT:
-         *
-         * Auth.login(
-         *   email,
-         *   password,
-         *   captchaToken
-         * )
-         */
-
         await Auth.login(
           currentEmail,
           pass,
           token
         );
-
-        /*
-         * SUCCESS
-         */
-
         showSuccess(
           "Login berhasil ✓"
         );
-
-        /*
-         * Jangan reset Turnstile setelah
-         * login berhasil karena halaman
-         * akan pindah.
-         */
-
         setTimeout(() => {
           window.location.replace(
             "dashboard.html"
           );
         }, 500);
-
       } catch (error) {
         console.error(
           "[PasTele] LOGIN ERROR:",
           error
         );
-
         showError(
           error?.message ||
           "Kata sandi salah atau login gagal."
         );
-
         /*
-         * Token Turnstile jangan dipakai
-         * kembali setelah request gagal.
+         * Token gagal login tidak dipakai ulang.
          */
-
         resetTurnstile();
-
-        /*
-         * Kembalikan tombol tetapi tetap
-         * disabled karena token sudah reset.
-         */
-
         button.innerHTML =
           originalHTML;
-
-        button.disabled =
-          true;
-
-        button.setAttribute(
-          "aria-disabled",
-          "true"
-        );
-
-      } finally {
-        loginSubmitting =
-          false;
-
-        /*
-         * Kalau login gagal, tetap disabled
-         * sampai Turnstile diverifikasi ulang.
-         */
-
-        if (!turnstileToken) {
-          setLoginButtonEnabled(
-            false
+        if (TURNSTILE_SITE_KEY) {
+          button.disabled = true;
+          button.setAttribute(
+            "aria-disabled",
+            "true"
           );
+        }
+      } finally {
+        loginSubmitting = false;
+        if (
+          TURNSTILE_SITE_KEY &&
+          !turnstileToken
+        ) {
+          setLoginButtonEnabled(false);
         }
       }
     }
   );
-
-
   /* =======================================================
      CHANGE ACCOUNT
      ======================================================= */
-
   changeAccount?.addEventListener(
     "click",
     () => {
       clearError();
-
-      showInitialState(
-        true
-      );
-
+      showInitialState(true);
       showSuccess(
         "Silakan masukkan akun lain."
       );
-
       setTimeout(() => {
         identifier?.focus();
       }, 100);
     }
   );
-
-
   /* =======================================================
      GOOGLE LOGIN
      ======================================================= */
-
   google?.addEventListener(
     "click",
     async () => {
       clearError();
-
       const originalHTML =
         google.innerHTML;
-
       setButtonLoading(
         google,
         true,
         "Menghubungkan..."
       );
-
       try {
         await Auth.google();
-
       } catch (error) {
         console.error(
           "[PasTele] GOOGLE LOGIN ERROR:",
           error
         );
-
         showError(
           error?.message ||
           "Login dengan Google gagal."
         );
-
         setButtonLoading(
           google,
           false,
@@ -1617,50 +981,35 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   );
-
-
   /* =======================================================
      FORGOT PASSWORD
      ======================================================= */
-
   forgot?.addEventListener(
     "click",
     async (event) => {
       event.preventDefault();
-
       clearError();
-
       let email =
         currentEmail;
-
       /*
-       * Jika akun sudah ditemukan,
-       * gunakan email tersebut.
+       * Jika Step 1 belum dilakukan,
+       * resolve akun terlebih dahulu.
        */
-
       if (!email) {
         const value =
           String(
-            identifier?.value ||
-            ""
+            identifier?.value || ""
           ).trim();
-
         if (!value) {
           showError(
             "Masukkan username atau Gmail terlebih dahulu."
           );
-
           identifier?.focus();
-
           return;
         }
-
         try {
           const found =
-            await Auth.lookup(
-              value
-            );
-
+            await Auth.lookup(value);
           if (
             !found ||
             !found.auth_email
@@ -1668,46 +1017,34 @@ document.addEventListener("DOMContentLoaded", () => {
             showError(
               "Akun tidak ditemukan."
             );
-
             return;
           }
-
           if (
             found.is_banned === true
           ) {
             showError(
               "Akun ini sedang diblokir."
             );
-
             return;
           }
-
           email =
             String(
               found.auth_email
             )
               .trim()
               .toLowerCase();
-
         } catch (error) {
           console.error(
             "[PasTele] FORGOT LOOKUP ERROR:",
             error
           );
-
           showError(
             error?.message ||
             "Gagal memeriksa akun."
           );
-
           return;
         }
       }
-
-      /*
-       * Validate email.
-       */
-
       if (
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
           email
@@ -1716,17 +1053,13 @@ document.addEventListener("DOMContentLoaded", () => {
         showError(
           "Email akun tidak valid."
         );
-
         return;
       }
-
       const originalHTML =
         forgot.innerHTML;
-
       try {
         forgot.style.pointerEvents =
           "none";
-
         forgot.innerHTML = `
           <i
             class="fa-solid fa-spinner fa-spin"
@@ -1734,80 +1067,65 @@ document.addEventListener("DOMContentLoaded", () => {
           ></i>
           Mengirim...
         `;
-
         const {
           error
         } =
-          await window.sb.auth.resetPasswordForEmail(
+          await supabase.auth.resetPasswordForEmail(
             email,
             {
               redirectTo:
-                `${window.location.origin}/reset-password.html`
+                new URL(
+                  "reset-password.html",
+                  window.location.origin
+                ).href
             }
           );
-
         if (error) {
           throw error;
         }
-
         showSuccess(
           "Link reset password sudah dikirim ke Gmail kamu."
         );
-
       } catch (error) {
         console.error(
           "[PasTele] RESET PASSWORD ERROR:",
           error
         );
-
         showError(
           error?.message ||
           "Gagal mengirim reset password."
         );
-
       } finally {
-        forgot.style.pointerEvents =
-          "";
-
-        forgot.innerHTML =
-          originalHTML;
+        forgot.style.pointerEvents = "";
+        forgot.innerHTML = originalHTML;
       }
     }
   );
-
-
   /* =======================================================
      PASSWORD VISIBILITY
      ======================================================= */
-
   toggle?.addEventListener(
     "click",
     () => {
       if (!password) {
         return;
       }
-
       const isPassword =
-        password.type ===
-        "password";
-
+        password.type === "password";
       password.type =
         isPassword
           ? "text"
           : "password";
-
       toggle.innerHTML =
         isPassword
           ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>'
           : '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
-
       toggle.setAttribute(
         "aria-label",
         isPassword
           ? "Sembunyikan kata sandi"
           : "Tampilkan kata sandi"
       );
-
       toggle.setAttribute(
         "title",
         isPassword
@@ -1816,53 +1134,36 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     }
   );
-
-
   /* =======================================================
-     INITIAL STATE
+     INITIALIZE
      ======================================================= */
-
-  showInitialState(
-    false
-  );
-
-  updateSecurityStatus(
-    false,
-    "Selesaikan verifikasi keamanan sebelum masuk."
-  );
-
-  /*
-   * Pastikan tombol Masuk disabled
-   * saat halaman pertama kali dibuka.
-   */
-
-  setLoginButtonEnabled(
-    false
-  );
-
-
+  showInitialState(false);
+  if (TURNSTILE_SITE_KEY) {
+    updateSecurityStatus(
+      false,
+      "Selesaikan verifikasi keamanan sebelum masuk."
+    );
+    setLoginButtonEnabled(false);
+  } else {
+    updateSecurityStatus(
+      true,
+      "Login aman tanpa verifikasi tambahan."
+    );
+    setLoginButtonEnabled(true);
+  }
   /* =======================================================
-     DEBUG — NO TOKEN
+     SAFE DEBUG
      ======================================================= */
-
   console.log(
     "[PasTele] Login initialized.",
     {
-      supabase:
-        Boolean(window.sb),
-
+      supabase: true,
+      auth: true,
       turnstileContainer:
-        Boolean(
-          turnstileContainer
-        ),
-
+        Boolean(turnstileContainer),
       turnstileSiteKeyConfigured:
-        Boolean(
-          TURNSTILE_SITE_KEY
-        ),
-
-      turnstileExplicit:
-        true
+        Boolean(TURNSTILE_SITE_KEY),
+      turnstileExplicit: true
     }
   );
 });
