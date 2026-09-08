@@ -65,48 +65,75 @@ document.addEventListener("DOMContentLoaded", async () => {
   const createPayment = async (order) => {
     if (creating) return;
     creating = true;
-    qr.innerHTML = '<div class="qr-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Membuat QRIS Cashi...</span></div>';
+    try {
+      qr.innerHTML = '<div class="qr-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Membuat QRIS Cashi...</span></div>';
 
-    const cfg = window.PASTELE_CONFIG || {};
-    const base = String(cfg.SUPABASE_URL || "").replace(/\/$/, "");
-    if (!base) throw new Error("SUPABASE_URL belum dikonfigurasi.");
+      const cfg = window.PASTELE_CONFIG || {};
+      const base = String(cfg.SUPABASE_URL || "").replace(/\/$/, "");
+      if (!base) throw new Error("SUPABASE_URL belum dikonfigurasi.");
 
-    const session = await window.sb.auth.getSession();
-    const token = session.data?.session?.access_token || "";
-    if (!token) throw new Error("Sesi login tidak ditemukan. Silakan login ulang.");
+      const sessionResult = await window.sb.auth.getSession();
+      if (sessionResult.error) throw sessionResult.error;
+      const token = sessionResult.data?.session?.access_token || "";
+      if (!token) throw new Error("Sesi login tidak ditemukan. Silakan login ulang.");
 
-    const r = await fetch(`${base}/functions/v1/create-cashi-payment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ order_id: order.id })
-    });
+      let response;
+      try {
+        response = await fetch(`${base}/functions/v1/create-cashi-payment`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ order_id: order.id }),
+        });
+      } catch (networkError) {
+        throw new Error("Tidak bisa menghubungi server pembayaran. Pastikan Edge Function create-cashi-payment sudah di-deploy di Supabase.");
+      }
 
-    const p = await r.json().catch(() => ({}));
-    if (!r.ok || p?.success === false) throw new Error(p.error || p.message || "Cashi gagal membuat pembayaran.");
+      const raw = await response.text();
+      let p = {};
+      try { p = raw ? JSON.parse(raw) : {}; } catch { p = {}; }
 
-    // Cashi's documented QR field is exactly `qrUrl` and contains a data:image/png URL.
-    const qrUrl = p.qrUrl || p.qr_url || p.qr_image || p.qris_image || "";
-    const paymentUrl = p.checkout_url || p.payment_url || "";
+      if (response.status === 404) {
+        throw new Error("Edge Function create-cashi-payment belum di-deploy di Supabase.");
+      }
+      if (response.status === 401) {
+        throw new Error(p.error || "Sesi login ditolak oleh server pembayaran. Silakan login ulang.");
+      }
+      if (!response.ok || p?.success === false) {
+        throw new Error(p.error || p.message || `Server pembayaran gagal (HTTP ${response.status}).`);
+      }
 
-    if (qrUrl) {
-      qr.innerHTML = `
-        <div class="qr-title"><i class="fa-solid fa-qrcode"></i><span>Scan QRIS Cashi</span></div>
-        <img class="cashi-qr-image" src="${esc(qrUrl)}" alt="QRIS Cashi" loading="eager" decoding="async">
-        <small class="qr-hint">Buka aplikasi bank/e-wallet kamu lalu scan QR di atas.</small>
-      `;
-    } else {
-      qr.innerHTML = '<div class="qr-loading"><i class="fa-solid fa-circle-exclamation"></i><span>CashI tidak mengembalikan QR. Silakan buka pembayaran Cashi.</span></div>';
+      const qrUrl = p.qrUrl || "";
+      const paymentUrl = p.checkout_url || "";
+
+      if (qrUrl) {
+        qr.innerHTML = `
+          <div class="qr-title"><i class="fa-solid fa-qrcode"></i><span>Scan QRIS Cashi</span></div>
+          <img class="cashi-qr-image" src="${esc(qrUrl)}" alt="QRIS Cashi" loading="eager" decoding="async">
+          <small class="qr-hint">Buka aplikasi bank/e-wallet kamu lalu scan QR di atas.</small>
+        `;
+      } else if (paymentUrl) {
+        qr.innerHTML = `
+          <div class="qr-loading">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>QR tidak dikirim Cashi. Gunakan tombol pembayaran di bawah.</span>
+          </div>
+        `;
+      } else {
+        throw new Error("Cashi tidak mengembalikan QRIS atau checkout URL.");
+      }
+
+      if (paymentUrl) {
+        urlBtn.hidden = false;
+        urlBtn.href = paymentUrl;
+        urlBtn.target = "_blank";
+        urlBtn.rel = "noopener noreferrer";
+      }
+    } finally {
+      creating = false;
     }
-
-    if (paymentUrl) {
-      urlBtn.hidden = false;
-      urlBtn.href = paymentUrl;
-    }
-
-    creating = false;
   };
 
   const checkGatewayStatus = async () => {
