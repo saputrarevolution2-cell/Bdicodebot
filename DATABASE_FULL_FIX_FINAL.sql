@@ -1,0 +1,1890 @@
+-- ============================================================
+-- PasTele / Bdicodebot
+-- ============================================================
+-- Bdicodebot / PasTele DATABASE FULL FIX FINAL
+-- AUTH + PROFILE + WALLET + MARKETPLACE + PAYMENT + WITHDRAW
+-- RLS + RPC + ADMIN + CONTENT + ANALYTICS
+-- ============================================================
+-- IMPORTANT / READ BEFORE RUNNING
+-- 1. THIS IS A FULL APPLICATION-DATABASE REBUILD.
+-- 2. It DROPS public application tables and their DATA.
+-- 3. It DOES NOT delete auth.users.
+-- 4. BACK UP your public schema/data before running this script.
+-- 5. Run in Supabase SQL Editor as postgres/service-role.
+-- 6. Deploy the matching Edge Functions after this SQL.
+-- 7. Configure payment/API secrets in Edge Functions, not here.
+-- 8. Existing auth.users are repaired into profiles/wallets afterward.
+-- 9. No hard-coded personal/admin email is inserted by this script.
+-- ============================================================
+
+BEGIN;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- ============================================================
+-- DROP APPLICATION FUNCTIONS
+-- ============================================================
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, p.proname,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public'
+      AND (
+        p.proname LIKE 'admin_%'
+        OR p.proname IN (
+          'buy_market_item','create_account_plan_order','create_checkout_order',
+          'get_market_item_detail','get_pending_balance_detail',
+          'get_public_site_settings','get_public_workspace_stats',
+          'increment_paste_view','record_content_view','release_matured_wallet',
+          'request_withdrawal_v2','resolve_username_login',
+          'check_username_available','settle_bayargg_order',
+          'toggle_content_like','track_analytics','is_current_user_admin',
+          'delete_purchase','get_profile','get_wallet'
+        )
+      )
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %I.%I(%s) CASCADE',
+                   r.nspname,r.proname,r.args);
+  END LOOP;
+END $$;
+
+-- ============================================================
+-- DROP VIEWS / TABLES
+-- ============================================================
+DROP VIEW IF EXISTS public.profile_public CASCADE;
+DROP VIEW IF EXISTS public.marketplace_public CASCADE;
+
+DROP TABLE IF EXISTS public.wallet_transactions CASCADE;
+DROP TABLE IF EXISTS public.withdrawals CASCADE;
+DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TABLE IF EXISTS public.purchases CASCADE;
+DROP TABLE IF EXISTS public.payments CASCADE;
+DROP TABLE IF EXISTS public.payment_methods CASCADE;
+DROP TABLE IF EXISTS public.payment_settings CASCADE;
+DROP TABLE IF EXISTS public.product_access CASCADE;
+DROP TABLE IF EXISTS public.product_views CASCADE;
+DROP TABLE IF EXISTS public.orders CASCADE;
+DROP TABLE IF EXISTS public.products CASCADE;
+DROP TABLE IF EXISTS public.telegram_products CASCADE;
+DROP TABLE IF EXISTS public.telegram_channels CASCADE;
+DROP TABLE IF EXISTS public.pastelinks CASCADE;
+DROP TABLE IF EXISTS public.pastes CASCADE;
+DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.announcements CASCADE;
+DROP TABLE IF EXISTS public.creator_followers CASCADE;
+DROP TABLE IF EXISTS public.content_likes CASCADE;
+DROP TABLE IF EXISTS public.content_comments CASCADE;
+DROP TABLE IF EXISTS public.analytics_events CASCADE;
+DROP TABLE IF EXISTS public.code_access_usage CASCADE;
+DROP TABLE IF EXISTS public.approved_bots CASCADE;
+DROP TABLE IF EXISTS public.bot_integrations CASCADE;
+DROP TABLE IF EXISTS public.login_history CASCADE;
+DROP TABLE IF EXISTS public.admin_logs CASCADE;
+DROP TABLE IF EXISTS public.admins CASCADE;
+DROP TABLE IF EXISTS public.site_settings CASCADE;
+DROP TABLE IF EXISTS public.site_stats CASCADE;
+DROP TABLE IF EXISTS public.wallets CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- ============================================================
+-- CORE
+-- ============================================================
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username text NOT NULL UNIQUE,
+  auth_email text NOT NULL,
+  display_name text,
+  avatar_url text,
+  role text NOT NULL DEFAULT 'user',
+  is_admin boolean NOT NULL DEFAULT false,
+  is_banned boolean NOT NULL DEFAULT false,
+  balance numeric(18,2) NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  telegram_username text,
+  whatsapp_number text,
+  bio text,
+  website text,
+  country text,
+  is_premium boolean NOT NULL DEFAULT false,
+  subscription_until timestamptz
+);
+
+CREATE TABLE public.admins (
+  id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  telegram_id bigint NOT NULL UNIQUE,
+  role text NOT NULL DEFAULT 'admin',
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.admin_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  action text NOT NULL,
+  target_id uuid,
+  details jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- MARKETPLACE
+-- ============================================================
+CREATE TABLE public.products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  seller_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  creator_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  price numeric(18,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  thumbnail_url text,
+  type text NOT NULL DEFAULT 'link',
+  access_type text NOT NULL DEFAULT 'free',
+  category text NOT NULL DEFAULT 'General',
+  description text NOT NULL DEFAULT '',
+  content text NOT NULL DEFAULT '',
+  views bigint NOT NULL DEFAULT 0,
+  sales_count bigint NOT NULL DEFAULT 0,
+  status text NOT NULL DEFAULT 'draft',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.telegram_products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  price numeric(18,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  description text NOT NULL DEFAULT '',
+  content text NOT NULL DEFAULT '',
+  thumbnail_url text,
+  category text NOT NULL DEFAULT 'General',
+  status text NOT NULL DEFAULT 'draft',
+  views bigint NOT NULL DEFAULT 0,
+  sales_count bigint NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.telegram_channels (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  username text,
+  name text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  invite_url text,
+  price numeric(18,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  category text NOT NULL DEFAULT 'General',
+  status text NOT NULL DEFAULT 'draft',
+  views bigint NOT NULL DEFAULT 0,
+  sales_count bigint NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  buyer_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  seller_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  product_id uuid,
+  amount numeric(18,2) NOT NULL DEFAULT 0 CHECK (amount >= 0),
+  status text NOT NULL DEFAULT 'pending',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  item_type text,
+  item_id text,
+  item_title text,
+  payment_reference text,
+  paid_at timestamptz,
+  gateway_payload jsonb NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE UNIQUE INDEX orders_payment_reference_uidx
+ON public.orders(payment_reference)
+WHERE payment_reference IS NOT NULL;
+
+CREATE TABLE public.purchases (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  buyer_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  product_id uuid,
+  order_id uuid REFERENCES public.orders(id) ON DELETE SET NULL,
+  item_type text,
+  amount numeric(18,2) NOT NULL DEFAULT 0,
+  status text NOT NULL DEFAULT 'completed',
+  access_url text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.product_access (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid REFERENCES public.orders(id) ON DELETE CASCADE,
+  product_id uuid NOT NULL,
+  buyer_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  delivery_url text,
+  delivered_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.product_views (
+  id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  product_id uuid NOT NULL,
+  viewer_hash text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- PASTE / PASTELINK
+-- ============================================================
+CREATE TABLE public.pastelinks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  slug text NOT NULL UNIQUE,
+  title text NOT NULL,
+  content_html text NOT NULL,
+  visibility text NOT NULL DEFAULT 'public',
+  password_hash text,
+  expires_at timestamptz,
+  description text NOT NULL DEFAULT '',
+  tags text[] NOT NULL DEFAULT '{}'::text[],
+  allow_comments boolean NOT NULL DEFAULT true,
+  allow_download boolean NOT NULL DEFAULT true,
+  show_raw boolean NOT NULL DEFAULT true,
+  anonymous boolean NOT NULL DEFAULT false,
+  views bigint NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.pastes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  content text NOT NULL,
+  visibility text NOT NULL DEFAULT 'public',
+  password text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- PAYMENTS
+-- ============================================================
+CREATE TABLE public.payment_settings (
+  id integer PRIMARY KEY,
+  enabled boolean NOT NULL DEFAULT false,
+  provider text NOT NULL DEFAULT 'manual',
+  mode text NOT NULL DEFAULT 'manual',
+  merchant_id text,
+  api_endpoint text,
+  qr_image_url text,
+  instructions text,
+  currency text NOT NULL DEFAULT 'IDR',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO public.payment_settings(id) VALUES(1);
+
+CREATE TABLE public.payment_methods (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  method_type text NOT NULL,
+  provider text NOT NULL,
+  account_name text NOT NULL,
+  account_number text NOT NULL,
+  country text NOT NULL DEFAULT 'ID',
+  is_default boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.payments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid REFERENCES public.orders(id) ON DELETE SET NULL,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  amount numeric(18,2) NOT NULL DEFAULT 0,
+  method text,
+  reference text,
+  status text NOT NULL DEFAULT 'pending',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  paid_at timestamptz
+);
+CREATE UNIQUE INDEX payments_reference_uidx
+ON public.payments(reference)
+WHERE reference IS NOT NULL;
+
+-- ============================================================
+-- WALLET
+-- ============================================================
+CREATE TABLE public.wallets (
+  user_id uuid PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+  balance numeric(18,2) NOT NULL DEFAULT 0,
+  available_balance numeric(18,2) NOT NULL DEFAULT 0,
+  pending_balance numeric(18,2) NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.transactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  amount numeric(18,2) NOT NULL DEFAULT 0,
+  fee numeric(18,2) NOT NULL DEFAULT 0,
+  net_amount numeric(18,2) NOT NULL DEFAULT 0,
+  type text NOT NULL,
+  status text NOT NULL DEFAULT 'completed',
+  reference text,
+  description text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX transactions_reference_uidx
+ON public.transactions(user_id,reference)
+WHERE reference IS NOT NULL;
+
+CREATE TABLE public.wallet_transactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  type text NOT NULL,
+  amount numeric(18,2) NOT NULL DEFAULT 0,
+  balance_before numeric(18,2) NOT NULL DEFAULT 0,
+  balance_after numeric(18,2) NOT NULL DEFAULT 0,
+  reference text,
+  status text NOT NULL DEFAULT 'completed',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.withdrawals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  amount numeric(18,2) NOT NULL CHECK (amount > 0),
+  mode text,
+  method text,
+  account_name text,
+  account_number text,
+  status text NOT NULL DEFAULT 'pending',
+  note text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  processed_at timestamptz
+);
+
+-- ============================================================
+-- CONTENT / SOCIAL
+-- ============================================================
+CREATE TABLE public.creator_followers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  follower_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(creator_id,follower_id)
+);
+
+CREATE TABLE public.content_likes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  content_owner_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  actor_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  target_id uuid NOT NULL,
+  target_type text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(actor_id,target_id,target_type)
+);
+
+CREATE TABLE public.content_comments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  target_id uuid NOT NULL,
+  target_type text NOT NULL DEFAULT 'product',
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  body text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  body text NOT NULL DEFAULT '',
+  is_read boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.announcements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  body text NOT NULL DEFAULT '',
+  image_url text,
+  published boolean NOT NULL DEFAULT false,
+  published_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.analytics_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  actor_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  event_type text NOT NULL,
+  target_type text,
+  target_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.code_access_usage (
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  usage_date date NOT NULL,
+  opens integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(user_id,usage_date)
+);
+
+CREATE TABLE public.login_history (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  ip_address inet,
+  city text,
+  region text,
+  country text,
+  latitude double precision,
+  longitude double precision,
+  user_agent text,
+  logged_in_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- BOTS / SETTINGS / STATS
+-- ============================================================
+CREATE TABLE public.approved_bots (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bot_username text NOT NULL UNIQUE,
+  bot_name text,
+  bot_id bigint,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.bot_integrations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  bot_username text,
+  telegram_bot_id bigint,
+  encrypted_token text,
+  is_active boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.site_settings (
+  id integer PRIMARY KEY,
+  settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO public.site_settings(id) VALUES(1);
+
+CREATE TABLE public.site_stats (
+  id integer PRIMARY KEY,
+  total_users bigint NOT NULL DEFAULT 0,
+  total_products bigint NOT NULL DEFAULT 0,
+  total_orders bigint NOT NULL DEFAULT 0,
+  total_sales numeric(18,2) NOT NULL DEFAULT 0,
+  total_revenue numeric(18,2) NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO public.site_stats(id) VALUES(1);
+
+-- ============================================================
+-- PUBLIC VIEWS — SECURITY INVOKER
+-- ============================================================
+CREATE VIEW public.profile_public
+WITH (security_invoker=true)
+AS
+SELECT id,username,display_name,avatar_url,country,created_at
+FROM public.profiles
+WHERE is_banned=false;
+
+CREATE VIEW public.marketplace_public
+WITH (security_invoker=true)
+AS
+SELECT
+  p.id,p.slug,p.title,p.type,p.access_type,p.price,p.thumbnail_url,
+  p.description,p.content,p.views,p.sales_count,p.category,p.created_at,
+  pr.display_name AS creator_name,
+  pr.username AS creator_username,
+  COALESCE(p.creator_id,p.seller_id) AS owner_id
+FROM public.products p
+LEFT JOIN public.profile_public pr
+  ON pr.id=COALESCE(p.creator_id,p.seller_id)
+WHERE p.status IN ('published','active');
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+CREATE UNIQUE INDEX profiles_username_lower_uidx
+ON public.profiles(lower(username));
+
+CREATE INDEX idx_profiles_username_lower ON public.profiles(lower(username));
+CREATE INDEX idx_profiles_admin ON public.profiles(is_admin,role);
+CREATE INDEX idx_orders_buyer ON public.orders(buyer_id,created_at DESC);
+CREATE INDEX idx_orders_seller ON public.orders(seller_id,created_at DESC);
+CREATE INDEX idx_orders_status ON public.orders(status);
+CREATE INDEX idx_payments_order ON public.payments(order_id);
+CREATE INDEX idx_payments_user ON public.payments(user_id,created_at DESC);
+CREATE INDEX idx_products_seller ON public.products(seller_id);
+CREATE INDEX idx_products_status ON public.products(status);
+CREATE INDEX idx_product_views_product ON public.product_views(product_id,created_at DESC);
+CREATE INDEX idx_purchases_buyer ON public.purchases(buyer_id,created_at DESC);
+CREATE INDEX idx_transactions_user ON public.transactions(user_id,created_at DESC);
+CREATE INDEX idx_withdrawals_user ON public.withdrawals(user_id,created_at DESC);
+CREATE INDEX idx_notifications_user ON public.notifications(user_id,is_read,created_at DESC);
+CREATE INDEX idx_analytics_owner ON public.analytics_events(owner_id,created_at DESC);
+CREATE INDEX idx_content_likes_target ON public.content_likes(target_id,target_type);
+
+-- ============================================================
+-- UPDATED_AT
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.touch_updated_at()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at=now();
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_profiles_updated BEFORE UPDATE ON public.profiles
+FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- ============================================================
+-- AUTH -> PROFILE
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  uname text;
+BEGIN
+  -- Gunakan username yang dipilih saat register.
+  -- Jika OAuth/metadata tidak menyediakannya, fallback ke prefix email.
+  uname := lower(regexp_replace(
+    coalesce(
+      NEW.raw_user_meta_data->>'username',
+      split_part(coalesce(NEW.email,''),'@',1)
+    ),
+    '[^a-zA-Z0-9_]',
+    '',
+    'g'
+  ));
+  IF uname='' THEN uname:='user'; END IF;
+  uname := left(uname,32);
+
+  -- Jika username bentrok, buat fallback yang aman.
+  WHILE EXISTS(SELECT 1 FROM public.profiles WHERE lower(username)=lower(uname)) LOOP
+    uname := left(split_part(uname,'_',1),23)||'_'||floor(random()*99999999)::int;
+    uname := left(uname,32);
+  END LOOP;
+
+  INSERT INTO public.profiles(id,username,auth_email,display_name)
+  VALUES(NEW.id,uname,coalesce(NEW.email,''),coalesce(NEW.raw_user_meta_data->>'display_name',uname))
+  ON CONFLICT(id) DO UPDATE
+    SET auth_email=excluded.auth_email,
+        updated_at=now();
+
+  IF to_regclass('public.wallets') IS NOT NULL THEN
+    INSERT INTO public.wallets(user_id)
+    VALUES(NEW.id)
+    ON CONFLICT(user_id) DO NOTHING;
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================================
+-- ADMIN HELPER
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.is_current_user_admin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path=public
+AS $$
+  SELECT EXISTS(
+    SELECT 1
+    FROM public.profiles p
+    WHERE p.id=auth.uid()
+      AND p.is_banned=false
+      AND (
+        p.is_admin=true
+        OR lower(p.role) IN ('admin','owner')
+        OR lower(p.username)='admim'
+      )
+  );
+$$;
+
+-- ============================================================
+-- AUTH HELPERS
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.resolve_username_login(p_username text)
+RETURNS TABLE(auth_email text,is_banned boolean)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,auth
+AS $$
+  SELECT COALESCE(u.email,p.auth_email),p.is_banned
+  FROM public.profiles p
+  LEFT JOIN auth.users u ON u.id=p.id
+  WHERE lower(btrim(p.username))=lower(btrim(p_username))
+  LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.check_username_available(p_username text)
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
+AS $$
+  SELECT NOT EXISTS(
+    SELECT 1 FROM public.profiles
+    WHERE lower(username)=lower(btrim(p_username))
+  );
+$$;
+
+-- ============================================================
+-- CHECKOUT
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
+RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+  uid uuid:=auth.uid();
+  seller uuid;
+  title text;
+  price numeric;
+  oid uuid;
+  normalized text:=lower(btrim(coalesce(p_type,'')));
+  pid uuid;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
+  BEGIN
+    pid:=p_id::uuid;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RAISE EXCEPTION 'INVALID_PRODUCT_ID';
+  END;
+
+  IF normalized IN ('product','code') THEN
+    SELECT p.seller_id,p.title,p.price INTO seller,title,price
+    FROM public.products p WHERE p.id=pid AND p.status IN ('published','active');
+  ELSIF normalized IN ('telegram_product','telegram-product') THEN
+    SELECT p.owner_id,p.title,p.price INTO seller,title,price
+    FROM public.telegram_products p WHERE p.id=pid AND p.status IN ('published','active');
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel') THEN
+    SELECT p.owner_id,p.name,p.price INTO seller,title,price
+    FROM public.telegram_channels p WHERE p.id=pid AND p.status IN ('published','active');
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
+  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
+
+  SELECT o.id INTO oid
+  FROM public.orders o
+  WHERE o.buyer_id=uid
+    AND o.product_id=pid
+    AND lower(coalesce(o.item_type,''))=normalized
+    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
+  ORDER BY o.created_at DESC LIMIT 1;
+
+  IF oid IS NULL THEN
+    INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title)
+    VALUES(uid,seller,pid,price,'pending',normalized,p_id,title)
+    RETURNING id INTO oid;
+  END IF;
+
+  RETURN QUERY SELECT oid,price,title,normalized;
+END $$;
+
+-- Exact uuid overload used by some older frontend code.
+CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r record;
+BEGIN
+  SELECT * INTO r FROM public.create_checkout_order(p_type,p_id::text);
+  RETURN jsonb_build_object(
+    'order_id',r.order_id,'amount',r.amount,
+    'item_title',r.item_title,'item_type',r.item_type
+  );
+END $$;
+
+CREATE OR REPLACE FUNCTION public.create_account_plan_order(
+  p_plan text,p_days integer,p_amount numeric
+)
+RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+ uid uuid:=auth.uid(); oid uuid; expected numeric; title text;
+ normalized text:=lower(btrim(coalesce(p_plan,'')));
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+ IF normalized='premium' THEN expected:=250000; title:='PasTele Premium';
+ ELSIF normalized='subscription_1' THEN expected:=15000; title:='Langganan PasTele 1 Hari';
+ ELSIF normalized='subscription_3' THEN expected:=30000; title:='Langganan PasTele 3 Hari';
+ ELSIF normalized='subscription_7' THEN expected:=50000; title:='Langganan PasTele 7 Hari';
+ ELSE RAISE EXCEPTION 'INVALID_PLAN'; END IF;
+
+ IF round(coalesce(p_amount,0),0)<>expected THEN RAISE EXCEPTION 'INVALID_PLAN_AMOUNT'; END IF;
+
+ INSERT INTO public.orders(buyer_id,seller_id,amount,status,item_type,item_id,item_title)
+ VALUES(uid,uid,expected,'pending','account_plan',normalized,title)
+ RETURNING id INTO oid;
+
+ RETURN QUERY SELECT oid,expected,title,'account_plan'::text;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.buy_market_item(p_type text,p_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r record;
+BEGIN
+  SELECT * INTO r FROM public.create_checkout_order(p_type,p_id::text);
+  RETURN jsonb_build_object('order_id',r.order_id,'amount',r.amount,'item_title',r.item_title,'item_type',r.item_type);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r record; uid uuid:=auth.uid(); already boolean:=false;
+BEGIN
+  IF lower(p_type) IN ('product','code') THEN
+    SELECT p.*,pr.username AS creator_username,pr.display_name AS creator_name
+    INTO r
+    FROM public.products p
+    LEFT JOIN public.profile_public pr ON pr.id=coalesce(p.creator_id,p.seller_id)
+    WHERE p.id=p_id AND p.status IN ('published','active');
+  ELSIF lower(p_type) IN ('telegram_product','telegram-product') THEN
+    SELECT p.*,pr.username AS creator_username,pr.display_name AS creator_name
+    INTO r
+    FROM public.telegram_products p
+    LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
+    WHERE p.id=p_id AND p.status IN ('published','active');
+  ELSIF lower(p_type) IN ('channel','telegram_channel','telegram-channel') THEN
+    SELECT p.*,pr.username AS creator_username,pr.display_name AS creator_name
+    INTO r
+    FROM public.telegram_channels p
+    LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
+    WHERE p.id=p_id AND p.status IN ('published','active');
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF r IS NULL THEN RETURN NULL; END IF;
+
+  IF uid IS NOT NULL THEN
+    SELECT EXISTS(
+      SELECT 1 FROM public.purchases pu
+      WHERE pu.buyer_id=uid
+        AND pu.product_id=p_id
+        AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')
+    ) INTO already;
+  END IF;
+
+  RETURN to_jsonb(r)||jsonb_build_object('can_access',already);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id text)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+  RETURN public.get_market_item_detail(p_type,p_id::uuid);
+EXCEPTION WHEN invalid_text_representation THEN
+  RAISE EXCEPTION 'INVALID_PRODUCT_ID';
+END $$;
+
+-- ============================================================
+-- BAYAR.GG SETTLEMENT 70/30
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.settle_bayargg_order(
+ p_order_id uuid,p_invoice_id text,p_gateway_status text,
+ p_final_amount numeric,p_gateway_payload jsonb DEFAULT '{}'::jsonb
+)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+ o public.orders%ROWTYPE;
+ seller_share numeric;
+ platform_fee numeric;
+ tx_exists boolean;
+ plan text;
+ days integer;
+BEGIN
+ SELECT * INTO o FROM public.orders WHERE id=p_order_id FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
+
+ IF lower(coalesce(o.status,'')) IN ('paid','success','completed') THEN RETURN true; END IF;
+ IF lower(coalesce(p_gateway_status,'')) NOT IN ('paid','settled','success') THEN RETURN false; END IF;
+ IF round(coalesce(p_final_amount,0),0)<>round(coalesce(o.amount,0),0)
+ THEN RAISE EXCEPTION 'AMOUNT_MISMATCH'; END IF;
+
+ UPDATE public.orders
+ SET status='paid',
+     paid_at=coalesce(paid_at,now()),
+     payment_reference=coalesce(p_invoice_id,payment_reference),
+     gateway_payload=coalesce(p_gateway_payload,'{}'::jsonb)
+ WHERE id=o.id;
+
+ IF lower(coalesce(o.item_type,''))='account_plan' THEN
+   plan=lower(coalesce(o.item_id,''));
+   IF plan='premium' THEN
+     UPDATE public.profiles SET is_premium=true,updated_at=now() WHERE id=o.buyer_id;
+   ELSE
+     days=CASE plan WHEN 'subscription_1' THEN 1 WHEN 'subscription_3' THEN 3 WHEN 'subscription_7' THEN 7 ELSE 0 END;
+     IF days>0 THEN
+       UPDATE public.profiles
+       SET subscription_until=greatest(coalesce(subscription_until,now()),now())+(days||' days')::interval,
+           updated_at=now()
+       WHERE id=o.buyer_id;
+     END IF;
+   END IF;
+ ELSE
+   seller_share=round(coalesce(o.amount,0)*0.70,2);
+   platform_fee=round(coalesce(o.amount,0)-seller_share,2);
+
+   IF o.seller_id IS NOT NULL THEN
+     INSERT INTO public.wallets(user_id,balance,available_balance,pending_balance)
+     VALUES(o.seller_id,seller_share,seller_share,0)
+     ON CONFLICT(user_id) DO UPDATE SET
+       balance=public.wallets.balance+excluded.balance,
+       available_balance=public.wallets.available_balance+excluded.available_balance,
+       updated_at=now();
+
+     SELECT EXISTS(
+       SELECT 1 FROM public.transactions
+       WHERE user_id=o.seller_id AND reference='bayargg-order:'||o.id::text
+     ) INTO tx_exists;
+
+     IF NOT tx_exists THEN
+       INSERT INTO public.transactions(user_id,amount,fee,net_amount,type,status,reference,description)
+       VALUES(o.seller_id,seller_share,platform_fee,seller_share,'sale_earning','completed',
+              'bayargg-order:'||o.id::text,'Marketplace sale 70/30');
+     END IF;
+   END IF;
+
+   IF lower(coalesce(o.item_type,'')) IN ('product','code') THEN
+     UPDATE public.products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
+   ELSIF lower(coalesce(o.item_type,''))='telegram_product' THEN
+     UPDATE public.telegram_products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
+   ELSIF lower(coalesce(o.item_type,'')) IN ('channel','telegram_channel','telegram-channel') THEN
+     UPDATE public.telegram_channels SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
+   END IF;
+
+   INSERT INTO public.purchases(buyer_id,product_id,order_id,item_type,amount,status)
+   VALUES(o.buyer_id,o.product_id,o.id,o.item_type,o.amount,'completed');
+ END IF;
+
+ RETURN true;
+END $$;
+
+-- ============================================================
+-- WALLET / WITHDRAWAL
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_pending_balance_detail()
+RETURNS TABLE(id uuid,amount numeric,created_at timestamptz,available_at timestamptz,hold_label text)
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT wt.id,wt.amount,wt.created_at,wt.created_at+interval '1 day','Pending balance'
+ FROM public.wallet_transactions wt
+ WHERE wt.user_id=auth.uid() AND wt.status='pending'
+ ORDER BY wt.created_at DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION public.release_matured_wallet()
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE moved numeric:=0;
+BEGIN
+ SELECT coalesce(sum(amount),0) INTO moved
+ FROM public.wallet_transactions
+ WHERE user_id=auth.uid() AND status='pending'
+   AND created_at<=now()-interval '1 day';
+
+ UPDATE public.wallet_transactions
+ SET status='completed'
+ WHERE user_id=auth.uid() AND status='pending'
+   AND created_at<=now()-interval '1 day';
+
+ IF moved>0 THEN
+   UPDATE public.wallets
+   SET pending_balance=greatest(0,pending_balance-moved),
+       available_balance=available_balance+moved,
+       updated_at=now()
+   WHERE user_id=auth.uid();
+ END IF;
+
+ RETURN jsonb_build_object('released',moved);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
+ p_amount numeric,p_mode text,p_method text,p_account_name text,p_account_number text
+)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE uid uuid:=auth.uid(); wid uuid; available numeric;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+ IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_WITHDRAWAL_10000'; END IF;
+
+ SELECT available_balance INTO available FROM public.wallets WHERE user_id=uid FOR UPDATE;
+ IF coalesce(available,0)<p_amount THEN RAISE EXCEPTION 'INSUFFICIENT_BALANCE'; END IF;
+
+ UPDATE public.wallets
+ SET available_balance=available_balance-p_amount,
+     balance=balance-p_amount,updated_at=now()
+ WHERE user_id=uid;
+
+ INSERT INTO public.withdrawals(user_id,amount,mode,method,account_name,account_number,status)
+ VALUES(uid,p_amount,p_mode,p_method,p_account_name,p_account_number,'pending')
+ RETURNING id INTO wid;
+
+ RETURN jsonb_build_object('id',wid,'status','pending','amount',p_amount);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
+ p_amount bigint,p_mode text,p_method text,p_account_name text,p_account_number text
+)
+RETURNS jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT public.request_withdrawal_v2(p_amount::numeric,p_mode,p_method,p_account_name,p_account_number);
+$$;
+
+-- ============================================================
+-- ANALYTICS — MATCH FRONTEND ARGUMENT NAMES
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.increment_paste_view(p_slug text)
+RETURNS bigint
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE v bigint;
+BEGIN
+ UPDATE public.pastelinks SET views=views+1,updated_at=updated_at
+ WHERE slug=p_slug RETURNING views INTO v;
+ RETURN coalesce(v,0);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.increment_paste_view(p_id uuid)
+RETURNS bigint
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE v bigint;
+BEGIN
+ UPDATE public.pastelinks SET views=views+1
+ WHERE id=p_id RETURNING views INTO v;
+ RETURN coalesce(v,0);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.record_content_view(
+ p_owner uuid,p_target_type text,p_target_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
+ VALUES(p_owner,auth.uid(),'view',p_target_type,p_target_id);
+ RETURN true;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.record_content_view(
+ p_target_id uuid,p_target_type text
+)
+RETURNS boolean
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT public.record_content_view(auth.uid(),p_target_type,p_target_id);
+$$;
+
+CREATE OR REPLACE FUNCTION public.toggle_content_like(
+ p_owner uuid,p_target_type text,p_target_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE liked boolean;
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+
+ SELECT EXISTS(
+   SELECT 1 FROM public.content_likes
+   WHERE actor_id=auth.uid() AND target_id=p_target_id AND target_type=p_target_type
+ ) INTO liked;
+
+ IF liked THEN
+   DELETE FROM public.content_likes
+   WHERE actor_id=auth.uid() AND target_id=p_target_id AND target_type=p_target_type;
+   RETURN jsonb_build_object('liked',false);
+ ELSE
+   INSERT INTO public.content_likes(content_owner_id,actor_id,target_id,target_type)
+   VALUES(coalesce(p_owner,auth.uid()),auth.uid(),p_target_id,p_target_type);
+   RETURN jsonb_build_object('liked',true);
+ END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.toggle_content_like(
+ p_target_id uuid,p_target_type text
+)
+RETURNS jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT public.toggle_content_like(auth.uid(),p_target_type,p_target_id);
+$$;
+
+CREATE OR REPLACE FUNCTION public.track_analytics(
+ p_owner uuid,p_event text,p_target_type text,p_target_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
+ VALUES(p_owner,auth.uid(),p_event,p_target_type,p_target_id);
+ RETURN true;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.track_analytics(
+ p_event_type text,p_target_type text DEFAULT NULL,p_target_id uuid DEFAULT NULL
+)
+RETURNS boolean
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT public.track_analytics(auth.uid(),p_event_type,p_target_type,p_target_id);
+$$;
+
+-- ============================================================
+-- PUBLIC SETTINGS / STATS
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_public_site_settings()
+RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT coalesce(settings,'{}'::jsonb) FROM public.site_settings WHERE id=1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_public_workspace_stats()
+RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT jsonb_build_object(
+  'users',(SELECT count(*) FROM public.profiles WHERE is_banned=false),
+  'products',(SELECT count(*) FROM public.products WHERE status IN ('published','active')),
+  'sales',(SELECT count(*) FROM public.orders WHERE status IN ('paid','completed','success','settled')),
+  'revenue',(SELECT coalesce(sum(amount),0) FROM public.orders WHERE status IN ('paid','completed','success','settled'))
+ );
+$$;
+
+-- ============================================================
+-- FULL ADMIN RPC
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.admin_adjust_balance(
+ p_user uuid,p_amount numeric,p_reason text
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ INSERT INTO public.wallets(user_id,balance,available_balance,pending_balance)
+ VALUES(p_user,p_amount,p_amount,0)
+ ON CONFLICT(user_id) DO UPDATE SET
+ balance=public.wallets.balance+p_amount,
+ available_balance=public.wallets.available_balance+p_amount,
+ updated_at=now();
+
+ INSERT INTO public.transactions(user_id,amount,fee,net_amount,type,status,description)
+ VALUES(p_user,p_amount,0,p_amount,'admin_adjustment','completed',coalesce(p_reason,'Admin balance adjustment'));
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_bots(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT id,bot_username,bot_name,bot_id,is_active,created_at,updated_at
+  FROM public.approved_bots
+  ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_cancel_order(p_order_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.orders%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.orders SET status='cancelled' WHERE id=p_order_id RETURNING * INTO r;
+ IF NOT FOUND THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_content(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+   SELECT p.*, 'pastes'::text AS source
+   FROM public.pastes p
+   ORDER BY p.created_at DESC
+   LIMIT greatest(coalesce(p_limit,500),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_bot(p_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ DELETE FROM public.approved_bots WHERE id=p_id;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_content(p_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ DELETE FROM public.pastes WHERE id=p_id;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_paste(p_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ DELETE FROM public.pastes WHERE id=p_id;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_product(p_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ DELETE FROM public.products WHERE id=p_id;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_logs(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+   SELECT * FROM public.admin_logs
+   ORDER BY created_at DESC
+   LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_mark_order_paid(
+ p_order_id uuid,p_payment_reference text
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.orders%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.orders
+ SET status='paid',payment_reference=p_payment_reference,paid_at=coalesce(paid_at,now())
+ WHERE id=p_order_id RETURNING * INTO r;
+ IF NOT FOUND THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_orders(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT * FROM public.orders ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_pastes(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT * FROM public.pastes ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_payment_methods(p_user uuid)
+RETURNS jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb)
+ FROM (
+  SELECT id,user_id,method_type,provider,account_name,account_number,country,is_default,created_at,updated_at
+  FROM public.payment_methods WHERE user_id=p_user ORDER BY is_default DESC,created_at DESC
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_payments(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT * FROM public.payments ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_process_withdrawal(
+ p_id uuid,p_status text,p_note text
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.withdrawals%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF lower(coalesce(p_status,'')) NOT IN ('pending','approved','rejected','completed','cancelled')
+ THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_STATUS'; END IF;
+
+ UPDATE public.withdrawals
+ SET status=lower(p_status),note=p_note,
+     processed_at=CASE WHEN lower(p_status) IN ('approved','rejected','completed','cancelled') THEN now() ELSE processed_at END
+ WHERE id=p_id RETURNING * INTO r;
+
+ IF NOT FOUND THEN RAISE EXCEPTION 'WITHDRAWAL_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_products(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT * FROM public.products ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_publish_announcement(
+ p_title text,p_body text,p_image_url text
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.announcements%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ INSERT INTO public.announcements(title,body,image_url,published,published_at)
+ VALUES(p_title,coalesce(p_body,''),p_image_url,true,now()) RETURNING * INTO r;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_save_socials(p_socials jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.site_settings
+ SET settings=jsonb_set(coalesce(settings,'{}'::jsonb),'{socials}',coalesce(p_socials,'{}'::jsonb),true),
+     updated_at=now()
+ WHERE id=1;
+ RETURN coalesce((SELECT settings->'socials' FROM public.site_settings WHERE id=1),'{}'::jsonb);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_set_bot_active(p_bot_id uuid,p_active boolean)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.approved_bots%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.approved_bots SET is_active=coalesce(p_active,false),updated_at=now()
+ WHERE id=p_bot_id RETURNING * INTO r;
+ IF NOT FOUND THEN RAISE EXCEPTION 'BOT_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_set_user(
+ p_user uuid,p_banned boolean,p_admin boolean
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.profiles%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.profiles
+ SET is_banned=coalesce(p_banned,false),
+     is_admin=coalesce(p_admin,false),
+     role=CASE WHEN coalesce(p_admin,false) THEN 'admin' ELSE 'user' END,
+     updated_at=now()
+ WHERE id=p_user RETURNING * INTO r;
+ IF NOT FOUND THEN RAISE EXCEPTION 'USER_NOT_FOUND'; END IF;
+ RETURN jsonb_build_object('id',r.id,'username',r.username,'display_name',r.display_name,
+   'role',r.role,'is_admin',r.is_admin,'is_banned',r.is_banned);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_site_stats()
+RETURNS jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT jsonb_build_object(
+  'users',(SELECT count(*) FROM public.profiles),
+  'products',(SELECT count(*) FROM public.products),
+  'orders',(SELECT count(*) FROM public.orders),
+  'sales',(SELECT count(*) FROM public.orders WHERE status IN ('paid','completed','success','settled')),
+  'revenue',(SELECT coalesce(sum(amount),0) FROM public.orders WHERE status IN ('paid','completed','success','settled')),
+  'pastes',(SELECT count(*) FROM public.pastes),
+  'views',(SELECT coalesce(sum(views),0) FROM public.products)+(SELECT coalesce(sum(views),0) FROM public.pastelinks),
+  'banned',(SELECT count(*) FROM public.profiles WHERE is_banned=true),
+  'pending',(SELECT count(*) FROM public.orders WHERE status IN ('pending','waiting','unpaid'))
+ )
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_stats()
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT jsonb_build_object(
+  'users',(SELECT count(*) FROM public.profiles),
+  'products',(SELECT count(*) FROM public.products),
+  'sales',(SELECT count(*) FROM public.orders WHERE status IN ('paid','completed','success','settled')),
+  'revenue',(SELECT coalesce(sum(amount),0) FROM public.orders WHERE status IN ('paid','completed','success','settled')),
+  'pastes',(SELECT count(*) FROM public.pastes),
+  'views',(SELECT coalesce(sum(views),0) FROM public.products)+(SELECT coalesce(sum(views),0) FROM public.pastelinks),
+  'banned',(SELECT count(*) FROM public.profiles WHERE is_banned=true),
+  'pending',(SELECT count(*) FROM public.orders WHERE status IN ('pending','waiting','unpaid'))
+ )
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_transactions(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT * FROM public.transactions ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_update_content(
+ p_id uuid,p_status text,p_title text,p_description text
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.pastes%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.pastes
+ SET title=coalesce(p_title,title),
+     content=coalesce(p_description,content),
+     visibility=CASE WHEN lower(coalesce(p_status,''))='published' THEN 'public' ELSE visibility END,
+     updated_at=now()
+ WHERE id=p_id RETURNING * INTO r;
+ IF NOT FOUND THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_update_product(
+ p_id uuid,p_status text,p_price numeric
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.products%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ UPDATE public.products
+ SET status=coalesce(p_status,status),price=coalesce(p_price,price),updated_at=now()
+ WHERE id=p_id RETURNING * INTO r;
+ IF NOT FOUND THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_upsert_bot(
+ p_username text,p_bot_id bigint,p_display_name text
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r public.approved_bots%ROWTYPE;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ INSERT INTO public.approved_bots(bot_username,bot_id,bot_name,is_active)
+ VALUES(lower(btrim(p_username)),p_bot_id,p_display_name,true)
+ ON CONFLICT(bot_username) DO UPDATE SET
+   bot_id=excluded.bot_id,bot_name=excluded.bot_name,updated_at=now()
+ RETURNING * INTO r;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_users(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT id,username,auth_email,display_name,avatar_url,role,is_admin,is_banned,balance,
+         created_at,updated_at
+  FROM public.profiles ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_withdrawals(p_limit integer,p_offset integer)
+RETURNS SETOF jsonb
+LANGUAGE sql SECURITY DEFINER SET search_path=public
+AS $$
+ SELECT to_jsonb(x) FROM (
+  SELECT * FROM public.withdrawals ORDER BY created_at DESC
+  LIMIT greatest(coalesce(p_limit,50),1) OFFSET greatest(coalesce(p_offset,0),0)
+ ) x
+ WHERE public.is_current_user_admin();
+$$;
+
+-- ============================================================
+-- RLS — ENABLE EVERY APPLICATION TABLE
+-- ============================================================
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.telegram_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.telegram_channels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_access ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pastelinks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pastes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.withdrawals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.creator_followers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.content_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.content_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.code_access_usage ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.login_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.approved_bots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bot_integrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_stats ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- GRANTS
+-- ============================================================
+GRANT USAGE ON SCHEMA public TO anon,authenticated;
+
+GRANT SELECT(id,username,display_name,avatar_url,country,created_at)
+ON public.profiles TO anon,authenticated;
+
+GRANT SELECT ON public.profile_public TO anon,authenticated;
+GRANT SELECT ON public.marketplace_public TO anon,authenticated;
+
+GRANT SELECT ON public.products TO anon,authenticated;
+GRANT SELECT ON public.telegram_products TO anon,authenticated;
+GRANT SELECT ON public.telegram_channels TO anon,authenticated;
+GRANT SELECT ON public.pastelinks TO anon,authenticated;
+GRANT SELECT ON public.pastes TO anon,authenticated;
+GRANT SELECT ON public.announcements TO anon,authenticated;
+GRANT SELECT ON public.approved_bots TO anon,authenticated;
+
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.products TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.telegram_products TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.telegram_channels TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.pastelinks TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.pastes TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.payment_methods TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.creator_followers TO authenticated;
+GRANT SELECT,INSERT,DELETE ON public.content_likes TO authenticated;
+GRANT SELECT,INSERT ON public.content_comments TO authenticated;
+GRANT SELECT,UPDATE ON public.notifications TO authenticated;
+GRANT SELECT,INSERT ON public.analytics_events TO authenticated;
+GRANT SELECT,INSERT ON public.product_views TO anon,authenticated;
+
+-- RPC execution
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon,authenticated;
+
+-- ============================================================
+-- RLS POLICIES
+-- ============================================================
+
+-- Profiles: public columns only; private columns are not granted.
+CREATE POLICY profiles_public_select
+ON public.profiles FOR SELECT
+TO anon,authenticated
+USING (is_banned=false);
+
+CREATE POLICY profiles_self_update
+ON public.profiles FOR UPDATE
+TO authenticated
+USING (id=auth.uid())
+WITH CHECK (id=auth.uid());
+
+-- Products
+CREATE POLICY products_public_select
+ON public.products FOR SELECT
+TO anon,authenticated
+USING (status IN ('published','active') OR seller_id=auth.uid() OR creator_id=auth.uid());
+
+CREATE POLICY products_owner_insert
+ON public.products FOR INSERT TO authenticated
+WITH CHECK (seller_id=auth.uid() OR creator_id=auth.uid());
+
+CREATE POLICY products_owner_update
+ON public.products FOR UPDATE TO authenticated
+USING (seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY products_owner_delete
+ON public.products FOR DELETE TO authenticated
+USING (seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin());
+
+-- Telegram products/channels
+CREATE POLICY telegram_products_select
+ON public.telegram_products FOR SELECT TO anon,authenticated
+USING (status IN ('published','active') OR owner_id=auth.uid());
+
+CREATE POLICY telegram_products_owner_insert
+ON public.telegram_products FOR INSERT TO authenticated
+WITH CHECK (owner_id=auth.uid());
+
+CREATE POLICY telegram_products_owner_update
+ON public.telegram_products FOR UPDATE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (owner_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY telegram_products_owner_delete
+ON public.telegram_products FOR DELETE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY telegram_channels_select
+ON public.telegram_channels FOR SELECT TO anon,authenticated
+USING (status IN ('published','active') OR owner_id=auth.uid());
+
+CREATE POLICY telegram_channels_owner_insert
+ON public.telegram_channels FOR INSERT TO authenticated
+WITH CHECK (owner_id=auth.uid());
+
+CREATE POLICY telegram_channels_owner_update
+ON public.telegram_channels FOR UPDATE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (owner_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY telegram_channels_owner_delete
+ON public.telegram_channels FOR DELETE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin());
+
+-- Orders: only buyer/seller/admin
+CREATE POLICY orders_private_select
+ON public.orders FOR SELECT TO authenticated
+USING (buyer_id=auth.uid() OR seller_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY orders_buyer_insert
+ON public.orders FOR INSERT TO authenticated
+WITH CHECK (buyer_id=auth.uid());
+
+CREATE POLICY orders_admin_update
+ON public.orders FOR UPDATE TO authenticated
+USING (buyer_id=auth.uid() OR seller_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (buyer_id=auth.uid() OR seller_id=auth.uid() OR public.is_current_user_admin());
+
+-- Purchases/access
+CREATE POLICY purchases_owner_select
+ON public.purchases FOR SELECT TO authenticated
+USING (buyer_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY product_access_owner_select
+ON public.product_access FOR SELECT TO authenticated
+USING (buyer_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY product_views_public_insert
+ON public.product_views FOR INSERT TO anon,authenticated
+WITH CHECK (true);
+
+CREATE POLICY product_views_public_select
+ON public.product_views FOR SELECT TO anon,authenticated
+USING (true);
+
+-- Pastelinks
+CREATE POLICY pastelinks_public_select
+ON public.pastelinks FOR SELECT TO anon,authenticated
+USING (
+ visibility='public'
+ OR user_id=auth.uid()
+);
+
+CREATE POLICY pastelinks_owner_insert
+ON public.pastelinks FOR INSERT TO authenticated
+WITH CHECK (user_id=auth.uid());
+
+CREATE POLICY pastelinks_owner_update
+ON public.pastelinks FOR UPDATE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY pastelinks_owner_delete
+ON public.pastelinks FOR DELETE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+-- Pastes
+CREATE POLICY pastes_public_select
+ON public.pastes FOR SELECT TO anon,authenticated
+USING (visibility='public' OR owner_id=auth.uid());
+
+CREATE POLICY pastes_owner_insert
+ON public.pastes FOR INSERT TO authenticated
+WITH CHECK (owner_id=auth.uid());
+
+CREATE POLICY pastes_owner_update
+ON public.pastes FOR UPDATE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (owner_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY pastes_owner_delete
+ON public.pastes FOR DELETE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin());
+
+-- Payment methods
+CREATE POLICY payment_methods_owner_all
+ON public.payment_methods FOR ALL TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+-- Payments
+CREATE POLICY payments_private_select
+ON public.payments FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY payments_owner_insert
+ON public.payments FOR INSERT TO authenticated
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+-- Wallet
+CREATE POLICY wallets_owner_select
+ON public.wallets FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY transactions_owner_select
+ON public.transactions FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY wallet_transactions_owner_select
+ON public.wallet_transactions FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY withdrawals_owner_select
+ON public.withdrawals FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY withdrawals_owner_insert
+ON public.withdrawals FOR INSERT TO authenticated
+WITH CHECK (user_id=auth.uid());
+
+CREATE POLICY withdrawals_owner_update
+ON public.withdrawals FOR UPDATE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+-- Social/content
+CREATE POLICY followers_select
+ON public.creator_followers FOR SELECT TO anon,authenticated USING (true);
+
+CREATE POLICY followers_insert
+ON public.creator_followers FOR INSERT TO authenticated WITH CHECK (follower_id=auth.uid());
+
+CREATE POLICY followers_delete
+ON public.creator_followers FOR DELETE TO authenticated
+USING (follower_id=auth.uid() OR creator_id=auth.uid());
+
+CREATE POLICY likes_select
+ON public.content_likes FOR SELECT TO anon,authenticated USING (true);
+
+CREATE POLICY likes_insert
+ON public.content_likes FOR INSERT TO authenticated WITH CHECK (actor_id=auth.uid());
+
+CREATE POLICY likes_delete
+ON public.content_likes FOR DELETE TO authenticated USING (actor_id=auth.uid());
+
+CREATE POLICY comments_select
+ON public.content_comments FOR SELECT TO anon,authenticated USING (true);
+
+CREATE POLICY comments_insert
+ON public.content_comments FOR INSERT TO authenticated WITH CHECK (user_id=auth.uid());
+
+CREATE POLICY notifications_owner
+ON public.notifications FOR SELECT TO authenticated USING (user_id=auth.uid());
+
+CREATE POLICY notifications_update
+ON public.notifications FOR UPDATE TO authenticated
+USING (user_id=auth.uid()) WITH CHECK (user_id=auth.uid());
+
+CREATE POLICY announcements_public
+ON public.announcements FOR SELECT TO anon,authenticated USING (published=true);
+
+CREATE POLICY analytics_owner_select
+ON public.analytics_events FOR SELECT TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY analytics_owner_insert
+ON public.analytics_events FOR INSERT TO authenticated
+WITH CHECK (actor_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY code_usage_owner
+ON public.code_access_usage FOR ALL TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE POLICY login_history_owner
+ON public.login_history FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+-- Bots
+CREATE POLICY approved_bots_public
+ON public.approved_bots FOR SELECT TO anon,authenticated USING (is_active=true);
+
+CREATE POLICY bot_integrations_owner
+ON public.bot_integrations FOR ALL TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (owner_id=auth.uid() OR public.is_current_user_admin());
+
+-- Site settings/stats
+CREATE POLICY site_settings_public
+ON public.site_settings FOR SELECT TO anon,authenticated USING (true);
+
+CREATE POLICY site_stats_public
+ON public.site_stats FOR SELECT TO anon,authenticated USING (true);
+
+-- Admin-only tables
+CREATE POLICY admins_admin_only
+ON public.admins FOR ALL TO authenticated
+USING (public.is_current_user_admin())
+WITH CHECK (public.is_current_user_admin());
+
+CREATE POLICY admin_logs_admin_only
+ON public.admin_logs FOR SELECT TO authenticated
+USING (public.is_current_user_admin());
+
+CREATE POLICY payment_settings_admin_only
+ON public.payment_settings FOR ALL TO authenticated
+USING (public.is_current_user_admin())
+WITH CHECK (public.is_current_user_admin());
+
+-- ============================================================
+-- EXISTING AUTH USER REPAIR
+-- ============================================================
+DO $$
+DECLARE u record; base text; uname text; n integer;
+BEGIN
+  FOR u IN
+    SELECT au.id,au.email,au.raw_user_meta_data
+    FROM auth.users au
+    LEFT JOIN public.profiles p ON p.id=au.id
+    WHERE p.id IS NULL
+  LOOP
+    base := lower(regexp_replace(
+      coalesce(u.raw_user_meta_data->>'username',split_part(coalesce(u.email,''),'@',1),'user'),
+      '[^a-zA-Z0-9_]','','g'));
+    IF base='' THEN base:='user'; END IF;
+    base:=left(base,32); uname:=base; n:=0;
+    WHILE EXISTS(SELECT 1 FROM public.profiles p WHERE lower(p.username)=lower(uname)) LOOP
+      n:=n+1;
+      IF n>1000 THEN RAISE EXCEPTION 'Unable to create unique username for auth user %',u.id; END IF;
+      uname:=left(base,23)||'_'||lpad(n::text,8,'0');
+    END LOOP;
+    INSERT INTO public.profiles(id,username,auth_email,display_name)
+    VALUES(u.id,uname,coalesce(u.email,''),coalesce(u.raw_user_meta_data->>'display_name',uname))
+    ON CONFLICT(id) DO UPDATE SET auth_email=excluded.auth_email,updated_at=now();
+    INSERT INTO public.wallets(user_id) VALUES(u.id) ON CONFLICT(user_id) DO NOTHING;
+  END LOOP;
+END $$;
+
+UPDATE public.profiles p
+SET auth_email=coalesce(u.email,p.auth_email),updated_at=now()
+FROM auth.users u
+WHERE u.id=p.id
+  AND coalesce(p.auth_email,'') IS DISTINCT FROM coalesce(u.email,'');
+
+-- Set your administrator manually after verifying the Auth UUID:
+-- UPDATE public.profiles SET is_admin=true, role='admin' WHERE id='YOUR-AUTH-USER-UUID';
+
+-- ============================================================
+-- FINAL AUTH GRANTS / SCHEMA RELOAD
+-- ============================================================
+GRANT EXECUTE ON FUNCTION public.resolve_username_login(text) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.check_username_available(text) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.is_current_user_admin() TO authenticated;
+NOTIFY pgrst,'reload schema';
+
+-- ============================================================
+-- SECURITY VERIFICATION
+-- ============================================================
+DO $$
+DECLARE k text;
+BEGIN
+  FOREACH k IN ARRAY ARRAY['profile_public','marketplace_public'] LOOP
+    IF NOT EXISTS(
+      SELECT 1 FROM pg_class c
+      JOIN pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname='public' AND c.relname=k AND c.relkind='v'
+    ) THEN
+      RAISE EXCEPTION 'Missing public view: %',k;
+    END IF;
+  END LOOP;
+END $$;
+
+COMMIT;
+
+-- ============================================================
+-- POST-RUN CHECKS
+-- ============================================================
+SELECT
+  n.nspname AS schema_name,
+  c.relname AS view_name,
+  c.reloptions
+FROM pg_class c
+JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='public'
+  AND c.relkind='v'
+  AND c.relname IN ('profile_public','marketplace_public');
+
+SELECT
+  p.proname AS function_name,
+  pg_get_function_identity_arguments(p.oid) AS arguments
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid=p.pronamespace
+WHERE n.nspname='public'
+  AND p.proname LIKE 'admin_%'
+ORDER BY p.proname,arguments;
