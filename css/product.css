@@ -1743,3 +1743,69 @@
         transition-duration: .01ms !important;
     }
 }
+
+/* =========================================================
+   FINAL SQL-SYNC ACCESS UI
+   ========================================================= */
+.product-buy-area{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--product-border-soft);
+}
+.product-price{
+    margin-right:auto;
+    font-size:24px;
+    line-height:1;
+    letter-spacing:-.03em;
+}
+.product-buy-area .btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.product-detail-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:9px;
+    margin-top:20px;
+    padding-top:15px;
+    border-top:1px solid var(--product-border-soft);
+    color:var(--product-muted);
+    font-size:12px;
+}
+.product-detail-meta span{display:inline-flex;align-items:center;gap:6px}
+.product-comment-item{
+    display:flex;
+    gap:10px;
+    padding:13px 0;
+    border-bottom:1px solid var(--product-border-soft);
+}
+.product-comment-item:last-child{border-bottom:0}
+.product-comment-avatar{
+    width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:var(--product-primary-soft);color:var(--product-primary)
+}
+.product-comment-item strong{display:block;font-size:12px}
+.product-comment-item time{display:block;margin-top:2px;color:var(--product-muted);font-size:10px}
+.product-comment-item p{margin:6px 0 0;font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+@media (max-width:650px){
+ .product-buy-area{align-items:stretch}
+ .product-price{width:100%;margin-right:0;margin-bottom:3px}
+ .product-buy-area .btn{width:100%}
+}
+html[data-theme="dark"] .product-page,
+html.theme-dark .product-page,
+body.theme-dark .product-page{
+ --product-bg:#07131f;
+ --product-card:#0d1b28;
+ --product-card-soft:#0a1723;
+ --product-text:#d7e6ee;
+ --product-muted:#91a6b5;
+ --product-border:rgba(170,205,225,.14);
+ --product-border-soft:rgba(170,205,225,.08);
+ --product-primary:#2ca8df;
+ --product-primary-dark:#1688bf;
+ --product-primary-soft:rgba(44,168,223,.12);
+ --product-success:#5bdda1;
+ --product-shadow:0 16px 40px rgba(0,0,0,.24);
+ --product-shadow-soft:0 8px 24px rgba(0,0,0,.18);
+}
