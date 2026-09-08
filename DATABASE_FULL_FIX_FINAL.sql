@@ -102,6 +102,7 @@ CREATE TABLE public.profiles (
   role text NOT NULL DEFAULT 'user',
   is_admin boolean NOT NULL DEFAULT false,
   is_banned boolean NOT NULL DEFAULT false,
+  status text NOT NULL DEFAULT 'active',
   balance numeric(18,2) NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
