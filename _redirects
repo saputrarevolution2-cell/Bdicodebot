@@ -14,3 +14,6 @@
 /ch/f/* /product.html?type=channel&slug=:splat 200
 /g/p/* /product.html?type=group&slug=:splat 200
 /g/f/* /product.html?type=group&slug=:splat 200
+
+# Free Paste
+/paste/* /product.html?type=paste&slug=:splat 200

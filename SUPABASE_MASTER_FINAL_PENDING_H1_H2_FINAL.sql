@@ -1977,3 +1977,235 @@ END $$;
 -- ============================================================
 
 COMMIT;
+-- ============================================================
+-- PasTele FINAL FRONTEND/ADMIN COMPATIBILITY PATCH
+-- Keeps the existing schema, fixes RPC routing and admin settlement.
+-- ============================================================
+BEGIN;
+
+-- Enforce the marketplace price contract used by the web app.
+ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_price_access_check;
+ALTER TABLE public.products ADD CONSTRAINT products_price_access_check
+CHECK ((access_type='free' AND price=0) OR (access_type='paid' AND price BETWEEN 5000 AND 150000));
+
+ALTER TABLE public.telegram_products DROP CONSTRAINT IF EXISTS telegram_products_price_access_check;
+ALTER TABLE public.telegram_products ADD CONSTRAINT telegram_products_price_access_check
+CHECK ((access_type='free' AND price=0) OR (access_type='paid' AND price BETWEEN 5000 AND 150000));
+
+ALTER TABLE public.telegram_channels DROP CONSTRAINT IF EXISTS telegram_channels_price_access_check;
+ALTER TABLE public.telegram_channels ADD CONSTRAINT telegram_channels_price_access_check
+CHECK ((access_type='free' AND price=0) OR (access_type='paid' AND price BETWEEN 5000 AND 150000));
+
+-- Code belongs to telegram_products, not products.
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+  r record;
+  normalized text:=lower(btrim(coalesce(p_type,'')));
+BEGIN
+  IF normalized IN ('product','link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
+           coalesce(p.creator_id,p.seller_id) AS owner_id
+    INTO r
+    FROM public.products p
+    LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
+    WHERE p.id=p_id;
+
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
+           p.owner_id AS seller_id
+    INTO r
+    FROM public.telegram_products p
+    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+    WHERE p.id=p_id;
+
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
+           p.owner_id AS seller_id,
+           p.name AS title
+    INTO r
+    FROM public.telegram_channels p
+    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+    WHERE p.id=p_id;
+
+  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
+           p.user_id AS owner_id,
+           0::numeric AS price,
+           'free'::text AS access_type,
+           'pastelink'::text AS item_type
+    INTO r
+    FROM public.pastelinks p
+    LEFT JOIN public.profiles pr ON pr.id=p.user_id
+    WHERE p.id=p_id;
+
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF r IS NULL THEN
+    RETURN jsonb_build_object('found',false);
+  END IF;
+
+  RETURN to_jsonb(r)||jsonb_build_object(
+    'found',true,
+    'can_access',
+      CASE
+        WHEN auth.uid() IS NULL THEN false
+        WHEN EXISTS(
+          SELECT 1 FROM public.purchases pu
+          WHERE pu.buyer_id=auth.uid()
+            AND pu.product_id=p_id
+            AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')
+        ) THEN true
+        WHEN public.is_current_user_admin() THEN true
+        ELSE false
+      END
+  );
+END $$;
+
+-- Checkout routing: Code -> telegram_products; Group -> telegram_channels.
+CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
+RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+  uid uuid:=auth.uid(); seller uuid; title text; price numeric; oid uuid;
+  normalized text:=lower(btrim(coalesce(p_type,''))); pid uuid;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
+  BEGIN pid:=p_id::uuid; EXCEPTION WHEN invalid_text_representation THEN RAISE EXCEPTION 'INVALID_PRODUCT_ID'; END;
+
+  IF normalized IN ('product','link') THEN
+    SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price INTO seller,title,price
+    FROM public.products p WHERE p.id=pid;
+    normalized:='product';
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.owner_id,p.title,p.price INTO seller,title,price
+    FROM public.telegram_products p WHERE p.id=pid;
+    normalized:='telegram_product';
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.owner_id,p.name,p.price INTO seller,title,price
+    FROM public.telegram_channels p WHERE p.id=pid;
+    normalized:='channel';
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
+  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
+
+  SELECT o.id INTO oid
+  FROM public.orders o
+  WHERE o.buyer_id=uid AND o.product_id=pid
+    AND lower(coalesce(o.item_type,''))=normalized
+    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
+  ORDER BY o.created_at DESC LIMIT 1;
+
+  IF oid IS NULL THEN
+    INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title)
+    VALUES(uid,seller,pid,price,'pending',normalized,p_id,title)
+    RETURNING id INTO oid;
+  END IF;
+
+  RETURN QUERY SELECT oid,price,title,normalized;
+END $$;
+
+-- Admin manual payment now performs the same settlement as Bayar.gg,
+-- including purchases, seller 70% pending balance, and H1/H2 maturity.
+CREATE OR REPLACE FUNCTION public.admin_mark_order_paid(
+ p_order_id uuid,p_payment_reference text
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE
+ o public.orders;
+ payload jsonb;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ SELECT * INTO o FROM public.orders WHERE id=p_order_id FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
+ IF lower(coalesce(o.status,'')) IN ('paid','success','completed','settled') THEN RETURN to_jsonb(o); END IF;
+
+ payload:=jsonb_build_object('source','admin_manual','admin_id',auth.uid(),'reference',p_payment_reference);
+ PERFORM public.settle_bayargg_order(
+   o.id,
+   nullif(p_payment_reference,''),
+   'paid',
+   o.amount,
+   payload
+ );
+
+ SELECT * INTO o FROM public.orders WHERE id=p_order_id;
+ RETURN to_jsonb(o);
+END $$;
+
+COMMIT;
+
+-- ============================================================
+-- ADMIN PRICE / ACCESS CONSISTENCY PATCH
+-- ============================================================
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.admin_update_product(p_id uuid,p_status text,p_price numeric)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r public.products;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF p_price IS NULL OR p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
+ UPDATE public.products
+ SET status=p_status,
+     price=p_price,
+     access_type=CASE WHEN p_price=0 THEN 'free' ELSE 'paid' END,
+     updated_at=now()
+ WHERE id=p_id RETURNING * INTO r;
+ IF r.id IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+ RETURN to_jsonb(r);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_update_content(
+ p_id uuid,p_status text DEFAULT NULL,p_title text DEFAULT NULL,p_description text DEFAULT NULL,
+ p_source text DEFAULT 'products',p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r jsonb;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ CASE lower(coalesce(p_source,'products'))
+  WHEN 'products' THEN
+   IF p_price IS NOT NULL AND p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
+   UPDATE public.products SET status=coalesce(p_status,status),title=coalesce(p_title,title),
+     slug=coalesce(nullif(p_slug,''),slug),price=coalesce(p_price,price),
+     access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,
+     description=coalesce(p_description,description),updated_at=now()
+   WHERE id=p_id RETURNING to_jsonb(products.*) INTO r;
+  WHEN 'pastelinks' THEN
+   UPDATE public.pastelinks SET visibility=CASE WHEN p_status='published' THEN 'public'
+     WHEN p_status IS NULL THEN visibility ELSE p_status END,
+     title=coalesce(p_title,title),description=coalesce(p_description,description),updated_at=now()
+   WHERE id=p_id RETURNING to_jsonb(pastelinks.*) INTO r;
+  WHEN 'pastes' THEN
+   UPDATE public.pastes SET title=coalesce(p_title,title),slug=coalesce(nullif(p_slug,''),slug),updated_at=now()
+   WHERE id=p_id RETURNING to_jsonb(pastes.*) INTO r;
+  WHEN 'telegram_products' THEN
+   IF p_price IS NOT NULL AND p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
+   UPDATE public.telegram_products SET status=coalesce(p_status,status),title=coalesce(p_title,title),
+     price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,
+     description=coalesce(p_description,description),updated_at=now()
+   WHERE id=p_id RETURNING to_jsonb(telegram_products.*) INTO r;
+  WHEN 'telegram_channels' THEN
+   IF p_price IS NOT NULL AND p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
+   UPDATE public.telegram_channels SET status=coalesce(p_status,status),name=coalesce(p_title,name),
+     price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,
+     description=coalesce(p_description,description),updated_at=now()
+   WHERE id=p_id RETURNING to_jsonb(telegram_channels.*) INTO r;
+  ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
+ END CASE;
+ IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
+ RETURN r;
+END $$;
+
+COMMIT;
