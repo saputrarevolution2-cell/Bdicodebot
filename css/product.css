@@ -3,7 +3,7 @@
    Premium Product Detail
    Responsive Android + Desktop
    Like + Comment Public
-   BAYARGG QRIS Modal
+   Bayar.gg QRIS Modal
    ========================================================= */
 
 
@@ -1132,7 +1132,7 @@
    BAYARGG MODAL
    ========================================================= */
 
-.BAYARGG-modal-backdrop {
+.bayargg-modal-backdrop {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -1151,10 +1151,10 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 
-    animation: BAYARGGBackdropIn .18s ease both;
+    animation: bayarggBackdropIn .18s ease both;
 }
 
-@keyframes BAYARGGBackdropIn {
+@keyframes bayarggBackdropIn {
     from {
         opacity: 0;
     }
@@ -1164,7 +1164,7 @@
     }
 }
 
-.BAYARGG-modal {
+.bayargg-modal {
     position: relative;
 
     width: min(100%, 430px);
@@ -1184,10 +1184,10 @@
     box-shadow:
         0 30px 90px rgba(0, 0, 0, .25);
 
-    animation: BAYARGGModalIn .22s ease both;
+    animation: bayarggModalIn .22s ease both;
 }
 
-@keyframes BAYARGGModalIn {
+@keyframes bayarggModalIn {
     from {
         opacity: 0;
         transform: translateY(12px) scale(.98);
@@ -1199,7 +1199,7 @@
     }
 }
 
-.BAYARGG-close {
+.bayargg-close {
     position: absolute;
     top: 13px;
     right: 13px;
@@ -1222,29 +1222,29 @@
     line-height: 1;
 }
 
-.BAYARGG-close:hover {
+.bayargg-close:hover {
     background: rgba(100, 116, 139, .14);
 }
 
-.BAYARGG-close:focus-visible {
+.bayargg-close:focus-visible {
     outline: 3px solid rgba(34, 158, 217, .18);
     outline-offset: 2px;
 }
 
-.BAYARGG-modal > .badge {
+.bayargg-modal > .badge {
     display: inline-flex;
 
     margin-bottom: 10px;
 }
 
-.BAYARGG-modal h2 {
+.bayargg-modal h2 {
     margin: 0 45px 6px 0;
 
     font-size: 25px;
     letter-spacing: -.025em;
 }
 
-.BAYARGG-modal > p.muted {
+.bayargg-modal > p.muted {
     margin: 0;
 
     font-size: 13px;
@@ -1256,7 +1256,7 @@
    BAYARGG QR
    ========================================================= */
 
-.BAYARGG-qr {
+.bayargg-qr {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1276,7 +1276,7 @@
     overflow: hidden;
 }
 
-.BAYARGG-qr img {
+.bayargg-qr img {
     display: block;
 
     width: min(100%, 280px);
@@ -1315,14 +1315,14 @@
     word-break: break-all;
 }
 
-.BAYARGG-modal > .btn {
+.bayargg-modal > .btn {
     width: 100%;
     justify-content: center;
 
     min-height: 46px;
 }
 
-.BAYARGG-status {
+.bayargg-status {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1419,8 +1419,8 @@
     background: rgba(34, 158, 217, .07);
 }
 
-[data-theme="dark"] .product-page .BAYARGG-qr,
-.dark .product-page .BAYARGG-qr {
+[data-theme="dark"] .product-page .bayargg-qr,
+.dark .product-page .bayargg-qr {
     background: #fff;
 }
 
@@ -1643,7 +1643,7 @@
         font-size: 12px;
     }
 
-    .BAYARGG-modal {
+    .bayargg-modal {
         width: 100%;
         max-height: calc(100dvh - 24px);
 
@@ -1652,18 +1652,18 @@
         border-radius: 21px;
     }
 
-    .BAYARGG-modal h2 {
+    .bayargg-modal h2 {
         font-size: 22px;
     }
 
-    .BAYARGG-qr {
+    .bayargg-qr {
         min-height: 210px;
 
         margin: 16px 0;
         padding: 13px;
     }
 
-    .BAYARGG-qr img {
+    .bayargg-qr img {
         width: min(100%, 245px);
     }
 }
