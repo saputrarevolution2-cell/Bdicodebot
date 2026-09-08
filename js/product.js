@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
        PasTele — PRODUCT
        PUBLIC PRODUCT DETAIL
        LIKE + COMMENT FOR EVERYONE
-       PAID CHECKOUT + BAYARGG QRIS
+       PAID CHECKOUT + BAYAR.GG QRIS
        ========================================================= */
 
     /* =========================================================
@@ -1263,7 +1263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 : price
                                 ? `
                                     <i class="fa-solid fa-qrcode"></i>
-                                    Bayar via BAYARGG QRIS
+                                    Bayar via Bayar.gg QRIS
                                 `
                                 : `
                                     <i class="fa-solid fa-unlock"></i>
@@ -2488,7 +2488,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document
             .getElementById(
-                "BAYARGGModal"
+                "bayarggModal"
             )
             ?.remove();
 
@@ -2498,10 +2498,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             );
 
         modal.className =
-            "BAYARGG-modal-backdrop";
+            "bayargg-modal-backdrop";
 
         modal.id =
-            "BAYARGGModal";
+            "bayarggModal";
 
         const qrImage =
             payment.qr_image ||
@@ -2521,25 +2521,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         modal.innerHTML = `
             <div
-                class="BAYARGG-modal"
+                class="bayargg-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="BAYARGGTitle"
+                aria-labelledby="bayarggTitle"
             >
 
                 <button
                     type="button"
-                    class="BAYARGG-close"
+                    class="bayargg-close"
                     aria-label="Tutup"
                 >
                     ×
                 </button>
 
                 <span class="badge">
-                    BAYARGG · QRIS
+                    BAYAR.GG · QRIS
                 </span>
 
-                <h2 id="BAYARGGTitle">
+                <h2 id="bayarggTitle">
                     Bayar ${money(
                         order.amount
                     )}
@@ -2550,7 +2550,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     sesuai harga produk.
                 </p>
 
-                <div class="BAYARGG-qr">
+                <div class="bayargg-qr">
 
                     ${
                         qrImage
@@ -2559,7 +2559,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     src="${esc(
                                         qrImage
                                     )}"
-                                    alt="QRIS BAYARGG"
+                                    alt="QRIS Bayar.gg"
                                 >
                             `
                             : qrString
@@ -2572,7 +2572,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             `
                             : `
                                 <div class="empty">
-                                    QR belum diterima dari BAYARGG.
+                                    QR belum diterima dari Bayar.gg.
                                 </div>
                             `
                     }
@@ -2591,15 +2591,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 )}"
                             >
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                Buka Pembayaran BAYARGG
+                                Buka Pembayaran Bayar.gg
                             </a>
                         `
                         : ""
                 }
 
                 <p
-                    class="BAYARGG-status"
-                    id="BAYARGGStatus"
+                    class="bayargg-status"
+                    id="bayarggStatus"
                 >
                     <i class="fa-solid fa-clock"></i>
                     Menunggu pembayaran...
@@ -2614,7 +2614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         modal
             .querySelector(
-                ".BAYARGG-close"
+                ".bayargg-close"
             )
             ?.addEventListener(
                 "click",
@@ -2653,7 +2653,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const status =
             modal.querySelector(
-                "#BAYARGGStatus"
+                "#bayarggStatus"
             );
 
         const started =
