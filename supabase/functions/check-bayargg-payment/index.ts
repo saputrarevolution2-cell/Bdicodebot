@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const CORS = { "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods":"POST, OPTIONS", "Content-Type":"application/json; charset=utf-8" };
+const CORS = { "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, accept", "Access-Control-Allow-Methods":"POST, OPTIONS", "Content-Type":"application/json; charset=utf-8" };
 const json=(b:unknown,s=200)=>new Response(JSON.stringify(b),{status:s,headers:CORS});
 const env=(n:string)=>{const v=Deno.env.get(n)?.trim();if(!v)throw new Error(`${n} belum diset di Supabase Edge Function Secrets.`);return v;};
 Deno.serve(async(req)=>{
