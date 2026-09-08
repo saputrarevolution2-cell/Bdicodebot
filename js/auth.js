@@ -64,20 +64,17 @@
   }
 
   function getErrorMessage(error) {
-    if (!error) {
-      return "Terjadi kesalahan autentikasi.";
-    }
-
-    if (typeof error === "string") {
-      return error;
-    }
-
-    return (
-      error.message ||
-      error.error_description ||
-      error.msg ||
-      "Terjadi kesalahan autentikasi."
-    );
+    if (!error) return "Terjadi kesalahan autentikasi.";
+    if (typeof error === "string") return error;
+    const msg = String(error.message || error.error_description || error.msg || "").trim();
+    const lower = msg.toLowerCase();
+    if (lower.includes("invalid login credentials")) return "Username/Gmail atau kata sandi salah.";
+    if (lower.includes("email not confirmed")) return "Email belum dikonfirmasi. Cek inbox/spam email kamu.";
+    if (lower.includes("user already registered") || lower.includes("already registered")) return "Gmail tersebut sudah terdaftar. Silakan login.";
+    if (lower.includes("database error saving new user")) return "Akun gagal dibuat karena profile database belum sinkron. Jalankan patch database terbaru.";
+    if (lower.includes("captcha") || lower.includes("turnstile")) return "Verifikasi keamanan gagal. Silakan coba lagi.";
+    if (lower.includes("too many requests")) return "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.";
+    return msg || "Terjadi kesalahan autentikasi.";
   }
 
   function assertSupabase() {
@@ -151,155 +148,66 @@
        LOGIN
        ===================================================== */
 
-    async login(identifier, password) {
+    async login(identifier, password, captchaToken = "") {
       const client = assertSupabase();
+      const value = String(identifier || "").trim();
+      const pass = String(password || "");
 
-      const value =
-        String(identifier || "").trim();
-
-      const pass =
-        String(password || "");
-
-      if (!value) {
-        throw new Error(
-          "Username atau Gmail wajib diisi."
-        );
-      }
-
-      if (!pass) {
-        throw new Error(
-          "Kata sandi wajib diisi."
-        );
-      }
-
-      /*
-       * Kalau identifier berupa email,
-       * login langsung menggunakan email.
-       */
+      if (!value) throw new Error("Username atau Gmail wajib diisi.");
+      if (!pass) throw new Error("Kata sandi wajib diisi.");
 
       let email = "";
 
-      if (
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-      ) {
+      // Email: do not touch profiles/RLS at all.
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
         email = normalizeEmail(value);
       } else {
-        /*
-         * Login menggunakan username.
-         * Cari email akun melalui RPC / tabel profiles.
-         */
+        const username = normalizeUsername(value);
 
-        const username =
-          normalizeUsername(value);
-
+        // The RPC is SECURITY DEFINER and is the preferred username resolver.
         try {
-          if (
-            typeof client.rpc === "function"
-          ) {
-            const { data, error } =
-              await client.rpc(
-                "resolve_username_login",
-                {
-                  p_username: username
-                }
-              );
-
-            if (!error && data) {
-              const row =
-                Array.isArray(data)
-                  ? data[0]
-                  : data;
-
-              email =
-                row?.auth_email ||
-                row?.email ||
-                row?.login_email ||
-                "";
-            }
+          const { data, error } = await client.rpc("resolve_username_login", {
+            p_username: username
+          });
+          if (!error && data) {
+            const row = Array.isArray(data) ? data[0] : data;
+            email = normalizeEmail(row?.auth_email || row?.email || "");
+            if (row?.is_banned === true) throw new Error("Akun kamu telah diblokir.");
           }
-        } catch (error) {
-          console.warn(
-            "[PasTele Auth] RPC username lookup gagal:",
-            error
-          );
+        } catch (e) {
+          if (/diblokir/i.test(String(e?.message || ""))) throw e;
+          console.warn("[PasTele Auth] username RPC gagal:", e);
         }
 
-        /*
-         * Fallback menggunakan tabel profiles.
-         */
-
+        // RLS-safe fallback for installations where the RPC was not deployed yet.
         if (!email) {
           try {
-            const { data, error } =
-              await client
-                .from("profiles")
-                .select(
-                  "auth_email,username"
-                )
-                .eq(
-                  "username",
-                  username
-                )
-                .maybeSingle();
-
+            const { data, error } = await client.from("profiles")
+              .select("auth_email,is_banned")
+              .eq("username", username)
+              .maybeSingle();
             if (!error && data) {
-              email =
-                data.auth_email ||
-                "";
+              if (data.is_banned === true) throw new Error("Akun kamu telah diblokir.");
+              email = normalizeEmail(data.auth_email || "");
             }
-          } catch (error) {
-            console.warn(
-              "[PasTele Auth] Profile lookup gagal:",
-              error
-            );
+          } catch (e) {
+            if (/diblokir/i.test(String(e?.message || ""))) throw e;
+            console.warn("[PasTele Auth] profile username fallback gagal:", e);
           }
         }
       }
 
-      if (!email) {
-        throw new Error(
-          "Akun tidak ditemukan."
-        );
-      }
+      if (!email) throw new Error("Username/Gmail tidak ditemukan. Periksa kembali data login kamu.");
 
-      email = normalizeEmail(email);
+      const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password: pass
+      });
 
-      console.log(
-        "[PasTele Auth] Login:",
-        email
-      );
+      if (error) throw new Error(getErrorMessage(error));
+      if (!data?.user) throw new Error("Login gagal. User tidak ditemukan.");
 
-      const { data, error } =
-        await client.auth.signInWithPassword({
-          email,
-          password: pass
-        });
-
-      if (error) {
-        console.error(
-          "[PasTele Auth] Login error:",
-          error
-        );
-
-        throw new Error(
-          getErrorMessage(error)
-        );
-      }
-
-      if (!data?.user) {
-        throw new Error(
-          "Login gagal. User tidak ditemukan."
-        );
-      }
-
-      /*
-       * Cek status user jika tersedia.
-       */
-
-      await this.ensureUserAllowed(
-        data.user
-      );
-
+      await this.ensureUserAllowed(data.user);
       return data;
     },
 
@@ -569,93 +477,33 @@
 
     async checkUsername(username) {
       const client = assertSupabase();
-
-      const value =
-        normalizeUsername(username);
-
-      if (!value) {
-        return false;
-      }
-
-      /*
-       * Coba RPC terlebih dahulu jika tersedia.
-       */
+      const value = normalizeUsername(username);
+      if (!value) return false;
 
       try {
-        const { data, error } =
-          await client.rpc(
-            "check_username_available",
-            {
-              p_username: value
-            }
-          );
-
+        const { data, error } = await client.rpc("check_username_available", {
+          p_username: value
+        });
         if (!error) {
-          if (typeof data === "boolean") {
-            return data;
-          }
-
-          if (
-            Array.isArray(data) &&
-            data.length
-          ) {
-            const row = data[0];
-
-            if (
-              typeof row === "boolean"
-            ) {
-              return row;
-            }
-
-            if (
-              typeof row?.available ===
-              "boolean"
-            ) {
-              return row.available;
-            }
-          }
+          if (typeof data === "boolean") return data;
+          const row = Array.isArray(data) ? data[0] : data;
+          if (typeof row === "boolean") return row;
+          if (typeof row?.available === "boolean") return row.available;
         }
-      } catch (error) {
-        console.warn(
-          "[PasTele Auth] Username availability RPC tidak tersedia."
-        );
+      } catch (e) {
+        console.warn("[PasTele Auth] username availability RPC gagal:", e);
       }
 
-      /*
-       * Fallback query profiles.
-       */
-
       try {
-        const { data, error } =
-          await client
-            .from("profiles")
-            .select("id")
-            .eq(
-              "username",
-              value
-            )
-            .limit(1);
-
-        if (error) {
-          throw error;
-        }
-
-        return !(
-          Array.isArray(data) &&
-          data.length > 0
-        );
-      } catch (error) {
-        console.warn(
-          "[PasTele Auth] Username availability check error:",
-          error
-        );
-
-        /*
-         * Jangan menganggap username sudah tersedia
-         * jika database tidak bisa diperiksa.
-         */
-
-        return true;
+        const { data, error } = await client.from("profiles")
+          .select("id")
+          .eq("username", value)
+          .limit(1);
+        if (error) throw error;
+        return !(Array.isArray(data) && data.length > 0);
+      } catch (e) {
+        // Never tell the UI that a username is available when the DB cannot be checked.
+        throw new Error("Database username belum dapat diperiksa. Jalankan AUTH_REGISTER_LOGIN_FINAL_PATCH.sql di Supabase.");
       }
     },
 

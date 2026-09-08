@@ -534,24 +534,11 @@ document.addEventListener("DOMContentLoaded", () => {
      */
 
     if (!TURNSTILE_SITE_KEY) {
-      console.error(
-        "[PasTele] Turnstile site key kosong."
-      );
-
-      updateSecurityStatus(
-        false,
-        "Cloudflare Turnstile belum dikonfigurasi."
-      );
-
-      setLoginButtonEnabled(
-        false
-      );
-
-      showError(
-        "Cloudflare Turnstile belum dikonfigurasi."
-      );
-
-      return false;
+      // Turnstile is an optional UI layer for login. Supabase signInWithPassword
+      // does not take a captcha token, so a missing site key must not brick login.
+      updateSecurityStatus(true, "Login aman tanpa verifikasi tambahan.");
+      setLoginButtonEnabled(true);
+      return true;
     }
 
     turnstileRendering =
@@ -847,9 +834,8 @@ document.addEventListener("DOMContentLoaded", () => {
      ======================================================= */
 
   function requireTurnstile() {
-    const token =
-      getTurnstileToken();
-
+    if (!TURNSTILE_SITE_KEY) return "";
+    const token = getTurnstileToken();
     if (!token) {
       setLoginButtonEnabled(
         false

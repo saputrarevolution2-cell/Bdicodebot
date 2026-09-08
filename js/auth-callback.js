@@ -1,13 +1,30 @@
+document.addEventListener("DOMContentLoaded", async () => {
+  const message = document.getElementById("m");
+  const client = window.sb;
+  if (!client) {
+    location.replace("setup.html");
+    return;
+  }
 
-/* SOURCE: /js/auth-callback.js */
-document.addEventListener('DOMContentLoaded', async () => {
-  const message = document.getElementById('m');
-  if (!window.sb) return location.replace('setup.html');
   try {
-    const { data } = await sb.auth.getSession();
-    if (data?.session) return location.replace('dashboard.html');
-    if (message) message.textContent = 'Login tidak berhasil. Silakan kembali ke halaman login.';
-  } catch (_) {
-    if (message) message.textContent = 'Terjadi kesalahan saat menyelesaikan login.';
+    const params = new URLSearchParams(location.search);
+    const code = params.get("code");
+    if (code) {
+      const { error } = await client.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      // Remove OAuth parameters so refresh cannot replay the callback.
+      history.replaceState({}, document.title, location.pathname);
+    }
+
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    if (data?.session) {
+      location.replace("dashboard.html");
+      return;
+    }
+    if (message) message.textContent = "Login tidak berhasil. Silakan kembali ke halaman login.";
+  } catch (e) {
+    console.error("[PasTele OAuth callback]", e);
+    if (message) message.textContent = e?.message || "Terjadi kesalahan saat menyelesaikan login.";
   }
 });
