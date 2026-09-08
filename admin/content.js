@@ -224,8 +224,8 @@
     let table=x.source;
     let update=data;
     if(table==='pastelinks') update={title:data.title,visibility:data.status==='published'?'public':data.status};
-    if(table==='telegram_products') update={title:data.title,description:data.description,price:data.price,is_published:data.status==='published'};
-    if(table==='telegram_channels') update={name:data.title,description:data.description,price:data.price,is_published:data.status==='published'};
+    if(table==='telegram_products') update={title:data.title,description:data.description,price:data.price,status:data.status};
+    if(table==='telegram_channels') update={name:data.title,description:data.description,price:data.price,status:data.status};
     if(table==='products') update={title:data.title,price:data.price,status:data.status,description:data.description};
     const ownerCol=table==='pastelinks'?'user_id':table==='products'?'creator_id':'owner_id';
     const q=await client.from(table).update(update).eq('id',x.id);
