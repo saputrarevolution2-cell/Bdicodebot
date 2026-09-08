@@ -1,16 +1,691 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <script src="js/theme-preload.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark">
-  <title>Pembayaran — PasTele</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/config.js?v=20260908"></script><script src="js/supabase.js?v=20260908"></script><script src="js/auth.js"></script><script src="js/navbar.js?v=20260908"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="css/app.css?v=20260908"><link rel="stylesheet" href="css/navbar.css?v=20260908"><link rel="stylesheet" href="css/footer.css?v=20260908"><link rel="stylesheet" href="css/saas-final.css?v=20260908"><link rel="stylesheet" href="css/payment.css?v=20260908">
-<link rel="stylesheet" href="css/dashboard-theme.css?v=20260909"><link rel="stylesheet" href="css/theme-universal.css?v=20260908-auto-theme">
-  
-<link rel="stylesheet" href="css/final-fixes.css?v=20260909-full"><script>document.documentElement.classList.add("pastele-ready");</script></head>
-<body class="app-page payment-page"><div id="navbar"></div><main><section class="section payment-section"><div class="container payment-container">
-<header class="payment-header"><span class="badge"><i class="fa-solid fa-qrcode"></i> BAYAR.GG · QRIS</span><h1>Selesaikan Pembayaran</h1><p class="muted">Scan QRIS atau buka halaman pembayaran Bayar.gg. Status akan diperbarui otomatis.</p></header>
-<div id="paymentLoading" class="payment-state"><i class="fa-solid fa-spinner fa-spin"></i><span>Menyiapkan pembayaran...</span></div>
-<div id="paymentContent" hidden><div class="payment-grid"><article class="card payment-card"><div class="payment-order-head"><div><span>ORDER</span><strong id="orderId">—</strong></div><button class="icon-btn" id="copyOrder" title="Salin order"><i class="fa-regular fa-copy"></i></button></div><div class="payment-product"><div class="payment-icon"><i class="fa-solid fa-box"></i></div><div><span id="orderType">Produk</span><h2 id="orderTitle">—</h2></div></div><div class="payment-amount"><span>Total pembayaran</span><strong id="orderAmount">Rp0</strong></div><div class="payment-qr-wrap" id="qrWrap"><div class="qr-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat QRIS...</span></div></div><a id="cashUrl" class="btn primary payment-open" target="_blank" rel="noopener noreferrer" hidden><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Pembayaran Bayar.gg</a></article>
-<aside class="card payment-card payment-side"><div class="status-icon" id="statusIcon"><i class="fa-solid fa-clock"></i></div><h2 id="paymentStatusTitle">Menunggu pembayaran</h2><p id="paymentStatusText" class="muted">Setelah kamu membayar, sistem akan memverifikasi transaksi secara otomatis.</p><div class="payment-status-pill" id="paymentStatusPill">PENDING</div><div class="payment-help"><div><i class="fa-solid fa-shield-halved"></i><span>Pembayaran aman melalui Bayar.gg</span></div><div><i class="fa-solid fa-bolt"></i><span>Verifikasi otomatis melalui webhook</span></div><div><i class="fa-solid fa-clock"></i><span>Jangan tutup halaman sampai status berubah</span></div></div><button class="btn secondary payment-check" id="checkPayment"><i class="fa-solid fa-rotate"></i> Cek Status Sekarang</button></aside></div></div>
-<div id="paymentError" class="payment-error" hidden></div></div></section></main><div id="toast"></div><script src="js/payment.js?v=20260908"></script><script src="js/footer.js?v=20260908"></script><script src="js/theme.js?v=20260909"></script></body></html>
+    <script src="js/theme-preload.js"></script>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="color-scheme" content="light dark">
+    <title>Pembayaran — PasTele</title>
+    <!-- =====================================================
+         CORE
+         ===================================================== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js?v=20260909"></script>
+    <script src="js/supabase.js?v=20260909"></script>
+    <script src="js/auth.js?v=20260909"></script>
+    <script src="js/navbar.js?v=20260909"></script>
+    <!-- =====================================================
+         ICON
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+    <!-- =====================================================
+         GLOBAL CSS
+         ===================================================== -->
+    <link rel="stylesheet" href="css/app.css?v=20260909">
+    <link rel="stylesheet" href="css/navbar.css?v=20260909">
+    <link rel="stylesheet" href="css/footer.css?v=20260909">
+    <link rel="stylesheet" href="css/saas-final.css?v=20260909">
+    <link rel="stylesheet" href="css/dashboard-theme.css?v=20260909">
+    <link rel="stylesheet" href="css/theme-universal.css?v=20260909-auto-theme">
+    <link rel="stylesheet" href="css/final-fixes.css?v=20260909-full">
+    <!-- =====================================================
+         PAYMENT CSS
+         ===================================================== -->
+    <link rel="stylesheet" href="css/payment.css?v=20260909-final">
+    <script>
+        document.documentElement.classList.add("pastele-ready");
+    </script>
+</head>
+<body class="app-page payment-page">
+    <!-- =====================================================
+         NAVBAR
+         ===================================================== -->
+    <div id="navbar"></div>
+    <main>
+        <!-- =================================================
+             HERO
+             ================================================= -->
+        <section class="payment-section">
+            <div class="container payment-container">
+                <header class="payment-header">
+                    <div class="payment-badge">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Pembayaran Aman</span>
+                    </div>
+                    <h1>
+                        Selesaikan Pembayaran
+                    </h1>
+                    <p>
+                        Scan QRIS atau buka halaman pembayaran
+                        Pastele. Setelah pembayaran berhasil,
+                        status order akan diverifikasi otomatis.
+                    </p>
+                    <div class="payment-security-row">
+                        <span>
+                            <i class="fa-solid fa-lock"></i>
+                            Secure Checkout
+                        </span>
+                        <span>
+                            <i class="fa-solid fa-bolt"></i>
+                            Verifikasi Otomatis
+                        </span>
+                        <span>
+                            <i class="fa-solid fa-qrcode"></i>
+                            QRIS
+                        </span>
+                    </div>
+                </header>
+                <!-- =================================================
+                     LOADING
+                     ================================================= -->
+                <div
+                    id="paymentLoading"
+                    class="payment-state"
+                >
+                    <div class="loading-orb">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    </div>
+                    <strong>
+                        Menyiapkan pembayaran...
+                    </strong>
+                    <span>
+                        Mohon tunggu sebentar.
+                    </span>
+                </div>
+                <!-- =================================================
+                     ERROR
+                     ================================================= -->
+                <div
+                    id="paymentError"
+                    class="payment-error"
+                    hidden
+                ></div>
+                <!-- =================================================
+                     CONTENT
+                     ================================================= -->
+                <div
+                    id="paymentContent"
+                    class="payment-content"
+                    hidden
+                >
+                    <div class="payment-layout">
+                        <!-- =========================================
+                             LEFT — ORDER + PAYMENT
+                             ========================================= -->
+                        <article class="payment-main-card">
+                            <!-- ORDER HEADER -->
+                            <div class="payment-order-head">
+                                <div class="order-reference">
+                                    <span class="eyebrow">
+                                        <i class="fa-solid fa-receipt"></i>
+                                        ORDER
+                                    </span>
+                                    <strong id="orderId">
+                                        —
+                                    </strong>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="icon-btn"
+                                    id="copyOrder"
+                                    title="Salin Order ID"
+                                    aria-label="Salin Order ID"
+                                >
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
+                            <!-- PRODUCT -->
+                            <div class="payment-product">
+                                <div class="payment-product-icon">
+                                    <i class="fa-solid fa-box-open"></i>
+                                </div>
+                                <div class="payment-product-info">
+                                    <span id="orderType">
+                                        Produk
+                                    </span>
+                                    <h2 id="orderTitle">
+                                        Menyiapkan pesanan...
+                                    </h2>
+                                </div>
+                            </div>
+                            <!-- TOTAL -->
+                            <div class="payment-total-box">
+                                <div class="payment-total-label">
+                                    <i class="fa-solid fa-wallet"></i>
+                                    <span>
+                                        Total pembayaran
+                                    </span>
+                                </div>
+                                <strong id="orderAmount">
+                                    Rp0
+                                </strong>
+                                <small>
+                                    Nominal pembayaran sesuai
+                                    order kamu.
+                                </small>
+                            </div>
+                            <!-- QR -->
+                            <div
+                                class="payment-qr-card"
+                                id="qrWrap"
+                            >
+                                <div class="qr-loading">
+                                    <div class="qr-loading-icon">
+                                        <i class="fa-solid fa-qrcode"></i>
+                                    </div>
+                                    <strong>
+                                        Memuat QRIS...
+                                    </strong>
+                                    <span>
+                                        QR pembayaran sedang
+                                        disiapkan.
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- PAYMENT URL -->
+                            <a
+                                id="cashUrl"
+                                class="payment-open-btn"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                hidden
+                            >
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                <span>
+                                    Buka Pembayaran Pastele
+                                </span>
+                            </a>
+                            <!-- PAYMENT METHODS -->
+                            <section class="payment-methods">
+                                <div class="section-heading">
+                                    <div class="section-heading-icon">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                    </div>
+                                    <div>
+                                        <h3>
+                                            Bayar dengan Bank & E-Wallet
+                                        </h3>
+                                        <p>
+                                            QRIS dapat dipindai menggunakan
+                                            aplikasi pembayaran yang mendukung QRIS.
+                                        </p>
+                                    </div>
+                                </div>
+                                <!-- BANK MARQUEE -->
+                                <div class="payment-marquee">
+                                    <div class="payment-marquee-track">
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BCA
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BRI
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BNI
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            Mandiri
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BTN
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            CIMB Niaga
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            Danamon
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            Permata
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            Bank Jago
+                                        </span>
+                                        <!-- DUPLICATE FOR LOOP -->
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BCA
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BRI
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BNI
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            Mandiri
+                                        </span>
+                                        <span class="payment-method-chip">
+                                            <i class="fa-solid fa-building-columns"></i>
+                                            BTN
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- EWALLET MARQUEE -->
+                                <div class="payment-marquee payment-marquee-wallet">
+                                    <div class="payment-marquee-track payment-marquee-track-reverse">
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            GoPay
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            OVO
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            DANA
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            ShopeePay
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-mobile-screen-button"></i>
+                                            LinkAja
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-qrcode"></i>
+                                            QRIS
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            GoPay
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            OVO
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            DANA
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            ShopeePay
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-mobile-screen-button"></i>
+                                            LinkAja
+                                        </span>
+                                        <span class="payment-method-chip wallet">
+                                            <i class="fa-solid fa-qrcode"></i>
+                                            QRIS
+                                        </span>
+                                    </div>
+                                </div>
+                            </section>
+                            <!-- =================================================
+                                 TUTORIAL
+                                 ================================================= -->
+                            <section class="payment-tutorial">
+                                <div class="section-heading">
+                                    <div class="section-heading-icon">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    </div>
+                                    <div>
+                                        <h3>
+                                            Cara Pembayaran
+                                        </h3>
+                                        <p>
+                                            Ikuti langkah berikut agar
+                                            pembayaran berhasil diproses.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="tutorial-list">
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            1
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-qrcode"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Tampilkan QRIS
+                                            </h4>
+                                            <p>
+                                                Pastikan QRIS sudah muncul
+                                                dengan sempurna pada halaman
+                                                pembayaran.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            2
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-mobile-screen-button"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Buka aplikasi pembayaran
+                                            </h4>
+                                            <p>
+                                                Buka aplikasi mobile banking
+                                                atau e-wallet yang mendukung
+                                                pembayaran QRIS.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            3
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Scan QRIS
+                                            </h4>
+                                            <p>
+                                                Pilih menu QRIS atau Scan,
+                                                lalu arahkan kamera ke QRIS
+                                                yang tampil di halaman ini.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            4
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-money-check-dollar"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Periksa nominal
+                                            </h4>
+                                            <p>
+                                                Pastikan nominal pada aplikasi
+                                                pembayaran sama dengan total
+                                                order sebelum menekan tombol
+                                                bayar.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            5
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-fingerprint"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Konfirmasi pembayaran
+                                            </h4>
+                                            <p>
+                                                Konfirmasi menggunakan PIN,
+                                                biometrik, atau metode keamanan
+                                                aplikasi pembayaran kamu.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            6
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-rotate"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Tunggu verifikasi
+                                            </h4>
+                                            <p>
+                                                Setelah pembayaran berhasil,
+                                                sistem akan mengecek status
+                                                secara otomatis.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="tutorial-step">
+                                        <div class="tutorial-number">
+                                            7
+                                        </div>
+                                        <div class="tutorial-icon">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        </div>
+                                        <div class="tutorial-content">
+                                            <h4>
+                                                Pembayaran selesai
+                                            </h4>
+                                            <p>
+                                                Jika status berubah menjadi
+                                                berhasil, order kamu telah
+                                                selesai diproses.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tutorial-warning">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                    <div>
+                                        <strong>
+                                            Jangan melakukan pembayaran
+                                            dua kali.
+                                        </strong>
+                                        <span>
+                                            Jika saldo sudah terpotong tetapi
+                                            status masih pending, tunggu
+                                            beberapa saat lalu tekan
+                                            <b>Cek Pembayaran</b>.
+                                        </span>
+                                    </div>
+                                </div>
+                            </section>
+                            <!-- =================================================
+                                 ORDER INFO
+                                 ================================================= -->
+                            <div class="payment-info-strip">
+                                <div>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>
+                                        Nominal otomatis sesuai order
+                                    </span>
+                                </div>
+                                <div>
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <span>
+                                        Pembayaran diproses melalui Bayar.gg
+                                    </span>
+                                </div>
+                                <div>
+                                    <i class="fa-solid fa-bolt"></i>
+                                    <span>
+                                        Status diperbarui otomatis
+                                    </span>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- =========================================
+                             RIGHT — STATUS
+                             ========================================= -->
+                        <aside class="payment-status-card">
+                            <div class="status-card-top">
+                                <span class="status-label">
+                                    <i class="fa-solid fa-signal"></i>
+                                    STATUS PEMBAYARAN
+                                </span>
+                                <div
+                                    class="payment-status-pill"
+                                    id="paymentStatusPill"
+                                >
+                                    PENDING
+                                </div>
+                            </div>
+                            <div
+                                class="status-icon"
+                                id="statusIcon"
+                            >
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <h2 id="paymentStatusTitle">
+                                Menunggu pembayaran
+                            </h2>
+                            <p
+                                id="paymentStatusText"
+                                class="status-description"
+                            >
+                                Setelah kamu membayar, sistem
+                                akan memverifikasi transaksi
+                                secara otomatis.
+                            </p>
+                            <div class="status-progress">
+                                <div class="progress-line">
+                                    <span></span>
+                                </div>
+                                <div class="progress-caption">
+                                    <span>
+                                        <i class="fa-solid fa-qrcode"></i>
+                                        Bayar
+                                    </span>
+                                    <span>
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                        Verifikasi
+                                    </span>
+                                    <span>
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        Selesai
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- HELP -->
+                            <div class="payment-help">
+                                <div class="help-item">
+                                    <div class="help-icon">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Pembayaran aman
+                                        </strong>
+                                        <span>
+                                            Transaksi diproses melalui
+                                            gateway pembayaran.
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="help-item">
+                                    <div class="help-icon">
+                                        <i class="fa-solid fa-bolt"></i>
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Verifikasi otomatis
+                                        </strong>
+                                        <span>
+                                            Sistem mengecek pembayaran
+                                            secara berkala.
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="help-item">
+                                    <div class="help-icon">
+                                        <i class="fa-solid fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Jangan tutup halaman
+                                        </strong>
+                                        <span>
+                                            Kamu tetap dapat mengecek
+                                            status secara manual.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ACTION -->
+                            <div class="payment-actions">
+                                <button
+                                    type="button"
+                                    class="payment-check-btn"
+                                    id="checkPayment"
+                                >
+                                    <i class="fa-solid fa-rotate"></i>
+                                    <span>
+                                        Cek Pembayaran
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="payment-cancel-btn"
+                                    id="cancelPayment"
+                                >
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    <span>
+                                        Batal & Kembali
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- SUPPORT -->
+                            <div class="payment-support">
+                                <i class="fa-solid fa-headset"></i>
+                                <div>
+                                    <strong>
+                                        Butuh bantuan?
+                                    </strong>
+                                    <span>
+                                        Simpan Order ID kamu
+                                        sebelum menghubungi admin.
+                                    </span>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- =====================================================
+         TOAST
+         ===================================================== -->
+    <div id="toast"></div>
+    <!-- =====================================================
+         SCRIPTS
+         ===================================================== -->
+    <script src="js/payment.js?v=20260909-final"></script>
+    <script src="js/footer.js?v=20260909"></script>
+    <script src="js/theme.js?v=20260909"></script>
+    <!-- CANCEL BUTTON -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const cancel = document.getElementById("cancelPayment");
+            if (!cancel) return;
+            cancel.addEventListener("click", () => {
+                const confirmed = window.confirm(
+                    "Batalkan halaman pembayaran dan kembali?"
+                );
+                if (!confirmed) return;
+                if (document.referrer) {
+                    history.back();
+                } else {
+                    window.location.href = "marketplace.html";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
