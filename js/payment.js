@@ -999,7 +999,7 @@ document.addEventListener(
                         <div class="qr-title">
                             <i class="fa-solid fa-qrcode"></i>
                             <span>
-                                Scan QRIS Bayar.gg
+                                Scan QRIS Di Bawah Ini
                             </span>
                         </div>
 
@@ -1054,7 +1054,7 @@ document.addEventListener(
 
                             <span>
                                 QRIS tidak tersedia.
-                                Gunakan halaman pembayaran Bayar.gg.
+                                Gunakan halaman pembayaran.
                             </span>
                         </div>
                     `;
@@ -1101,7 +1101,7 @@ document.addEventListener(
                         urlBtn.innerHTML = `
                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
                             <span>
-                                Buka Pembayaran Bayar.gg
+                                Buka Pembayaran
                             </span>
                         `;
                     } else {
