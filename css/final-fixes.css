@@ -1,0 +1,17 @@
+/* PasTele final stability/UI layer — safe, non-destructive */
+*,*::before,*::after{box-sizing:border-box}
+html{overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{min-height:100vh;overflow-x:hidden}
+img,svg,video,canvas,iframe{max-width:100%}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
+.card,.auth-card,.panel,.dashboard-card,.product-card,.market-card,.settings-card{max-width:100%}
+.table-wrap,.table-responsive,.overflow-auto{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:700px){
+  .container,.page-container,.main-container,.content-container{width:100%;max-width:100%;padding-left:14px;padding-right:14px}
+  .grid,.cards-grid,.product-grid{grid-template-columns:minmax(0,1fr)!important}
+  .row{flex-wrap:wrap}
+  .modal{max-width:calc(100vw - 24px);margin:12px}
+  h1{font-size:clamp(1.45rem,7vw,2rem)}
+  h2{font-size:clamp(1.2rem,5.5vw,1.6rem)}
+}
