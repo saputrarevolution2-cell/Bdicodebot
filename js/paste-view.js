@@ -1,1 +1,612 @@
-document.addEventListener('DOMContentLoaded',async()=>{const slug=new URLSearchParams(location.search).get('slug'),box=document.getElementById('pasteContent');const esc=v=>window.TC?.esc?TC.esc(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));const safe=v=>{let s=String(v||'').trim();if(/^www\./i.test(s))s='https://'+s;try{const u=new URL(s);return['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}};const linkify=raw=>{const d=new DOMParser().parseFromString(String(raw||''),'text/html');d.querySelectorAll('script,iframe,object,embed,style').forEach(e=>e.remove());d.querySelectorAll('[onclick],[onerror],[onload],[onmouseover]').forEach(e=>['onclick','onerror','onload','onmouseover'].forEach(a=>e.removeAttribute(a)));d.querySelectorAll('a').forEach(a=>{const h=safe(a.getAttribute('href'));if(h){a.href=h;a.target='_blank';a.rel='noopener noreferrer'}else a.replaceWith(document.createTextNode(a.textContent||''))});const w=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),nodes=[];while(w.nextNode())if(!w.currentNode.parentElement.closest('a,pre,code'))nodes.push(w.currentNode);const re=/((?:https?:\/\/|www\.)[^\s<>"']+)/gi;nodes.forEach(n=>{let frag=document.createDocumentFragment(),last=0,m;while((m=re.exec(n.nodeValue))){let u=m[1],trail='';while(/[.,!?;:)\]}]$/.test(u)){trail=u.slice(-1)+trail;u=u.slice(0,-1)}if(m.index>last)frag.append(document.createTextNode(n.nodeValue.slice(last,m.index)));const a=document.createElement('a');a.href=safe(u)||u;a.target='_blank';a.rel='noopener noreferrer';a.textContent=u;frag.append(a);if(trail)frag.append(document.createTextNode(trail));last=m.index+m[1].length}if(last){if(last<n.nodeValue.length)frag.append(document.createTextNode(n.nodeValue.slice(last)));n.replaceWith(frag)}});return d.body.innerHTML};const r=await sb.from('pastelinks').select('*').eq('slug',slug).maybeSingle(),x=r.data;if(r.error||!x)return box.innerHTML='<div class="empty">Paste tidak ditemukan.</div>';if(x.expires_at&&new Date(x.expires_at)<new Date())return box.innerHTML='<div class="empty">Paste sudah expired.</div>';box.innerHTML=`<article class="justpaste-view premium-view"><div class="paste-view-top"><span class="badge"><i class="fa-solid fa-link"></i> PasteLink</span><span class="paste-live"><i class="fa-solid fa-circle"></i> Published</span></div><h1>${esc(x.title)}</h1><div class="rich-output">${linkify(x.content_html)}</div><p class="muted">${(x.tags||[]).map(t=>'#'+esc(t)).join(' ')}</p><div class="paste-actions"><button class="btn" id="plike"><i class="fa-regular fa-heart"></i> Like</button><button class="btn" id="pshare"><i class="fa-solid fa-share-nodes"></i> Share</button></div></article>`;await sb.rpc('increment_paste_view',{p_id:x.id});await sb.rpc('record_content_view',{p_owner:x.user_id,p_target_type:'link',p_target_id:x.id});document.getElementById('pshare').onclick=async()=>{try{await navigator.clipboard.writeText(location.href)}catch(_){}await sb.rpc('track_analytics',{p_owner:x.user_id,p_event_type:'share',p_target_type:'link',p_target_id:x.id});TC.toast('Link disalin','success')};document.getElementById('plike').onclick=async()=>{const u=await TC.user();if(!u)return location.href='login.html';const q=await sb.rpc('toggle_content_like',{p_owner:x.user_id,p_target_type:'link',p_target_id:x.id});if(q.error)TC.toast(q.error.message,'error');else document.getElementById('plike').innerHTML=q.data?.liked?'<i class="fa-solid fa-heart"></i> Liked':'<i class="fa-regular fa-heart"></i> Like'}});
+/* =========================================================
+   PasTele — PasteLink View
+   FINAL SQL SYNC
+   SQL TABLE:
+   public.pastelinks
+   Relevant columns:
+   - id
+   - user_id
+   - slug
+   - title
+   - content_html
+   - visibility
+   - password_hash
+   - expires_at
+   - description
+   - tags
+   - allow_comments
+   - allow_download
+   - show_raw
+   - anonymous
+   - views
+   - created_at
+   - updated_at
+   RPC:
+   - increment_paste_view(uuid)
+   - record_content_view(uuid,text,uuid)
+   - track_analytics(text,text,uuid,uuid)
+   - toggle_content_like(uuid,text,uuid)
+   ========================================================= */
+document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
+    /* =======================================================
+       DOM
+       ======================================================= */
+    const params = new URLSearchParams(location.search);
+    const slug = String(params.get("slug") || "").trim();
+    const box = document.getElementById("pasteContent");
+    if (!box) {
+        console.error("[PasteLink] #pasteContent tidak ditemukan.");
+        return;
+    }
+    /* =======================================================
+       BASIC HELPERS
+       ======================================================= */
+    const esc = (value) => {
+        if (window.TC?.esc) {
+            return TC.esc(String(value ?? ""));
+        }
+        return String(value ?? "").replace(
+            /[&<>"']/g,
+            (char) =>
+                ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#039;"
+                })[char]
+        );
+    };
+    const client =
+        window.sb ||
+        window.supabaseClient ||
+        window.supabase;
+    if (!client) {
+        box.innerHTML = `
+            <div class="empty">
+                Tidak dapat terhubung ke database.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       URL SANITIZER
+       ======================================================= */
+    const safeUrl = (value) => {
+        let url = String(value || "").trim();
+        if (!url) return "";
+        if (/^www\./i.test(url)) {
+            url = "https://" + url;
+        }
+        try {
+            const parsed = new URL(url);
+            if (
+                parsed.protocol !== "http:" &&
+                parsed.protocol !== "https:"
+            ) {
+                return "";
+            }
+            return parsed.href;
+        } catch {
+            return "";
+        }
+    };
+    /* =======================================================
+       SAFE HTML / LINKIFY
+       -------------------------------------------------------
+       content_html memang berupa HTML dari PasteLink.
+       Kita tetap sanitasi elemen/script berbahaya sebelum
+       memasukkannya ke DOM.
+       ======================================================= */
+    const linkify = (raw) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(
+            String(raw || ""),
+            "text/html"
+        );
+        /* Remove dangerous elements */
+        doc.querySelectorAll(
+            "script,iframe,object,embed,style,link,meta,base,form"
+        ).forEach((element) => {
+            element.remove();
+        });
+        /* Remove inline event handlers */
+        doc.querySelectorAll("*").forEach((element) => {
+            [...element.attributes].forEach((attribute) => {
+                const name = attribute.name.toLowerCase();
+                if (
+                    name.startsWith("on") ||
+                    name === "srcdoc"
+                ) {
+                    element.removeAttribute(attribute.name);
+                }
+            });
+        });
+        /* Sanitize anchors */
+        doc.querySelectorAll("a").forEach((anchor) => {
+            const href = safeUrl(
+                anchor.getAttribute("href")
+            );
+            if (!href) {
+                anchor.replaceWith(
+                    document.createTextNode(
+                        anchor.textContent || ""
+                    )
+                );
+                return;
+            }
+            anchor.setAttribute("href", href);
+            anchor.setAttribute("target", "_blank");
+            anchor.setAttribute(
+                "rel",
+                "noopener noreferrer nofollow"
+            );
+        });
+        /*
+         * Remove javascript/data/blob URLs from media.
+         * Normal HTTPS images are allowed.
+         */
+        doc.querySelectorAll(
+            "img,video,audio,source"
+        ).forEach((element) => {
+            const attr =
+                element.hasAttribute("src")
+                    ? "src"
+                    : element.hasAttribute("poster")
+                        ? "poster"
+                        : null;
+            if (!attr) return;
+            const value =
+                element.getAttribute(attr);
+            if (!safeUrl(value)) {
+                element.removeAttribute(attr);
+            }
+        });
+        /* ===================================================
+           AUTO LINK PLAIN URLS
+           =================================================== */
+        const walker = doc.createTreeWalker(
+            doc.body,
+            NodeFilter.SHOW_TEXT
+        );
+        const textNodes = [];
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            if (
+                node.parentElement &&
+                !node.parentElement.closest(
+                    "a,pre,code,textarea"
+                )
+            ) {
+                textNodes.push(node);
+            }
+        }
+        const urlRegex =
+            /((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
+        textNodes.forEach((node) => {
+            const text = node.nodeValue || "";
+            let match;
+            let lastIndex = 0;
+            let changed = false;
+            const fragment =
+                document.createDocumentFragment();
+            urlRegex.lastIndex = 0;
+            while ((match = urlRegex.exec(text))) {
+                let url = match[1];
+                let trailing = "";
+                /*
+                 * Keep punctuation outside the anchor.
+                 */
+                while (
+                    /[.,!?;:)\]}]$/.test(url)
+                ) {
+                    trailing =
+                        url.slice(-1) + trailing;
+                    url = url.slice(0, -1);
+                }
+                if (match.index > lastIndex) {
+                    fragment.appendChild(
+                        document.createTextNode(
+                            text.slice(
+                                lastIndex,
+                                match.index
+                            )
+                        )
+                    );
+                }
+                const href = safeUrl(url);
+                if (href) {
+                    const anchor =
+                        document.createElement("a");
+                    anchor.href = href;
+                    anchor.target = "_blank";
+                    anchor.rel =
+                        "noopener noreferrer nofollow";
+                    anchor.textContent = url;
+                    fragment.appendChild(anchor);
+                    if (trailing) {
+                        fragment.appendChild(
+                            document.createTextNode(
+                                trailing
+                            )
+                        );
+                    }
+                    changed = true;
+                } else {
+                    fragment.appendChild(
+                        document.createTextNode(
+                            match[1]
+                        )
+                    );
+                    changed = true;
+                }
+                lastIndex =
+                    match.index + match[1].length;
+            }
+            if (!changed) return;
+            if (lastIndex < text.length) {
+                fragment.appendChild(
+                    document.createTextNode(
+                        text.slice(lastIndex)
+                    )
+                );
+            }
+            node.replaceWith(fragment);
+        });
+        return doc.body.innerHTML;
+    };
+    /* =======================================================
+       VALIDATE SLUG
+       ======================================================= */
+    if (!slug) {
+        box.innerHTML = `
+            <div class="empty">
+                Paste tidak ditemukan.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       LOAD PASTELINK
+       -------------------------------------------------------
+       Jangan gunakan select('*').
+       Ambil hanya kolom yang memang digunakan.
+       ======================================================= */
+    const result = await client
+        .from("pastelinks")
+        .select(`
+            id,
+            user_id,
+            slug,
+            title,
+            content_html,
+            visibility,
+            expires_at,
+            description,
+            tags,
+            allow_comments,
+            allow_download,
+            show_raw,
+            anonymous,
+            views,
+            created_at,
+            updated_at
+        `)
+        .eq("slug", slug)
+        .maybeSingle();
+    if (result.error) {
+        console.error(
+            "[PasteLink] Query error:",
+            result.error
+        );
+        box.innerHTML = `
+            <div class="empty">
+                Gagal memuat PasteLink.
+            </div>
+        `;
+        return;
+    }
+    const paste = result.data;
+    if (!paste) {
+        box.innerHTML = `
+            <div class="empty">
+                Paste tidak ditemukan.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       EXPIRATION
+       ======================================================= */
+    if (
+        paste.expires_at &&
+        new Date(paste.expires_at).getTime() <= Date.now()
+    ) {
+        box.innerHTML = `
+            <div class="empty">
+                Paste sudah expired.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       TAGS
+       ======================================================= */
+    const tags = Array.isArray(paste.tags)
+        ? paste.tags
+        : [];
+    const tagHtml = tags
+        .filter((tag) => String(tag || "").trim())
+        .map(
+            (tag) =>
+                `<span class="paste-tag">#${esc(tag)}</span>`
+        )
+        .join("");
+    /* =======================================================
+       RENDER
+       ======================================================= */
+    const html = linkify(
+        paste.content_html || ""
+    );
+    box.innerHTML = `
+        <article
+            class="justpaste-view premium-view"
+            data-paste-id="${esc(paste.id)}"
+        >
+            <div class="paste-view-top">
+                <span class="badge">
+                    <i class="fa-solid fa-link"></i>
+                    PasteLink
+                </span>
+                <span class="paste-live">
+                    <i class="fa-solid fa-circle"></i>
+                    Published
+                </span>
+            </div>
+            <h1>
+                ${esc(paste.title || "Untitled Paste")}
+            </h1>
+            ${
+                paste.description
+                    ? `
+                        <p class="paste-description muted">
+                            ${esc(paste.description)}
+                        </p>
+                    `
+                    : ""
+            }
+            <div class="rich-output">
+                ${html}
+            </div>
+            ${
+                tagHtml
+                    ? `
+                        <div class="paste-tags">
+                            ${tagHtml}
+                        </div>
+                    `
+                    : ""
+            }
+            <div class="paste-actions">
+                <button
+                    type="button"
+                    class="btn"
+                    id="plike"
+                >
+                    <i class="fa-regular fa-heart"></i>
+                    Like
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    id="pshare"
+                >
+                    <i class="fa-solid fa-share-nodes"></i>
+                    Share
+                </button>
+            </div>
+        </article>
+    `;
+    /* =======================================================
+       VIEW TRACKING
+       -------------------------------------------------------
+       RPC memang tersedia di SQL.
+       Jangan block UI kalau analytics gagal.
+       ======================================================= */
+    try {
+        const viewResult = await client.rpc(
+            "increment_paste_view",
+            {
+                p_id: paste.id
+            }
+        );
+        if (viewResult.error) {
+            console.warn(
+                "[PasteLink] increment_paste_view:",
+                viewResult.error
+            );
+        }
+    } catch (error) {
+        console.warn(
+            "[PasteLink] View RPC gagal:",
+            error
+        );
+    }
+    try {
+        const analyticsResult = await client.rpc(
+            "record_content_view",
+            {
+                p_owner: paste.user_id,
+                p_target_type: "link",
+                p_target_id: paste.id
+            }
+        );
+        if (analyticsResult.error) {
+            console.warn(
+                "[PasteLink] record_content_view:",
+                analyticsResult.error
+            );
+        }
+    } catch (error) {
+        console.warn(
+            "[PasteLink] Analytics RPC gagal:",
+            error
+        );
+    }
+    /* =======================================================
+       SHARE
+       ======================================================= */
+    const shareButton =
+        document.getElementById("pshare");
+    shareButton?.addEventListener(
+        "click",
+        async () => {
+            const url = location.href;
+            let copied = false;
+            try {
+                if (
+                    navigator.clipboard &&
+                    window.isSecureContext
+                ) {
+                    await navigator.clipboard.writeText(
+                        url
+                    );
+                    copied = true;
+                }
+            } catch {
+                copied = false;
+            }
+            /*
+             * Fallback Web Share API.
+             */
+            if (
+                !copied &&
+                navigator.share
+            ) {
+                try {
+                    await navigator.share({
+                        title:
+                            paste.title ||
+                            "PasteLink",
+                        url
+                    });
+                } catch {
+                    /* User cancelled share */
+                }
+            }
+            /* Track share */
+            try {
+                const shareResult =
+                    await client.rpc(
+                        "track_analytics",
+                        {
+                            p_owner: paste.user_id,
+                            p_event_type: "share",
+                            p_target_type: "link",
+                            p_target_id: paste.id
+                        }
+                    );
+                if (shareResult.error) {
+                    console.warn(
+                        "[PasteLink] Share analytics:",
+                        shareResult.error
+                    );
+                }
+            } catch (error) {
+                console.warn(
+                    "[PasteLink] Share RPC gagal:",
+                    error
+                );
+            }
+            if (window.TC?.toast) {
+                TC.toast(
+                    copied
+                        ? "Link disalin"
+                        : "Link siap dibagikan",
+                    "success"
+                );
+            }
+        }
+    );
+    /* =======================================================
+       LIKE
+       ======================================================= */
+    const likeButton =
+        document.getElementById("plike");
+    likeButton?.addEventListener(
+        "click",
+        async () => {
+            let currentUser = null;
+            try {
+                if (
+                    window.TC &&
+                    typeof TC.user === "function"
+                ) {
+                    currentUser = await TC.user();
+                }
+            } catch {
+                currentUser = null;
+            }
+            if (!currentUser?.id) {
+                location.href =
+                    "login.html";
+                return;
+            }
+            likeButton.disabled = true;
+            try {
+                const likeResult =
+                    await client.rpc(
+                        "toggle_content_like",
+                        {
+                            p_owner: paste.user_id,
+                            p_target_type: "link",
+                            p_target_id: paste.id
+                        }
+                    );
+                if (likeResult.error) {
+                    throw likeResult.error;
+                }
+                const liked =
+                    Boolean(
+                        likeResult.data?.liked
+                    );
+                likeButton.innerHTML = liked
+                    ? `
+                        <i class="fa-solid fa-heart"></i>
+                        Liked
+                    `
+                    : `
+                        <i class="fa-regular fa-heart"></i>
+                        Like
+                    `;
+                likeButton.classList.toggle(
+                    "active",
+                    liked
+                );
+                if (window.TC?.toast) {
+                    TC.toast(
+                        liked
+                            ? "Ditambahkan ke suka"
+                            : "Like dibatalkan",
+                        "success"
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "[PasteLink] Like error:",
+                    error
+                );
+                if (window.TC?.toast) {
+                    TC.toast(
+                        error?.message ||
+                            "Gagal memproses like.",
+                        "error"
+                    );
+                }
+            } finally {
+                likeButton.disabled = false;
+            }
+        }
+    );
+});
