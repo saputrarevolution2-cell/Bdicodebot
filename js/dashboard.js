@@ -1,30 +1,41 @@
 /* =========================================================
    PasTele — DASHBOARD
    SOURCE: /js/dashboard.js
-   VERSION: 2026-09-08
-   Clean / Real Supabase Data / 7-Day Analytics
-   Compatible with dashboard.html
+   VERSION: 2026-09-09
+   FINAL SQL SYNC
+   ---------------------------------------------------------
+   Compatible with:
+   SUPABASE_MASTER_FINAL_PENDING_H1_H2_FINAL.sql
+   IMPORTANT SQL SYNC:
+   - products.seller_id / creator_id
+   - telegram_products.status
+   - telegram_channels.status
+   - pastes.owner_id
+   - pastelinks.user_id
+   - orders.seller_id / item_type / item_id
+   - transactions.user_id / type / reference
+   - analytics_events.owner_id
+   - content_likes.content_owner_id
+   - creator_followers.creator_id
    ========================================================= */
-
 document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
-
   /* =======================================================
      DOM
      ======================================================= */
-
   const $ = (id) => document.getElementById(id);
-
   /* =======================================================
-     GLOBAL CORE
+     CORE
      ======================================================= */
-
   const core = window.TC || {};
-  const supabase = window.sb;
-
+  const supabase =
+    window.sb ||
+    window.supabaseClient ||
+    window.supabase;
   if (!supabase) {
-    console.error('PasTele Dashboard: Supabase client tidak ditemukan.');
-
+    console.error(
+      'PasTele Dashboard: Supabase client tidak ditemukan.'
+    );
     if ($('activity')) {
       $('activity').innerHTML = `
         <div class="empty">
@@ -33,14 +44,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }
-
     return;
   }
-
   /* =======================================================
      HELPERS
      ======================================================= */
-
   const fallbackEsc = (value) =>
     String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -48,120 +56,118 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
-
   const esc = (value) =>
     typeof core.esc === 'function'
       ? core.esc(value)
       : fallbackEsc(value);
-
   const number = (value) => {
     const n = Number(value || 0);
-
     return n.toLocaleString('id-ID');
   };
-
   const fallbackMoney = (value) => {
     const n = Number(value || 0);
-
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       maximumFractionDigits: 0
     }).format(n);
   };
-
   const money = (value) => {
     const n = Number(value || 0);
-
     return typeof core.money === 'function'
       ? core.money(n)
       : fallbackMoney(n);
   };
-
-  const toast = (message, type = 'info') => {
+  const toast = (
+    message,
+    type = 'info'
+  ) => {
     if (typeof core.toast === 'function') {
       core.toast(message, type);
       return;
     }
-
     const box = $('toast');
-
     if (!box) {
       return;
     }
-
-    box.textContent = String(message || '');
-
+    box.textContent =
+      String(message || '');
     box.className = '';
-    box.classList.add(`toast-${type}`);
-
-    clearTimeout(toast._timer);
-
-    toast._timer = setTimeout(() => {
-      box.className = '';
-      box.textContent = '';
-    }, 3500);
+    box.classList.add(
+      `toast-${type}`
+    );
+    clearTimeout(
+      toast._timer
+    );
+    toast._timer =
+      setTimeout(() => {
+        box.className = '';
+        box.textContent = '';
+      }, 3500);
   };
-
   const normalize = (value) =>
     String(value ?? '')
       .trim()
       .toLowerCase();
-
   const safeDate = (value) => {
     if (!value) {
       return null;
     }
-
     const date = new Date(value);
-
-    return Number.isNaN(date.getTime())
+    return Number.isNaN(
+      date.getTime()
+    )
       ? null
       : date;
   };
-
   const startOfDay = (value) => {
     const date = new Date(value);
-
-    date.setHours(0, 0, 0, 0);
-
+    date.setHours(
+      0,
+      0,
+      0,
+      0
+    );
     return date;
   };
-
-  const addDays = (value, amount) => {
-    const date = new Date(value);
-
+  const addDays = (
+    value,
+    amount
+  ) => {
+    const date =
+      new Date(value);
     date.setDate(
       date.getDate() + amount
     );
-
     return date;
   };
-
   const dateKey = (value) => {
     const date =
       value instanceof Date
         ? value
         : new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
       return '';
     }
-
-    const year = date.getFullYear();
-
-    const month = String(
-      date.getMonth() + 1
-    ).padStart(2, '0');
-
-    const day = String(
-      date.getDate()
-    ).padStart(2, '0');
-
+    const year =
+      date.getFullYear();
+    const month =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, '0');
+    const day =
+      String(
+        date.getDate()
+      ).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-
-  const formatDay = (date) =>
+  const formatDay = (
+    date
+  ) =>
     date.toLocaleDateString(
       'id-ID',
       {
@@ -170,14 +176,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         month: 'short'
       }
     );
-
-  const formatDate = (value) => {
-    const date = safeDate(value);
-
+  const formatDate = (
+    value
+  ) => {
+    const date =
+      safeDate(value);
     if (!date) {
       return '-';
     }
-
     return date.toLocaleDateString(
       'id-ID',
       {
@@ -187,369 +193,429 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     );
   };
-
-  const formatDateTime = (value) => {
-    const date = safeDate(value);
-
+  const formatDateTime = (
+    value
+  ) => {
+    const date =
+      safeDate(value);
     if (!date) {
       return '-';
     }
-
-    return date.toLocaleString('id-ID');
+    return date.toLocaleString(
+      'id-ID'
+    );
   };
-
   /* =======================================================
-     PAGINATION HELPER
+     PAGINATION FETCH
      ======================================================= */
-
-  async function fetchAll(buildQuery, pageSize = 1000) {
+  async function fetchAll(
+    buildQuery,
+    pageSize = 1000
+  ) {
     const all = [];
-
     let from = 0;
-
     while (true) {
-      const to = from + pageSize - 1;
-
-      const query = buildQuery();
-
+      const to =
+        from +
+        pageSize -
+        1;
+      const query =
+        buildQuery();
       const {
         data,
         error
-      } = await query.range(from, to);
-
+      } =
+        await query.range(
+          from,
+          to
+        );
       if (error) {
         throw error;
       }
-
-      const rows = Array.isArray(data)
-        ? data
-        : [];
-
-      all.push(...rows);
-
-      if (rows.length < pageSize) {
+      const rows =
+        Array.isArray(data)
+          ? data
+          : [];
+      all.push(
+        ...rows
+      );
+      if (
+        rows.length <
+        pageSize
+      ) {
         break;
       }
-
-      from += pageSize;
+      from +=
+        pageSize;
     }
-
     return all;
   }
-
   /* =======================================================
      AUTH
      ======================================================= */
-
   let user = null;
-
   try {
-    if (typeof core.user !== 'function') {
-      throw new Error(
-        'TC.user() tidak tersedia.'
-      );
+    if (
+      typeof core.user ===
+      'function'
+    ) {
+      user =
+        await core.user();
+    } else {
+      const {
+        data,
+        error
+      } =
+        await supabase.auth.getUser();
+      if (error) {
+        throw error;
+      }
+      user =
+        data?.user || null;
     }
-
-    user = await core.user();
   } catch (error) {
     console.error(
       'Dashboard auth error:',
       error
     );
-
-    location.replace('login.html');
-
+    location.replace(
+      'login.html'
+    );
     return;
   }
-
   if (!user) {
-    location.replace('login.html');
-
+    location.replace(
+      'login.html'
+    );
     return;
   }
-
   /* =======================================================
      GREETING
      ======================================================= */
-
   if ($('helloName')) {
     $('helloName').textContent =
-      user.user_metadata?.username ||
-      user.user_metadata?.name ||
-      user.user_metadata?.full_name ||
-      user.email?.split('@')[0] ||
+      user.user_metadata
+        ?.username ||
+      user.user_metadata
+        ?.name ||
+      user.user_metadata
+        ?.full_name ||
+      user.email
+        ?.split('@')[0] ||
       'User';
   }
-
   /* =======================================================
      DATE RANGE
      ======================================================= */
-
-  const today = startOfDay(new Date());
-
+  const today =
+    startOfDay(
+      new Date()
+    );
   /*
-   * CURRENT
-   * 6 hari sebelumnya + hari ini = 7 hari
+   * CURRENT:
+   * hari -6 sampai hari ini
    */
-
   const currentStart =
-    addDays(today, -6);
-
+    addDays(
+      today,
+      -6
+    );
   /*
-   * PREVIOUS
+   * PREVIOUS:
    * 7 hari sebelum current
    */
-
   const previousStart =
-    addDays(today, -13);
-
+    addDays(
+      today,
+      -13
+    );
   const currentDays =
     Array.from(
-      { length: 7 },
+      {
+        length: 7
+      },
       (_, index) =>
         addDays(
           currentStart,
           index
         )
     );
-
   const previousDays =
     Array.from(
-      { length: 7 },
+      {
+        length: 7
+      },
       (_, index) =>
         addDays(
           previousStart,
           index
         )
     );
-
   const currentDayKeys =
     new Set(
-      currentDays.map(dateKey)
+      currentDays.map(
+        dateKey
+      )
     );
-
   const previousDayKeys =
     new Set(
-      previousDays.map(dateKey)
+      previousDays.map(
+        dateKey
+      )
     );
-
   /*
-   * Ambil data analytics hanya dari
-   * periode yang diperlukan.
-   *
-   * Sedikit buffer supaya aman terhadap
-   * timezone UTC.
+   * Buffer timezone UTC.
    */
-
   const queryStart =
     addDays(
       previousStart,
       -1
     ).toISOString();
-
   const queryEnd =
     addDays(
       today,
       1
     ).toISOString();
-
   /* =======================================================
      SCOPE
      ======================================================= */
-
   const getScope = () =>
-    $('scope')?.value || 'all';
-
+    $('scope')?.value ||
+    'all';
   const matchProductType = (
     type,
     scope
   ) => {
     const normalized =
       normalize(type);
-
-    if (scope === 'all') {
+    if (
+      scope === 'all'
+    ) {
       return true;
     }
-
-    if (scope === 'paste') {
+    if (
+      scope === 'paste'
+    ) {
       return [
         'link',
         'paste',
         'pastelink'
-      ].includes(normalized);
+      ].includes(
+        normalized
+      );
     }
-
-    return normalized === scope;
+    return (
+      normalized ===
+      normalize(scope)
+    );
   };
-
   const matchTelegramProduct = (
     item,
     scope
   ) => {
-    if (scope === 'all') {
+    if (
+      scope === 'all'
+    ) {
       return true;
     }
-
-    if (scope !== 'code') {
+    if (
+      scope !== 'code'
+    ) {
       return false;
     }
-
     const type =
       normalize(
-        item?.product_type
+        item?.product_type ||
+        item?.type
       );
-
     return [
       'code',
       'product',
       'file'
     ].includes(type);
   };
-
   const matchChannel = (
     item,
     scope
   ) => {
-    if (scope === 'all') {
+    if (
+      scope === 'all'
+    ) {
       return true;
     }
-
     return (
-      normalize(item?.type) ===
+      normalize(
+        item?.type
+      ) ===
       normalize(scope)
     );
   };
-
   const matchEvent = (
     event,
     scope
   ) => {
-    if (scope === 'all') {
+    if (
+      scope === 'all'
+    ) {
       return true;
     }
-
     const target =
       normalize(
         event?.target_type
       );
-
-    if (scope === 'paste') {
+    if (
+      scope === 'paste'
+    ) {
       return [
         'link',
         'paste',
         'pastelink'
-      ].includes(target);
+      ].includes(
+        target
+      );
     }
-
-    if (scope === 'code') {
+    if (
+      scope === 'code'
+    ) {
       return [
         'code',
         'product',
         'file'
-      ].includes(target);
+      ].includes(
+        target
+      );
     }
-
-    if (scope === 'channel') {
-      return target === 'channel';
+    if (
+      scope === 'channel'
+    ) {
+      return (
+        target ===
+        'channel' ||
+        target ===
+        'telegram_channel'
+      );
     }
-
-    if (scope === 'group') {
-      return target === 'group';
+    if (
+      scope === 'group'
+    ) {
+      return (
+        target ===
+        'group' ||
+        target ===
+        'telegram_group'
+      );
     }
-
     return false;
   };
-
   /* =======================================================
      TREND
      ======================================================= */
-
   const calculateTrend = (
     current,
     previous
   ) => {
     const currentValue =
-      Number(current || 0);
-
+      Number(
+        current || 0
+      );
     const previousValue =
-      Number(previous || 0);
-
+      Number(
+        previous || 0
+      );
     if (
       currentValue === 0 &&
       previousValue === 0
     ) {
       return {
-        direction: 'stable',
-        icon: 'fa-minus',
-        label: '0%',
-        percent: 0
+        direction:
+          'stable',
+        icon:
+          'fa-minus',
+        label:
+          '0%',
+        percent:
+          0
       };
     }
-
     if (
       previousValue === 0 &&
       currentValue > 0
     ) {
       return {
-        direction: 'up',
-        icon: 'fa-arrow-trend-up',
-        label: '+100%',
-        percent: 100
+        direction:
+          'up',
+        icon:
+          'fa-arrow-trend-up',
+        label:
+          '+100%',
+        percent:
+          100
       };
     }
-
     const percent =
       (
-        (currentValue -
-          previousValue) /
+        (
+          currentValue -
+          previousValue
+        ) /
         previousValue
       ) * 100;
-
     if (
-      Math.abs(percent) < 0.05
+      Math.abs(percent) <
+      0.05
     ) {
       return {
-        direction: 'stable',
-        icon: 'fa-minus',
-        label: '0%',
-        percent: 0
+        direction:
+          'stable',
+        icon:
+          'fa-minus',
+        label:
+          '0%',
+        percent:
+          0
       };
     }
-
     const rounded =
-      Math.abs(percent).toFixed(1);
-
-    if (percent > 0) {
+      Math.abs(
+        percent
+      ).toFixed(1);
+    if (
+      percent > 0
+    ) {
       return {
-        direction: 'up',
-        icon: 'fa-arrow-trend-up',
-        label: `+${rounded}%`,
+        direction:
+          'up',
+        icon:
+          'fa-arrow-trend-up',
+        label:
+          `+${rounded}%`,
         percent
       };
     }
-
     return {
-      direction: 'down',
-      icon: 'fa-arrow-trend-down',
-      label: `-${rounded}%`,
+      direction:
+        'down',
+      icon:
+        'fa-arrow-trend-down',
+      label:
+        `-${rounded}%`,
       percent
     };
   };
-
   const renderTrend = (
     elementId,
     trend
   ) => {
     const element =
       $(elementId);
-
-    if (!element || !trend) {
+    if (
+      !element ||
+      !trend
+    ) {
       return;
     }
-
     element.className =
       `trend trend-${trend.direction}`;
-
     element.innerHTML = `
       <i
         class="fa-solid ${esc(trend.icon)}"
@@ -560,30 +626,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       </span>
     `;
   };
-
   /* =======================================================
      PAGINATION UI
      ======================================================= */
-
   function renderPager(
     id,
     page,
     total,
     onChange
   ) {
-    const host = $(id);
-
+    const host =
+      $(id);
     if (!host) {
       return;
     }
-
-    if (total <= 1) {
+    if (
+      total <= 1
+    ) {
       host.innerHTML = '';
       return;
     }
-
     const buttons = [];
-
     buttons.push(`
       <button
         type="button"
@@ -594,7 +657,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         ‹
       </button>
     `);
-
     for (
       let i = 1;
       i <= total;
@@ -614,10 +676,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             '<span>…</span>'
           );
         }
-
         continue;
       }
-
       buttons.push(`
         <button
           type="button"
@@ -628,7 +688,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </button>
       `);
     }
-
     buttons.push(`
       <button
         type="button"
@@ -639,488 +698,638 @@ document.addEventListener('DOMContentLoaded', async () => {
         ›
       </button>
     `);
-
     host.innerHTML =
       buttons.join('');
-
     host
       .querySelectorAll(
         'button[data-p]'
       )
-      .forEach((button) => {
-        button.addEventListener(
-          'click',
-          () => {
-            const next =
-              Number(
-                button.dataset.p
-              );
-
-            if (
-              Number.isFinite(next) &&
-              next >= 1 &&
-              next <= total &&
-              next !== page
-            ) {
-              onChange(next);
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            'click',
+            () => {
+              const next =
+                Number(
+                  button.dataset.p
+                );
+              if (
+                Number.isFinite(
+                  next
+                ) &&
+                next >= 1 &&
+                next <= total &&
+                next !== page
+              ) {
+                onChange(
+                  next
+                );
+              }
             }
-          }
-        );
-      });
+          );
+        }
+      );
   }
-
   /* =======================================================
      PERFORMANCE SNAPSHOT
      ======================================================= */
-
   const performanceSnapshot = {
     views: {
-      label: 'Views',
-      value: 0,
-      trend: null
+      label:
+        'Views',
+      value:
+        0,
+      trend:
+        null
     },
-
     sales: {
-      label: 'Sales',
-      value: 0,
-      trend: null
+      label:
+        'Sales',
+      value:
+        0,
+      trend:
+        null
     },
-
     share: {
-      label: 'Share',
-      value: 0,
-      trend: null
+      label:
+        'Share',
+      value:
+        0,
+      trend:
+        null
     },
-
     revenue: {
-      label: 'Revenue',
-      value: 0,
-      trend: null
+      label:
+        'Revenue',
+      value:
+        0,
+      trend:
+        null
     }
   };
-
   /* =======================================================
      CHART
      ======================================================= */
-
   const renderChart = (
     chartData
   ) => {
-    const chart = $('chart');
-
+    const chart =
+      $('chart');
     if (!chart) {
       return;
     }
-
-    const max = Math.max(
-      1,
-      ...currentDays.map(
-        (day) => {
-          const item =
-            chartData[
-              dateKey(day)
-            ] || {};
-
-          return Math.max(
-            Number(item.views || 0),
-            Number(item.sales || 0),
-            Number(item.share || 0)
-          );
-        }
-      )
-    );
-
+    const max =
+      Math.max(
+        1,
+        ...currentDays.map(
+          (day) => {
+            const item =
+              chartData[
+                dateKey(day)
+              ] || {};
+            return Math.max(
+              Number(
+                item.views || 0
+              ),
+              Number(
+                item.sales || 0
+              ),
+              Number(
+                item.share || 0
+              )
+            );
+          }
+        )
+      );
     chart.innerHTML =
       currentDays
-        .map((day) => {
-          const key =
-            dateKey(day);
-
-          const item =
-            chartData[key] || {
-              views: 0,
-              sales: 0,
-              share: 0,
-              revenue: 0
-            };
-
-          const views =
-            Number(
-              item.views || 0
-            );
-
-          const sales =
-            Number(
-              item.sales || 0
-            );
-
-          const share =
-            Number(
-              item.share || 0
-            );
-
-          const viewsHeight =
-            views > 0
-              ? Math.max(
-                  3,
-                  (views / max) * 100
-                )
-              : 2;
-
-          const salesHeight =
-            sales > 0
-              ? Math.max(
-                  3,
-                  (sales / max) * 100
-                )
-              : 2;
-
-          const shareHeight =
-            share > 0
-              ? Math.max(
-                  3,
-                  (share / max) * 100
-                )
-              : 2;
-
-          return `
-            <div
-              class="chart-day"
-              data-date="${esc(key)}"
-              tabindex="0"
-              role="button"
-              title="${esc(
-                `${formatDay(day)} — Views ${number(views)}, Sales ${number(sales)}, Share ${number(share)}`
-              )}"
-            >
-              <div class="bars">
-                <i
-                  class="bar-views"
-                  style="height:${viewsHeight}%"
-                  aria-label="Views ${number(views)}"
-                ></i>
-
-                <i
-                  class="bar-sales"
-                  style="height:${salesHeight}%"
-                  aria-label="Sales ${number(sales)}"
-                ></i>
-
-                <i
-                  class="bar-share"
-                  style="height:${shareHeight}%"
-                  aria-label="Share ${number(share)}"
-                ></i>
+        .map(
+          (day) => {
+            const key =
+              dateKey(day);
+            const item =
+              chartData[key] || {
+                views:
+                  0,
+                sales:
+                  0,
+                share:
+                  0,
+                revenue:
+                  0
+              };
+            const views =
+              Number(
+                item.views || 0
+              );
+            const sales =
+              Number(
+                item.sales || 0
+              );
+            const share =
+              Number(
+                item.share || 0
+              );
+            const viewsHeight =
+              views > 0
+                ? Math.max(
+                    3,
+                    (
+                      views /
+                      max
+                    ) * 100
+                  )
+                : 2;
+            const salesHeight =
+              sales > 0
+                ? Math.max(
+                    3,
+                    (
+                      sales /
+                      max
+                    ) * 100
+                  )
+                : 2;
+            const shareHeight =
+              share > 0
+                ? Math.max(
+                    3,
+                    (
+                      share /
+                      max
+                    ) * 100
+                  )
+                : 2;
+            return `
+              <div
+                class="chart-day"
+                data-date="${esc(key)}"
+                tabindex="0"
+                role="button"
+                title="${esc(
+                  `${formatDay(day)} — Views ${number(views)}, Sales ${number(sales)}, Share ${number(share)}`
+                )}"
+              >
+                <div class="bars">
+                  <i
+                    class="bar-views"
+                    style="height:${viewsHeight}%"
+                    aria-label="Views ${number(views)}"
+                  ></i>
+                  <i
+                    class="bar-sales"
+                    style="height:${salesHeight}%"
+                    aria-label="Sales ${number(sales)}"
+                  ></i>
+                  <i
+                    class="bar-share"
+                    style="height:${shareHeight}%"
+                    aria-label="Share ${number(share)}"
+                  ></i>
+                </div>
+                <small>
+                  ${esc(
+                    formatDay(day)
+                  )}
+                </small>
               </div>
-
-              <small>
-                ${esc(formatDay(day))}
-              </small>
-            </div>
-          `;
-        })
+            `;
+          }
+        )
         .join('');
-
-    /*
-     * Chart day dibuat clickable.
-     */
-
     chart
       .querySelectorAll(
         '.chart-day'
       )
-      .forEach((dayElement) => {
-        const handler = () => {
-          const key =
-            dayElement.dataset.date;
-
-          const item =
-            chartData[key] || {};
-
-          toast(
-            `${formatDate(key)} · Views ${number(item.views || 0)} · Sales ${number(item.sales || 0)} · Share ${number(item.share || 0)} · Revenue ${money(item.revenue || 0)}`,
-            'info'
+      .forEach(
+        (dayElement) => {
+          const handler =
+            () => {
+              const key =
+                dayElement
+                  .dataset
+                  .date;
+              const item =
+                chartData[
+                  key
+                ] || {};
+              toast(
+                `${formatDate(key)} · Views ${number(item.views || 0)} · Sales ${number(item.sales || 0)} · Share ${number(item.share || 0)} · Revenue ${money(item.revenue || 0)}`,
+                'info'
+              );
+            };
+          dayElement.addEventListener(
+            'click',
+            handler
           );
-        };
-
-        dayElement.addEventListener(
-          'click',
-          handler
-        );
-
-        dayElement.addEventListener(
-          'keydown',
-          (event) => {
-            if (
-              event.key === 'Enter' ||
-              event.key === ' '
-            ) {
-              event.preventDefault();
-              handler();
+          dayElement.addEventListener(
+            'keydown',
+            (event) => {
+              if (
+                event.key ===
+                  'Enter' ||
+                event.key ===
+                  ' '
+              ) {
+                event.preventDefault();
+                handler();
+              }
             }
-          }
-        );
-      });
+          );
+        }
+      );
   };
-
   /* =======================================================
      MAIN LOAD
      ======================================================= */
-
   async function load() {
     const scope =
       getScope();
-
     /* =====================================================
        DATABASE
        ===================================================== */
-
     const [
       products,
       pastes,
-      codes,
-      channels,
+      pastelinks,
+      telegramProducts,
+      telegramChannels,
       orders,
       transactions,
       analyticsEvents,
       likesResult,
       followsResult
-    ] = await Promise.all([
-      fetchAll(() =>
-        supabase
-          .from('products')
-          .select(
-            [
-              'id',
-              'title',
-              'type',
-              'views',
-              'sales_count',
-              'price',
+    ] =
+      await Promise.all([
+        /*
+         * PRODUCTS
+         *
+         * SQL:
+         * seller_id
+         * creator_id
+         */
+        fetchAll(() =>
+          supabase
+            .from('products')
+            .select(
+              [
+                'id',
+                'seller_id',
+                'creator_id',
+                'title',
+                'slug',
+                'type',
+                'access_type',
+                'category',
+                'views',
+                'sales_count',
+                'price',
+                'status',
+                'created_at'
+              ].join(',')
+            )
+            .or(
+              `creator_id.eq.${user.id},seller_id.eq.${user.id}`
+            )
+            .order(
               'created_at',
-              'status'
-            ].join(',')
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * PASTES
+         *
+         * SQL:
+         * owner_id
+         */
+        fetchAll(() =>
+          supabase
+            .from('pastes')
+            .select(
+              [
+                'id',
+                'owner_id',
+                'title',
+                'slug',
+                'visibility',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'owner_id',
+              user.id
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * PASTELINKS
+         *
+         * SQL:
+         * user_id
+         */
+        fetchAll(() =>
+          supabase
+            .from('pastelinks')
+            .select(
+              [
+                'id',
+                'user_id',
+                'slug',
+                'title',
+                'views',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'user_id',
+              user.id
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * TELEGRAM PRODUCTS
+         *
+         * SQL memakai:
+         * status
+         * BUKAN is_published
+         */
+        fetchAll(() =>
+          supabase
+            .from(
+              'telegram_products'
+            )
+            .select(
+              [
+                'id',
+                'owner_id',
+                'title',
+                'slug',
+                'type',
+                'product_type',
+                'access_type',
+                'price',
+                'status',
+                'views',
+                'sales_count',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'owner_id',
+              user.id
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * TELEGRAM CHANNELS
+         *
+         * SQL memakai:
+         * status
+         * BUKAN is_published
+         */
+        fetchAll(() =>
+          supabase
+            .from(
+              'telegram_channels'
+            )
+            .select(
+              [
+                'id',
+                'owner_id',
+                'username',
+                'name',
+                'type',
+                'access_type',
+                'price',
+                'status',
+                'views',
+                'sales_count',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'owner_id',
+              user.id
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * ORDERS
+         */
+        fetchAll(() =>
+          supabase
+            .from('orders')
+            .select(
+              [
+                'id',
+                'buyer_id',
+                'seller_id',
+                'product_id',
+                'amount',
+                'status',
+                'item_type',
+                'item_id',
+                'item_title',
+                'payment_reference',
+                'paid_at',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'seller_id',
+              user.id
+            )
+            .in(
+              'status',
+              [
+                'paid',
+                'success',
+                'completed'
+              ]
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * TRANSACTIONS
+         *
+         * SQL:
+         * sale_earning
+         * withdrawal_fee
+         * dll.
+         */
+        fetchAll(() =>
+          supabase
+            .from(
+              'transactions'
+            )
+            .select(
+              [
+                'id',
+                'user_id',
+                'amount',
+                'fee',
+                'net_amount',
+                'type',
+                'status',
+                'reference',
+                'description',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'user_id',
+              user.id
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * ANALYTICS EVENTS
+         *
+         * SQL:
+         * owner_id
+         * actor_id
+         * event_type
+         * target_type
+         * target_id
+         */
+        fetchAll(() =>
+          supabase
+            .from(
+              'analytics_events'
+            )
+            .select(
+              [
+                'id',
+                'owner_id',
+                'actor_id',
+                'event_type',
+                'target_type',
+                'target_id',
+                'created_at'
+              ].join(',')
+            )
+            .eq(
+              'owner_id',
+              user.id
+            )
+            .gte(
+              'created_at',
+              queryStart
+            )
+            .lt(
+              'created_at',
+              queryEnd
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+        ),
+        /*
+         * LIKES
+         *
+         * SQL:
+         * content_owner_id
+         */
+        supabase
+          .from(
+            'content_likes'
+          )
+          .select(
+            'id',
+            {
+              count:
+                'exact',
+              head:
+                true
+            }
+          )
+          .eq(
+            'content_owner_id',
+            user.id
+          ),
+        /*
+         * FOLLOWERS
+         *
+         * SQL:
+         * creator_id
+         */
+        supabase
+          .from(
+            'creator_followers'
+          )
+          .select(
+            'id',
+            {
+              count:
+                'exact',
+              head:
+                true
+            }
           )
           .eq(
             'creator_id',
             user.id
           )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      fetchAll(() =>
-        supabase
-          .from('pastelinks')
-          .select(
-            'id,slug,title,views,created_at'
-          )
-          .eq(
-            'user_id',
-            user.id
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      fetchAll(() =>
-        supabase
-          .from('telegram_products')
-          .select(
-            [
-              'id',
-              'title',
-              'product_type',
-              'access_type',
-              'price',
-              'is_published',
-              'created_at'
-            ].join(',')
-          )
-          .eq(
-            'owner_id',
-            user.id
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      fetchAll(() =>
-        supabase
-          .from('telegram_channels')
-          .select(
-            [
-              'id',
-              'name',
-              'type',
-              'access_type',
-              'price',
-              'is_published',
-              'created_at'
-            ].join(',')
-          )
-          .eq(
-            'owner_id',
-            user.id
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      fetchAll(() =>
-        supabase
-          .from('orders')
-          .select(
-            [
-              'id',
-              'product_id',
-              'item_type',
-              'item_id',
-              'item_title',
-              'amount',
-              'status',
-              'created_at',
-              'paid_at'
-            ].join(',')
-          )
-          .eq(
-            'seller_id',
-            user.id
-          )
-          .eq(
-            'status',
-            'paid'
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      fetchAll(() =>
-        supabase
-          .from('transactions')
-          .select(
-            [
-              'id',
-              'amount',
-              'net_amount',
-              'type',
-              'status',
-              'reference',
-              'created_at'
-            ].join(',')
-          )
-          .eq(
-            'user_id',
-            user.id
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      fetchAll(() =>
-        supabase
-          .from('analytics_events')
-          .select(
-            [
-              'event_type',
-              'target_type',
-              'target_id',
-              'created_at'
-            ].join(',')
-          )
-          .eq(
-            'owner_id',
-            user.id
-          )
-          .gte(
-            'created_at',
-            queryStart
-          )
-          .lt(
-            'created_at',
-            queryEnd
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false
-            }
-          )
-      ),
-
-      supabase
-        .from('content_likes')
-        .select(
-          'id',
-          {
-            count: 'exact',
-            head: true
-          }
-        )
-        .eq(
-          'content_owner_id',
-          user.id
-        ),
-
-      supabase
-        .from('creator_followers')
-        .select(
-          'id',
-          {
-            count: 'exact',
-            head: true
-          }
-        )
-        .eq(
-          'creator_id',
-          user.id
-        )
-    ]);
-
+      ]);
     /* =====================================================
        ERROR CHECK
        ===================================================== */
-
     if (
       likesResult?.error
     ) {
       throw likesResult.error;
     }
-
     if (
       followsResult?.error
     ) {
       throw followsResult.error;
     }
-
     /* =====================================================
        FILTER CONTENT
        ===================================================== */
-
     const filteredProducts =
       products.filter(
         (item) =>
@@ -1129,37 +1338,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             scope
           )
       );
-
     const filteredPastes =
-      (
-        scope === 'all' ||
-        scope === 'paste'
-      )
+      scope === 'all' ||
+      scope === 'paste'
         ? pastes
         : [];
-
+    const filteredPastelinks =
+      scope === 'all' ||
+      scope === 'paste'
+        ? pastelinks
+        : [];
     const filteredCodes =
-      codes.filter(
+      telegramProducts.filter(
         (item) =>
           matchTelegramProduct(
             item,
             scope
           )
       );
-
     const filteredChannels =
-      channels.filter(
+      telegramChannels.filter(
         (item) =>
           matchChannel(
             item,
             scope
           )
       );
-
     /* =====================================================
        FILTER ANALYTICS
        ===================================================== */
-
     const scopedEvents =
       analyticsEvents.filter(
         (event) =>
@@ -1168,31 +1375,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             scope
           )
       );
-
     /* =====================================================
        CONTENT COUNT
        ===================================================== */
-
     const createdCount =
       filteredProducts.length +
       filteredPastes.length +
+      filteredPastelinks.length +
       filteredCodes.length +
       filteredChannels.length;
-
     if ($('created')) {
       $('created').textContent =
-        number(createdCount);
+        number(
+          createdCount
+        );
     }
-
-    if ($('detailContent')) {
+    if (
+      $('detailContent')
+    ) {
       $('detailContent').textContent =
-        number(createdCount);
+        number(
+          createdCount
+        );
     }
-
     /* =====================================================
-       TOTAL LINK / CODE / CHANNEL
+       TOTAL LINK
        ===================================================== */
-
     const totalLink =
       products.filter(
         (item) =>
@@ -1201,187 +1409,214 @@ document.addEventListener('DOMContentLoaded', async () => {
             'paste',
             'pastelink'
           ].includes(
-            normalize(item.type)
+            normalize(
+              item.type
+            )
           )
       ).length +
-      pastes.length;
-
+      pastes.length +
+      pastelinks.length;
+    /* =====================================================
+       TOTAL CODE
+       ===================================================== */
     const totalCode =
-      codes.filter(
-        (item) => {
-          const type =
-            normalize(
-              item.product_type
-            );
-
-          return [
+      telegramProducts.filter(
+        (item) =>
+          [
             'code',
             'product',
             'file'
-          ].includes(type);
-        }
+          ].includes(
+            normalize(
+              item.product_type ||
+              item.type
+            )
+          )
+      ).length +
+      products.filter(
+        (item) =>
+          normalize(
+            item.type
+          ) === 'code'
       ).length;
-
+    /* =====================================================
+       TOTAL CHANNEL
+       ===================================================== */
     const totalChannel =
-      channels.filter(
+      telegramChannels.filter(
         (item) =>
           normalize(
             item.type
           ) === 'channel'
       ).length;
-
-    if ($('totalLink')) {
+    if (
+      $('totalLink')
+    ) {
       $('totalLink').textContent =
-        number(totalLink);
+        number(
+          totalLink
+        );
     }
-
-    if ($('totalCode')) {
+    if (
+      $('totalCode')
+    ) {
       $('totalCode').textContent =
-        number(totalCode);
+        number(
+          totalCode
+        );
     }
-
-    if ($('totalChannel')) {
+    if (
+      $('totalChannel')
+    ) {
       $('totalChannel').textContent =
-        number(totalChannel);
+        number(
+          totalChannel
+        );
     }
-
     /* =====================================================
-       TOTAL VIEWS
+       ALL-TIME STORED VIEWS
        ===================================================== */
-
     /*
-     * Products dan Pastelink mempunyai
-     * counter views tersimpan.
+     * Counter tersimpan adalah all-time.
+     *
+     * Digunakan untuk kartu TOTAL VIEWS.
+     *
+     * Tidak dicampur dengan analytics
+     * supaya tidak double count.
      */
-
     const storedViews =
       filteredProducts.reduce(
-        (total, item) =>
+        (
+          total,
+          item
+        ) =>
           total +
           Number(
             item.views || 0
           ),
         0
       ) +
-      filteredPastes.reduce(
-        (total, item) =>
+      filteredPastelinks.reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(
+            item.views || 0
+          ),
+        0
+      ) +
+      filteredCodes.reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(
+            item.views || 0
+          ),
+        0
+      ) +
+      filteredChannels.reduce(
+        (
+          total,
+          item
+        ) =>
           total +
           Number(
             item.views || 0
           ),
         0
       );
-
     /*
-     * Analytics view untuk periode
-     * yang tersedia.
+     * Untuk Telegram / content yang
+     * tidak punya counter khusus,
+     * analytics view tetap menjadi
+     * sumber tambahan.
      *
-     * Telegram content tidak mempunyai
-     * counter views pada tabel tersebut,
-     * sehingga event view digunakan.
+     * Tetapi hanya event target yang
+     * tidak mempunyai stored counter.
      */
-
-    const eventViews =
+    const analyticsViews =
       scopedEvents.filter(
         (event) =>
           normalize(
             event.event_type
           ) === 'view'
       ).length;
-
+    const hasStoredViewSources =
+      filteredProducts.length >
+        0 ||
+      filteredPastelinks.length >
+        0 ||
+      filteredCodes.length >
+        0 ||
+      filteredChannels.length >
+        0;
     /*
-     * Jangan menjumlahkan stored counter
-     * dengan event history karena bisa
-     * double count.
+     * Dashboard all-time views:
+     *
+     * Jika content memiliki counter,
+     * gunakan counter.
+     *
+     * Analytics dipakai minimal jika
+     * counter belum tersedia.
      */
-
     const totalViews =
-      Math.max(
-        storedViews,
-        eventViews
-      );
-
+      hasStoredViewSources
+        ? storedViews
+        : analyticsViews;
     if ($('views')) {
       $('views').textContent =
-        number(totalViews);
+        number(
+          totalViews
+        );
     }
-
-    if ($('detailViews')) {
+    if (
+      $('detailViews')
+    ) {
       $('detailViews').textContent =
-        number(totalViews);
+        number(
+          totalViews
+        );
     }
-
-    /* =====================================================
-       SALES SOURCE
-       ===================================================== */
-
-    /*
-     * Canonical sales:
-     *
-     * 1. Paid orders
-     * 2. Direct sell_* transactions
-     *
-     * seller transaction yang reference-nya
-     * sama dengan paid order TIDAK dihitung lagi.
-     */
-
-    const paidOrderIds =
-      new Set(
-        orders.map(
-          (order) =>
-            String(order.id)
-        )
-      );
-
-    const directSellTransactions =
-      transactions.filter(
-        (transaction) => {
-          const type =
-            normalize(
-              transaction.type
-            );
-
-          const status =
-            normalize(
-              transaction.status
-            );
-
-          const reference =
-            String(
-              transaction.reference ??
-              ''
-            );
-
-          return (
-            type.startsWith(
-              'sell_'
-            ) &&
-            [
-              'completed',
-              'paid',
-              'success'
-            ].includes(status) &&
-            !paidOrderIds.has(
-              reference
-            )
-          );
-        }
-      );
-
     /* =====================================================
        ORDER TYPE
        ===================================================== */
-
     const productById =
       new Map(
         products.map(
           (item) => [
-            String(item.id),
+            String(
+              item.id
+            ),
             item
           ]
         )
       );
-
+    const telegramProductById =
+      new Map(
+        telegramProducts.map(
+          (item) => [
+            String(
+              item.id
+            ),
+            item
+          ]
+        )
+      );
+    const channelById =
+      new Map(
+        telegramChannels.map(
+          (item) => [
+            String(
+              item.id
+            ),
+            item
+          ]
+        )
+      );
     const getOrderType = (
       order
     ) => {
@@ -1389,42 +1624,111 @@ document.addEventListener('DOMContentLoaded', async () => {
         normalize(
           order.item_type
         );
-
-      if (explicit) {
+      if (
+        explicit
+      ) {
         return explicit;
       }
-
       if (
         order.product_id
       ) {
+        const id =
+          String(
+            order.product_id
+          );
         const product =
           productById.get(
-            String(
-              order.product_id
-            )
+            id
           );
-
         if (product) {
           return normalize(
             product.type
           );
         }
+        const telegramProduct =
+          telegramProductById.get(
+            id
+          );
+        if (
+          telegramProduct
+        ) {
+          return normalize(
+            telegramProduct.product_type ||
+            telegramProduct.type ||
+            'code'
+          );
+        }
+        const channel =
+          channelById.get(
+            id
+          );
+        if (
+          channel
+        ) {
+          return normalize(
+            channel.type
+          );
+        }
       }
-
       return '';
     };
-
+    const normalizeSaleType = (
+      type
+    ) => {
+      let normalized =
+        normalize(type);
+      normalized =
+        normalized.replace(
+          /^telegram[-_]/,
+          ''
+        );
+      if (
+        normalized ===
+        'telegram_product'
+      ) {
+        return 'code';
+      }
+      if (
+        normalized ===
+        'telegram_channel'
+      ) {
+        return 'channel';
+      }
+      if (
+        normalized ===
+        'telegram_group'
+      ) {
+        return 'group';
+      }
+      if (
+        normalized ===
+        'product'
+      ) {
+        return 'product';
+      }
+      if (
+        normalized ===
+        'file'
+      ) {
+        return 'code';
+      }
+      return normalized;
+    };
     const matchSaleScope = (
       type
     ) => {
-      if (scope === 'all') {
+      if (
+        scope === 'all'
+      ) {
         return true;
       }
-
       const normalized =
-        normalize(type);
-
-      if (scope === 'paste') {
+        normalizeSaleType(
+          type
+        );
+      if (
+        scope === 'paste'
+      ) {
         return [
           'link',
           'paste',
@@ -1433,8 +1737,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           normalized
         );
       }
-
-      if (scope === 'code') {
+      if (
+        scope === 'code'
+      ) {
         return [
           'code',
           'product',
@@ -1443,111 +1748,234 @@ document.addEventListener('DOMContentLoaded', async () => {
           normalized
         );
       }
-
       return (
-        normalized === scope
+        normalized ===
+        normalize(scope)
       );
     };
-
-    const scopedOrders =
-      orders.filter(
-        (order) =>
-          matchSaleScope(
-            getOrderType(order)
-          )
-      );
-
-    const scopedDirectTransactions =
-      directSellTransactions.filter(
+    /* =====================================================
+       SALE TRANSACTIONS
+       ===================================================== */
+    /*
+     * SQL settle_bayargg_order():
+     *
+     * type        = sale_earning
+     * status      = pending
+     * reference   = bayargg-order:<order_id>
+     *
+     * Status pending tetap merupakan
+     * seller earning karena dana sedang
+     * menunggu H1/H2.
+     */
+    const saleTransactions =
+      transactions.filter(
         (transaction) => {
           const type =
             normalize(
               transaction.type
+            );
+          const status =
+            normalize(
+              transaction.status
+            );
+          return (
+            type ===
+              'sale_earning' &&
+            [
+              'pending',
+              'completed',
+              'paid',
+              'success'
+            ].includes(
+              status
             )
-              .replace(
-                /^sell_/,
-                ''
-              );
-
-          return matchSaleScope(
-            type
           );
         }
       );
-
     /* =====================================================
-       SELL REVENUE
+       MATCH TRANSACTION TO ORDER
        ===================================================== */
-
     const sellerTransactionByOrder =
       new Map();
-
-    transactions.forEach(
+    saleTransactions.forEach(
       (transaction) => {
-        const type =
-          normalize(
-            transaction.type
-          );
-
-        const status =
-          normalize(
-            transaction.status
-          );
-
-        if (
-          !type.startsWith(
-            'sell_'
-          )
-        ) {
-          return;
-        }
-
-        if (
-          ![
-            'completed',
-            'paid',
-            'success'
-          ].includes(status)
-        ) {
-          return;
-        }
-
         const reference =
           String(
             transaction.reference ??
             ''
           );
-
         if (
-          reference &&
-          paidOrderIds.has(
-            reference
-          )
+          !reference
+        ) {
+          return;
+        }
+        /*
+         * Canonical SQL reference:
+         *
+         * bayargg-order:<uuid>
+         */
+        const match =
+          reference.match(
+            /^bayargg-order:(.+)$/i
+          );
+        if (
+          match?.[1]
         ) {
           sellerTransactionByOrder.set(
-            reference,
+            String(
+              match[1]
+            ),
+            transaction
+          );
+          return;
+        }
+        /*
+         * Fallback:
+         * direct UUID reference.
+         */
+        const order =
+          orders.find(
+            (item) =>
+              String(
+                item.id
+              ) ===
+              reference
+          );
+        if (
+          order
+        ) {
+          sellerTransactionByOrder.set(
+            String(
+              order.id
+            ),
             transaction
           );
         }
       }
     );
-
     /* =====================================================
-       CANONICAL SALES
+       DIRECT SALE TRANSACTIONS
        ===================================================== */
-
+    const paidOrderIds =
+      new Set(
+        orders.map(
+          (order) =>
+            String(
+              order.id
+            )
+        )
+      );
+    const directSaleTransactions =
+      saleTransactions.filter(
+        (transaction) => {
+          const reference =
+            String(
+              transaction.reference ??
+              ''
+            );
+          /*
+           * Jika reference menunjuk
+           * ke order, jangan dihitung
+           * dua kali.
+           */
+          const match =
+            reference.match(
+              /^bayargg-order:(.+)$/i
+            );
+          if (
+            match?.[1] &&
+            paidOrderIds.has(
+              String(
+                match[1]
+              )
+            )
+          ) {
+            return false;
+          }
+          if (
+            paidOrderIds.has(
+              reference
+            )
+          ) {
+            return false;
+          }
+          return true;
+        }
+      );
+    /* =====================================================
+       SCOPED ORDERS
+       ===================================================== */
+    const scopedOrders =
+      orders.filter(
+        (order) =>
+          matchSaleScope(
+            getOrderType(
+              order
+            )
+          )
+      );
+    /* =====================================================
+       SCOPED DIRECT SALES
+       ===================================================== */
+    const scopedDirectTransactions =
+      directSaleTransactions.filter(
+        (transaction) => {
+          const description =
+            normalize(
+              transaction.description
+            );
+          /*
+           * Kalau transaksi standalone
+           * tidak menyimpan item type,
+           * tetap masukkan pada ALL.
+           */
+          if (
+            scope === 'all'
+          ) {
+            return true;
+          }
+          /*
+           * Coba baca type dari description
+           * jika tersedia.
+           */
+          const rawType =
+            normalize(
+              transaction.type
+            ).replace(
+              /^sell_/,
+              ''
+            );
+          return matchSaleScope(
+            rawType
+          ) || !description;
+        }
+      );
+    /* =====================================================
+       CANONICAL SALE ROWS
+       ===================================================== */
     const saleRows = [];
-
+    /*
+     * 1. ORDER SALES
+     */
     scopedOrders.forEach(
       (order) => {
         const orderId =
-          String(order.id);
-
+          String(
+            order.id
+          );
         const sellerTransaction =
           sellerTransactionByOrder.get(
             orderId
           );
-
+        /*
+         * settlement transaction:
+         *
+         * amount    = seller share
+         * net_amount = seller share
+         *
+         * Jadi revenue dashboard
+         * menggunakan net seller earning.
+         */
         const transactionValue =
           sellerTransaction
             ? Number(
@@ -1556,37 +1984,41 @@ document.addEventListener('DOMContentLoaded', async () => {
                 0
               )
             : null;
-
         const revenue =
           transactionValue !== null
             ? transactionValue
             : Number(
                 order.amount || 0
-              );
-
+              ) * 0.70;
         saleRows.push({
-          id: `order:${orderId}`,
-          source: 'order',
+          id:
+            `order:${orderId}`,
+          source:
+            'order',
           type:
-            getOrderType(order),
+            getOrderType(
+              order
+            ),
           date:
+            order.paid_at ||
             order.created_at,
           revenue
         });
       }
     );
-
+    /*
+     * 2. STANDALONE SALE TRANSACTIONS
+     */
     scopedDirectTransactions.forEach(
       (transaction) => {
         saleRows.push({
-          id: `transaction:${transaction.id}`,
-          source: 'transaction',
+          id:
+            `transaction:${transaction.id}`,
+          source:
+            'transaction',
           type:
-            normalize(
+            normalizeSaleType(
               transaction.type
-            ).replace(
-              /^sell_/,
-              ''
             ),
           date:
             transaction.created_at,
@@ -1599,156 +2031,185 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
     );
-
     /* =====================================================
        SALES TOTAL
        ===================================================== */
-
     const totalSales =
       saleRows.length;
-
     const totalRevenue =
       saleRows.reduce(
-        (total, sale) =>
+        (
+          total,
+          sale
+        ) =>
           total +
           Number(
             sale.revenue || 0
           ),
         0
       );
-
     if ($('sales')) {
       $('sales').textContent =
-        number(totalSales);
+        number(
+          totalSales
+        );
     }
-
-    if ($('detailSales')) {
+    if (
+      $('detailSales')
+    ) {
       $('detailSales').textContent =
-        number(totalSales);
+        number(
+          totalSales
+        );
     }
-
     if ($('revenue')) {
       $('revenue').textContent =
-        money(totalRevenue);
+        money(
+          totalRevenue
+        );
     }
-
-    if ($('detailRevenue')) {
+    if (
+      $('detailRevenue')
+    ) {
       $('detailRevenue').textContent =
-        money(totalRevenue);
+        money(
+          totalRevenue
+        );
     }
-
     /* =====================================================
        INTERACTIONS
        ===================================================== */
-
     const countEvent =
       (type) =>
         scopedEvents.filter(
           (event) =>
             normalize(
               event.event_type
-            ) === normalize(type)
+            ) ===
+            normalize(type)
         ).length;
-
     const likeCount =
       Number(
         likesResult.count || 0
       );
-
     const followerCount =
       Number(
         followsResult.count || 0
       );
-
     const shareCount =
-      countEvent('share');
-
-    if ($('interactions')) {
+      countEvent(
+        'share'
+      );
+    if (
+      $('interactions')
+    ) {
       const items = [
         {
-          icon: 'fa-eye',
-          label: 'Views',
-          value: totalViews,
-          color: 'blue'
+          icon:
+            'fa-eye',
+          label:
+            'Views',
+          value:
+            totalViews,
+          color:
+            'blue'
         },
-
         {
-          icon: 'fa-heart',
-          label: 'Like',
-          value: likeCount,
-          color: 'pink'
+          icon:
+            'fa-heart',
+          label:
+            'Like',
+          value:
+            likeCount,
+          color:
+            'pink'
         },
-
         {
-          icon: 'fa-share-nodes',
-          label: 'Share',
-          value: shareCount,
-          color: 'violet'
+          icon:
+            'fa-share-nodes',
+          label:
+            'Share',
+          value:
+            shareCount,
+          color:
+            'violet'
         },
-
         {
-          icon: 'fa-user-plus',
-          label: 'Follower',
-          value: followerCount,
-          color: 'green'
+          icon:
+            'fa-user-plus',
+          label:
+            'Follower',
+          value:
+            followerCount,
+          color:
+            'green'
         }
       ];
-
       $('interactions').innerHTML =
         items
           .map(
             (item) => `
-              <div class="circle-stat ${esc(item.color)}">
+              <div
+                class="circle-stat ${esc(
+                  item.color
+                )}"
+              >
                 <div class="circle">
                   <i
-                    class="fa-solid ${esc(item.icon)}"
+                    class="fa-solid ${esc(
+                      item.icon
+                    )}"
                     aria-hidden="true"
                   ></i>
                 </div>
-
                 <strong>
-                  ${number(item.value)}
+                  ${number(
+                    item.value
+                  )}
                 </strong>
-
                 <span>
-                  ${esc(item.label)}
+                  ${esc(
+                    item.label
+                  )}
                 </span>
               </div>
             `
           )
           .join('');
     }
-
     /* =====================================================
-       7 DAY CHART DATA
+       CHART DATA
        ===================================================== */
-
     const chartData = {};
-
     currentDays.forEach(
       (day) => {
         chartData[
           dateKey(day)
         ] = {
-          views: 0,
-          sales: 0,
-          share: 0,
-          revenue: 0
+          views:
+            0,
+          sales:
+            0,
+          share:
+            0,
+          revenue:
+            0
         };
       }
     );
-
-    /* =====================================================
-       CURRENT / PREVIOUS EVENTS
-       ===================================================== */
-
     const previousData = {
-      views: 0,
-      sales: 0,
-      share: 0,
-      revenue: 0
+      views:
+        0,
+      sales:
+        0,
+      share:
+        0,
+      revenue:
+        0
     };
-
+    /* =====================================================
+       EVENTS -> CURRENT / PREVIOUS
+       ===================================================== */
     for (
       const event of scopedEvents
     ) {
@@ -1756,86 +2217,93 @@ document.addEventListener('DOMContentLoaded', async () => {
         safeDate(
           event.created_at
         );
-
       if (!date) {
         continue;
       }
-
       const key =
         dateKey(date);
-
       const type =
         normalize(
           event.event_type
         );
-
       /*
        * CURRENT
        */
-
       if (
-        currentDayKeys.has(key)
+        currentDayKeys.has(
+          key
+        )
       ) {
-        if (type === 'view') {
-          chartData[key].views++;
+        if (
+          type === 'view'
+        ) {
+          chartData[
+            key
+          ].views++;
         }
-
-        if (type === 'share') {
-          chartData[key].share++;
+        if (
+          type === 'share'
+        ) {
+          chartData[
+            key
+          ].share++;
         }
       }
-
       /*
        * PREVIOUS
        */
-
       if (
-        previousDayKeys.has(key)
+        previousDayKeys.has(
+          key
+        )
       ) {
-        if (type === 'view') {
+        if (
+          type === 'view'
+        ) {
           previousData.views++;
         }
-
-        if (type === 'share') {
+        if (
+          type === 'share'
+        ) {
           previousData.share++;
         }
       }
     }
-
     /* =====================================================
-       SALES INTO CHART
+       SALES -> CURRENT / PREVIOUS
        ===================================================== */
-
     saleRows.forEach(
       (sale) => {
         const date =
           safeDate(
             sale.date
           );
-
         if (!date) {
           return;
         }
-
         const key =
           dateKey(date);
-
         if (
-          currentDayKeys.has(key)
+          currentDayKeys.has(
+            key
+          )
         ) {
-          chartData[key].sales++;
-
-          chartData[key].revenue +=
+          chartData[
+            key
+          ].sales++;
+          chartData[
+            key
+          ].revenue +=
             Number(
               sale.revenue || 0
             );
         }
-
         if (
-          previousDayKeys.has(key)
+          previousDayKeys.has(
+            key
+          )
         ) {
           previousData.sales++;
-
           previousData.revenue +=
             Number(
               sale.revenue || 0
@@ -1843,273 +2311,277 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     );
-
     /* =====================================================
        CURRENT PERIOD
        ===================================================== */
-
     const currentData = {
-      views: 0,
-      sales: 0,
-      share: 0,
-      revenue: 0
+      views:
+        0,
+      sales:
+        0,
+      share:
+        0,
+      revenue:
+        0
     };
-
     currentDays.forEach(
       (day) => {
         const item =
           chartData[
             dateKey(day)
           ] || {};
-
         currentData.views +=
           Number(
             item.views || 0
           );
-
         currentData.sales +=
           Number(
             item.sales || 0
           );
-
         currentData.share +=
           Number(
             item.share || 0
           );
-
         currentData.revenue +=
           Number(
             item.revenue || 0
           );
       }
     );
-
     /* =====================================================
        TRENDS
        ===================================================== */
-
     const viewsTrend =
       calculateTrend(
         currentData.views,
         previousData.views
       );
-
     const salesTrend =
       calculateTrend(
         currentData.sales,
         previousData.sales
       );
-
     const shareTrend =
       calculateTrend(
         currentData.share,
         previousData.share
       );
-
     const revenueTrend =
       calculateTrend(
         currentData.revenue,
         previousData.revenue
       );
-
     /* =====================================================
-       TREND IDS FROM dashboard.html
+       TREND IDS
        ===================================================== */
-
     renderTrend(
       'performanceViewsTrend',
       viewsTrend
     );
-
     renderTrend(
       'performanceSalesTrend',
       salesTrend
     );
-
     renderTrend(
       'performanceShareTrend',
       shareTrend
     );
-
     renderTrend(
       'performanceRevenueTrend',
       revenueTrend
     );
-
     renderTrend(
       'revenueTrendChange',
       revenueTrend
     );
-
     /* =====================================================
        PERFORMANCE SNAPSHOT
        ===================================================== */
-
     performanceSnapshot.views = {
-      label: 'Views',
-      value: currentData.views,
-      trend: viewsTrend
+      label:
+        'Views',
+      value:
+        currentData.views,
+      trend:
+        viewsTrend
     };
-
     performanceSnapshot.sales = {
-      label: 'Sales',
-      value: currentData.sales,
-      trend: salesTrend
+      label:
+        'Sales',
+      value:
+        currentData.sales,
+      trend:
+        salesTrend
     };
-
     performanceSnapshot.share = {
-      label: 'Share',
-      value: currentData.share,
-      trend: shareTrend
+      label:
+        'Share',
+      value:
+        currentData.share,
+      trend:
+        shareTrend
     };
-
     performanceSnapshot.revenue = {
-      label: 'Revenue',
-      value: currentData.revenue,
-      trend: revenueTrend
+      label:
+        'Revenue',
+      value:
+        currentData.revenue,
+      trend:
+        revenueTrend
     };
-
     /* =====================================================
        PERFORMANCE VALUES
        ===================================================== */
-
-    if ($('performanceViews')) {
+    if (
+      $('performanceViews')
+    ) {
       $('performanceViews').textContent =
         number(
           currentData.views
         );
     }
-
-    if ($('performanceSales')) {
+    if (
+      $('performanceSales')
+    ) {
       $('performanceSales').textContent =
         number(
           currentData.sales
         );
     }
-
-    if ($('performanceShare')) {
+    if (
+      $('performanceShare')
+    ) {
       $('performanceShare').textContent =
         number(
           currentData.share
         );
     }
-
-    if ($('performanceRevenue')) {
+    if (
+      $('performanceRevenue')
+    ) {
       $('performanceRevenue').textContent =
         money(
           currentData.revenue
         );
     }
-
     /* =====================================================
        PERFORMANCE PERIOD
        ===================================================== */
-
     const firstDay =
       currentDays[0];
-
     const lastDay =
       currentDays[
         currentDays.length - 1
       ];
-
-    if ($('performancePeriod')) {
+    if (
+      $('performancePeriod')
+    ) {
       $('performancePeriod').textContent =
         `${firstDay.toLocaleDateString(
           'id-ID',
           {
-            day: '2-digit',
-            month: 'short'
+            day:
+              '2-digit',
+            month:
+              'short'
           }
         )} – ${lastDay.toLocaleDateString(
           'id-ID',
           {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
+            day:
+              '2-digit',
+            month:
+              'short',
+            year:
+              'numeric'
           }
         )}`;
     }
-
-    if ($('periodBadge')) {
+    if (
+      $('periodBadge')
+    ) {
       $('periodBadge').textContent =
         '7 Hari';
     }
-
     /* =====================================================
        PERFORMANCE META
        ===================================================== */
-
     const performanceMeta =
       document.querySelector(
         '.performance-meta'
       );
-
-    if (performanceMeta) {
+    if (
+      performanceMeta
+    ) {
       const metaItems =
         performanceMeta.querySelectorAll(
           '.performance-meta-item'
         );
-
-      if (metaItems[0]) {
+      if (
+        metaItems[0]
+      ) {
         const span =
-          metaItems[0].querySelector(
-            'span'
-          );
-
+          metaItems[0]
+            .querySelector(
+              'span'
+            );
         if (span) {
           span.textContent =
             `Dibandingkan ${previousDays[0].toLocaleDateString(
               'id-ID',
               {
-                day: '2-digit',
-                month: 'short'
+                day:
+                  '2-digit',
+                month:
+                  'short'
               }
             )} – ${previousDays[
-              previousDays.length - 1
+              previousDays.length -
+              1
             ].toLocaleDateString(
               'id-ID',
               {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
+                day:
+                  '2-digit',
+                month:
+                  'short',
+                year:
+                  'numeric'
               }
             )}`;
         }
       }
-
-      if (metaItems[1]) {
+      if (
+        metaItems[1]
+      ) {
         const span =
-          metaItems[1].querySelector(
-            'span'
-          );
-
+          metaItems[1]
+            .querySelector(
+              'span'
+            );
         if (span) {
-          const trendLabel =
-            revenueTrend.label;
-
           span.textContent =
-            `Trend otomatis · ${trendLabel}`;
+            `Trend otomatis · ${revenueTrend.label}`;
         }
       }
     }
-
     /* =====================================================
        REVENUE TREND
        ===================================================== */
-
-    if ($('revenueTrendValue')) {
+    if (
+      $('revenueTrendValue')
+    ) {
       $('revenueTrendValue').textContent =
         money(
           currentData.revenue
         );
     }
-
     /* =====================================================
        REVENUE BARS
        ===================================================== */
-
-    if ($('revenueBars')) {
+    if (
+      $('revenueBars')
+    ) {
       const maxRevenue =
         Math.max(
           1,
@@ -2118,26 +2590,26 @@ document.addEventListener('DOMContentLoaded', async () => {
               Number(
                 chartData[
                   dateKey(day)
-                ]?.revenue || 0
+                ]?.revenue ||
+                0
               )
           )
         );
-
       $('revenueBars').innerHTML =
         currentDays
           .map(
             (day) => {
               const key =
                 dateKey(day);
-
               const item =
-                chartData[key] || {};
-
+                chartData[
+                  key
+                ] || {};
               const revenue =
                 Number(
-                  item.revenue || 0
+                  item.revenue ||
+                  0
                 );
-
               const height =
                 revenue > 0
                   ? Math.max(
@@ -2148,11 +2620,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                       ) * 100
                     )
                   : 2;
-
               return `
                 <div
                   class="revenue-bar"
-                  data-date="${esc(key)}"
+                  data-date="${esc(
+                    key
+                  )}"
                   tabindex="0"
                   role="button"
                   title="${esc(
@@ -2162,7 +2635,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <i
                     style="height:${height}%"
                   ></i>
-
                   <small>
                     ${esc(
                       formatDay(day)
@@ -2174,7 +2646,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           )
           .join('');
-
       $('revenueBars')
         .querySelectorAll(
           '.revenue-bar'
@@ -2185,27 +2656,31 @@ document.addEventListener('DOMContentLoaded', async () => {
               () => {
                 const item =
                   chartData[
-                    bar.dataset.date
+                    bar.dataset
+                      .date
                   ] || {};
-
                 toast(
-                  `${formatDate(bar.dataset.date)} · Revenue ${money(item.revenue || 0)}`,
+                  `${formatDate(
+                    bar.dataset.date
+                  )} · Revenue ${money(
+                    item.revenue ||
+                    0
+                  )}`,
                   'info'
                 );
               };
-
             bar.addEventListener(
               'click',
               showRevenue
             );
-
             bar.addEventListener(
               'keydown',
               (event) => {
                 if (
                   event.key ===
                     'Enter' ||
-                  event.key === ' '
+                  event.key ===
+                    ' '
                 ) {
                   event.preventDefault();
                   showRevenue();
@@ -2215,46 +2690,44 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         );
     }
-
     /* =====================================================
        MAIN CHART
        ===================================================== */
-
     renderChart(
       chartData
     );
-
     /* =====================================================
-       FOLLOWER
+       FOLLOWERS
        ===================================================== */
-
-    if ($('followerTotal')) {
+    if (
+      $('followerTotal')
+    ) {
       $('followerTotal').textContent =
         number(
           followerCount
         );
     }
-
     /*
-     * dashboard.html masih menyediakan
-     * followerCountries.
+     * SQL profiles memang punya country,
+     * tetapi creator_followers hanya menyimpan
+     * creator_id + follower_id.
      *
-     * Tetapi schema profiles kamu tidak
-     * memiliki kolom country.
-     *
-     * Jadi JANGAN query:
-     * profiles:follower_id(country)
-     *
-     * karena itu menyebabkan error.
+     * Tidak melakukan nested relation yang
+     * belum tentu tersedia.
      */
-
-    if ($('followerCountries')) {
-      if (followerCount > 0) {
+    if (
+      $('followerCountries')
+    ) {
+      if (
+        followerCount > 0
+      ) {
         $('followerCountries').innerHTML = `
           <div class="empty">
             <i class="fa-solid fa-users"></i>
             <span>
-              ${number(followerCount)}
+              ${number(
+                followerCount
+              )}
               pengikut tercatat.
             </span>
           </div>
@@ -2270,123 +2743,141 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       }
     }
-
-    if ($('followerDonut')) {
+    if (
+      $('followerDonut')
+    ) {
       $('followerDonut').style.background =
         followerCount > 0
           ? 'conic-gradient(#229ed9 0 100%)'
           : 'conic-gradient(#dfe7ec 0 100%)';
     }
-
     /* =====================================================
        RECENT CONTENT
        ===================================================== */
-
     const recentRows = [
+      /*
+       * PRODUCTS
+       */
       ...filteredProducts.map(
         (item) => ({
           title:
             item.title ||
             'Untitled',
-
           type:
             item.type ||
             'link',
-
           icon:
             normalize(
               item.type
             ) === 'code'
               ? 'fa-code'
               : 'fa-link',
-
           date:
             item.created_at,
-
           views:
             Number(
               item.views || 0
             ),
-
           price:
             Number(
               item.price || 0
             )
         })
       ),
-
+      /*
+       * PASTES
+       */
       ...filteredPastes.map(
         (item) => ({
           title:
             item.title ||
             item.slug ||
-            'PasteLink',
-
+            'Paste',
           type:
-            'pastelink',
-
+            'paste',
           icon:
             'fa-file-lines',
-
           date:
             item.created_at,
-
+          views:
+            0,
+          price:
+            0
+        })
+      ),
+      /*
+       * PASTELINKS
+       */
+      ...filteredPastelinks.map(
+        (item) => ({
+          title:
+            item.title ||
+            item.slug ||
+            'PasteLink',
+          type:
+            'pastelink',
+          icon:
+            'fa-link',
+          date:
+            item.created_at,
           views:
             Number(
               item.views || 0
             ),
-
-          price: 0
+          price:
+            0
         })
       ),
-
+      /*
+       * TELEGRAM PRODUCTS
+       */
       ...filteredCodes.map(
         (item) => ({
           title:
             item.title ||
             'Code',
-
           type:
             item.product_type ||
+            item.type ||
             'code',
-
           icon:
             'fa-code',
-
           date:
             item.created_at,
-
-          views: 0,
-
+          views:
+            Number(
+              item.views || 0
+            ),
           price:
             Number(
               item.price || 0
             )
         })
       ),
-
+      /*
+       * TELEGRAM CHANNELS
+       */
       ...filteredChannels.map(
         (item) => ({
           title:
             item.name ||
+            item.username ||
             'Telegram',
-
           type:
             item.type ||
             'channel',
-
           icon:
             normalize(
               item.type
             ) === 'group'
               ? 'fa-users'
               : 'fa-broadcast-tower',
-
           date:
             item.created_at,
-
-          views: 0,
-
+          views:
+            Number(
+              item.views || 0
+            ),
           price:
             Number(
               item.price || 0
@@ -2396,127 +2887,132 @@ document.addEventListener('DOMContentLoaded', async () => {
     ].sort(
       (a, b) => {
         const dateA =
-          safeDate(a.date)
-            ?.getTime() || 0;
-
+          safeDate(
+            a.date
+          )?.getTime() ||
+          0;
         const dateB =
-          safeDate(b.date)
-            ?.getTime() || 0;
-
-        return dateB - dateA;
+          safeDate(
+            b.date
+          )?.getTime() ||
+          0;
+        return (
+          dateB -
+          dateA
+        );
       }
     );
-
-    const recentPageSize = 5;
-
-    let recentPage = 1;
-
-    const renderRecent = () => {
-      const totalPages =
-        Math.max(
-          1,
-          Math.ceil(
-            recentRows.length /
-            recentPageSize
-          )
-        );
-
-      recentPage =
-        Math.min(
-          recentPage,
-          totalPages
-        );
-
-      const start =
-        (
-          recentPage - 1
-        ) * recentPageSize;
-
-      const rows =
-        recentRows.slice(
-          start,
-          start + recentPageSize
-        );
-
-      if ($('recentLinks')) {
-        $('recentLinks').innerHTML =
-          rows.length
-            ? rows
-                .map(
-                  (item) => `
-                    <div class="recent-item">
-                      <span class="recent-icon">
-                        <i
-                          class="fa-solid ${esc(item.icon)}"
-                          aria-hidden="true"
-                        ></i>
-                      </span>
-
-                      <div>
-                        <b>
-                          ${esc(item.title)}
-                        </b>
-
-                        <small>
-                          ${esc(
-                            String(
-                              item.type ||
-                              'content'
-                            )
-                          )}
-                          ·
-                          ${esc(
-                            formatDate(
-                              item.date
-                            )
-                          )}
-                        </small>
-                      </div>
-
-                      <strong>
-                        ${
-                          item.price > 0
-                            ? esc(
-                                money(
-                                  item.price
-                                )
+    const recentPageSize =
+      5;
+    let recentPage =
+      1;
+    const renderRecent =
+      () => {
+        const totalPages =
+          Math.max(
+            1,
+            Math.ceil(
+              recentRows.length /
+                recentPageSize
+            )
+          );
+        recentPage =
+          Math.min(
+            recentPage,
+            totalPages
+          );
+        const start =
+          (
+            recentPage -
+            1
+          ) *
+          recentPageSize;
+        const rows =
+          recentRows.slice(
+            start,
+            start +
+              recentPageSize
+          );
+        if (
+          $('recentLinks')
+        ) {
+          $('recentLinks').innerHTML =
+            rows.length
+              ? rows
+                  .map(
+                    (item) => `
+                      <div class="recent-item">
+                        <span class="recent-icon">
+                          <i
+                            class="fa-solid ${esc(
+                              item.icon
+                            )}"
+                            aria-hidden="true"
+                          ></i>
+                        </span>
+                        <div>
+                          <b>
+                            ${esc(
+                              item.title
+                            )}
+                          </b>
+                          <small>
+                            ${esc(
+                              String(
+                                item.type ||
+                                'content'
                               )
-                            : `${number(
-                                item.views
-                              )} views`
-                        }
-                      </strong>
-                    </div>
-                  `
-                )
-                .join('')
-            : `
-                <div class="empty">
-                  <i class="fa-solid fa-box-open"></i>
-                  <span>
-                    Belum ada konten.
-                  </span>
-                </div>
-              `;
-      }
-
-      renderPager(
-        'recentPagination',
-        recentPage,
-        totalPages,
-        (page) => {
-          recentPage = page;
-          renderRecent();
+                            )}
+                            ·
+                            ${esc(
+                              formatDate(
+                                item.date
+                              )
+                            )}
+                          </small>
+                        </div>
+                        <strong>
+                          ${
+                            item.price >
+                            0
+                              ? esc(
+                                  money(
+                                    item.price
+                                  )
+                                )
+                              : `${number(
+                                  item.views
+                                )} views`
+                          }
+                        </strong>
+                      </div>
+                    `
+                  )
+                  .join('')
+              : `
+                  <div class="empty">
+                    <i class="fa-solid fa-box-open"></i>
+                    <span>
+                      Belum ada konten.
+                    </span>
+                  </div>
+                `;
         }
-      );
-    };
-
+        renderPager(
+          'recentPagination',
+          recentPage,
+          totalPages,
+          (page) => {
+            recentPage =
+              page;
+            renderRecent();
+          }
+        );
+      };
     renderRecent();
-
     /* =====================================================
        ACTIVITY
        ===================================================== */
-
     const activityEvents =
       scopedEvents.map(
         (event) => ({
@@ -2525,35 +3021,29 @@ document.addEventListener('DOMContentLoaded', async () => {
               event.event_type
             ) ||
             'activity',
-
           date:
             event.created_at
         })
       );
-
     const orderActivities =
       scopedOrders.map(
         (order) => ({
           type:
             'paid',
-
           date:
             order.paid_at ||
             order.created_at
         })
       );
-
     const transactionActivities =
       scopedDirectTransactions.map(
         (transaction) => ({
           type:
             'sale',
-
           date:
             transaction.created_at
         })
       );
-
     const activities = [
       ...activityEvents,
       ...orderActivities,
@@ -2561,17 +3051,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     ].sort(
       (a, b) => {
         const dateA =
-          safeDate(a.date)
-            ?.getTime() || 0;
-
+          safeDate(
+            a.date
+          )?.getTime() ||
+          0;
         const dateB =
-          safeDate(b.date)
-            ?.getTime() || 0;
-
-        return dateB - dateA;
+          safeDate(
+            b.date
+          )?.getTime() ||
+          0;
+        return (
+          dateB -
+          dateA
+        );
       }
     );
-
     const activityIcon = (
       type
     ) => {
@@ -2580,34 +3074,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       ) {
         case 'view':
           return 'fa-eye';
-
         case 'like':
           return 'fa-heart';
-
         case 'share':
           return 'fa-share-nodes';
-
         case 'follow':
           return 'fa-user-plus';
-
         case 'paid':
         case 'sale':
           return 'fa-cart-shopping';
-
         case 'click':
           return 'fa-arrow-pointer';
-
         case 'download':
           return 'fa-download';
-
         case 'purchase':
           return 'fa-bag-shopping';
-
         default:
           return 'fa-bolt';
       }
     };
-
     const activityLabel = (
       type
     ) => {
@@ -2616,31 +3101,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       ) {
         case 'view':
           return 'VIEW';
-
         case 'like':
           return 'LIKE';
-
         case 'share':
           return 'SHARE';
-
         case 'follow':
           return 'FOLLOW';
-
         case 'paid':
           return 'PAID';
-
         case 'sale':
           return 'SALE';
-
         case 'click':
           return 'CLICK';
-
         case 'download':
           return 'DOWNLOAD';
-
         case 'purchase':
           return 'PURCHASE';
-
         default:
           return String(
             type ||
@@ -2648,104 +3124,100 @@ document.addEventListener('DOMContentLoaded', async () => {
           ).toUpperCase();
       }
     };
-
-    const activityPageSize = 5;
-
-    let activityPage = 1;
-
-    const renderActivity = () => {
-      const totalPages =
-        Math.max(
-          1,
-          Math.ceil(
-            activities.length /
-            activityPageSize
-          )
-        );
-
-      activityPage =
-        Math.min(
-          activityPage,
-          totalPages
-        );
-
-      const start =
-        (
-          activityPage - 1
-        ) * activityPageSize;
-
-      const rows =
-        activities.slice(
-          start,
-          start + activityPageSize
-        );
-
-      if ($('activity')) {
-        $('activity').innerHTML =
-          rows.length
-            ? rows
-                .map(
-                  (item) => `
-                    <div class="activity-row">
-                      <span>
-                        <i
-                          class="fa-solid ${esc(
-                            activityIcon(
-                              item.type
-                            )
-                          )}"
-                          aria-hidden="true"
-                        ></i>
-                      </span>
-
-                      <div>
-                        <b>
-                          ${esc(
-                            activityLabel(
-                              item.type
-                            )
-                          )}
-                        </b>
-
-                        <small>
-                          ${esc(
-                            formatDateTime(
-                              item.date
-                            )
-                          )}
-                        </small>
+    const activityPageSize =
+      5;
+    let activityPage =
+      1;
+    const renderActivity =
+      () => {
+        const totalPages =
+          Math.max(
+            1,
+            Math.ceil(
+              activities.length /
+                activityPageSize
+            )
+          );
+        activityPage =
+          Math.min(
+            activityPage,
+            totalPages
+          );
+        const start =
+          (
+            activityPage -
+            1
+          ) *
+          activityPageSize;
+        const rows =
+          activities.slice(
+            start,
+            start +
+              activityPageSize
+          );
+        if (
+          $('activity')
+        ) {
+          $('activity').innerHTML =
+            rows.length
+              ? rows
+                  .map(
+                    (item) => `
+                      <div class="activity-row">
+                        <span>
+                          <i
+                            class="fa-solid ${esc(
+                              activityIcon(
+                                item.type
+                              )
+                            )}"
+                            aria-hidden="true"
+                          ></i>
+                        </span>
+                        <div>
+                          <b>
+                            ${esc(
+                              activityLabel(
+                                item.type
+                              )
+                            )}
+                          </b>
+                          <small>
+                            ${esc(
+                              formatDateTime(
+                                item.date
+                              )
+                            )}
+                          </small>
+                        </div>
                       </div>
-                    </div>
-                  `
-                )
-                .join('')
-            : `
-                <div class="empty">
-                  <i class="fa-solid fa-clock"></i>
-                  <span>
-                    Belum ada aktivitas.
-                  </span>
-                </div>
-              `;
-      }
-
-      renderPager(
-        'activityPagination',
-        activityPage,
-        totalPages,
-        (page) => {
-          activityPage = page;
-          renderActivity();
+                    `
+                  )
+                  .join('')
+              : `
+                  <div class="empty">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>
+                      Belum ada aktivitas.
+                    </span>
+                  </div>
+                `;
         }
-      );
-    };
-
+        renderPager(
+          'activityPagination',
+          activityPage,
+          totalPages,
+          (page) => {
+            activityPage =
+              page;
+            renderActivity();
+          }
+        );
+      };
     renderActivity();
-
     /* =====================================================
        PERFORMANCE CLICK
        ===================================================== */
-
     document
       .querySelectorAll(
         '[data-performance]'
@@ -2753,47 +3225,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       .forEach(
         (element) => {
           /*
-           * Hindari listener dobel ketika
-           * scope berubah dan load() dipanggil lagi.
+           * Hindari listener dobel
+           * saat scope berubah.
            */
-
           if (
-            element.dataset.dashboardBound ===
+            element.dataset
+              .dashboardBound ===
             'true'
           ) {
             return;
           }
-
-          element.dataset.dashboardBound =
+          element.dataset
+            .dashboardBound =
             'true';
-
           element.addEventListener(
             'click',
             () => {
               const key =
-                element.dataset.performance;
-
+                element.dataset
+                  .performance;
               const item =
                 performanceSnapshot[
                   key
                 ];
-
               if (!item) {
                 return;
               }
-
               const value =
-                key === 'revenue'
+                key ===
+                'revenue'
                   ? money(
                       item.value
                     )
                   : number(
                       item.value
                     );
-
               toast(
                 `${item.label}: ${value} · Performa ${item.trend?.label || '0%'}`,
-                item.trend?.direction ===
+                item.trend
+                  ?.direction ===
                   'down'
                   ? 'error'
                   : 'success'
@@ -2803,26 +3273,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       );
   }
-
   /* =======================================================
      SCOPE CHANGE
      ======================================================= */
-
   const scopeElement =
     $('scope');
-
-  if (scopeElement) {
+  if (
+    scopeElement
+  ) {
     scopeElement.addEventListener(
       'change',
       async () => {
         try {
           await load();
-        } catch (error) {
+        } catch (
+          error
+        ) {
           console.error(
             'Dashboard scope error:',
             error
           );
-
           toast(
             error?.message ||
               'Dashboard gagal dimuat.',
@@ -2832,37 +3302,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     );
   }
-
   /* =======================================================
      INITIAL LOAD
      ======================================================= */
-
   try {
     await load();
-  } catch (error) {
+  } catch (
+    error
+  ) {
     console.error(
       'Dashboard load error:',
       error
     );
-
-    if ($('created')) {
-      $('created').textContent = '0';
+    if (
+      $('created')
+    ) {
+      $('created').textContent =
+        '0';
     }
-
-    if ($('views')) {
-      $('views').textContent = '0';
+    if (
+      $('views')
+    ) {
+      $('views').textContent =
+        '0';
     }
-
-    if ($('sales')) {
-      $('sales').textContent = '0';
+    if (
+      $('sales')
+    ) {
+      $('sales').textContent =
+        '0';
     }
-
-    if ($('revenue')) {
+    if (
+      $('revenue')
+    ) {
       $('revenue').textContent =
         money(0);
     }
-
-    if ($('recentLinks')) {
+    if (
+      $('recentLinks')
+    ) {
       $('recentLinks').innerHTML = `
         <div class="empty">
           <i class="fa-solid fa-circle-exclamation"></i>
@@ -2872,8 +3350,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }
-
-    if ($('activity')) {
+    if (
+      $('activity')
+    ) {
       $('activity').innerHTML = `
         <div class="empty">
           <i class="fa-solid fa-circle-exclamation"></i>
@@ -2886,7 +3365,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }
-
     toast(
       error?.message ||
         'Dashboard gagal dimuat.',
