@@ -1,0 +1,221 @@
+/*
+============================================================
+PasTele — UNIVERSAL AUTO THEME / FINAL CONSISTENCY LAYER
+============================================================
+Theme is controlled ONLY by html[data-theme]:
+06:00–17:59 light
+18:00–05:59 dark
+
+This file is intentionally loaded LAST so page-specific CSS
+cannot leave common surfaces stuck in the opposite theme.
+*/
+
+:root{
+  --theme-bg:#f5f8fc;
+  --theme-surface:#ffffff;
+  --theme-surface-2:#f8fafc;
+  --theme-surface-3:#eef3f7;
+  --theme-text:#14212b;
+  --theme-muted:#718293;
+  --theme-line:#e2e9ef;
+  --theme-line-strong:#cfd9e1;
+  --theme-input:#ffffff;
+  --theme-hover:#f4f8fb;
+  --theme-shadow:0 10px 30px rgba(15,35,52,.07);
+}
+
+html[data-theme="dark"]{
+  --theme-bg:#08121a;
+  --theme-surface:#101d27;
+  --theme-surface-2:#142631;
+  --theme-surface-3:#1a303d;
+  --theme-text:#edf5f8;
+  --theme-muted:#91a4b2;
+  --theme-line:#263d4b;
+  --theme-line-strong:#39515f;
+  --theme-input:#0f1c25;
+  --theme-hover:#192b36;
+  --theme-shadow:0 12px 36px rgba(0,0,0,.24);
+}
+
+/* Base */
+html,body{
+  background-color:var(--theme-bg)!important;
+  color:var(--theme-text)!important;
+}
+body{
+  color-scheme:inherit;
+}
+main,section,article,aside{
+  color:var(--theme-text);
+}
+h1,h2,h3,h4,h5,h6,p,li,dt,dd,label,small,strong{
+  color:inherit;
+}
+.muted,.text-muted,.secondary,.kpi{
+  color:var(--theme-muted)!important;
+}
+
+/* Universal surfaces */
+.card,.panel,.section-card,.dashboard-card,.content-card,
+.modal-content,.modal-card,.dropdown-menu,.menu-card,.stat-card,
+.auth-card,.security-panel,.cta,.market-card,.product-card,
+.plan-card,.benefit-card,.premium-price,.plan-profile,
+.payment-card,.success-card,.wallet-card,.purchase-card,
+.settings-card,.withdrawal-card,.transaction-card{
+  background-color:var(--theme-surface)!important;
+  color:var(--theme-text);
+  border-color:var(--theme-line)!important;
+  box-shadow:var(--theme-shadow);
+}
+
+/* Secondary blocks */
+.notice,.alert,.empty,.list-item,.table-wrap,
+.search-box,.filter-bar,.toolbar,.tabs{
+  color:var(--theme-text);
+}
+html[data-theme="dark"] .notice,
+html[data-theme="dark"] .alert,
+html[data-theme="dark"] .empty,
+html[data-theme="dark"] .list-item,
+html[data-theme="dark"] .table-wrap,
+html[data-theme="dark"] .search-box,
+html[data-theme="dark"] .filter-bar,
+html[data-theme="dark"] .toolbar{
+  background-color:var(--theme-surface-2)!important;
+  border-color:var(--theme-line)!important;
+}
+
+/* Forms — never leave white controls in dark mode */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,select,.input,.select,.textarea,.composer,
+.search-input,.form-control{
+  background-color:var(--theme-input)!important;
+  color:var(--theme-text)!important;
+  border-color:var(--theme-line-strong)!important;
+}
+input::placeholder,textarea::placeholder{
+  color:var(--theme-muted)!important;
+}
+option{
+  background-color:var(--theme-surface)!important;
+  color:var(--theme-text)!important;
+}
+
+/* Tables */
+table,.table{
+  color:var(--theme-text);
+}
+.table th,.table td,
+table th,table td{
+  border-color:var(--theme-line)!important;
+}
+.table th,table th{
+  background-color:var(--theme-surface-2)!important;
+  color:var(--theme-muted)!important;
+}
+.table tbody tr:hover td,
+table tbody tr:hover td{
+  background-color:var(--theme-hover)!important;
+}
+
+/* Buttons */
+.btn:not(.primary):not(.danger):not(.success),
+button:not(.primary):not(.danger):not(.success):not([class*="icon"]){
+  background-color:var(--theme-surface)!important;
+  color:var(--theme-text);
+  border-color:var(--theme-line-strong);
+}
+.btn:not(.primary):not(.danger):not(.success):hover{
+  background-color:var(--theme-hover)!important;
+}
+
+/* Navigation / headers / footers */
+.navbar,.topbar,.app-navbar,#navbar,
+.footer,header,footer{
+  color:var(--theme-text);
+  border-color:var(--theme-line)!important;
+}
+.footer{
+  background:var(--theme-surface)!important;
+}
+html[data-theme="dark"] .navbar,
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .app-navbar,
+html[data-theme="dark"] #navbar,
+html[data-theme="dark"] header{
+  background-color:rgba(10,20,29,.96)!important;
+}
+
+/* Common overlays and menus */
+.modal-backdrop,.overlay,.drawer-backdrop{
+  background:rgba(0,0,0,.62)!important;
+}
+.dropdown,.popover,.menu,.context-menu{
+  background-color:var(--theme-surface)!important;
+  color:var(--theme-text)!important;
+  border-color:var(--theme-line)!important;
+}
+
+/* Explicitly neutralize common white-only blocks in dark mode.
+   QR images and image elements are intentionally excluded. */
+html[data-theme="dark"] .white-bg,
+html[data-theme="dark"] .light-card,
+html[data-theme="dark"] .surface-light,
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-light{
+  background-color:var(--theme-surface)!important;
+  color:var(--theme-text)!important;
+}
+
+/* Progress / separators */
+.progress{
+  background-color:var(--theme-surface-3)!important;
+}
+hr{
+  border-color:var(--theme-line)!important;
+}
+
+/* Dark mode text that is frequently hard-coded */
+html[data-theme="dark"] .text-dark,
+html[data-theme="dark"] .text-black{
+  color:var(--theme-text)!important;
+}
+html[data-theme="light"] .text-light,
+html[data-theme="light"] .text-white{
+  color:var(--theme-text)!important;
+}
+
+/* Landing/auth shells */
+.auth-shell,.login-page,.register-page,.settings-page-body,
+.marketplace-page,.my-products-page,.profile-page,
+.purchases-page,.wallet-page,.withdrawals-page,
+.transactions-page,.payment-page,.product-page,
+.paste-page{
+  color:var(--theme-text);
+}
+html[data-theme="dark"] .auth-shell,
+html[data-theme="dark"] .login-page,
+html[data-theme="dark"] .register-page{
+  background-color:var(--theme-bg)!important;
+}
+
+/* Browser autofill */
+html[data-theme="dark"] input:-webkit-autofill,
+html[data-theme="dark"] textarea:-webkit-autofill,
+html[data-theme="dark"] select:-webkit-autofill{
+  -webkit-text-fill-color:var(--theme-text)!important;
+  -webkit-box-shadow:0 0 0 1000px var(--theme-input) inset!important;
+  caret-color:var(--theme-text);
+}
+
+/* Keep transitions smooth at the exact 06:00/18:00 switch. */
+html,body,.card,.panel,.footer,.navbar,.topbar,.app-navbar,
+input,textarea,select,button{
+  transition:background-color .22s ease,color .22s ease,border-color .22s ease;
+}
+
+@media(prefers-reduced-motion:reduce){
+  html,body,.card,.panel,.footer,.navbar,.topbar,.app-navbar,
+  input,textarea,select,button{transition:none!important}
+}
