@@ -1,1 +1,54 @@
-(()=>{const K="pastele-theme",r=document.documentElement;const apply=m=>{if(m==="light"||m==="dark")r.dataset.theme=m;else delete r.dataset.theme;r.style.colorScheme=m==="system"?(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"):m};const saved=localStorage.getItem(K)||"system";apply(saved);matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{if((localStorage.getItem(K)||"system")==="system")apply("system")});window.PasTeleTheme={get:()=>localStorage.getItem(K)||"system",set:m=>{m=["system","light","dark"].includes(m)?m:"system";localStorage.setItem(K,m);apply(m);window.dispatchEvent(new CustomEvent("pastele-theme-change",{detail:{mode:m}}))},cycle:()=>{const a=["system","light","dark"],c=a.indexOf(window.PasTeleTheme.get());window.PasTeleTheme.set(a[(c+1)%a.length])}}})();
+/* PasTele — UNIVERSAL AUTOMATIC DAY/NIGHT THEME
+   06:00–17:59 => LIGHT
+   18:00–05:59 => DARK
+*/
+(() => {
+  'use strict';
+
+  const root = document.documentElement;
+  const NIGHT_START = 18;
+  const DAY_START = 6;
+
+  const getAutoTheme = () => {
+    const hour = new Date().getHours();
+    return (hour >= DAY_START && hour < NIGHT_START) ? 'light' : 'dark';
+  };
+
+  const apply = () => {
+    const theme = getAutoTheme();
+
+    root.dataset.theme = theme;
+    root.classList.toggle('theme-dark', theme === 'dark');
+    root.classList.toggle('theme-light', theme === 'light');
+    root.style.colorScheme = theme;
+
+    if (document.body) {
+      document.body.classList.toggle('theme-dark', theme === 'dark');
+      document.body.classList.toggle('theme-light', theme === 'light');
+    }
+
+    window.dispatchEvent(new CustomEvent('pastele-theme-change', {
+      detail: { mode: 'auto', theme }
+    }));
+
+    return theme;
+  };
+
+  // Always automatic. Clear old manual/system preference so it cannot override.
+  try { localStorage.removeItem('pastele-theme'); } catch (_) {}
+
+  apply();
+
+  // Re-check at every minute so an already-open page switches at 18:00 / 06:00.
+  const tick = () => apply();
+  window.setInterval(tick, 60 * 1000);
+
+  // Public API retained for compatibility with existing code.
+  window.PasTeleTheme = {
+    get: () => 'auto',
+    resolved: getAutoTheme,
+    set: () => apply(),
+    cycle: () => apply(),
+    apply
+  };
+})();

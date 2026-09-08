@@ -1383,173 +1383,49 @@ document.addEventListener('DOMContentLoaded', async () => {
      THEME / APPEARANCE
      ======================================================= */
 
-  const THEME_KEY =
-    'pastele-theme';
-
-  function getStoredTheme() {
-    const value =
-      localStorage.getItem(
-        THEME_KEY
-      );
-
-    if (
-      value === 'light' ||
-      value === 'dark' ||
-      value === 'system'
-    ) {
-      return value;
-    }
-
-    return 'system';
-  }
-
-  function getSystemTheme() {
-    return window.matchMedia &&
-      window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      ).matches
-      ? 'dark'
-      : 'light';
-  }
-
-  function applyTheme(theme) {
-    const resolved =
-      theme === 'system'
-        ? getSystemTheme()
-        : theme;
-
-    document.documentElement.dataset.theme =
-      resolved;
-
-    document.documentElement.classList.toggle(
-      'theme-dark',
-      resolved === 'dark'
-    );
-
-    document.documentElement.classList.toggle(
-      'theme-light',
-      resolved === 'light'
-    );
-
-    document.body.classList.toggle(
-      'theme-dark',
-      resolved === 'dark'
-    );
-
-    document.body.classList.toggle(
-      'theme-light',
-      resolved === 'light'
-    );
-
-    document
-      .querySelectorAll(
-        '[data-theme-option]'
-      )
-      .forEach((button) => {
-        const active =
-          button.dataset.themeOption ===
-          theme;
-
-        button.classList.toggle(
-          'active',
-          active
-        );
-
-        button.setAttribute(
-          'aria-pressed',
-          active
-            ? 'true'
-            : 'false'
-        );
-      });
-  }
-
-  function saveTheme(theme) {
-    localStorage.setItem(
-      THEME_KEY,
-      theme
-    );
-
-    applyTheme(theme);
-  }
-
-  applyTheme(
-    getStoredTheme()
-  );
-
-  document
-    .querySelectorAll(
-      '[data-theme-option]'
-    )
-    .forEach((button) => {
-      button.addEventListener(
-        'click',
-        () => {
-          const theme =
-            button.dataset.themeOption;
-
-          if (
-            theme !== 'light' &&
-            theme !== 'dark' &&
-            theme !== 'system'
-          ) {
-            return;
-          }
-
-          saveTheme(theme);
-
-          const label =
-            theme === 'light'
-              ? 'Terang'
-              : theme === 'dark'
-                ? 'Gelap'
-                : 'Sistem';
-
-          toast(
-            `Tema ${label} diterapkan.`,
-            'success'
-          );
-        }
-      );
-    });
-
   /* =======================================================
-     SYSTEM THEME CHANGE
+     THEME / APPEARANCE — AUTOMATIC DAY/NIGHT
      ======================================================= */
 
-  if (window.matchMedia) {
-    const media =
-      window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      );
-
-    const handleThemeChange =
-      () => {
-        if (
-          getStoredTheme() ===
-          'system'
-        ) {
-          applyTheme('system');
-        }
-      };
-
-    if (
-      typeof media.addEventListener ===
-      'function'
-    ) {
-      media.addEventListener(
-        'change',
-        handleThemeChange
-      );
-    } else if (
-      typeof media.addListener ===
-      'function'
-    ) {
-      media.addListener(
-        handleThemeChange
-      );
-    }
+  function getAutoTheme() {
+    const hour = new Date().getHours();
+    return (hour >= 6 && hour < 18) ? 'light' : 'dark';
   }
+
+  function applyAutoTheme() {
+    const theme = getAutoTheme();
+
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+
+    if (document.body) {
+      document.body.classList.toggle('theme-dark', theme === 'dark');
+      document.body.classList.toggle('theme-light', theme === 'light');
+    }
+
+    // The settings page always shows the automatic mode as active.
+    document.querySelectorAll('[data-theme-option]').forEach((button) => {
+      const active = button.dataset.themeOption === 'system';
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  // Remove any old manual preference from previous versions.
+  try { localStorage.removeItem('pastele-theme'); } catch (_) {}
+
+  applyAutoTheme();
+
+  // Switch an already-open settings page exactly at the next day/night boundary.
+  window.setInterval(applyAutoTheme, 60 * 1000);
+
+  document.querySelectorAll('[data-theme-option]').forEach((button) => {
+    button.addEventListener('click', () => {
+      applyAutoTheme();
+      toast('Tema otomatis mengikuti waktu: 06.00–17.59 terang, 18.00–05.59 gelap.', 'success');
+    });
+  });
 
   /* =======================================================
      NOTIFICATION SETTINGS

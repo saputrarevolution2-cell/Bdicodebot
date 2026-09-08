@@ -693,185 +693,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   /* =======================================================
-     THEME
-     Compatible with:
-     - light
-     - dark
-     - system
-  ======================================================= */
+     AUTO DAY / NIGHT THEME
+     ======================================================= */
 
-  const getStoredTheme = () => {
-    const saved =
-      localStorage.getItem(
-        "pastele-theme"
-      );
-
-    if (
-      saved === "dark" ||
-      saved === "light" ||
-      saved === "system"
-    ) {
-      return saved;
-    }
-
-    return "system";
+  const getAutoTheme = () => {
+    const hour = new Date().getHours();
+    return (hour >= 6 && hour < 18) ? 'light' : 'dark';
   };
 
+  const applyTheme = () => {
+    const theme = getAutoTheme();
 
-  const getSystemTheme = () => {
-    try {
-      return window.matchMedia?.(
-        "(prefers-color-scheme: dark)"
-      ).matches
-        ? "dark"
-        : "light";
-    } catch (_) {
-      return "light";
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+
+    if (document.body) {
+      document.body.classList.toggle('theme-dark', theme === 'dark');
+      document.body.classList.toggle('theme-light', theme === 'light');
     }
+
+    return theme;
   };
 
-
-  const resolveTheme = (theme) => {
-    if (theme === "dark") {
-      return "dark";
-    }
-
-    if (theme === "light") {
-      return "light";
-    }
-
-    return getSystemTheme();
-  };
-
-
-  const applyTheme = (theme) => {
-
-    const normalized =
-      resolveTheme(theme);
-
-    document.documentElement.dataset.theme =
-      normalized;
-
-    document.documentElement.style.colorScheme =
-      normalized;
-
-    document.body.classList.toggle(
-      "theme-dark",
-      normalized === "dark"
-    );
-
-    document.body.classList.toggle(
-      "theme-light",
-      normalized === "light"
-    );
-
-
-    if (themeBtn) {
-
-      const icon =
-        themeBtn.querySelector("i");
-
-      if (icon) {
-
-        icon.className =
-          normalized === "dark"
-            ? "fa-solid fa-sun"
-            : "fa-solid fa-moon";
-
-      }
-
-
-      let label = "Ganti tema";
-
-      if (theme === "dark") {
-        label = "Gunakan tema terang";
-      } else if (theme === "light") {
-        label = "Gunakan tema gelap";
-      } else if (theme === "system") {
-        label =
-          normalized === "dark"
-            ? "Tema sistem aktif — gunakan tema terang"
-            : "Tema sistem aktif — gunakan tema gelap";
-      }
-
-      themeBtn.setAttribute(
-        "aria-label",
-        label
-      );
-
-      themeBtn.setAttribute(
-        "title",
-        label
-      );
-    }
-  };
-
-
-  const initialTheme =
-    getStoredTheme();
-
-  applyTheme(initialTheme);
-
-
-  const systemMedia =
-    window.matchMedia?.(
-      "(prefers-color-scheme: dark)"
-    );
-
-
-  systemMedia?.addEventListener?.(
-    "change",
-    () => {
-
-      const stored =
-        localStorage.getItem(
-          "pastele-theme"
-        );
-
-      if (
-        !stored ||
-        stored === "system"
-      ) {
-        applyTheme("system");
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     THEME BUTTON
-     Cycle:
-     system → dark → light → system
-  ======================================================= */
-
-  themeBtn?.addEventListener(
-    "click",
-    () => {
-
-      const current =
-        getStoredTheme();
-
-      let next = "system";
-
-      if (current === "system") {
-        next = "dark";
-      } else if (current === "dark") {
-        next = "light";
-      } else {
-        next = "system";
-      }
-
-      localStorage.setItem(
-        "pastele-theme",
-        next
-      );
-
-      applyTheme(next);
-
-    }
-  );
-
+  applyTheme();
+  window.setInterval(applyTheme, 60 * 1000);
 
   /* =======================================================
      WALLET BALANCE
