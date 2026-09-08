@@ -140,6 +140,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const icons = {
             paste:
                 "fa-file-lines",
+            pastelink:
+                "fa-link",
             code:
                 "fa-code",
             channel:
@@ -159,6 +161,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     ) => {
         const labels = {
             paste:
+                "Paste",
+            pastelink:
                 "PasteLink",
             code:
                 "Code Telegram",
@@ -348,20 +352,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         /*
          * PasteLink
          */
-        if (
-            type === "paste"
-        ) {
-            if (
-                !item.slug
-            ) {
-                return "#";
-            }
-            return (
-                `${location.origin}/p/` +
-                encodeURIComponent(
-                    item.slug
-                )
-            );
+        if (type === "pastelink") {
+            if (!item.slug) return "#";
+            return `${location.origin}/p/` + encodeURIComponent(item.slug);
+        }
+        if (type === "paste") {
+            if (!item.slug) return "#";
+            return `${location.origin}/paste/` + encodeURIComponent(item.slug);
         }
         /*
          * Telegram products/channels
@@ -618,6 +615,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const [
                 productsResponse,
                 pasteResponse,
+                plainPasteResponse,
                 codeResponse,
                 channelResponse
             ] =
@@ -698,6 +696,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     false
                             }
                         ),
+                    /*
+                     * PLAIN PASTES
+                     */
+                    supabase
+                        .from("pastes")
+                        .select("id,owner_id,title,slug,content,visibility,created_at,updated_at")
+                        .eq("owner_id", profile.id)
+                        .order("created_at", {ascending:false}),
                     /*
                      * TELEGRAM PRODUCTS
                      *
@@ -790,6 +796,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const responses = [
                 productsResponse,
                 pasteResponse,
+                plainPasteResponse,
                 codeResponse,
                 channelResponse
             ];
@@ -817,17 +824,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                             "product"
                     })
                 );
+            const pasteLinkItems =
+                (pasteResponse.data || []).map(item => ({...item,__type:"pastelink",price:0,access_type:"free",status:item.visibility === "public" ? "published" : item.visibility}));
             const pasteItems =
-                (
-                    pasteResponse.data ||
-                    []
-                ).map(
-                    (item) => ({
-                        ...item,
-                        __type:
-                            "paste"
-                    })
-                );
+                (plainPasteResponse.data || []).map(item => ({...item,__type:"paste",price:0,access_type:"free",status:item.visibility === "public" ? "published" : item.visibility}));
             const codeItems =
                 (
                     codeResponse.data ||
@@ -856,9 +856,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             groups = [
                 {
                     key:
-                        "paste",
+                        "pastelink",
                     title:
                         "PasteLink",
+                    icon:
+                        "fa-link",
+                    items:
+                        pasteLinkItems
+                },
+                {
+                    key:
+                        "paste",
+                    title:
+                        "Paste",
                     icon:
                         "fa-file-lines",
                     items:
@@ -1790,15 +1800,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             /* =============================================
                PASTELINK
                ============================================= */
-            if (
-                type ===
-                "paste"
-            ) {
-                response =
-                    await supabase
-                        .from(
-                            "pastelinks"
-                        )
+            if (type === "pastelink") {
+                response = await supabase.from("pastelinks")
                         .update({
                             title:
                                 cleanTitle
@@ -1811,6 +1814,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                             "user_id",
                             profile.id
                         );
+            }
+            /* =============================================
+               PLAIN PASTE
+               ============================================= */
+            else if (type === "paste") {
+                const contentValue = prompt("Isi paste", item.content || "");
+                if (contentValue === null) return;
+                response = await supabase.from("pastes").update({title:cleanTitle,content:contentValue.trim()}).eq("id",item.id).eq("owner_id",profile.id);
             }
             /* =============================================
                TELEGRAM PRODUCT
@@ -2096,15 +2107,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             /* =============================================
                PASTELINK
                ============================================= */
-            if (
-                type ===
-                "paste"
-            ) {
-                response =
-                    await supabase
-                        .from(
-                            "pastelinks"
-                        )
+            if (type === "pastelink") {
+                response = await supabase.from("pastelinks")
                         .delete()
                         .eq(
                             "id",
@@ -2114,6 +2118,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                             "user_id",
                             profile.id
                         );
+            }
+            else if (type === "paste") {
+                response = await supabase.from("pastes").delete().eq("id",item.id).eq("owner_id",profile.id);
             }
             /* =============================================
                TELEGRAM PRODUCT

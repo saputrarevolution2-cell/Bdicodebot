@@ -5,10 +5,11 @@
 
    ROUTING
    ---------------------------------------------------------
-   link / paste / pastelink -> products
+   link                    -> products
+   paste                   -> pastes
+   pastelink               -> pastelinks
    code                    -> telegram_products
-   channel                 -> telegram_channels
-   group                   -> telegram_channels
+   channel / group         -> telegram_channels
 
    ACCESS
    ---------------------------------------------------------
@@ -34,8 +35,14 @@
        /g/f/slug
        /g/p/slug
 
-   Generic:
-       /product.html?type=...&slug=...
+   PasteLink:
+       /p/slug
+
+   Paste:
+       /paste/slug
+
+   Link:
+       /product.html?type=link&slug=slug
 
    SUCCESS
    ---------------------------------------------------------
@@ -1068,6 +1075,7 @@ document.addEventListener("DOMContentLoaded", () => {
         () => {
             clearInvalid(type);
             syncFeatureForm();
+            syncPrice();
         }
     );
 
@@ -1084,12 +1092,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const isPaid =
-                access.value ===
-                "paid";
+            const selectedType = String(type?.value || "").toLowerCase();
+            const paidOption = access.querySelector('option[value="paid"]');
+            const isPriceUnsupported = selectedType === "paste" || selectedType === "pastelink";
 
-            price.required =
-                isPaid;
+            if (paidOption) {
+                paidOption.disabled = isPriceUnsupported;
+            }
+
+            if (isPriceUnsupported && access.value === "paid") {
+                access.value = "free";
+            }
+
+            const isPaid = access.value === "paid" && !isPriceUnsupported;
+
+            price.required = isPaid;
 
             if (!isPaid) {
                 price.value =
@@ -1632,6 +1649,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 return null;
             }
 
+            /*
+             * SQL FINAL: public.pastes and public.pastelinks do not
+             * contain a price column and are not supported by the
+             * checkout RPC as paid marketplace items. Keep them Free
+             * here instead of writing data the database cannot settle.
+             */
+            if (
+                (productType === "paste" || productType === "pastelink") &&
+                productAccess === "paid"
+            ) {
+                markInvalid(access);
+                toast(
+                    productType === "pastelink"
+                        ? "PasteLink pada database ini hanya mendukung Free (Rp0)."
+                        : "Paste pada database ini hanya mendukung Free (Rp0).",
+                    "error"
+                );
+                return null;
+            }
+
             /* =================================================
                PRICE
                ================================================= */
@@ -1902,12 +1939,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         encodedSlug
                     );
 
+                case "pastelink":
+                    return `${origin}/p/${encodedSlug}`;
+
+                case "paste":
+                    return (
+                        `${origin}/product.html?type=paste&slug=` +
+                        encodedSlug
+                    );
+
                 default:
                     return (
                         `${origin}/product.html?type=` +
-                        encodeURIComponent(
-                            product.type
-                        ) +
+                        encodeURIComponent(product.type) +
                         `&slug=` +
                         encodedSlug
                     );
@@ -3041,6 +3085,51 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
     /* =======================================================
+       PASTELINK INSERT
+       SQL TABLE: public.pastelinks
+       ======================================================= */
+
+    const insertPasteLink = async (sb, user, product) => {
+        const payload = {
+            user_id: user.id,
+            slug: product.slug,
+            title: product.title,
+            content_html: product.content,
+            visibility: "public",
+            password_hash: null,
+            expires_at: null,
+            description: product.description || "",
+            tags: [],
+            allow_comments: true,
+            allow_download: true,
+            show_raw: true,
+            anonymous: false
+        };
+        const { error } = await sb.from("pastelinks").insert(payload);
+        if (error) throw error;
+        return { id: true, slug: product.slug, title: product.title, type: "pastelink", access_type: "free", price: 0 };
+    };
+
+    /* =======================================================
+       PASTE INSERT
+       SQL TABLE: public.pastes
+       ======================================================= */
+
+    const insertPaste = async (sb, user, product) => {
+        const payload = {
+            owner_id: user.id,
+            title: product.title,
+            slug: product.slug,
+            content: product.content,
+            visibility: "public",
+            password: null
+        };
+        const { error } = await sb.from("pastes").insert(payload);
+        if (error) throw error;
+        return { id: true, slug: product.slug, title: product.title, type: "paste", access_type: "free", price: 0 };
+    };
+
+    /* =======================================================
        GENERIC PRODUCT INSERT
        ======================================================= */
 
@@ -3425,16 +3514,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 /* =========================================
-                   GENERIC
+                   PASTELINK / PASTE
+                   ========================================= */
+
+                else if (product.type === "pastelink") {
+                    created = await insertPasteLink(sb, user, product);
+                }
+
+                else if (product.type === "paste") {
+                    created = await insertPaste(sb, user, product);
+                }
+
+                /* =========================================
+                   GENERIC LINK / MARKETPLACE PRODUCT
                    ========================================= */
 
                 else {
-                    created =
-                        await insertGenericProduct(
-                            sb,
-                            user,
-                            product
-                        );
+                    created = await insertGenericProduct(sb, user, product);
                 }
 
                 /* =========================================
