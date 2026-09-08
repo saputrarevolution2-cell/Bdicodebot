@@ -624,8 +624,11 @@ BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
   IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
 
-  BEGIN pid:=p_id::uuid; EXCEPTION WHEN invalid_text_representation THEN
-    RAISE EXCEPTION 'INVALID_PRODUCT_ID'; END; END;
+  BEGIN
+    pid := p_id::uuid;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RAISE EXCEPTION 'INVALID_PRODUCT_ID';
+  END;
 
   IF normalized IN ('product','code') THEN
     SELECT p.seller_id,p.title,p.price INTO seller,title,price
