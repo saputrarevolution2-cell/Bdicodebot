@@ -234,7 +234,7 @@
               await client
                 .from("profiles")
                 .select(
-                  "auth_email,email,username"
+                  "auth_email,username"
                 )
                 .eq(
                   "username",
@@ -245,7 +245,6 @@
             if (!error && data) {
               email =
                 data.auth_email ||
-                data.email ||
                 "";
             }
           } catch (error) {
@@ -481,10 +480,11 @@
             await client
               .from("profiles")
               .select(
-                "id,username,display_name,auth_email,email,role,status,is_admin,is_banned"
+                "id,username,display_name,auth_email,role,is_admin,is_banned"
               )
-              .or(
-                `auth_email.eq.${value},email.eq.${value}`
+.eq(
+                "auth_email",
+                value
               )
               .maybeSingle();
 
@@ -542,7 +542,7 @@
           await client
             .from("profiles")
             .select(
-              "id,username,display_name,auth_email,email,role,status,is_admin,is_banned"
+              "id,username,display_name,auth_email,role,is_admin,is_banned"
             )
             .eq(
               "username",
