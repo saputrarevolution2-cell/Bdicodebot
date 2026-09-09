@@ -25,7 +25,12 @@
     content="#f7f9fc"
   >
 
-  <title>Buat Code — PasTele</title>
+  <meta
+    name="description"
+    content="Buat dan publikasikan Code Bot Telegram di PasTele."
+  >
+
+  <title>Buat Code Bot — PasTele</title>
 
 
   <!-- =====================================================
@@ -96,17 +101,22 @@
        ===================================================== -->
   <main class="create-detail">
 
+
     <!-- ===================================================
-         PAGE HEADER
+         HEADER
          =================================================== -->
     <section class="create-detail-head">
 
       <a
         class="back-create"
         href="create-product.html"
+        aria-label="Kembali ke semua tipe"
       >
         <i class="fa-solid fa-arrow-left"></i>
-        <span>Semua tipe</span>
+
+        <span>
+          Semua tipe
+        </span>
       </a>
 
 
@@ -123,7 +133,7 @@
         <div>
 
           <span class="eyebrow">
-            CODE
+            CODE BOT
           </span>
 
           <h1>
@@ -131,9 +141,9 @@
           </h1>
 
           <p>
-            Buat produk Code dengan delivery
-            yang hanya dapat dibuka sesuai
-            hak akses pembeli.
+            Publikasikan source code atau delivery
+            bot Telegram dengan akses gratis atau
+            berbayar.
           </p>
 
         </div>
@@ -155,12 +165,12 @@
 
 
       <!-- =================================================
-           TITLE
+           JUDUL
            ================================================= -->
       <div class="field">
 
         <label for="title">
-          Judul
+          Judul Code
           <em>*</em>
         </label>
 
@@ -171,33 +181,83 @@
           maxlength="120"
           required
           autocomplete="off"
-          placeholder="Contoh: Bot Downloader Premium"
+          placeholder="Bot Downloader Premium"
         >
 
         <small>
-          URL dibuat otomatis.
-          Kamu tidak perlu mengisi slug.
+          Judul yang akan ditampilkan pada halaman Code.
         </small>
 
       </div>
 
 
       <!-- =================================================
-           ACCESS
+           USERNAME BOT
+           ================================================= -->
+      <div class="field">
+
+        <label for="botUsername">
+          Username Bot
+          <em>*</em>
+        </label>
+
+
+        <div class="bot-input">
+
+          <span
+            class="bot-prefix"
+            aria-hidden="true"
+          >
+            @
+          </span>
+
+          <input
+            id="botUsername"
+            name="botUsername"
+            type="text"
+            maxlength="32"
+            minlength="5"
+            required
+            autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            inputmode="text"
+            placeholder="NamaBot"
+          >
+
+        </div>
+
+
+        <small>
+          Masukkan username bot Telegram tanpa
+          tanda <b>@</b>.
+          Contoh: <b>NamaBot</b>
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           JENIS AKSES
            ================================================= -->
       <div class="field">
 
         <label>
-          Akses
+          Jenis Akses
         </label>
+
 
         <div
           class="access-grid"
           role="radiogroup"
-          aria-label="Jenis akses"
+          aria-label="Jenis akses Code"
         >
 
-          <!-- FREE -->
+
+          <!-- =============================================
+               GRATIS
+               ============================================= -->
           <label class="access-option">
 
             <input
@@ -215,7 +275,7 @@
               </b>
 
               <small>
-                Rp0
+                Semua pengguna dapat mengakses
               </small>
 
             </span>
@@ -223,7 +283,9 @@
           </label>
 
 
-          <!-- PAID -->
+          <!-- =============================================
+               BERBAYAR
+               ============================================= -->
           <label class="access-option">
 
             <input
@@ -240,7 +302,7 @@
               </b>
 
               <small>
-                Rp5.000–Rp150.000
+                Pembeli harus melakukan pembayaran
               </small>
 
             </span>
@@ -253,22 +315,27 @@
 
 
       <!-- =================================================
-           PRICE
+           NOMINAL HARGA
+           HANYA MUNCUL SAAT BERBAYAR
            ================================================= -->
       <div
-        class="field price-box"
         id="priceBox"
+        class="field price-box"
         hidden
       >
 
         <label for="price">
-          Harga
+          Nominal Harga
           <em>*</em>
         </label>
 
+
         <div class="money-input">
 
-          <span>
+          <span
+            class="currency"
+            aria-hidden="true"
+          >
             Rp
           </span>
 
@@ -282,20 +349,54 @@
             value="5000"
             inputmode="numeric"
             autocomplete="off"
+            placeholder="5000"
           >
 
         </div>
 
+
         <small>
-          Harga Paid Rp5.000–Rp150.000
-          dan harus kelipatan Rp1.000.
+          Harga Rp5.000–Rp150.000 dan harus
+          kelipatan Rp1.000.
         </small>
 
       </div>
 
 
       <!-- =================================================
-           DESCRIPTION
+           CODE / DELIVERY
+           ================================================= -->
+      <div class="field">
+
+        <label for="content">
+          Code / Delivery
+          <em>*</em>
+        </label>
+
+
+        <textarea
+          id="content"
+          name="content"
+          rows="16"
+          maxlength="1000000"
+          required
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="Tempel source code bot, link file, atau delivery produk di sini..."
+        ></textarea>
+
+
+        <small>
+          Isi ini akan menjadi delivery Code setelah
+          pengguna memiliki hak akses.
+          Maksimal 1.000.000 karakter.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           DESKRIPSI
            ================================================= -->
       <div class="field">
 
@@ -309,78 +410,21 @@
 
         </label>
 
+
         <textarea
           id="description"
           name="description"
-          maxlength="3000"
           rows="4"
-          placeholder="Jelaskan isi dan manfaat konten..."
+          maxlength="3000"
+          autocomplete="off"
+          placeholder="Jelaskan fungsi bot, fitur, kebutuhan, atau informasi lainnya..."
         ></textarea>
+
 
         <small class="field-counter">
+
           <span id="counter">0</span>/3000
-        </small>
 
-      </div>
-
-
-      <!-- =================================================
-           THUMBNAIL
-           ================================================= -->
-      <div class="field">
-
-        <label for="thumbnail">
-
-          Thumbnail URL
-
-          <span>
-            Opsional
-          </span>
-
-        </label>
-
-        <input
-          id="thumbnail"
-          name="thumbnail"
-          type="url"
-          inputmode="url"
-          autocomplete="off"
-          placeholder="https://contoh.com/gambar.jpg"
-        >
-
-        <small>
-          Gunakan URL gambar publik jika diperlukan.
-        </small>
-
-      </div>
-
-
-      <!-- =================================================
-           CONTENT
-           ================================================= -->
-      <div class="field">
-
-        <label for="content">
-
-          Code / Delivery
-
-          <em>*</em>
-
-        </label>
-
-        <textarea
-          id="content"
-          name="content"
-          rows="14"
-          maxlength="1000000"
-          required
-          spellcheck="false"
-          placeholder="Tempel source code, link file, atau delivery produk..."
-        ></textarea>
-
-        <small>
-          Data ini menjadi isi produk Code
-          setelah pembelian.
         </small>
 
       </div>
@@ -391,32 +435,42 @@
            ================================================= -->
       <div class="create-actions">
 
+
+        <!-- BATAL -->
         <a
           href="my-products.html"
           class="btn secondary"
         >
+
           <i class="fa-solid fa-xmark"></i>
-          <span>Batal</span>
+
+          <span>
+            Batal
+          </span>
+
         </a>
 
 
+        <!-- PUBLIKASIKAN -->
         <button
           id="submitBtn"
           class="btn primary"
           type="submit"
         >
 
+          <!-- NORMAL -->
           <span class="normal">
 
             <i class="fa-solid fa-cloud-arrow-up"></i>
 
             <span>
-              Publikasikan
+              Publikasikan Code
             </span>
 
           </span>
 
 
+          <!-- LOADING -->
           <span
             class="loading"
             hidden
@@ -438,7 +492,7 @@
 
 
     <!-- ===================================================
-         SUCCESS RESULT
+         RESULT
          =================================================== -->
     <section
       id="result"
@@ -446,6 +500,7 @@
       hidden
       aria-live="polite"
     ></section>
+
 
   </main>
 
@@ -455,13 +510,14 @@
        ===================================================== -->
   <div
     id="toast"
+    role="status"
     aria-live="polite"
     aria-atomic="true"
   ></div>
 
 
   <!-- =====================================================
-       NAVBAR
+       NAVBAR JS
        ===================================================== -->
   <script src="js/navbar.js?v=20260910"></script>
 
@@ -473,9 +529,10 @@
 
 
   <!-- =====================================================
-       THEME
+       THEME JS
        ===================================================== -->
   <script src="js/theme.js?v=20260910"></script>
 
 </body>
+
 </html>
