@@ -2804,3 +2804,101 @@ tr:last-child td{border-bottom:0}
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+
+/* =========================================================
+   PasTele — UNIVERSAL SAAS PREMIUM UI 2026
+   Responsive Android + Desktop / Unified Light + Dark
+   ========================================================= */
+:root{
+  --saas-primary:#635bff;
+  --saas-secondary:#06b6d4;
+  --saas-accent:#ec4899;
+  --saas-success:#10b981;
+  --saas-warning:#f59e0b;
+  --saas-danger:#ef4444;
+  --saas-radius:16px;
+  --saas-radius-sm:12px;
+  --saas-focus:rgba(99,91,255,.18);
+}
+html{color-scheme:light dark;-webkit-text-size-adjust:100%;}
+body{min-width:320px;overflow-x:hidden;}
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent;}
+button,.btn,.nav-link,.admin-nav a{touch-action:manipulation;}
+/* colorful premium icon treatment */
+.fa-solid,.fa-regular,.fa-brands,.fa-light,.fa-thin,.fa-duotone{
+  line-height:1;
+}
+.iconbox i,.detail-icon i,.kpi i,.badge i,.chip i,.btn i,.nav-link i,.admin-nav i,.nav-group-title i{
+  transition:transform .2s ease,filter .2s ease;
+}
+.iconbox i,.detail-icon i{
+  background:linear-gradient(135deg,var(--saas-primary),var(--saas-secondary) 55%,var(--saas-accent));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.btn:hover i,.nav-link:hover i,.admin-nav a:hover i{transform:translateY(-1px) scale(1.05);}
+.btn.primary i,.btn.danger i{color:inherit;-webkit-text-fill-color:currentColor;background:none;}
+.card,.panel,.create-card,.table-wrap,.market-toolbar,.market-header{
+  border-radius:var(--saas-radius);
+}
+.card,.panel,.create-card{
+  box-shadow:0 12px 38px rgba(15,23,42,.055);
+}
+.btn{min-height:42px;border-radius:var(--saas-radius-sm);}
+input,select,textarea,.input,.select,.textarea{min-height:44px;border-radius:var(--saas-radius-sm);}
+input:focus,select:focus,textarea:focus,.input:focus,.select:focus,.textarea:focus{
+  outline:none!important;box-shadow:0 0 0 4px var(--saas-focus)!important;
+}
+/* desktop */
+@media(min-width:1024px){
+  .container{width:min(1180px,calc(100% - 48px));}
+  .section{padding-block:40px;}
+}
+/* tablet */
+@media(max-width:1023px){
+  .container{width:min(100% - 28px,1180px);}
+  .grid-4{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+/* Android / narrow screens */
+@media(max-width:640px){
+  body{font-size:14px;}
+  .container,.page-container,.main-container,.content-container{width:calc(100% - 20px)!important;}
+  .section{padding:22px 0;}
+  h1{font-size:clamp(25px,8vw,34px);}
+  h2{font-size:clamp(20px,6vw,26px);}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+  .row{flex-wrap:wrap;}
+  .btn{min-height:44px;}
+  .card,.panel{padding:16px;}
+  .create-actions{flex-direction:column-reverse;}
+  .create-actions .btn,.actions .btn{width:100%;}
+  table{font-size:13px;}
+  th,td{padding:11px 10px;}
+  .toast,#toast{left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));max-width:none;}
+}
+@media(max-width:380px){
+  .container,.page-container,.main-container,.content-container{width:calc(100% - 16px)!important;}
+  .card,.panel{padding:13px;}
+}
+/* safe-area support for modern Android/iOS */
+body{padding-bottom:env(safe-area-inset-bottom);}
+/* unified dark theme: every component follows the same tokens */
+html[data-theme="dark"]{
+  --premium-bg:#0b1020;
+  --premium-surface:#111827;
+  --premium-line:#263247;
+  --premium-shadow:0 18px 50px rgba(0,0,0,.28);
+  --saas-focus:rgba(129,140,248,.24);
+}
+html[data-theme="dark"] body{background:var(--app-bg,var(--premium-bg));}
+html[data-theme="dark"] .card,html[data-theme="dark"] .panel,html[data-theme="dark"] .create-card,html[data-theme="dark"] .table-wrap{
+  box-shadow:0 16px 46px rgba(0,0,0,.20);
+}
+html[data-theme="dark"] .btn:not(.primary):not(.danger){background:var(--surface,#111827);color:var(--text,#eef4f8);}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea,html[data-theme="dark"] .input,html[data-theme="dark"] .select,html[data-theme="dark"] .textarea{
+  color:var(--text,#eef4f8);background:var(--surface,#111827);
+}
+/* reduce motion for accessibility */
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+}
