@@ -2209,3 +2209,565 @@ BEGIN
 END $$;
 
 COMMIT;
+
+
+-- ============================================================
+
+
+-- PasTele FINAL NOTIFICATION + PAID PASTELINK EXTENSION
+-- ============================================================
+BEGIN;
+
+-- PasteLink participates in the same marketplace contract as
+-- Code / Channel / Group. Existing rows remain Free (Rp0).
+ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS access_type text NOT NULL DEFAULT 'free';
+ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS price numeric(18,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.pastelinks DROP CONSTRAINT IF EXISTS pastelinks_price_access_check;
+ALTER TABLE public.pastelinks ADD CONSTRAINT pastelinks_price_access_check
+CHECK ((access_type='free' AND price=0) OR (access_type='paid' AND price BETWEEN 5000 AND 150000));
+CREATE INDEX IF NOT EXISTS idx_pastelinks_user ON public.pastelinks(user_id,created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pastelinks_access ON public.pastelinks(access_type,price);
+
+-- Checkout now supports Paid PasteLink.
+CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
+RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE
+  uid uuid:=auth.uid(); seller uuid; title text; price numeric; oid uuid;
+  normalized text:=lower(btrim(coalesce(p_type,''))); pid uuid;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
+  BEGIN pid:=p_id::uuid; EXCEPTION WHEN invalid_text_representation THEN RAISE EXCEPTION 'INVALID_PRODUCT_ID'; END;
+
+  IF normalized IN ('product','link') THEN
+    SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price INTO seller,title,price FROM public.products p WHERE p.id=pid;
+    normalized:='product';
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.owner_id,p.title,p.price INTO seller,title,price FROM public.telegram_products p WHERE p.id=pid;
+    normalized:='telegram_product';
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.owner_id,p.name,p.price INTO seller,title,price FROM public.telegram_channels p WHERE p.id=pid;
+    normalized:='channel';
+  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
+    SELECT p.user_id,p.title,p.price INTO seller,title,price FROM public.pastelinks p WHERE p.id=pid;
+    normalized:='pastelink';
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
+  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
+
+  SELECT o.id INTO oid FROM public.orders o
+  WHERE o.buyer_id=uid AND o.product_id=pid
+    AND lower(coalesce(o.item_type,''))=normalized
+    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
+  ORDER BY o.created_at DESC LIMIT 1;
+
+  IF oid IS NULL THEN
+    INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title)
+    VALUES(uid,seller,pid,price,'pending',normalized,p_id,title) RETURNING id INTO oid;
+  END IF;
+  RETURN QUERY SELECT oid,price,title,normalized;
+END $$;
+
+-- Detail RPC supports PasteLink paid/free and does not leak paid content
+-- before the buyer/owner/admin has access.
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE
+  r record; result jsonb; normalized text:=lower(btrim(coalesce(p_type,'')));
+  can_access boolean:=false;
+BEGIN
+  IF normalized IN ('product','link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id
+    INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id
+    INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,p.name title
+    INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
+  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type
+    INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
+
+  can_access := auth.uid() IS NOT NULL AND (
+    auth.uid()=r.owner_id OR
+    public.is_current_user_admin() OR
+    coalesce(r.access_type,'free')='free' OR
+    EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=auth.uid() AND pu.product_id=p_id
+      AND lower(coalesce(pu.status,'')) IN ('completed','paid','success'))
+  );
+
+  result:=to_jsonb(r)||jsonb_build_object('found',true,'can_access',can_access);
+  IF NOT can_access AND coalesce(r.access_type,'free')='paid' THEN
+    result:=result-'content'-'content_html';
+  END IF;
+  RETURN result;
+END $$;
+
+-- Normalize notification creation for publication, views, purchases and withdrawals.
+CREATE OR REPLACE FUNCTION public.notify_user_once(p_user_id uuid,p_title text,p_body text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF p_user_id IS NULL THEN RETURN; END IF;
+  INSERT INTO public.notifications(user_id,title,body)
+  VALUES(p_user_id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000));
+END $$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE owner uuid; label text;
+BEGIN
+  owner:=coalesce(
+    nullif(to_jsonb(NEW)->>'user_id','')::uuid,
+    nullif(to_jsonb(NEW)->>'owner_id','')::uuid,
+    nullif(to_jsonb(NEW)->>'creator_id','')::uuid,
+    nullif(to_jsonb(NEW)->>'seller_id','')::uuid
+  );
+  label:=coalesce(to_jsonb(NEW)->>'title',to_jsonb(NEW)->>'name','Konten');
+  PERFORM public.notify_user_once(owner,'Publikasi berhasil', 'Konten "'||label||'" sudah dipublikasikan ke Marketplace.');
+  RETURN NEW;
+END $$;
+
+DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
+CREATE TRIGGER trg_notify_pastelink_publish AFTER INSERT ON public.pastelinks FOR EACH ROW
+WHEN (NEW.visibility='public') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_product_publish ON public.products;
+CREATE TRIGGER trg_notify_product_publish AFTER INSERT ON public.products FOR EACH ROW
+WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_telegram_product_publish ON public.telegram_products;
+CREATE TRIGGER trg_notify_telegram_product_publish AFTER INSERT ON public.telegram_products FOR EACH ROW
+WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_channels;
+CREATE TRIGGER trg_notify_telegram_channel_publish AFTER INSERT ON public.telegram_channels FOR EACH ROW
+WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+
+CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE seller uuid;
+BEGIN
+  SELECT seller_id INTO seller FROM public.orders WHERE id=NEW.order_id;
+  PERFORM public.notify_user_once(NEW.buyer_id,'Pembelian berhasil','Akses untuk "'||coalesce(NEW.item_title,'Produk')||'" sudah tersedia.');
+  PERFORM public.notify_user_once(seller,'Produk terjual','"'||coalesce(NEW.item_title,'Produk')||'" dibeli oleh user. Penghasilan seller diproses sesuai settlement.');
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS trg_notify_purchase ON public.purchases;
+CREATE TRIGGER trg_notify_purchase AFTER INSERT ON public.purchases FOR EACH ROW EXECUTE FUNCTION public.trg_notify_purchase();
+
+CREATE OR REPLACE FUNCTION public.trg_notify_view()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF NEW.owner_id IS NOT NULL AND NEW.actor_id IS DISTINCT FROM NEW.owner_id THEN
+    PERFORM public.notify_user_once(NEW.owner_id,'Konten dibuka','Konten kamu baru saja dibuka di PasTele.');
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS trg_notify_content_view ON public.analytics_events;
+CREATE TRIGGER trg_notify_content_view AFTER INSERT ON public.analytics_events FOR EACH ROW
+WHEN (NEW.event_type='view') EXECUTE FUNCTION public.trg_notify_view();
+
+CREATE OR REPLACE FUNCTION public.trg_notify_withdrawal()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE a uuid;
+BEGIN
+  FOR a IN SELECT id FROM public.profiles WHERE is_admin=true OR lower(role) IN ('admin','owner') LOOP
+    PERFORM public.notify_user_once(a,'Withdrawal baru','Ada permintaan WD baru #'||NEW.id::text||' sebesar Rp'||to_char(coalesce(NEW.amount,0),'FM999G999G999G990'));
+  END LOOP;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS trg_notify_withdrawal ON public.withdrawals;
+CREATE TRIGGER trg_notify_withdrawal AFTER INSERT ON public.withdrawals FOR EACH ROW EXECUTE FUNCTION public.trg_notify_withdrawal();
+
+COMMIT;
+
+
+-- Final marketplace view: every supported publishable source.
+BEGIN;
+DROP VIEW IF EXISTS public.marketplace_public CASCADE;
+CREATE VIEW public.marketplace_public
+WITH (security_invoker = true)
+AS
+SELECT p.id,p.slug,p.title,p.type,p.access_type,p.price,p.thumbnail_url,p.description,
+       p.views,p.sales_count,p.category,p.created_at,
+       pr.display_name creator_name,pr.username creator_username,
+       coalesce(p.creator_id,p.seller_id) owner_id
+FROM public.products p LEFT JOIN public.profile_public pr ON pr.id=coalesce(p.creator_id,p.seller_id)
+WHERE p.status IN ('published','active')
+UNION ALL
+SELECT p.id,p.slug,p.title,'code'::text,p.access_type,p.price,p.thumbnail_url,p.description,
+       p.views,p.sales_count,p.category,p.created_at,pr.display_name,pr.username,p.owner_id
+FROM public.telegram_products p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
+WHERE p.status='published'
+UNION ALL
+SELECT p.id,p.slug,p.name,CASE WHEN p.type='group' THEN 'group' ELSE 'channel' END,p.access_type,p.price,
+       NULL::text,p.description,p.views,p.sales_count,p.category,p.created_at,pr.display_name,pr.username,p.owner_id
+FROM public.telegram_channels p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
+WHERE p.status='published'
+UNION ALL
+SELECT p.id,p.slug,p.title,'pastelink'::text,p.access_type,p.price,NULL::text,p.description,
+       p.views,0::bigint,'General'::text,p.created_at,pr.display_name,pr.username,p.user_id
+FROM public.pastelinks p LEFT JOIN public.profile_public pr ON pr.id=p.user_id
+WHERE p.visibility='public'
+UNION ALL
+SELECT p.id,p.slug,p.title,'paste'::text,'free'::text,0::numeric,NULL::text,NULLIF(left(coalesce(p.content,''),180),''),
+       0::bigint,0::bigint,'General'::text,p.created_at,pr.display_name,pr.username,p.owner_id
+FROM public.pastes p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
+WHERE p.visibility='public';
+COMMIT;
+
+-- Final admin content editor contract for paid PasteLink.
+BEGIN;
+CREATE OR REPLACE FUNCTION public.admin_update_content(
+ p_id uuid,p_status text DEFAULT NULL,p_title text DEFAULT NULL,p_description text DEFAULT NULL,
+ p_source text DEFAULT 'products',p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r jsonb; src text:=lower(coalesce(p_source,'products')); new_price numeric;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF p_price IS NOT NULL AND (p_price<0 OR p_price>150000) THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
+ CASE src
+  WHEN 'products' THEN
+   UPDATE public.products SET status=coalesce(p_status,status),title=coalesce(p_title,title),slug=coalesce(nullif(p_slug,''),slug),price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,description=coalesce(p_description,description),updated_at=now() WHERE id=p_id RETURNING to_jsonb(products.*) INTO r;
+  WHEN 'pastelinks' THEN
+   UPDATE public.pastelinks SET visibility=CASE WHEN p_status='published' THEN 'public' WHEN p_status IS NULL THEN visibility ELSE p_status END,title=coalesce(p_title,title),description=coalesce(p_description,description),price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,updated_at=now() WHERE id=p_id RETURNING to_jsonb(pastelinks.*) INTO r;
+  WHEN 'telegram_products' THEN
+   UPDATE public.telegram_products SET status=coalesce(p_status,status),title=coalesce(p_title,title),price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,description=coalesce(p_description,description),updated_at=now() WHERE id=p_id RETURNING to_jsonb(telegram_products.*) INTO r;
+  WHEN 'telegram_channels' THEN
+   UPDATE public.telegram_channels SET status=coalesce(p_status,status),name=coalesce(p_title,name),price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,description=coalesce(p_description,description),updated_at=now() WHERE id=p_id RETURNING to_jsonb(telegram_channels.*) INTO r;
+  WHEN 'pastes' THEN
+   UPDATE public.pastes SET visibility=CASE WHEN p_status='published' THEN 'public' WHEN p_status IS NULL THEN visibility ELSE p_status END,title=coalesce(p_title,title),slug=coalesce(nullif(p_slug,''),slug) WHERE id=p_id RETURNING to_jsonb(pastes.*) INTO r;
+  ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
+ END CASE;
+ IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
+ RETURN r;
+END $$;
+COMMIT;
+
+-- ============================================================
+-- GLOBAL USER NOTIFICATIONS — FINAL
+-- All registered users receive lightweight notifications for
+-- marketplace publication, likes, views and purchases.
+-- ============================================================
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.notify_all_users(
+  p_title text,
+  p_body text,
+  p_exclude_user uuid DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+BEGIN
+  INSERT INTO public.notifications(user_id,title,body)
+  SELECT p.id,
+         left(coalesce(p_title,'Notifikasi'),180),
+         left(coalesce(p_body,''),1000)
+  FROM public.profiles p
+  WHERE p.id IS NOT NULL
+    AND (p_exclude_user IS NULL OR p.id <> p_exclude_user)
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.notifications n
+      WHERE n.user_id = p.id
+        AND n.title = left(coalesce(p_title,'Notifikasi'),180)
+        AND n.body = left(coalesce(p_body,''),1000)
+        AND n.created_at > now() - interval '10 minutes'
+    );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  owner uuid;
+  label text;
+  kind text;
+BEGIN
+  owner := coalesce(
+    nullif(to_jsonb(NEW)->>'user_id','')::uuid,
+    nullif(to_jsonb(NEW)->>'owner_id','')::uuid,
+    nullif(to_jsonb(NEW)->>'creator_id','')::uuid,
+    nullif(to_jsonb(NEW)->>'seller_id','')::uuid
+  );
+
+  label := coalesce(
+    nullif(to_jsonb(NEW)->>'title',''),
+    nullif(to_jsonb(NEW)->>'name',''),
+    'Konten'
+  );
+
+  kind := CASE
+    WHEN TG_TABLE_NAME = 'pastelinks' THEN 'PasteLink'
+    WHEN TG_TABLE_NAME = 'telegram_products' THEN 'Code'
+    WHEN TG_TABLE_NAME = 'telegram_channels' AND lower(coalesce(to_jsonb(NEW)->>'type','')) = 'group' THEN 'Group'
+    WHEN TG_TABLE_NAME = 'telegram_channels' THEN 'Channel'
+    ELSE 'Produk'
+  END;
+
+  PERFORM public.notify_all_users(
+    'Konten baru di Marketplace',
+    kind || ' "' || label || '" baru saja dipublikasikan di Marketplace.',
+    NULL
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_content_like()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  label text := 'Konten';
+  kind text := coalesce(NEW.target_type,'content');
+BEGIN
+  BEGIN
+    IF NEW.target_type = 'pastelink' THEN
+      SELECT title INTO label FROM public.pastelinks WHERE id=NEW.target_id;
+    ELSIF NEW.target_type IN ('code','telegram_product') THEN
+      SELECT title INTO label FROM public.telegram_products WHERE id=NEW.target_id;
+    ELSIF NEW.target_type IN ('channel','group','telegram_channel') THEN
+      SELECT name INTO label FROM public.telegram_channels WHERE id=NEW.target_id;
+    ELSIF NEW.target_type IN ('product','link') THEN
+      SELECT title INTO label FROM public.products WHERE id=NEW.target_id;
+    ELSIF NEW.target_type = 'paste' THEN
+      SELECT title INTO label FROM public.pastes WHERE id=NEW.target_id;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    label := 'Konten';
+  END;
+
+  PERFORM public.notify_all_users(
+    'Konten mendapat Like',
+    coalesce(kind,'Konten') || ' "' || coalesce(label,'Konten') || '" mendapat Like baru.',
+    NULL
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_notify_content_like ON public.content_likes;
+CREATE TRIGGER trg_notify_content_like
+AFTER INSERT ON public.content_likes
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_notify_content_like();
+
+CREATE OR REPLACE FUNCTION public.trg_notify_view()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  label text := 'Konten';
+  kind text := coalesce(NEW.target_type,'content');
+BEGIN
+  BEGIN
+    IF NEW.target_type = 'pastelink' THEN
+      SELECT title INTO label FROM public.pastelinks WHERE id=NEW.target_id;
+    ELSIF NEW.target_type IN ('code','telegram_product') THEN
+      SELECT title INTO label FROM public.telegram_products WHERE id=NEW.target_id;
+    ELSIF NEW.target_type IN ('channel','group','telegram_channel') THEN
+      SELECT name INTO label FROM public.telegram_channels WHERE id=NEW.target_id;
+    ELSIF NEW.target_type IN ('product','link') THEN
+      SELECT title INTO label FROM public.products WHERE id=NEW.target_id;
+    ELSIF NEW.target_type = 'paste' THEN
+      SELECT title INTO label FROM public.pastes WHERE id=NEW.target_id;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    label := 'Konten';
+  END;
+
+  PERFORM public.notify_all_users(
+    'Konten dibuka',
+    coalesce(kind,'Konten') || ' "' || coalesce(label,'Konten') || '" baru saja dibuka.',
+    NULL
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  seller uuid;
+BEGIN
+  SELECT seller_id INTO seller
+  FROM public.orders
+  WHERE id=NEW.order_id;
+
+  PERFORM public.notify_all_users(
+    'Pembelian Marketplace',
+    'Pembelian "' || coalesce(NEW.item_title,'Produk') || '" berhasil diproses.',
+    NULL
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+-- Realtime for the navbar bell/toast. Safe if already enabled.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname='supabase_realtime'
+      AND schemaname='public'
+      AND tablename='notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  END IF;
+EXCEPTION WHEN undefined_object THEN
+  NULL;
+END;
+$$;
+
+COMMIT;
+
+-- ============================================================
+-- FINAL CHECKOUT OVERRIDE — PAID PASTELINK + FREE/Paid SAFETY
+-- This is intentionally the last definition so it wins over
+-- older duplicate create_checkout_order definitions above.
+-- ============================================================
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
+RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+  uid uuid:=auth.uid();
+  seller uuid;
+  title text;
+  price numeric;
+  oid uuid;
+  normalized text:=lower(btrim(coalesce(p_type,'')));
+  pid uuid;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
+  BEGIN
+    pid:=p_id::uuid;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RAISE EXCEPTION 'INVALID_PRODUCT_ID';
+  END;
+
+  IF normalized IN ('product','link') THEN
+    SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price
+      INTO seller,title,price
+    FROM public.products p WHERE p.id=pid;
+    normalized:='product';
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.owner_id,p.title,p.price
+      INTO seller,title,price
+    FROM public.telegram_products p WHERE p.id=pid;
+    normalized:='telegram_product';
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.owner_id,p.name,p.price
+      INTO seller,title,price
+    FROM public.telegram_channels p WHERE p.id=pid;
+    normalized:='channel';
+  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
+    SELECT p.user_id,p.title,p.price
+      INTO seller,title,price
+    FROM public.pastelinks p WHERE p.id=pid;
+    normalized:='pastelink';
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
+  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
+  IF price < 5000 OR price > 150000 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
+
+  SELECT o.id INTO oid
+  FROM public.orders o
+  WHERE o.buyer_id=uid
+    AND o.product_id=pid
+    AND lower(coalesce(o.item_type,''))=normalized
+    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
+  ORDER BY o.created_at DESC
+  LIMIT 1;
+
+  IF oid IS NULL THEN
+    INSERT INTO public.orders(
+      buyer_id,seller_id,product_id,amount,status,
+      item_type,item_id,item_title
+    )
+    VALUES(
+      uid,seller,pid,price,'pending',
+      normalized,p_id,title
+    )
+    RETURNING id INTO oid;
+  END IF;
+
+  RETURN QUERY SELECT oid,price,title,normalized;
+END;
+$$;
+
+COMMIT;
+
+-- ============================================================
+-- FINAL PUBLICATION NOTIFICATION TRIGGERS
+-- Notify every registered user when an existing draft is
+-- switched to published/public by an admin.
+-- ============================================================
+BEGIN;
+
+DROP TRIGGER IF EXISTS trg_notify_product_publish ON public.products;
+CREATE TRIGGER trg_notify_product_publish
+AFTER INSERT OR UPDATE OF status ON public.products
+FOR EACH ROW
+WHEN (NEW.status IN ('published','active') AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status))
+EXECUTE FUNCTION public.trg_notify_market_publication();
+
+DROP TRIGGER IF EXISTS trg_notify_telegram_product_publish ON public.telegram_products;
+CREATE TRIGGER trg_notify_telegram_product_publish
+AFTER INSERT OR UPDATE OF status ON public.telegram_products
+FOR EACH ROW
+WHEN (NEW.status='published' AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status))
+EXECUTE FUNCTION public.trg_notify_market_publication();
+
+DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_channels;
+CREATE TRIGGER trg_notify_telegram_channel_publish
+AFTER INSERT OR UPDATE OF status ON public.telegram_channels
+FOR EACH ROW
+WHEN (NEW.status='published' AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status))
+EXECUTE FUNCTION public.trg_notify_market_publication();
+
+DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
+CREATE TRIGGER trg_notify_pastelink_publish
+AFTER INSERT OR UPDATE OF visibility ON public.pastelinks
+FOR EACH ROW
+WHEN (NEW.visibility='public' AND (TG_OP='INSERT' OR OLD.visibility IS DISTINCT FROM NEW.visibility))
+EXECUTE FUNCTION public.trg_notify_market_publication();
+
+COMMIT;

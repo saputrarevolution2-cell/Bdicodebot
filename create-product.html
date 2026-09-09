@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <script src="js/theme-preload.js"></script>
+  <script src="js/theme-preload.js?v=20260910-final"></script>
 
   <meta charset="utf-8">
 
@@ -48,10 +48,10 @@
        CORE
        ===================================================== -->
 
-  <script src="js/config.js?v=20260909"></script>
-  <script src="js/supabase.js?v=20260909"></script>
-  <script src="js/auth.js?v=20260909"></script>
-  <script src="js/navbar.js?v=20260909"></script>
+  <script src="js/config.js?v=20260910"></script>
+  <script src="js/supabase.js?v=20260910"></script>
+  <script src="js/auth.js?v=20260910"></script>
+  <script src="js/navbar.js?v=20260910-final2"></script>
 
   <!-- =====================================================
        ICONS
@@ -68,17 +68,17 @@
 
   <link
     rel="stylesheet"
-    href="css/app.css?v=20260909"
+    href="css/app.css?v=20260910"
   >
 
   <link
     rel="stylesheet"
-    href="css/navbar.css?v=20260909"
+    href="css/navbar.css?v=20260910-final"
   >
 
   <link
     rel="stylesheet"
-    href="css/footer.css?v=20260909"
+    href="css/footer.css?v=20260910"
   >
 
   <!-- =====================================================
@@ -87,32 +87,32 @@
 
   <link
     rel="stylesheet"
-    href="css/create-product.css?v=20260909"
+    href="css/create-product.css?v=20260910"
   >
 
   <link
     rel="stylesheet"
-    href="css/final-polish.css?v=20260909"
+    href="css/final-polish.css?v=20260910"
   >
 
   <link
     rel="stylesheet"
-    href="css/saas-final.css?v=20260909"
+    href="css/saas-final.css?v=20260910"
   >
 
   <link
     rel="stylesheet"
-    href="css/dashboard-theme.css?v=20260909"
+    href="css/dashboard-theme.css?v=20260910"
   >
 
   <link
     rel="stylesheet"
-    href="css/theme-universal.css?v=20260909-auto-theme"
+    href="css/theme-universal.css?v=20260910-auto-theme"
   >
 
   <link
     rel="stylesheet"
-    href="css/final-fixes.css?v=20260909-full"
+    href="css/final-fixes.css?v=20260910-full"
   >
 
   <script>
@@ -208,7 +208,28 @@
         </header>
 
 
-        <!-- =================================================
+        <!-- CREATE TYPE PICKER -->
+        <div class="create-type-picker" id="createTypePicker" aria-label="Pilih jenis create">
+          <button type="button" class="create-type-card" data-create-type="pastelink">
+            <span class="create-type-icon"><i class="fa-solid fa-link"></i></span>
+            <span><b>PasteLink</b><small>Halaman link & konten</small></span>
+          </button>
+          <button type="button" class="create-type-card" data-create-type="code">
+            <span class="create-type-icon"><i class="fa-solid fa-code"></i></span>
+            <span><b>Code</b><small>Produk source code</small></span>
+          </button>
+          <button type="button" class="create-type-card" data-create-type="channel">
+            <span class="create-type-icon"><i class="fa-solid fa-users"></i></span>
+            <span><b>Group / Channel</b><small>Akses komunitas Telegram</small></span>
+          </button>
+        </div>
+
+        <div class="telegram-kind-picker" id="telegramKindPicker" hidden>
+  <button type="button" data-telegram-kind="channel" class="telegram-kind active"><i class="fa-solid fa-broadcast-tower"></i><span>Channel</span></button>
+  <button type="button" data-telegram-kind="group" class="telegram-kind"><i class="fa-solid fa-users"></i><span>Group</span></button>
+</div>
+
+<!-- =================================================
              CREATE FORM
              ================================================= -->
 
@@ -266,7 +287,7 @@
                  TITLE
                  ================================================= -->
 
-            <div class="form-field">
+            <div class="form-field" id="titleField">
 
               <label for="title">
 
@@ -311,7 +332,7 @@
                  SLUG
                  ================================================= -->
 
-            <div class="form-field">
+            <div class="form-field" id="slugField">
 
               <label for="slug">
 
@@ -363,7 +384,7 @@
 
               <!-- TYPE -->
 
-              <div class="form-field">
+              <div class="form-field" id="typeField">
 
                 <label for="type">
 
@@ -383,7 +404,7 @@
                   ></i>
 
                   <select
-                    class="select"
+                    class="select create-type-select-hidden"
                     id="type"
                     name="type"
                     required
@@ -498,8 +519,8 @@
                 <strong>Akses mengikuti database</strong>
 
                 <span>
-                  Link, Code, Channel, dan Group dapat dibuat <b>Free</b> atau <b>Paid</b>.
-                  Free = Rp0, Paid = <b>Rp5.000–Rp150.000</b>. Paste dan PasteLink pada SQL ini hanya Free (Rp0).
+                  PasteLink, Code, Channel, dan Group dapat dibuat <b>Free</b> atau <b>Paid</b>.
+                  Free = Rp0, Paid = <b>Rp5.000–Rp150.000</b>. Harga Paid muncul otomatis setelah memilih Paid.
                 </span>
 
               </div>
@@ -513,6 +534,7 @@
 
             <div
               class="form-field price-field"
+              id="priceField"
             >
 
               <label for="price">
@@ -560,7 +582,7 @@
                  THUMBNAIL
                  ================================================= -->
 
-            <div class="form-field">
+            <div class="form-field" id="thumbField">
 
               <label for="thumb">
 
@@ -633,7 +655,7 @@
                  DESCRIPTION
                  ================================================= -->
 
-            <div class="form-field">
+            <div class="form-field" id="descField">
 
               <label for="desc">
 
@@ -684,7 +706,7 @@
                  CONTENT / DELIVERY
                  ================================================= -->
 
-            <div class="form-field">
+            <div class="form-field" id="contentField">
 
               <label for="content">
 
@@ -1395,11 +1417,11 @@
        PAGE SCRIPTS
        ===================================================== -->
 
-  <script src="js/create-product.js?v=20260909-center"></script>
+  <script src="js/create-product.js?v=20260910-final3"></script>
 
-  <script src="js/footer.js?v=20260909"></script>
+  <script src="js/footer.js?v=20260910"></script>
 
-  <script src="js/theme.js?v=20260909"></script>
+  <script src="js/theme.js?v=20260910-final2"></script>
 
 </body>
 </html>
