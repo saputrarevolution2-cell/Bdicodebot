@@ -273,30 +273,9 @@ document.addEventListener("DOMContentLoaded", async () => {
        Jangan gunakan select('*').
        Ambil hanya kolom yang memang digunakan.
        ======================================================= */
-    const result = await client
-        .from("pastelinks")
-        .select(`
-            id,
-            user_id,
-            slug,
-            title,
-            content_html,
-            visibility,
-            expires_at,
-            description,
-            tags,
-            allow_comments,
-            allow_download,
-            show_raw,
-            anonymous,
-            access_type,
-            price,
-            views,
-            created_at,
-            updated_at
-        `)
-        .eq("slug", slug)
-        .maybeSingle();
+    const result = await client.rpc("get_pastelink_by_slug", {
+        p_slug: slug
+    });
     if (result.error) {
         console.error(
             "[PasteLink] Query error:",
@@ -309,11 +288,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
         return;
     }
-    let paste = result.data;
-    if (!paste) {
+    let paste = Array.isArray(result.data)
+        ? result.data[0]
+        : result.data;
+    if (!paste || paste.found === false) {
         box.innerHTML = `
             <div class="empty">
-                Paste tidak ditemukan.
+                PasteLink tidak ditemukan.
             </div>
         `;
         return;

@@ -108,9 +108,13 @@
     if (
       lower.includes("user already registered") ||
       lower.includes("already registered") ||
-      lower.includes("user_already_exists")
+      lower.includes("user_already_exists") ||
+      lower.includes("gmail tersebut sudah terdaftar")
     ) {
       return "Gmail tersebut sudah terdaftar. Silakan login.";
+    }
+    if (lower.includes("username_already_exists") || lower.includes("username sudah digunakan")) {
+      return "Username tersebut sudah terdaftar. Silakan pilih username lain.";
     }
     if (
       lower.includes("database error saving new user") ||
@@ -369,7 +373,7 @@
         );
       }
       /* ---------------------------------------------------
-         CEK USERNAME
+         CEK USERNAME + EMAIL DI DATABASE
       --------------------------------------------------- */
       const available =
         await this.checkUsername(
@@ -377,7 +381,17 @@
         );
       if (available !== true) {
         throw new Error(
-          "Username sudah digunakan."
+          "Username sudah digunakan. Silakan pilih username lain."
+        );
+      }
+
+      const emailAvailable =
+        await this.checkEmail(
+          cleanEmail
+        );
+      if (emailAvailable !== true) {
+        throw new Error(
+          "Gmail tersebut sudah terdaftar. Silakan login atau gunakan Gmail lain."
         );
       }
       /* ---------------------------------------------------
@@ -422,6 +436,34 @@
        *   → email confirmation aktif
        */
       return data;
+    },
+    /* =====================================================
+       CHECK EMAIL
+       ===================================================== */
+    async checkEmail(email) {
+      const client = assertSupabase();
+      const value = normalizeEmail(email);
+      if (!isEmail(value)) {
+        throw new Error("Email tidak valid.");
+      }
+      const { data, error } =
+        await client.rpc("check_email_available", {
+          p_email: value
+        });
+      if (error) {
+        console.error(
+          "[PasTele Auth] check_email_available:",
+          error
+        );
+        throw new Error(
+          "Database email belum dapat diperiksa. Pastikan SQL final sudah dijalankan di Supabase."
+        );
+      }
+      if (typeof data === "boolean") return data;
+      const row = unwrapRpcRow(data);
+      if (typeof row === "boolean") return row;
+      if (typeof row?.available === "boolean") return row.available;
+      throw new Error("Respons pengecekan email dari database tidak valid.");
     },
     /* =====================================================
        LOOKUP USER
