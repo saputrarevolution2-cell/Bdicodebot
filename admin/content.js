@@ -19,7 +19,9 @@
 
   const normalizeType = (raw, source='') => {
     const t = String(raw||'').toLowerCase();
-    if (source === 'pastelinks' || ['paste','pastelink','paste-link','paste_link'].includes(t)) return 'link';
+    if (source === 'pastelinks') return 'link';
+    if (source === 'pastes') return 'paste';
+    if (['pastelink','paste-link','paste_link'].includes(t)) return 'link';
     if (source === 'telegram_products') return t.includes('group') ? 'group' : 'code';
     if (source === 'telegram_channels') return 'channel';
     if (t === 'telegram_channel') return 'channel';
@@ -27,8 +29,8 @@
     if (t === 'product') return 'product';
     return ['link','code','channel','group'].includes(t) ? t : 'product';
   };
-  const typeLabel = t => ({link:'PasteLink',code:'Code',channel:'Channel',group:'Group',product:'Product'})[t] || 'Content';
-  const typeIcon = t => ({link:'fa-link',code:'fa-code',channel:'fa-broadcast-tower',group:'fa-users',product:'fa-box'})[t] || 'fa-layer-group';
+  const typeLabel = t => ({link:'PasteLink',paste:'Paste',code:'Code',channel:'Channel',group:'Group',product:'Link / Product'})[t] || 'Content';
+  const typeIcon = t => ({link:'fa-link',paste:'fa-file-lines',code:'fa-code',channel:'fa-broadcast-tower',group:'fa-users',product:'fa-box'})[t] || 'fa-layer-group';
   const statusOf = x => {
     if (x.source === 'pastelinks') return x.visibility === 'public' ? 'published' : String(x.visibility||'hidden').toLowerCase();
     return String(x.status || 'draft').toLowerCase();
@@ -55,7 +57,8 @@
     if (!client) throw new Error('Supabase belum siap.');
     const configs = [
       ['products','product','id,title,slug,price,status,description,views,sales_count,creator_id,seller_id,created_at,updated_at,thumbnail_url'],
-      ['pastelinks','link','id,title,slug,visibility,content_html,user_id,views,created_at,updated_at,expires_at'],
+      ['pastelinks','link','id,title,slug,visibility,content_html,user_id,views,created_at,updated_at,expires_at,access_type,price'],
+      ['pastes','paste','id,title,slug,content,visibility,owner_id,created_at,updated_at'],
       ['telegram_products','code','id,title,description,price,access_type,status,owner_id,created_at,updated_at'],
       ['telegram_channels','channel','id,name,description,price,access_type,status,owner_id,created_at,updated_at']
     ];
@@ -84,8 +87,7 @@
 
   async function load() {
     $('contentList').innerHTML = '<div class="card admin-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat konten...</div>';
-    const rpcData = await loadRpc();
-    all = rpcData && rpcData.length ? rpcData : await loadDirect();
+    all = await loadDirect();
     render();
   }
 
@@ -153,7 +155,7 @@
     const cid = creatorId(x);
     const slug = x.slug || '—';
     const price = n(x.price);
-    const link = x.source==='pastelinks' ? `../paste-view.html?slug=${encodeURIComponent(slug)}` : `../product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`;
+    const link = x.source==='pastelinks' ? `../paste-view.html?slug=${encodeURIComponent(slug)}` : x.source==='pastes' ? `../product.html?type=paste&slug=${encodeURIComponent(slug)}` : `../product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`;
     return `<article class="content-item">
       <div class="content-type-icon ${esc(type)}"><i class="fa-solid ${esc(typeIcon(type))}"></i></div>
       <div class="content-main">
@@ -185,7 +187,7 @@
 
   function viewContent(x) {
     const type=normalizeType(x.type,x.source), slug=x.slug;
-    const url=x.source==='pastelinks' ? `../paste-view.html?slug=${encodeURIComponent(slug||'')}` : `../product.html?id=${encodeURIComponent(x.id||'')}&type=${encodeURIComponent(type)}`;
+    const url=x.source==='pastelinks' ? `../paste-view.html?slug=${encodeURIComponent(slug||'')}` : x.source==='pastes' ? `../product.html?type=paste&slug=${encodeURIComponent(slug||'')}` : `../product.html?id=${encodeURIComponent(x.id||'')}&type=${encodeURIComponent(type)}`;
     window.open(url,'_blank','noopener');
   }
 
@@ -198,8 +200,8 @@
     $('editPrice').value=n(x.price);
     $('editStatus').value=statusOf(x);
     $('editDescription').value=x.description||'';
-    $('editSlug').disabled=x.source!=='products';
-    $('editNote').textContent = x.source==='pastelinks' ? 'PasteLink dikelola melalui kolom title/visibility. Slug tetap dipertahankan agar URL publik tidak rusak.' : 'Perubahan admin harus tetap tunduk pada RLS/RPC database.';
+    $('editSlug').disabled=!['products','pastes'].includes(x.source);
+    $('editNote').textContent = x.source==='pastelinks' ? 'PasteLink menggunakan visibility public/hidden. Slug dipertahankan agar URL publik tidak rusak.' : x.source==='pastes' ? 'Paste menggunakan tabel pastes. SQL FINAL hanya menyediakan delete RPC untuk paste.' : 'Perubahan admin mengikuti kolom dan RPC SQL FINAL.';
     $('contentModal').hidden=false;
     $('contentModal').setAttribute('aria-hidden','false');
     document.body.classList.add('content-modal-open');
@@ -222,7 +224,8 @@
     if(!client) throw new Error('Supabase belum siap.');
     let table=x.source;
     let update=data;
-    if(table==='pastelinks') update={title:data.title,visibility:data.status==='published'?'public':data.status};
+    if(table==='pastelinks') update={title:data.title,visibility:data.status==='published'?'public':data.status,price:Number(data.price||0),access_type:Number(data.price||0)>0?'paid':'free'};
+    if(table==='pastes') update={title:data.title,slug:data.slug||x.slug};
     if(table==='telegram_products') update={title:data.title,description:data.description,price:data.price,status:data.status};
     if(table==='telegram_channels') update={name:data.title,description:data.description,price:data.price,status:data.status};
     if(table==='products') update={title:data.title,price:data.price,status:data.status,description:data.description};
@@ -253,10 +256,13 @@
       let rpc=null;
       try { rpc=await Admin.rpc('admin_delete_content',{p_id:x.id,p_source:x.source}); } catch (_) {}
       if(rpc===null) {
+        if(x.source==='pastes') { await Admin.rpc('admin_delete_paste',{p_id:x.id}); rpc=true; }
         const client=sb();
+        if(x.source==='pastes') { /* dedicated RPC already handled */ } else {
         if(!client) throw new Error('Supabase belum siap.');
         const q=await client.from(x.source).delete().eq('id',x.id);
         if(q.error) throw q.error;
+        }
       }
       toast('Konten berhasil dihapus','success');
       await load();
