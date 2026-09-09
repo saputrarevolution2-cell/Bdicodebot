@@ -1,9 +1,481 @@
-<!doctype html><html lang="id"><head>
-<script src="js/theme-preload.js?v=20260910-ui1"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<script src="js/config.js?v=20260910-ui1"></script><script src="js/supabase.js?v=20260910-ui1"></script><script src="js/auth.js?v=20260910-ui1"></script><script src="js/navbar.js?v=20260910-ui1"></script>
-<link rel="stylesheet" href="css/app.css?v=20260910-ui1"><link rel="stylesheet" href="css/navbar.css?v=20260910-ui1"><link rel="stylesheet" href="css/create-common.css?v=20260910-ui1"><link rel="stylesheet" href="css/theme-universal.css?v=20260910-ui1">
-<link rel="stylesheet" href="css/create-code.css?v=20260910-ui1"><title>Buat Code — PasTele</title></head><body class="app-page create-detail-page"><div id="navbar"></div><main class="create-detail"><section class="create-detail-head"><a class="back-create" href="create-product.html"><i class="fa-solid fa-arrow-left"></i> Semua tipe</a><div class="detail-title"><span class="detail-icon"><i class="fa-solid fa-code"></i></span><div><span class="eyebrow">CODE</span><h1>Buat Code</h1><p>Buat produk Code dengan delivery yang hanya dibuka sesuai hak akses.</p></div></div></section><form id="createForm" class="create-card" novalidate autocomplete="off"><div class="field"><label for="title">Judul <em>*</em></label><input id="title" maxlength="120" required placeholder="Contoh: Bot Downloader Premium"><small>URL dibuat otomatis. Kamu tidak perlu mengisi slug.</small></div>
-<div class="field"><label>Akses</label><div class="access-grid"><label class="access-option"><input type="radio" name="access" value="free" checked><span><b>Gratis</b><small>Rp0</small></span></label><label class="access-option"><input type="radio" name="access" value="paid"><span><b>Berbayar</b><small>Rp5.000–Rp150.000</small></span></label></div></div>
-<div class="field price-box" id="priceBox" hidden><label for="price">Harga <em>*</em></label><div class="money-input"><span>Rp</span><input id="price" type="number" min="5000" max="150000" step="1000" value="5000" inputmode="numeric"></div><small>Kelipatan Rp1.000, maksimal Rp150.000.</small></div>
-<div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" maxlength="3000" rows="4" placeholder="Jelaskan isi dan manfaat konten..."></textarea><small><span id="counter">0</span>/3000</small></div><div class="field"><label for="thumbnail">Thumbnail URL <span>Opsional</span></label><input id="thumbnail" type="url" placeholder="https://..."><small>Gunakan URL gambar publik jika diperlukan.</small></div><div class="field"><label for="content">Code / Delivery <em>*</em></label><textarea id="content" rows="14" maxlength="1000000" required placeholder="Tempel source code, link file, atau delivery produk..."></textarea><small>Data ini menjadi isi produk Code setelah pembelian.</small></div><div class="create-actions"><a href="my-products.html" class="btn secondary">Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-cloud-arrow-up"></i> Publikasikan</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...</span></button></div></form><div id="result" class="create-result" hidden></div></main><script src="js/create-code.js?v=20260910-ui1"></script></body></html>
+<!doctype html>
+<html lang="id">
+
+<head>
+
+  <!-- =====================================================
+       THEME PRELOAD
+       ===================================================== -->
+  <script src="js/theme-preload.js?v=20260910"></script>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+  <meta
+    name="theme-color"
+    content="#f7f9fc"
+  >
+
+  <title>Buat Code — PasTele</title>
+
+
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="js/config.js?v=20260910"></script>
+  <script src="js/supabase.js?v=20260910"></script>
+  <script src="js/auth.js?v=20260910"></script>
+
+
+  <!-- =====================================================
+       ICON
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+
+
+  <!-- =====================================================
+       GLOBAL CSS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/theme-universal.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/create-common.css?v=20260910"
+  >
+
+
+  <!-- =====================================================
+       CODE PAGE CSS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/create-code.css?v=20260910"
+  >
+
+</head>
+
+
+<body class="app-page create-detail-page">
+
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+  <div id="navbar"></div>
+
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+  <main class="create-detail">
+
+    <!-- ===================================================
+         PAGE HEADER
+         =================================================== -->
+    <section class="create-detail-head">
+
+      <a
+        class="back-create"
+        href="create-product.html"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Semua tipe</span>
+      </a>
+
+
+      <div class="detail-title">
+
+        <div
+          class="detail-icon"
+          aria-hidden="true"
+        >
+          <i class="fa-solid fa-code"></i>
+        </div>
+
+
+        <div>
+
+          <span class="eyebrow">
+            CODE
+          </span>
+
+          <h1>
+            Buat Code
+          </h1>
+
+          <p>
+            Buat produk Code dengan delivery
+            yang hanya dapat dibuka sesuai
+            hak akses pembeli.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         CREATE FORM
+         =================================================== -->
+    <form
+      id="createForm"
+      class="create-card"
+      novalidate
+      autocomplete="off"
+    >
+
+
+      <!-- =================================================
+           TITLE
+           ================================================= -->
+      <div class="field">
+
+        <label for="title">
+          Judul
+          <em>*</em>
+        </label>
+
+        <input
+          id="title"
+          name="title"
+          type="text"
+          maxlength="120"
+          required
+          autocomplete="off"
+          placeholder="Contoh: Bot Downloader Premium"
+        >
+
+        <small>
+          URL dibuat otomatis.
+          Kamu tidak perlu mengisi slug.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           ACCESS
+           ================================================= -->
+      <div class="field">
+
+        <label>
+          Akses
+        </label>
+
+        <div
+          class="access-grid"
+          role="radiogroup"
+          aria-label="Jenis akses"
+        >
+
+          <!-- FREE -->
+          <label class="access-option">
+
+            <input
+              type="radio"
+              name="access"
+              value="free"
+              checked
+            >
+
+            <span>
+
+              <b>
+                <i class="fa-solid fa-unlock"></i>
+                Gratis
+              </b>
+
+              <small>
+                Rp0
+              </small>
+
+            </span>
+
+          </label>
+
+
+          <!-- PAID -->
+          <label class="access-option">
+
+            <input
+              type="radio"
+              name="access"
+              value="paid"
+            >
+
+            <span>
+
+              <b>
+                <i class="fa-solid fa-lock"></i>
+                Berbayar
+              </b>
+
+              <small>
+                Rp5.000–Rp150.000
+              </small>
+
+            </span>
+
+          </label>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           PRICE
+           ================================================= -->
+      <div
+        class="field price-box"
+        id="priceBox"
+        hidden
+      >
+
+        <label for="price">
+          Harga
+          <em>*</em>
+        </label>
+
+        <div class="money-input">
+
+          <span>
+            Rp
+          </span>
+
+          <input
+            id="price"
+            name="price"
+            type="number"
+            min="5000"
+            max="150000"
+            step="1000"
+            value="5000"
+            inputmode="numeric"
+            autocomplete="off"
+          >
+
+        </div>
+
+        <small>
+          Harga Paid Rp5.000–Rp150.000
+          dan harus kelipatan Rp1.000.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           DESCRIPTION
+           ================================================= -->
+      <div class="field">
+
+        <label for="description">
+
+          Deskripsi
+
+          <span>
+            Opsional
+          </span>
+
+        </label>
+
+        <textarea
+          id="description"
+          name="description"
+          maxlength="3000"
+          rows="4"
+          placeholder="Jelaskan isi dan manfaat konten..."
+        ></textarea>
+
+        <small class="field-counter">
+          <span id="counter">0</span>/3000
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           THUMBNAIL
+           ================================================= -->
+      <div class="field">
+
+        <label for="thumbnail">
+
+          Thumbnail URL
+
+          <span>
+            Opsional
+          </span>
+
+        </label>
+
+        <input
+          id="thumbnail"
+          name="thumbnail"
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          placeholder="https://contoh.com/gambar.jpg"
+        >
+
+        <small>
+          Gunakan URL gambar publik jika diperlukan.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           CONTENT
+           ================================================= -->
+      <div class="field">
+
+        <label for="content">
+
+          Code / Delivery
+
+          <em>*</em>
+
+        </label>
+
+        <textarea
+          id="content"
+          name="content"
+          rows="14"
+          maxlength="1000000"
+          required
+          spellcheck="false"
+          placeholder="Tempel source code, link file, atau delivery produk..."
+        ></textarea>
+
+        <small>
+          Data ini menjadi isi produk Code
+          setelah pembelian.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           ACTIONS
+           ================================================= -->
+      <div class="create-actions">
+
+        <a
+          href="my-products.html"
+          class="btn secondary"
+        >
+          <i class="fa-solid fa-xmark"></i>
+          <span>Batal</span>
+        </a>
+
+
+        <button
+          id="submitBtn"
+          class="btn primary"
+          type="submit"
+        >
+
+          <span class="normal">
+
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+
+            <span>
+              Publikasikan
+            </span>
+
+          </span>
+
+
+          <span
+            class="loading"
+            hidden
+          >
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            <span>
+              Menyimpan...
+            </span>
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </form>
+
+
+    <!-- ===================================================
+         SUCCESS RESULT
+         =================================================== -->
+    <section
+      id="result"
+      class="create-result"
+      hidden
+      aria-live="polite"
+    ></section>
+
+  </main>
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+  <div
+    id="toast"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+  <script src="js/navbar.js?v=20260910"></script>
+
+
+  <!-- =====================================================
+       CREATE CODE JS
+       ===================================================== -->
+  <script src="js/create-code.js?v=20260910"></script>
+
+
+  <!-- =====================================================
+       THEME
+       ===================================================== -->
+  <script src="js/theme.js?v=20260910"></script>
+
+</body>
+</html>
