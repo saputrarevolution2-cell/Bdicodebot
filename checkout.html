@@ -1,63 +1,465 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <script src="js/theme-preload.js?v=20260909-final"></script>
+  <!-- =====================================================
+       THEME PRELOAD
+       ===================================================== -->
+  <script src="js/theme-preload.js?v=20260910"></script>
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+  <meta
+    name="theme-color"
+    content="#f7f9fc"
+  >
+
   <title>Checkout — PasTele</title>
+
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260908"></script>
-  <script src="js/supabase.js?v=20260908"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/navbar.js?v=20260910-final3"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-  <link rel="stylesheet" href="css/app.css?v=20260908">
-  <link rel="stylesheet" href="css/navbar.css?v=20260908">
-  <link rel="stylesheet" href="css/footer.css?v=20260908">
-  <link rel="stylesheet" href="css/saas-final.css?v=20260908">
-  <link rel="stylesheet" href="css/checkout.css?v=20260908">
-<link rel="stylesheet" href="css/dashboard-theme.css?v=20260909"><link rel="stylesheet" href="css/theme-universal.css?v=20260908-auto-theme">
-  
-<link rel="stylesheet" href="css/final-fixes.css?v=20260909-full"><script>document.documentElement.classList.add("pastele-ready");</script></head>
+
+  <script src="js/config.js?v=20260910"></script>
+  <script src="js/supabase.js?v=20260910"></script>
+  <script src="js/auth.js?v=20260910"></script>
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+  <script src="js/navbar.js?v=20260910"></script>
+
+  <!-- =====================================================
+       ICONS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  >
+
+  <!-- =====================================================
+       GLOBAL CSS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/app.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/footer.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/saas-final.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/dashboard-theme.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/theme-universal.css?v=20260910"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/final-fixes.css?v=20260910"
+  >
+
+  <!-- =====================================================
+       CHECKOUT PAGE CSS
+       ===================================================== -->
+  <link
+    rel="stylesheet"
+    href="css/checkout.css?v=20260910"
+  >
+
+  <script>
+    document.documentElement.classList.add("pastele-ready");
+  </script>
+</head>
+
 <body class="app-page checkout-page">
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
   <div id="navbar"></div>
-  <main>
+
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+  <main class="checkout-main">
+
     <section class="section checkout-section">
+
       <div class="container checkout-container">
+
+        <!-- =================================================
+             HEADER
+             ================================================= -->
         <header class="checkout-header">
-          <a class="checkout-back" href="marketplace.html"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
-          <span class="badge"><i class="fa-solid fa-lock"></i> CHECKOUT AMAN</span>
-          <h1>Konfirmasi Pembelian</h1>
-          <p class="muted">Periksa detail produk sebelum melanjutkan ke pembayaran Bayar.gg.</p>
-        </header>
-        <div id="checkoutState" class="checkout-state"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat detail produk...</span></div>
-        <div id="checkoutContent" hidden>
-          <div class="checkout-grid">
-            <article class="card checkout-card checkout-product-card">
-              <div class="checkout-card-title"><i class="fa-solid fa-box"></i><div><span>Produk</span><h2 id="productTitle">—</h2></div></div>
-              <div class="checkout-meta" id="productMeta"></div>
-              <div class="checkout-divider"></div>
-              <div class="checkout-info-row"><span><i class="fa-solid fa-eye"></i> Dilihat</span><strong id="productViews">—</strong></div>
-              <div class="checkout-info-row"><span><i class="fa-solid fa-shield-halved"></i> Akses</span><strong id="productAccess">—</strong></div>
-            </article>
-            <aside class="card checkout-card checkout-summary">
-              <div class="checkout-card-title"><i class="fa-solid fa-receipt"></i><div><span>Ringkasan</span><h2>Pembayaran</h2></div></div>
-              <div class="checkout-summary-row"><span>Harga produk</span><strong id="productPrice">Rp0</strong></div>
-              <div class="checkout-summary-row"><span>Biaya layanan</span><strong id="serviceFee">Rp0</strong></div>
-              <div class="checkout-total"><span>Total</span><strong id="totalPrice">Rp0</strong></div>
-              <div class="checkout-payment-note"><i class="fa-solid fa-qrcode"></i><div><b>QRIS via Bayar.gg</b><span>Pembayaran diverifikasi otomatis.</span></div></div>
-              <button class="btn primary checkout-pay" id="continuePayment"><i class="fa-solid fa-qrcode"></i> Lanjut ke Pembayaran</button>
-              <p class="checkout-secure"><i class="fa-solid fa-shield-check"></i> Nominal pembayaran dikunci dari harga produk.</p>
-            </aside>
+
+          <a
+            class="checkout-back"
+            href="marketplace.html"
+            aria-label="Kembali ke Marketplace"
+          >
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Kembali</span>
+          </a>
+
+          <div class="checkout-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Checkout Aman</span>
           </div>
+
+          <h1>
+            Konfirmasi Pembelian
+          </h1>
+
+          <p class="muted">
+            Periksa detail konten sebelum melanjutkan
+            ke pembayaran.
+          </p>
+
+        </header>
+
+
+        <!-- =================================================
+             LOADING
+             ================================================= -->
+        <div
+          id="checkoutState"
+          class="checkout-state"
+          role="status"
+          aria-live="polite"
+        >
+
+          <div class="checkout-loading-icon">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          </div>
+
+          <div>
+            <strong>Memuat checkout</strong>
+            <span>Menyiapkan detail konten...</span>
+          </div>
+
         </div>
-        <div id="checkoutError" class="checkout-error" hidden></div>
+
+
+        <!-- =================================================
+             CHECKOUT CONTENT
+             ================================================= -->
+        <div
+          id="checkoutContent"
+          class="checkout-content"
+          hidden
+        >
+
+          <div class="checkout-grid">
+
+            <!-- =============================================
+                 PRODUCT
+                 ============================================= -->
+            <article
+              class="card checkout-card checkout-product-card"
+            >
+
+              <div class="checkout-card-title">
+
+                <div class="checkout-card-icon">
+                  <i class="fa-solid fa-box-open"></i>
+                </div>
+
+                <div>
+                  <span>Konten</span>
+
+                  <h2 id="productTitle">
+                    —
+                  </h2>
+                </div>
+
+              </div>
+
+
+              <!-- PRODUCT META -->
+              <div
+                id="productMeta"
+                class="checkout-meta"
+              >
+                —
+              </div>
+
+
+              <div class="checkout-divider"></div>
+
+
+              <!-- PRODUCT INFO -->
+              <div class="checkout-info-list">
+
+                <div class="checkout-info-row">
+
+                  <span>
+                    <i class="fa-solid fa-layer-group"></i>
+                    Jenis
+                  </span>
+
+                  <strong id="productType">
+                    —
+                  </strong>
+
+                </div>
+
+
+                <div class="checkout-info-row">
+
+                  <span>
+                    <i class="fa-solid fa-eye"></i>
+                    Dilihat
+                  </span>
+
+                  <strong id="productViews">
+                    —
+                  </strong>
+
+                </div>
+
+
+                <div class="checkout-info-row">
+
+                  <span>
+                    <i class="fa-solid fa-lock"></i>
+                    Akses
+                  </span>
+
+                  <strong id="productAccess">
+                    —
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <!-- SECURITY NOTE -->
+              <div class="checkout-product-note">
+
+                <div class="checkout-note-icon">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <div>
+                  <strong>Akses aman</strong>
+
+                  <span>
+                    Konten berbayar hanya dapat dibuka
+                    setelah pembayaran berhasil dan
+                    akses pembelian terverifikasi.
+                  </span>
+                </div>
+
+              </div>
+
+            </article>
+
+
+            <!-- =============================================
+                 PAYMENT SUMMARY
+                 ============================================= -->
+            <aside
+              class="card checkout-card checkout-summary"
+            >
+
+              <div class="checkout-card-title">
+
+                <div class="checkout-card-icon">
+                  <i class="fa-solid fa-receipt"></i>
+                </div>
+
+                <div>
+                  <span>Ringkasan</span>
+
+                  <h2>
+                    Pembayaran
+                  </h2>
+                </div>
+
+              </div>
+
+
+              <!-- PRICE -->
+              <div class="checkout-summary-list">
+
+                <div class="checkout-summary-row">
+
+                  <span>
+                    Harga konten
+                  </span>
+
+                  <strong id="productPrice">
+                    Rp0
+                  </strong>
+
+                </div>
+
+
+                <div class="checkout-summary-row">
+
+                  <span>
+                    Biaya layanan
+                  </span>
+
+                  <strong id="serviceFee">
+                    Rp0
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <!-- TOTAL -->
+              <div class="checkout-total">
+
+                <div>
+                  <span>Total pembayaran</span>
+
+                  <small>
+                    Nominal dikunci oleh server
+                  </small>
+                </div>
+
+                <strong id="totalPrice">
+                  Rp0
+                </strong>
+
+              </div>
+
+
+              <!-- PAYMENT METHOD -->
+              <div class="checkout-payment-method">
+
+                <div class="checkout-payment-icon">
+                  <i class="fa-solid fa-qrcode"></i>
+                </div>
+
+                <div>
+
+                  <strong>
+                    Pembayaran QRIS
+                  </strong>
+
+                  <span>
+                    Pembayaran diproses melalui
+                    Bayar.gg dan diverifikasi otomatis.
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <!-- PAY BUTTON -->
+              <button
+                type="button"
+                class="btn primary checkout-pay"
+                id="continuePayment"
+              >
+
+                <i class="fa-solid fa-qrcode"></i>
+
+                <span>
+                  Lanjut ke Pembayaran
+                </span>
+
+              </button>
+
+
+              <!-- SECURITY -->
+              <div class="checkout-secure">
+
+                <i class="fa-solid fa-shield-check"></i>
+
+                <span>
+                  Pembayaran aman. Setelah pembayaran
+                  berhasil, akses konten diberikan
+                  berdasarkan status pembelian di server.
+                </span>
+
+              </div>
+
+            </aside>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ERROR
+             ================================================= -->
+        <div
+          id="checkoutError"
+          class="checkout-error"
+          role="alert"
+          aria-live="assertive"
+          hidden
+        ></div>
+
       </div>
+
     </section>
+
   </main>
-  <div id="toast"></div>
-  <script src="js/checkout.js?v=20260908"></script>
-  <script src="js/footer.js?v=20260908"></script>
-<script src="js/theme.js?v=20260909-final2"></script></body>
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+  <div
+    id="toast"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
+  <script src="js/footer.js?v=20260910"></script>
+
+
+  <!-- =====================================================
+       THEME
+       ===================================================== -->
+  <script src="js/theme.js?v=20260910"></script>
+
+
+  <!-- =====================================================
+       CHECKOUT JS
+       ===================================================== -->
+  <script src="js/checkout.js?v=20260910"></script>
+
+</body>
 </html>
