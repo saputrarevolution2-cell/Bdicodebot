@@ -1608,3 +1608,9 @@ body.theme-dark .settings-page-body {
     break-inside: avoid;
   }
 }
+
+/* FINAL SETTINGS — same SaaS surface as the rest of the app */
+.settings-container{width:min(1040px,calc(100% - 28px));margin-inline:auto}
+.settings-card,.settings-quick-card{border-radius:18px}
+.settings-header{align-items:center}
+@media(max-width:640px){.settings-container{width:calc(100% - 20px)}.settings-header{gap:14px}.settings-header-actions .btn{width:100%;justify-content:center}}

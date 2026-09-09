@@ -1142,3 +1142,28 @@ html[data-theme="dark"]
   }
 
 }
+
+/* =========================================================
+   FINAL CLEAN FOOTER — COMPACT / NO OVER-WIDE LAYOUT
+========================================================= */
+#pasteleFooter { margin-top:32px; }
+#pasteleFooter .footer-container,
+#pasteleFooter .footer-bottom {
+  width:min(980px,calc(100% - 28px));
+}
+#pasteleFooter .footer-container {
+  grid-template-columns:minmax(220px,1.35fr) repeat(3,minmax(110px,.8fr));
+  gap:22px;
+  padding:26px 0 20px;
+}
+#pasteleFooter .footer-bottom { padding:12px 0; }
+#pasteleFooter .footer-column a { padding:5px 0; }
+#pasteleFooter .footer-description { max-width:420px; }
+@media(max-width:760px){
+  #pasteleFooter .footer-container { grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; padding:22px 0 16px; }
+  #pasteleFooter .footer-brand { grid-column:1/-1; }
+}
+@media(max-width:460px){
+  #pasteleFooter .footer-container { grid-template-columns:1fr 1fr; width:calc(100% - 22px); }
+  #pasteleFooter .footer-bottom { width:calc(100% - 22px); }
+}

@@ -3058,3 +3058,62 @@ body.theme-dark .create-product-page.paste-page {
     justify-content: center;
   }
 }
+
+
+/* =========================================================
+   CREATE CENTER — CLEAN TYPE-FIRST UI
+========================================================= */
+.create-type-picker {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0 0 18px;
+}
+.create-type-card {
+  border:1px solid var(--cp-border,rgba(15,23,42,.08)); background:var(--cp-card,#fff); color:inherit;
+  border-radius:16px; padding:14px; display:flex; align-items:center; gap:11px; text-align:left; cursor:pointer;
+  transition:.18s ease; min-width:0;
+}
+.create-type-card:hover,.create-type-card.active { transform:translateY(-1px); border-color:rgba(14,165,233,.42); box-shadow:0 10px 25px rgba(14,165,233,.10); }
+.create-type-icon { width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:0 0 40px;background:rgba(14,165,233,.10);color:#0284c7; }
+.create-type-card b,.create-type-card small { display:block; }
+.create-type-card b { font-size:13px; }
+.create-type-card small { margin-top:3px; opacity:.65; font-size:10px; }
+.create-field-hidden { display:none !important; }
+.create-type-select-hidden { display:none !important; }
+@media (max-width:700px) { .create-type-picker{grid-template-columns:1fr;} .create-type-card{padding:12px;} }
+html[data-theme="dark"] .create-type-card { background:#0d131f; border-color:rgba(255,255,255,.08); }
+
+.telegram-kind-picker{display:flex;gap:8px;margin:-6px 0 18px;padding:5px;border:1px solid var(--cp-border,rgba(15,23,42,.08));border-radius:14px;background:var(--cp-card,#fff);width:max-content;}
+.telegram-kind{border:0;background:transparent;color:inherit;border-radius:10px;padding:9px 14px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:750;cursor:pointer;}
+.telegram-kind.active{background:rgba(14,165,233,.11);color:#0284c7;}
+html[data-theme="dark"] .telegram-kind-picker{background:#0d131f;border-color:rgba(255,255,255,.08)}
+@media(max-width:700px){.telegram-kind-picker{width:100%;}.telegram-kind{flex:1;justify-content:center;}}
+
+
+/* =========================================================
+   FINAL CREATE CENTER — SELECT THEN FORM
+========================================================= */
+.create-layout[hidden] { display:none !important; }
+.create-type-picker {
+  margin: 0 0 18px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.create-type-card {
+  appearance:none;
+  border:1px solid var(--create-border, rgba(15,23,42,.08));
+  background:var(--create-card,#fff);
+  border-radius:18px;
+  padding:16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.create-type-card:hover,.create-type-card.active { transform:translateY(-2px); box-shadow:0 12px 30px rgba(15,23,42,.08); border-color:rgba(14,165,233,.35); }
+.create-type-card b,.create-type-card small { display:block; }
+.create-type-card small { margin-top:3px; opacity:.62; }
+.create-type-icon { width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:rgba(14,165,233,.1);flex:none; }
+@media(max-width:700px){.create-type-picker{grid-template-columns:1fr}.create-type-card{padding:14px}.create-layout{margin-top:8px}}
+html[data-theme="dark"] .create-type-card, body.theme-dark .create-type-card { background:#0d1522; border-color:rgba(255,255,255,.08); color:#f3f7ff; }
