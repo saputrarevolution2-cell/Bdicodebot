@@ -1173,9 +1173,23 @@ CREATE OR REPLACE FUNCTION public.record_content_view(
 )
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
 AS $$
+DECLARE t text:=lower(btrim(coalesce(p_target_type,'')));
 BEGIN
+ IF p_target_id IS NULL THEN RETURN false; END IF;
  INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
- VALUES(coalesce(p_owner,auth.uid()),auth.uid(),'view',p_target_type,p_target_id);
+ VALUES(coalesce(p_owner,auth.uid()),auth.uid(),'view',t,p_target_id);
+ -- Keep marketplace counters and analytics in sync.
+ IF t IN ('product','link','code') THEN
+   UPDATE public.products SET views=views+1,updated_at=now() WHERE id=p_target_id;
+ ELSIF t IN ('telegram_product','telegram-product') THEN
+   UPDATE public.telegram_products SET views=views+1,updated_at=now() WHERE id=p_target_id;
+ ELSIF t IN ('channel','group','telegram_channel','telegram-channel','telegram_group','telegram-group') THEN
+   UPDATE public.telegram_channels SET views=views+1,updated_at=now() WHERE id=p_target_id;
+ ELSIF t IN ('pastelink','paste-link') THEN
+   UPDATE public.pastelinks SET views=views+1 WHERE id=p_target_id;
+ ELSIF t='paste' THEN
+   UPDATE public.pastes SET views=views+1 WHERE id=p_target_id;
+ END IF;
  RETURN true;
 END $$;
 
