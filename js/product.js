@@ -1219,6 +1219,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadEngagement(){
     const targetId=item?.id; if(!targetId) return;
     const likeBtn=$("productLikeBtn"), likeCount=$("productLikeCount"), likeIcon=$("productLikeIcon"), likeLabel=$("productLikeLabel");
+    const shareBtn=$("productShareBtn"), shareCount=$("productShareCount");
     const commentCount=$("productCommentCount"), list=$("productCommentList"), form=$("productCommentForm"), submit=$("productCommentSubmit");
     const targetType = resolvedType === "code" ? "telegram_product" : resolvedType;
     const likes=await client.from("content_likes").select("id,actor_id").eq("target_id",targetId).eq("target_type",targetType);
@@ -1229,6 +1230,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       if(likeIcon) likeIcon.className=mine?"fa-solid fa-heart":"fa-regular fa-heart";
       if(likeLabel) likeLabel.textContent=mine?"Disukai":"Suka";
     }
+    if (shareCount) {
+      const shares=await client.from("analytics_events").select("id",{count:"exact",head:true}).eq("target_id",targetId).eq("target_type",targetType).eq("event_type","share");
+      if(!shares.error) shareCount.textContent=String(shares.count||0);
+    }
+    if (shareBtn) shareBtn.onclick=async()=>{
+      const url=location.href;
+      try {
+        if (navigator.share) await navigator.share({title:item.title||"PasTele",text:item.description||"Lihat produk ini di PasTele",url});
+        else await navigator.clipboard.writeText(url);
+      } catch(e) { if(e?.name==='AbortError') return; try { await navigator.clipboard.writeText(url); } catch(_) {} }
+      try { await client.rpc("track_analytics",{p_event_type:"share",p_target_type:targetType,p_target_id:targetId,p_owner:item.owner_id||item.creator_id||item.seller_id||null}); } catch(e) { console.warn("[Product] Share tracking unavailable:",e); }
+      if(shareCount) shareCount.textContent=String(Number(shareCount.textContent||0)+1);
+    };
     if (likeBtn) likeBtn.onclick=async()=>{
       const profile=await currentProfile();
       if(!profile?.id){ location.href=`login.html?redirect=${encodeURIComponent(location.href)}`; return; }

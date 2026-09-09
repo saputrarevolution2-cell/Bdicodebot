@@ -1013,6 +1013,7 @@ window.PASTELE_CONFIG = Object.freeze({
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
+    bindShareButtons();
   "use strict";
 
   const host = document.getElementById("navbar");
@@ -2358,11 +2359,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const href =
       productUrl(item);
     return `
-      <a
-        class="product-card"
-        href="${esc(href)}"
-        aria-label="Buka ${esc(title)}"
-      >
+      <article class="product-card" data-share-id="${esc(item?.id||'')}" data-share-type="${esc(type)}" data-share-owner="${esc(item?.owner_id||'')}" data-share-url="${esc(href)}">
+      <a class="product-card-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
         <!-- THUMBNAIL -->
         <div class="product-thumb">
           ${thumbnailHtml(
@@ -2846,6 +2844,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      MAIN RENDER
      ======================================================= */
+  function bindShareButtons(){
+    if(window.__PASTELE_MARKET_SHARE_BOUND__) return;
+    window.__PASTELE_MARKET_SHARE_BOUND__=true;
+    document.addEventListener("click",async e=>{
+      const btn=e.target.closest("[data-share-card]"); if(!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      const card=btn.closest("[data-share-id]"); if(!card) return;
+      const id=card.dataset.shareId,rawType=card.dataset.shareType, type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType),owner=card.dataset.shareOwner||null;
+      const url=new URL(card.dataset.shareUrl||location.href,location.origin).href;
+      try { if(navigator.share) await navigator.share({title:"PasTele",url}); else await navigator.clipboard.writeText(url); } catch(err){ if(err?.name==='AbortError') return; try{await navigator.clipboard.writeText(url)}catch(_){} }
+      try { await getSupabase().rpc("track_analytics",{p_event_type:"share",p_target_type:type,p_target_id:id,p_owner:owner}); } catch(err){ console.warn("[Marketplace] share tracking unavailable",err); }
+      btn.classList.add("shared"); setTimeout(()=>btn.classList.remove("shared"),900);
+    });
+  }
+
   function render() {
     if (!market) {
       return;
