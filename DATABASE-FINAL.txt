@@ -1,0 +1,8 @@
+PasTele / Bdicodebot
+DATABASE CANONICAL FILE:
+SUPABASE_MASTER_FINAL_FULL_FIX_IDEMPOTENT.sql
+
+This is the SQL file intended for the production frontend in this package.
+It is designed for repeatable execution. PostgreSQL functions do not support
+CREATE FUNCTION IF NOT EXISTS, so compatible CREATE OR REPLACE definitions
+are used; incompatible return-type changes are handled explicitly.
