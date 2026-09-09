@@ -179,9 +179,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           ["marketplace.html", "fa-store", "Marketplace"]
         ]],
         ["Create", [
-          ["create-product.html?type=pastelink", "fa-link", "PasteLink"],
-          ["create-product.html?type=code", "fa-code", "Code"],
-          ["create-product.html?type=channel", "fa-users", "Group / Channel"]
+          ["create-pastelink.html", "fa-link", "PasteLink"],
+          ["create-code.html", "fa-code", "Code"],
+          ["create-telegram.html?type=channel", "fa-users", "Group / Channel"]
         ]],
         ["Manage", [
           ["my-products.html", "fa-box-open", "My Product"],
