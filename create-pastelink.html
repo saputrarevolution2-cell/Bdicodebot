@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Buat PasteLink — PasTele</title>
 <link rel="stylesheet" href="css/create-pastelink.css?v=20260910-clean-ui"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/core.css?v=20260910-core-fix">
-</head><body class="app-page create-detail-page"><div id="navbar"></div><main class="create-detail">
+<link rel="stylesheet" href="css/navbar.css?v=20260910-navbar-final"></head><body class="app-page create-detail-page"><div id="navbar"></div><main class="create-detail">
 <section class="create-detail-head"><a class="back-create" href="create-product.html"><i class="fa-solid fa-arrow-left"></i><span>Semua tipe</span></a><div class="detail-title"><div class="detail-icon"><i class="fa-solid fa-link"></i></div><div><span class="eyebrow">PASTELINK</span><h1>Buat PasteLink</h1><p>Buat halaman konten dengan URL sendiri, tag, akses, dan masa berlaku.</p></div></div></section>
 <form id="createForm" class="create-card" novalidate autocomplete="off">
 <div class="field"><label for="title">Judul <em>*</em></label><input id="title" maxlength="120" required placeholder="Contoh: Panduan Bot Downloader"><small>Judul PasteLink yang tampil di halaman publik.</small></div>
@@ -17,5 +17,5 @@
 <div class="field"><label for="customUrl">Custom URL <span>Opsional</span></label><div class="url-input"><span>p/</span><input id="customUrl" maxlength="80" pattern="[A-Za-z0-9-]+" placeholder="panduan-bot"></div><small>Hanya huruf, angka, dan tanda minus. Kosongkan untuk URL otomatis.</small></div>
 <div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" maxlength="3000" rows="4" placeholder="Ringkasan singkat PasteLink..."></textarea><small><span id="counter">0</span>/3000</small></div>
 <div class="create-actions"><a href="my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-link"></i>Publikasikan PasteLink</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
-</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260910-clean-ui"></script>  <script src="js/navbar.js?v=20260910-navbar-clean"></script>
-</body></html>
+</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260910-clean-ui"></script>
+<script src="js/navbar.js?v=20260910-navbar-final"></script></body></html>
