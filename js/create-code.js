@@ -1,9 +1,25 @@
 /* =========================================================
    PasTele — CREATE CODE
-   FINAL CLEAN / SQL-SYNC
-   ---------------------------------------------------------
+   FINAL / SQL-SYNC
+   =========================================================
    DATABASE:
-   telegram_products
+   public.telegram_products
+
+   SQL COLUMNS USED:
+   - owner_id
+   - title
+   - slug
+   - type
+   - product_type
+   - access_type
+   - bot_username
+   - telegram_bot_id
+   - price
+   - description
+   - content
+   - thumbnail_url
+   - category
+   - status
 
    SUPPORTED:
    - Free
@@ -25,7 +41,8 @@
      HELPERS
      ======================================================= */
 
-  const $ = (id) => document.getElementById(id);
+  const $ = (id) =>
+    document.getElementById(id);
 
   const getSupabase = () => {
     if (!window.sb) {
@@ -37,9 +54,18 @@
     return window.sb;
   };
 
-  const toast = (message, type = "info") => {
-    if (typeof window.TC?.toast === "function") {
-      window.TC.toast(message, type);
+  const toast = (
+    message,
+    type = "info"
+  ) => {
+    if (
+      typeof window.TC?.toast ===
+      "function"
+    ) {
+      window.TC.toast(
+        message,
+        type
+      );
       return;
     }
 
@@ -47,11 +73,16 @@
   };
 
   const escapeHTML = (value) => {
-    if (typeof window.TC?.esc === "function") {
+    if (
+      typeof window.TC?.esc ===
+      "function"
+    ) {
       return window.TC.esc(value);
     }
 
-    return String(value ?? "").replace(
+    return String(
+      value ?? ""
+    ).replace(
       /[&<>"']/g,
       (char) => ({
         "&": "&amp;",
@@ -63,50 +94,64 @@
     );
   };
 
-  const formatMoney = (value) => {
-    const amount = Number(value || 0);
-
-    if (typeof window.TC?.money === "function") {
-      return window.TC.money(amount);
-    }
-
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
   /* =======================================================
      SLUG
-     -------------------------------------------------------
-     Slug hanya untuk URL.
-     User tidak perlu mengisinya.
      ======================================================= */
 
-  const slugify = (value) => {
-    return String(value || "")
+  const slugify = (
+    value
+  ) => {
+    return String(
+      value || ""
+    )
       .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(
+        /[\u0300-\u036f]/g,
+        ""
+      )
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60);
+      .replace(
+        /[^a-z0-9]+/g,
+        "-"
+      )
+      .replace(
+        /^-+|-+$/g,
+        ""
+      )
+      .slice(
+        0,
+        60
+      );
   };
 
   const randomSuffix = () => {
     try {
-      const bytes = new Uint8Array(5);
-
-      globalThis.crypto?.getRandomValues?.(bytes);
+      const bytes =
+        new Uint8Array(6);
 
       if (
-        bytes.some((value) => value !== 0)
+        globalThis.crypto &&
+        typeof globalThis.crypto
+          .getRandomValues ===
+          "function"
       ) {
-        return Array.from(
-          bytes,
-          (byte) => (byte % 36).toString(36)
-        ).join("");
+        globalThis.crypto
+          .getRandomValues(
+            bytes
+          );
+
+        const result =
+          Array.from(
+            bytes,
+            (byte) =>
+              (
+                byte % 36
+              ).toString(36)
+          ).join("");
+
+        if (result) {
+          return result;
+        }
       }
     } catch (error) {
       console.warn(
@@ -117,12 +162,15 @@
 
     return Math.random()
       .toString(36)
-      .slice(2, 9);
+      .slice(2, 10);
   };
 
-  const createSlug = (title) => {
+  const createSlug = (
+    title
+  ) => {
     const base =
-      slugify(title) || "code";
+      slugify(title) ||
+      "code";
 
     return `${base}-${randomSuffix()}`;
   };
@@ -131,35 +179,65 @@
      AUTH
      ======================================================= */
 
-  const getUser = async () => {
-    try {
-      if (
-        typeof window.TC?.user ===
-        "function"
-      ) {
-        const user =
-          await window.TC.user();
+  const getUser =
+    async () => {
+      try {
+        /*
+         * Gunakan helper TC.user()
+         * bila tersedia.
+         */
+        if (
+          typeof window.TC?.user ===
+          "function"
+        ) {
+          const user =
+            await window.TC.user();
 
-        if (user?.id) {
-          return user;
+          if (user?.id) {
+            return user;
+          }
         }
-      }
 
-      const supabase = getSupabase();
+        /*
+         * Fallback Supabase Auth.
+         */
+        const supabase =
+          getSupabase();
 
-      const {
-        data,
-        error
-      } = await supabase.auth.getUser();
+        const {
+          data,
+          error
+        } =
+          await supabase.auth.getUser();
 
-      if (error) {
-        throw error;
-      }
+        if (error) {
+          throw error;
+        }
 
-      const user =
-        data?.user || null;
+        const user =
+          data?.user || null;
 
-      if (!user?.id) {
+        if (!user?.id) {
+          const redirect =
+            encodeURIComponent(
+              window.location.href
+            );
+
+          window.location.replace(
+            `login.html?redirect=${redirect}`
+          );
+
+          return null;
+        }
+
+        return user;
+
+      } catch (error) {
+        console.error(
+          "[Create Code] Auth:",
+          error
+        );
+
         const redirect =
           encodeURIComponent(
             window.location.href
@@ -171,387 +249,606 @@
 
         return null;
       }
-
-      return user;
-    } catch (error) {
-      console.error(
-        "[Create Code] Auth:",
-        error
-      );
-
-      const redirect =
-        encodeURIComponent(
-          window.location.href
-        );
-
-      window.location.replace(
-        `login.html?redirect=${redirect}`
-      );
-
-      return null;
-    }
-  };
+    };
 
   /* =======================================================
      ACCESS
      ======================================================= */
 
-  const getAccess = () => {
-    return (
-      document.querySelector(
-        'input[name="access"]:checked'
-      )?.value || "free"
-    )
-      .trim()
-      .toLowerCase();
-  };
+  const getAccess =
+    () => {
+      return (
+        document.querySelector(
+          'input[name="access"]:checked'
+        )?.value ||
+        "free"
+      )
+        .trim()
+        .toLowerCase();
+    };
 
-  const getPrice = () => {
-    if (getAccess() !== "paid") {
-      return 0;
-    }
+  /* =======================================================
+     PRICE
+     ======================================================= */
 
-    return Number(
-      $("price")?.value || 0
-    );
-  };
+  const getPrice =
+    () => {
+      if (
+        getAccess() !==
+        "paid"
+      ) {
+        return 0;
+      }
+
+      return Number(
+        $("price")?.value ||
+        0
+      );
+    };
+
+  /* =======================================================
+     BOT USERNAME
+     ======================================================= */
+
+  const getBotUsername =
+    () => {
+      return (
+        $("botUsername")
+          ?.value
+          ?.trim()
+          .replace(
+            /^@+/,
+            ""
+          ) || ""
+      );
+    };
+
+  /*
+   * Telegram bot username:
+   * - 5–32 karakter adalah praktik normal username bot.
+   * - Hanya huruf, angka, underscore.
+   *
+   * Database sendiri menyimpan text,
+   * sehingga validasi dilakukan di frontend.
+   */
+  const isValidBotUsername =
+    (username) => {
+      return /^[A-Za-z0-9_]{5,32}$/.test(
+        username
+      );
+    };
 
   /* =======================================================
      PRICE UI
      ======================================================= */
 
-  const updatePriceUI = () => {
-    const access =
-      getAccess();
+  const updatePriceUI =
+    () => {
+      const access =
+        getAccess();
 
-    const paid =
-      access === "paid";
+      const paid =
+        access === "paid";
 
-    const priceBox =
-      $("priceBox");
+      const priceBox =
+        $("priceBox");
 
-    if (priceBox) {
-      priceBox.hidden = !paid;
-    }
+      if (priceBox) {
+        priceBox.hidden =
+          !paid;
+      }
 
-    if (!paid && $("price")) {
-      $("price").value = "0";
-    }
-  };
+      if (
+        !paid &&
+        $("price")
+      ) {
+        $("price").value =
+          "0";
+      }
+
+      /*
+       * Saat Paid dipilih dan
+       * harga kosong/0, gunakan
+       * harga minimum SQL.
+       */
+      if (
+        paid &&
+        $("price")
+      ) {
+        const current =
+          Number(
+            $("price").value
+          );
+
+        if (
+          !Number.isFinite(
+            current
+          ) ||
+          current <= 0
+        ) {
+          $("price").value =
+            "5000";
+        }
+      }
+    };
 
   /* =======================================================
      DESCRIPTION COUNTER
      ======================================================= */
 
-  const updateDescriptionCounter = () => {
-    const description =
-      $("description");
+  const updateDescriptionCounter =
+    () => {
+      const description =
+        $("description");
 
-    const counter =
-      $("counter");
+      const counter =
+        $("counter");
 
-    if (!description || !counter) {
-      return;
-    }
+      if (
+        !description ||
+        !counter
+      ) {
+        return;
+      }
 
-    counter.textContent =
-      String(
-        description.value.length
-      );
-  };
+      counter.textContent =
+        String(
+          description.value.length
+        );
+    };
 
   /* =======================================================
      COMMON EVENTS
      ======================================================= */
 
-  const wireCommon = () => {
-    document
-      .querySelectorAll(
-        'input[name="access"]'
-      )
-      .forEach((input) => {
-        input.addEventListener(
-          "change",
-          updatePriceUI
+  const wireCommon =
+    () => {
+      document
+        .querySelectorAll(
+          'input[name="access"]'
+        )
+        .forEach(
+          (input) => {
+            input.addEventListener(
+              "change",
+              updatePriceUI
+            );
+          }
         );
-      });
 
-    $("description")
-      ?.addEventListener(
-        "input",
-        updateDescriptionCounter
-      );
+      $("description")
+        ?.addEventListener(
+          "input",
+          updateDescriptionCounter
+        );
 
-    updatePriceUI();
-    updateDescriptionCounter();
-  };
+      /*
+       * Hilangkan @ otomatis
+       * ketika user mengetik/paste.
+       */
+      $("botUsername")
+        ?.addEventListener(
+          "input",
+          () => {
+            const input =
+              $("botUsername");
+
+            if (!input) {
+              return;
+            }
+
+            if (
+              input.value.includes(
+                "@"
+              )
+            ) {
+              input.value =
+                input.value.replace(
+                  /@/g,
+                  ""
+                );
+            }
+          }
+        );
+
+      updatePriceUI();
+      updateDescriptionCounter();
+    };
 
   /* =======================================================
      VALIDATION
      ======================================================= */
 
-  const validate = () => {
-    const title =
-      $("title")
-        ?.value
-        ?.trim() || "";
+  const validate =
+    () => {
+      const title =
+        $("title")
+          ?.value
+          ?.trim() ||
+        "";
 
-    const description =
-      $("description")
-        ?.value
-        ?.trim() || "";
+      const botUsername =
+        getBotUsername();
 
-    const content =
-      $("content")
-        ?.value
-        ?.trim() || "";
+      const description =
+        $("description")
+          ?.value
+          ?.trim() ||
+        "";
 
-    const thumbnail =
-      $("thumbnail")
-        ?.value
-        ?.trim() || "";
+      const content =
+        $("content")
+          ?.value
+          ?.trim() ||
+        "";
 
-    const access =
-      getAccess();
+      const thumbnail =
+        $("thumbnail")
+          ?.value
+          ?.trim() ||
+        "";
 
-    const price =
-      getPrice();
+      const access =
+        getAccess();
 
-    /* -----------------------------------------------------
-       TITLE
-       ----------------------------------------------------- */
+      const price =
+        getPrice();
 
-    if (title.length < 2) {
-      toast(
-        "Judul minimal 2 karakter.",
-        "error"
-      );
-
-      $("title")?.focus();
-
-      return null;
-    }
-
-    if (title.length > 150) {
-      toast(
-        "Judul maksimal 150 karakter.",
-        "error"
-      );
-
-      $("title")?.focus();
-
-      return null;
-    }
-
-    /* -----------------------------------------------------
-       ACCESS
-       ----------------------------------------------------- */
-
-    if (
-      access !== "free" &&
-      access !== "paid"
-    ) {
-      toast(
-        "Jenis akses tidak valid.",
-        "error"
-      );
-
-      return null;
-    }
-
-    /* -----------------------------------------------------
-       PRICE
-       ----------------------------------------------------- */
-
-    if (access === "paid") {
-      if (
-        !Number.isFinite(price) ||
-        !Number.isInteger(price)
-      ) {
-        toast(
-          "Harga harus berupa angka yang valid.",
-          "error"
-        );
-
-        $("price")?.focus();
-
-        return null;
-      }
+      /* -----------------------------------------------------
+         TITLE
+         ----------------------------------------------------- */
 
       if (
-        price < 5000 ||
-        price > 150000
+        title.length < 2
       ) {
         toast(
-          "Harga Paid harus Rp5.000–Rp150.000.",
+          "Judul minimal 2 karakter.",
           "error"
         );
 
-        $("price")?.focus();
+        $("title")?.focus();
 
         return null;
       }
 
-      if (price % 1000 !== 0) {
+      /*
+       * HTML maxlength = 120
+       * SQL field digunakan sebagai
+       * title produk.
+       */
+      if (
+        title.length > 120
+      ) {
         toast(
-          "Harga harus kelipatan Rp1.000.",
+          "Judul maksimal 120 karakter.",
           "error"
         );
 
-        $("price")?.focus();
+        $("title")?.focus();
 
         return null;
       }
-    }
 
-    /* -----------------------------------------------------
-       CONTENT
-       ----------------------------------------------------- */
+      /* -----------------------------------------------------
+         BOT USERNAME
+         ----------------------------------------------------- */
 
-    if (!content) {
-      toast(
-        "Code / Delivery wajib diisi.",
-        "error"
-      );
+      if (
+        !botUsername
+      ) {
+        toast(
+          "Nama Bot wajib diisi.",
+          "error"
+        );
 
-      $("content")?.focus();
+        $("botUsername")?.focus();
 
-      return null;
-    }
+        return null;
+      }
 
-    if (content.length > 1000000) {
-      toast(
-        "Isi Code terlalu besar.",
-        "error"
-      );
+      if (
+        botUsername.length > 32
+      ) {
+        toast(
+          "Username bot maksimal 32 karakter.",
+          "error"
+        );
 
-      return null;
-    }
+        $("botUsername")?.focus();
 
-    /* -----------------------------------------------------
-       THUMBNAIL
-       ----------------------------------------------------- */
+        return null;
+      }
 
-    if (thumbnail) {
-      try {
-        const url =
-          new URL(thumbnail);
+      if (
+        !isValidBotUsername(
+          botUsername
+        )
+      ) {
+        toast(
+          "Username bot tidak valid. Gunakan huruf, angka, dan underscore.",
+          "error"
+        );
+
+        $("botUsername")?.focus();
+
+        return null;
+      }
+
+      /* -----------------------------------------------------
+         DESCRIPTION
+         ----------------------------------------------------- */
+
+      if (
+        description.length >
+        3000
+      ) {
+        toast(
+          "Deskripsi maksimal 3000 karakter.",
+          "error"
+        );
+
+        $("description")?.focus();
+
+        return null;
+      }
+
+      /* -----------------------------------------------------
+         ACCESS
+         ----------------------------------------------------- */
+
+      if (
+        access !== "free" &&
+        access !== "paid"
+      ) {
+        toast(
+          "Jenis akses tidak valid.",
+          "error"
+        );
+
+        return null;
+      }
+
+      /* -----------------------------------------------------
+         PRICE
+         ----------------------------------------------------- */
+
+      if (
+        access === "free"
+      ) {
+        /*
+         * Free harus benar-benar
+         * tersimpan sebagai 0.
+         */
+        if (
+          price !== 0
+        ) {
+          toast(
+            "Code Gratis tidak boleh memiliki harga.",
+            "error"
+          );
+
+          return null;
+        }
+      }
+
+      if (
+        access === "paid"
+      ) {
+        if (
+          !Number.isFinite(
+            price
+          ) ||
+          !Number.isInteger(
+            price
+          )
+        ) {
+          toast(
+            "Harga harus berupa angka yang valid.",
+            "error"
+          );
+
+          $("price")?.focus();
+
+          return null;
+        }
 
         if (
-          url.protocol !== "http:" &&
-          url.protocol !== "https:"
+          price < 5000 ||
+          price > 150000
         ) {
-          throw new Error(
-            "Invalid protocol"
+          toast(
+            "Harga Paid harus Rp5.000–Rp150.000.",
+            "error"
           );
+
+          $("price")?.focus();
+
+          return null;
         }
-      } catch {
+
+        if (
+          price % 1000 !==
+          0
+        ) {
+          toast(
+            "Harga harus kelipatan Rp1.000.",
+            "error"
+          );
+
+          $("price")?.focus();
+
+          return null;
+        }
+      }
+
+      /* -----------------------------------------------------
+         CONTENT
+         ----------------------------------------------------- */
+
+      if (!content) {
         toast(
-          "URL thumbnail tidak valid.",
+          "Code / Delivery wajib diisi.",
           "error"
         );
 
-        $("thumbnail")?.focus();
+        $("content")?.focus();
 
         return null;
       }
-    }
 
-    /* -----------------------------------------------------
-       RESULT
-       ----------------------------------------------------- */
+      if (
+        content.length >
+        1000000
+      ) {
+        toast(
+          "Isi Code terlalu besar. Maksimal 1.000.000 karakter.",
+          "error"
+        );
 
-    return {
-      title,
-      description,
-      content,
-      thumbnail,
-      access,
-      price,
-      slug: createSlug(title)
+        $("content")?.focus();
+
+        return null;
+      }
+
+      /* -----------------------------------------------------
+         THUMBNAIL
+         ----------------------------------------------------- */
+
+      if (
+        thumbnail
+      ) {
+        try {
+          const url =
+            new URL(
+              thumbnail
+            );
+
+          if (
+            url.protocol !==
+              "http:" &&
+            url.protocol !==
+              "https:"
+          ) {
+            throw new Error(
+              "Invalid protocol"
+            );
+          }
+
+        } catch {
+          toast(
+            "URL thumbnail tidak valid.",
+            "error"
+          );
+
+          $("thumbnail")?.focus();
+
+          return null;
+        }
+      }
+
+      /* -----------------------------------------------------
+         RESULT
+         ----------------------------------------------------- */
+
+      return {
+        title,
+        botUsername,
+        description,
+        content,
+        thumbnail,
+        access,
+        price,
+        slug:
+          createSlug(
+            title
+          )
+      };
     };
-  };
 
   /* =======================================================
      SUBMIT BUTTON
      ======================================================= */
 
-  const setSubmitLoading = (
-    loading
-  ) => {
-    const button =
-      $("submitBtn");
+  const setSubmitLoading =
+    (loading) => {
+      const button =
+        $("submitBtn");
 
-    if (!button) {
-      return;
-    }
+      if (!button) {
+        return;
+      }
 
-    button.disabled =
-      loading;
-
-    const normal =
-      button.querySelector(
-        ".normal"
-      );
-
-    const loadingEl =
-      button.querySelector(
-        ".loading"
-      );
-
-    if (normal) {
-      normal.hidden =
+      button.disabled =
         loading;
-    }
 
-    if (loadingEl) {
-      loadingEl.hidden =
-        !loading;
-    }
+      const normal =
+        button.querySelector(
+          ".normal"
+        );
 
-    if (
-      !normal &&
-      !loadingEl
-    ) {
-      button.innerHTML =
-        loading
-          ? `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Menyimpan...</span>
-          `
-          : `
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Publikasikan</span>
-          `;
-    }
-  };
+      const loadingEl =
+        button.querySelector(
+          ".loading"
+        );
+
+      if (normal) {
+        normal.hidden =
+          loading;
+      }
+
+      if (loadingEl) {
+        loadingEl.hidden =
+          !loading;
+      }
+    };
 
   /* =======================================================
-     ERROR MESSAGE
+     DATABASE ERROR
      ======================================================= */
 
   const getDatabaseError =
     (error) => {
       const code =
         String(
-          error?.code || ""
+          error?.code ||
+            ""
         );
 
       const message =
         String(
-          error?.message || ""
+          error?.message ||
+            ""
         );
+
+      const details =
+        String(
+          error?.details ||
+            ""
+        );
+
+      const hint =
+        String(
+          error?.hint ||
+            ""
+        );
+
+      const combined =
+        `${message} ${details} ${hint}`;
+
+      /* -----------------------------------------------------
+         DUPLICATE
+         ----------------------------------------------------- */
 
       if (
         code === "23505"
       ) {
         if (
           /slug/i.test(
-            message
+            combined
           )
         ) {
           return (
-            "Link Code bentrok. Silakan coba publikasikan lagi."
+            "Link Code bentrok. Silakan publikasikan lagi."
           );
         }
 
@@ -560,6 +857,10 @@
         );
       }
 
+      /* -----------------------------------------------------
+         FOREIGN KEY
+         ----------------------------------------------------- */
+
       if (
         code === "23503"
       ) {
@@ -567,6 +868,44 @@
           "Akun tidak memiliki data yang diperlukan. Silakan login ulang."
         );
       }
+
+      /* -----------------------------------------------------
+         CHECK CONSTRAINT
+         ----------------------------------------------------- */
+
+      if (
+        code === "23514"
+      ) {
+        return (
+          "Data tidak memenuhi aturan database. Periksa akses dan harga."
+        );
+      }
+
+      /* -----------------------------------------------------
+         NOT NULL
+         ----------------------------------------------------- */
+
+      if (
+        code === "23502"
+      ) {
+        if (
+          /bot_username/i.test(
+            combined
+          )
+        ) {
+          return (
+            "Nama Bot wajib diisi."
+          );
+        }
+
+        return (
+          "Ada data wajib yang belum diisi."
+        );
+      }
+
+      /* -----------------------------------------------------
+         PERMISSION
+         ----------------------------------------------------- */
 
       if (
         code === "42501"
@@ -577,23 +916,35 @@
       }
 
       if (
-        code === "23514"
-      ) {
-        return (
-          "Data tidak memenuhi aturan database."
-        );
-      }
-
-      if (
         /row-level security/i.test(
-          message
+          combined
         ) ||
         /permission denied/i.test(
-          message
+          combined
         )
       ) {
         return (
           "Akses ditolak oleh keamanan database. Silakan login ulang."
+        );
+      }
+
+      /* -----------------------------------------------------
+         AUTH
+         ----------------------------------------------------- */
+
+      if (
+        /JWT/i.test(
+          combined
+        ) ||
+        /auth/i.test(
+          combined
+        ) &&
+        /expired|invalid|session/i.test(
+          combined
+        )
+      ) {
+        return (
+          "Sesi login sudah berakhir. Silakan login kembali."
         );
       }
 
@@ -604,203 +955,252 @@
     };
 
   /* =======================================================
-     SUCCESS
+     SUCCESS RESULT
      ======================================================= */
 
-  const showResult = (
-    data,
-    url
-  ) => {
-    const result =
-      $("result");
+  const showResult =
+    (
+      data,
+      url
+    ) => {
+      const result =
+        $("result");
 
-    if (!result) {
-      /*
-       * Fallback jika HTML belum memiliki
-       * result container.
-       */
-      toast(
-        "Code berhasil dipublikasikan.",
-        "success"
-      );
+      if (!result) {
+        toast(
+          "Code berhasil dipublikasikan.",
+          "success"
+        );
 
-      return;
-    }
+        return;
+      }
 
-    result.hidden = false;
+      result.hidden =
+        false;
 
-    result.innerHTML = `
-      <div class="result-icon">
-        <i class="fa-solid fa-check"></i>
-      </div>
+      result.innerHTML = `
+        <div class="result-icon">
+          <i class="fa-solid fa-check"></i>
+        </div>
 
-      <h2>
-        Code berhasil dipublikasikan
-      </h2>
+        <h2>
+          Code berhasil dipublikasikan
+        </h2>
 
-      <p>
-        <b>${escapeHTML(data.title)}</b>
-        sudah berhasil disimpan.
-      </p>
+        <p>
+          <b>${escapeHTML(
+            data.title
+          )}</b>
+          berhasil disimpan untuk bot
+          <b>@${escapeHTML(
+            data.botUsername
+          )}</b>.
+        </p>
 
-      <div class="result-url">
-        <input
-          type="text"
-          readonly
-          value="${escapeHTML(url)}"
-          aria-label="Link Code"
-        >
-
-        <button
-          type="button"
-          id="copyUrl"
-          aria-label="Salin link"
-          title="Salin link"
-        >
-          <i class="fa-regular fa-copy"></i>
-        </button>
-      </div>
-
-      <div class="result-actions">
-
-        <a
-          class="btn primary"
-          href="${escapeHTML(url)}"
-        >
-          <i class="fa-solid fa-arrow-up-right-from-square"></i>
-          Buka Code
-        </a>
-
-        <a
-          class="btn secondary"
-          href="my-products.html"
-        >
-          <i class="fa-solid fa-box"></i>
-          Konten Saya
-        </a>
-
-      </div>
-    `;
-
-    $("copyUrl")
-      ?.addEventListener(
-        "click",
-        async () => {
-          try {
-            await navigator.clipboard.writeText(
+        <div class="result-url">
+          <input
+            type="text"
+            readonly
+            value="${escapeHTML(
               url
-            );
+            )}"
+            aria-label="Link Code"
+          >
 
-            toast(
-              "Link berhasil disalin.",
-              "success"
-            );
-          } catch (error) {
-            console.warn(
-              "[Create Code] Clipboard:",
-              error
-            );
+          <button
+            type="button"
+            id="copyUrl"
+            aria-label="Salin link"
+            title="Salin link"
+          >
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
 
-            /*
-             * Fallback manual select.
-             */
-            const input =
-              result.querySelector(
-                ".result-url input"
+        <div class="result-actions">
+
+          <a
+            class="btn primary"
+            href="${escapeHTML(
+              url
+            )}"
+          >
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            Buka Code
+          </a>
+
+          <a
+            class="btn secondary"
+            href="my-products.html"
+          >
+            <i class="fa-solid fa-box"></i>
+            Konten Saya
+          </a>
+
+        </div>
+      `;
+
+      $("copyUrl")
+        ?.addEventListener(
+          "click",
+          async () => {
+            try {
+              await navigator.clipboard.writeText(
+                url
               );
-
-            if (input) {
-              input.focus();
-              input.select();
 
               toast(
-                "Link dipilih. Silakan salin.",
-                "info"
+                "Link berhasil disalin.",
+                "success"
               );
+
+            } catch (
+              error
+            ) {
+              console.warn(
+                "[Create Code] Clipboard:",
+                error
+              );
+
+              const input =
+                result.querySelector(
+                  ".result-url input"
+                );
+
+              if (input) {
+                input.focus();
+                input.select();
+
+                toast(
+                  "Link dipilih. Silakan salin.",
+                  "info"
+                );
+              }
             }
           }
-        }
-      );
+        );
 
-    result.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-  };
+      result.scrollIntoView({
+        behavior:
+          "smooth",
+        block:
+          "center"
+      });
+    };
 
   /* =======================================================
      CREATE CODE
      ======================================================= */
 
   const createCode =
-    async (data, user) => {
+    async (
+      data,
+      user
+    ) => {
       const supabase =
         getSupabase();
 
       /*
-       * SQL TABLE:
+       * =====================================================
+       * CANONICAL SQL TABLE
+       * =====================================================
+       *
        * public.telegram_products
        *
-       * Semua field di bawah memang berasal
-       * dari struktur SQL Code.
+       * Tidak memakai kolom yang tidak ada.
        */
 
       const payload = {
-        owner_id: user.id,
+        owner_id:
+          user.id,
 
-        title: data.title,
+        title:
+          data.title,
 
-        slug: data.slug,
+        slug:
+          data.slug,
 
-        type: "code",
+        type:
+          "code",
 
-        product_type: "code",
+        product_type:
+          "code",
 
-        access_type: data.access,
+        access_type:
+          data.access,
 
-        bot_username: null,
+        /*
+         * SQL:
+         * bot_username text
+         *
+         * Sekarang diisi dari form.
+         */
+        bot_username:
+          data.botUsername,
 
-        telegram_bot_id: null,
+        /*
+         * Belum menghubungkan
+         * Telegram Bot ID.
+         */
+        telegram_bot_id:
+          null,
 
-        price: data.price,
+        /*
+         * Free = 0
+         * Paid = 5000–150000
+         */
+        price:
+          data.price,
 
         description:
-          data.description || null,
+          data.description ||
+          "",
 
-        content: data.content,
+        content:
+          data.content,
 
         thumbnail_url:
-          data.thumbnail || null,
+          data.thumbnail ||
+          null,
 
-        category: "General",
+        category:
+          "General",
 
-        status: "published"
+        status:
+          "published"
       };
+
+      console.log(
+        "[Create Code] Insert payload:",
+        {
+          ...payload,
+          content:
+            `[${data.content.length} chars]`
+        }
+      );
 
       const {
         error
-      } = await supabase
-        .from(
-          "telegram_products"
-        )
-        .insert(
-          payload
-        );
+      } =
+        await supabase
+          .from(
+            "telegram_products"
+          )
+          .insert(
+            payload
+          );
 
       if (error) {
         throw error;
       }
 
       /*
-       * Jangan melakukan SELECT setelah insert.
+       * Jangan SELECT setelah INSERT.
        *
-       * Ini sengaja supaya tidak bergantung
-       * pada SELECT RLS.
+       * Ini sengaja supaya proses
+       * tidak bergantung pada SELECT RLS.
        */
-      return {
-        ...data,
-        id: null
-      };
+      return true;
     };
 
   /* =======================================================
@@ -808,7 +1208,9 @@
      ======================================================= */
 
   const handleSubmit =
-    async (event) => {
+    async (
+      event
+    ) => {
       event.preventDefault();
 
       const form =
@@ -823,6 +1225,9 @@
         return;
       }
 
+      /*
+       * VALIDATE
+       */
       const data =
         validate();
 
@@ -830,6 +1235,9 @@
         return;
       }
 
+      /*
+       * AUTH
+       */
       const user =
         await getUser();
 
@@ -842,23 +1250,20 @@
       );
 
       try {
+        /*
+         * INSERT DATABASE
+         */
         await createCode(
           data,
           user
         );
 
         /*
-         * URL publik:
-         *
-         * Free:
-         * /c/f/:slug
-         *
-         * Paid:
-         * /c/p/:slug
+         * PUBLIC URL
          */
-
         const accessPrefix =
-          data.access === "paid"
+          data.access ===
+          "paid"
             ? "p"
             : "f";
 
@@ -868,13 +1273,16 @@
             window.location.origin
           ).href;
 
+        /*
+         * SUCCESS
+         */
         showResult(
           data,
           url
         );
 
         /*
-         * Reset form setelah berhasil.
+         * Reset form.
          */
         form?.reset();
 
@@ -886,14 +1294,18 @@
           "success"
         );
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
           "[PasTele Create Code]",
           error
         );
 
         toast(
-          getDatabaseError(error),
+          getDatabaseError(
+            error
+          ),
           "error"
         );
 
@@ -908,25 +1320,26 @@
      INITIALIZE
      ======================================================= */
 
-  const init = () => {
-    const form =
-      $("createForm");
+  const init =
+    () => {
+      const form =
+        $("createForm");
 
-    if (!form) {
-      console.warn(
-        "[PasTele Create Code] #createForm tidak ditemukan."
+      if (!form) {
+        console.warn(
+          "[PasTele Create Code] #createForm tidak ditemukan."
+        );
+
+        return;
+      }
+
+      wireCommon();
+
+      form.addEventListener(
+        "submit",
+        handleSubmit
       );
-
-      return;
-    }
-
-    wireCommon();
-
-    form.addEventListener(
-      "submit",
-      handleSubmit
-    );
-  };
+    };
 
   /* =======================================================
      DOM READY
@@ -939,7 +1352,9 @@
     document.addEventListener(
       "DOMContentLoaded",
       init,
-      { once: true }
+      {
+        once: true
+      }
     );
   } else {
     init();
