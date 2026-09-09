@@ -131,8 +131,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const metadata = user?.user_metadata || {};
 
+  let profile = null;
+  if (user && getSB()) {
+    try {
+      const { data } = await getSB()
+        .from("profiles")
+        .select("username,display_name,avatar_url,is_banned,is_admin,role,is_premium,subscription_until")
+        .eq("id", user.id)
+        .maybeSingle();
+      profile = data || null;
+    } catch (_) {}
+  }
+
   const name =
+    profile?.username ||
     metadata.username ||
+    profile?.display_name ||
     metadata.full_name ||
     metadata.name ||
     user?.email?.split("@")[0] ||
@@ -144,194 +158,47 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const groups = isAdmin
     ? [
-        [
-          "Workspace",
-          [
-            ["index.html", "fa-chart-pie", "Overview"],
-            ["users.html", "fa-users", "Users"],
-            ["products.html", "fa-box", "Products"],
-            ["content.html", "fa-layer-group", "Content"],
-            ["orders.html", "fa-receipt", "Orders"]
-          ]
-        ],
-
-        [
-          "Finance",
-          [
-            [
-              "payments.html",
-              "fa-credit-card",
-              "Payments"
-            ],
-            [
-              "withdrawals.html",
-              "fa-money-bill-transfer",
-              "Withdrawals"
-            ],
-            [
-              "transactions.html",
-              "fa-arrow-right-arrow-left",
-              "Transactions"
-            ]
-          ]
-        ],
-
-        [
-          "System",
-          [
-            [
-              "pastes.html",
-              "fa-file-lines",
-              "Pastes"
-            ],
-            [
-              "bots.html",
-              "fa-robot",
-              "Bots"
-            ],
-            [
-              "logs.html",
-              "fa-list",
-              "Logs"
-            ]
-          ]
-        ]
+        ["Admin", [
+          ["index.html", "fa-chart-pie", "Overview"],
+          ["users.html", "fa-users", "Users"],
+          ["products.html", "fa-box", "Products"],
+          ["content.html", "fa-layer-group", "Content"],
+          ["orders.html", "fa-receipt", "Orders"],
+          ["payments.html", "fa-credit-card", "Payments"],
+          ["withdrawals.html", "fa-money-bill-transfer", "Withdrawals"],
+          ["transactions.html", "fa-arrow-right-arrow-left", "Transactions"],
+          ["pastes.html", "fa-file-lines", "Pastes"],
+          ["bots.html", "fa-robot", "Bots"],
+          ["logs.html", "fa-list", "Logs"]
+        ]]
       ]
     : [
-        [
-          "Workspace",
-          [
-            [
-              "dashboard.html",
-              "fa-house",
-              "Dashboard"
-            ],
-            [
-              "marketplace.html",
-              "fa-store",
-              `Marketplace
-               <em class="nav-badge nav-hot">
-                 <i class="fa-solid fa-fire"></i>
-                 Hot
-               </em>`
-            ]
-          ]
-        ],
-
-        [
-          "Create & Manage",
-          [
-            [
-              "paste.html",
-              "fa-paperclip",
-              "Create"
-            ],
-            [
-              "my-products.html",
-              "fa-box-open",
-              "My Products"
-            ],
-            [
-              "my-links.html",
-              "fa-link",
-              "My Links"
-            ],
-            [
-              "purchases.html",
-              "fa-bag-shopping",
-              `Purchases
-               <em class="nav-badge nav-new">
-                 <i class="fa-solid fa-sparkles"></i>
-                 New
-               </em>`
-            ]
-          ]
-        ],
-
-        [
-          "Finance",
-          [
-            [
-              "wallet.html",
-              "fa-wallet",
-              "Wallet"
-            ],
-            [
-              "withdrawals.html",
-              "fa-money-bill-transfer",
-              "Withdraw"
-            ],
-            [
-              "transactions.html",
-              "fa-arrow-right-arrow-left",
-              "Transactions"
-            ]
-          ]
-        ],
-
-        [
-          "Tools",
-          [
-            [
-              "payment-methods.html",
-              "fa-credit-card",
-              "Payment Methods"
-            ],
-            [
-              "setup.html",
-              "fa-sliders",
-              "Setup"
-            ],
-            [
-              "about.html",
-              "fa-circle-info",
-              "About"
-            ]
-          ]
-        ],
-
-        [
-          "Account",
-          [
-            [
-              "subscription.html",
-              "fa-crown",
-              `Langganan
-               <em class="nav-badge nav-new">
-                 <i class="fa-solid fa-sparkles"></i>
-                 New
-               </em>`
-            ],
-            [
-              "premium.html",
-              "fa-gem",
-              `Premium
-               <em class="nav-badge nav-trend">
-                 <i class="fa-solid fa-fire"></i>
-                 Trend
-               </em>`
-            ],
-            [
-              "notifications.html",
-              "fa-bell",
-              `Notifications
-               <em class="nav-badge nav-new">
-                 <i class="fa-solid fa-sparkles"></i>
-                 New
-               </em>`
-            ],
-            [
-              "profile.html",
-              "fa-user",
-              "Profile"
-            ],
-            [
-              "settings.html",
-              "fa-gear",
-              "Settings"
-            ]
-          ]
-        ]
+        ["Menu", [
+          ["dashboard.html", "fa-house", "Dashboard"],
+          ["marketplace.html", "fa-store", "Marketplace"]
+        ]],
+        ["Create", [
+          ["create-product.html?type=pastelink", "fa-link", "PasteLink"],
+          ["create-product.html?type=code", "fa-code", "Code"],
+          ["create-product.html?type=channel", "fa-users", "Group / Channel"]
+        ]],
+        ["Manage", [
+          ["my-products.html", "fa-box-open", "My Product"],
+          ["purchases.html", "fa-bag-shopping", "Purchases"]
+        ]],
+        ["Finance", [
+          ["wallet.html", "fa-wallet", "Wallet"],
+          ["withdrawals.html", "fa-money-bill-transfer", "Withdraw"],
+          ["transactions.html", "fa-arrow-right-arrow-left", "Transaction"]
+        ]],
+        ["Account", [
+          ["subscription.html", "fa-crown", "Langganan"],
+          ["premium.html", "fa-gem", "Premium"],
+          ["notifications.html", "fa-bell", "Notifikasi"],
+          ["profile.html", "fa-user", "Profile"],
+          ["settings.html", "fa-gear", "Setting"],
+          ["about.html", "fa-circle-info", "About"]
+        ]]
       ];
 
   /* =======================================================
@@ -343,31 +210,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       return `
         <div class="nav-group">
 
-          <small class="nav-group-title">
-            ${esc(title)}
-          </small>
-
-          ${items
-            .map(([href, icon, label]) => {
+          ${title === "Create" ? `
+            <button type="button" class="nav-group-title nav-create-toggle" id="navCreateToggle" aria-expanded="false">
+              <span><i class="fa-solid fa-plus"></i> Create</span>
+              <i class="fa-solid fa-chevron-down nav-create-chevron"></i>
+            </button>
+            <div class="nav-create-submenu" id="navCreateSubmenu" hidden>
+              ${items.map(([href, icon, label]) => {
+                const active = isSamePath(href);
+                return `<a href="${base}${esc(href)}" data-href="${esc(href)}" class="nav-link${active ? " active" : ""}" ${active ? 'aria-current="page"' : ""}>
+                  <i class="fa-solid ${esc(icon)}" aria-hidden="true"></i><span>${label}</span>
+                </a>`;
+              }).join("")}
+            </div>
+          ` : `
+            <small class="nav-group-title">${esc(title)}</small>
+            ${items.map(([href, icon, label]) => {
               const active = isSamePath(href);
-
-              return `
-                <a
-                  href="${base}${esc(href)}"
-                  data-href="${esc(href)}"
-                  class="nav-link${active ? " active" : ""}"
-                  ${active ? 'aria-current="page"' : ""}
-                >
-                  <i
-                    class="fa-solid ${esc(icon)}"
-                    aria-hidden="true"
-                  ></i>
-
-                  <span>${label}</span>
-                </a>
-              `;
-            })
-            .join("")}
+              return `<a href="${base}${esc(href)}" data-href="${esc(href)}" class="nav-link${active ? " active" : ""}" ${active ? 'aria-current="page"' : ""}>
+                <i class="fa-solid ${esc(icon)}" aria-hidden="true"></i><span>${label}</span>
+              </a>`;
+            }).join("")}
+          `}
 
         </div>
       `;
@@ -414,57 +278,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         ================================================== -->
 
         <div class="nav-account">
-
           <a
             class="nav-account-info"
             href="${base}${isAdmin ? "index.html" : "profile.html"}"
-            aria-label="Profil"
+            aria-label="Profil akun"
           >
-
             <div class="nav-avatar">
-              <i
-                class="fa-solid fa-user"
-                aria-hidden="true"
-              ></i>
+              <i class="fa-solid fa-user" aria-hidden="true"></i>
             </div>
-
             <div class="nav-name">
-
               <b>${esc(name)}</b>
-
-              <small>
-                ${isAdmin ? "Administrator" : "Profil akun"}
-              </small>
-
+              <small id="navAccountStatus">Akun aktif</small>
             </div>
-
           </a>
-
-
-          <span
-            class="nav-balance"
-            id="navBalance"
-            aria-label="Saldo tersedia"
-          >
-            Rp 0
-          </span>
-
-
-          <button
-            class="nav-theme"
-            id="navTheme"
-            type="button"
-            title="Ganti tema"
-            aria-label="Ganti tema"
-          >
-
-            <i
-              class="fa-solid fa-moon"
-              aria-hidden="true"
-            ></i>
-
-          </button>
-
+          <div class="nav-account-side">
+            <span class="nav-balance" id="navBalance" aria-label="Saldo tersedia">Rp 0</span>
+            <a class="nav-notification" id="navNotification" href="${base}notifications.html" title="Notifikasi" aria-label="Notifikasi">
+              <i class="fa-solid fa-bell" aria-hidden="true"></i>
+              <span class="nav-notification-badge" id="navNotificationBadge" hidden>0</span>
+            </a>
+            <button class="nav-theme" id="navTheme" type="button" title="Ganti tema" aria-label="Ganti tema">
+              <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
 
 
@@ -581,6 +417,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const navLinks = [
     ...document.querySelectorAll("#navLinks a")
   ];
+
+  const createToggle = document.getElementById("navCreateToggle");
+  const createSubmenu = document.getElementById("navCreateSubmenu");
+  const createHasActive = [...(createSubmenu?.querySelectorAll("a") || [])].some((a) => a.classList.contains("active"));
+  const setCreateOpen = (open) => {
+    if (!createToggle || !createSubmenu) return;
+    createSubmenu.hidden = !open;
+    createToggle.setAttribute("aria-expanded", String(open));
+    createToggle.classList.toggle("open", open);
+  };
+  setCreateOpen(createHasActive);
+  createToggle?.addEventListener("click", () => setCreateOpen(createSubmenu.hidden));
 
 
   /* =======================================================
@@ -719,31 +567,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   /* =======================================================
-     AUTO DAY / NIGHT THEME
-     ======================================================= */
-
-  const getAutoTheme = () => {
-    const hour = new Date().getHours();
-    return (hour >= 6 && hour < 18) ? 'light' : 'dark';
-  };
-
-  const applyTheme = () => {
-    const theme = getAutoTheme();
-
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
-    document.documentElement.classList.toggle('theme-light', theme === 'light');
-
-    if (document.body) {
-      document.body.classList.toggle('theme-dark', theme === 'dark');
-      document.body.classList.toggle('theme-light', theme === 'light');
+     THEME
+  ======================================================= */
+  const applyNavbarTheme = () => {
+    const mode = window.PasTeleTheme?.get?.() || localStorage.getItem('pastele-theme') || 'system';
+    const theme = window.PasTeleTheme?.resolved?.() || document.documentElement.dataset.theme || 'light';
+    if (themeBtn) {
+      const icon = themeBtn.querySelector('i');
+      if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      themeBtn.title = `Tema: ${mode === 'system' ? 'System' : mode === 'dark' ? 'Dark' : 'Light'}`;
+      themeBtn.setAttribute('aria-label', themeBtn.title);
     }
+  };
+  themeBtn?.addEventListener('click', () => {
+    const theme = window.PasTeleTheme?.cycle ? window.PasTeleTheme.cycle() : null;
+    applyNavbarTheme();
+    try { getTC()?.toast?.(`Tema ${window.PasTeleTheme?.get?.() || 'system'}`, 'success'); } catch (_) {}
+  });
+  window.addEventListener('pastele-theme-change', applyNavbarTheme);
+  applyNavbarTheme();
 
-    return theme;
+  /* =======================================================
+     ACCOUNT STATUS
+  ======================================================= */
+
+  const statusEl = document.getElementById("navAccountStatus");
+
+  const loadAccountStatus = async () => {
+    if (!statusEl || isAdmin) return;
+    const p = profile;
+    if (p?.is_banned) {
+      statusEl.textContent = "Akun dibatasi";
+    } else if (p?.is_premium || (p?.subscription_until && new Date(p.subscription_until) > new Date())) {
+      statusEl.textContent = "Premium aktif";
+    } else {
+      statusEl.textContent = "Akun aktif";
+    }
   };
 
-  applyTheme();
-  window.setInterval(applyTheme, 60 * 1000);
+  await loadAccountStatus();
 
   /* =======================================================
      WALLET BALANCE
@@ -884,124 +746,101 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   /* =======================================================
+     GLOBAL NOTIFICATIONS
+  ======================================================= */
+  const notificationBadge = document.getElementById('navNotificationBadge');
+  const loadNotificationBadge = async () => {
+    if (!user || !getSB()) return;
+    try {
+      const { count } = await getSB().from('notifications').select('id', {count:'exact', head:true}).eq('user_id', user.id).eq('is_read', false);
+      const n = Number(count || 0);
+      if (notificationBadge) { notificationBadge.hidden = n <= 0; notificationBadge.textContent = n > 99 ? '99+' : String(n); }
+    } catch (_) {}
+  };
+  await loadNotificationBadge();
+
+  /* Lightweight live notification — never blocks the page. */
+  const showLiveNotification = (item) => {
+    if (!item?.title) return;
+    let host = document.getElementById('pastele-live-notifications');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'pastele-live-notifications';
+      host.setAttribute('aria-live', 'polite');
+      document.body.appendChild(host);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'pastele-live-notification';
+    card.innerHTML = `
+      <button type="button" class="pastele-live-close" aria-label="Tutup">×</button>
+      <div class="pastele-live-icon"><i class="fa-solid fa-bell"></i></div>
+      <div class="pastele-live-copy">
+        <strong>${getTC()?.esc ? getTC().esc(item.title) : String(item.title)}</strong>
+        <span>${getTC()?.esc ? getTC().esc(item.body || '') : String(item.body || '')}</span>
+      </div>`;
+
+    const remove = () => {
+      card.classList.add('is-leaving');
+      setTimeout(() => card.remove(), 180);
+    };
+    card.querySelector('.pastele-live-close')?.addEventListener('click', remove);
+    host.prepend(card);
+
+    while (host.children.length > 2) host.lastElementChild?.remove();
+    requestAnimationFrame(() => card.classList.add('is-visible'));
+    setTimeout(remove, 4200);
+  };
+
+  if (getSB() && user) {
+    try {
+      getSB().channel(`pastele-notifications-${user.id}`)
+        .on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${user.id}`}, payload => {
+          loadNotificationBadge();
+          showLiveNotification(payload?.new);
+        }).subscribe();
+    } catch (_) {}
+  }
+  window.setInterval(loadNotificationBadge, 20000);
+
+  /* =======================================================
+     ADMIN ALERTS — WITHDRAWAL / SYSTEM NOTIFICATIONS
+  ======================================================= */
+  if (isAdmin && getSB() && user) {
+    try {
+      const { count } = await getSB().from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).eq('is_read',false);
+      const wdLink = [...document.querySelectorAll('#navLinks a')].find(a => /withdrawals\.html$/i.test(a.dataset.href || ''));
+      if (wdLink && Number(count || 0) > 0) {
+        wdLink.insertAdjacentHTML('beforeend', `<span class="nav-alert-count">${Number(count)>99?'99+':Number(count)}</span>`);
+      }
+    } catch (_) {}
+  }
+
+  /* =======================================================
      SOCIAL MEDIA
   ======================================================= */
 
   const loadSocials = async () => {
-
     const sb = getSB();
-
-    if (!sb) {
-      return;
-    }
-
-    const socialHost =
-      document.getElementById(
-        "navSocials"
-      );
-
-    if (!socialHost) {
-      return;
-    }
-
-
+    const socialHost = document.getElementById("navSocials");
+    if (!sb || !socialHost) return;
     try {
-
-      const response =
-        await sb.rpc(
-          "get_public_site_settings"
-        );
-
-      if (response?.error) {
-        return;
-      }
-
-      const socials =
-        Array.isArray(
-          response?.data?.socials
-        )
-          ? response.data.socials
-          : [];
-
-
-      if (!socials.length) {
-        return;
-      }
-
-
-      const validSocials =
-        socials
-          .slice(0, 5)
-          .map((social) => {
-
-            const url =
-              safeUrl(
-                social?.url
-              );
-
-            if (url === "#") {
-              return null;
-            }
-
-
-            const icon =
-              String(
-                social?.icon ||
-                  "fa-solid fa-link"
-              ).trim();
-
-
-            const label =
-              String(
-                social?.name ||
-                  "Social"
-              ).trim();
-
-
-            return `
-              <a
-                href="${esc(url)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="${esc(label)}"
-                title="${esc(label)}"
-              >
-
-                <i
-                  class="${esc(icon)}"
-                  aria-hidden="true"
-                ></i>
-
-                <span>
-                  ${esc(label)}
-                </span>
-
-              </a>
-            `;
-
-          })
-          .filter(Boolean)
-          .join("");
-
-
-      if (!validSocials) {
-        return;
-      }
-
-
-      socialHost.innerHTML = `
-        <small>Sosial Media</small>
-        ${validSocials}
-      `;
-
-    } catch (_) {
-
-      /* Social settings are optional */
-
-    }
-
+      const response = await sb.rpc("get_public_site_settings");
+      const socials = Array.isArray(response?.data?.socials) ? response.data.socials : [];
+      const wanted = [
+        ["telegram", "fa-brands fa-telegram"],
+        ["youtube", "fa-brands fa-youtube"],
+        ["facebook", "fa-brands fa-facebook"]
+      ];
+      const links = wanted.map(([key, icon]) => {
+        const item = socials.find((x) => String(x?.name || "").toLowerCase().includes(key));
+        const url = safeUrl(item?.url);
+        if (url === "#") return "";
+        return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(key)}" title="${esc(key)}"><i class="${icon}" aria-hidden="true"></i></a>`;
+      }).join("");
+      if (links) socialHost.innerHTML = `<small>Sosial</small><div class="nav-social-icons">${links}</div>`;
+    } catch (_) {}
   };
-
 
   await loadSocials();
 

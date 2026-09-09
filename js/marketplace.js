@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       type === "paste-link" ||
       type === "paste_link"
     ) {
-      return "link";
+      return "pastelink";
     }
     if (
       type === "telegram_channel" ||
@@ -188,6 +188,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         return "fa-users";
       case "paste":
         return "fa-file-lines";
+      case "pastelink":
+        return "fa-link";
       case "link":
       default:
         return "fa-link";
@@ -207,6 +209,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         return "Group";
       case "paste":
         return "Paste";
+      case "pastelink":
+        return "PasteLink";
       case "link":
       default:
         return "Link";
@@ -299,8 +303,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!id) {
       return "product.html";
     }
-    const type =
-      typeOf(item);
+    const type = typeOf(item);
+    if (type === "pastelink") {
+      return "paste-view.html?slug=" + encodeURIComponent(item.slug || "");
+    }
     return (
       "product.html" +
       `?id=${encodeURIComponent(id)}` +

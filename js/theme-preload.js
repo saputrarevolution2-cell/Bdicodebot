@@ -1,14 +1,13 @@
-/* PasTele — AUTO DAY/NIGHT PRELOAD
-   Day: 06:00–17:59 = light
-   Night: 18:00–05:59 = dark
-   No OS theme and no stale saved theme can override this.
-*/
+/* PasTele — Theme Preload: prevents flash and respects saved Light/Dark/System. */
 (() => {
   try {
-    const hour = new Date().getHours();
-    const theme = (hour >= 6 && hour < 18) ? 'light' : 'dark';
+    const key = 'pastele-theme';
+    const saved = localStorage.getItem(key) || 'system';
+    const dark = saved === 'dark' || (saved === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const theme = dark ? 'dark' : 'light';
     const root = document.documentElement;
     root.dataset.theme = theme;
+    root.dataset.themeMode = saved;
     root.classList.remove('theme-light','theme-dark');
     root.classList.add(`theme-${theme}`);
     root.style.colorScheme = theme;

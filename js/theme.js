@@ -1,54 +1,55 @@
-/* PasTele — UNIVERSAL AUTOMATIC DAY/NIGHT THEME
-   06:00–17:59 => LIGHT
-   18:00–05:59 => DARK
+/* PasTele — Theme Manager
+   Modes: light, dark, system
+   Persists the user's choice and applies it consistently.
 */
 (() => {
   'use strict';
-
   const root = document.documentElement;
-  const NIGHT_START = 18;
-  const DAY_START = 6;
+  const KEY = 'pastele-theme';
+  const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
-  const getAutoTheme = () => {
-    const hour = new Date().getHours();
-    return (hour >= DAY_START && hour < NIGHT_START) ? 'light' : 'dark';
+  const resolved = (mode) => {
+    if (mode === 'light' || mode === 'dark') return mode;
+    return media?.matches ? 'dark' : 'light';
   };
 
-  const apply = () => {
-    const theme = getAutoTheme();
-
+  const apply = (mode = localStorage.getItem(KEY) || 'system') => {
+    if (!['light','dark','system'].includes(mode)) mode = 'system';
+    const theme = resolved(mode);
     root.dataset.theme = theme;
+    root.dataset.themeMode = mode;
     root.classList.toggle('theme-dark', theme === 'dark');
     root.classList.toggle('theme-light', theme === 'light');
     root.style.colorScheme = theme;
-
     if (document.body) {
       document.body.classList.toggle('theme-dark', theme === 'dark');
       document.body.classList.toggle('theme-light', theme === 'light');
     }
-
-    window.dispatchEvent(new CustomEvent('pastele-theme-change', {
-      detail: { mode: 'auto', theme }
-    }));
-
+    document.querySelectorAll('[data-theme-option]').forEach(btn => {
+      const active = btn.dataset.themeOption === mode;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+    window.dispatchEvent(new CustomEvent('pastele-theme-change', {detail:{mode,theme}}));
     return theme;
   };
 
-  // Always automatic. Clear old manual/system preference so it cannot override.
-  try { localStorage.removeItem('pastele-theme'); } catch (_) {}
-
-  apply();
-
-  // Re-check at every minute so an already-open page switches at 18:00 / 06:00.
-  const tick = () => apply();
-  window.setInterval(tick, 60 * 1000);
-
-  // Public API retained for compatibility with existing code.
   window.PasTeleTheme = {
-    get: () => 'auto',
-    resolved: getAutoTheme,
-    set: () => apply(),
-    cycle: () => apply(),
+    get: () => localStorage.getItem(KEY) || 'system',
+    resolved: () => resolved(localStorage.getItem(KEY) || 'system'),
+    set: (mode) => { localStorage.setItem(KEY, mode); return apply(mode); },
+    cycle: () => {
+      const modes = ['system','light','dark'];
+      const current = modes.indexOf(localStorage.getItem(KEY) || 'system');
+      const next = modes[(current + 1) % modes.length];
+      localStorage.setItem(KEY, next);
+      return apply(next);
+    },
     apply
   };
+
+  apply();
+  media?.addEventListener?.('change', () => {
+    if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
+  });
 })();

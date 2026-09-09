@@ -4,6 +4,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   if(!host) return;
   const esc=v=>window.TC?.esc?TC.esc(v):String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   let user=null; try{ user=window.TC?.user ? await TC.user() : null; }catch(_){}
+  if(user?.id && window.sb){
+    try {
+      const {count}=await window.sb.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).eq('is_read',false);
+      window.dispatchEvent(new CustomEvent('pastele-notification-count',{detail:{count:Number(count||0)}}));
+    } catch(_){}
+  }
   host.innerHTML=`
   <div class="public-shell">
     <div class="public-ticker"><div class="public-ticker-track"><span><i class="fa-solid fa-bolt"></i> Gabung sekarang dan nikmati fitur menarik lainnya — jadilah Kreator PasTele yang top dan dapatkan bonus melimpah!</span><span><i class="fa-solid fa-bolt"></i> Gabung sekarang dan nikmati fitur menarik lainnya — jadilah Kreator PasTele yang top dan dapatkan bonus melimpah!</span></div></div>

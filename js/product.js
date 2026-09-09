@@ -236,6 +236,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     setHeader(title,item.description||"Detail produk dan akses.",({link:"fa-link",paste:"fa-file-lines",code:"fa-code",channel:"fa-tower-broadcast",group:"fa-users"}[resolvedType]||"fa-box"));
     const access=await canAccess();
     if(access.ok) renderOpen(access); else renderLocked(access);
+
+    /* Record every opening; the SQL trigger creates the owner's notification. */
+    try {
+      const owner = item.owner_id || item.creator_id || item.seller_id || null;
+      const targetType = resolvedType === "code" ? "telegram_product" : (resolvedType === "channel" || resolvedType === "group" ? "channel" : resolvedType);
+      await client.rpc("record_content_view", { p_owner: owner, p_target_type: targetType, p_target_id: item.id });
+    } catch (viewError) {
+      console.warn("[Product] View tracking unavailable:", viewError);
+    }
+
     await loadEngagement();
   } catch(e){
     console.error("[Product]",e);

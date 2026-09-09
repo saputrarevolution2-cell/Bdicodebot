@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const title = $("title");
     const slug = $("slug");
     const price = $("price");
+    const priceField = document.getElementById("priceField") || price?.closest(".form-field");
     const thumb = $("thumb");
     const type = $("type");
     const access = $("access");
@@ -982,6 +983,44 @@ document.addEventListener("DOMContentLoaded", () => {
        TYPE UI
        ======================================================= */
 
+    const createField = (id) => document.getElementById(id);
+
+    const applyCreateFieldVisibility = (selectedType) => {
+        const fields = {
+            slug: createField("slugField"),
+            type: createField("typeField"),
+            access: createField("accessField"),
+            thumb: createField("thumbField"),
+            desc: createField("descField"),
+            content: createField("contentField")
+        };
+
+        Object.values(fields).forEach((el) => el?.classList.remove("create-field-hidden"));
+
+        if (fields.type) fields.type.classList.add("create-field-hidden");
+        const telegramPicker = document.getElementById("telegramKindPicker");
+        if (telegramPicker) telegramPicker.hidden = !(selectedType === "channel" || selectedType === "group");
+        document.querySelectorAll("[data-telegram-kind]").forEach((button) => {
+            const active = button.dataset.telegramKind === selectedType;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+        if (selectedType === "pastelink") {
+            fields.thumb?.classList.add("create-field-hidden");
+        } else if (selectedType === "code") {
+            fields.thumb?.classList.remove("create-field-hidden");
+        } else if (selectedType === "channel" || selectedType === "group") {
+            fields.thumb?.classList.add("create-field-hidden");
+        }
+
+        document.querySelectorAll("[data-create-type]").forEach((button) => {
+            const active = button.dataset.createType === selectedType ||
+                (selectedType === "group" && button.dataset.createType === "channel");
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+    };
+
     const syncFeatureForm =
         () => {
             const selectedType =
@@ -998,6 +1037,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             document.body.dataset.productType =
                 selectedType;
+
+            applyCreateFieldVisibility(selectedType);
 
             const icon =
                 document.querySelector(
@@ -1079,6 +1120,72 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     );
 
+    /* CREATE CENTER TYPE PICKER */
+    document.querySelectorAll("[data-create-type]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const next = button.dataset.createType;
+            if (!VALID_TYPES.includes(next)) return;
+            if (type) type.value = next;
+            const url = new URL(window.location.href);
+            url.searchParams.set("type", next);
+            window.history.replaceState({}, "", url);
+            const layout = document.querySelector(".create-layout");
+            if (layout) layout.hidden = false;
+            const picker = document.getElementById("createTypePicker");
+            picker?.classList.add("has-selection");
+            syncFeatureForm();
+            syncPrice();
+            const heading = document.getElementById("createTitle");
+            if (heading) heading.textContent = next === "pastelink" ? "Buat PasteLink" : next === "code" ? "Buat Code" : "Buat Group / Channel";
+        });
+    });
+
+    /* INITIAL TYPE FROM URL */
+    (() => {
+        const requested = new URLSearchParams(window.location.search).get("type");
+        const hasSelection = VALID_TYPES.includes(requested);
+        const initial = hasSelection ? requested : null;
+        const layout = document.querySelector(".create-layout");
+        const picker = document.getElementById("createTypePicker");
+        const heading = document.getElementById("createTitle");
+        const subtitle = document.querySelector(".create-heading p");
+
+        if (initial) {
+            if (type) type.value = initial;
+            if (layout) layout.hidden = false;
+            if (picker) picker.classList.add("has-selection");
+            if (heading) heading.textContent = initial === "pastelink" ? "Buat PasteLink" : initial === "code" ? "Buat Code" : "Buat Group / Channel";
+            if (subtitle) subtitle.textContent = "Lengkapi form sesuai jenis konten yang kamu pilih.";
+        } else {
+            if (layout) layout.hidden = true;
+            const kindPicker = document.getElementById("telegramKindPicker");
+            if (kindPicker) kindPicker.hidden = true;
+            if (heading) heading.textContent = "Create";
+            if (subtitle) subtitle.textContent = "Pilih jenis konten terlebih dahulu. Form akan muncul setelah pilihan dibuat.";
+        }
+    })();
+
+    const telegramKindPicker = document.getElementById("telegramKindPicker");
+    document.querySelectorAll("[data-telegram-kind]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const next = button.dataset.telegramKind;
+            if (next !== "channel" && next !== "group") return;
+            if (type) type.value = next;
+            document.querySelectorAll("[data-telegram-kind]").forEach((item) => {
+                const active = item.dataset.telegramKind === next;
+                item.classList.toggle("active", active);
+                item.setAttribute("aria-pressed", String(active));
+            });
+            syncFeatureForm();
+            syncPrice();
+            const heading = document.getElementById("createTitle");
+            if (heading) heading.textContent = next === "group" ? "Buat Group Telegram" : "Buat Channel Telegram";
+            const url = new URL(window.location.href);
+            url.searchParams.set("type", next);
+            window.history.replaceState({}, "", url);
+        });
+    });
+
     /* =======================================================
        ACCESS / PRICE
        ======================================================= */
@@ -1094,7 +1201,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const selectedType = String(type?.value || "").toLowerCase();
             const paidOption = access.querySelector('option[value="paid"]');
-            const isPriceUnsupported = selectedType === "paste" || selectedType === "pastelink";
+            const isPriceUnsupported = selectedType === "paste";
 
             if (paidOption) {
                 paidOption.disabled = isPriceUnsupported;
@@ -1106,6 +1213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const isPaid = access.value === "paid" && !isPriceUnsupported;
 
+            if (priceField) priceField.classList.toggle("create-field-hidden", !isPaid);
             price.required = isPaid;
 
             if (!isPaid) {
@@ -1655,17 +1763,9 @@ document.addEventListener("DOMContentLoaded", () => {
              * checkout RPC as paid marketplace items. Keep them Free
              * here instead of writing data the database cannot settle.
              */
-            if (
-                (productType === "paste" || productType === "pastelink") &&
-                productAccess === "paid"
-            ) {
+            if (productType === "paste" && productAccess === "paid") {
                 markInvalid(access);
-                toast(
-                    productType === "pastelink"
-                        ? "PasteLink pada database ini hanya mendukung Free (Rp0)."
-                        : "Paste pada database ini hanya mendukung Free (Rp0).",
-                    "error"
-                );
+                toast("Paste biasa pada database ini hanya mendukung Free (Rp0).", "error");
                 return null;
             }
 
@@ -3118,11 +3218,13 @@ document.addEventListener("DOMContentLoaded", () => {
             allow_comments: true,
             allow_download: true,
             show_raw: true,
-            anonymous: false
+            anonymous: false,
+            access_type: product.access_type || "free",
+            price: Number(product.price || 0)
         };
         const { error } = await sb.from("pastelinks").insert(payload);
         if (error) throw error;
-        return { id: true, slug: product.slug, title: product.title, type: "pastelink", access_type: "free", price: 0 };
+        return { id: true, slug: product.slug, title: product.title, type: "pastelink", access_type: product.access_type || "free", price: Number(product.price || 0) };
     };
 
     /* =======================================================

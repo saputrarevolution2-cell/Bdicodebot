@@ -678,6 +678,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 "slug",
                                 "title",
                                 "description",
+                                "access_type",
+                                "price",
                                 "visibility",
                                 "expires_at",
                                 "views",
@@ -825,7 +827,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     })
                 );
             const pasteLinkItems =
-                (pasteResponse.data || []).map(item => ({...item,__type:"pastelink",price:0,access_type:"free",status:item.visibility === "public" ? "published" : item.visibility}));
+                (pasteResponse.data || []).map(item => ({...item,__type:"pastelink",price:Number(item.price||0),access_type:item.access_type||"free",status:item.visibility === "public" ? "published" : item.visibility}));
             const pasteItems =
                 (plainPasteResponse.data || []).map(item => ({...item,__type:"paste",price:0,access_type:"free",status:item.visibility === "public" ? "published" : item.visibility}));
             const codeItems =
@@ -1801,11 +1803,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                PASTELINK
                ============================================= */
             if (type === "pastelink") {
+                const currentAccess = normalize(item.access_type) === "paid" ? "paid" : "free";
+                const enteredAccess = prompt("Akses (free/paid)", currentAccess);
+                if (enteredAccess === null) return;
+                const nextAccess = normalize(enteredAccess) === "paid" ? "paid" : "free";
+                let nextPrice = nextAccess === "paid" ? Number(prompt("Harga IDR (5000-150000)", item.price || 5000)) : 0;
+                if (nextAccess === "paid" && (!Number.isFinite(nextPrice) || nextPrice < 5000 || nextPrice > 150000 || nextPrice % 1000 !== 0)) { showToast("Harga Paid harus Rp5.000-Rp150.000 dan kelipatan Rp1.000.","error"); return; }
                 response = await supabase.from("pastelinks")
-                        .update({
-                            title:
-                                cleanTitle
-                        })
+                        .update({ title: cleanTitle, access_type: nextAccess, price: nextPrice })
                         .eq(
                             "id",
                             item.id

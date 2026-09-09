@@ -1379,49 +1379,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* =======================================================
      THEME / APPEARANCE
      ======================================================= */
-
-  /* =======================================================
-     THEME / APPEARANCE — AUTOMATIC DAY/NIGHT
-     ======================================================= */
-
-  function getAutoTheme() {
-    const hour = new Date().getHours();
-    return (hour >= 6 && hour < 18) ? 'light' : 'dark';
-  }
-
-  function applyAutoTheme() {
-    const theme = getAutoTheme();
-
+  const themeKey = 'pastele-theme';
+  const resolveTheme = (mode) => {
+    if (mode === 'light' || mode === 'dark') return mode;
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  };
+  const applySettingsTheme = (mode) => {
+    if (!['light','dark','system'].includes(mode)) mode = 'system';
+    localStorage.setItem(themeKey, mode);
+    const theme = resolveTheme(mode);
     document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.themeMode = mode;
     document.documentElement.classList.toggle('theme-dark', theme === 'dark');
     document.documentElement.classList.toggle('theme-light', theme === 'light');
-
-    if (document.body) {
-      document.body.classList.toggle('theme-dark', theme === 'dark');
-      document.body.classList.toggle('theme-light', theme === 'light');
-    }
-
-    // The settings page always shows the automatic mode as active.
-    document.querySelectorAll('[data-theme-option]').forEach((button) => {
-      const active = button.dataset.themeOption === 'system';
+    document.body?.classList.toggle('theme-dark', theme === 'dark');
+    document.body?.classList.toggle('theme-light', theme === 'light');
+    document.documentElement.style.colorScheme = theme;
+    document.querySelectorAll('[data-theme-option]').forEach(button => {
+      const active = button.dataset.themeOption === mode;
       button.classList.toggle('active', active);
-      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      button.setAttribute('aria-pressed', String(active));
     });
-  }
-
-  // Remove any old manual preference from previous versions.
-  try { localStorage.removeItem('pastele-theme'); } catch (_) {}
-
-  applyAutoTheme();
-
-  // Switch an already-open settings page exactly at the next day/night boundary.
-  window.setInterval(applyAutoTheme, 60 * 1000);
-
-  document.querySelectorAll('[data-theme-option]').forEach((button) => {
+  };
+  applySettingsTheme(localStorage.getItem(themeKey) || 'system');
+  document.querySelectorAll('[data-theme-option]').forEach(button => {
     button.addEventListener('click', () => {
-      applyAutoTheme();
-      toast('Tema otomatis mengikuti waktu: 06.00–17.59 terang, 18.00–05.59 gelap.', 'success');
+      const mode = button.dataset.themeOption || 'system';
+      applySettingsTheme(mode);
+      if (window.PasTeleTheme?.set) window.PasTeleTheme.set(mode);
+      toast(`Tema ${mode === 'system' ? 'System' : mode === 'dark' ? 'Dark' : 'Light'} aktif.`, 'success');
     });
+  });
+  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener('change', () => {
+    if ((localStorage.getItem(themeKey) || 'system') === 'system') applySettingsTheme('system');
   });
 
   /* =======================================================

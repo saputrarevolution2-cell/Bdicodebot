@@ -289,6 +289,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             allow_download,
             show_raw,
             anonymous,
+            access_type,
+            price,
             views,
             created_at,
             updated_at
@@ -307,7 +309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
         return;
     }
-    const paste = result.data;
+    let paste = result.data;
     if (!paste) {
         box.innerHTML = `
             <div class="empty">
@@ -316,6 +318,75 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
         return;
     }
+
+    /* =======================================================
+       PAID / FREE ACCESS
+       ======================================================= */
+    let detail = null;
+    try {
+        const detailResult = await client.rpc("get_market_item_detail", {
+            p_type: "pastelink",
+            p_id: paste.id
+        });
+        if (!detailResult.error) {
+            detail = Array.isArray(detailResult.data) ? detailResult.data[0] : detailResult.data;
+            if (detail && detail.found !== false) {
+                paste = { ...paste, ...detail };
+            }
+        }
+    } catch (error) {
+        console.warn("[PasteLink] Detail RPC gagal:", error);
+    }
+
+    const accessType = String(paste.access_type || "free").toLowerCase();
+    const isPaid = accessType === "paid" && Number(paste.price || 0) > 0;
+    const canAccess = !isPaid || paste.can_access === true;
+
+    if (isPaid && !canAccess) {
+        const priceText = Number(paste.price || 0).toLocaleString("id-ID");
+        box.innerHTML = `
+            <article class="justpaste-view premium-view paste-locked">
+                <div class="paste-view-top">
+                    <span class="badge"><i class="fa-solid fa-lock"></i> PasteLink Paid</span>
+                    <span class="paste-live">Marketplace</span>
+                </div>
+                <h1>${esc(paste.title || "PasteLink")}</h1>
+                ${paste.description ? `<p class="paste-description muted">${esc(paste.description)}</p>` : ""}
+                <div class="paste-paywall">
+                    <div class="paste-paywall-icon"><i class="fa-solid fa-lock"></i></div>
+                    <h2>Konten ini berbayar</h2>
+                    <p>Beli akses untuk membuka seluruh isi PasteLink.</p>
+                    <strong class="paste-paywall-price">Rp ${priceText}</strong>
+                    <button type="button" class="btn primary" id="buyPasteLink">
+                        <i class="fa-solid fa-cart-shopping"></i> Beli Akses
+                    </button>
+                </div>
+            </article>
+        `;
+
+        document.getElementById("buyPasteLink")?.addEventListener("click", async () => {
+            let currentUser = null;
+            try { currentUser = typeof window.TC?.user === "function" ? await window.TC.user() : null; } catch (_) {}
+            if (!currentUser?.id) {
+                location.href = "login.html?return=" + encodeURIComponent(location.pathname + location.search);
+                return;
+            }
+            const button = document.getElementById("buyPasteLink");
+            if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...'; }
+            try {
+                const buy = await client.rpc("buy_market_item", { p_type: "pastelink", p_id: paste.id });
+                if (buy.error) throw buy.error;
+                const orderId = buy.data?.order_id;
+                if (!orderId) throw new Error("Order tidak berhasil dibuat.");
+                location.href = "payment.html?order_id=" + encodeURIComponent(orderId);
+            } catch (error) {
+                window.TC?.toast?.(error?.message || "Gagal membuat order.", "error");
+                if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Beli Akses'; }
+            }
+        });
+        return;
+    }
+
     /* =======================================================
        EXPIRATION
        ======================================================= */
@@ -503,7 +574,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         {
                             p_owner: paste.user_id,
                             p_event_type: "share",
-                            p_target_type: "link",
+                            p_target_type: "pastelink",
                             p_target_id: paste.id
                         }
                     );
@@ -560,7 +631,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         "toggle_content_like",
                         {
                             p_owner: paste.user_id,
-                            p_target_type: "link",
+                            p_target_type: "pastelink",
                             p_target_id: paste.id
                         }
                     );

@@ -461,6 +461,44 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     });
   /* =======================================================
+     SUCCESS CREDENTIAL NOTICE
+  ======================================================= */
+  function showRegistrationSuccess(username, email, password) {
+    const old = document.getElementById("registerSuccessModal");
+    old?.remove();
+    const esc = (v) => escapeHTML(v);
+    const modal = document.createElement("div");
+    modal.id = "registerSuccessModal";
+    modal.className = "register-success-modal";
+    modal.innerHTML = `
+      <div class="register-success-backdrop" data-close-success></div>
+      <section class="register-success-card" role="dialog" aria-modal="true" aria-labelledby="registerSuccessTitle">
+        <div class="register-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 id="registerSuccessTitle">Pendaftaran Akun Succes</h2>
+        <p class="register-success-lead">Silahkan Screenshot atau Ambil Layar agar tidak lupa.</p>
+        <div class="register-credentials">
+          <div><span>Username</span><b>${esc(username)}</b></div>
+          <div><span>Gmail</span><b>${esc(email)}</b></div>
+          <div><span>Kata sandi</span><b class="register-password">${esc(password)}</b></div>
+        </div>
+        <div class="register-success-warning"><i class="fa-solid fa-shield-halved"></i><span>Simpan data ini di tempat aman dan jangan bagikan kata sandi kepada orang lain.</span></div>
+        <div class="register-success-actions">
+          <button type="button" class="btn primary" id="copyRegisterCredentials"><i class="fa-regular fa-copy"></i> Salin</button>
+          <button type="button" class="btn" id="closeRegisterSuccess"><i class="fa-solid fa-check"></i> Saya Sudah Simpan</button>
+        </div>
+      </section>`;
+    document.body.appendChild(modal);
+    const text = `Pendaftaran Akun Succes\nSilahkan Screenshot Atau Ambil Layar agar tidak lupa\nUsername: ${username}\nGmail: ${email}\nKata sandi: ${password}`;
+    document.getElementById("copyRegisterCredentials")?.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(text); toast("Data akun berhasil disalin.", "success"); }
+      catch { toast("Gagal menyalin. Silakan screenshot halaman ini.", "error"); }
+    });
+    const close = () => { modal.remove(); location.replace("dashboard.html"); };
+    document.getElementById("closeRegisterSuccess")?.addEventListener("click", close);
+    modal.querySelector("[data-close-success]")?.addEventListener("click", close);
+  }
+
+  /* =======================================================
      FORM SUBMIT
      ======================================================= */
   form.addEventListener(
@@ -565,27 +603,13 @@ document.addEventListener("DOMContentLoaded", () => {
             token
           );
         if (data?.session) {
-          toast(
-            "Akun PasTele berhasil dibuat. Selamat datang!",
-            "success"
-          );
-          submit.innerHTML =
-            '<i class="fa-solid fa-check"></i><span>Berhasil</span>';
-          setTimeout(() => {
-            location.replace(
-              "dashboard.html"
-            );
-          }, 900);
+          toast("Pendaftaran akun berhasil.", "success");
+          submit.innerHTML = '<i class="fa-solid fa-check"></i><span>Berhasil</span>';
+          showRegistrationSuccess(username, email, password);
           return;
         }
-        toast(
-          "Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele.",
-          "success"
-        );
-        show(
-          noticeBox,
-          "Akun berhasil dibuat. Cek Gmail untuk verifikasi akun PasTele."
-        );
+        toast("Akun berhasil dibuat. Cek Gmail untuk verifikasi jika diminta.", "success");
+        showRegistrationSuccess(username, email, password);
         form.reset();
         resetTurnstile();
         updateProgress();
