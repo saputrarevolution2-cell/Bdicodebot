@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <script src="js/theme-preload.js?v=20260909-final"></script>
+<head><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
     <meta charset="utf-8">
     <meta
         name="viewport"
@@ -13,35 +12,19 @@
          CORE
          ===================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=20260909"></script>
-    <script src="js/supabase.js?v=20260909"></script>
-    <script src="js/auth.js?v=20260909"></script>
-    <script src="js/navbar.js?v=20260910-final3"></script>
     <!-- =====================================================
          ICON
          ===================================================== -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-    >
     <!-- =====================================================
          GLOBAL CSS
          ===================================================== -->
-    <link rel="stylesheet" href="css/app.css?v=20260909">
-    <link rel="stylesheet" href="css/navbar.css?v=20260909-final">
-    <link rel="stylesheet" href="css/footer.css?v=20260909">
-    <link rel="stylesheet" href="css/saas-final.css?v=20260909">
-    <link rel="stylesheet" href="css/dashboard-theme.css?v=20260909">
-    <link rel="stylesheet" href="css/theme-universal.css?v=20260909-auto-theme">
-    <link rel="stylesheet" href="css/final-fixes.css?v=20260909-full">
     <!-- =====================================================
          PAYMENT CSS
          ===================================================== -->
-    <link rel="stylesheet" href="css/payment.css?v=20260909-final">
     <script>
         document.documentElement.classList.add("pastele-ready");
     </script>
-</head>
+<link rel="stylesheet" href="css/payment.css?v=20260910-saas-final"></head>
 <body class="app-page payment-page">
     <!-- =====================================================
          NAVBAR
@@ -666,9 +649,6 @@
     <!-- =====================================================
          SCRIPTS
          ===================================================== -->
-    <script src="js/payment.js?v=20260909-final"></script>
-    <script src="js/footer.js?v=20260909"></script>
-    <script src="js/theme.js?v=20260909-final2"></script>
     <!-- CANCEL BUTTON -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -687,5 +667,5 @@
             });
         });
     </script>
-</body>
+<script src="js/payment.js?v=20260910-saas-final"></script></body>
 </html>
