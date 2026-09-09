@@ -183,6 +183,7 @@ CREATE TABLE public.telegram_products (
 CREATE TABLE public.telegram_channels (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  slug text NOT NULL UNIQUE,
   username text,
   name text NOT NULL,
   type text NOT NULL DEFAULT 'channel',
@@ -2390,6 +2391,23 @@ CREATE TRIGGER trg_notify_withdrawal AFTER INSERT ON public.withdrawals FOR EACH
 COMMIT;
 
 
+-- Compatibility fix: telegram_channels must have a public slug because
+-- marketplace/routing/create-center use /ch|g/<access>/<slug>.
+BEGIN;
+ALTER TABLE public.telegram_channels
+  ADD COLUMN IF NOT EXISTS slug text;
+
+UPDATE public.telegram_channels
+SET slug = lower(substr(md5(id::text || coalesce(telegram_channel_id, name)), 1, 10))
+WHERE slug IS NULL OR btrim(slug) = '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS telegram_channels_slug_uidx
+  ON public.telegram_channels(slug);
+
+ALTER TABLE public.telegram_channels
+  ALTER COLUMN slug SET NOT NULL;
+COMMIT;
+
 -- Final marketplace view: every supported publishable source.
 BEGIN;
 DROP VIEW IF EXISTS public.marketplace_public CASCADE;
@@ -2500,6 +2518,13 @@ DECLARE
   label text;
   kind text;
 BEGIN
+  IF TG_OP='UPDATE' THEN
+    IF TG_TABLE_NAME='products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='telegram_products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='telegram_channels' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='pastelinks' AND OLD.visibility IS NOT DISTINCT FROM NEW.visibility THEN RETURN NEW; END IF;
+  END IF;
+
   owner := coalesce(
     nullif(to_jsonb(NEW)->>'user_id','')::uuid,
     nullif(to_jsonb(NEW)->>'owner_id','')::uuid,
@@ -2746,28 +2771,365 @@ DROP TRIGGER IF EXISTS trg_notify_product_publish ON public.products;
 CREATE TRIGGER trg_notify_product_publish
 AFTER INSERT OR UPDATE OF status ON public.products
 FOR EACH ROW
-WHEN (NEW.status IN ('published','active') AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status))
+WHEN (NEW.status IN ('published','active'))
 EXECUTE FUNCTION public.trg_notify_market_publication();
 
 DROP TRIGGER IF EXISTS trg_notify_telegram_product_publish ON public.telegram_products;
 CREATE TRIGGER trg_notify_telegram_product_publish
 AFTER INSERT OR UPDATE OF status ON public.telegram_products
 FOR EACH ROW
-WHEN (NEW.status='published' AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status))
+WHEN (NEW.status='published')
 EXECUTE FUNCTION public.trg_notify_market_publication();
 
 DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_channels;
 CREATE TRIGGER trg_notify_telegram_channel_publish
 AFTER INSERT OR UPDATE OF status ON public.telegram_channels
 FOR EACH ROW
-WHEN (NEW.status='published' AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status))
+WHEN (NEW.status='published')
 EXECUTE FUNCTION public.trg_notify_market_publication();
 
 DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
 CREATE TRIGGER trg_notify_pastelink_publish
 AFTER INSERT OR UPDATE OF visibility ON public.pastelinks
 FOR EACH ROW
-WHEN (NEW.visibility='public' AND (TG_OP='INSERT' OR OLD.visibility IS DISTINCT FROM NEW.visibility))
+WHEN (NEW.visibility='public')
 EXECUTE FUNCTION public.trg_notify_market_publication();
+
+COMMIT;
+
+
+-- ============================================================
+-- FINAL WD OPERATING SCHEDULE + ADMIN ANNOUNCEMENTS
+-- WIB / Asia-Jakarta
+-- Manual WD:
+--   Mon-Wed 09:00-21:00
+--   Thu (malam Jumat) 09:00-23:00
+--   Fri 09:00-21:00
+--   Sat/Sun + configured public holidays = CLOSED
+-- Instant WD is unchanged.
+-- ============================================================
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.withdrawal_holidays (
+  holiday_date date PRIMARY KEY,
+  name text NOT NULL,
+  kind text NOT NULL DEFAULT 'national',
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.withdrawal_holidays ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS withdrawal_holidays_public_read ON public.withdrawal_holidays;
+CREATE POLICY withdrawal_holidays_public_read
+ON public.withdrawal_holidays
+FOR SELECT TO anon,authenticated
+USING (is_active=true OR public.is_current_user_admin());
+
+DROP POLICY IF EXISTS withdrawal_holidays_admin_write ON public.withdrawal_holidays;
+CREATE POLICY withdrawal_holidays_admin_write
+ON public.withdrawal_holidays
+FOR ALL TO authenticated
+USING (public.is_current_user_admin())
+WITH CHECK (public.is_current_user_admin());
+
+GRANT SELECT ON public.withdrawal_holidays TO anon,authenticated;
+GRANT ALL ON public.withdrawal_holidays TO authenticated;
+
+-- Official 2026 Indonesian national holidays + collective leave.
+-- Source: SKB 3 Menteri 2026 (17 national holidays + 8 collective leave).
+INSERT INTO public.withdrawal_holidays(holiday_date,name,kind)
+VALUES
+ ('2026-01-01','Tahun Baru 2026 Masehi','national'),
+ ('2026-01-16','Isra Mikraj Nabi Muhammad saw.','national'),
+ ('2026-02-16','Cuti Bersama Tahun Baru Imlek 2577 Kongzili','collective_leave'),
+ ('2026-02-17','Tahun Baru Imlek 2577 Kongzili','national'),
+ ('2026-03-18','Cuti Bersama Hari Suci Nyepi','collective_leave'),
+ ('2026-03-19','Hari Suci Nyepi (Tahun Baru Saka 1948)','national'),
+ ('2026-03-20','Cuti Bersama Idulfitri 1447 H','collective_leave'),
+ ('2026-03-21','Idulfitri 1447 H','national'),
+ ('2026-03-22','Idulfitri 1447 H','national'),
+ ('2026-03-23','Cuti Bersama Idulfitri 1447 H','collective_leave'),
+ ('2026-03-24','Cuti Bersama Idulfitri 1447 H','collective_leave'),
+ ('2026-04-03','Wafat Yesus Kristus','national'),
+ ('2026-04-05','Kebangkitan Yesus Kristus (Paskah)','national'),
+ ('2026-05-01','Hari Buruh Internasional','national'),
+ ('2026-05-14','Kenaikan Yesus Kristus','national'),
+ ('2026-05-15','Cuti Bersama Kenaikan Yesus Kristus','collective_leave'),
+ ('2026-05-27','Iduladha 1447 H','national'),
+ ('2026-05-28','Cuti Bersama Iduladha 1447 H','collective_leave'),
+ ('2026-05-31','Hari Raya Waisak 2570 BE','national'),
+ ('2026-06-01','Hari Lahir Pancasila','national'),
+ ('2026-06-16','1 Muharam Tahun Baru Islam 1448 H','national'),
+ ('2026-08-17','Proklamasi Kemerdekaan','national'),
+ ('2026-08-25','Maulid Nabi Muhammad saw.','national'),
+ ('2026-12-24','Cuti Bersama Kelahiran Yesus Kristus','collective_leave'),
+ ('2026-12-25','Kelahiran Yesus Kristus','national')
+ON CONFLICT (holiday_date) DO UPDATE
+SET name=excluded.name, kind=excluded.kind, is_active=true;
+
+CREATE OR REPLACE FUNCTION public.withdrawal_schedule_status(
+  p_at timestamptz DEFAULT now()
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  local_ts timestamp;
+  d date;
+  dow int;
+  mins int;
+  close_mins int;
+  holiday_name text;
+  is_holiday boolean;
+  is_open boolean := false;
+  reason text := '';
+  next_open timestamp;
+BEGIN
+  local_ts := timezone('Asia/Jakarta', coalesce(p_at,now()));
+  d := local_ts::date;
+  dow := extract(isodow from local_ts)::int; -- Mon=1 ... Sun=7
+  mins := extract(hour from local_ts)::int*60 + extract(minute from local_ts)::int;
+
+  SELECT h.name INTO holiday_name
+  FROM public.withdrawal_holidays h
+  WHERE h.holiday_date=d AND h.is_active=true
+  LIMIT 1;
+
+  is_holiday := holiday_name IS NOT NULL;
+
+  IF is_holiday THEN
+    reason := 'Tanggal merah: '||holiday_name;
+  ELSIF dow IN (6,7) THEN
+    reason := CASE WHEN dow=6 THEN 'Hari Sabtu' ELSE 'Hari Minggu' END;
+  ELSE
+    close_mins := CASE WHEN dow=4 THEN 23*60 ELSE 21*60 END; -- Thu = malam Jumat
+    IF mins >= 9*60 AND mins < close_mins THEN
+      is_open := true;
+      reason := CASE WHEN dow=4 THEN 'Kamis 09:00-23:00 WIB (malam Jumat)'
+                     ELSE 'Senin-Jumat 09:00-21:00 WIB' END;
+    ELSE
+      reason := CASE WHEN dow=4 THEN 'Di luar jam WD Manual Kamis (09:00-23:00 WIB)'
+                     ELSE 'Di luar jam WD Manual (09:00-21:00 WIB)' END;
+    END IF;
+  END IF;
+
+  IF NOT is_open THEN
+    -- Find the next weekday/non-holiday opening at 09:00 WIB.
+    FOR i IN 1..370 LOOP
+      IF extract(isodow from (d+i)::date)::int BETWEEN 1 AND 5
+         AND NOT EXISTS (
+           SELECT 1 FROM public.withdrawal_holidays h
+           WHERE h.holiday_date=(d+i)::date AND h.is_active=true
+         ) THEN
+        next_open := ((d+i)::date + time '09:00');
+        EXIT;
+      END IF;
+    END LOOP;
+    -- If today is an open weekday but before 09:00, today is the next opening.
+    IF NOT is_holiday AND dow BETWEEN 1 AND 5 AND mins < 9*60 THEN
+      next_open := d + time '09:00';
+    END IF;
+  ELSE
+    next_open := local_ts;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'open',is_open,
+    'weekday',dow,
+    'date',d,
+    'time',to_char(local_ts,'HH24:MI'),
+    'reason',reason,
+    'holiday',is_holiday,
+    'holiday_name',holiday_name,
+    'open_time','09:00',
+    'close_time',CASE WHEN dow=4 THEN '23:00' ELSE '21:00' END,
+    'timezone','Asia/Jakarta',
+    'next_open',CASE WHEN next_open IS NULL THEN NULL
+                     ELSE to_char(next_open,'YYYY-MM-DD HH24:MI:SS') END
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.withdrawal_schedule_status(timestamptz) TO anon,authenticated;
+
+-- Server-side enforcement. Frontend can disable the button, but this
+-- function is the final security gate so closed hours cannot be bypassed.
+CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
+ p_amount numeric,p_mode text,p_method text,p_account_name text,p_account_number text
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+ uid uuid:=auth.uid(); wid uuid; available numeric:=0;
+ fee numeric:=0; net_amount numeric:=0; total_debit numeric:=0;
+ mode_normalized text:=lower(btrim(coalesce(p_mode,'')));
+ sched jsonb;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+ IF p_amount IS NULL OR p_amount<=0 THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_AMOUNT'; END IF;
+
+ -- Manual WD is schedule-controlled. Instant remains unchanged.
+ IF mode_normalized='manual' THEN
+   sched:=public.withdrawal_schedule_status(now());
+   IF coalesce((sched->>'open')::boolean,false)=false THEN
+     RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%', coalesce(sched->>'reason','WD Manual sedang ditutup');
+   END IF;
+   IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_10000'; END IF;
+   fee:=7000;
+ ELSIF mode_normalized='instant' THEN
+   IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
+   IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
+   fee:=15000;
+ ELSE
+   RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
+ END IF;
+
+ net_amount:=greatest(0,p_amount-fee);
+ total_debit:=p_amount+fee;
+
+ SELECT available_balance INTO available
+ FROM public.wallets WHERE user_id=uid FOR UPDATE;
+ IF coalesce(available,0)<total_debit THEN RAISE EXCEPTION 'INSUFFICIENT_BALANCE'; END IF;
+
+ UPDATE public.wallets
+ SET available_balance=available_balance-total_debit,
+     balance=balance-total_debit,
+     updated_at=now()
+ WHERE user_id=uid;
+
+ UPDATE public.profiles
+ SET balance=balance-total_debit,updated_at=now()
+ WHERE id=uid;
+
+ INSERT INTO public.withdrawals(
+   user_id,amount,fee,net_amount,mode,method,account_name,account_number,status
+ ) VALUES(uid,p_amount,fee,net_amount,mode_normalized,p_method,p_account_name,p_account_number,'pending')
+ RETURNING id INTO wid;
+
+ INSERT INTO public.transactions(
+   user_id,amount,fee,net_amount,type,status,reference,description
+ ) VALUES(
+   uid,fee,fee,fee,'withdrawal_fee','completed',
+   'withdrawal-fee:'||wid::text,
+   CASE WHEN mode_normalized='instant' THEN 'WD Instant fee Rp15.000' ELSE 'WD Manual fee Rp7.000' END
+ );
+
+ RETURN jsonb_build_object(
+   'id',wid,'status','pending','amount',p_amount,'fee',fee,
+   'net_amount',net_amount,'total_debit',total_debit,'mode',mode_normalized
+ );
+END $$;
+
+GRANT EXECUTE ON FUNCTION public.request_withdrawal_v2(numeric,text,text,text,text) TO authenticated;
+
+-- ============================================================
+-- ADMIN ANNOUNCEMENT CRUD
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.admin_announcements(
+ p_limit integer DEFAULT 100,
+ p_offset integer DEFAULT 0
+)
+RETURNS SETOF public.announcements
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ RETURN QUERY
+ SELECT * FROM public.announcements
+ ORDER BY coalesce(published_at,created_at) DESC
+ LIMIT greatest(1,least(coalesce(p_limit,100),500))
+ OFFSET greatest(0,coalesce(p_offset,0));
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_upsert_announcement(
+ p_id uuid DEFAULT NULL,
+ p_title text DEFAULT '',
+ p_body text DEFAULT '',
+ p_image_url text DEFAULT NULL,
+ p_published boolean DEFAULT true
+)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+ r public.announcements;
+ old_title text;
+ old_body text;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF btrim(coalesce(p_title,''))='' THEN RAISE EXCEPTION 'TITLE_REQUIRED'; END IF;
+
+ IF p_id IS NULL THEN
+   INSERT INTO public.announcements(title,body,image_url,published,published_at)
+   VALUES(left(btrim(p_title),180),coalesce(p_body,''),nullif(btrim(coalesce(p_image_url,'')),''),coalesce(p_published,true),
+          CASE WHEN coalesce(p_published,true) THEN now() ELSE NULL END)
+   RETURNING * INTO r;
+ ELSE
+   SELECT title,body INTO old_title,old_body
+   FROM public.announcements WHERE id=p_id FOR UPDATE;
+
+   IF old_title IS NULL THEN RAISE EXCEPTION 'ANNOUNCEMENT_NOT_FOUND'; END IF;
+
+   UPDATE public.announcements
+   SET title=left(btrim(p_title),180),
+       body=coalesce(p_body,''),
+       image_url=nullif(btrim(coalesce(p_image_url,'')),''),
+       published=coalesce(p_published,false),
+       published_at=CASE
+         WHEN coalesce(p_published,false) AND published_at IS NULL THEN now()
+         WHEN NOT coalesce(p_published,false) THEN NULL
+         ELSE published_at
+       END,
+       updated_at=now()
+   WHERE id=p_id
+   RETURNING * INTO r;
+
+   -- Keep the all-user inbox copy synchronized with the edited announcement.
+   UPDATE public.notifications
+   SET title=r.title, body=left(coalesce(r.body,''),1000)
+   WHERE title=old_title AND body=left(coalesce(old_body,''),1000);
+
+   IF NOT r.published THEN
+     DELETE FROM public.notifications
+     WHERE title=r.title AND body=left(coalesce(r.body,''),1000);
+   END IF;
+ END IF;
+
+ IF r.published THEN
+   PERFORM public.notify_all_users(
+     r.title,
+     left(coalesce(r.body,''),1000),
+     NULL
+   );
+ END IF;
+
+ RETURN to_jsonb(r);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_announcement(p_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE
+ r public.announcements;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ SELECT * INTO r FROM public.announcements WHERE id=p_id;
+ IF NOT FOUND THEN RETURN false; END IF;
+ DELETE FROM public.announcements WHERE id=p_id;
+ DELETE FROM public.notifications
+ WHERE title=r.title AND body=left(coalesce(r.body,''),1000);
+ RETURN true;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.admin_announcements(integer,integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_upsert_announcement(uuid,text,text,text,boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_delete_announcement(uuid) TO authenticated;
 
 COMMIT;
