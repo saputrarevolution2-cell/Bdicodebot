@@ -228,6 +228,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             ],
             [
               "my-products.html",
+              "fa-box-open",
+              "My Products"
+            ],
+            [
+              "my-links.html",
               "fa-link",
               "My Links"
             ],
@@ -260,6 +265,27 @@ document.addEventListener("DOMContentLoaded", async () => {
               "transactions.html",
               "fa-arrow-right-arrow-left",
               "Transactions"
+            ]
+          ]
+        ],
+
+        [
+          "Tools",
+          [
+            [
+              "payment-methods.html",
+              "fa-credit-card",
+              "Payment Methods"
+            ],
+            [
+              "setup.html",
+              "fa-sliders",
+              "Setup"
+            ],
+            [
+              "about.html",
+              "fa-circle-info",
+              "About"
             ]
           ]
         ],

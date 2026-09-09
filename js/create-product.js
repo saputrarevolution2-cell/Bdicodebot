@@ -1731,6 +1731,21 @@ document.addEventListener("DOMContentLoaded", () => {
             if (
                 productAccess ===
                     "paid" &&
+                amount % 1000 !== 0
+            ) {
+                markInvalid(price);
+
+                toast(
+                    "Harga Paid harus kelipatan Rp1.000.",
+                    "error"
+                );
+
+                return null;
+            }
+
+            if (
+                productAccess ===
+                    "paid" &&
                 amount >
                     MAX_PAID_PRICE
             ) {
