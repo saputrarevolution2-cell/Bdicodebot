@@ -227,14 +227,57 @@ document.addEventListener(
                 );
             }
             /*
-             * User can continue to dashboard.
-             * Actual purchased-content access should be
-             * handled by the purchases/order access page,
-             * not by trusting query parameters on this page.
+             * Resolve the exact purchased content after the server
+             * has marked the order paid and created the purchase row.
+             * No query-string access is trusted; ownership is checked
+             * by the logged-in buyer + completed purchase.
              */
-            setAccessUrl(
-                "dashboard.html"
-            );
+            let accessUrl = "dashboard.html";
+            try {
+                const { data: purchase, error: purchaseError } = await client
+                    .from("purchases")
+                    .select("id,item_type,item_id,item_title,status,access_url")
+                    .eq("order_id", order.id)
+                    .eq("buyer_id", user.id)
+                    .in("status", ["completed","paid","success"])
+                    .maybeSingle();
+                if (purchaseError) throw purchaseError;
+
+                if (purchase?.access_url) {
+                    accessUrl = purchase.access_url;
+                } else {
+                    const type = String(order.item_type || "").toLowerCase();
+                    const id = order.item_id || order.product_id;
+                    if (id && type === "pastelink") {
+                        const { data } = await client.from("pastelinks").select("slug").eq("id",id).maybeSingle();
+                        if (data?.slug) accessUrl = `paste-view.html?slug=${encodeURIComponent(data.slug)}`;
+                    } else if (id && type === "telegram_product") {
+                        const { data } = await client.from("telegram_products").select("slug").eq("id",id).maybeSingle();
+                        if (data?.slug) accessUrl = `product.html?type=code&slug=${encodeURIComponent(data.slug)}`;
+                    } else if (id && ["channel","telegram_channel","group","telegram_group"].includes(type)) {
+                        const { data } = await client.from("telegram_channels").select("slug,type").eq("id",id).maybeSingle();
+                        if (data?.slug) {
+                            const prefix = String(data.type || type).toLowerCase() === "group" ? "g" : "ch";
+                            accessUrl = `product.html?type=${prefix === "g" ? "group" : "channel"}&slug=${encodeURIComponent(data.slug)}`;
+                        }
+                    } else if (id && ["product","link"].includes(type)) {
+                        const { data } = await client.from("products").select("slug").eq("id",id).maybeSingle();
+                        if (data?.slug) accessUrl = `product.html?type=link&slug=${encodeURIComponent(data.slug)}`;
+                    }
+                }
+            } catch (accessError) {
+                console.warn("[Payment Success] Access resolve:", accessError);
+            }
+
+            setAccessUrl(accessUrl);
+            if (accessButton) {
+                accessButton.textContent = accessUrl === "dashboard.html" ? "Buka Dashboard" : "Buka Konten";
+            }
+            setTimeout(() => {
+                if (accessUrl && accessUrl !== "#") {
+                    window.location.href = accessUrl;
+                }
+            }, 1200);
             /* ===============================================
                OPTIONAL SUCCESS HOOK
                =============================================== */

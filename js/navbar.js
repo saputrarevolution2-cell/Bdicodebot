@@ -166,6 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           ["orders.html", "fa-receipt", "Orders"],
           ["payments.html", "fa-credit-card", "Payments"],
           ["withdrawals.html", "fa-money-bill-transfer", "Withdrawals"],
+          ["notifications.html", "fa-bell", "Notifications"],
           ["transactions.html", "fa-arrow-right-arrow-left", "Transactions"],
           ["pastes.html", "fa-file-lines", "Pastes"],
           ["bots.html", "fa-robot", "Bots"],

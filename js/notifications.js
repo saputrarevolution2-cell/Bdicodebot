@@ -168,9 +168,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         is_read: true,
         notification_id: null
     }));
+    // Avoid showing the same admin announcement twice: once from
+    // announcements and again from the all-user notification inbox.
+    const noticeKeys = new Set(
+        notificationRows.map(item => `${item.title}||${item.body}`)
+    );
+    const filteredAnnouncements = announcementRows.filter(
+        item => !noticeKeys.has(`${item.title}||${item.body}`)
+    );
+
     const rows = [
         ...notificationRows,
-        ...announcementRows
+        ...filteredAnnouncements
     ].sort((a, b) => {
         const da = new Date(a.created_at || 0).getTime();
         const db = new Date(b.created_at || 0).getTime();

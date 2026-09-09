@@ -71,6 +71,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const manualStatus = $('manualStatus');
     const manualStatusTitle = $('manualStatusTitle');
     const manualStatusText = $('manualStatusText');
+    const manualClosedNotice = $('manualClosedNotice');
+    const manualClosedText = $('manualClosedText');
     const manualFeeText = $('manualFeeText');
 
     const withdrawFeePreview = $('withdrawFeePreview');
@@ -109,14 +111,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const INSTANT_MAX = 250000;
     const INSTANT_FEE = 15000;
 
-    const MANUAL_MIN = 100000;
+    const MANUAL_MIN = 10000;
 
-    const MANUAL_FEE_BANK = 10000;
+    const MANUAL_FEE_BANK = 7000;
     const MANUAL_FEE_EWALLET = 7000;
 
-    const MANUAL_OFF_HOURS_FEE = 5000;
-
-    const MANUAL_OPEN_HOUR = 7;
+    const MANUAL_OPEN_HOUR = 9;
     const MANUAL_CLOSE_HOUR = 21;
 
     const TIMEZONE = 'Asia/Jakarta';
@@ -146,6 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let isSubmitting = false;
     let isLoading = false;
+    let scheduleStatus = { open: false, reason: 'Memeriksa jadwal WD Manual...' };
 
     let historyPage = 1;
 
@@ -472,40 +473,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const isManualNormalHours = () => {
-        const now =
-            getJakartaParts();
+        return Boolean(scheduleStatus?.open);
+    };
 
-        const weekend =
-            now.weekday === 'Sat' ||
-            now.weekday === 'Sun';
+    const isManualOffHours = () => !isManualNormalHours();
 
-        if (weekend) {
-            return false;
+    const isInstantOpen = () => true;
+
+    const loadWithdrawalSchedule = async () => {
+        const supabase = getSupabase();
+        if (!supabase) return;
+        try {
+            const { data, error } = await supabase.rpc('withdrawal_schedule_status');
+            if (error) throw error;
+            scheduleStatus = data || { open:false, reason:'Jadwal tidak tersedia' };
+        } catch (error) {
+            console.warn('[Withdrawals] schedule:', error);
+            // Fail closed for manual WD if the schedule cannot be verified.
+            scheduleStatus = { open:false, reason:'Jadwal WD Manual tidak dapat diverifikasi. Coba refresh.' };
         }
-
-        const currentMinutes =
-            now.totalMinutes;
-
-        const openMinutes =
-            MANUAL_OPEN_HOUR * 60;
-
-        const closeMinutes =
-            MANUAL_CLOSE_HOUR * 60;
-
-        return (
-            currentMinutes >=
-                openMinutes &&
-            currentMinutes <
-                closeMinutes
-        );
-    };
-
-    const isManualOffHours = () => {
-        return !isManualNormalHours();
-    };
-
-    const isInstantOpen = () => {
-        return true;
+        renderManualSchedule();
+        renderFeePreview();
     };
 
     /* =====================================================
@@ -527,68 +515,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             : MANUAL_FEE_EWALLET;
     };
 
-    const getManualFee = () => {
-        const normalFee =
-            getNormalManualFee();
-
-        return isManualOffHours()
-            ? normalFee +
-                MANUAL_OFF_HOURS_FEE
-            : normalFee;
-    };
+    const getManualFee = () => getNormalManualFee();
 
     /* =====================================================
        MANUAL STATUS
        ===================================================== */
 
     const renderManualSchedule = () => {
-        if (!manualStatus) {
-            return;
+        if (!manualStatus) return;
+
+        const open = isManualNormalHours();
+        manualStatus.classList.remove('open','closed','off-hours');
+        manualStatus.dataset.state = open ? 'open' : 'closed';
+
+        if (manualClosedNotice) {
+            manualClosedNotice.hidden = open;
         }
 
-        const normalHours =
-            isManualNormalHours();
+        if (manualSubmit) {
+            manualSubmit.disabled = !open;
+            manualSubmit.setAttribute('aria-disabled', String(!open));
+            manualSubmit.classList.toggle('is-closed', !open);
+        }
 
-        manualStatus.classList.remove(
-            'open',
-            'closed',
-            'off-hours'
-        );
-
-        manualStatus.dataset.state =
-            normalHours
-                ? 'open'
-                : 'checking';
-
-        if (normalHours) {
-            manualStatus.classList.add(
-                'open'
-            );
-
-            if (manualStatusTitle) {
-                manualStatusTitle.textContent =
-                    'WD Manual sedang buka';
-            }
-
+        if (open) {
+            manualStatus.classList.add('open');
+            if (manualStatusTitle) manualStatusTitle.textContent = 'WD Manual sedang buka';
             if (manualStatusText) {
                 manualStatusText.textContent =
-                    'Senin–Jumat, 07:00–21:00 WIB. Fee normal berlaku.';
+                    scheduleStatus?.reason || 'Senin–Jumat 09:00–21:00 WIB. Kamis malam (malam Jumat) sampai 23:00 WIB.';
             }
         } else {
-            manualStatus.classList.add(
-                'off-hours'
-            );
-
-            if (manualStatusTitle) {
-                manualStatusTitle.textContent =
-                    'WD Manual di luar jam normal';
-            }
-
-            if (manualStatusText) {
-                manualStatusText.textContent =
-                    `Tetap bisa mengajukan. Fee tambahan ${money(
-                        MANUAL_OFF_HOURS_FEE
-                    )} berlaku.`;
+            manualStatus.classList.add('closed');
+            if (manualStatusTitle) manualStatusTitle.textContent = 'WD Manual sedang tutup';
+            if (manualStatusText) manualStatusText.textContent =
+                scheduleStatus?.reason || 'WD Manual ditutup di luar jadwal operasional.';
+            if (manualClosedText) {
+                const next = scheduleStatus?.next_open
+                    ? String(scheduleStatus.next_open).replace(' ', ' WIB ')
+                    : 'jadwal operasional berikutnya';
+                manualClosedText.textContent =
+                    `Pengajuan WD Manual ditutup. Buka kembali ${next}.`;
             }
         }
 
@@ -600,38 +567,8 @@ document.addEventListener('DOMContentLoaded', async () => {
        ===================================================== */
 
     const renderManualFeeInfo = () => {
-        if (!manualFeeText) {
-            return;
-        }
-
-        const extra =
-            isManualOffHours()
-                ? MANUAL_OFF_HOURS_FEE
-                : 0;
-
-        const bankFee =
-            MANUAL_FEE_BANK +
-            extra;
-
-        const ewalletFee =
-            MANUAL_FEE_EWALLET +
-            extra;
-
-        if (extra > 0) {
-            manualFeeText.textContent =
-                `Fee saat ini: Bank ${money(
-                    bankFee
-                )} · E-Wallet ${money(
-                    ewalletFee
-                )}`;
-        } else {
-            manualFeeText.textContent =
-                `Fee Bank ${money(
-                    MANUAL_FEE_BANK
-                )} · E-Wallet ${money(
-                    MANUAL_FEE_EWALLET
-                )}`;
-        }
+        if (!manualFeeText) return;
+        manualFeeText.textContent = `Fee WD Manual ${money(MANUAL_FEE_EWALLET)}. WD hanya dapat diajukan saat jam operasional.`;
     };
 
     /* =====================================================
@@ -667,10 +604,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             money(net);
 
         if (withdrawFeePreview) {
-            withdrawFeePreview.classList.toggle(
-                'fee-increased',
-                isManualOffHours()
-            );
+            withdrawFeePreview.classList.remove('fee-increased');
         }
     };
 
@@ -2083,11 +2017,13 @@ document.addEventListener('DOMContentLoaded', async () => {
            MANUAL
            --------------------------------------------- */
 
-        if (
-            mode === 'manual' &&
-            amount < MANUAL_MIN
-        ) {
-            return 'WD Manual minimum Rp100.000.';
+        if (mode === 'manual') {
+            if (!isManualNormalHours()) {
+                return `WD Manual sedang tutup. ${scheduleStatus?.reason || 'Silakan kembali pada jam operasional.'}`;
+            }
+            if (amount < MANUAL_MIN) {
+                return 'WD Manual minimum Rp10.000.';
+            }
         }
 
         /* ---------------------------------------------
@@ -2190,6 +2126,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw new Error(
                 validation
             );
+        }
+
+        // Recheck the schedule immediately before submitting.
+        if (mode === 'manual') {
+            const { data: schedule, error: scheduleError } =
+                await supabase.rpc('withdrawal_schedule_status');
+            if (scheduleError) throw scheduleError;
+            scheduleStatus = schedule || scheduleStatus;
+            renderManualSchedule();
+            if (!scheduleStatus?.open) {
+                throw new Error(`WD Manual sedang tutup. ${scheduleStatus?.reason || ''}`.trim());
+            }
         }
 
         /*
@@ -2614,7 +2562,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             renderPaymentMethods();
 
-            renderManualSchedule();
+            await loadWithdrawalSchedule();
 
             if (
                 selectedPaymentMethod
@@ -2948,7 +2896,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      */
     setInterval(
         () => {
-            renderManualSchedule();
+            loadWithdrawalSchedule();
             renderFeePreview();
         },
         60 * 1000
@@ -2969,7 +2917,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.visibilityState ===
                 'visible'
             ) {
-                renderManualSchedule();
+                loadWithdrawalSchedule();
                 renderFeePreview();
             }
         }
