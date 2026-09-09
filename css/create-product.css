@@ -2873,3 +2873,188 @@ body.auth-modal-open {
 .create-product-page[data-product-type="pastelink"] #content{min-height:180px}
 .create-product-page[data-product-type="link"] #content{min-height:90px}
 @media (max-width:650px){.create-container{padding-left:12px;padding-right:12px}.create-form-panel{padding:16px}.form-row{grid-template-columns:1fr}.form-actions{justify-content:stretch}.cancel-btn,.submit-btn{flex:1 1 0}.back-btn{width:100%}}
+
+
+/* =========================================================
+   CREATE CENTER — PASTE-STYLE UI
+   Visual layer only. Functional selectors remain
+   compatible with create-product.js + canonical SQL.
+   ========================================================= */
+
+.create-product-page.paste-page {
+  --create-bg:
+    radial-gradient(circle at 8% 0%, rgba(34,158,217,.055), transparent 30%),
+    #f6f9fb;
+  background: var(--create-bg);
+}
+
+html[data-theme="dark"] .create-product-page.paste-page,
+html.theme-dark .create-product-page.paste-page,
+body.theme-dark .create-product-page.paste-page {
+  --create-bg:
+    radial-gradient(circle at 8% 0%, rgba(34,158,217,.10), transparent 32%),
+    #07131f;
+}
+
+.create-product-page .create-main {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.create-product-page .create-section {
+  padding: 28px 18px 56px;
+}
+
+.create-product-page .create-container {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.create-product-page .create-header,
+.create-product-page .create-form-panel,
+.create-product-page .side-card,
+.create-product-page .side-note {
+  border-radius: 18px;
+}
+
+.create-product-page .create-header {
+  margin-bottom: 18px;
+  padding: 22px;
+  background: var(--create-card, #fff);
+  border: 1px solid var(--create-border, #e1e9ee);
+  box-shadow: var(--create-shadow, 0 10px 30px rgba(15,40,60,.055));
+}
+
+.create-product-page .create-header-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.create-product-page .create-page-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  background: var(--create-primary-soft, #edf8fc);
+  color: var(--create-primary, #229ed9);
+}
+
+.create-product-page .create-heading h1 {
+  margin: 2px 0 5px;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -.02em;
+}
+
+.create-product-page .create-heading p {
+  margin: 0;
+  color: var(--create-muted, #7b8e9b);
+}
+
+.create-product-page .create-form-panel {
+  background: var(--create-card, #fff);
+  border: 1px solid var(--create-border, #e1e9ee);
+  box-shadow: var(--create-shadow, 0 10px 30px rgba(15,40,60,.055));
+}
+
+.create-product-page .panel-heading {
+  padding: 22px 22px 14px;
+  border-bottom: 1px solid var(--create-border-soft, #edf2f5);
+}
+
+.create-product-page .form-field {
+  margin-bottom: 16px;
+}
+
+.create-product-page .form-field label {
+  font-weight: 700;
+  color: var(--create-heading, #10232f);
+}
+
+.create-product-page .input-wrap,
+.create-product-page .textarea-wrap {
+  border-radius: 13px;
+}
+
+.create-product-page .input,
+.create-product-page .select,
+.create-product-page .textarea {
+  border-radius: 13px;
+}
+
+.create-product-page .form-row {
+  gap: 14px;
+}
+
+.create-product-page .submit-btn {
+  border-radius: 13px;
+  min-height: 48px;
+}
+
+.create-product-page .cancel-btn {
+  border-radius: 13px;
+}
+
+.create-product-page .create-side {
+  gap: 14px;
+}
+
+.create-product-page .side-card {
+  background: var(--create-card, #fff);
+  border: 1px solid var(--create-border, #e1e9ee);
+  box-shadow: var(--create-shadow, 0 10px 30px rgba(15,40,60,.055));
+}
+
+.create-product-page .side-card:hover {
+  box-shadow: var(--create-shadow-hover, 0 16px 38px rgba(15,40,60,.085));
+}
+
+.create-product-page .access-selector,
+.create-product-page .type-selector {
+  border-radius: 14px;
+}
+
+.create-product-page .form-field small,
+.create-product-page .field-bottom small,
+.create-product-page #priceHint,
+.create-product-page #contentHint {
+  color: var(--create-muted, #7b8e9b);
+}
+
+@media (max-width: 760px) {
+  .create-product-page .create-section {
+    padding: 16px 12px 36px;
+  }
+
+  .create-product-page .create-header {
+    padding: 17px;
+    border-radius: 16px;
+  }
+
+  .create-product-page .create-header-main {
+    align-items: flex-start;
+  }
+
+  .create-product-page .create-page-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 12px;
+  }
+
+  .create-product-page .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-product-page .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .create-product-page .submit-btn,
+  .create-product-page .cancel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
