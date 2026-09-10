@@ -3691,3 +3691,168 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon,authenticated;
 
 COMMIT;
+
+
+-- ============================================================================
+-- FINAL PRODUCT ACCESS + GUEST FREE CREATION HARDENING
+-- ============================================================================
+-- Rules:
+-- 1) Guest users may OPEN/VISIT only FREE public content.
+-- 2) PAID content never exposes its protected payload until a completed purchase.
+-- 3) Guest users may CREATE FREE PasteLink / Code / Channel / Group.
+-- 4) PAID creation requires an authenticated account.
+-- 5) Authenticated owners/admins may manage their own content.
+-- 6) Price/access are normalized together: free => 0, paid => Rp5k..Rp150k step Rp1k.
+-- ============================================================================
+BEGIN;
+
+ALTER TABLE public.pastelinks ALTER COLUMN user_id DROP NOT NULL;
+ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS access_type text NOT NULL DEFAULT 'free';
+ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS price numeric(18,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.pastelinks DROP CONSTRAINT IF EXISTS pastelinks_price_access_check;
+ALTER TABLE public.pastelinks ADD CONSTRAINT pastelinks_price_access_check CHECK (
+  (access_type='free' AND price=0) OR
+  (access_type='paid' AND price BETWEEN 5000 AND 150000 AND mod(price,1000)=0)
+);
+
+-- Public metadata is exposed through the marketplace view; base tables are
+-- intentionally limited to rows that are safe for direct frontend reads.
+DROP POLICY IF EXISTS products_public_read ON public.products;
+CREATE POLICY products_public_read ON public.products
+FOR SELECT TO anon,authenticated
+USING (
+  seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin()
+  OR status IN ('published','active')
+);
+
+DROP POLICY IF EXISTS telegram_products_public_read ON public.telegram_products;
+CREATE POLICY telegram_products_public_read ON public.telegram_products
+FOR SELECT TO anon,authenticated
+USING (
+  owner_id=auth.uid() OR public.is_current_user_admin()
+  OR status IN ('published','active')
+);
+
+DROP POLICY IF EXISTS telegram_channels_public_read ON public.telegram_channels;
+CREATE POLICY telegram_channels_public_read ON public.telegram_channels
+FOR SELECT TO anon,authenticated
+USING (
+  owner_id=auth.uid() OR public.is_current_user_admin()
+  OR status IN ('published','active')
+);
+
+-- Paid PasteLinks are NOT directly readable by guests/unpaid users.
+DROP POLICY IF EXISTS pastelinks_owner_or_public ON public.pastelinks;
+CREATE POLICY pastelinks_owner_or_public ON public.pastelinks
+FOR SELECT TO anon,authenticated
+USING (
+  user_id=auth.uid()
+  OR public.is_current_user_admin()
+  OR (visibility='public' AND coalesce(access_type,'free')='free')
+);
+
+-- Guest/authenticated creation RPCs. These are the ONLY public write paths.
+CREATE OR REPLACE FUNCTION public.create_pastelink_content(
+  p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',
+  p_price numeric DEFAULT 0,p_description text DEFAULT '',p_tags text[] DEFAULT '{}',
+  p_expires_at timestamptz DEFAULT NULL
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); r public.pastelinks;
+BEGIN
+ IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
+ IF a NOT IN ('free','paid') THEN RAISE EXCEPTION 'INVALID_ACCESS_TYPE'; END IF;
+ IF a='paid' AND uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED_FOR_PAID'; END IF;
+ IF a='free' THEN pr:=0; ELSE IF pr<5000 OR pr>150000 OR mod(pr,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PAID_PRICE'; END IF; END IF;
+ INSERT INTO public.pastelinks(user_id,slug,title,content_html,visibility,password_hash,expires_at,description,tags,allow_comments,allow_download,show_raw,anonymous,views,access_type,price)
+ VALUES(uid,btrim(p_slug),btrim(p_title),p_content,'public',NULL,p_expires_at,coalesce(p_description,''),coalesce(p_tags,'{}'),true,true,true,uid IS NULL,0,a,pr)
+ RETURNING * INTO r;
+ RETURN jsonb_build_object('ok',true,'id',r.id,'slug',r.slug,'access_type',r.access_type,'price',r.price);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.create_code_content(
+  p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,
+  p_description text DEFAULT '',p_approved_bot_id uuid DEFAULT NULL
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); b public.approved_bots; r public.telegram_products;
+BEGIN
+ IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
+ IF a NOT IN ('free','paid') THEN RAISE EXCEPTION 'INVALID_ACCESS_TYPE'; END IF;
+ IF a='paid' AND uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED_FOR_PAID'; END IF;
+ IF a='free' THEN pr:=0; ELSE IF pr<5000 OR pr>150000 OR mod(pr,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PAID_PRICE'; END IF; END IF;
+ IF p_approved_bot_id IS NULL THEN RAISE EXCEPTION 'APPROVED_BOT_REQUIRED'; END IF;
+ SELECT * INTO b FROM public.approved_bots WHERE id=p_approved_bot_id AND is_active=true;
+ IF b.id IS NULL THEN RAISE EXCEPTION 'BOT_NOT_FOUND_OR_INACTIVE'; END IF;
+ INSERT INTO public.telegram_products(owner_id,title,slug,type,product_type,access_type,bot_username,telegram_bot_id,price,description,content,thumbnail_url,category,status,approved_bot_id)
+ VALUES(uid,btrim(p_title),btrim(p_slug),'code','code',a,b.bot_username,b.bot_id,pr,coalesce(p_description,''),p_content,NULL,'General','published',b.id)
+ RETURNING * INTO r;
+ RETURN jsonb_build_object('ok',true,'id',r.id,'slug',r.slug,'access_type',r.access_type,'price',r.price);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.create_telegram_content(
+  p_name text,p_slug text,p_type text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,
+  p_description text DEFAULT '',p_username text DEFAULT NULL,p_invite_url text DEFAULT NULL,
+  p_telegram_channel_id text DEFAULT NULL
+)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); k text:=CASE WHEN lower(coalesce(p_type,''))='group' THEN 'group' ELSE 'channel' END; r public.telegram_channels;
+BEGIN
+ IF btrim(coalesce(p_name,''))='' THEN RAISE EXCEPTION 'TITLE_REQUIRED'; END IF;
+ IF a NOT IN ('free','paid') THEN RAISE EXCEPTION 'INVALID_ACCESS_TYPE'; END IF;
+ IF a='paid' AND uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED_FOR_PAID'; END IF;
+ IF a='free' THEN pr:=0; ELSE IF pr<5000 OR pr>150000 OR mod(pr,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PAID_PRICE'; END IF; END IF;
+ INSERT INTO public.telegram_channels(owner_id,slug,username,name,type,access_type,telegram_channel_id,description,invite_url,price,category,status)
+ VALUES(uid,btrim(p_slug),p_username,btrim(p_name),k,a,p_telegram_channel_id,coalesce(p_description,''),p_invite_url,pr,'General','published')
+ RETURNING * INTO r;
+ RETURN jsonb_build_object('ok',true,'id',r.id,'slug',r.slug,'access_type',r.access_type,'price',r.price,'type',r.type);
+END $$;
+
+GRANT EXECUTE ON FUNCTION public.create_pastelink_content(text,text,text,text,numeric,text,text[],timestamptz) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.create_code_content(text,text,text,text,numeric,text,uuid) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.create_telegram_content(text,text,text,text,numeric,text,text,text,text) TO anon,authenticated;
+
+-- Definitive secure detail RPC: FREE is visible to guests; PAID requires owner/admin/purchase.
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r record; result jsonb; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; uid uuid:=auth.uid(); paid boolean:=false;
+BEGIN
+ IF normalized IN ('product','link','code') THEN
+   IF normalized='code' THEN
+     SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,
+            ab.bot_username master_bot_username,ab.bot_name master_bot_name,ab.bot_id master_bot_id,coalesce(ab.is_active,false) bot_active
+     INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id LEFT JOIN public.approved_bots ab ON ab.id=p.approved_bot_id WHERE p.id=p_id;
+   ELSE
+     SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id
+     INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
+   END IF;
+ ELSIF normalized IN ('telegram_product','telegram-product') THEN
+   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,
+          ab.bot_username master_bot_username,ab.bot_name master_bot_name,ab.bot_id master_bot_id,coalesce(ab.is_active,false) bot_active
+   INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id LEFT JOIN public.approved_bots ab ON ab.id=p.approved_bot_id WHERE p.id=p_id;
+ ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,p.name title
+   INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
+ ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
+   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type
+   INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
+ ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
+ IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
+ paid:=coalesce(r.access_type,'free')='paid' OR coalesce(r.price,0)>0;
+ can_access:=NOT paid OR public.is_current_user_admin() OR (uid IS NOT NULL AND uid=r.owner_id) OR
+   (uid IS NOT NULL AND EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=uid AND pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')));
+ result:=to_jsonb(r)||jsonb_build_object('found',true,'can_access',can_access,'is_paid',paid);
+ IF NOT can_access AND paid THEN result:=result-'content'-'content_html'; END IF;
+ RETURN result;
+END $$;
+GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
+
+-- Keep PasteLink slug access on the same secure contract.
+CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE pid uuid;
+BEGIN SELECT id INTO pid FROM public.pastelinks WHERE slug=btrim(coalesce(p_slug,'')) LIMIT 1; IF pid IS NULL THEN RETURN jsonb_build_object('found',false); END IF; RETURN public.get_market_item_detail('pastelink',pid); END $$;
+GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon,authenticated;
+
+-- Withdrawal schedule remains authoritative from SQL RPC; frontend must fail closed.
+COMMIT;
