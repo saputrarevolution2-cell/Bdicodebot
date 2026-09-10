@@ -1,0 +1,49 @@
+
+/* PasTele FINAL UI POLISH — loaded last */
+:root{--pt-nav-h:72px}
+/* Fixed universal navbar */
+#navbar{position:sticky;top:0;z-index:5000;width:100%;height:var(--pt-nav-h);isolation:isolate}
+#navbar>.navbar{position:sticky;top:0;z-index:5001;height:var(--pt-nav-h)}
+.navbar{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+body.nav-menu-open{overflow:hidden}
+.nav-social-inline{display:flex;align-items:center;gap:7px;margin-right:4px}
+.nav-social-inline a{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;text-decoration:none;transition:transform .18s ease,background .18s ease}
+.nav-social-inline a:hover{transform:translateY(-1px);background:rgba(100,116,139,.12)}
+.nav-social-inline i{font-size:16px}
+.nav-balance{display:none!important}
+#navSocials{display:none!important}
+.nav-tools{margin-top:auto}
+/* Footer horizontal layout */
+.pastele-footer .footer-container{display:grid!important;grid-template-columns:minmax(240px,1.5fr) repeat(3,minmax(140px,1fr));gap:34px;align-items:start}
+.pastele-footer .footer-bottom{display:flex!important;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.pastele-footer .footer-meta{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+/* Create hub / forms */
+.create-hub,.create-page,.content-page,.profile-page,.settings-page,.subscription-page,.premium-page,.about-page{max-width:1180px;margin-inline:auto}
+.create-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important}
+.create-choice{min-height:118px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px}
+/* Dashboard-like horizontal cards */
+.profile-grid,.settings-grid,.subscription-grid,.premium-grid,.about-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.profile-card,.settings-card,.subscription-card,.premium-card,.about-card{min-width:0}
+/* Notification readability */
+.notice-body{line-height:1.7;overflow-wrap:anywhere}
+.notice-read-more{margin-top:10px;cursor:pointer;border:0;background:transparent;font-weight:700;text-decoration:underline}
+/* Disabled closed withdrawal form */
+.manual-closed .manual-form,.manual-form.is-closed,.withdraw-form.is-closed{pointer-events:none;opacity:.58;filter:saturate(.65)}
+button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allowed}
+/* Responsive */
+@media(max-width:900px){
+ :root{--pt-nav-h:64px}
+ #navbar,#navbar>.navbar{height:var(--pt-nav-h)}
+ .nav-social-inline a{width:30px;height:30px}
+ .pastele-footer .footer-container{grid-template-columns:1fr 1fr!important;gap:24px}
+ .pastele-footer .footer-brand{grid-column:1/-1}
+ .profile-grid,.settings-grid,.subscription-grid,.premium-grid,.about-grid{grid-template-columns:1fr}
+ .create-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:560px){
+ .pastele-footer .footer-container{grid-template-columns:1fr!important}
+ .pastele-footer .footer-bottom{align-items:flex-start;flex-direction:column}
+ .nav-social-inline{gap:2px}
+ .nav-social-inline a{width:27px;height:27px}
+ .nav-social-inline i{font-size:14px}
+}
