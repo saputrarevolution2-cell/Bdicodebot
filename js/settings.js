@@ -1321,9 +1321,9 @@ window.PASTELE_CONFIG = Object.freeze({
     } catch (_) {}
 
     const updateThemeLabel = () => {
-      const mode = localStorage.getItem('pastele-theme') || 'system';
+      const mode = localStorage.getItem('pastele-theme') || 'auto';
       const el = document.getElementById('ptThemeText');
-      if (el) el.textContent = mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
     };
 
     updateThemeLabel();
@@ -1332,8 +1332,8 @@ window.PASTELE_CONFIG = Object.freeze({
       if (window.PasTeleTheme?.cycle) {
         window.PasTeleTheme.cycle();
       } else {
-        const modes = ['system','light','dark'];
-        const current = localStorage.getItem('pastele-theme') || 'system';
+        const modes = ['auto','light','dark'];
+        const current = localStorage.getItem('pastele-theme') || 'auto';
         localStorage.setItem('pastele-theme', modes[(modes.indexOf(current) + 1) % modes.length]);
         location.reload();
       }
@@ -2747,41 +2747,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* =======================================================
      THEME / APPEARANCE
      ======================================================= */
-  const themeKey = 'pastele-theme';
-  const resolveTheme = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    if (mode === 'system') return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const h = new Date().getHours();
-    return h >= 18 || h < 6 ? 'dark' : 'light';
-  };
   const applySettingsTheme = (mode) => {
-    if (!['auto','light','dark','system'].includes(mode)) mode = 'auto';
-    localStorage.setItem(themeKey, mode);
-    const theme = resolveTheme(mode);
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.themeMode = mode;
-    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
-    document.documentElement.classList.toggle('theme-light', theme === 'light');
-    document.body?.classList.toggle('theme-dark', theme === 'dark');
-    document.body?.classList.toggle('theme-light', theme === 'light');
-    document.documentElement.style.colorScheme = theme;
-    document.querySelectorAll('[data-theme-option]').forEach(button => {
-      const active = button.dataset.themeOption === mode;
-      button.classList.toggle('active', active);
-      button.setAttribute('aria-pressed', String(active));
-    });
+    if (window.PasTeleTheme?.set) return window.PasTeleTheme.set(mode);
+    localStorage.setItem('pastele-theme', mode);
   };
-  applySettingsTheme(localStorage.getItem(themeKey) || 'auto');
   document.querySelectorAll('[data-theme-option]').forEach(button => {
     button.addEventListener('click', () => {
       const mode = button.dataset.themeOption || 'auto';
       applySettingsTheme(mode);
-      if (window.PasTeleTheme?.set) window.PasTeleTheme.set(mode);
       toast(`Tema ${mode === 'auto' ? 'Auto' : mode === 'system' ? 'System' : mode === 'dark' ? 'Dark' : 'Light'} aktif.`, 'success');
     });
   });
-  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener('change', () => {
-    if ((localStorage.getItem(themeKey) || 'auto') === 'system') applySettingsTheme('system');
+  window.addEventListener('pastele-theme-change', () => {
+    document.querySelectorAll('[data-theme-option]').forEach(button => {
+      const mode = localStorage.getItem('pastele-theme') || 'auto';
+      const active = button.dataset.themeOption === mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
   });
 
   /* =======================================================

@@ -1,53 +1,65 @@
-/* PasTele — Unified automatic theme manager.
-   Default: AUTO (06:00–17:59 light, 18:00–05:59 dark).
-   Manual modes remain available from Settings: auto, light, dark, system.
-*/
+/* PasTele — Canonical global theme manager. */
 (() => {
   'use strict';
   const root = document.documentElement;
   const KEY = 'pastele-theme';
-  const resolve = mode => {
+  const MODES = ['auto', 'light', 'dark', 'system'];
+
+  const resolve = (mode) => {
     if (mode === 'light' || mode === 'dark') return mode;
-    if (mode === 'system') return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const h = new Date().getHours();
-    return h >= 18 || h < 6 ? 'dark' : 'light';
+    if (mode === 'system') {
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    const hour = new Date().getHours();
+    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
   };
+
   const apply = (mode = localStorage.getItem(KEY) || 'auto') => {
-    if (!['auto','light','dark','system'].includes(mode)) mode = 'auto';
+    if (!MODES.includes(mode)) mode = 'auto';
     const theme = resolve(mode);
     root.dataset.theme = theme;
     root.dataset.themeMode = mode;
     root.classList.toggle('theme-dark', theme === 'dark');
     root.classList.toggle('theme-light', theme === 'light');
     root.style.colorScheme = theme;
-    document.body?.classList.toggle('theme-dark', theme === 'dark');
-    document.body?.classList.toggle('theme-light', theme === 'light');
-    document.querySelectorAll('[data-theme-option]').forEach(btn => {
-      const active = btn.dataset.themeOption === mode;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-pressed', String(active));
+    if (document.body) {
+      document.body.classList.toggle('theme-dark', theme === 'dark');
+      document.body.classList.toggle('theme-light', theme === 'light');
+    }
+    document.querySelectorAll('[data-theme-option]').forEach((button) => {
+      const active = button.dataset.themeOption === mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
     });
     window.dispatchEvent(new CustomEvent('pastele-theme-change', { detail: { mode, theme } }));
     return theme;
   };
-  window.PasTeleTheme = {
+
+  const set = (mode) => {
+    if (!MODES.includes(mode)) mode = 'auto';
+    localStorage.setItem(KEY, mode);
+    return apply(mode);
+  };
+
+  const cycle = () => {
+    const current = localStorage.getItem(KEY) || 'auto';
+    const index = Math.max(0, MODES.indexOf(current));
+    return set(['auto', 'light', 'dark'][(index + 1) % 3]);
+  };
+
+  window.PasTeleTheme = Object.freeze({
     get: () => localStorage.getItem(KEY) || 'auto',
     resolved: () => resolve(localStorage.getItem(KEY) || 'auto'),
-    set: mode => { localStorage.setItem(KEY, mode); return apply(mode); },
-    cycle: () => {
-      const modes = ['auto','light','dark'];
-      const current = modes.indexOf(localStorage.getItem(KEY) || 'auto');
-      const next = modes[(current + 1) % modes.length];
-      localStorage.setItem(KEY, next);
-      return apply(next);
-    },
+    set,
+    cycle,
     apply
-  };
+  });
+
   apply();
   window.setInterval(() => {
-    const mode = localStorage.getItem(KEY) || 'auto';
-    if (mode === 'auto') apply('auto');
+    if ((localStorage.getItem(KEY) || 'auto') === 'auto') apply('auto');
   }, 60 * 1000);
+
   window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change', () => {
     if ((localStorage.getItem(KEY) || 'auto') === 'system') apply('system');
   });

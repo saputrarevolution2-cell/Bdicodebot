@@ -6,7 +6,7 @@
    ============================================================ */
 
 (() => {
-  const initNavbar = async () => {
+  const initNavbar = async () => { if (/\/admin(?:\/|$)/i.test(location.pathname)) return;
     const host = document.getElementById('navbar');
     if (!host || host.dataset.ready === '1') return;
     host.dataset.ready = '1';
@@ -328,7 +328,7 @@
     const updateThemeLabel = () => {
       const mode = localStorage.getItem('pastele-theme') || 'auto';
       const el = document.getElementById('ptThemeText');
-      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
     };
 
     updateThemeLabel();

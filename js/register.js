@@ -2359,9 +2359,9 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
 
     const updateThemeLabel = () => {
-      const mode = localStorage.getItem('pastele-theme') || 'system';
+      const mode = localStorage.getItem('pastele-theme') || 'auto';
       const el = document.getElementById('ptThemeText');
-      if (el) el.textContent = mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
     };
 
     updateThemeLabel();
@@ -2370,8 +2370,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (window.PasTeleTheme?.cycle) {
         window.PasTeleTheme.cycle();
       } else {
-        const modes = ['system','light','dark'];
-        const current = localStorage.getItem('pastele-theme') || 'system';
+        const modes = ['auto','light','dark'];
+        const current = localStorage.getItem('pastele-theme') || 'auto';
         localStorage.setItem('pastele-theme', modes[(modes.indexOf(current) + 1) % modes.length]);
         location.reload();
       }
