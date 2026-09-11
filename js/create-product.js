@@ -1029,6 +1029,11 @@ window.PASTELE_CONFIG = Object.freeze({
       }
     } catch (_) {}
 
+    if (!user) {
+      host.dataset.ready = "";
+      return;
+    }
+
     try {
       if (user && window.sb) {
         const r = await window.sb

@@ -1029,6 +1029,11 @@ window.PASTELE_CONFIG = Object.freeze({
       }
     } catch (_) {}
 
+    if (!user) {
+      host.dataset.ready = "";
+      return;
+    }
+
     try {
       if (user && window.sb) {
         const r = await window.sb
@@ -1365,61 +1370,3 @@ window.PASTELE_CONFIG = Object.freeze({
 document.addEventListener('DOMContentLoaded',()=>{
 'use strict';const $=id=>document.getElementById(id),client=()=>window.sb;const toast=(m,t='info')=>window.TC?.toast?window.TC.toast(m,t):alert(m);const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));const slugify=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,70);const access=()=>document.querySelector('input[name="access"]:checked')?.value||'free';const kind=()=>new URLSearchParams(location.search).get('type')==='group'?'group':'channel';const user=async()=>await window.TC?.user?.();function sync(){const paid=access()==='paid';$('priceBox').hidden=!paid;$('price').disabled=!paid;if(!paid)$('price').value='0';$('kindLabel').textContent=kind()==='group'?'Group':'Channel';document.querySelectorAll('[data-kind]').forEach(x=>x.classList.toggle('active',x.dataset.kind===kind()));$('pageIcon').className=kind()==='group'?'fa-solid fa-users':'fa-solid fa-tower-broadcast'}function parseTelegram(raw){const s=String(raw||'').trim();const m=s.match(/^(?:https?:\/\/(?:t\.me|telegram\.me)\/)?@?([A-Za-z0-9_]{5,32})\/?$/i);return m?{username:'@'+m[1],url:'https://t.me/'+m[1]}:{username:null,url:/^https?:\/\/(?:t\.me|telegram\.me)\//i.test(s)?s:null}}function validate(){const title=$('title').value.trim(),desc=$('description').value.trim(),raw=$('telegram').value.trim(),a=access(),price=a==='paid'?Number($('price').value||0):0;if(title.length<2||title.length>120)return toast('Judul harus 2–120 karakter.','error'),null;if(!raw)return toast('Link Group/Channel wajib diisi.','error'),null;const tg=parseTelegram(raw);if(!tg.url)return toast('Masukkan username @bot atau link https://t.me/... yang valid.','error'),null;if(a==='paid'&&(!Number.isInteger(price)||price<5000||price>150000||price%1000))return toast('Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.','error'),null;return {title,desc,raw,tg,a,price}}function loading(on){$('submitBtn').disabled=on;$('submitBtn .normal').hidden=on;$('submitBtn .loading').hidden=!on}function finish(v,url){const r=$('result');r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>${v.kind==='group'?'Group':'Channel'} berhasil dipublikasikan</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;$('copyUrl').onclick=async()=>{try{await navigator.clipboard.writeText(url);toast('Link berhasil disalin.','success')}catch{toast('Gagal menyalin link.','error')}};r.scrollIntoView({behavior:'smooth',block:'center'})}$('createForm').addEventListener('submit',async e=>{e.preventDefault();const v=validate();if(!v)return;const u=await user();if(v.a==='paid'&&!u){location.href='login.html?redirect='+encodeURIComponent(location.href);return;}loading(true);try{const slug=slugify(v.title)+'-'+Math.random().toString(36).slice(2,8);const {data,error}=await client().rpc('create_telegram_content',{p_name:v.title,p_slug:slug,p_type:kind(),p_access_type:v.a,p_price:v.price,p_description:v.desc,p_username:v.tg.username,p_invite_url:v.tg.url,p_telegram_channel_id:v.raw});if(error)throw error;const prefix=kind()==='group'?'g':'ch';finish({title:v.title,kind:kind()},`${location.origin}/${prefix}/${v.a==='paid'?'p':'f'}/${encodeURIComponent(slug)}`);$('createForm').reset();$('priceBox').hidden=true;sync()}catch(e){console.error(e);toast(e?.code==='23505'?'Slug sudah digunakan. Silakan coba lagi.':e?.message||'Gagal menyimpan Telegram.','error')}finally{loading(false)}});sync();
 });
-
-
-/* ===== SOURCE: js/theme.js ===== */
-/* PasTele — Theme Manager
-   Modes: light, dark, system
-   Persists the user's choice and applies it consistently.
-*/
-(() => {
-  'use strict';
-  const root = document.documentElement;
-  const KEY = 'pastele-theme';
-  const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-
-  const resolved = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    return media?.matches ? 'dark' : 'light';
-  };
-
-  const apply = (mode = localStorage.getItem(KEY) || 'system') => {
-    if (!['light','dark','system'].includes(mode)) mode = 'system';
-    const theme = resolved(mode);
-    root.dataset.theme = theme;
-    root.dataset.themeMode = mode;
-    root.classList.toggle('theme-dark', theme === 'dark');
-    root.classList.toggle('theme-light', theme === 'light');
-    root.style.colorScheme = theme;
-    if (document.body) {
-      document.body.classList.toggle('theme-dark', theme === 'dark');
-      document.body.classList.toggle('theme-light', theme === 'light');
-    }
-    document.querySelectorAll('[data-theme-option]').forEach(btn => {
-      const active = btn.dataset.themeOption === mode;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-pressed', String(active));
-    });
-    window.dispatchEvent(new CustomEvent('pastele-theme-change', {detail:{mode,theme}}));
-    return theme;
-  };
-
-  window.PasTeleTheme = {
-    get: () => localStorage.getItem(KEY) || 'system',
-    resolved: () => resolved(localStorage.getItem(KEY) || 'system'),
-    set: (mode) => { localStorage.setItem(KEY, mode); return apply(mode); },
-    cycle: () => {
-      const modes = ['system','light','dark'];
-      const current = modes.indexOf(localStorage.getItem(KEY) || 'system');
-      const next = modes[(current + 1) % modes.length];
-      localStorage.setItem(KEY, next);
-      return apply(next);
-    },
-    apply
-  };
-
-  apply();
-  media?.addEventListener?.('change', () => {
-    if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
-  });
-})();

@@ -12,11 +12,14 @@
   const ACTIVITY_KEY = "pastele_last_activity";
   const PUBLIC = new Set([
     "index.html", "login.html", "register.html",
-    "forgot-password.html", "reset-password.html"
+    "forgot-password.html", "reset-password.html",
+    "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "about.html", "terms.html", "privacy.html"
   ]);
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
-  const isPublic = PUBLIC.has(file);
+  const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
+  const isPublic = !isAdminPath && PUBLIC.has(file);
   let locked = false;
   let initialized = false;
   let timer = null;

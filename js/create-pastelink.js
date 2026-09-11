@@ -1029,6 +1029,11 @@ window.PASTELE_CONFIG = Object.freeze({
       }
     } catch (_) {}
 
+    if (!user) {
+      host.dataset.ready = "";
+      return;
+    }
+
     try {
       if (user && window.sb) {
         const r = await window.sb
@@ -1365,61 +1370,3 @@ window.PASTELE_CONFIG = Object.freeze({
 document.addEventListener('DOMContentLoaded',()=>{
 'use strict';const $=id=>document.getElementById(id),client=()=>window.sb;const toast=(m,t='info')=>window.TC?.toast?window.TC.toast(m,t):alert(m);const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));const slugify=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);const access=()=>document.querySelector('input[name="access"]:checked')?.value||'free';const user=async()=>await window.TC?.user?.();function sync(){const paid=access()==='paid';$('priceBox').hidden=!paid;$('price').disabled=!paid;if(!paid)$('price').value='0';$('accessHint').textContent=paid?'Konten hanya terbuka setelah pembayaran berhasil.':'Konten dapat dibuka semua pengguna.'}function tags(){return String($('tags').value||'').split(',').map(x=>x.trim().replace(/^#/,'')).filter(Boolean).slice(0,20)}function validate(){const title=$('title').value.trim(),content=$('content').value.trim(),a=access(),price=a==='paid'?Number($('price').value||0):0,custom=slugify($('customUrl').value);if(title.length<2||title.length>120)return toast('Judul harus 2–120 karakter.','error'),null;if(!content)return toast('Content wajib diisi.','error'),null;if(a==='paid'&&(!Number.isInteger(price)||price<5000||price>150000||price%1000))return toast('Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.','error'),null;if($('customUrl').value.trim()&&custom.length<3)return toast('Custom URL minimal 3 karakter dan hanya huruf, angka, tanda minus.','error'),null;let exp=null;if($('hasExpiry').checked){const raw=$('expiresAt').value;if(!raw)return toast('Isi tanggal expired.','error');exp=new Date(raw);if(Number.isNaN(exp.getTime())||exp.getTime()<=Date.now())return toast('Tanggal expired harus di masa depan.','error');exp=exp.toISOString()}return {title,content,a,price,custom,tags:tags(),exp,desc:$('description').value.trim()}}function loading(on){$('submitBtn').disabled=on;$('submitBtn .normal').hidden=on;$('submitBtn .loading').hidden=!on}function finish(v,url){const r=$('result');r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>PasteLink berhasil dibuat</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka PasteLink</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;$('copyUrl').onclick=async()=>{try{await navigator.clipboard.writeText(url);toast('Link berhasil disalin.','success')}catch{toast('Gagal menyalin link.','error')}};r.scrollIntoView({behavior:'smooth',block:'center'})}$('hasExpiry').addEventListener('change',()=>{$('expiryBox').hidden=!$('hasExpiry').checked});document.querySelectorAll('input[name="access"]').forEach(x=>x.addEventListener('change',sync));$('description').addEventListener('input',()=>$('counter').textContent=$('description').value.length);$('createForm').addEventListener('submit',async e=>{e.preventDefault();const v=validate();if(!v)return;const u=await user();if(v.a==='paid'&&!u){location.href='login.html?redirect='+encodeURIComponent(location.href);return;}loading(true);try{let slug=v.custom||slugify(v.title)||'pastelink';if(!v.custom)slug+=`-${Math.random().toString(36).slice(2,8)}`;const {data,error}=await client().rpc('create_pastelink_content',{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp});if(error)throw error;finish(v,`${location.origin}/p/${encodeURIComponent(slug)}`);$('createForm').reset();$('priceBox').hidden=true;$('expiryBox').hidden=true;$('counter').textContent='0';sync()}catch(e){console.error(e);toast(e?.code==='23505'?'Custom URL sudah digunakan. Silakan pilih URL lain.':e?.message||'Gagal membuat PasteLink.','error')}finally{loading(false)}});sync();$('expiryBox').hidden=true;
 });
-
-
-/* ===== SOURCE: js/theme.js ===== */
-/* PasTele — Theme Manager
-   Modes: light, dark, system
-   Persists the user's choice and applies it consistently.
-*/
-(() => {
-  'use strict';
-  const root = document.documentElement;
-  const KEY = 'pastele-theme';
-  const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-
-  const resolved = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    return media?.matches ? 'dark' : 'light';
-  };
-
-  const apply = (mode = localStorage.getItem(KEY) || 'system') => {
-    if (!['light','dark','system'].includes(mode)) mode = 'system';
-    const theme = resolved(mode);
-    root.dataset.theme = theme;
-    root.dataset.themeMode = mode;
-    root.classList.toggle('theme-dark', theme === 'dark');
-    root.classList.toggle('theme-light', theme === 'light');
-    root.style.colorScheme = theme;
-    if (document.body) {
-      document.body.classList.toggle('theme-dark', theme === 'dark');
-      document.body.classList.toggle('theme-light', theme === 'light');
-    }
-    document.querySelectorAll('[data-theme-option]').forEach(btn => {
-      const active = btn.dataset.themeOption === mode;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-pressed', String(active));
-    });
-    window.dispatchEvent(new CustomEvent('pastele-theme-change', {detail:{mode,theme}}));
-    return theme;
-  };
-
-  window.PasTeleTheme = {
-    get: () => localStorage.getItem(KEY) || 'system',
-    resolved: () => resolved(localStorage.getItem(KEY) || 'system'),
-    set: (mode) => { localStorage.setItem(KEY, mode); return apply(mode); },
-    cycle: () => {
-      const modes = ['system','light','dark'];
-      const current = modes.indexOf(localStorage.getItem(KEY) || 'system');
-      const next = modes[(current + 1) % modes.length];
-      localStorage.setItem(KEY, next);
-      return apply(next);
-    },
-    apply
-  };
-
-  apply();
-  media?.addEventListener?.('change', () => {
-    if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
-  });
-})();

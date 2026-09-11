@@ -1029,6 +1029,11 @@ window.PASTELE_CONFIG = Object.freeze({
       }
     } catch (_) {}
 
+    if (!user) {
+      host.dataset.ready = "";
+      return;
+    }
+
     try {
       if (user && window.sb) {
         const r = await window.sb
@@ -2745,10 +2750,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const themeKey = 'pastele-theme';
   const resolveTheme = (mode) => {
     if (mode === 'light' || mode === 'dark') return mode;
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (mode === 'system') return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const h = new Date().getHours();
+    return h >= 18 || h < 6 ? 'dark' : 'light';
   };
   const applySettingsTheme = (mode) => {
-    if (!['light','dark','system'].includes(mode)) mode = 'system';
+    if (!['auto','light','dark','system'].includes(mode)) mode = 'auto';
     localStorage.setItem(themeKey, mode);
     const theme = resolveTheme(mode);
     document.documentElement.dataset.theme = theme;
@@ -2764,17 +2771,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.setAttribute('aria-pressed', String(active));
     });
   };
-  applySettingsTheme(localStorage.getItem(themeKey) || 'system');
+  applySettingsTheme(localStorage.getItem(themeKey) || 'auto');
   document.querySelectorAll('[data-theme-option]').forEach(button => {
     button.addEventListener('click', () => {
-      const mode = button.dataset.themeOption || 'system';
+      const mode = button.dataset.themeOption || 'auto';
       applySettingsTheme(mode);
       if (window.PasTeleTheme?.set) window.PasTeleTheme.set(mode);
-      toast(`Tema ${mode === 'system' ? 'System' : mode === 'dark' ? 'Dark' : 'Light'} aktif.`, 'success');
+      toast(`Tema ${mode === 'auto' ? 'Auto' : mode === 'system' ? 'System' : mode === 'dark' ? 'Dark' : 'Light'} aktif.`, 'success');
     });
   });
   window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener('change', () => {
-    if ((localStorage.getItem(themeKey) || 'system') === 'system') applySettingsTheme('system');
+    if ((localStorage.getItem(themeKey) || 'auto') === 'system') applySettingsTheme('system');
   });
 
   /* =======================================================
@@ -3579,61 +3586,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   }
 
-})();
-
-/* ===== SOURCE: js/theme.js ===== */
-/* PasTele — Theme Manager
-   Modes: light, dark, system
-   Persists the user's choice and applies it consistently.
-*/
-(() => {
-  'use strict';
-  const root = document.documentElement;
-  const KEY = 'pastele-theme';
-  const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-
-  const resolved = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    return media?.matches ? 'dark' : 'light';
-  };
-
-  const apply = (mode = localStorage.getItem(KEY) || 'system') => {
-    if (!['light','dark','system'].includes(mode)) mode = 'system';
-    const theme = resolved(mode);
-    root.dataset.theme = theme;
-    root.dataset.themeMode = mode;
-    root.classList.toggle('theme-dark', theme === 'dark');
-    root.classList.toggle('theme-light', theme === 'light');
-    root.style.colorScheme = theme;
-    if (document.body) {
-      document.body.classList.toggle('theme-dark', theme === 'dark');
-      document.body.classList.toggle('theme-light', theme === 'light');
-    }
-    document.querySelectorAll('[data-theme-option]').forEach(btn => {
-      const active = btn.dataset.themeOption === mode;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-pressed', String(active));
-    });
-    window.dispatchEvent(new CustomEvent('pastele-theme-change', {detail:{mode,theme}}));
-    return theme;
-  };
-
-  window.PasTeleTheme = {
-    get: () => localStorage.getItem(KEY) || 'system',
-    resolved: () => resolved(localStorage.getItem(KEY) || 'system'),
-    set: (mode) => { localStorage.setItem(KEY, mode); return apply(mode); },
-    cycle: () => {
-      const modes = ['system','light','dark'];
-      const current = modes.indexOf(localStorage.getItem(KEY) || 'system');
-      const next = modes[(current + 1) % modes.length];
-      localStorage.setItem(KEY, next);
-      return apply(next);
-    },
-    apply
-  };
-
-  apply();
-  media?.addEventListener?.('change', () => {
-    if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
-  });
 })();
