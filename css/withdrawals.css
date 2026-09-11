@@ -3472,3 +3472,8 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 @media(prefers-reduced-motion:reduce){
   .plan-card,.wallet-pending-click{transition:none!important}
 }
+
+
+/* FINAL WITHDRAW CLOSED STATE */
+.manual-withdraw-disabled,.withdraw-closed,.withdraw-form.is-disabled{opacity:.62;pointer-events:none;filter:saturate(.6);}
+#manualSubmit:disabled{cursor:not-allowed!important;opacity:.55;}

@@ -208,3 +208,9 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 @media(prefers-reduced-motion:reduce){
   .plan-card,.wallet-pending-click{transition:none!important}
 }
+
+
+/* FINAL NOTIFICATION READER */
+.notice-body-preview{display:block;line-height:1.65;max-height:5.2em;overflow:hidden;position:relative;}
+.notice-body.expanded{max-height:none;overflow:visible;}
+.notice-readmore{margin-top:9px;border:0;background:transparent;color:var(--primary,#635bff);font-weight:800;cursor:pointer;padding:0;}

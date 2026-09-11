@@ -508,3 +508,13 @@ html[data-theme="dark"] #navbar .pt-nav{
     width:min(350px,90vw);
   }
 }
+
+
+/* FINAL NAVBAR FIX */
+#navbar{position:fixed!important;top:0;left:0;right:0;z-index:1200;}
+body{padding-top:64px;}
+#navbar .pt-socials,#navbar .pt-drawer-socials{display:flex;align-items:center;gap:8px;}
+#navbar .pt-socials{grid-column:1/-1;margin-top:4px;}
+#navbar .pt-socials a,#navbar .pt-drawer-socials a{width:36px;height:36px;border:1px solid var(--line,#e5e7eb);border-radius:11px;display:grid;place-items:center;color:var(--muted,#64748b);background:var(--surface-2,#f8fafc);text-decoration:none;}
+#navbar .pt-socials a:hover,#navbar .pt-drawer-socials a:hover{color:var(--primary,#635bff);transform:translateY(-1px);}
+#navbar .pt-drawer-socials{justify-content:center;padding:4px 0 10px;}

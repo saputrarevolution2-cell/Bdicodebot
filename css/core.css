@@ -216,3 +216,10 @@ html[data-theme="dark"] .notice-card,html[data-theme="dark"] .notice-inner,html[
 .access-grid{grid-template-columns:1fr}.btn{min-height:46px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}.btn:hover{transform:none}}
+
+
+/* FINAL GLOBAL LAYOUT FIX */
+body{overflow-x:hidden;}
+.site-footer .footer-grid{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(3,minmax(130px,1fr));align-items:start;gap:28px;}
+@media(max-width:760px){.site-footer .footer-grid{grid-template-columns:1fr 1fr}.site-footer .footer-brand{grid-column:1/-1}}
+@media(max-width:480px){.site-footer .footer-grid{grid-template-columns:1fr}.site-footer .footer-brand{grid-column:auto}}
