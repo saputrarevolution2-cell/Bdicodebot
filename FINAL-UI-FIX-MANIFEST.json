@@ -1,0 +1,25 @@
+{
+  "project": "PasTele",
+  "release": "UNIFIED-FULL-UI-FIX-2026-09-12",
+  "status": "clean-unified-ui",
+  "admin": {
+    "canonical_css": "admin/admin-unified.css",
+    "removed_duplicate_overrides": [
+      "admin/index-fixed.css",
+      "admin/index-fixed.js",
+      "admin/admin-full.css",
+      "admin/admin-full.js",
+      "admin/admin-scroll-fix.css"
+    ]
+  },
+  "theme": {
+    "authority": "js/theme-preload.js + js/theme.js",
+    "default": "auto",
+    "day": "06:00-17:59",
+    "night": "18:00-05:59"
+  },
+  "session": {
+    "type": "inactivity",
+    "timeout_hours": 24
+  }
+}

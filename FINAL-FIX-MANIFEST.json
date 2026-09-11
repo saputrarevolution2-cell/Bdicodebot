@@ -1,7 +1,7 @@
 {
   "project": "PasTele",
-  "release": "UNIFIED-UI-SESSION-THEME-2026-09-12",
-  "status": "final-audit",
+  "release": "UNIFIED-CLEAN-FINAL-2026-09-12",
+  "status": "production-clean-audit",
   "fixes": [
     "Unified automatic day/night theme across public, authenticated and admin pages",
     "Removed duplicate bundled theme overrides that could reset Auto theme to System",
@@ -14,13 +14,24 @@
     "Public discovery/legal/auth pages are not blocked by the inactivity guard",
     "Admin pages are always treated as authenticated even when the filename is index.html",
     "Normalized local CSS/JS references and verified local stylesheet references",
-    "Validated all JavaScript files with Node syntax checker"
+    "Validated all JavaScript files with Node syntax checker",
+    "Removed development-only patch.py and patch2.py from release",
+    "Removed stray css/css artifact",
+    "Removed duplicate inline theme preload implementations",
+    "Canonical theme manager is the only global theme authority",
+    "Normalized Auto/Light/Dark/System labels and navbar theme cycle",
+    "Verified HTML structure, local asset references and JavaScript syntax"
   ],
   "theme": {
     "default": "auto",
     "light": "06:00-17:59",
     "dark": "18:00-05:59",
-    "manual_modes": ["auto", "light", "dark", "system"]
+    "manual_modes": [
+      "auto",
+      "light",
+      "dark",
+      "system"
+    ]
   },
   "session": {
     "type": "inactivity",
