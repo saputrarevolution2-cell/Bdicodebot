@@ -1,30 +1,298 @@
 <!doctype html>
 <html lang="id">
-<head><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0ea5e9">
-<meta name="description" content="Tentang PasTele PasTele.">
-<title>Tentang PasTele · PasTele</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<script>document.documentElement.classList.add("pastele-ready");</script><link rel="stylesheet" href="css/about.css?v=20260910-clean-ui"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/core.css?v=20260910-core-fix">
-<link rel="stylesheet" href="css/navbar.css?v=20260911-navbar-clean"><link rel="stylesheet" href="css/final-polish.css?v=20260911-final">
+<head>
+  <script>
+    (() => {
+      try {
+        const key = "pastele-theme";
+        const mode = localStorage.getItem(key) || "system";
+        const dark =
+          mode === "dark" ||
+          (mode === "system" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.classList.add(
+          dark ? "theme-dark" : "theme-light"
+        );
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      } catch (e) {}
+    })();
+  </script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta
+    name="description"
+    content="Tentang PasTele, platform digital untuk Link, Code, Channel, dan Group Telegram."
+  >
+
+  <meta name="theme-color" content="#0ea5e9">
+
+  <title>Tentang PasTele · PasTele</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <script>
+    document.documentElement.classList.add("pastele-ready");
+  </script>
+
+  <!-- Core -->
+  <link rel="stylesheet" href="css/core.css?v=20260911-core">
+
+  <!-- Navbar -->
+  <link rel="stylesheet" href="css/navbar.css?v=20260911-navbar">
+
+  <!-- About page only -->
+  <link rel="stylesheet" href="css/about.css?v=20260911-about">
+
+  <!-- Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  >
 </head>
-<body class="app-page legal-page">
-<div id="navbar"></div>
-<main>
-<section class="section">
-<div class="container legal-container">
-<div class="legal-head">
-<span class="eyebrow"><i class="fa-solid fa-file-shield"></i> ABOUT</span>
-<h1>Tentang PasTele</h1>
-<p>Informasi resmi PasTele untuk pengguna platform.</p>
-</div>
-<article class="card legal-card">
-<h2>PasTele</h2><p>PasTele adalah platform digital untuk membuat, mempublikasikan, menemukan, membagikan, dan memonetisasi Link, Code, Channel, serta Group Telegram.</p><h2>Untuk Creator</h2><p>Creator dapat mengelola konten, akses, produk, engagement, transaksi, saldo, dan penarikan dalam satu workspace.</p><h2>Untuk Pengguna</h2><p>Pengguna dapat menjelajahi marketplace, membuka konten gratis, membeli akses berbayar, serta mengelola riwayat pembelian dari akun mereka.</p><h2>Keamanan</h2><p>Autentikasi dan akses data aplikasi ditangani melalui Supabase Auth, Row Level Security, dan operasi server-side yang sesuai dengan konfigurasi database.</p>
-</article>
-</div>
-</section>
-</main>
-<script src="js/navbar.js?v=20260911-final"></script><script src="js/about.js?v=20260910-clean-ui"></script></body>
+
+<body class="app-page legal-page about-page">
+
+  <!-- Navbar -->
+  <div id="navbar"></div>
+
+  <main class="about-main">
+
+    <!-- Hero -->
+    <section class="about-hero section">
+      <div class="container about-container">
+
+        <div class="about-hero-content">
+
+          <span class="about-eyebrow">
+            <i class="fa-solid fa-circle-info"></i>
+            TENTANG PASTELE
+          </span>
+
+          <h1>
+            Satu ruang untuk
+            <span>ekosistem Telegram.</span>
+          </h1>
+
+          <p>
+            PasTele adalah platform digital yang membantu pengguna dan creator
+            membuat, menemukan, membagikan, mengelola, serta memonetisasi
+            berbagai aset dan konten Telegram.
+          </p>
+
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Main information -->
+    <section class="section about-content-section">
+      <div class="container about-container">
+
+        <div class="about-layout">
+
+          <!-- Main -->
+          <article class="card about-card">
+
+            <div class="about-card-heading">
+              <div class="about-icon">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+
+              <div>
+                <span>PLATFORM</span>
+                <h2>PasTele</h2>
+              </div>
+            </div>
+
+            <p>
+              PasTele adalah platform digital untuk membuat, mempublikasikan,
+              menemukan, membagikan, dan memonetisasi Link, Code, Channel,
+              serta Group Telegram.
+            </p>
+
+
+            <div class="about-divider"></div>
+
+
+            <section class="about-block">
+              <div class="about-block-icon">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+
+              <div>
+                <h3>Untuk Creator</h3>
+
+                <p>
+                  Creator dapat mengelola konten, akses, produk, engagement,
+                  transaksi, saldo, dan penarikan dalam satu workspace.
+                </p>
+              </div>
+            </section>
+
+
+            <section class="about-block">
+              <div class="about-block-icon">
+                <i class="fa-solid fa-users"></i>
+              </div>
+
+              <div>
+                <h3>Untuk Pengguna</h3>
+
+                <p>
+                  Pengguna dapat menjelajahi marketplace, membuka konten
+                  gratis, membeli akses berbayar, serta mengelola riwayat
+                  pembelian dari akun mereka.
+                </p>
+              </div>
+            </section>
+
+
+            <section class="about-block">
+              <div class="about-block-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+
+              <div>
+                <h3>Keamanan</h3>
+
+                <p>
+                  Autentikasi dan akses data aplikasi ditangani melalui
+                  Supabase Auth, Row Level Security, dan operasi server-side
+                  sesuai dengan konfigurasi database aplikasi.
+                </p>
+              </div>
+            </section>
+
+          </article>
+
+
+          <!-- Sidebar -->
+          <aside class="about-sidebar">
+
+            <div class="card about-nav-card">
+
+              <div class="about-nav-title">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Informasi & Ketentuan</span>
+              </div>
+
+              <a href="about.html" class="about-nav-link active">
+                <span>
+                  <i class="fa-solid fa-circle-info"></i>
+                  Tentang PasTele
+                </span>
+                <i class="fa-solid fa-chevron-right"></i>
+              </a>
+
+              <a href="privacy.html" class="about-nav-link">
+                <span>
+                  <i class="fa-solid fa-user-shield"></i>
+                  Kebijakan Privasi
+                </span>
+                <i class="fa-solid fa-chevron-right"></i>
+              </a>
+
+              <a href="terms.html" class="about-nav-link">
+                <span>
+                  <i class="fa-solid fa-file-contract"></i>
+                  Syarat & Ketentuan
+                </span>
+                <i class="fa-solid fa-chevron-right"></i>
+              </a>
+
+            </div>
+
+
+            <div class="card about-note-card">
+
+              <div class="about-note-icon">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+
+              <h3>Privasi adalah prioritas</h3>
+
+              <p>
+                Kami berupaya menjaga keamanan akun dan data pengguna melalui
+                mekanisme autentikasi dan kontrol akses yang tersedia pada
+                sistem PasTele.
+              </p>
+
+              <a href="privacy.html" class="about-text-link">
+                Baca Kebijakan Privasi
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+
+            </div>
+
+          </aside>
+
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Quick links -->
+    <section class="section about-links-section">
+      <div class="container about-container">
+
+        <div class="about-links-grid">
+
+          <a href="privacy.html" class="about-link-card">
+
+            <div class="about-link-icon">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+
+            <div>
+              <span>PRIVASI</span>
+              <h3>Kebijakan Privasi</h3>
+              <p>
+                Pelajari bagaimana data dan informasi pengguna dikelola.
+              </p>
+            </div>
+
+            <i class="fa-solid fa-arrow-up-right-from-square about-link-arrow"></i>
+
+          </a>
+
+
+          <a href="terms.html" class="about-link-card">
+
+            <div class="about-link-icon">
+              <i class="fa-solid fa-file-signature"></i>
+            </div>
+
+            <div>
+              <span>LEGAL</span>
+              <h3>Syarat & Ketentuan</h3>
+              <p>
+                Ketentuan yang berlaku saat menggunakan layanan PasTele.
+              </p>
+            </div>
+
+            <i class="fa-solid fa-arrow-up-right-from-square about-link-arrow"></i>
+
+          </a>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <script src="js/navbar.js?v=20260911-navbar"></script>
+  <script src="js/about.js?v=20260911-about"></script>
+
+</body>
 </html>
