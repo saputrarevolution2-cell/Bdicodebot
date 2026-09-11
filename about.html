@@ -1,297 +1,1038 @@
 <!doctype html>
 <html lang="id">
+
 <head>
+
+  <!-- =====================================================
+       THEME BOOTSTRAP
+       ===================================================== -->
   <script>
     (() => {
       try {
-        const key = "pastele-theme";
-        const mode = localStorage.getItem(key) || "system";
+        const KEY = "pastele-theme";
+        const mode = localStorage.getItem(KEY) || "system";
+
         const dark =
           mode === "dark" ||
-          (mode === "system" &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches);
+          (
+            mode === "system" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+          );
 
-        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.dataset.theme =
+          dark ? "dark" : "light";
+
         document.documentElement.dataset.themeMode = mode;
+
         document.documentElement.classList.add(
           dark ? "theme-dark" : "theme-light"
         );
-        document.documentElement.style.colorScheme = dark ? "dark" : "light";
-      } catch (e) {}
+
+        document.documentElement.style.colorScheme =
+          dark ? "dark" : "light";
+
+      } catch (_) {}
     })();
   </script>
 
+
+  <!-- =====================================================
+       META
+       ===================================================== -->
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#0ea5e9"
+  >
 
   <meta
     name="description"
-    content="Tentang PasTele, platform digital untuk Link, Code, Channel, dan Group Telegram."
+    content="Tentang PasTele — platform digital untuk Link, Code, Channel, Group Telegram, creator dan pengguna."
   >
 
-  <meta name="theme-color" content="#0ea5e9">
+  <meta
+    name="robots"
+    content="index,follow"
+  >
 
   <title>Tentang PasTele · PasTele</title>
 
+
+  <!-- =====================================================
+       FONT
+       ===================================================== -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
 
-  <script>
-    document.documentElement.classList.add("pastele-ready");
-  </script>
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
 
-  <!-- Core -->
-  <link rel="stylesheet" href="css/core.css?v=20260911-core">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
 
-  <!-- Navbar -->
-  <link rel="stylesheet" href="css/navbar.css?v=20260911-navbar">
 
-  <!-- About page only -->
-  <link rel="stylesheet" href="css/about.css?v=20260911-about">
+  <!-- =====================================================
+       ICON
+       ===================================================== -->
 
-  <!-- Icons -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   >
+
+
+  <!-- =====================================================
+       CORE
+       ===================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="css/core.css?v=20260911-core"
+  >
+
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="css/navbar.css?v=20260911-navbar"
+  >
+
+
+  <!-- =====================================================
+       ABOUT ONLY
+       ===================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="css/about.css?v=20260911-about-premium"
+  >
+
+
+  <script>
+    document.documentElement.classList.add("pastele-ready");
+  </script>
+
 </head>
 
-<body class="app-page legal-page about-page">
 
-  <!-- Navbar -->
+<body class="app-page about-page">
+
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+
   <div id="navbar"></div>
+
+
+  <!-- =====================================================
+       PAGE
+       ===================================================== -->
 
   <main class="about-main">
 
-    <!-- Hero -->
-    <section class="about-hero section">
+
+    <!-- ===================================================
+         HERO
+         =================================================== -->
+
+    <section class="about-hero">
+
+      <div class="about-bg-orb about-orb-one"></div>
+      <div class="about-bg-orb about-orb-two"></div>
+      <div class="about-bg-orb about-orb-three"></div>
+
+      <div class="about-grid-bg"></div>
+
       <div class="container about-container">
 
-        <div class="about-hero-content">
+        <div class="about-hero-content" data-reveal>
 
-          <span class="about-eyebrow">
-            <i class="fa-solid fa-circle-info"></i>
-            TENTANG PASTELE
-          </span>
+          <div class="about-eyebrow">
+            <span class="about-eyebrow-icon">
+              <i class="fa-solid fa-circle-info"></i>
+            </span>
+
+            <span>TENTANG PASTELE</span>
+
+            <span class="about-eyebrow-dot"></span>
+
+            <span>PLATFORM DIGITAL</span>
+          </div>
+
 
           <h1>
-            Satu ruang untuk
-            <span>ekosistem Telegram.</span>
+            Bangun.
+            <span>Bagikan.</span>
+            <br>
+            Monetisasi.
           </h1>
 
+
+          <p class="about-hero-description">
+            PasTele menghadirkan ruang digital yang membantu
+            pengguna dan creator mengelola Link, Code, Channel,
+            Group Telegram, konten, transaksi, dan monetisasi
+            dalam satu ekosistem.
+          </p>
+
+
+          <div class="about-hero-actions">
+
+            <a
+              href="marketplace.html"
+              class="about-btn about-btn-primary"
+            >
+              <i class="fa-solid fa-store"></i>
+              <span>Jelajahi Marketplace</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+            <a
+              href="terms.html"
+              class="about-btn about-btn-secondary"
+            >
+              <i class="fa-solid fa-file-contract"></i>
+              <span>Lihat Ketentuan</span>
+            </a>
+
+          </div>
+
+
+          <div class="about-trust-row">
+
+            <div class="about-trust-item">
+              <span class="about-trust-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+              </span>
+
+              <span>
+                <strong>Secure</strong>
+                <small>Access controlled</small>
+              </span>
+            </div>
+
+
+            <div class="about-trust-item">
+              <span class="about-trust-icon">
+                <i class="fa-solid fa-bolt"></i>
+              </span>
+
+              <span>
+                <strong>Fast</strong>
+                <small>Built for modern web</small>
+              </span>
+            </div>
+
+
+            <div class="about-trust-item">
+              <span class="about-trust-icon">
+                <i class="fa-solid fa-mobile-screen"></i>
+              </span>
+
+              <span>
+                <strong>Responsive</strong>
+                <small>Mobile & desktop</small>
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- HERO VISUAL -->
+
+        <div class="about-hero-visual" data-reveal>
+
+          <div class="about-dashboard-glow"></div>
+
+          <div class="about-floating-card about-float-top">
+
+            <span class="about-floating-icon">
+              <i class="fa-solid fa-chart-line"></i>
+            </span>
+
+            <span>
+              <strong>Creator Growth</strong>
+              <small>Everything in one place</small>
+            </span>
+
+            <i class="fa-solid fa-arrow-trend-up"></i>
+
+          </div>
+
+
+          <div class="about-product-window">
+
+            <div class="about-window-header">
+
+              <div class="about-window-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+
+              <span class="about-window-title">
+                pastele
+              </span>
+
+              <i class="fa-solid fa-ellipsis"></i>
+
+            </div>
+
+
+            <div class="about-window-body">
+
+              <div class="about-window-welcome">
+                <span>Workspace</span>
+                <strong>Everything connected.</strong>
+              </div>
+
+
+              <div class="about-mini-grid">
+
+                <div class="about-mini-card">
+
+                  <span class="about-mini-icon">
+                    <i class="fa-solid fa-link"></i>
+                  </span>
+
+                  <span>
+                    <small>Links</small>
+                    <strong>Manage</strong>
+                  </span>
+
+                </div>
+
+
+                <div class="about-mini-card">
+
+                  <span class="about-mini-icon purple">
+                    <i class="fa-solid fa-code"></i>
+                  </span>
+
+                  <span>
+                    <small>Codes</small>
+                    <strong>Publish</strong>
+                  </span>
+
+                </div>
+
+
+                <div class="about-mini-card">
+
+                  <span class="about-mini-icon green">
+                    <i class="fa-solid fa-users"></i>
+                  </span>
+
+                  <span>
+                    <small>Community</small>
+                    <strong>Connect</strong>
+                  </span>
+
+                </div>
+
+
+                <div class="about-mini-card">
+
+                  <span class="about-mini-icon orange">
+                    <i class="fa-solid fa-wallet"></i>
+                  </span>
+
+                  <span>
+                    <small>Wallet</small>
+                    <strong>Monetize</strong>
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div class="about-window-chart">
+
+                <div class="about-chart-head">
+                  <span>Creator activity</span>
+
+                  <span class="about-chart-badge">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    Growing
+                  </span>
+                </div>
+
+                <div class="about-chart-bars">
+
+                  <span style="height:35%"></span>
+                  <span style="height:52%"></span>
+                  <span style="height:44%"></span>
+                  <span style="height:66%"></span>
+                  <span style="height:58%"></span>
+                  <span style="height:78%"></span>
+                  <span style="height:91%"></span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="about-floating-card about-float-bottom">
+
+            <span class="about-floating-check">
+              <i class="fa-solid fa-check"></i>
+            </span>
+
+            <span>
+              <strong>One Workspace</strong>
+              <small>Creator + User</small>
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         STATS
+         =================================================== -->
+
+    <section class="about-stats-section">
+
+      <div class="container about-container">
+
+        <div class="about-stats" data-reveal>
+
+          <div class="about-stat">
+            <span class="about-stat-icon">
+              <i class="fa-solid fa-layer-group"></i>
+            </span>
+
+            <strong>All-in-one</strong>
+            <span>Digital workspace</span>
+          </div>
+
+
+          <div class="about-stat">
+            <span class="about-stat-icon">
+              <i class="fa-solid fa-users"></i>
+            </span>
+
+            <strong>Creator First</strong>
+            <span>Built for creators</span>
+          </div>
+
+
+          <div class="about-stat">
+            <span class="about-stat-icon">
+              <i class="fa-solid fa-shield"></i>
+            </span>
+
+            <strong>Protected</strong>
+            <span>Access & security</span>
+          </div>
+
+
+          <div class="about-stat">
+            <span class="about-stat-icon">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+            </span>
+
+            <strong>Everywhere</strong>
+            <span>Mobile & desktop</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         INTRO
+         =================================================== -->
+
+    <section class="about-section about-intro-section">
+
+      <div class="container about-container">
+
+        <div class="about-section-heading" data-reveal>
+
+          <span class="about-section-label">
+            <i class="fa-solid fa-sparkles"></i>
+            EKOSISTEM
+          </span>
+
+          <h2>
+            Dibuat untuk membuat
+            <span>Telegram lebih produktif.</span>
+          </h2>
+
           <p>
-            PasTele adalah platform digital yang membantu pengguna dan creator
-            membuat, menemukan, membagikan, mengelola, serta memonetisasi
-            berbagai aset dan konten Telegram.
+            PasTele menghubungkan berbagai kebutuhan digital
+            dalam satu pengalaman yang sederhana, cepat,
+            dan mudah digunakan.
           </p>
 
         </div>
 
-      </div>
-    </section>
 
+        <div class="about-feature-grid">
 
-    <!-- Main information -->
-    <section class="section about-content-section">
-      <div class="container about-container">
+          <article class="about-feature-card" data-reveal>
 
-        <div class="about-layout">
+            <div class="about-feature-number">01</div>
 
-          <!-- Main -->
-          <article class="card about-card">
-
-            <div class="about-card-heading">
-              <div class="about-icon">
-                <i class="fa-solid fa-layer-group"></i>
-              </div>
-
-              <div>
-                <span>PLATFORM</span>
-                <h2>PasTele</h2>
-              </div>
+            <div class="about-feature-icon blue">
+              <i class="fa-solid fa-link"></i>
             </div>
 
+            <h3>Link & Content</h3>
+
             <p>
-              PasTele adalah platform digital untuk membuat, mempublikasikan,
-              menemukan, membagikan, dan memonetisasi Link, Code, Channel,
-              serta Group Telegram.
+              Buat dan kelola Link maupun konten digital
+              dengan akses yang dapat disesuaikan.
             </p>
 
-
-            <div class="about-divider"></div>
-
-
-            <section class="about-block">
-              <div class="about-block-icon">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-              </div>
-
-              <div>
-                <h3>Untuk Creator</h3>
-
-                <p>
-                  Creator dapat mengelola konten, akses, produk, engagement,
-                  transaksi, saldo, dan penarikan dalam satu workspace.
-                </p>
-              </div>
-            </section>
-
-
-            <section class="about-block">
-              <div class="about-block-icon">
-                <i class="fa-solid fa-users"></i>
-              </div>
-
-              <div>
-                <h3>Untuk Pengguna</h3>
-
-                <p>
-                  Pengguna dapat menjelajahi marketplace, membuka konten
-                  gratis, membeli akses berbayar, serta mengelola riwayat
-                  pembelian dari akun mereka.
-                </p>
-              </div>
-            </section>
-
-
-            <section class="about-block">
-              <div class="about-block-icon">
-                <i class="fa-solid fa-shield-halved"></i>
-              </div>
-
-              <div>
-                <h3>Keamanan</h3>
-
-                <p>
-                  Autentikasi dan akses data aplikasi ditangani melalui
-                  Supabase Auth, Row Level Security, dan operasi server-side
-                  sesuai dengan konfigurasi database aplikasi.
-                </p>
-              </div>
-            </section>
+            <span class="about-feature-bottom">
+              <i class="fa-solid fa-arrow-right"></i>
+              Publish & manage
+            </span>
 
           </article>
 
 
-          <!-- Sidebar -->
-          <aside class="about-sidebar">
+          <article class="about-feature-card" data-reveal>
 
-            <div class="card about-nav-card">
+            <div class="about-feature-number">02</div>
 
-              <div class="about-nav-title">
-                <i class="fa-solid fa-book-open"></i>
-                <span>Informasi & Ketentuan</span>
-              </div>
-
-              <a href="about.html" class="about-nav-link active">
-                <span>
-                  <i class="fa-solid fa-circle-info"></i>
-                  Tentang PasTele
-                </span>
-                <i class="fa-solid fa-chevron-right"></i>
-              </a>
-
-              <a href="privacy.html" class="about-nav-link">
-                <span>
-                  <i class="fa-solid fa-user-shield"></i>
-                  Kebijakan Privasi
-                </span>
-                <i class="fa-solid fa-chevron-right"></i>
-              </a>
-
-              <a href="terms.html" class="about-nav-link">
-                <span>
-                  <i class="fa-solid fa-file-contract"></i>
-                  Syarat & Ketentuan
-                </span>
-                <i class="fa-solid fa-chevron-right"></i>
-              </a>
-
+            <div class="about-feature-icon purple">
+              <i class="fa-solid fa-code"></i>
             </div>
 
+            <h3>Code Marketplace</h3>
 
-            <div class="card about-note-card">
+            <p>
+              Creator dapat mempublikasikan dan menawarkan
+              Code kepada pengguna melalui marketplace.
+            </p>
 
-              <div class="about-note-icon">
-                <i class="fa-solid fa-lock"></i>
-              </div>
+            <span class="about-feature-bottom">
+              <i class="fa-solid fa-arrow-right"></i>
+              Sell & discover
+            </span>
 
-              <h3>Privasi adalah prioritas</h3>
+          </article>
 
-              <p>
-                Kami berupaya menjaga keamanan akun dan data pengguna melalui
-                mekanisme autentikasi dan kontrol akses yang tersedia pada
-                sistem PasTele.
-              </p>
 
-              <a href="privacy.html" class="about-text-link">
-                Baca Kebijakan Privasi
-                <i class="fa-solid fa-arrow-right"></i>
-              </a>
+          <article class="about-feature-card" data-reveal>
 
+            <div class="about-feature-number">03</div>
+
+            <div class="about-feature-icon green">
+              <i class="fa-solid fa-users"></i>
             </div>
 
-          </aside>
+            <h3>Channel & Group</h3>
+
+            <p>
+              Bangun koneksi dengan komunitas Telegram
+              dan kelola akses melalui satu platform.
+            </p>
+
+            <span class="about-feature-bottom">
+              <i class="fa-solid fa-arrow-right"></i>
+              Connect community
+            </span>
+
+          </article>
+
+
+          <article class="about-feature-card" data-reveal>
+
+            <div class="about-feature-number">04</div>
+
+            <div class="about-feature-icon orange">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+
+            <h3>Wallet & Monetization</h3>
+
+            <p>
+              Kelola saldo, transaksi, penghasilan, dan
+              proses penarikan dari workspace.
+            </p>
+
+            <span class="about-feature-bottom">
+              <i class="fa-solid fa-arrow-right"></i>
+              Earn & withdraw
+            </span>
+
+          </article>
 
         </div>
 
       </div>
+
     </section>
 
 
-    <!-- Quick links -->
-    <section class="section about-links-section">
+    <!-- ===================================================
+         CREATOR / USER
+         =================================================== -->
+
+    <section class="about-section about-audience-section">
+
       <div class="container about-container">
 
-        <div class="about-links-grid">
+        <div class="about-audience-grid">
 
-          <a href="privacy.html" class="about-link-card">
+          <article
+            class="about-audience-card creator"
+            data-reveal
+          >
 
-            <div class="about-link-icon">
-              <i class="fa-solid fa-user-shield"></i>
+            <div class="about-audience-glow"></div>
+
+            <div class="about-audience-top">
+
+              <span class="about-audience-icon">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </span>
+
+              <span class="about-audience-tag">
+                FOR CREATORS
+              </span>
+
             </div>
 
+            <h2>
+              Jadikan ide kamu
+              <span>lebih bernilai.</span>
+            </h2>
+
+            <p>
+              Creator dapat mengatur produk, konten, akses,
+              engagement, transaksi, saldo, hingga monetisasi
+              dari satu workspace.
+            </p>
+
+            <div class="about-check-list">
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Kelola produk & konten</span>
+              </div>
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Atur akses pengguna</span>
+              </div>
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Pantau transaksi</span>
+              </div>
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Monetisasi & withdraw</span>
+              </div>
+
+            </div>
+
+            <a
+              href="create-code.html"
+              class="about-audience-link"
+            >
+              <span>Mulai sebagai Creator</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+          </article>
+
+
+          <article
+            class="about-audience-card user"
+            data-reveal
+          >
+
+            <div class="about-audience-glow"></div>
+
+            <div class="about-audience-top">
+
+              <span class="about-audience-icon">
+                <i class="fa-solid fa-compass"></i>
+              </span>
+
+              <span class="about-audience-tag">
+                FOR USERS
+              </span>
+
+            </div>
+
+            <h2>
+              Temukan sesuatu
+              <span>yang kamu butuhkan.</span>
+            </h2>
+
+            <p>
+              Jelajahi marketplace, temukan konten,
+              beli akses, dan kelola semua aktivitas
+              dari satu akun.
+            </p>
+
+            <div class="about-check-list">
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Jelajahi marketplace</span>
+              </div>
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Akses konten gratis</span>
+              </div>
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Beli akses premium</span>
+              </div>
+
+              <div>
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Kelola riwayat pembelian</span>
+              </div>
+
+            </div>
+
+            <a
+              href="marketplace.html"
+              class="about-audience-link"
+            >
+              <span>Jelajahi Marketplace</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+          </article>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         SECURITY
+         =================================================== -->
+
+    <section class="about-section about-security-section">
+
+      <div class="container about-container">
+
+        <div
+          class="about-security"
+          data-reveal
+        >
+
+          <div class="about-security-orb"></div>
+
+          <div class="about-security-content">
+
+            <span class="about-section-label">
+              <i class="fa-solid fa-shield-halved"></i>
+              SECURITY
+            </span>
+
+            <h2>
+              Keamanan dibangun
+              <span>sejak awal.</span>
+            </h2>
+
+            <p>
+              PasTele menggunakan sistem autentikasi,
+              kontrol akses database, dan operasi server-side
+              untuk membantu menjaga data dan aktivitas pengguna.
+            </p>
+
+          </div>
+
+
+          <div class="about-security-items">
+
+            <div class="about-security-item">
+
+              <span>
+                <i class="fa-solid fa-key"></i>
+              </span>
+
+              <div>
+                <strong>Authentication</strong>
+                <small>
+                  Login dan session dikelola melalui
+                  sistem autentikasi.
+                </small>
+              </div>
+
+            </div>
+
+
+            <div class="about-security-item">
+
+              <span>
+                <i class="fa-solid fa-database"></i>
+              </span>
+
+              <div>
+                <strong>Row Level Security</strong>
+                <small>
+                  Akses data dikontrol pada level database.
+                </small>
+              </div>
+
+            </div>
+
+
+            <div class="about-security-item">
+
+              <span>
+                <i class="fa-solid fa-server"></i>
+              </span>
+
+              <div>
+                <strong>Server-side Operations</strong>
+                <small>
+                  Operasi sensitif diproses melalui
+                  mekanisme server-side.
+                </small>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         LEGAL
+         =================================================== -->
+
+    <section class="about-section about-legal-section">
+
+      <div class="container about-container">
+
+        <div class="about-section-heading compact" data-reveal>
+
+          <span class="about-section-label">
+            <i class="fa-solid fa-scale-balanced"></i>
+            INFORMATION
+          </span>
+
+          <h2>
+            Transparan untuk
+            <span>semua pengguna.</span>
+          </h2>
+
+          <p>
+            Baca informasi resmi mengenai penggunaan platform,
+            privasi, dan ketentuan layanan PasTele.
+          </p>
+
+        </div>
+
+
+        <div class="about-legal-grid">
+
+          <a
+            href="privacy.html"
+            class="about-legal-card"
+            data-reveal
+          >
+
+            <span class="about-legal-icon blue">
+              <i class="fa-solid fa-user-shield"></i>
+            </span>
+
             <div>
-              <span>PRIVASI</span>
+              <small>PRIVACY</small>
               <h3>Kebijakan Privasi</h3>
               <p>
-                Pelajari bagaimana data dan informasi pengguna dikelola.
+                Bagaimana informasi pengguna dikelola
+                dan dilindungi.
               </p>
             </div>
 
-            <i class="fa-solid fa-arrow-up-right-from-square about-link-arrow"></i>
+            <span class="about-legal-arrow">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </span>
 
           </a>
 
 
-          <a href="terms.html" class="about-link-card">
+          <a
+            href="terms.html"
+            class="about-legal-card"
+            data-reveal
+          >
 
-            <div class="about-link-icon">
-              <i class="fa-solid fa-file-signature"></i>
-            </div>
+            <span class="about-legal-icon purple">
+              <i class="fa-solid fa-file-contract"></i>
+            </span>
 
             <div>
-              <span>LEGAL</span>
+              <small>LEGAL</small>
               <h3>Syarat & Ketentuan</h3>
               <p>
-                Ketentuan yang berlaku saat menggunakan layanan PasTele.
+                Ketentuan yang berlaku saat menggunakan
+                layanan PasTele.
               </p>
             </div>
 
-            <i class="fa-solid fa-arrow-up-right-from-square about-link-arrow"></i>
+            <span class="about-legal-arrow">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </span>
+
+          </a>
+
+
+          <a
+            href="settings.html"
+            class="about-legal-card"
+            data-reveal
+          >
+
+            <span class="about-legal-icon green">
+              <i class="fa-solid fa-sliders"></i>
+            </span>
+
+            <div>
+              <small>ACCOUNT</small>
+              <h3>Pengaturan Akun</h3>
+              <p>
+                Kelola preferensi dan pengaturan akun
+                PasTele kamu.
+              </p>
+            </div>
+
+            <span class="about-legal-arrow">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </span>
 
           </a>
 
         </div>
 
       </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         FINAL CTA
+         =================================================== -->
+
+    <section class="about-cta-section">
+
+      <div class="about-cta-orb one"></div>
+      <div class="about-cta-orb two"></div>
+
+      <div class="container about-container">
+
+        <div class="about-cta" data-reveal>
+
+          <span class="about-cta-icon">
+            <i class="fa-brands fa-telegram"></i>
+          </span>
+
+          <span class="about-section-label">
+            <i class="fa-solid fa-rocket"></i>
+            START WITH PASTELE
+          </span>
+
+          <h2>
+            Siap membangun sesuatu
+            <span>lebih besar?</span>
+          </h2>
+
+          <p>
+            Mulai jelajahi PasTele dan temukan cara baru
+            untuk menggunakan, berbagi, dan memonetisasi
+            ekosistem Telegram.
+          </p>
+
+          <div class="about-cta-actions">
+
+            <a
+              href="marketplace.html"
+              class="about-btn about-btn-primary"
+            >
+              <i class="fa-solid fa-store"></i>
+              <span>Explore Marketplace</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+            <a
+              href="dashboard.html"
+              class="about-btn about-btn-light"
+            >
+              <i class="fa-solid fa-gauge-high"></i>
+              <span>Open Dashboard</span>
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </section>
 
   </main>
 
 
-  <script src="js/navbar.js?v=20260911-navbar"></script>
+  <!-- =====================================================
+       SCRIPTS
+       ===================================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="js/config.js?v=20260911"></script>
+  <script src="js/supabase.js?v=20260911"></script>
+
+  <script src="js/theme.js?v=20260911"></script>
+  <script src="js/navbar.js?v=20260911"></script>
+  <script src="js/footer.js?v=20260911"></script>
   <script src="js/about.js?v=20260911-about"></script>
 
 </body>
