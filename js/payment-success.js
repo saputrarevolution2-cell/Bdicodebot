@@ -10,7 +10,6 @@ window.PASTELE_CONFIG = Object.freeze({
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
 
-
 /* ===== SOURCE: js/supabase.js ===== */
 /* =========================================================
    PasTele — Supabase client
@@ -184,7 +183,6 @@ window.PASTELE_CONFIG = Object.freeze({
     }
   };
 })();
-
 
 /* ===== SOURCE: js/auth.js ===== */
 /* =========================================================
@@ -994,914 +992,373 @@ window.PASTELE_CONFIG = Object.freeze({
   );
 })();
 
-
 /* ===== SOURCE: js/navbar.js ===== */
-/* =========================================================
+/* ============================================================
    PasTele — UNIVERSAL NAVBAR
-   FINAL PREMIUM / RESPONSIVE / SAFE
-   Dashboard-style Navigation
-   Supports:
-   - User Navbar
-   - Admin Navbar
-   - Mobile Sidebar
-   - Light / Dark / System Theme
-   - Wallet Balance
-   - Social Media
-   - Active Navigation
-   - Logout
-   - Accessibility
-   ========================================================= */
+   Layout: [Menu] [Logo] ........ [Username / Avatar]
+   Username opens: Saldo / Notifikasi / Tema / Kelola Profil
+   Menu drawer contains navigation; Logout stays at bottom.
+   ============================================================ */
 
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
+(() => {
+  const initNavbar = async () => {
+    const host = document.getElementById('navbar');
+    if (!host || host.dataset.ready === '1') return;
+    host.dataset.ready = '1';
 
-  const host = document.getElementById("navbar");
-  if (!host) return;
+    const isAdmin = /\/admin(?:\/|$)/i.test(location.pathname);
+    const base = isAdmin ? '../' : '';
+    const file = (location.pathname.split('/').pop() || 'dashboard.html').toLowerCase();
 
-  /* =======================================================
-     PREVENT DUPLICATE INITIALIZATION
-  ======================================================= */
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[c]));
 
-  if (host.dataset.navbarReady === "1") return;
-  host.dataset.navbarReady = "1";
+    const same = (href) => String(href).split('?')[0].split('#')[0].toLowerCase() === file;
 
-  const isAdmin = location.pathname.includes("/admin/");
-  const base = isAdmin ? "../" : "";
+    let user = null;
+    let profile = null;
 
-  /* =======================================================
-     HELPERS
-  ======================================================= */
-
-  const getTC = () => window.TC || null;
-  const getSB = () => window.sb || null;
-
-  const esc = (value) => {
     try {
-      if (getTC()?.esc) {
-        return getTC().esc(value);
+      if (window.TC?.user) user = await window.TC.user();
+    } catch (_) {}
+
+    try {
+      if (!user && window.sb?.auth) {
+        user = (await window.sb.auth.getUser()).data?.user || null;
       }
     } catch (_) {}
 
-    return String(value ?? "").replace(
-      /[&<>"']/g,
-      (char) =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#039;"
-        })[char]
+    try {
+      if (user && window.sb) {
+        const r = await window.sb
+          .from('profiles')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until')
+          .eq('id', user.id)
+          .maybeSingle();
+        profile = r.data || null;
+      }
+    } catch (_) {}
+
+    const name =
+      profile?.username ||
+      profile?.display_name ||
+      user?.user_metadata?.username ||
+      user?.user_metadata?.full_name ||
+      user?.email?.split('@')[0] ||
+      'Account';
+
+    const premium = Boolean(
+      profile?.is_premium &&
+      (!profile?.subscription_until || new Date(profile.subscription_until) > new Date())
     );
-  };
 
-  const safeUrl = (value) => {
-    try {
-      const raw = String(value || "").trim();
+    const groups = isAdmin
+      ? [
+          ['Admin', [
+            ['index.html','fa-chart-pie','Overview'],
+            ['users.html','fa-users','Users'],
+            ['products.html','fa-box','Products'],
+            ['content.html','fa-layer-group','Content'],
+            ['orders.html','fa-receipt','Orders'],
+            ['payments.html','fa-credit-card','Payments'],
+            ['withdrawals.html','fa-money-bill-transfer','Withdrawals'],
+            ['notifications.html','fa-bell','Notifications'],
+            ['transactions.html','fa-arrow-right-arrow-left','Transactions'],
+            ['pastes.html','fa-file-lines','Pastes'],
+            ['bots.html','fa-robot','Bots'],
+            ['logs.html','fa-list','Logs']
+          ]]
+        ]
+      : [
+          ['Menu', [
+            ['dashboard.html','fa-house','Dashboard'],
+            ['marketplace.html','fa-store','Marketplace']
+          ]],
+          ['Create', [
+            ['create-pastelink.html','fa-link','PasteLink'],
+            ['create-code.html','fa-code','Code'],
+            ['create-telegram.html?type=channel','fa-users','Group / Channel']
+          ]],
+          ['Manage', [
+            ['my-products.html','fa-box-open','My Product'],
+            ['purchases.html','fa-bag-shopping','Purchases']
+          ]],
+          ['Finance', [
+            ['wallet.html','fa-wallet','Wallet'],
+            ['withdrawals.html','fa-money-bill-transfer','Withdraw'],
+            ['transactions.html','fa-arrow-right-arrow-left','Transaction']
+          ]],
+          ['Account', [
+            ['subscription.html','fa-crown','Langganan'],
+            ['premium.html','fa-gem','Premium'],
+            ['notifications.html','fa-bell','Notifikasi'],
+            ['profile.html','fa-user','Profile'],
+            ['settings.html','fa-gear','Setting'],
+            ['about.html','fa-circle-info','About']
+          ]]
+        ];
 
-      if (!raw) return "#";
-
-      const url = new URL(raw, window.location.origin);
-
-      if (
-        url.protocol !== "http:" &&
-        url.protocol !== "https:"
-      ) {
-        return "#";
-      }
-
-      return url.href;
-    } catch (_) {
-      return "#";
-    }
-  };
-
-  const getCurrentFile = () => {
-    const path = location.pathname
-      .split("?")[0]
-      .split("#")[0]
-      .replace(/\/+$/, "");
-
-    const file = path.split("/").pop();
-
-    if (!file) {
-      return isAdmin ? "index.html" : "dashboard.html";
-    }
-
-    return file.toLowerCase();
-  };
-
-  const normalizeFile = (value) => {
-    return String(value || "")
-      .split("?")[0]
-      .split("#")[0]
-      .replace(/^\/+/, "")
-      .toLowerCase();
-  };
-
-  const isSamePath = (href) => {
-    return normalizeFile(href) === getCurrentFile();
-  };
-
-  /* =======================================================
-     USER
-  ======================================================= */
-
-  let user = null;
-
-  try {
-    if (getTC()?.user) {
-      user = await getTC().user();
-    }
-  } catch (_) {
-    user = null;
-  }
-
-  /* Fallback Supabase session */
-  if (!user && getSB()?.auth) {
-    try {
-      const { data } = await getSB().auth.getUser();
-      user = data?.user || null;
-    } catch (_) {
-      user = null;
-    }
-  }
-
-  const metadata = user?.user_metadata || {};
-
-  let profile = null;
-  if (user && getSB()) {
-    try {
-      const { data } = await getSB()
-        .from("profiles")
-        .select("username,display_name,avatar_url,is_banned,is_admin,role,is_premium,subscription_until")
-        .eq("id", user.id)
-        .maybeSingle();
-      profile = data || null;
-    } catch (_) {}
-  }
-
-  const name =
-    profile?.username ||
-    metadata.username ||
-    profile?.display_name ||
-    metadata.full_name ||
-    metadata.name ||
-    user?.email?.split("@")[0] ||
-    "Guest";
-
-  /* =======================================================
-     NAVIGATION GROUPS
-  ======================================================= */
-
-  const groups = isAdmin
-    ? [
-        ["Admin", [
-          ["index.html", "fa-chart-pie", "Overview"],
-          ["users.html", "fa-users", "Users"],
-          ["products.html", "fa-box", "Products"],
-          ["content.html", "fa-layer-group", "Content"],
-          ["orders.html", "fa-receipt", "Orders"],
-          ["payments.html", "fa-credit-card", "Payments"],
-          ["withdrawals.html", "fa-money-bill-transfer", "Withdrawals"],
-          ["notifications.html", "fa-bell", "Notifications"],
-          ["transactions.html", "fa-arrow-right-arrow-left", "Transactions"],
-          ["pastes.html", "fa-file-lines", "Pastes"],
-          ["bots.html", "fa-robot", "Bots"],
-          ["logs.html", "fa-list", "Logs"]
-        ]]
-      ]
-    : [
-        ["Menu", [
-          ["dashboard.html", "fa-house", "Dashboard"],
-          ["marketplace.html", "fa-store", "Marketplace"]
-        ]],
-        ["Create", [
-          ["create-pastelink.html", "fa-link", "PasteLink"],
-          ["create-code.html", "fa-code", "Code"],
-          ["create-telegram.html?type=channel", "fa-users", "Group / Channel"]
-        ]],
-        ["Manage", [
-          ["my-products.html", "fa-box-open", "My Product"],
-          ["purchases.html", "fa-bag-shopping", "Purchases"]
-        ]],
-        ["Finance", [
-          ["wallet.html", "fa-wallet", "Wallet"],
-          ["withdrawals.html", "fa-money-bill-transfer", "Withdraw"],
-          ["transactions.html", "fa-arrow-right-arrow-left", "Transaction"]
-        ]],
-        ["Account", [
-          ["subscription.html", "fa-crown", "Langganan"],
-          ["premium.html", "fa-gem", "Premium"],
-          ["notifications.html", "fa-bell", "Notifikasi"],
-          ["profile.html", "fa-user", "Profile"],
-          ["settings.html", "fa-gear", "Setting"],
-          ["about.html", "fa-circle-info", "About"]
-        ]]
-      ];
-
-  /* =======================================================
-     RENDER NAVIGATION
-  ======================================================= */
-
-  const renderGroups = groups
-    .map(([title, items]) => {
+    const links = (items) => items.map(([href, icon, label]) => {
+      const active = same(href);
       return `
-        <div class="nav-group">
+        <a class="pt-link${active ? ' active' : ''}"
+           href="${base}${esc(href)}"
+           ${active ? 'aria-current="page"' : ''}>
+          <span class="pt-link-icon"><i class="fa-solid ${esc(icon)}"></i></span>
+          <span class="pt-link-label">${esc(label)}</span>
+          <i class="fa-solid fa-chevron-right pt-link-arrow"></i>
+        </a>`;
+    }).join('');
 
-          ${title === "Create" ? `
-            <button type="button" class="nav-group-title nav-create-toggle" id="navCreateToggle" aria-expanded="false">
-              <span><i class="fa-solid fa-plus"></i> Create</span>
-              <i class="fa-solid fa-chevron-down nav-create-chevron"></i>
-            </button>
-            <div class="nav-create-submenu" id="navCreateSubmenu" hidden>
-              ${items.map(([href, icon, label]) => {
-                const active = isSamePath(href);
-                return `<a href="${base}${esc(href)}" data-href="${esc(href)}" class="nav-link${active ? " active" : ""}" ${active ? 'aria-current="page"' : ""}>
-                  <i class="fa-solid ${esc(icon)}" aria-hidden="true"></i><span>${label}</span>
-                </a>`;
-              }).join("")}
-            </div>
-          ` : `
-            <small class="nav-group-title">${esc(title)}</small>
-            ${items.map(([href, icon, label]) => {
-              const active = isSamePath(href);
-              return `<a href="${base}${esc(href)}" data-href="${esc(href)}" class="nav-link${active ? " active" : ""}" ${active ? 'aria-current="page"' : ""}>
-                <i class="fa-solid ${esc(icon)}" aria-hidden="true"></i><span>${label}</span>
-              </a>`;
-            }).join("")}
-          `}
+    const avatar = (large = false) =>
+      profile?.avatar_url
+        ? `<img src="${esc(profile.avatar_url)}" alt="">`
+        : `<i class="fa-solid fa-user"></i>`;
 
-        </div>
-      `;
-    })
-    .join("");
+    host.innerHTML = `
+      <header class="pt-nav">
+        <div class="pt-nav-inner">
 
-  /* =======================================================
-     NAVBAR HTML
-  ======================================================= */
-
-  host.innerHTML = `
-    <header
-      class="navbar"
-      id="tgSidebar"
-      role="navigation"
-    >
-
-      <div class="nav-inner">
-
-        <!-- =================================================
-             BRAND
-        ================================================== -->
-
-        <a
-          class="brand"
-          href="${base}${isAdmin ? "index.html" : "dashboard.html"}"
-          aria-label="PasTele"
-        >
-
-          <span class="brand-mark">
-            <i
-              class="fa-brands fa-telegram"
-              aria-hidden="true"
-            ></i>
-          </span>
-
-          <span>PasTele</span>
-
-        </a>
-
-
-        <!-- =================================================
-             ACCOUNT
-        ================================================== -->
-
-        <div class="nav-account">
-          <a
-            class="nav-account-info"
-            href="${base}${isAdmin ? "index.html" : "profile.html"}"
-            aria-label="Profil akun"
-          >
-            <div class="nav-avatar">
-              <i class="fa-solid fa-user" aria-hidden="true"></i>
-            </div>
-            <div class="nav-name">
-              <b>${esc(name)}</b>
-              <small id="navAccountStatus">Akun aktif</small>
-            </div>
-          </a>
-          <div class="nav-account-side">
-            <span class="nav-balance" id="navBalance" aria-label="Saldo tersedia">Rp 0</span>
-            <a class="nav-notification" id="navNotification" href="${base}notifications.html" title="Notifikasi" aria-label="Notifikasi">
-              <i class="fa-solid fa-bell" aria-hidden="true"></i>
-              <span class="nav-notification-badge" id="navNotificationBadge" hidden>0</span>
-            </a>
-            <button class="nav-theme" id="navTheme" type="button" title="Ganti tema" aria-label="Ganti tema">
-              <i class="fa-solid fa-moon" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-
-
-        <!-- =================================================
-             NAVIGATION
-        ================================================== -->
-
-        <nav
-          class="nav-links"
-          id="navLinks"
-          aria-label="${isAdmin
-            ? "Admin navigation"
-            : "Main navigation"}"
-        >
-
-          ${renderGroups}
-
-        </nav>
-
-
-        <!-- =================================================
-             SOCIAL MEDIA
-        ================================================== -->
-
-        <div
-          class="nav-extra"
-          id="navSocials"
-          aria-label="Sosial Media"
-        ></div>
-
-
-        <!-- =================================================
-             TOOLS
-        ================================================== -->
-
-        <div class="nav-tools">
-
-          <button
-            class="nav-logout"
-            id="navLogout"
-            type="button"
-          >
-
-            <i
-              class="fa-solid fa-right-from-bracket"
-              aria-hidden="true"
-            ></i>
-
-            <span>Log out</span>
-
+          <button class="pt-menu-btn" id="ptMenu" type="button"
+                  aria-label="Buka menu" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
           </button>
 
+          <a class="pt-brand"
+             href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
+             aria-label="PasTele">
+            <span class="pt-brand-mark">
+              <i class="fa-brands fa-telegram"></i>
+            </span>
+            <span class="pt-brand-name">PasTele</span>
+          </a>
+
+          <span class="pt-spacer"></span>
+
+          <div class="pt-user-wrap">
+            <button class="pt-user-btn" id="ptUser" type="button"
+                    aria-expanded="false" aria-haspopup="true">
+              <span class="pt-avatar">${avatar()}</span>
+              <span class="pt-name">${esc(name)}</span>
+              ${premium ? '<i class="fa-solid fa-circle-check pt-check"></i>' : ''}
+              <i class="fa-solid fa-chevron-down pt-chevron"></i>
+            </button>
+
+            <div class="pt-dropdown" id="ptDrop" hidden>
+              <div class="pt-profile">
+                <span class="pt-avatar pt-avatar-lg">${avatar(true)}</span>
+                <div class="pt-profile-text">
+                  <strong>${esc(name)}</strong>
+                  <small>${isAdmin ? 'Administrator' : premium ? 'Premium aktif' : 'Akun aktif'}</small>
+                </div>
+              </div>
+
+              <div class="pt-account-grid">
+                <a class="pt-account-item" href="${base}notifications.html">
+                  <i class="fa-solid fa-bell"></i>
+                  <span>Notifikasi</span>
+                  <strong id="ptNotif">0</strong>
+                </a>
+
+                <button class="pt-account-item" id="ptTheme" type="button">
+                  <i class="fa-solid fa-circle-half-stroke"></i>
+                  <span>Tema</span>
+                  <strong id="ptThemeText">System</strong>
+                </button>
+              </div>
+
+              <div class="pt-socials" aria-label="Social media">
+                <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+                <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+              </div>
+
+              <a class="pt-profile-link"
+                 href="${base}${isAdmin ? 'index.html' : 'profile.html'}">
+                <i class="fa-solid fa-user-gear"></i>
+                <span>Kelola profil</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="pt-backdrop" id="ptBackdrop"></div>
+
+      <aside class="pt-drawer" id="ptDrawer" aria-hidden="true">
+        <div class="pt-drawer-head">
+          <div class="pt-drawer-title">
+            <span>${isAdmin ? 'ADMIN PANEL' : 'WORKSPACE'}</span>
+            <strong>${isAdmin ? 'Administration' : 'PasTele Menu'}</strong>
+          </div>
+          <button class="pt-close-btn" id="ptClose" type="button"
+                  aria-label="Tutup menu">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
 
-      </div>
+        <nav class="pt-menu-scroll" aria-label="Menu utama">
+          ${groups.map(([title, items]) => `
+            <section class="pt-group">
+              <h3>${esc(title)}</h3>
+              ${links(items)}
+            </section>`).join('')}
+        </nav>
 
-    </header>
+        <div class="pt-drawer-bottom">
+          <div class="pt-drawer-socials" aria-label="Social media">
+            <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+          <button class="pt-link logout" id="ptLogout" type="button">
+            <span class="pt-link-icon">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </span>
+            <span class="pt-link-label">Log out</span>
+            <i class="fa-solid fa-arrow-right pt-link-arrow"></i>
+          </button>
+        </div>
+      </aside>`;
 
+    const menu = document.getElementById('ptMenu');
+    const drawer = document.getElementById('ptDrawer');
+    const backdrop = document.getElementById('ptBackdrop');
+    const closeButton = document.getElementById('ptClose');
+    const userButton = document.getElementById('ptUser');
+    const dropdown = document.getElementById('ptDrop');
 
-    <!-- =====================================================
-         MOBILE BACKDROP
-    ====================================================== -->
+    const closeDrawer = () => {
+      drawer.classList.remove('open');
+      backdrop.classList.remove('open');
+      drawer.setAttribute('aria-hidden', 'true');
+      menu.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('pt-nav-lock');
+    };
 
-    <div
-      class="nav-backdrop"
-      id="navBackdrop"
-      aria-hidden="true"
-    ></div>
+    const openDrawer = () => {
+      dropdown.hidden = true;
+      userButton.setAttribute('aria-expanded', 'false');
+      drawer.classList.add('open');
+      backdrop.classList.add('open');
+      drawer.setAttribute('aria-hidden', 'false');
+      menu.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('pt-nav-lock');
+    };
 
+    menu.addEventListener('click', openDrawer);
+    closeButton.addEventListener('click', closeDrawer);
+    backdrop.addEventListener('click', closeDrawer);
 
-    <!-- =====================================================
-         MOBILE TOGGLE
-    ====================================================== -->
+    drawer.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', closeDrawer);
+    });
 
-    <button
-      class="nav-toggle"
-      id="navToggle"
-      type="button"
-      aria-label="Buka menu"
-      aria-expanded="false"
-      title="Menu"
-    >
+    userButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const shouldOpen = dropdown.hidden;
+      dropdown.hidden = !shouldOpen;
+      userButton.setAttribute('aria-expanded', String(shouldOpen));
+      if (shouldOpen) closeDrawer();
+    });
 
-      <i
-        class="fa-solid fa-bars"
-        aria-hidden="true"
-      ></i>
-
-    </button>
-  `;
-
-  /* =======================================================
-     ELEMENTS
-  ======================================================= */
-
-  const sidebar =
-    document.getElementById("tgSidebar");
-
-  const toggle =
-    document.getElementById("navToggle");
-
-  const backdrop =
-    document.getElementById("navBackdrop");
-
-  const themeBtn =
-    document.getElementById("navTheme");
-
-  const logoutBtn =
-    document.getElementById("navLogout");
-
-  const balanceEl =
-    document.getElementById("navBalance");
-
-  const navLinks = [
-    ...document.querySelectorAll("#navLinks a")
-  ];
-
-  const createToggle = document.getElementById("navCreateToggle");
-  const createSubmenu = document.getElementById("navCreateSubmenu");
-  const createHasActive = [...(createSubmenu?.querySelectorAll("a") || [])].some((a) => a.classList.contains("active"));
-  const setCreateOpen = (open) => {
-    if (!createToggle || !createSubmenu) return;
-    createSubmenu.hidden = !open;
-    createToggle.setAttribute("aria-expanded", String(open));
-    createToggle.classList.toggle("open", open);
-  };
-  setCreateOpen(createHasActive);
-  createToggle?.addEventListener("click", () => setCreateOpen(createSubmenu.hidden));
-
-
-  /* =======================================================
-     ACTIVE MENU
-  ======================================================= */
-
-  navLinks.forEach((link) => {
-    const href = link.dataset.href;
-
-    if (isSamePath(href)) {
-      link.classList.add("active");
-      link.setAttribute(
-        "aria-current",
-        "page"
-      );
-    }
-  });
-
-
-  /* =======================================================
-     MOBILE MENU
-  ======================================================= */
-
-  const setMenu = (open) => {
-    if (!sidebar || !toggle || !backdrop) {
-      return;
-    }
-
-    sidebar.classList.toggle(
-      "nav-open",
-      open
-    );
-
-    backdrop.classList.toggle(
-      "show",
-      open
-    );
-
-    toggle.setAttribute(
-      "aria-expanded",
-      String(open)
-    );
-
-    toggle.setAttribute(
-      "aria-label",
-      open
-        ? "Tutup menu"
-        : "Buka menu"
-    );
-
-    toggle.setAttribute(
-      "title",
-      open
-        ? "Tutup menu"
-        : "Menu"
-    );
-
-    backdrop.setAttribute(
-      "aria-hidden",
-      String(!open)
-    );
-
-    const icon =
-      toggle.querySelector("i");
-
-    if (icon) {
-      icon.className =
-        open
-          ? "fa-solid fa-xmark"
-          : "fa-solid fa-bars";
-    }
-
-    document.body.classList.toggle(
-      "nav-menu-open",
-      open
-    );
-  };
-
-
-  const toggleMenu = () => {
-    const isOpen =
-      sidebar?.classList.contains(
-        "nav-open"
-      );
-
-    setMenu(!isOpen);
-  };
-
-
-  toggle?.addEventListener(
-    "click",
-    toggleMenu
-  );
-
-
-  backdrop?.addEventListener(
-    "click",
-    () => {
-      setMenu(false);
-    }
-  );
-
-
-  navLinks.forEach((link) => {
-    link.addEventListener(
-      "click",
-      () => {
-        setMenu(false);
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('#navbar .pt-user-wrap')) {
+        dropdown.hidden = true;
+        userButton.setAttribute('aria-expanded', 'false');
       }
-    );
-  });
+    });
 
-
-  window.addEventListener(
-    "keydown",
-    (event) => {
-
-      if (event.key === "Escape") {
-        setMenu(false);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeDrawer();
+        dropdown.hidden = true;
+        userButton.setAttribute('aria-expanded', 'false');
       }
+    });
 
-    }
-  );
-
-
-  window.addEventListener(
-    "resize",
-    () => {
-
-      if (window.innerWidth > 900) {
-        setMenu(false);
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     THEME
-  ======================================================= */
-  const applyNavbarTheme = () => {
-    const mode = window.PasTeleTheme?.get?.() || localStorage.getItem('pastele-theme') || 'system';
-    const theme = window.PasTeleTheme?.resolved?.() || document.documentElement.dataset.theme || 'light';
-    if (themeBtn) {
-      const icon = themeBtn.querySelector('i');
-      if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-      themeBtn.title = `Tema: ${mode === 'system' ? 'System' : mode === 'dark' ? 'Dark' : 'Light'}`;
-      themeBtn.setAttribute('aria-label', themeBtn.title);
-    }
-  };
-  themeBtn?.addEventListener('click', () => {
-    const theme = window.PasTeleTheme?.cycle ? window.PasTeleTheme.cycle() : null;
-    applyNavbarTheme();
-    try { getTC()?.toast?.(`Tema ${window.PasTeleTheme?.get?.() || 'system'}`, 'success'); } catch (_) {}
-  });
-  window.addEventListener('pastele-theme-change', applyNavbarTheme);
-  applyNavbarTheme();
-
-  /* =======================================================
-     ACCOUNT STATUS
-  ======================================================= */
-
-  const statusEl = document.getElementById("navAccountStatus");
-
-  const loadAccountStatus = async () => {
-    if (!statusEl || isAdmin) return;
-    const p = profile;
-    if (p?.is_banned) {
-      statusEl.textContent = "Akun dibatasi";
-    } else if (p?.is_premium || (p?.subscription_until && new Date(p.subscription_until) > new Date())) {
-      statusEl.textContent = "Premium aktif";
-    } else {
-      statusEl.textContent = "Akun aktif";
-    }
-  };
-
-  await loadAccountStatus();
-
-  /* =======================================================
-     WALLET BALANCE
-  ======================================================= */
-
-  const formatMoney = (value) => {
+    const money = (value) =>
+      new Intl.NumberFormat('id-ID', {
+        style:'currency',
+        currency:'IDR',
+        maximumFractionDigits:0
+      }).format(Number(value) || 0);
 
     try {
-      if (getTC()?.money) {
-        return getTC().money(value);
-      }
-    } catch (_) {}
-
-    return `Rp ${Number(
-      value || 0
-    ).toLocaleString("id-ID")}`;
-  };
-
-
-  const loadNavbarBalance = async () => {
-
-    if (!user || !getSB()) {
-      return;
-    }
-
-    try {
-
-      const { data: wallet, error } =
-        await getSB()
-          .from("wallets")
-          .select(
-            "balance,available_balance"
-          )
-          .eq(
-            "user_id",
-            user.id
-          )
+      if (user && window.sb) {
+        const r = await window.sb
+          .from('wallets')
+          .select('balance,available_balance')
+          .eq('user_id', user.id)
           .maybeSingle();
 
-      if (error) {
-        return;
+        const balance = r.data?.available_balance ?? r.data?.balance ?? 0;
+        const balanceEl = document.getElementById('ptBalance');
+        if (balanceEl) balanceEl.textContent = money(balance);
       }
+    } catch (_) {}
 
-      const balance =
-        wallet?.available_balance ??
-        wallet?.balance ??
-        0;
+    try {
+      if (user && window.sb) {
+        const r = await window.sb
+          .from('notifications')
+          .select('id', {count:'exact', head:true})
+          .eq('user_id', user.id)
+          .eq('is_read', false);
 
-      if (balanceEl) {
-
-        balanceEl.textContent =
-          formatMoney(balance);
-
+        const notifEl = document.getElementById('ptNotif');
+        if (notifEl) notifEl.textContent = String(r.count || 0);
       }
+    } catch (_) {}
 
-    } catch (_) {
+    const updateThemeLabel = () => {
+      const mode = localStorage.getItem('pastele-theme') || 'system';
+      const el = document.getElementById('ptThemeText');
+      if (el) el.textContent = mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+    };
 
-      /* Wallet failure must never break navbar */
+    updateThemeLabel();
 
-    }
-
-  };
-
-
-  await loadNavbarBalance();
-
-
-  /* =======================================================
-     LOGOUT
-  ======================================================= */
-
-  logoutBtn?.addEventListener(
-    "click",
-    async () => {
-
-      if (logoutBtn.disabled) {
-        return;
+    document.getElementById('ptTheme').addEventListener('click', () => {
+      if (window.PasTeleTheme?.cycle) {
+        window.PasTeleTheme.cycle();
+      } else {
+        const modes = ['system','light','dark'];
+        const current = localStorage.getItem('pastele-theme') || 'system';
+        localStorage.setItem('pastele-theme', modes[(modes.indexOf(current) + 1) % modes.length]);
+        location.reload();
       }
+      updateThemeLabel();
+    });
 
-      logoutBtn.disabled = true;
-
-      const originalHTML =
-        logoutBtn.innerHTML;
-
-      logoutBtn.innerHTML = `
-        <i
-          class="fa-solid fa-spinner fa-spin"
-          aria-hidden="true"
-        ></i>
-
-        <span>Keluar...</span>
-      `;
-
+    document.getElementById('ptLogout').addEventListener('click', async (event) => {
+      const button = event.currentTarget;
+      const label = button.querySelector('.pt-link-label');
+      button.disabled = true;
+      if (label) label.textContent = 'Keluar...';
 
       try {
-
-        if (getTC()?.logout) {
-          await getTC().logout();
-        } else if (window.Auth?.logout) {
-          await window.Auth.logout();
-        } else if (getSB()?.auth) {
-          await getSB().auth.signOut();
-
-          window.location.href =
-            `${base}login.html`;
-        } else {
-
-          throw new Error(
-            "Sistem logout belum tersedia."
-          );
-
-        }
-
-      } catch (error) {
-
-        logoutBtn.disabled = false;
-        logoutBtn.innerHTML =
-          originalHTML;
-
-        try {
-
-          if (getTC()?.toast) {
-
-            getTC().toast(
-              error?.message ||
-                "Gagal logout",
-              "error"
-            );
-
-          }
-
-        } catch (_) {}
-
+        if (window.TC?.logout) await window.TC.logout();
+        else if (window.Auth?.logout) await window.Auth.logout();
+        else if (window.sb?.auth) await window.sb.auth.signOut();
+        location.href = `${base}login.html`;
+      } catch (_) {
+        button.disabled = false;
+        if (label) label.textContent = 'Log out';
       }
-
-    }
-  );
-
-
-  /* =======================================================
-     GLOBAL NOTIFICATIONS
-  ======================================================= */
-  const notificationBadge = document.getElementById('navNotificationBadge');
-  const loadNotificationBadge = async () => {
-    if (!user || !getSB()) return;
-    try {
-      const { count } = await getSB().from('notifications').select('id', {count:'exact', head:true}).eq('user_id', user.id).eq('is_read', false);
-      const n = Number(count || 0);
-      if (notificationBadge) { notificationBadge.hidden = n <= 0; notificationBadge.textContent = n > 99 ? '99+' : String(n); }
-    } catch (_) {}
-  };
-  await loadNotificationBadge();
-
-  /* Lightweight live notification — never blocks the page. */
-  const showLiveNotification = (item) => {
-    if (!item?.title) return;
-    let host = document.getElementById('pastele-live-notifications');
-    if (!host) {
-      host = document.createElement('div');
-      host.id = 'pastele-live-notifications';
-      host.setAttribute('aria-live', 'polite');
-      document.body.appendChild(host);
-    }
-
-    const card = document.createElement('div');
-    card.className = 'pastele-live-notification';
-    card.innerHTML = `
-      <button type="button" class="pastele-live-close" aria-label="Tutup">×</button>
-      <div class="pastele-live-icon"><i class="fa-solid fa-bell"></i></div>
-      <div class="pastele-live-copy">
-        <strong>${getTC()?.esc ? getTC().esc(item.title) : String(item.title)}</strong>
-        <span>${getTC()?.esc ? getTC().esc(item.body || '') : String(item.body || '')}</span>
-      </div>`;
-
-    const remove = () => {
-      card.classList.add('is-leaving');
-      setTimeout(() => card.remove(), 180);
-    };
-    card.querySelector('.pastele-live-close')?.addEventListener('click', remove);
-    host.prepend(card);
-
-    while (host.children.length > 2) host.lastElementChild?.remove();
-    requestAnimationFrame(() => card.classList.add('is-visible'));
-    setTimeout(remove, 4200);
+    });
   };
 
-  if (getSB() && user) {
-    try {
-      getSB().channel(`pastele-notifications-${user.id}`)
-        .on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${user.id}`}, payload => {
-          loadNotificationBadge();
-          showLiveNotification(payload?.new);
-        }).subscribe();
-    } catch (_) {}
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNavbar, {once:true});
+  } else {
+    initNavbar();
   }
-  window.setInterval(loadNotificationBadge, 20000);
-
-  /* =======================================================
-     ADMIN ALERTS — WITHDRAWAL / SYSTEM NOTIFICATIONS
-  ======================================================= */
-  if (isAdmin && getSB() && user) {
-    try {
-      const { count } = await getSB().from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).eq('is_read',false);
-      const wdLink = [...document.querySelectorAll('#navLinks a')].find(a => /withdrawals\.html$/i.test(a.dataset.href || ''));
-      if (wdLink && Number(count || 0) > 0) {
-        wdLink.insertAdjacentHTML('beforeend', `<span class="nav-alert-count">${Number(count)>99?'99+':Number(count)}</span>`);
-      }
-    } catch (_) {}
-  }
-
-  /* =======================================================
-     SOCIAL MEDIA
-  ======================================================= */
-
-  const loadSocials = async () => {
-    const sb = getSB();
-    const socialHost = document.getElementById("navSocials");
-    if (!sb || !socialHost) return;
-    try {
-      const response = await sb.rpc("get_public_site_settings");
-      const socials = Array.isArray(response?.data?.socials) ? response.data.socials : [];
-      const wanted = [
-        ["telegram", "fa-brands fa-telegram"],
-        ["youtube", "fa-brands fa-youtube"],
-        ["facebook", "fa-brands fa-facebook"]
-      ];
-      const links = wanted.map(([key, icon]) => {
-        const item = socials.find((x) => String(x?.name || "").toLowerCase().includes(key));
-        const url = safeUrl(item?.url);
-        if (url === "#") return "";
-        return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(key)}" title="${esc(key)}"><i class="${icon}" aria-hidden="true"></i></a>`;
-      }).join("");
-      if (links) socialHost.innerHTML = `<small>Sosial</small><div class="nav-social-icons">${links}</div>`;
-    } catch (_) {}
-  };
-
-  await loadSocials();
-
-
-  /* =======================================================
-     FOCUS / ACCESSIBILITY
-  ======================================================= */
-
-  document.addEventListener(
-    "focusin",
-    (event) => {
-
-      const link =
-        event.target.closest?.(
-          "#navLinks a"
-        );
-
-      if (!link) {
-        return;
-      }
-
-      if (
-        window.innerWidth <= 900 &&
-        !sidebar?.classList.contains(
-          "nav-open"
-        )
-      ) {
-        return;
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     PAGE VISIBILITY
-     Refresh balance when returning to tab
-  ======================================================= */
-
-  document.addEventListener(
-    "visibilitychange",
-    () => {
-
-      if (
-        document.visibilityState ===
-        "visible"
-      ) {
-        loadNavbarBalance();
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     FINAL STATE
-  ======================================================= */
-
-  host.dataset.navbarLoaded = "1";
-
-});
-
+})();
 
 /* ===== SOURCE: js/payment-success.js ===== */
 /* =========================================================
@@ -1990,43 +1447,10 @@ document.addEventListener(
             return;
         }
         /* ===================================================
-           AUTH
+           AUTH (OPTIONAL FOR GUEST ORDERS)
            =================================================== */
         let user = null;
-        try {
-            if (
-                !window.TC ||
-                typeof TC.user !==
-                    "function"
-            ) {
-                throw new Error(
-                    "Sesi login tidak tersedia."
-                );
-            }
-            user =
-                await TC.user();
-        } catch (error) {
-            console.warn(
-                "[Payment Success] Auth:",
-                error
-            );
-            const redirect =
-                encodeURIComponent(
-                    location.href
-                );
-            location.href =
-                `login.html?redirect=${redirect}`;
-            return;
-        }
-        if (!user?.id) {
-            const redirect =
-                encodeURIComponent(
-                    location.href
-                );
-            location.href =
-                `login.html?redirect=${redirect}`;
-            return;
-        }
+        try { if (window.TC && typeof TC.user === "function") user = await TC.user(); } catch (_) { user = null; }
         /* ===================================================
            ORDER ID VALIDATION
            =================================================== */
@@ -2047,43 +1471,9 @@ document.addEventListener(
            Explicit columns only.
            =================================================== */
         try {
-            const {
-                data: order,
-                error
-            } = await client
-                .from("orders")
-                .select(`
-                    id,
-                    buyer_id,
-                    seller_id,
-                    product_id,
-                    amount,
-                    status,
-                    created_at,
-                    item_type,
-                    item_id,
-                    item_title,
-                    payment_reference,
-                    paid_at
-                `)
-                .eq("id", orderId)
-                .eq("buyer_id", user.id)
-                .maybeSingle();
-            if (error) {
-                throw error;
-            }
-            /* ===============================================
-               ORDER NOT FOUND
-               =============================================== */
-            if (!order) {
-                setText(
-                    "Order tidak ditemukan atau bukan milik akun ini."
-                );
-                setAccessUrl(
-                    "dashboard.html"
-                );
-                return;
-            }
+            const { data: order, error } = await client.rpc("get_order_for_payment", { p_order_id: orderId, p_guest_token: guestToken || null });
+            if (error) throw error;
+            if (!order) { setText("Order tidak ditemukan atau akses tidak valid."); setAccessUrl("dashboard.html"); return; }
             /* ===============================================
                NORMALIZE STATUS
                =============================================== */
@@ -2140,17 +1530,17 @@ document.addEventListener(
              */
             let accessUrl = "dashboard.html";
             try {
-                const { data: purchase, error: purchaseError } = await client
-                    .from("purchases")
-                    .select("id,item_type,item_id,item_title,status,access_url")
-                    .eq("order_id", order.id)
-                    .eq("buyer_id", user.id)
-                    .in("status", ["completed","paid","success"])
-                    .maybeSingle();
+                let purchase=null; let purchaseError=null;
+                if (order.buyer_id && user?.id) {
+                    ({ data: purchase, error: purchaseError } = await client.from("purchases").select("id,item_type,item_id,item_title,status,access_url").eq("order_id",order.id).eq("buyer_id",user.id).in("status",["completed","paid","success"]).maybeSingle());
+                }
                 if (purchaseError) throw purchaseError;
 
                 if (purchase?.access_url) {
                     accessUrl = purchase.access_url;
+                } else if (!order.buyer_id && guestToken) {
+                    const type=String(order.item_type||"").toLowerCase(); const id=order.item_id||order.product_id;
+                    if(id){ const d=await client.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:guestToken}); const item=d.data; const slug=item?.slug; if(slug){ if(type==='pastelink') accessUrl=`paste-view.html?slug=${encodeURIComponent(slug)}&guest_token=${encodeURIComponent(guestToken)}`; else if(type==='telegram_product') accessUrl=`product.html?type=code&id=${encodeURIComponent(id)}`; else if(type==='channel') accessUrl=`product.html?type=channel&id=${encodeURIComponent(id)}`; else accessUrl=`product.html?type=product&id=${encodeURIComponent(id)}`; } }
                 } else {
                     const type = String(order.item_type || "").toLowerCase();
                     const id = order.item_id || order.product_id;
@@ -2541,7 +1931,6 @@ document.addEventListener(
 
 })();
 
-
 /* ===== SOURCE: js/theme.js ===== */
 /* PasTele — Theme Manager
    Modes: light, dark, system
@@ -2598,4 +1987,3 @@ document.addEventListener(
     if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
   });
 })();
-

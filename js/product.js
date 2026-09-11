@@ -10,7 +10,6 @@ window.PASTELE_CONFIG = Object.freeze({
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
 
-
 /* ===== SOURCE: js/supabase.js ===== */
 /* =========================================================
    PasTele — Supabase client
@@ -184,7 +183,6 @@ window.PASTELE_CONFIG = Object.freeze({
     }
   };
 })();
-
 
 /* ===== SOURCE: js/auth.js ===== */
 /* =========================================================
@@ -994,7 +992,6 @@ window.PASTELE_CONFIG = Object.freeze({
   );
 })();
 
-
 /* ===== SOURCE: js/public-view.js ===== */
 /* PasTele public view shell — premium top navigation + ticker */
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1117,7 +1114,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (table === "products") rpcType = "product";
     else if (table === "telegram_products") rpcType = "telegram_product";
     else rpcType = "channel";
-    const detail = await client.rpc("get_market_item_detail", {p_type:rpcType,p_id:id});
+    const guestToken=String(new URLSearchParams(location.search).get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+    const detail = guestToken ? await client.rpc("get_market_item_detail_guest", {p_type:rpcType,p_id:id,p_guest_token:guestToken}) : await client.rpc("get_market_item_detail", {p_type:rpcType,p_id:id});
     if (detail.error) throw detail.error;
     item = Array.isArray(detail.data) ? detail.data[0] : detail.data;
     if (!item || item.found === false) return false;
@@ -1150,6 +1148,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "";
   }
 
+  function guestCheckoutToken(){let k='pastele-guest-checkout-token';let v=localStorage.getItem(k);if(!v){v=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)));localStorage.setItem(k,v)}return v}
+
   function renderLocked(access){
     const paid = priceOf(item);
     const login = access.reason === "login";
@@ -1175,12 +1175,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       const btn=$("productBuyBtn"); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
       try {
-        const typeForCheckout = resolvedType === "code" ? "telegram_product" : (resolvedType === "channel" || resolvedType === "group" ? "channel" : "product");
-        const q=await client.rpc("buy_market_item",{p_type:typeForCheckout,p_id:item.id});
+        const typeForCheckout = resolvedType === "code" ? "telegram_product" : (resolvedType === "channel" || resolvedType === "group" ? "channel" : (resolvedType === "paste" ? "pastelink" : "product"));
+        const guestToken=guestCheckoutToken();
+        const q=await client.rpc("buy_market_item_guest",{p_type:typeForCheckout,p_id:item.id,p_guest_token:guestToken});
         if(q.error) throw q.error;
         const oid=q.data?.order_id;
         if(!oid) throw new Error("Order ID tidak ditemukan.");
-        location.href=`payment.html?order_id=${encodeURIComponent(oid)}`;
+        location.href=`payment.html?order_id=${encodeURIComponent(oid)}&guest_token=${encodeURIComponent(guestToken)}`;
       } catch(e) { toast(e.message||"Checkout gagal.","error"); btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-qrcode"></i> Beli Akses'; }
     });
   }
@@ -1602,7 +1603,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 })();
 
-
 /* ===== SOURCE: js/theme.js ===== */
 /* PasTele — Theme Manager
    Modes: light, dark, system
@@ -1659,4 +1659,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
   });
 })();
-

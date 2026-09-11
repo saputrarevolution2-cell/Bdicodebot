@@ -160,12 +160,6 @@
               </div>
 
               <div class="pt-account-grid">
-                <a class="pt-account-item" href="${base}wallet.html">
-                  <i class="fa-solid fa-wallet"></i>
-                  <span>Saldo</span>
-                  <strong id="ptBalance">Rp 0</strong>
-                </a>
-
                 <a class="pt-account-item" href="${base}notifications.html">
                   <i class="fa-solid fa-bell"></i>
                   <span>Notifikasi</span>
@@ -177,6 +171,13 @@
                   <span>Tema</span>
                   <strong id="ptThemeText">System</strong>
                 </button>
+              </div>
+
+              <div class="pt-socials" aria-label="Social media">
+                <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+                <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
               </div>
 
               <a class="pt-profile-link"
@@ -213,13 +214,12 @@
         </nav>
 
         <div class="pt-drawer-bottom">
-          ${!isAdmin ? `
-            <a class="pt-link" href="${base}wallet.html">
-              <span class="pt-link-icon"><i class="fa-solid fa-wallet"></i></span>
-              <span class="pt-link-label">Wallet &amp; Saldo</span>
-              <i class="fa-solid fa-chevron-right pt-link-arrow"></i>
-            </a>` : ''}
-
+          <div class="pt-drawer-socials" aria-label="Social media">
+            <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          </div>
           <button class="pt-link logout" id="ptLogout" type="button">
             <span class="pt-link-icon">
               <i class="fa-solid fa-right-from-bracket"></i>

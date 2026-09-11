@@ -56,4 +56,3 @@
     if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
   });
 })();
-

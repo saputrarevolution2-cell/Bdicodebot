@@ -10,7 +10,6 @@ window.PASTELE_CONFIG = Object.freeze({
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
 
-
 /* ===== SOURCE: js/supabase.js ===== */
 /* =========================================================
    PasTele — Supabase client
@@ -184,7 +183,6 @@ window.PASTELE_CONFIG = Object.freeze({
     }
   };
 })();
-
 
 /* ===== SOURCE: js/auth.js ===== */
 /* =========================================================
@@ -994,7 +992,6 @@ window.PASTELE_CONFIG = Object.freeze({
   );
 })();
 
-
 /* ===== SOURCE: js/public-view.js ===== */
 /* PasTele public view shell — premium top navigation + ticker */
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1334,10 +1331,10 @@ document.addEventListener("DOMContentLoaded", async () => {
        ======================================================= */
     let detail = null;
     try {
-        const detailResult = await client.rpc("get_market_item_detail", {
-            p_type: "pastelink",
-            p_id: paste.id
-        });
+        const guestToken=String(new URLSearchParams(location.search).get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+        const detailResult = guestToken
+            ? await client.rpc("get_market_item_detail_guest", {p_type:"pastelink",p_id:paste.id,p_guest_token:guestToken})
+            : await client.rpc("get_market_item_detail", {p_type:"pastelink",p_id:paste.id});
         if (!detailResult.error) {
             detail = Array.isArray(detailResult.data) ? detailResult.data[0] : detailResult.data;
             if (detail && detail.found !== false) {
@@ -1377,18 +1374,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("buyPasteLink")?.addEventListener("click", async () => {
             let currentUser = null;
             try { currentUser = typeof window.TC?.user === "function" ? await window.TC.user() : null; } catch (_) {}
-            if (!currentUser?.id) {
-                location.href = "login.html?return=" + encodeURIComponent(location.pathname + location.search);
-                return;
-            }
             const button = document.getElementById("buyPasteLink");
             if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...'; }
             try {
-                const buy = await client.rpc("buy_market_item", { p_type: "pastelink", p_id: paste.id });
+                const key='pastele-guest-checkout-token'; let guestToken=localStorage.getItem(key); if(!guestToken){guestToken=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));localStorage.setItem(key,guestToken);} const buy = await client.rpc("buy_market_item_guest", { p_type: "pastelink", p_id: paste.id, p_guest_token: guestToken });
                 if (buy.error) throw buy.error;
                 const orderId = buy.data?.order_id;
                 if (!orderId) throw new Error("Order tidak berhasil dibuat.");
-                location.href = "payment.html?order_id=" + encodeURIComponent(orderId);
+                location.href = "payment.html?order_id=" + encodeURIComponent(orderId) + "&guest_token=" + encodeURIComponent(guestToken);
             } catch (error) {
                 window.TC?.toast?.(error?.message || "Gagal membuat order.", "error");
                 if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Beli Akses'; }
@@ -1998,7 +1991,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 })();
 
-
 /* ===== SOURCE: js/theme.js ===== */
 /* PasTele — Theme Manager
    Modes: light, dark, system
@@ -2055,4 +2047,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ((localStorage.getItem(KEY) || 'system') === 'system') apply('system');
   });
 })();
-
