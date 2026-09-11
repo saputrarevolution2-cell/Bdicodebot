@@ -1,657 +1,206 @@
 <!doctype html>
 <html lang="id">
-<head><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
-  <!-- =====================================================
-       THEME PRELOAD
-       Harus dimuat paling awal untuk mencegah dark-mode flash
-       ===================================================== -->
-  <!-- =====================================================
-       META
-       ===================================================== -->
+<head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-  <meta
-    name="theme-color"
-    content="#07111f"
-  >
-  <meta
-    name="description"
-    content="PasTele — platform profesional untuk membuat, membagikan, menemukan, dan memonetisasi link, payment link, code, serta akses Telegram."
-  >
-  <title>PasTele — Link, Payment Link, Code &amp; Telegram</title>
-  <!-- =====================================================
-       FONT
-       ===================================================== -->
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-  >
-  <!-- =====================================================
-       SUPABASE
-       ===================================================== -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0ea5e9">
+  <meta name="description" content="PasTele — platform digital untuk PasteLink, Telegram Code, Channel, Group, marketplace, creator dan wallet.">
+  <title>PasTele — Create. Publish. Earn.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <!-- Keep your existing global shell/navbar files. This page CSS only styles index content. -->
+  <link rel="stylesheet" href="css/app.css?v=20260911">
+  <link rel="stylesheet" href="css/navbar.css?v=20260911">
+  <link rel="stylesheet" href="css/footer.css?v=20260911">
+  <link rel="stylesheet" href="css/index.css?v=20260911">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- =====================================================
-       AUTH / DEBUG
-       ===================================================== -->
-  
-  <!-- =====================================================
-       FONT AWESOME
-       ===================================================== -->
-  <!-- =====================================================
-       GLOBAL CSS
-       ===================================================== -->
-  <script>document.documentElement.classList.add("pastele-ready");</script><link rel="stylesheet" href="css/index.css?v=20260910-clean-ui"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/core.css?v=20260910-core-fix">
-<link rel="stylesheet" href="css/final-polish.css?v=20260911-final">
+  <script src="js/config.js?v=20260911"></script>
+  <script src="js/supabase.js?v=20260911"></script>
 </head>
-<body class="landing-page">
-  <!-- =====================================================
-       HEADER
-       ===================================================== -->
-  <header class="landing-header">
-    <div class="container landing-header-inner">
-      <!-- Brand -->
-      <a
-        class="landing-brand"
-        href="index.html"
-        aria-label="PasTele"
-      >
-        <span
-          class="landing-brand-mark"
-          aria-hidden="true"
-        >
-          <i class="fa-solid fa-bolt"></i>
-        </span>
-        <span>PasTele</span>
-      </a>
-      <!-- Header actions -->
-      <nav
-        class="landing-header-actions"
-        aria-label="Navigasi akun"
-      >
-        <a
-          class="btn"
-          href="login.html"
-        >
-          <i class="fa-solid fa-right-to-bracket"></i>
-          <span>Masuk</span>
-        </a>
-        <a
-          class="btn primary"
-          href="register.html"
-        >
-          <i class="fa-solid fa-user-plus"></i>
-          <span>Mulai Gratis</span>
-        </a>
-      </nav>
-    </div>
-  </header>
-  <!-- =====================================================
-       MAIN
-       ===================================================== -->
-  <main class="landing-main">
-    <!-- ===================================================
-         HERO
-         =================================================== -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <!-- Hero copy -->
-        <div class="hero-copy">
-          <span class="eyebrow">
-            <i class="fa-solid fa-sparkles"></i>
-            Professional digital publishing platform
-          </span>
-          <h1>
-            Satu platform untuk
-            <span
-              class="typing-word"
-              id="typingWord"
-            >link</span>
-          </h1>
+<body class="app-page index-page">
+  <div id="navbar"></div>
+
+  <main>
+    <section class="ix-hero">
+      <div class="ix-hero-bg"><i></i><i></i><i></i></div>
+      <div class="ix-container ix-hero-grid">
+        <div class="ix-hero-copy" data-reveal>
+          <span class="ix-badge"><b></b><i class="fa-solid fa-bolt"></i> PASTELE DIGITAL ECOSYSTEM</span>
+          <h1>Buat. Publikasikan.<br><span>Jadi penghasilan.</span></h1>
           <p>
-            PasTele membantu creator, developer, seller, dan pemilik
-            komunitas membuat halaman digital, membagikan resource,
-            menjual produk, mengelola akses, serta memantau transaksi
-            dari satu workspace yang clean dan modern.
+            Satu platform untuk membuat PasteLink, menjual Telegram Code,
+            mempublikasikan Channel & Group, menemukan produk digital,
+            dan mengelola penghasilan creator.
           </p>
-          <div class="hero-actions">
-            <a
-              class="btn primary btn-lg"
-              href="register.html"
-            >
-              <i class="fa-solid fa-rocket"></i>
-              Mulai sekarang
-            </a>
-            <a
-              class="btn btn-lg"
-              href="marketplace.html"
-            >
-              <i class="fa-solid fa-store"></i>
-              Jelajahi Marketplace
-            </a>
+          <div class="ix-actions">
+            <a class="ix-btn ix-primary" href="register.html"><i class="fa-solid fa-rocket"></i> Mulai Gratis <i class="fa-solid fa-arrow-right"></i></a>
+            <a class="ix-btn ix-outline" href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+            <a class="ix-btn ix-soft" href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a>
           </div>
-          <div class="trust">
-            <span>
-              <i class="fa-solid fa-shield-halved"></i>
-              Kontrol akses
-            </span>
-            <span>
-              <i class="fa-solid fa-mobile-screen-button"></i>
-              Android ready
-            </span>
-            <span>
-              <i class="fa-solid fa-display"></i>
-              Desktop ready
-            </span>
-            <span>
-              <i class="fa-solid fa-wallet"></i>
-              Siap monetisasi
-            </span>
+          <div class="ix-trust">
+            <span><i class="fa-solid fa-circle-check"></i> Creator friendly</span>
+            <span><i class="fa-solid fa-shield-halved"></i> Secure access</span>
+            <span><i class="fa-solid fa-mobile-screen-button"></i> Mobile ready</span>
           </div>
         </div>
-        <!-- Hero visual -->
-        <div class="hero-visual">
-          <div class="hero-card">
-            <div class="window">
-              <div class="window-head">
-                <div
-                  class="dots"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
-                </div>
-                <span class="window-title">
-                  PasTele Workspace
-                </span>
-                <span class="pill">
-                  LIVE
-                </span>
+
+        <div class="ix-hero-art" data-reveal data-delay="100">
+          <div class="ix-glass-card">
+            <div class="ix-window">
+              <div class="ix-dots"><b></b><b></b><b></b></div>
+              <span><i class="fa-solid fa-lock"></i> pastele</span>
+              <i class="fa-solid fa-ellipsis"></i>
+            </div>
+            <div class="ix-art-head">
+              <div><small>CREATOR OVERVIEW</small><strong>Workspace</strong></div>
+              <span><i class="fa-solid fa-circle"></i> Live</span>
+            </div>
+            <div class="ix-art-stats">
+              <div><i class="fa-solid fa-link"></i><small>PasteLink</small><b id="mockPastes">—</b></div>
+              <div><i class="fa-solid fa-code"></i><small>Code</small><b id="mockCodes">—</b></div>
+              <div><i class="fa-brands fa-telegram"></i><small>Telegram</small><b id="mockTelegram">—</b></div>
+              <div><i class="fa-solid fa-wallet"></i><small>Revenue</small><b id="mockRevenue">Rp0</b></div>
+            </div>
+            <div class="ix-art-main">
+              <div class="ix-chart">
+                <div class="ix-card-title"><span><i class="fa-solid fa-chart-line"></i> Activity</span><small>Last 30 days</small></div>
+                <div class="ix-bars"><i style="--h:34%"></i><i style="--h:55%"></i><i style="--h:46%"></i><i style="--h:70%"></i><i style="--h:58%"></i><i style="--h:82%"></i><i style="--h:64%"></i><i style="--h:91%"></i><i style="--h:75%"></i><i style="--h:100%"></i><i style="--h:87%"></i><i style="--h:95%"></i></div>
               </div>
-              <div class="dashboard-preview">
-                <!-- Revenue -->
-                <div class="preview-kpi">
-                  <span>
-                    Total revenue
-                  </span>
-                  <b id="homeRevenue">
-                    Rp 0
-                  </b>
-                  <small>
-                    <i class="fa-solid fa-arrow-trend-up"></i>
-                    <span id="homeRevenueTrend">
-                      0,0%
-                    </span>
-                  </small>
-                </div>
-                <!-- Preview list -->
-                <div class="preview-list">
-                  <!-- Payment Link -->
-                  <div>
-                    <span
-                      class="preview-icon"
-                      aria-hidden="true"
-                    >
-                      <i class="fa-solid fa-link"></i>
-                    </span>
-                    <span>
-                      <b>Payment Link</b>
-                      <small>Instant checkout</small>
-                    </span>
-                    <strong id="homePaymentCount">
-                      0 item
-                    </strong>
-                  </div>
-                  <!-- Code -->
-                  <div>
-                    <span
-                      class="preview-icon"
-                      aria-hidden="true"
-                    >
-                      <i class="fa-solid fa-code"></i>
-                    </span>
-                    <span>
-                      <b>Code Product</b>
-                      <small>Free / Paid</small>
-                    </span>
-                    <strong id="homeCodeCount">
-                      0 item
-                    </strong>
-                  </div>
-                  <!-- Telegram -->
-                  <div>
-                    <span
-                      class="preview-icon"
-                      aria-hidden="true"
-                    >
-                      <i class="fa-brands fa-telegram"></i>
-                    </span>
-                    <span>
-                      <b>Telegram Access</b>
-                      <small>Channel / Group</small>
-                    </span>
-                    <strong id="homeTelegramCount">
-                      0 item
-                    </strong>
-                  </div>
-                </div>
+              <div class="ix-feed">
+                <div class="ix-card-title"><span><i class="fa-solid fa-bolt"></i> Recent</span></div>
+                <div><b><i class="fa-solid fa-link"></i></b><p><strong>PasteLink published</strong><small>Just now</small></p><em><i class="fa-solid fa-check"></i></em></div>
+                <div><b><i class="fa-solid fa-code"></i></b><p><strong>Code sold</strong><small>Marketplace</small></p><em><i class="fa-solid fa-cart-shopping"></i></em></div>
+                <div><b><i class="fa-solid fa-wallet"></i></b><p><strong>Wallet updated</strong><small>Settlement</small></p><em><i class="fa-solid fa-arrow-trend-up"></i></em></div>
               </div>
             </div>
           </div>
-          <!-- Floating confirmation -->
-          <div class="floating-card floating-one">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>
-              <b>Checkout confirmed</b>
-              <small>Payment berhasil diproses</small>
-            </span>
-          </div>
-          <!-- Floating analytics -->
-          <div class="floating-card floating-two">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>
-              <b>Analytics</b>
-              <small>Monitor performa real-time</small>
-            </span>
-          </div>
+          <div class="ix-float ix-float-a"><span><i class="fa-solid fa-wand-magic-sparkles"></i></span><div><b>Publish faster</b><small>One connected ecosystem</small></div></div>
+          <div class="ix-float ix-float-b"><span><i class="fa-solid fa-circle-check"></i></span><div><b>Payment success</b><small>Checkout recorded</small></div></div>
         </div>
       </div>
     </section>
-    <!-- ===================================================
-         INTRO
-         =================================================== -->
-    <section class="section intro-section">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">
-            APA ITU PASTELE?
-          </span>
-          <h2>
-            Semua kebutuhan digital publishing dalam satu tempat.
-          </h2>
-          <p class="muted">
-            Bukan sekadar halaman link. PasTele dirancang sebagai
-            workspace untuk membuat, menjual, membagikan, dan
-            mengelola aset digital yang terhubung dengan ekosistem
-            Telegram.
-          </p>
+
+    <section class="ix-stats">
+      <div class="ix-container ix-stat-grid">
+        <article data-reveal><span><i class="fa-solid fa-layer-group"></i></span><div><small>Public content</small><b id="statContent">—</b><em>All content types</em></div></article>
+        <article data-reveal data-delay="50"><span><i class="fa-solid fa-users"></i></span><div><small>Creators</small><b id="statCreators">—</b><em>Building on PasTele</em></div></article>
+        <article data-reveal data-delay="100"><span><i class="fa-solid fa-eye"></i></span><div><small>Total views</small><b id="statViews">—</b><em>Public engagement</em></div></article>
+        <article data-reveal data-delay="150"><span><i class="fa-solid fa-cart-shopping"></i></span><div><small>Sales</small><b id="statSales">—</b><em>Marketplace activity</em></div></article>
+      </div>
+    </section>
+
+    <section class="ix-section" id="marketplace">
+      <div class="ix-container">
+        <div class="ix-head" data-reveal>
+          <div><span class="ix-kicker"><i class="fa-solid fa-store"></i> MARKETPLACE</span><h2>Konten yang baru dipublikasikan.</h2><p>PasteLink, Code, Channel, Group, dan product yang sudah tersedia secara publik.</p></div>
+          <a class="ix-link" href="marketplace.html">Lihat semua <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        <div class="feature-grid">
-          <article class="card feature feature-large">
-            <span class="feature-icon">
-              <i class="fa-solid fa-link"></i>
-            </span>
-            <h3>
-              Link &amp; Landing Page
-            </h3>
-            <p>
-              Buat halaman yang rapi untuk membagikan resource,
-              profil, katalog, campaign, atau tujuan digital lainnya.
-            </p>
-            <span class="feature-tag">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i>
-              Shareable
-            </span>
-          </article>
-          <article class="card feature feature-large">
-            <span class="feature-icon">
-              <i class="fa-solid fa-credit-card"></i>
-            </span>
-            <h3>
-              Payment Link
-            </h3>
-            <p>
-              Gunakan halaman produk dan alur pembayaran untuk
-              menawarkan item digital atau akses berbayar dengan
-              lebih terstruktur.
-            </p>
-            <span class="feature-tag">
-              <i class="fa-solid fa-bolt"></i>
-              Checkout ready
-            </span>
-          </article>
-          <article class="card feature feature-large">
-            <span class="feature-icon">
-              <i class="fa-solid fa-code"></i>
-            </span>
-            <h3>
-              Code Marketplace
-            </h3>
-            <p>
-              Publikasikan source code, bot, template, snippet,
-              konfigurasi, atau paket digital dengan model
-              Free maupun Paid.
-            </p>
-            <span class="feature-tag">
-              <i class="fa-solid fa-box-open"></i>
-              Digital product
-            </span>
-          </article>
-          <article class="card feature feature-large">
-            <span class="feature-icon">
-              <i class="fa-brands fa-telegram"></i>
-            </span>
-            <h3>
-              Channel &amp; Group
-            </h3>
-            <p>
-              Promosikan dan kelola listing akses komunitas Telegram
-              dengan informasi produk yang jelas bagi calon member.
-            </p>
-            <span class="feature-tag">
-              <i class="fa-solid fa-users"></i>
-              Community
-            </span>
-          </article>
+        <div class="ix-tabs" data-reveal>
+          <button class="active" data-filter="all"><i class="fa-solid fa-border-all"></i> Semua</button>
+          <button data-filter="link"><i class="fa-solid fa-link"></i> PasteLink</button>
+          <button data-filter="code"><i class="fa-solid fa-code"></i> Code</button>
+          <button data-filter="channel"><i class="fa-solid fa-broadcast-tower"></i> Channel</button>
+          <button data-filter="group"><i class="fa-solid fa-users"></i> Group</button>
+          <button data-filter="product"><i class="fa-solid fa-box"></i> Product</button>
+        </div>
+        <div id="publishedGrid" class="ix-market-grid"><div class="ix-loading"><i class="fa-solid fa-spinner fa-spin"></i><b>Memuat konten publik...</b><small>Menyiapkan marketplace.</small></div></div>
+        <div class="ix-center"><a class="ix-btn ix-soft" href="marketplace.html"><i class="fa-solid fa-magnifying-glass"></i> Explore Marketplace</a></div>
+      </div>
+    </section>
+
+    <section class="ix-section ix-ranking">
+      <div class="ix-container">
+        <div class="ix-head ix-head-center" data-reveal>
+          <span class="ix-kicker"><i class="fa-solid fa-ranking-star"></i> TOP 10</span>
+          <h2>Yang sedang paling banyak dilihat.</h2>
+          <p>Ranking menggunakan data engagement publik yang tersedia pada database.</p>
+        </div>
+        <div class="ix-rank-grid">
+          <article class="ix-rank-box" data-reveal><header><span class="link"><i class="fa-solid fa-link"></i></span><div><b>Top 10 PasteLink</b><small>Most viewed links</small></div><em>TOP 10</em></header><div id="topLink"></div></article>
+          <article class="ix-rank-box" data-reveal data-delay="60"><header><span class="code"><i class="fa-solid fa-code"></i></span><div><b>Top 10 Code</b><small>Popular Telegram Code</small></div><em>TOP 10</em></header><div id="topCode"></div></article>
+          <article class="ix-rank-box" data-reveal data-delay="120"><header><span class="channel"><i class="fa-solid fa-broadcast-tower"></i></span><div><b>Top 10 Channel</b><small>Popular channels</small></div><em>TOP 10</em></header><div id="topChannel"></div></article>
+          <article class="ix-rank-box" data-reveal data-delay="180"><header><span class="group"><i class="fa-solid fa-users"></i></span><div><b>Top 10 Group</b><small>Popular groups</small></div><em>TOP 10</em></header><div id="topGroup"></div></article>
         </div>
       </div>
     </section>
-    <!-- ===================================================
-         MONETIZATION
-         =================================================== -->
-    <section
-      class="section monetization-section"
-      id="monetize"
-    >
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">
-            MONETISASI
-          </span>
-          <h2>
-            Ubah traffic dan karya digital menjadi aset yang bernilai.
-          </h2>
-          <p class="muted">
-            Bangun katalog yang mudah ditemukan, tentukan akses
-            Free atau Paid, lalu kelola hasil penjualan melalui
-            wallet dan riwayat transaksi.
-          </p>
+
+    <section class="ix-section">
+      <div class="ix-container">
+        <div class="ix-head ix-head-center" data-reveal>
+          <span class="ix-kicker"><i class="fa-solid fa-cubes-stacked"></i> PLATFORM</span>
+          <h2>Satu platform. Banyak cara untuk tumbuh.</h2>
+          <p>Mulai sebagai pengguna, creator, seller, atau bagian dari komunitas Telegram.</p>
         </div>
-        <div class="monetize-grid">
-          <article class="card monetize-card">
-            <div class="number">01</div>
-            <i class="fa-solid fa-link"></i>
-            <h3>
-              Monetize Link
-            </h3>
-            <p>
-              Gunakan link sebagai pintu menuju produk, resource,
-              campaign, atau halaman informasi yang kamu miliki.
-            </p>
-          </article>
-          <article class="card monetize-card">
-            <div class="number">02</div>
-            <i class="fa-solid fa-money-check-dollar"></i>
-            <h3>
-              Payment Link
-            </h3>
-            <p>
-              Siapkan penawaran berbayar dengan harga dan informasi
-              produk yang jelas agar buyer lebih mudah melakukan
-              checkout.
-            </p>
-          </article>
-          <article class="card monetize-card">
-            <div class="number">03</div>
-            <i class="fa-solid fa-file-code"></i>
-            <h3>
-              Sell Code
-            </h3>
-            <p>
-              Jual bot, source code, template, automation, library,
-              atau resource developer secara lebih profesional.
-            </p>
-          </article>
-          <article class="card monetize-card">
-            <div class="number">04</div>
-            <i class="fa-brands fa-telegram"></i>
-            <h3>
-              Sell Access
-            </h3>
-            <p>
-              Tampilkan produk channel atau group dengan detail
-              akses yang transparan dan mudah dipahami buyer.
-            </p>
-          </article>
+        <div class="ix-eco">
+          <a href="create-pastelink.html" class="cyan" data-reveal><i class="fa-solid fa-link"></i><b>PasteLink</b><p>Buat dan bagikan halaman link dengan cepat.</p><small>Build <i class="fa-solid fa-arrow-right"></i></small></a>
+          <a href="create-code.html" class="violet" data-reveal data-delay="50"><i class="fa-solid fa-code"></i><b>Telegram Code</b><p>Jual code dengan akses free atau paid.</p><small>Publish <i class="fa-solid fa-arrow-right"></i></small></a>
+          <a href="create-telegram.html?type=channel" class="orange" data-reveal data-delay="100"><i class="fa-solid fa-broadcast-tower"></i><b>Channel</b><p>Publikasikan akses channel Telegram.</p><small>Publish <i class="fa-solid fa-arrow-right"></i></small></a>
+          <a href="create-telegram.html?type=group" class="pink" data-reveal data-delay="150"><i class="fa-solid fa-users"></i><b>Group</b><p>Bangun katalog akses group Telegram.</p><small>Publish <i class="fa-solid fa-arrow-right"></i></small></a>
+          <a href="wallet.html" class="green" data-reveal data-delay="200"><i class="fa-solid fa-wallet"></i><b>Wallet</b><p>Kelola saldo, transaksi, earnings dan withdrawal.</p><small>Manage <i class="fa-solid fa-arrow-right"></i></small></a>
+          <a href="subscription.html" class="blue" data-reveal data-delay="250"><i class="fa-solid fa-gem"></i><b>Premium</b><p>Gunakan paket premium sesuai kebutuhanmu.</p><small>Upgrade <i class="fa-solid fa-arrow-right"></i></small></a>
         </div>
       </div>
     </section>
-    <!-- ===================================================
-         WORKFLOW
-         =================================================== -->
-    <section class="section workflow-section">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">
-            UNTUK CREATOR &amp; SELLER
-          </span>
-          <h2>
-            Dari ide sampai transaksi, alurnya sederhana.
-          </h2>
-        </div>
-        <div class="steps">
-          <div class="card step">
-            <span class="num">
-              01
-            </span>
-            <div class="step-icon">
-              <i class="fa-solid fa-user-plus"></i>
-            </div>
-            <h3>
-              Buat akun
-            </h3>
-            <p class="muted">
-              Registrasi dan masuk ke workspace personal untuk
-              mengelola semua aktivitas.
-            </p>
-          </div>
-          <div class="card step">
-            <span class="num">
-              02
-            </span>
-            <div class="step-icon">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-            </div>
-            <h3>
-              Buat produk
-            </h3>
-            <p class="muted">
-              Tentukan tipe, judul, kategori, deskripsi, harga,
-              dan detail delivery yang diperlukan.
-            </p>
-          </div>
-          <div class="card step">
-            <span class="num">
-              03
-            </span>
-            <div class="step-icon">
-              <i class="fa-solid fa-share-nodes"></i>
-            </div>
-            <h3>
-              Publikasikan
-            </h3>
-            <p class="muted">
-              Bagikan link produk atau tampilkan di marketplace
-              agar mudah ditemukan audience.
-            </p>
-          </div>
-          <div class="card step">
-            <span class="num">
-              04
-            </span>
-            <div class="step-icon">
-              <i class="fa-solid fa-chart-pie"></i>
-            </div>
-            <h3>
-              Kelola &amp; monitor
-            </h3>
-            <p class="muted">
-              Pantau produk, pembelian, saldo, transaksi, dan
-              performa dari dashboard.
-            </p>
-          </div>
+
+    <section class="ix-section ix-creator">
+      <div class="ix-container">
+        <div class="ix-creator-box" data-reveal>
+          <div><span class="ix-kicker"><i class="fa-solid fa-sparkles"></i> CREATOR ECONOMY</span><h2>Punya karya atau audience? Jangan biarkan berhenti di timeline.</h2><p>Publikasikan konten, temukan buyer, bangun audience, dan kelola hasilnya dari satu dashboard.</p><div class="ix-actions"><a href="register.html" class="ix-btn ix-white"><i class="fa-solid fa-user-plus"></i> Gabung Jadi Creator</a><a href="about.html" class="ix-white-link">Kenapa PasTele? <i class="fa-solid fa-arrow-right"></i></a></div></div>
+          <div class="ix-wallet-art"><div class="ix-wallet"><div><span><i class="fa-solid fa-wallet"></i> Creator Wallet</span><i class="fa-solid fa-ellipsis"></i></div><small>Total earnings</small><b>Rp <span id="creatorMoney">0</span></b><i class="ix-progress"></i><footer><span><i class="fa-solid fa-arrow-trend-up"></i> Growing</span><span><i class="fa-solid fa-shield-halved"></i> Secure</span></footer></div></div>
         </div>
       </div>
     </section>
-    <!-- ===================================================
-         MARKETPLACE PREVIEW
-         =================================================== -->
-    <section class="section marketplace-preview">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">
-            MARKETPLACE
-          </span>
-          <h2>
-            Temukan produk digital dari creator PasTele.
-          </h2>
-          <p class="muted">
-            Jelajahi link, code, channel, dan group. Tersedia
-            pilihan Free maupun Paid sesuai produk.
-          </p>
-        </div>
-        <div class="marketbar">
-          <span class="muted">
-            <i class="fa-solid fa-chart-simple"></i>
-            Produk populer berdasarkan performa
-          </span>
-          <a
-            class="btn"
-            href="marketplace.html"
-          >
-            Buka marketplace
-            <i class="fa-solid fa-arrow-right"></i>
-          </a>
-        </div>
-        <!-- Dynamic marketplace -->
-        <div
-          class="market-grid"
-          id="market"
-        >
-          <div class="market-skeleton">
-            Memuat marketplace member…
-          </div>
-        </div>
-        <!-- Top products -->
-        <div class="topgrid">
-          <div class="card topcard">
-            <h3>
-              <i class="fa-solid fa-trophy"></i>
-              Top Link
-            </h3>
-            <div id="topLink"></div>
-          </div>
-          <div class="card topcard">
-            <h3>
-              <i class="fa-solid fa-code"></i>
-              Top Code
-            </h3>
-            <div id="topCode"></div>
-          </div>
-          <div class="card topcard">
-            <h3>
-              <i class="fa-brands fa-telegram"></i>
-              Top Channel
-            </h3>
-            <div id="topChannel"></div>
-          </div>
+
+    <section class="ix-section ix-payment">
+      <div class="ix-container">
+        <div class="ix-head ix-head-center" data-reveal><span class="ix-kicker"><i class="fa-solid fa-credit-card"></i> PAYMENT</span><h2>Metode pembayaran yang familiar.</h2><p>Baris bank bergerak ke kanan, e-wallet bergerak ke kiri. Ketersediaan metode checkout aktual mengikuti provider pembayaran dan konfigurasi akun aktif.</p></div>
+        <div class="ix-pay-card" data-reveal>
+          <div class="ix-pay-label"><span><i class="fa-solid fa-building-columns"></i> BANK</span><small><i class="fa-solid fa-arrow-right"></i> berjalan ke kanan</small></div>
+          <div class="ix-marquee"><div class="ix-pay-track bank">
+            <b><i class="fa-solid fa-building-columns"></i>BCA</b><b><i class="fa-solid fa-building-columns"></i>Mandiri</b><b><i class="fa-solid fa-building-columns"></i>BRI</b><b><i class="fa-solid fa-building-columns"></i>BNI</b><b><i class="fa-solid fa-building-columns"></i>BSI</b><b><i class="fa-solid fa-building-columns"></i>CIMB Niaga</b><b><i class="fa-solid fa-building-columns"></i>Permata</b><b><i class="fa-solid fa-building-columns"></i>Danamon</b><b><i class="fa-solid fa-building-columns"></i>OCBC</b><b><i class="fa-solid fa-building-columns"></i>Maybank</b><b><i class="fa-solid fa-building-columns"></i>BTN</b><b><i class="fa-solid fa-building-columns"></i>Bank Mega</b>
+            <b><i class="fa-solid fa-building-columns"></i>BCA</b><b><i class="fa-solid fa-building-columns"></i>Mandiri</b><b><i class="fa-solid fa-building-columns"></i>BRI</b><b><i class="fa-solid fa-building-columns"></i>BNI</b><b><i class="fa-solid fa-building-columns"></i>BSI</b><b><i class="fa-solid fa-building-columns"></i>CIMB Niaga</b><b><i class="fa-solid fa-building-columns"></i>Permata</b><b><i class="fa-solid fa-building-columns"></i>Danamon</b><b><i class="fa-solid fa-building-columns"></i>OCBC</b><b><i class="fa-solid fa-building-columns"></i>Maybank</b><b><i class="fa-solid fa-building-columns"></i>BTN</b><b><i class="fa-solid fa-building-columns"></i>Bank Mega</b>
+          </div></div>
+          <div class="ix-divider"></div>
+          <div class="ix-pay-label"><span><i class="fa-solid fa-wallet"></i> E-WALLET & QR</span><small><i class="fa-solid fa-arrow-left"></i> berjalan ke kiri</small></div>
+          <div class="ix-marquee"><div class="ix-pay-track wallet">
+            <b><i class="fa-solid fa-qrcode"></i>QRIS</b><b><i class="fa-solid fa-wallet"></i>DANA</b><b><i class="fa-solid fa-wallet"></i>OVO</b><b><i class="fa-solid fa-wallet"></i>GoPay</b><b><i class="fa-solid fa-wallet"></i>ShopeePay</b><b><i class="fa-solid fa-wallet"></i>LinkAja</b><b><i class="fa-solid fa-wallet"></i>Sakuku</b><b><i class="fa-solid fa-mobile-screen-button"></i>Mobile Payment</b>
+            <b><i class="fa-solid fa-qrcode"></i>QRIS</b><b><i class="fa-solid fa-wallet"></i>DANA</b><b><i class="fa-solid fa-wallet"></i>OVO</b><b><i class="fa-solid fa-wallet"></i>GoPay</b><b><i class="fa-solid fa-wallet"></i>ShopeePay</b><b><i class="fa-solid fa-wallet"></i>LinkAja</b><b><i class="fa-solid fa-wallet"></i>Sakuku</b><b><i class="fa-solid fa-mobile-screen-button"></i>Mobile Payment</b>
+          </div></div>
         </div>
       </div>
     </section>
-    <!-- ===================================================
-         SECURITY / CONTROL
-         =================================================== -->
-    <section class="section security-section">
-      <div class="container">
-        <div class="security-panel">
-          <div>
-            <span class="eyebrow">
-              <i class="fa-solid fa-shield-halved"></i>
-              BUILT FOR CONTROL
-            </span>
-            <h2>
-              Clean di depan. Terstruktur di belakang.
-            </h2>
-            <p>
-              PasTele memisahkan pengalaman publik, creator
-              workspace, marketplace, wallet, dan administrasi
-              agar alur platform tetap rapi serta mudah
-              dikembangkan.
-            </p>
-          </div>
-          <div class="security-points">
-            <span>
-              <i class="fa-solid fa-lock"></i>
-              Access control
-            </span>
-            <span>
-              <i class="fa-solid fa-receipt"></i>
-              Transaction history
-            </span>
-            <span>
-              <i class="fa-solid fa-wallet"></i>
-              Wallet management
-            </span>
-            <span>
-              <i class="fa-solid fa-gauge-high"></i>
-              Performance tracking
-            </span>
-          </div>
+
+    <section class="ix-section ix-features">
+      <div class="ix-container">
+        <div class="ix-head" data-reveal><div><span class="ix-kicker"><i class="fa-solid fa-shield-heart"></i> WHY PASTELE</span><h2>Dibuat supaya orang mau kembali menggunakannya.</h2></div></div>
+        <div class="ix-feature-grid">
+          <article data-reveal><i class="fa-solid fa-gauge-high"></i><div><b>Simple workflow</b><p>Create → Publish → Discover → Checkout → Earn.</p></div></article>
+          <article data-reveal data-delay="50"><i class="fa-solid fa-store"></i><div><b>Marketplace</b><p>Satu katalog untuk konten yang dipublikasikan creator.</p></div></article>
+          <article data-reveal data-delay="100"><i class="fa-solid fa-chart-line"></i><div><b>Creator growth</b><p>Data views, sales dan wallet membantu membaca performa.</p></div></article>
+          <article data-reveal data-delay="150"><i class="fa-solid fa-lock"></i><div><b>Access control</b><p>Konten free dan paid mengikuti aturan akses database.</p></div></article>
+          <article data-reveal data-delay="200"><i class="fa-solid fa-receipt"></i><div><b>Transaction trail</b><p>Order dan transaksi tersusun agar mudah dilacak.</p></div></article>
+          <article data-reveal data-delay="250"><i class="fa-solid fa-mobile-screen-button"></i><div><b>Mobile first</b><p>Nyaman digunakan di Android, iPhone, tablet dan desktop.</p></div></article>
         </div>
       </div>
     </section>
-    <!-- ===================================================
-         FINAL CTA
-         =================================================== -->
-    <section class="section final-cta">
-      <div class="container">
-        <div class="cta">
-          <div>
-            <span class="eyebrow">
-              START TODAY
-            </span>
-            <h2>
-              Bangun halaman digital yang terlihat profesional.
-            </h2>
-            <p>
-              Mulai gratis, buat produk pertama, lalu kembangkan
-              menjadi katalog digital yang bisa kamu kelola sendiri.
-            </p>
-          </div>
-          <div class="cta-actions">
-            <a
-              class="btn light btn-lg"
-              href="register.html"
-            >
-              <i class="fa-solid fa-rocket"></i>
-              Buat akun gratis
-            </a>
-            <a
-              class="btn ghost btn-lg"
-              href="marketplace.html"
-            >
-              <i class="fa-solid fa-store"></i>
-              Lihat produk
-            </a>
-          </div>
-        </div>
-      </div>
+
+    <section class="ix-section ix-final">
+      <div class="ix-container"><div class="ix-final-box" data-reveal><span><i class="fa-solid fa-users-rays"></i></span><div><span class="ix-kicker"><i class="fa-solid fa-heart"></i> GROW TOGETHER</span><h2>Kalau kamu punya sesuatu untuk dibagikan, tempatnya ada di sini.</h2><p>Gabung sekarang dan jadilah bagian dari ekosistem creator, buyer, audience dan komunitas Telegram.</p></div><div class="ix-final-actions"><a href="register.html" class="ix-btn ix-primary"><i class="fa-solid fa-user-plus"></i> Register</a><a href="login.html" class="ix-btn ix-outline"><i class="fa-solid fa-right-to-bracket"></i> Login</a></div></div></div>
+    </section>
+
+    <section class="ix-legal">
+      <div class="ix-container"><div class="ix-legal-grid">
+        <a href="about.html"><i class="fa-solid fa-circle-info"></i><div><b>Tentang PasTele</b><small>Platform & ecosystem</small></div><i class="fa-solid fa-arrow-right"></i></a>
+        <a href="privacy.html"><i class="fa-solid fa-user-shield"></i><div><b>Privacy</b><small>Data & keamanan</small></div><i class="fa-solid fa-arrow-right"></i></a>
+        <a href="terms.html"><i class="fa-solid fa-scale-balanced"></i><div><b>Ketentuan</b><small>Rules & policies</small></div><i class="fa-solid fa-arrow-right"></i></a>
+      </div></div>
     </section>
   </main>
-  <!-- =====================================================
-       GLOBAL FLOATING TOAST
-       ===================================================== -->
-  <div
-    id="toast"
-    role="alert"
-    aria-live="polite"
-    aria-atomic="true"
-  ></div>
-  <!-- =====================================================
-       PAGE SCRIPT
-       ===================================================== -->
-  <script src="js/index.js?v=20260910-clean-ui"></script></body>
+
+  <script src="js/navbar.js?v=20260911"></script>
+  <script src="js/footer.js?v=20260911"></script>
+  <script src="js/index.js?v=20260911"></script>
+</body>
 </html>
