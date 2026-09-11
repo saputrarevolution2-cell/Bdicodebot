@@ -1,0 +1,17 @@
+/* PasTele footer styling — kept as a dedicated optional stylesheet. */
+.pastele-footer{width:100%;padding:42px 0 0;background:var(--pt-surface,#fff);border-top:1px solid var(--pt-line,#e2e8f0)}
+.pastele-footer .container{width:min(1180px,calc(100% - 28px));margin:auto}
+.pastele-footer .footer-container{display:grid;grid-template-columns:minmax(240px,1.5fr) repeat(3,minmax(140px,1fr));gap:34px;align-items:start}
+.pastele-footer .footer-brand-link{display:inline-flex;align-items:center;gap:10px;font-weight:900;color:var(--pt-text,#0f172a)}
+.pastele-footer .footer-brand-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#635bff);color:#fff}
+.pastele-footer .footer-description{max-width:390px;color:var(--pt-muted,#64748b);line-height:1.7;font-size:12px}
+.pastele-footer .footer-platform-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:800;color:#10b981}
+.pastele-footer .footer-status-indicator{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.10)}
+.pastele-footer .footer-column{display:grid;gap:8px}
+.pastele-footer .footer-column h3{margin:0 0 5px;color:var(--pt-text,#0f172a);font-size:12px}
+.pastele-footer .footer-column a{display:flex;align-items:center;gap:8px;font-size:11px}
+.pastele-footer .footer-bottom{width:min(1180px,calc(100% - 28px));margin:28px auto 0;padding:17px 0;border-top:1px solid var(--pt-line,#e2e8f0);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:10px}
+.pastele-footer .footer-meta{display:flex;gap:16px;flex-wrap:wrap}
+@media(max-width:800px){.pastele-footer .footer-container{grid-template-columns:1fr 1fr}.pastele-footer .footer-brand{grid-column:1/-1}}
+@media(max-width:520px){.pastele-footer .footer-container{grid-template-columns:1fr}.pastele-footer .footer-brand{grid-column:auto}.pastele-footer .footer-bottom{width:calc(100% - 20px);flex-direction:column}}
+html[data-theme="dark"] .pastele-footer .footer-brand-link,html[data-theme="dark"] .pastele-footer .footer-column h3{color:#f8fafc}
