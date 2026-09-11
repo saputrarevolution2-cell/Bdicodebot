@@ -1,0 +1,21 @@
+{
+  "status": "final-hardening",
+  "guest_rules": {
+    "free_create": true,
+    "paid_create_requires_login": true,
+    "paid_purchase_without_login": true,
+    "paid_access_requires_successful_payment": true
+  },
+  "navbar": {
+    "fixed": true,
+    "wallet_bottom_removed": true,
+    "social_icons": [
+      "telegram",
+      "facebook",
+      "instagram",
+      "youtube"
+    ]
+  },
+  "database": "database.sql",
+  "source_sql": "SUPABASE_MASTER_FINAL_FULL_FIX_IDEMPOTENT.sql"
+}
