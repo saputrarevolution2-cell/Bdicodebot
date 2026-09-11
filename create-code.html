@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang="id">
-<head><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
+<head>
+  <script src="js/theme-preload.js?v=20260912"></script><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>Buat Code Bot — PasTele</title>
 <link rel="stylesheet" href="css/create-code.css?v=20260910-clean-ui"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/core.css?v=20260910-core-fix">
 <link rel="stylesheet" href="css/navbar.css?v=20260911-navbar-clean"><link rel="stylesheet" href="css/final-polish.css?v=20260911-final">
-<link rel="stylesheet" href="css/public-session.css?v=20260911"></head>
+<link rel="stylesheet" href="css/public-session.css?v=20260911">  <link rel="stylesheet" href="css/pastele-theme.css?v=20260912">
+  <script src="js/theme.js?v=20260912"></script>
+</head>
 <body class="app-page create-detail-page">
 <div id="navbar"></div>
 <main class="create-detail">
@@ -20,5 +23,5 @@
 <div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" name="description" rows="4" maxlength="3000" placeholder="Jelaskan fungsi bot, fitur, kebutuhan, dan informasi lainnya..."></textarea><small><span id="counter">0</span>/3000</small></div>
 <div class="create-actions"><a href="my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-cloud-arrow-up"></i>Publikasikan Code</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
 </form><section id="result" class="create-result" hidden aria-live="polite"></section>
-</main><div id="toast"></div>
-<script src="js/navbar.js?v=20260911-final"></script><script src="js/create-code.js?v=20260910-clean-ui"></script><script src="js/session.js?v=20260911"></script></body></html>
+</main><div id="toast"></div><script src="js/create-code.js?v=20260910-clean-ui"></script><script src="js/session.js?v=20260911"></script>  <script src="js/footer.js?v=20260912"></script>
+</body></html>

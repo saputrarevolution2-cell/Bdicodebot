@@ -1,21 +1,29 @@
 {
-  "status": "final-hardening",
-  "guest_rules": {
-    "free_create": true,
-    "paid_create_requires_login": true,
-    "paid_purchase_without_login": true,
-    "paid_access_requires_successful_payment": true
+  "project": "PasTele",
+  "release": "UNIFIED-UI-SESSION-THEME-2026-09-12",
+  "status": "final-audit",
+  "fixes": [
+    "Unified automatic day/night theme across public, authenticated and admin pages",
+    "Removed duplicate bundled theme overrides that could reset Auto theme to System",
+    "Unified global color/surface variables and dark-mode mappings",
+    "Fixed index page scrolling and removed missing app/footer stylesheet references",
+    "Added dedicated footer stylesheet and consistent footer shell",
+    "Navbar renders only when an authenticated user exists",
+    "Navbar and theme controls use Auto/Light/Dark consistently",
+    "24-hour inactivity session guard retained for authenticated pages",
+    "Public discovery/legal/auth pages are not blocked by the inactivity guard",
+    "Admin pages are always treated as authenticated even when the filename is index.html",
+    "Normalized local CSS/JS references and verified local stylesheet references",
+    "Validated all JavaScript files with Node syntax checker"
+  ],
+  "theme": {
+    "default": "auto",
+    "light": "06:00-17:59",
+    "dark": "18:00-05:59",
+    "manual_modes": ["auto", "light", "dark", "system"]
   },
-  "navbar": {
-    "fixed": true,
-    "wallet_bottom_removed": true,
-    "social_icons": [
-      "telegram",
-      "facebook",
-      "instagram",
-      "youtube"
-    ]
-  },
-  "database": "database.sql",
-  "source_sql": "SUPABASE_MASTER_FINAL_FULL_FIX_IDEMPOTENT.sql"
+  "session": {
+    "type": "inactivity",
+    "timeout_hours": 24
+  }
 }

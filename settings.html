@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="id">
 
-<head><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
+<head>
+  <script src="js/theme-preload.js?v=20260912"></script><script>(()=>{try{const k='pastele-theme',m=localStorage.getItem(k)||'system',d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.classList.add(d?'theme-dark':'theme-light');document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}})();</script>
   <meta charset="utf-8">
 
   <meta
@@ -43,7 +44,9 @@
 
   <script>document.documentElement.classList.add("pastele-ready");</script><link rel="stylesheet" href="css/settings.css?v=20260910-clean-ui"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/core.css?v=20260910-core-fix">
 <link rel="stylesheet" href="css/navbar.css?v=20260911-navbar-clean"><link rel="stylesheet" href="css/final-polish.css?v=20260911-final">
-<link rel="stylesheet" href="css/public-session.css?v=20260911"></head>
+<link rel="stylesheet" href="css/public-session.css?v=20260911">  <link rel="stylesheet" href="css/pastele-theme.css?v=20260912">
+  <script src="js/theme.js?v=20260912"></script>
+</head>
 
 
 <body class="app-page settings-page-body">
@@ -903,6 +906,12 @@
 
             <div class="appearance-options">
 
+              <button type="button" class="appearance-option" data-theme-option="auto">
+                <span class="appearance-option-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                <span><strong>Auto</strong><small>Siang terang, malam gelap</small></span>
+                <span class="appearance-check"><i class="fa-solid fa-check"></i></span>
+              </button>
+
               <button
                 type="button"
                 class="appearance-option"
@@ -1529,8 +1538,7 @@
 
   <!-- =====================================================
        SCRIPTS
-       ===================================================== -->
-
-  <script src="js/navbar.js?v=20260911-final"></script><script src="js/settings.js?v=20260910-clean-ui"></script><script src="js/session.js?v=20260911"></script></body>
+       ===================================================== --><script src="js/settings.js?v=20260910-clean-ui"></script><script src="js/session.js?v=20260911"></script>  <script src="js/footer.js?v=20260912"></script>
+</body>
 
 </html>
