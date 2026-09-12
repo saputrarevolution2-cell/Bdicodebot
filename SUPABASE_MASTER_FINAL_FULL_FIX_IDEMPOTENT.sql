@@ -1110,10 +1110,10 @@ BEGIN
  IF mode_normalized='instant' THEN
    IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
    IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
-   fee:=15000;
+   fee:=0;
  ELSIF mode_normalized='manual' THEN
    IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_10000'; END IF;
-   fee:=7000;
+   fee:=0;
  ELSE
    RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
  END IF;
@@ -3047,11 +3047,11 @@ BEGIN
      RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%', coalesce(sched->>'reason','WD Manual sedang ditutup');
    END IF;
    IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_10000'; END IF;
-   fee:=7000;
+   fee:=0;
  ELSIF mode_normalized='instant' THEN
    IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
    IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
-   fee:=15000;
+   fee:=0;
  ELSE
    RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
  END IF;
@@ -3997,5 +3997,146 @@ BEGIN
  RETURN to_jsonb(r)||jsonb_build_object('found',true,'can_access',true);
 END $$;
 GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
+
+COMMIT;
+
+-- ============================================================
+-- PASTELE LIVE NOTIFICATIONS — FINAL OVERRIDE
+-- Publish: all users. Open: owner only. Purchase: buyer + seller.
+-- Every notification carries a direct target URL for the 3s toast.
+-- ============================================================
+BEGIN;
+
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS notification_type text NOT NULL DEFAULT 'system';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link_url text;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_type text;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_id uuid;
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created
+ON public.notifications(user_id,created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.notify_user_once(
+  p_user_id uuid,
+  p_title text,
+  p_body text,
+  p_type text DEFAULT 'system',
+  p_link_url text DEFAULT NULL,
+  p_target_type text DEFAULT NULL,
+  p_target_id uuid DEFAULT NULL
+)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF p_user_id IS NULL THEN RETURN; END IF;
+  INSERT INTO public.notifications(user_id,title,body,notification_type,link_url,target_type,target_id)
+  VALUES(p_user_id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000),coalesce(nullif(p_type,''),'system'),nullif(p_link_url,''),p_target_type,p_target_id);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.notify_all_users(
+  p_title text,
+  p_body text,
+  p_exclude_user uuid DEFAULT NULL,
+  p_type text DEFAULT 'system',
+  p_link_url text DEFAULT NULL,
+  p_target_type text DEFAULT NULL,
+  p_target_id uuid DEFAULT NULL
+)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  INSERT INTO public.notifications(user_id,title,body,notification_type,link_url,target_type,target_id)
+  SELECT p.id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000),coalesce(nullif(p_type,''),'system'),nullif(p_link_url,''),p_target_type,p_target_id
+  FROM public.profiles p
+  WHERE p.id IS NOT NULL AND (p_exclude_user IS NULL OR p.id<>p_exclude_user);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE
+  owner uuid; label text; kind text; target text;
+BEGIN
+  IF TG_OP='UPDATE' THEN
+    IF TG_TABLE_NAME='products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='telegram_products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='telegram_channels' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='pastelinks' AND OLD.visibility IS NOT DISTINCT FROM NEW.visibility THEN RETURN NEW; END IF;
+  END IF;
+  owner:=CASE
+    WHEN TG_TABLE_NAME='pastelinks' THEN NEW.user_id
+    WHEN TG_TABLE_NAME='products' THEN coalesce(NEW.creator_id,NEW.seller_id)
+    WHEN TG_TABLE_NAME='telegram_products' THEN NEW.owner_id
+    WHEN TG_TABLE_NAME='telegram_channels' THEN NEW.owner_id
+    ELSE NULL END;
+  label:=CASE WHEN TG_TABLE_NAME='telegram_channels' THEN NEW.name ELSE NEW.title END;
+  kind:=CASE
+    WHEN TG_TABLE_NAME='pastelinks' THEN 'PasteLink'
+    WHEN TG_TABLE_NAME='telegram_products' THEN 'Code'
+    WHEN TG_TABLE_NAME='telegram_channels' AND lower(coalesce(NEW.type,''))='group' THEN 'Group'
+    WHEN TG_TABLE_NAME='telegram_channels' THEN 'Channel'
+    ELSE 'Produk' END;
+  target:=CASE
+    WHEN TG_TABLE_NAME='pastelinks' THEN 'paste-view.html?slug='||coalesce(NEW.slug,'')
+    WHEN TG_TABLE_NAME='products' THEN 'product.html?type=product&id='||NEW.id::text
+    WHEN TG_TABLE_NAME='telegram_products' THEN 'product.html?type=code&id='||NEW.id::text
+    WHEN TG_TABLE_NAME='telegram_channels' THEN 'product.html?type='||CASE WHEN lower(coalesce(NEW.type,''))='group' THEN 'group' ELSE 'channel' END||'&id='||NEW.id::text
+    ELSE 'marketplace.html' END;
+  PERFORM public.notify_all_users('Konten baru di Marketplace',kind||' "'||coalesce(label,'Konten')||'" baru saja dipublikasikan.',NULL,'publish',target,lower(kind),NEW.id);
+  RETURN NEW;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_view()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE label text:='Konten'; kind text:=lower(coalesce(NEW.target_type,'content')); target text; owner uuid;
+BEGIN
+  owner:=NEW.owner_id;
+  IF owner IS NULL OR NEW.actor_id IS NOT DISTINCT FROM owner THEN RETURN NEW; END IF;
+  BEGIN
+    IF kind IN ('pastelink','paste-link','paste_link') THEN SELECT title, 'paste-view.html?slug='||slug INTO label,target FROM public.pastelinks WHERE id=NEW.target_id;
+    ELSIF kind IN ('code','telegram_product','telegram-product') THEN SELECT title, 'product.html?type=code&id='||id::text INTO label,target FROM public.telegram_products WHERE id=NEW.target_id;
+    ELSIF kind IN ('channel','group','telegram_channel','telegram-channel','telegram_group','telegram-group') THEN SELECT name, 'product.html?type='||CASE WHEN lower(type)='group' THEN 'group' ELSE 'channel' END||'&id='||id::text INTO label,target FROM public.telegram_channels WHERE id=NEW.target_id;
+    ELSIF kind IN ('product','link') THEN SELECT title, 'product.html?type=product&id='||id::text INTO label,target FROM public.products WHERE id=NEW.target_id;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN label:='Konten'; target:='marketplace.html'; END;
+  PERFORM public.notify_user_once(owner,'Konten dibuka',coalesce(initcap(kind),'Konten')||' "'||coalesce(label,'Konten')||'" baru saja dibuka.','view',target,kind,NEW.target_id);
+  RETURN NEW;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE seller uuid; target text; kind text:=lower(coalesce(NEW.item_type,'product')); title text:=coalesce(NEW.item_title,'Produk');
+BEGIN
+  SELECT seller_id INTO seller FROM public.orders WHERE id=NEW.order_id;
+  IF kind IN ('pastelink','paste','link') THEN target:='paste-view.html?slug='||coalesce((SELECT slug FROM public.pastelinks WHERE id=NEW.product_id),'');
+  ELSIF kind IN ('telegram_product','code') THEN target:='product.html?type=code&id='||coalesce(NEW.product_id::text,NEW.item_id,'');
+  ELSIF kind IN ('channel','group','telegram_channel','telegram-channel','telegram_group','telegram-group') THEN target:='product.html?type='||CASE WHEN kind LIKE '%group%' THEN 'group' ELSE 'channel' END||'&id='||coalesce(NEW.product_id::text,NEW.item_id,'');
+  ELSE target:='product.html?type=product&id='||coalesce(NEW.product_id::text,NEW.item_id,''); END IF;
+  PERFORM public.notify_user_once(NEW.buyer_id,'Pembelian berhasil','Akses untuk "'||title||'" sudah tersedia.','purchase',coalesce(NEW.access_url,target),kind,NEW.product_id);
+  IF seller IS NOT NULL AND seller IS DISTINCT FROM NEW.buyer_id THEN
+    PERFORM public.notify_user_once(seller,'Produk terjual','"'||title||'" berhasil dibeli oleh user.','sale',target,kind,NEW.product_id);
+  END IF;
+  RETURN NEW;
+END $$;
+
+-- Rebuild triggers so the final functions above are always used.
+DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
+CREATE TRIGGER trg_notify_pastelink_publish AFTER INSERT OR UPDATE OF visibility ON public.pastelinks FOR EACH ROW WHEN (NEW.visibility='public') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_product_publish ON public.products;
+CREATE TRIGGER trg_notify_product_publish AFTER INSERT OR UPDATE OF status ON public.products FOR EACH ROW WHEN (NEW.status IN ('published','active')) EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_telegram_product_publish ON public.telegram_products;
+CREATE TRIGGER trg_notify_telegram_product_publish AFTER INSERT OR UPDATE OF status ON public.telegram_products FOR EACH ROW WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_channels;
+CREATE TRIGGER trg_notify_telegram_channel_publish AFTER INSERT OR UPDATE OF status ON public.telegram_channels FOR EACH ROW WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_purchase ON public.purchases;
+CREATE TRIGGER trg_notify_purchase AFTER INSERT ON public.purchases FOR EACH ROW EXECUTE FUNCTION public.trg_notify_purchase();
+DROP TRIGGER IF EXISTS trg_notify_content_view ON public.analytics_events;
+CREATE TRIGGER trg_notify_content_view AFTER INSERT ON public.analytics_events FOR EACH ROW WHEN (NEW.event_type='view') EXECUTE FUNCTION public.trg_notify_view();
+
+-- Ensure Realtime can stream notification inserts to the logged-in browser.
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  WHEN undefined_object THEN NULL;
+  END;
+END $$;
 
 COMMIT;
