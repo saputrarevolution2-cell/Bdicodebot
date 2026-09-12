@@ -1038,7 +1038,7 @@ window.PASTELE_CONFIG = Object.freeze({
       if (user && window.sb) {
         const r = await window.sb
           .from('profiles')
-          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,whatsapp_number,website,balance')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,youtube_url,facebook_url,whatsapp_number,website,balance')
           .eq('id', user.id)
           .maybeSingle();
         profile = r.data || null;
@@ -1072,8 +1072,9 @@ window.PASTELE_CONFIG = Object.freeze({
     };
     const userSocials = [
       { url: normalizeSocial(profile?.telegram_username, 'telegram'), icon:'fa-brands fa-telegram', label:'Telegram' },
-      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' },
-      { url: normalizeSocial(profile?.website, 'website'), icon:'fa-solid fa-globe', label:'Website' }
+      { url: normalizeSocial(profile?.youtube_url, 'website'), icon:'fa-brands fa-youtube', label:'YouTube' },
+      { url: normalizeSocial(profile?.facebook_url, 'website'), icon:'fa-brands fa-facebook', label:'Facebook' },
+      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' }
     ].filter(x => x.url);
     const userSocialHtml = userSocials.length
       ? userSocials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(x.label)}"><i class="${esc(x.icon)}"></i></a>`).join('')
@@ -1239,10 +1240,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
         <div class="pt-drawer-bottom">
           <div class="pt-drawer-socials" aria-label="Social media">
-            <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
-            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            ${platformSocialHtml}
           </div>
           <button class="pt-link logout" id="ptLogout" type="button">
             <span class="pt-link-icon">
@@ -4821,3 +4819,10 @@ function escapeProfileText(
   }
 
 })();
+
+/* PasTele public profile socials */
+(function(){'use strict';
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const norm=(v,t)=>{let u=String(v||'').trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(t==='telegram')return 'https://t.me/'+u.replace(/^@/,'');if(t==='whatsapp')return 'https://wa.me/'+u.replace(/\D/g,'');return 'https://'+u};
+async function run(){if(!window.sb)return;const host=document.querySelector('.profile-actions');if(!host)return;const p=new URLSearchParams(location.search),key=p.get('user')||p.get('username')||p.get('id');let q=window.sb.from('profiles').select('id,username,telegram_username,youtube_url,facebook_url,whatsapp_number');if(key){const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key);q=q.eq(uuid?'id':'username',uuid?key:key.toLowerCase())}else{const u=await window.sb.auth.getUser();if(!u?.data?.user)return;q=q.eq('id',u.data.user.id)}const r=await q.maybeSingle();if(r.error||!r.data)return;const items=[[norm(r.data.telegram_username,'telegram'),'fa-brands fa-telegram','Telegram'],[norm(r.data.youtube_url,'web'),'fa-brands fa-youtube','YouTube'],[norm(r.data.facebook_url,'web'),'fa-brands fa-facebook','Facebook'],[norm(r.data.whatsapp_number,'whatsapp'),'fa-brands fa-whatsapp','WhatsApp']].filter(x=>x[0]);document.querySelector('.profile-user-socials')?.remove();if(!items.length)return;const el=document.createElement('div');el.className='profile-user-socials';el.innerHTML=items.map(([url,icon,label])=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="${esc(label)}" aria-label="${esc(label)}"><i class="${esc(icon)}"></i></a>`).join('');host.insertAdjacentElement('afterend',el)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();})();

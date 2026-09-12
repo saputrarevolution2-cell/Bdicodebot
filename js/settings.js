@@ -1038,7 +1038,7 @@ window.PASTELE_CONFIG = Object.freeze({
       if (user && window.sb) {
         const r = await window.sb
           .from('profiles')
-          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,whatsapp_number,website,balance')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,youtube_url,facebook_url,whatsapp_number,website,balance')
           .eq('id', user.id)
           .maybeSingle();
         profile = r.data || null;
@@ -1072,8 +1072,9 @@ window.PASTELE_CONFIG = Object.freeze({
     };
     const userSocials = [
       { url: normalizeSocial(profile?.telegram_username, 'telegram'), icon:'fa-brands fa-telegram', label:'Telegram' },
-      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' },
-      { url: normalizeSocial(profile?.website, 'website'), icon:'fa-solid fa-globe', label:'Website' }
+      { url: normalizeSocial(profile?.youtube_url, 'website'), icon:'fa-brands fa-youtube', label:'YouTube' },
+      { url: normalizeSocial(profile?.facebook_url, 'website'), icon:'fa-brands fa-facebook', label:'Facebook' },
+      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' }
     ].filter(x => x.url);
     const userSocialHtml = userSocials.length
       ? userSocials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(x.label)}"><i class="${esc(x.icon)}"></i></a>`).join('')
@@ -1239,10 +1240,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
         <div class="pt-drawer-bottom">
           <div class="pt-drawer-socials" aria-label="Social media">
-            <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
-            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            ${platformSocialHtml}
           </div>
           <button class="pt-link logout" id="ptLogout" type="button">
             <span class="pt-link-icon">
@@ -1473,6 +1471,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const usernameInput = $('username');
   const telegramInput = $('telegram_username');
+  const youtubeInput = $('youtube_url');
+  const facebookInput = $('facebook_url');
   const whatsappInput = $('whatsapp_number');
   const bioInput = $('bio');
 
@@ -1575,9 +1575,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     usernameInput.value = profile.username || '';
   }
 
-  if (telegramInput) {
-    telegramInput.value = profile.telegram_username || '';
-  }
+  if (telegramInput) { telegramInput.value = profile.telegram_username || ''; }
+  if (youtubeInput) { youtubeInput.value = profile.youtube_url || ''; }
+  if (facebookInput) { facebookInput.value = profile.facebook_url || ''; }
 
   if (whatsappInput) {
     whatsappInput.value = profile.whatsapp_number || '';
@@ -2005,9 +2005,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           telegramInput?.value
             .trim() || '';
 
-        const whatsappNumber =
-          whatsappInput?.value
-            .trim() || '';
+        const youtubeUrl = youtubeInput?.value.trim() || '';
+        const facebookUrl = facebookInput?.value.trim() || '';
+        const whatsappNumber = whatsappInput?.value.trim() || '';
 
         const bio =
           bioInput?.value
@@ -2048,6 +2048,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 display_name: username,
                 telegram_username:
                   telegramUsername || null,
+                youtube_url: youtubeUrl || null,
+                facebook_url: facebookUrl || null,
                 whatsapp_number:
                   whatsappNumber || null,
                 bio:
@@ -2068,6 +2070,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               display_name: username,
               telegram_username:
                 telegramUsername || null,
+              youtube_url: youtubeUrl || null,
+              facebook_url: facebookUrl || null,
               whatsapp_number:
                 whatsappNumber || null,
               bio:

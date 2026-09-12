@@ -1038,7 +1038,7 @@ window.PASTELE_CONFIG = Object.freeze({
       if (user && window.sb) {
         const r = await window.sb
           .from('profiles')
-          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,whatsapp_number,website,balance')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,youtube_url,facebook_url,whatsapp_number,website,balance')
           .eq('id', user.id)
           .maybeSingle();
         profile = r.data || null;
@@ -1072,8 +1072,9 @@ window.PASTELE_CONFIG = Object.freeze({
     };
     const userSocials = [
       { url: normalizeSocial(profile?.telegram_username, 'telegram'), icon:'fa-brands fa-telegram', label:'Telegram' },
-      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' },
-      { url: normalizeSocial(profile?.website, 'website'), icon:'fa-solid fa-globe', label:'Website' }
+      { url: normalizeSocial(profile?.youtube_url, 'website'), icon:'fa-brands fa-youtube', label:'YouTube' },
+      { url: normalizeSocial(profile?.facebook_url, 'website'), icon:'fa-brands fa-facebook', label:'Facebook' },
+      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' }
     ].filter(x => x.url);
     const userSocialHtml = userSocials.length
       ? userSocials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(x.label)}"><i class="${esc(x.icon)}"></i></a>`).join('')
@@ -1239,10 +1240,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
         <div class="pt-drawer-bottom">
           <div class="pt-drawer-socials" aria-label="Social media">
-            <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
-            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            ${platformSocialHtml}
           </div>
           <button class="pt-link logout" id="ptLogout" type="button">
             <span class="pt-link-icon">
@@ -1722,12 +1720,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const detailOpen = document.getElementById("noticeDetailOpen");
     let activeNotice = null;
     const closeNoticeModal = () => { noticeModal.hidden = true; document.body.classList.remove("notice-modal-open"); activeNotice = null; };
-    noticeModal.querySelectorAll("[data-notice-close]").forEach(b => b.addEventListener("click", closeNoticeModal));
+    noticeModal.querySelectorAll("[data-notice-close]").forEach(b => b.addEventListener("click", async (e) => { e.preventDefault(); await markOneRead(activeNotice); closeNoticeModal(); }));
     const openNoticeModal = (item) => {
       activeNotice = item;
       if (detailTitle) detailTitle.textContent = String(item.title || "Notifikasi");
       if (detailBody) {
-        detailBody.textContent = String(item.body || "");
+        const raw = String(item.body || "");
+        const safe = escapeHtml(raw);
+        detailBody.innerHTML = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
         detailBody.style.whiteSpace = "pre-wrap";
       }
       if (detailOpen) {
@@ -1742,50 +1742,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !noticeModal.hidden) closeNoticeModal(); });
     /* =======================================================
-       MARK NOTIFICATIONS AS READ
-       -------------------------------------------------------
-       Hanya notifications milik user sendiri.
-       announcements tidak di-update karena tidak memiliki
-       user_id / is_read.
+       READ STATE — only after explicit "Tutup, sudah dibaca"
        ======================================================= */
-    const unreadIds = notificationRows
-        .filter((item) => !item.is_read)
-        .map((item) => item.notification_id)
-        .filter(Boolean);
-    if (unreadIds.length) {
-        try {
-            const { error } = await client
-                .from("notifications")
-                .update({ is_read: true })
-                .eq("user_id", user.id)
-                .in("id", unreadIds);
-            if (error) {
-                console.error(
-                    "[Notifications] Gagal menandai sudah dibaca:",
-                    error
-                );
-            } else {
-                /* Update UI tanpa reload */
-                unreadIds.forEach((id) => {
-                    const card = document.querySelector(
-                        `[data-notification-id="${CSS.escape(id)}"]`
-                    );
-                    if (!card) return;
-                    card.classList.remove("unread");
-                    const badge =
-                        card.querySelector(".notice-unread");
-                    if (badge) {
-                        badge.remove();
-                    }
-                });
-            }
-        } catch (error) {
-            console.error(
-                "[Notifications] Mark read exception:",
-                error
-            );
-        }
-    }
+    const markOneRead = async (item) => {
+      if (!item?.notification_id || item.is_read) return;
+      try {
+        const { error } = await client.from("notifications").update({ is_read:true }).eq("user_id", user.id).eq("id", item.notification_id);
+        if (error) throw error;
+        item.is_read = true;
+        const card = document.querySelector(`[data-notification-id="${CSS.escape(item.notification_id)}"]`);
+        card?.classList.remove("unread"); card?.querySelector(".notice-unread")?.remove();
+      } catch(e){ console.error("[Notifications] markOneRead",e); }
+    };
     /* =======================================================
        OPTIONAL GLOBAL COUNTER REFRESH
        -------------------------------------------------------
