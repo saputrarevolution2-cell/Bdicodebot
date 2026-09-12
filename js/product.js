@@ -1046,9 +1046,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const money = v => window.TC?.money ? TC.money(v) : `Rp ${Number(v||0).toLocaleString("id-ID")}`;
   const client = window.sb || window.supabaseClient || null;
   const params = new URLSearchParams(location.search);
-  const requestedType = String(params.get("type") || "link").trim().toLowerCase();
+  const pathParts = (location.pathname || "").split("/").filter(Boolean);
+  const shortCodeRoute = pathParts.length >= 3 && pathParts[0].toLowerCase() === "c" && ["f","p"].includes(pathParts[1].toLowerCase());
+  const routeSlug = shortCodeRoute ? decodeURIComponent(pathParts.slice(2).join("/")).trim() : "";
+  const requestedType = String(params.get("type") || (shortCodeRoute ? "code" : "link")).trim().toLowerCase();
   const requestedId = String(params.get("id") || "").trim();
-  const requestedSlug = String(params.get("slug") || "").trim();
+  const requestedSlug = String(params.get("slug") || routeSlug).trim();
   let item = null;
   let resolvedType = requestedType;
   let rpcType = requestedType;
@@ -1105,6 +1108,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     let table = "products";
     if (requestedType === "code") table = "telegram_products";
     if (["channel","group"].includes(requestedType)) table = "telegram_channels";
+    // Short Code URLs (/c/f/<slug> and /c/p/<slug>) must work even when
+    // Cloudflare rewrites the request to product.html without adding a query string.
+    if (requestedType === "code" && !requestedId && requestedSlug) {
+      const detailBySlug = await client.rpc("get_code_by_slug", { p_slug: requestedSlug });
+      if (detailBySlug.error) throw detailBySlug.error;
+      item = Array.isArray(detailBySlug.data) ? detailBySlug.data[0] : detailBySlug.data;
+      if (!item || item.found === false) return false;
+      resolvedType = "code";
+      rpcType = "telegram_product";
+      return true;
+    }
+
     const q = requestedId
       ? await client.from(table).select("id").eq("id",requestedId).maybeSingle()
       : await client.from(table).select("id").eq("slug",requestedSlug).maybeSingle();
