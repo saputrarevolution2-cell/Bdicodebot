@@ -4031,35 +4031,70 @@ BEGIN
   SELECT p.id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000),coalesce(nullif(p_type,''),'system'),nullif(p_link_url,''),p_target_type,p_target_id
   FROM public.profiles p WHERE p.id IS NOT NULL AND (p_exclude_user IS NULL OR p.id<>p_exclude_user);
 END $$;
-CREATE OR REPLACE FUNCTION public.trg_notify_market_publication() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE owner uuid; label text; kind text; target text;
+CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE
+  nr jsonb := to_jsonb(NEW);
+  orow jsonb := CASE WHEN TG_OP='UPDATE' THEN to_jsonb(OLD) ELSE '{}'::jsonb END;
+  owner uuid;
+  label text;
+  kind text;
+  target text;
+  target_id uuid;
+  status_new text := lower(coalesce(nr->>'status',''));
+  status_old text := lower(coalesce(orow->>'status',''));
+  visibility_new text := lower(coalesce(nr->>'visibility',''));
+  visibility_old text := lower(coalesce(orow->>'visibility',''));
+  item_type text := lower(coalesce(nr->>'type',''));
 BEGIN
   IF TG_OP='UPDATE' THEN
-    IF TG_TABLE_NAME='products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
-    IF TG_TABLE_NAME='telegram_products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
-    IF TG_TABLE_NAME='telegram_channels' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
-    IF TG_TABLE_NAME='pastelinks' AND OLD.visibility IS NOT DISTINCT FROM NEW.visibility THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME IN ('products','telegram_products','telegram_channels') AND status_new IS NOT DISTINCT FROM status_old THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='pastelinks' AND visibility_new IS NOT DISTINCT FROM visibility_old THEN RETURN NEW; END IF;
   END IF;
-  owner:=CASE WHEN TG_TABLE_NAME='pastelinks' THEN NEW.user_id WHEN TG_TABLE_NAME='products' THEN coalesce(NEW.creator_id,NEW.seller_id) WHEN TG_TABLE_NAME='telegram_products' THEN NEW.owner_id WHEN TG_TABLE_NAME='telegram_channels' THEN NEW.owner_id ELSE NULL END;
-  label:=CASE WHEN TG_TABLE_NAME='telegram_channels' THEN NEW.name ELSE NEW.title END;
-  kind:=CASE WHEN TG_TABLE_NAME='pastelinks' THEN 'PasteLink' WHEN TG_TABLE_NAME='telegram_products' THEN 'Code' WHEN TG_TABLE_NAME='telegram_channels' AND lower(coalesce(NEW.type,''))='group' THEN 'Group' WHEN TG_TABLE_NAME='telegram_channels' THEN 'Channel' ELSE 'Produk' END;
-  target:=CASE WHEN TG_TABLE_NAME='pastelinks' THEN 'paste-view.html?slug='||coalesce(NEW.slug,'') WHEN TG_TABLE_NAME='products' THEN 'product.html?type=product&id='||NEW.id::text WHEN TG_TABLE_NAME='telegram_products' THEN 'product.html?type=code&id='||NEW.id::text WHEN TG_TABLE_NAME='telegram_channels' THEN 'product.html?type='||CASE WHEN lower(coalesce(NEW.type,''))='group' THEN 'group' ELSE 'channel' END||'&id='||NEW.id::text ELSE 'marketplace.html' END;
-  PERFORM public.notify_all_users('Konten baru di Marketplace',kind||' "'||coalesce(label,'Konten')||'" baru saja dipublikasikan.',NULL,'publish',target,lower(kind),NEW.id);
+
+  owner := CASE
+    WHEN TG_TABLE_NAME='pastelinks' THEN nullif(nr->>'user_id','')::uuid
+    WHEN TG_TABLE_NAME IN ('telegram_products','telegram_channels') THEN nullif(nr->>'owner_id','')::uuid
+    WHEN TG_TABLE_NAME='products' THEN coalesce(nullif(nr->>'creator_id','')::uuid,nullif(nr->>'seller_id','')::uuid)
+    ELSE NULL
+  END;
+
+  label := CASE WHEN TG_TABLE_NAME='telegram_channels' THEN coalesce(nr->>'name','Channel') ELSE coalesce(nr->>'title','Konten') END;
+  kind := CASE
+    WHEN TG_TABLE_NAME='pastelinks' THEN 'PasteLink'
+    WHEN TG_TABLE_NAME='telegram_products' THEN 'Code'
+    WHEN TG_TABLE_NAME='telegram_channels' AND item_type='group' THEN 'Group'
+    WHEN TG_TABLE_NAME='telegram_channels' THEN 'Channel'
+    ELSE 'Produk'
+  END;
+  target_id := nullif(nr->>'id','')::uuid;
+  target := CASE
+    WHEN TG_TABLE_NAME='pastelinks' THEN 'paste-view.html?slug='||coalesce(nr->>'slug','')
+    WHEN TG_TABLE_NAME='telegram_products' THEN 'product.html?type=code&id='||coalesce(nr->>'id','')
+    WHEN TG_TABLE_NAME='telegram_channels' THEN 'product.html?type='||CASE WHEN item_type='group' THEN 'group' ELSE 'channel' END||'&id='||coalesce(nr->>'id','')
+    WHEN TG_TABLE_NAME='products' THEN 'product.html?type=product&id='||coalesce(nr->>'id','')
+    ELSE 'marketplace.html'
+  END;
+
+  IF owner IS NOT NULL THEN
+    PERFORM public.notify_all_users(
+      'Konten baru di Marketplace',
+      kind||' "'||label||'" baru saja dipublikasikan.',
+      owner,'publish',target,lower(kind),target_id
+    );
+  END IF;
   RETURN NEW;
 END $$;
-CREATE OR REPLACE FUNCTION public.trg_notify_view() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE label text:='Konten'; kind text:=lower(coalesce(NEW.target_type,'content')); target text; owner uuid;
-BEGIN
-  owner:=NEW.owner_id; IF owner IS NULL OR NEW.actor_id IS NOT DISTINCT FROM owner THEN RETURN NEW; END IF;
-  BEGIN
-    IF kind IN ('pastelink','paste-link','paste_link','link') THEN SELECT title,'paste-view.html?slug='||slug INTO label,target FROM public.pastelinks WHERE id=NEW.target_id;
-    ELSIF kind IN ('code','telegram_product','telegram-product') THEN SELECT title,'product.html?type=code&id='||id::text INTO label,target FROM public.telegram_products WHERE id=NEW.target_id;
-    ELSIF kind IN ('channel','group','telegram_channel','telegram-channel','telegram_group','telegram-group') THEN SELECT name,'product.html?type='||CASE WHEN lower(type)='group' THEN 'group' ELSE 'channel' END||'&id='||id::text INTO label,target FROM public.telegram_channels WHERE id=NEW.target_id;
-    ELSIF kind IN ('product','link') THEN SELECT title,'product.html?type=product&id='||id::text INTO label,target FROM public.products WHERE id=NEW.target_id;
-    END IF;
-  EXCEPTION WHEN OTHERS THEN label:='Konten'; target:='marketplace.html'; END;
-  PERFORM public.notify_user_once(owner,'Konten dibuka',initcap(kind)||' "'||coalesce(label,'Konten')||'" baru saja dibuka.','view',target,kind,NEW.target_id); RETURN NEW;
-END $$;
+
+DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
+CREATE TRIGGER trg_notify_pastelink_publish AFTER INSERT OR UPDATE OF visibility ON public.pastelinks FOR EACH ROW WHEN (NEW.visibility='public') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_product_publish ON public.products;
+CREATE TRIGGER trg_notify_product_publish AFTER INSERT OR UPDATE OF status ON public.products FOR EACH ROW WHEN (NEW.status IN ('published','active')) EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_telegram_product_publish ON public.telegram_products;
+CREATE TRIGGER trg_notify_telegram_product_publish AFTER INSERT OR UPDATE OF status ON public.telegram_products FOR EACH ROW WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_channels;
+CREATE TRIGGER trg_notify_telegram_channel_publish AFTER INSERT OR UPDATE OF status ON public.telegram_channels FOR EACH ROW WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
+
 CREATE OR REPLACE FUNCTION public.trg_notify_purchase() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE seller uuid; target text; kind text:=lower(coalesce(NEW.item_type,'product')); title text:=coalesce(NEW.item_title,'Produk');
 BEGIN
