@@ -2051,6 +2051,37 @@ END $$;
 
 -- ============================================================
 
+
+-- ============================================================
+-- FINAL PUBLIC CODE ROUTE RESOLVER
+-- /c/f/<slug> and /c/p/<slug> -> telegram_products by slug.
+-- Uses the same access-control logic as get_market_item_detail.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_code_by_slug(p_slug text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  pid uuid;
+BEGIN
+  SELECT id INTO pid
+  FROM public.telegram_products
+  WHERE slug = btrim(coalesce(p_slug,''))
+    AND lower(coalesce(status,'')) = 'published'
+  LIMIT 1;
+
+  IF pid IS NULL THEN
+    RETURN jsonb_build_object('found',false);
+  END IF;
+
+  RETURN public.get_market_item_detail('telegram_product', pid);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_code_by_slug(text) TO anon,authenticated;
+
 COMMIT;
 -- ============================================================
 -- PasTele FINAL FRONTEND/ADMIN COMPATIBILITY PATCH
