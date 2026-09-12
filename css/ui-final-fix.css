@@ -21,3 +21,92 @@ html[data-theme="dark"] body.app-page [style*="background:#fff"],html[data-theme
 .notice-detail-modal{position:fixed!important;inset:0!important;z-index:100000!important;padding:16px!important;display:grid!important;place-items:center!important}.notice-detail-dialog{width:min(720px,100%)!important;max-height:min(86vh,820px)!important;background:var(--pt-surface,var(--surface,#fff))!important;color:var(--pt-text,var(--text,#17212b))!important;border:1px solid var(--pt-accent-border)!important;overflow:hidden!important}.notice-detail-body{overflow:auto!important;max-height:55vh!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;color:var(--pt-text,var(--text,#17212b))!important}.notice-detail-body a{color:var(--pt-accent-strong)!important;text-decoration:underline}.notice-detail-foot{background:var(--pt-surface,var(--surface,#fff))!important;border-color:var(--pt-accent-border)!important;position:sticky!important;bottom:0!important}
 .pastele-footer .footer-container{display:grid!important;grid-template-columns:minmax(220px,1.4fr) repeat(3,minmax(130px,1fr))!important;gap:28px!important;align-items:start!important}.pastele-footer .footer-bottom{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;flex-wrap:wrap!important}.pastele-footer .footer-meta{display:flex!important;align-items:center!important;gap:14px!important;flex-wrap:wrap!important}
 .pt-profile-socials,.profile-user-socials{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.pt-profile-socials a,.profile-user-socials a{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--pt-accent-border);border-radius:11px;background:var(--pt-accent-soft);color:var(--pt-accent-strong)!important}.settings-social-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.settings-social-grid .field{min-width:0}.settings-social-grid input{min-width:0!important;width:100%!important}@media(max-width:760px){.pastele-footer .footer-container{grid-template-columns:1fr 1fr!important}.pastele-footer .footer-bottom{align-items:flex-start!important;flex-direction:column!important}.pastele-footer .footer-meta{width:100%!important}}@media(max-width:700px){.settings-social-grid{grid-template-columns:1fr}}@media(max-width:520px){.pastele-footer .footer-container{grid-template-columns:1fr!important}.market-search input,.search-box input,.search-box .input,.purchases-search input,.tx-search input{font-size:13px!important;padding-left:40px!important;padding-right:40px!important}}
+
+/* ============================================================
+   PasTele — FINAL UI STABILITY LAYER
+   Non-destructive fixes for overflow, form controls and mobile
+   ============================================================ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { overflow-x: hidden; }
+body.app-page { min-width: 0; overflow-x: hidden; }
+
+img, video, iframe, svg, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+button, input, select, textarea { font: inherit; }
+
+button { -webkit-tap-highlight-color: transparent; }
+
+.container,
+.section,
+main,
+header,
+footer,
+.card,
+.panel,
+.box {
+  min-width: 0;
+}
+
+.table-wrap,
+.table-responsive,
+.overflow-auto {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+pre, code {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-wrap: anywhere;
+}
+
+.pt-nav,
+.pt-nav-inner {
+  min-width: 0;
+}
+
+.pt-brand,
+.pt-name,
+.pt-user-btn {
+  min-width: 0;
+}
+
+.pt-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .pt-nav-inner {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .pt-brand-name {
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pt-name { max-width: 30vw; }
+
+  .settings-social-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .pt-name { display: none; }
+  .pt-user-btn { gap: 6px; }
+  .pt-brand-name { max-width: 45vw; }
+}
+
