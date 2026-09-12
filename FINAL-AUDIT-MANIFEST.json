@@ -1,0 +1,22 @@
+{
+  "project": "PasTele",
+  "release": "FULL-FIX-CANONICAL-2026-09-12",
+  "status": "ready-for-deploy",
+  "counts": {
+    "html": 48,
+    "js": 60,
+    "css": 55
+  },
+  "database": {
+    "canonical": "database.sql",
+    "master_sha256": "d02aa808a5cdf23e5e0927bb53c4546ef3ffff360a9be5b1cb3b10c61a3278cc",
+    "includes_get_code_by_slug": true
+  },
+  "routes": "# TeleCod short public URLs\n# The destination pages read the slug from the query string.\n# 200 = rewrite, so the browser keeps the short URL.\n\n# PasteLink\n/p/* /paste-view.html?slug=:splat 200\n\n# Telegram Code\n/c/p/* /product.html 200\n/c/f/* /product.html 200\n\n# Telegram Channel / Group\n/ch/p/* /product.html?type=channel&slug=:splat 200\n/ch/f/* /product.html?type=channel&slug=:splat 200\n/g/p/* /product.html?type=group&slug=:splat 200\n/g/f/* /product.html?type=group&slug=:splat 200\n\n# Free Paste\n/paste/* /product.html?type=paste&slug=:splat 200\n",
+  "asset_reference_errors": [],
+  "notes": [
+    "database.sql is byte-identical to SUPABASE_MASTER_FINAL_FULL_FIX_IDEMPOTENT.sql",
+    "Public /c/f/* and /c/p/* routes resolve through product.html and product.js",
+    "product.js has guarded fallback for older databases missing get_code_by_slug"
+  ]
+}

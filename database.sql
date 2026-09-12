@@ -1111,7 +1111,7 @@ BEGIN
  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
  IF p_amount IS NULL OR p_amount<=0 THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_AMOUNT'; END IF;
 
- -- WD fee: Rp0 (no withdrawal fee).
+ -- Manual WD: fee Rp7.000. Instant WD: fee Rp15.000.
  IF mode_normalized='instant' THEN
    IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
    IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
@@ -2050,6 +2050,37 @@ END $$;
 
 
 -- ============================================================
+
+
+-- ============================================================
+-- FINAL PUBLIC CODE ROUTE RESOLVER
+-- /c/f/<slug> and /c/p/<slug> -> telegram_products by slug.
+-- Uses the same access-control logic as get_market_item_detail.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_code_by_slug(p_slug text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  pid uuid;
+BEGIN
+  SELECT id INTO pid
+  FROM public.telegram_products
+  WHERE slug = btrim(coalesce(p_slug,''))
+    AND lower(coalesce(status,'')) = 'published'
+  LIMIT 1;
+
+  IF pid IS NULL THEN
+    RETURN jsonb_build_object('found',false);
+  END IF;
+
+  RETURN public.get_market_item_detail('telegram_product', pid);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_code_by_slug(text) TO anon,authenticated;
 
 COMMIT;
 -- ============================================================
@@ -4011,26 +4042,48 @@ COMMIT;
 -- Every notification carries a direct target URL for the 3s toast.
 -- ============================================================
 BEGIN;
+
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS notification_type text NOT NULL DEFAULT 'system';
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link_url text;
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_type text;
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_id uuid;
-CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON public.notifications(user_id,created_at DESC);
-CREATE OR REPLACE FUNCTION public.notify_user_once(p_user_id uuid,p_title text,p_body text,p_type text DEFAULT 'system',p_link_url text DEFAULT NULL,p_target_type text DEFAULT NULL,p_target_id uuid DEFAULT NULL)
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created
+ON public.notifications(user_id,created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.notify_user_once(
+  p_user_id uuid,
+  p_title text,
+  p_body text,
+  p_type text DEFAULT 'system',
+  p_link_url text DEFAULT NULL,
+  p_target_type text DEFAULT NULL,
+  p_target_id uuid DEFAULT NULL
+)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
   IF p_user_id IS NULL THEN RETURN; END IF;
-  IF p_type='view' AND EXISTS(SELECT 1 FROM public.notifications n WHERE n.user_id=p_user_id AND n.notification_type='view' AND n.target_id=p_target_id AND n.created_at>now()-interval '10 minutes') THEN RETURN; END IF;
   INSERT INTO public.notifications(user_id,title,body,notification_type,link_url,target_type,target_id)
   VALUES(p_user_id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000),coalesce(nullif(p_type,''),'system'),nullif(p_link_url,''),p_target_type,p_target_id);
 END $$;
-CREATE OR REPLACE FUNCTION public.notify_all_users(p_title text,p_body text,p_exclude_user uuid DEFAULT NULL,p_type text DEFAULT 'system',p_link_url text DEFAULT NULL,p_target_type text DEFAULT NULL,p_target_id uuid DEFAULT NULL)
+
+CREATE OR REPLACE FUNCTION public.notify_all_users(
+  p_title text,
+  p_body text,
+  p_exclude_user uuid DEFAULT NULL,
+  p_type text DEFAULT 'system',
+  p_link_url text DEFAULT NULL,
+  p_target_type text DEFAULT NULL,
+  p_target_id uuid DEFAULT NULL
+)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
   INSERT INTO public.notifications(user_id,title,body,notification_type,link_url,target_type,target_id)
   SELECT p.id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000),coalesce(nullif(p_type,''),'system'),nullif(p_link_url,''),p_target_type,p_target_id
-  FROM public.profiles p WHERE p.id IS NOT NULL AND (p_exclude_user IS NULL OR p.id<>p_exclude_user);
+  FROM public.profiles p
+  WHERE p.id IS NOT NULL AND (p_exclude_user IS NULL OR p.id<>p_exclude_user);
 END $$;
+
 CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE
@@ -4095,7 +4148,8 @@ CREATE TRIGGER trg_notify_telegram_product_publish AFTER INSERT OR UPDATE OF sta
 DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_channels;
 CREATE TRIGGER trg_notify_telegram_channel_publish AFTER INSERT OR UPDATE OF status ON public.telegram_channels FOR EACH ROW WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
 
-CREATE OR REPLACE FUNCTION public.trg_notify_purchase() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE seller uuid; target text; kind text:=lower(coalesce(NEW.item_type,'product')); title text:=coalesce(NEW.item_title,'Produk');
 BEGIN
   SELECT seller_id INTO seller FROM public.orders WHERE id=NEW.order_id;
@@ -4104,9 +4158,13 @@ BEGIN
   ELSIF kind IN ('channel','group','telegram_channel','telegram-channel','telegram_group','telegram-group') THEN target:='product.html?type='||CASE WHEN kind LIKE '%group%' THEN 'group' ELSE 'channel' END||'&id='||coalesce(NEW.product_id::text,NEW.item_id,'');
   ELSE target:='product.html?type=product&id='||coalesce(NEW.product_id::text,NEW.item_id,''); END IF;
   PERFORM public.notify_user_once(NEW.buyer_id,'Pembelian berhasil','Akses untuk "'||title||'" sudah tersedia.','purchase',coalesce(NEW.access_url,target),kind,NEW.product_id);
-  IF seller IS NOT NULL AND seller IS DISTINCT FROM NEW.buyer_id THEN PERFORM public.notify_user_once(seller,'Produk terjual','"'||title||'" berhasil dibeli oleh user.','sale',target,kind,NEW.product_id); END IF;
+  IF seller IS NOT NULL AND seller IS DISTINCT FROM NEW.buyer_id THEN
+    PERFORM public.notify_user_once(seller,'Produk terjual','"'||title||'" berhasil dibeli oleh user.','sale',target,kind,NEW.product_id);
+  END IF;
   RETURN NEW;
 END $$;
+
+-- Rebuild triggers so the final functions above are always used.
 DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
 CREATE TRIGGER trg_notify_pastelink_publish AFTER INSERT OR UPDATE OF visibility ON public.pastelinks FOR EACH ROW WHEN (NEW.visibility='public') EXECUTE FUNCTION public.trg_notify_market_publication();
 DROP TRIGGER IF EXISTS trg_notify_product_publish ON public.products;
@@ -4119,5 +4177,15 @@ DROP TRIGGER IF EXISTS trg_notify_purchase ON public.purchases;
 CREATE TRIGGER trg_notify_purchase AFTER INSERT ON public.purchases FOR EACH ROW EXECUTE FUNCTION public.trg_notify_purchase();
 DROP TRIGGER IF EXISTS trg_notify_content_view ON public.analytics_events;
 CREATE TRIGGER trg_notify_content_view AFTER INSERT ON public.analytics_events FOR EACH ROW WHEN (NEW.event_type='view') EXECUTE FUNCTION public.trg_notify_view();
-DO $$ BEGIN BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications; EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL; END; END $$;
+
+-- Ensure Realtime can stream notification inserts to the logged-in browser.
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  WHEN undefined_object THEN NULL;
+  END;
+END $$;
+
 COMMIT;
