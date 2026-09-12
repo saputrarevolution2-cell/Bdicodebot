@@ -1512,7 +1512,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             "record_content_view",
             {
                 p_owner: paste.user_id,
-                p_target_type: "link",
+                p_target_type: "pastelink",
                 p_target_id: paste.id
             }
         );

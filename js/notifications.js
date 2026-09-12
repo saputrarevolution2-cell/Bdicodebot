@@ -1001,7 +1001,7 @@ window.PASTELE_CONFIG = Object.freeze({
    ============================================================ */
 
 (() => {
-  const initNavbar = async () => {
+  const initNavbar = async () => { if (/\/admin(?:\/|$)/i.test(location.pathname)) return;
     const host = document.getElementById('navbar');
     if (!host || host.dataset.ready === '1') return;
     host.dataset.ready = '1';
@@ -1038,7 +1038,7 @@ window.PASTELE_CONFIG = Object.freeze({
       if (user && window.sb) {
         const r = await window.sb
           .from('profiles')
-          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,whatsapp_number,website,balance')
           .eq('id', user.id)
           .maybeSingle();
         profile = r.data || null;
@@ -1057,6 +1057,30 @@ window.PASTELE_CONFIG = Object.freeze({
       profile?.is_premium &&
       (!profile?.subscription_until || new Date(profile.subscription_until) > new Date())
     );
+
+    let platformSocials = [];
+    try {
+      const sr = await window.sb?.rpc('get_public_site_settings');
+      platformSocials = Array.isArray(sr?.data?.socials) ? sr.data.socials : [];
+    } catch (_) {}
+    const normalizeSocial = (url, fallback) => {
+      let u = String(url || '').trim();
+      if (!u) return '';
+      if (fallback === 'telegram' && !/^https?:\/\//i.test(u)) u = `https://t.me/${u.replace(/^@/, '')}`;
+      if (fallback === 'whatsapp' && !/^https?:\/\//i.test(u)) u = `https://wa.me/${u.replace(/\D/g, '')}`;
+      return /^https?:\/\//i.test(u) ? u : '';
+    };
+    const userSocials = [
+      { url: normalizeSocial(profile?.telegram_username, 'telegram'), icon:'fa-brands fa-telegram', label:'Telegram' },
+      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' },
+      { url: normalizeSocial(profile?.website, 'website'), icon:'fa-solid fa-globe', label:'Website' }
+    ].filter(x => x.url);
+    const userSocialHtml = userSocials.length
+      ? userSocials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(x.label)}"><i class="${esc(x.icon)}"></i></a>`).join('')
+      : `<span class="pt-social-empty">Belum ada sosial</span>`;
+    const platformSocialHtml = platformSocials.length
+      ? platformSocials.map(x => { const url=String(x?.url||''); const icon=String(x?.icon||'fa-solid fa-link'); const name=String(x?.name||'Social'); return /^https?:\/\//i.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(name)}"><i class="${esc(icon)}"></i></a>` : ''; }).join('')
+      : '';
 
     const groups = isAdmin
       ? [
@@ -1160,6 +1184,11 @@ window.PASTELE_CONFIG = Object.freeze({
               </div>
 
               <div class="pt-account-grid">
+                <div class="pt-account-item pt-balance-item">
+                  <i class="fa-solid fa-wallet"></i>
+                  <span>Saldo</span>
+                  <strong>${esc(window.TC?.money ? TC.money(profile?.balance || 0) : ('Rp' + Number(profile?.balance || 0).toLocaleString('id-ID')))}</strong>
+                </div>
                 <a class="pt-account-item" href="${base}notifications.html">
                   <i class="fa-solid fa-bell"></i>
                   <span>Notifikasi</span>
@@ -1173,12 +1202,7 @@ window.PASTELE_CONFIG = Object.freeze({
                 </button>
               </div>
 
-              <div class="pt-socials" aria-label="Social media">
-                <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
-                <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-                <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
-              </div>
+              <div class="pt-socials" aria-label="Social media user">${userSocialHtml}</div>
 
               <a class="pt-profile-link"
                  href="${base}${isAdmin ? 'index.html' : 'profile.html'}">
@@ -1323,7 +1347,7 @@ window.PASTELE_CONFIG = Object.freeze({
     const updateThemeLabel = () => {
       const mode = localStorage.getItem('pastele-theme') || 'auto';
       const el = document.getElementById('ptThemeText');
-      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
     };
 
     updateThemeLabel();
@@ -1457,7 +1481,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const [notificationResult, announcementResult] = await Promise.allSettled([
         client
             .from("notifications")
-            .select("id,user_id,title,body,is_read,created_at")
+            .select("id,user_id,title,body,is_read,created_at,notification_type,link_url,target_type,target_id")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
         client
@@ -1521,7 +1545,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         image_url: null,
         created_at: item.created_at,
         is_read: Boolean(item.is_read),
-        notification_id: item.id
+        notification_id: item.id,
+        notification_type: item.notification_type || "system",
+        link_url: item.link_url || "",
+        target_type: item.target_type || null,
+        target_id: item.target_id || null
     }));
     const announcementRows = announcements.map((item) => ({
         id: item.id,
@@ -1599,6 +1627,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     data-notification-id="${escapeHtml(
                         item.notification_id || ""
                     )}"
+                    ${item.link_url ? `data-link-url="${escapeHtml(item.link_url)}" tabindex="0" role="link"` : ""}
                 >
                     ${image}
                     <div class="notice-inner">
@@ -1646,7 +1675,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                         class="btn notice-more"
                                         data-more="${index}"
                                     >
-                                        Baca selengkapnya
+                                        Baca selanjutnya
                                     </button>
                                 `
                                 : ""
@@ -1660,35 +1689,58 @@ document.addEventListener("DOMContentLoaded", async () => {
             `;
         })
         .join("");
-    /* =======================================================
-       READ MORE / COLLAPSE
-       ======================================================= */
     rows.forEach((item, index) => {
-        const button = document.querySelector(
-            `[data-more="${index}"]`
-        );
-        if (!button) return;
-        const bodyElement = document.getElementById(
-            `notice-body-${index}`
-        );
-        if (!bodyElement) return;
-        const fullBody = String(item.body || "");
-        button.addEventListener("click", () => {
-            const expanded =
-                bodyElement.classList.toggle("expanded");
-            if (expanded) {
-                bodyElement.textContent = fullBody;
-                button.textContent = "Tutup";
-            } else {
-                bodyElement.textContent =
-                    fullBody.length > 300
-                        ? fullBody.slice(0, 300) + "..."
-                        : fullBody;
-                button.textContent =
-                    "Baca selengkapnya";
-            }
-        });
+        if (!item.link_url) return;
+        const card = document.querySelector(`[data-index="${index}"]`);
+        if (!card) return;
+        card.classList.add("is-clickable");
+        const open = () => { window.location.assign(new URL(item.link_url, window.location.origin + "/").href); };
+        card.addEventListener("click", (e) => { if (e.target.closest("button")) return; open(); });
+        card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
     });
+
+    /* =======================================================
+       READ MORE MODAL
+       ======================================================= */
+    let noticeModal = document.getElementById("noticeDetailModal");
+    if (!noticeModal) {
+      noticeModal = document.createElement("div");
+      noticeModal.id = "noticeDetailModal";
+      noticeModal.className = "notice-detail-modal";
+      noticeModal.hidden = true;
+      noticeModal.innerHTML = `
+        <div class="notice-detail-backdrop" data-notice-close></div>
+        <section class="notice-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="noticeDetailTitle">
+          <header class="notice-detail-head"><div><span class="badge"><i class="fa-solid fa-bell"></i> DETAIL NOTIFIKASI</span><h2 id="noticeDetailTitle"></h2></div><button type="button" class="notice-detail-x" data-notice-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></header>
+          <div class="notice-detail-body" id="noticeDetailBody"></div>
+          <footer class="notice-detail-foot"><button type="button" class="btn" data-notice-close><i class="fa-solid fa-check"></i> Tutup, sudah dibaca</button><button type="button" class="btn primary" id="noticeDetailOpen" hidden><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</button></footer>
+        </section>`;
+      document.body.appendChild(noticeModal);
+    }
+    const detailTitle = document.getElementById("noticeDetailTitle");
+    const detailBody = document.getElementById("noticeDetailBody");
+    const detailOpen = document.getElementById("noticeDetailOpen");
+    let activeNotice = null;
+    const closeNoticeModal = () => { noticeModal.hidden = true; document.body.classList.remove("notice-modal-open"); activeNotice = null; };
+    noticeModal.querySelectorAll("[data-notice-close]").forEach(b => b.addEventListener("click", closeNoticeModal));
+    const openNoticeModal = (item) => {
+      activeNotice = item;
+      if (detailTitle) detailTitle.textContent = String(item.title || "Notifikasi");
+      if (detailBody) {
+        detailBody.textContent = String(item.body || "");
+        detailBody.style.whiteSpace = "pre-wrap";
+      }
+      if (detailOpen) {
+        detailOpen.hidden = !item.link_url;
+        detailOpen.onclick = item.link_url ? () => window.location.assign(new URL(item.link_url, window.location.origin + "/").href) : null;
+      }
+      noticeModal.hidden = false; document.body.classList.add("notice-modal-open");
+    };
+    rows.forEach((item, index) => {
+      const button = document.querySelector(`[data-more="${index}"]`);
+      button?.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); openNoticeModal(item); });
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !noticeModal.hidden) closeNoticeModal(); });
     /* =======================================================
        MARK NOTIFICATIONS AS READ
        -------------------------------------------------------

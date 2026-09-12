@@ -1001,7 +1001,7 @@ window.PASTELE_CONFIG = Object.freeze({
    ============================================================ */
 
 (() => {
-  const initNavbar = async () => {
+  const initNavbar = async () => { if (/\/admin(?:\/|$)/i.test(location.pathname)) return;
     const host = document.getElementById('navbar');
     if (!host || host.dataset.ready === '1') return;
     host.dataset.ready = '1';
@@ -1038,7 +1038,7 @@ window.PASTELE_CONFIG = Object.freeze({
       if (user && window.sb) {
         const r = await window.sb
           .from('profiles')
-          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,whatsapp_number,website,balance')
           .eq('id', user.id)
           .maybeSingle();
         profile = r.data || null;
@@ -1057,6 +1057,30 @@ window.PASTELE_CONFIG = Object.freeze({
       profile?.is_premium &&
       (!profile?.subscription_until || new Date(profile.subscription_until) > new Date())
     );
+
+    let platformSocials = [];
+    try {
+      const sr = await window.sb?.rpc('get_public_site_settings');
+      platformSocials = Array.isArray(sr?.data?.socials) ? sr.data.socials : [];
+    } catch (_) {}
+    const normalizeSocial = (url, fallback) => {
+      let u = String(url || '').trim();
+      if (!u) return '';
+      if (fallback === 'telegram' && !/^https?:\/\//i.test(u)) u = `https://t.me/${u.replace(/^@/, '')}`;
+      if (fallback === 'whatsapp' && !/^https?:\/\//i.test(u)) u = `https://wa.me/${u.replace(/\D/g, '')}`;
+      return /^https?:\/\//i.test(u) ? u : '';
+    };
+    const userSocials = [
+      { url: normalizeSocial(profile?.telegram_username, 'telegram'), icon:'fa-brands fa-telegram', label:'Telegram' },
+      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' },
+      { url: normalizeSocial(profile?.website, 'website'), icon:'fa-solid fa-globe', label:'Website' }
+    ].filter(x => x.url);
+    const userSocialHtml = userSocials.length
+      ? userSocials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(x.label)}"><i class="${esc(x.icon)}"></i></a>`).join('')
+      : `<span class="pt-social-empty">Belum ada sosial</span>`;
+    const platformSocialHtml = platformSocials.length
+      ? platformSocials.map(x => { const url=String(x?.url||''); const icon=String(x?.icon||'fa-solid fa-link'); const name=String(x?.name||'Social'); return /^https?:\/\//i.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(name)}"><i class="${esc(icon)}"></i></a>` : ''; }).join('')
+      : '';
 
     const groups = isAdmin
       ? [
@@ -1160,6 +1184,11 @@ window.PASTELE_CONFIG = Object.freeze({
               </div>
 
               <div class="pt-account-grid">
+                <div class="pt-account-item pt-balance-item">
+                  <i class="fa-solid fa-wallet"></i>
+                  <span>Saldo</span>
+                  <strong>${esc(window.TC?.money ? TC.money(profile?.balance || 0) : ('Rp' + Number(profile?.balance || 0).toLocaleString('id-ID')))}</strong>
+                </div>
                 <a class="pt-account-item" href="${base}notifications.html">
                   <i class="fa-solid fa-bell"></i>
                   <span>Notifikasi</span>
@@ -1173,12 +1202,7 @@ window.PASTELE_CONFIG = Object.freeze({
                 </button>
               </div>
 
-              <div class="pt-socials" aria-label="Social media">
-                <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
-                <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-                <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
-              </div>
+              <div class="pt-socials" aria-label="Social media user">${userSocialHtml}</div>
 
               <a class="pt-profile-link"
                  href="${base}${isAdmin ? 'index.html' : 'profile.html'}">
@@ -1323,7 +1347,7 @@ window.PASTELE_CONFIG = Object.freeze({
     const updateThemeLabel = () => {
       const mode = localStorage.getItem('pastele-theme') || 'auto';
       const el = document.getElementById('ptThemeText');
-      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
     };
 
     updateThemeLabel();
@@ -1383,7 +1407,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     sells: [],
     all: [],
     filter: "all",
-    search: ""
+    search: "",
+    page: 1
   };
   const esc = (value) => TC.esc(String(value ?? ""));
   const money = (value) => {
@@ -1845,8 +1870,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     return haystack.includes(query);
   }
   function filteredItems() {
+    const hidden = JSON.parse(localStorage.getItem("pastele_hidden_transactions") || "[]");
+    const hiddenSet = new Set(Array.isArray(hidden) ? hidden : []);
     return state.all.filter((item) => {
-      return matchesFilter(item) && matchesSearch(item);
+      const key = `${item.__source || item.__side || "tx"}:${item.id || item.__key || item.reference || item.__date}`;
+      item.__displayKey = key;
+      return !hiddenSet.has(key) && matchesFilter(item) && matchesSearch(item);
     });
   }
   /* =======================================================
@@ -1923,7 +1952,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       date(item.__date)
     ].filter(Boolean);
     return `
-      <article class="tx-row">
+      <article class="tx-row" data-tx-key="${esc(item.__displayKey || item.id || "")}" tabindex="0">
         <span class="tx-row-icon">
           <i class="fa-solid ${iconForType(item.__type)}"></i>
         </span>
@@ -1954,6 +1983,10 @@ document.addEventListener("DOMContentLoaded", async () => {
               ? `<small>#${esc(String(item.id).slice(0, 10))}</small>`
               : ""
           }
+        </div>
+        <div class="tx-row-actions" aria-label="Aksi transaksi">
+          <button type="button" class="tx-action tx-hide" data-tx-action="hide" title="Sembunyikan"><i class="fa-solid fa-eye-slash"></i></button>
+          <button type="button" class="tx-action tx-delete" data-tx-action="delete" title="Hapus dari daftar"><i class="fa-solid fa-trash"></i></button>
         </div>
       </article>
     `;
@@ -2015,7 +2048,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
       return;
     }
-    const groups = groupItems(items);
+    const PAGE_SIZE = 10;
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    state.page = Math.min(Math.max(1, state.page), totalPages);
+    const pageItems = items.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
+    const groups = groupItems(pageItems);
     const order = [
       "buy-link",
       "buy-paste",
@@ -2057,6 +2094,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     });
     content.innerHTML = html.join("");
+    const host = document.createElement("div");
+    host.className = "tx-pagination";
+    if (totalPages > 1) {
+      host.innerHTML = Array.from({length: totalPages}, (_,i) => `<button type="button" class="${i+1===state.page?'active':''}" data-tx-page="${i+1}">${i+1}</button>`).join("");
+      host.querySelectorAll("[data-tx-page]").forEach(btn => btn.addEventListener("click", () => { state.page = Number(btn.dataset.txPage); render(); window.scrollTo({top: document.querySelector(".transactions-page")?.offsetTop || 0, behavior:"smooth"}); }));
+      content.appendChild(host);
+    }
+    content.querySelectorAll(".tx-row").forEach(row => {
+      const key=row.dataset.txKey;
+      row.querySelectorAll("[data-tx-action]").forEach(btn => btn.addEventListener("click", async e => {
+        e.preventDefault(); e.stopPropagation();
+        const action=btn.dataset.txAction;
+        const hidden=JSON.parse(localStorage.getItem("pastele_hidden_transactions") || "[]");
+        const next=Array.isArray(hidden)?hidden:[];
+        if(!next.includes(key)) next.push(key);
+        localStorage.setItem("pastele_hidden_transactions", JSON.stringify(next));
+        render();
+      }));
+      row.addEventListener("click", e => { if(e.target.closest("button")) return; row.classList.toggle("is-selected"); });
+      row.addEventListener("keydown", e => { if((e.key==='Enter'||e.key===' ') && !e.target.closest('button')) { e.preventDefault(); row.classList.toggle('is-selected'); }});
+    });
   }
   /* =======================================================
      RESULT BAR
@@ -2152,6 +2210,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   searchInput?.addEventListener("input", (event) => {
     state.search = event.target.value || "";
+    state.page = 1;
     updateSearchUI();
     render();
   });
@@ -2173,6 +2232,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.addEventListener("click", () => {
         state.filter =
           button.dataset.filter || "all";
+        state.page = 1;
         document
           .querySelectorAll(".tx-filter")
           .forEach((item) => {
@@ -2190,6 +2250,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("resetFilters")?.addEventListener("click", () => {
     state.filter = "all";
     state.search = "";
+    state.page = 1;
     if (searchInput) {
       searchInput.value = "";
     }

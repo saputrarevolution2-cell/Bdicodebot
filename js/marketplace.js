@@ -1001,7 +1001,7 @@ window.PASTELE_CONFIG = Object.freeze({
    ============================================================ */
 
 (() => {
-  const initNavbar = async () => {
+  const initNavbar = async () => { if (/\/admin(?:\/|$)/i.test(location.pathname)) return;
     const host = document.getElementById('navbar');
     if (!host || host.dataset.ready === '1') return;
     host.dataset.ready = '1';
@@ -1038,7 +1038,7 @@ window.PASTELE_CONFIG = Object.freeze({
       if (user && window.sb) {
         const r = await window.sb
           .from('profiles')
-          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until')
+          .select('username,display_name,avatar_url,is_admin,is_premium,subscription_until,telegram_username,whatsapp_number,website,balance')
           .eq('id', user.id)
           .maybeSingle();
         profile = r.data || null;
@@ -1057,6 +1057,30 @@ window.PASTELE_CONFIG = Object.freeze({
       profile?.is_premium &&
       (!profile?.subscription_until || new Date(profile.subscription_until) > new Date())
     );
+
+    let platformSocials = [];
+    try {
+      const sr = await window.sb?.rpc('get_public_site_settings');
+      platformSocials = Array.isArray(sr?.data?.socials) ? sr.data.socials : [];
+    } catch (_) {}
+    const normalizeSocial = (url, fallback) => {
+      let u = String(url || '').trim();
+      if (!u) return '';
+      if (fallback === 'telegram' && !/^https?:\/\//i.test(u)) u = `https://t.me/${u.replace(/^@/, '')}`;
+      if (fallback === 'whatsapp' && !/^https?:\/\//i.test(u)) u = `https://wa.me/${u.replace(/\D/g, '')}`;
+      return /^https?:\/\//i.test(u) ? u : '';
+    };
+    const userSocials = [
+      { url: normalizeSocial(profile?.telegram_username, 'telegram'), icon:'fa-brands fa-telegram', label:'Telegram' },
+      { url: normalizeSocial(profile?.whatsapp_number, 'whatsapp'), icon:'fa-brands fa-whatsapp', label:'WhatsApp' },
+      { url: normalizeSocial(profile?.website, 'website'), icon:'fa-solid fa-globe', label:'Website' }
+    ].filter(x => x.url);
+    const userSocialHtml = userSocials.length
+      ? userSocials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(x.label)}"><i class="${esc(x.icon)}"></i></a>`).join('')
+      : `<span class="pt-social-empty">Belum ada sosial</span>`;
+    const platformSocialHtml = platformSocials.length
+      ? platformSocials.map(x => { const url=String(x?.url||''); const icon=String(x?.icon||'fa-solid fa-link'); const name=String(x?.name||'Social'); return /^https?:\/\//i.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(name)}"><i class="${esc(icon)}"></i></a>` : ''; }).join('')
+      : '';
 
     const groups = isAdmin
       ? [
@@ -1160,6 +1184,11 @@ window.PASTELE_CONFIG = Object.freeze({
               </div>
 
               <div class="pt-account-grid">
+                <div class="pt-account-item pt-balance-item">
+                  <i class="fa-solid fa-wallet"></i>
+                  <span>Saldo</span>
+                  <strong>${esc(window.TC?.money ? TC.money(profile?.balance || 0) : ('Rp' + Number(profile?.balance || 0).toLocaleString('id-ID')))}</strong>
+                </div>
                 <a class="pt-account-item" href="${base}notifications.html">
                   <i class="fa-solid fa-bell"></i>
                   <span>Notifikasi</span>
@@ -1173,12 +1202,7 @@ window.PASTELE_CONFIG = Object.freeze({
                 </button>
               </div>
 
-              <div class="pt-socials" aria-label="Social media">
-                <a href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
-                <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-                <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
-              </div>
+              <div class="pt-socials" aria-label="Social media user">${userSocialHtml}</div>
 
               <a class="pt-profile-link"
                  href="${base}${isAdmin ? 'index.html' : 'profile.html'}">
@@ -1323,7 +1347,7 @@ window.PASTELE_CONFIG = Object.freeze({
     const updateThemeLabel = () => {
       const mode = localStorage.getItem('pastele-theme') || 'auto';
       const el = document.getElementById('ptThemeText');
-      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
+      if (el) el.textContent = mode === 'auto' ? 'Auto' : mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Gelap' : mode === 'light' ? 'Terang' : 'System';
     };
 
     updateThemeLabel();
@@ -1620,14 +1644,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      CREATOR
      ======================================================= */
-  const creatorText = (
-    item
-  ) => {
-    return (
-      item?.creator_name ||
-      item?.creator_username ||
-      "Creator"
-    );
+  const creatorText = (item) => {
+    const raw = String(item?.creator_username || item?.creator_name || "Creator").trim().replace(/^@/, "");
+    if (!raw) return "Creator";
+    if (raw.length <= 2) return raw[0] + "***";
+    return raw.slice(0, 2) + "***" + raw.slice(-1);
   };
   /* =======================================================
      STORED STATS
