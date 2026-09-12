@@ -1111,9 +1111,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Short Code URLs (/c/f/<slug> and /c/p/<slug>) must work even when
     // Cloudflare rewrites the request to product.html without adding a query string.
     if (requestedType === "code" && !requestedId && requestedSlug) {
+      // Canonical public Code route. The database.sql ships get_code_by_slug(text),
+      // but keep a guarded direct lookup for older deployments so the page can
+      // fail gracefully instead of showing a misleading generic product error.
       const detailBySlug = await client.rpc("get_code_by_slug", { p_slug: requestedSlug });
-      if (detailBySlug.error) throw detailBySlug.error;
-      item = Array.isArray(detailBySlug.data) ? detailBySlug.data[0] : detailBySlug.data;
+      if (!detailBySlug.error) {
+        item = Array.isArray(detailBySlug.data) ? detailBySlug.data[0] : detailBySlug.data;
+        if (!item || item.found === false) return false;
+        resolvedType = "code";
+        rpcType = "telegram_product";
+        return true;
+      }
+      console.warn("[PasTele] get_code_by_slug RPC failed; trying direct published lookup.", detailBySlug.error);
+      const legacy = await client
+        .from("telegram_products")
+        .select("id")
+        .eq("slug", requestedSlug)
+        .eq("status", "published")
+        .maybeSingle();
+      if (legacy.error) throw detailBySlug.error;
+      if (!legacy.data?.id) return false;
+      const detail = await client.rpc("get_market_item_detail", {
+        p_type: "telegram_product",
+        p_id: legacy.data.id
+      });
+      if (detail.error) throw detail.error;
+      item = Array.isArray(detail.data) ? detail.data[0] : detail.data;
       if (!item || item.found === false) return false;
       resolvedType = "code";
       rpcType = "telegram_product";
