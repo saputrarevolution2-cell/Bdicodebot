@@ -3321,3 +3321,14 @@ body.theme-dark
     }
   }
 }
+/* FINAL DASHBOARD STAT DIFFERENTIATION */
+.dash-stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important}
+.dash-stat{border:1px solid var(--pt-accent-border)!important;background:linear-gradient(145deg,var(--dash-surface,#fff),var(--dash-surface-2,#fff))!important;box-shadow:0 10px 28px var(--pt-accent-shadow)!important}
+.dash-stat.pink{min-height:148px;position:relative;overflow:hidden}
+.dash-stat.pink:after{content:'↗  Pendapatan';position:absolute;right:14px;bottom:12px;font-size:11px;font-weight:900;color:var(--pt-accent);opacity:.9}
+.circle-stats{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:16px!important}
+.circle-stat{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;min-height:150px!important;border:1px solid var(--pt-accent-border)!important;border-radius:999px!important;background:radial-gradient(circle,var(--pt-accent-soft),transparent 68%)!important}
+.circle-stat .circle{border-color:var(--pt-accent)!important;color:var(--pt-accent)!important}
+.performance-summary{border:1px solid var(--pt-accent-border)!important;border-radius:18px!important}
+.performance-stat{border:0!important;border-right:1px solid var(--pt-accent-border)!important}
+@media(max-width:850px){.dash-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.circle-stats{grid-template-columns:repeat(2,1fr)!important}.circle-stat{border-radius:28px!important}}

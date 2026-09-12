@@ -1523,3 +1523,5 @@ html.theme-dark .wallet-pending-dialog{
     transform:none;
   }
 }
+/* WALLET — gold details + pagination */
+.wallet-card,.wallet-balance-hero,.wallet-quick-card,.wallet-withdraw-panel{border-color:var(--pt-accent-border)!important}.wallet-balance-value,.wallet-card-value,.wallet-activity-amount{color:var(--pt-accent)!important}.wallet-card-icon,.wallet-heading-icon,.wallet-panel-icon{border-color:var(--pt-accent-border)!important;color:var(--pt-accent)!important}

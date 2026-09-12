@@ -769,3 +769,8 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 @media(prefers-reduced-motion:reduce){
   .plan-card,.wallet-pending-click{transition:none!important}
 }
+/* TRANSACTIONS — clickable rows */
+.tx-row{position:relative;border:1px solid var(--pt-accent-border)!important;border-radius:15px!important;cursor:pointer!important;transition:transform .18s,box-shadow .18s,border-color .18s!important}
+.tx-row:hover{transform:translateY(-2px);box-shadow:0 12px 28px var(--pt-accent-shadow)!important;border-color:var(--pt-accent)!important}.tx-row-amount{color:var(--pt-accent)!important}
+.tx-search{width:100%!important}
+.tx-row{padding-right:92px!important}.tx-row-actions{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;gap:6px}.tx-action{width:34px;height:34px;border:1px solid var(--pt-accent-border);border-radius:9px;background:var(--surface,#fff);color:var(--muted,#64748b);cursor:pointer}.tx-action:hover{color:var(--pt-accent);border-color:var(--pt-accent)}.tx-delete:hover{color:#ef4444;border-color:#ef4444}.tx-row.is-selected{border-color:var(--pt-accent)!important;box-shadow:0 0 0 2px var(--pt-accent-soft)!important}

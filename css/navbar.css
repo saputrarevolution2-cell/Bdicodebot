@@ -518,3 +518,6 @@ body{padding-top:64px;}
 #navbar .pt-socials a,#navbar .pt-drawer-socials a{width:36px;height:36px;border:1px solid var(--line,#e5e7eb);border-radius:11px;display:grid;place-items:center;color:var(--muted,#64748b);background:var(--surface-2,#f8fafc);text-decoration:none;}
 #navbar .pt-socials a:hover,#navbar .pt-drawer-socials a:hover{color:var(--primary,#635bff);transform:translateY(-1px);}
 #navbar .pt-drawer-socials{justify-content:center;padding:4px 0 10px;}
+/* NAVBAR FINAL — gold clean */
+#navbar .pt-user-btn,#navbar .pt-dropdown{border-color:var(--pt-accent-border)!important}#navbar .pt-brand-mark,#navbar .pt-link-icon{color:var(--pt-accent)!important}#navbar .pt-user-btn:hover{border-color:var(--pt-accent)!important;box-shadow:0 8px 24px var(--pt-accent-shadow)!important}#navbar .pt-socials a,#navbar .pt-drawer-socials a{border-color:var(--pt-accent-border)!important;color:var(--pt-accent)!important}
+body.pt-nav-lock{overflow:hidden!important}

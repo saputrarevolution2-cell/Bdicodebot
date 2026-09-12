@@ -2110,3 +2110,5 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 @media(prefers-reduced-motion:reduce){
   .plan-card,.wallet-pending-click{transition:none!important}
 }
+/* PURCHASES — clean */
+.purchase-item{border:1px solid var(--pt-accent-border)!important;border-radius:16px!important}.purchase-item-top,.purchase-meta{gap:10px!important;flex-wrap:wrap!important}.purchase-item-price{color:var(--pt-accent)!important;font-weight:900!important}.purchases-search{width:100%!important}.purchase-stat-card{border-color:var(--pt-accent-border)!important}

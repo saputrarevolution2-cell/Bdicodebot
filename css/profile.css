@@ -1759,3 +1759,7 @@ body.profile-modal-open{
     transform:none;
   }
 }
+/* PROFILE — icons + clean social stats */
+.profile-stat-card{border-color:var(--pt-accent-border)!important}.profile-stat-card i,.profile-stat-card .icon{color:var(--pt-accent)!important}.profile-social-stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}.profile-stat-card{min-height:112px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important}
+@media(max-width:700px){.profile-social-stats{grid-template-columns:repeat(2,1fr)!important}}
+.profile-stat-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--pt-accent-soft);color:var(--pt-accent)!important;margin-bottom:7px}.profile-stat-card strong{font-size:22px!important}

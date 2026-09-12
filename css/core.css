@@ -223,3 +223,41 @@ body{overflow-x:hidden;}
 .site-footer .footer-grid{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(3,minmax(130px,1fr));align-items:start;gap:28px;}
 @media(max-width:760px){.site-footer .footer-grid{grid-template-columns:1fr 1fr}.site-footer .footer-brand{grid-column:1/-1}}
 @media(max-width:480px){.site-footer .footer-grid{grid-template-columns:1fr}.site-footer .footer-brand{grid-column:auto}}
+
+/* Live notification cards / notification inbox links */
+.notice-card.is-clickable{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.notice-card.is-clickable:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(15,23,42,.10);border-color:color-mix(in srgb,var(--primary) 28%,var(--line))}
+.notice-card.is-clickable:focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 25%,transparent);outline-offset:2px}
+
+/* =========================================================
+   PasTele FINAL UI SYSTEM — GOLD / CLEAN / RESPONSIVE
+   ========================================================= */
+:root{
+  --pt-accent:#f4b400;--pt-accent-2:#ffd45a;--pt-accent-soft:rgba(244,180,0,.12);
+  --pt-accent-border:rgba(244,180,0,.28);--pt-accent-shadow:rgba(244,180,0,.18);
+}
+html[data-theme="dark"]{--pt-accent:#ffd15a;--pt-accent-2:#ffe39a;--pt-accent-soft:rgba(255,209,90,.11);--pt-accent-border:rgba(255,209,90,.28);--pt-accent-shadow:rgba(255,209,90,.16)}
+.badge,.page-badge,.panel-kicker,.eyebrow,.market-resultbar strong,.tx-resultbar span,.wallet-heading-copy h1,.withdraw-heading h1,.settings-heading h1,.profile-eyebrow{color:var(--pt-accent)!important}
+.btn.primary,.btn.primary:hover{background:linear-gradient(135deg,var(--pt-accent),var(--pt-accent-2))!important;color:#17120a!important;border-color:transparent!important}
+.card,.panel,.market-panel,.wallet-panel,.settings-card,.profile-section,.admin-card,.admin-extra-grid>.card{border-color:var(--pt-accent-border)!important}
+input,select,textarea,.input,.select{box-sizing:border-box!important;min-width:0!important;max-width:100%!important;line-height:1.35!important}
+.search-box,.market-search,.purchases-search,.tx-search{position:relative;display:flex;align-items:center;min-width:0}
+.search-box>i,.market-search>i,.purchases-search>i,.tx-search>i{left:14px!important;top:50%!important;transform:translateY(-50%)!important;z-index:2!important;pointer-events:none!important}
+.search-box input,.market-search input,.purchases-search input,.tx-search input{width:100%!important;padding-left:42px!important;padding-right:42px!important;min-height:46px!important;border-radius:13px!important}
+.search-clear,.market-search-clear,.purchases-search .search-clear,.tx-search-clear{right:8px!important;left:auto!important;top:50%!important;transform:translateY(-50%)!important;position:absolute!important;z-index:3!important;margin:0!important}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--pt-accent)!important;outline-offset:2px}
+
+/* compact pagination */
+.market-pagination,.purchase-pagination,.dash-pagination,.profile-pagination,.tx-pagination,.wallet-pagination{display:flex;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;margin:22px 0}
+.market-pagination button,.purchase-pagination button,.dash-pagination button,.profile-pagination button,.tx-pagination button,.wallet-pagination button{min-width:38px;height:38px;border:1px solid var(--pt-accent-border);border-radius:10px;background:var(--surface,#fff);color:var(--text,#17202a);font-weight:800;cursor:pointer}
+.market-pagination button.active,.purchase-pagination button.active,.dash-pagination button.active,.profile-pagination button.active,.tx-pagination button.active,.wallet-pagination button.active{background:var(--pt-accent)!important;color:#17120a!important;border-color:var(--pt-accent)!important}
+.market-pagination button:disabled,.purchase-pagination button:disabled,.dash-pagination button:disabled,.profile-pagination button:disabled{opacity:.45;cursor:not-allowed}
+
+/* footer horizontal */
+footer,.site-footer{width:100%}
+.footer-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:26px!important;align-items:start!important}
+.footer-column{min-width:0!important}.footer-column a{display:flex!important;align-items:center!important;gap:9px!important;white-space:nowrap!important}
+.footer-bottom{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:18px!important;flex-wrap:wrap!important}
+.footer-meta{display:flex!important;align-items:center!important;gap:14px!important;flex-wrap:wrap!important}
+@media(max-width:760px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.footer-bottom{align-items:flex-start!important}.footer-meta{gap:9px!important}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr 1fr!important;gap:18px!important}.footer-column a{font-size:12px!important}}

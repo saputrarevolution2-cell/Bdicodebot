@@ -1269,3 +1269,6 @@ html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="da
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
 }
+/* SUBSCRIPTION — full icon plans */
+.plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important}.plan-card{border:1px solid var(--pt-accent-border)!important;border-radius:20px!important;position:relative;overflow:hidden!important}.plan-icon{width:54px!important;height:54px!important;border-radius:16px!important;color:var(--pt-accent)!important;background:var(--pt-accent-soft)!important;border:1px solid var(--pt-accent-border)!important}.plan-card li,.plan-card .feature,.plan-card p{line-height:1.55!important}.plan-card .btn{width:100%!important}.plan-duration{color:var(--pt-accent)!important}
+@media(max-width:850px){.plan-grid{grid-template-columns:1fr!important}}

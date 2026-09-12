@@ -1269,3 +1269,5 @@ html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="da
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
 }
+/* PREMIUM — gold */
+.premium-hero,.premium-benefit,.premium-benefit-item{border-color:var(--pt-accent-border)!important}.premium-icon{color:var(--pt-accent)!important;background:var(--pt-accent-soft)!important}.premium-price{color:var(--pt-accent)!important}.premium-benefit-item i{color:var(--pt-accent)!important}

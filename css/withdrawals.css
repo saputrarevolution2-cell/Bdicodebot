@@ -3477,3 +3477,11 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 /* FINAL WITHDRAW CLOSED STATE */
 .manual-withdraw-disabled,.withdraw-closed,.withdraw-form.is-disabled{opacity:.62;pointer-events:none;filter:saturate(.6);}
 #manualSubmit:disabled{cursor:not-allowed!important;opacity:.55;}
+/* WITHDRAW — safe form states */
+.withdrawal-card,.withdraw-form-card,.withdraw-method-card,.withdraw-history-card{border-color:var(--pt-accent-border)!important}
+.manual-closed-notice,.is-closed,.withdraw-manual-closed{background:#fff0f0!important;border-color:#ef4444!important;color:#b91c1c!important}
+html[data-theme="dark"] .manual-closed-notice,html[data-theme="dark"] .is-closed,html[data-theme="dark"] .withdraw-manual-closed{background:rgba(239,68,68,.12)!important;color:#ff8d8d!important}
+.manualSubmit.is-closed,.manual-submit.is-closed{pointer-events:none!important;cursor:not-allowed!important;opacity:.48!important}
+.withdraw-fee,.fee-preview,#withdrawFeePreview,[data-fee],#manualFeeText{display:none!important}
+.withdraw-input,.withdraw-amount-input{min-height:50px!important;padding:0 15px!important}
+#instantBox{border-color:#ef4444!important;box-shadow:0 12px 32px rgba(239,68,68,.10)!important}.instant-box .box-heading-icon.instant,.instant-box .withdraw-submit{background:#ef4444!important;color:#fff!important;border-color:#ef4444!important}.instant-box .withdraw-submit{width:100%!important}.withdraw-fee-preview,#withdrawFeePreview,#confirmFee{display:none!important}

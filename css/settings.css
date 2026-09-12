@@ -1652,3 +1652,5 @@ body.modal-open{
     break-inside:avoid;
   }
 }
+/* SETTINGS — no text overlap */
+.settings-grid,.settings-quick-grid{min-width:0!important}.settings-card{min-width:0!important;overflow:hidden!important}.settings-card input,.settings-card select,.settings-card textarea,.settings-card .input,.settings-card .select{width:100%!important;min-height:48px!important;padding:11px 14px!important}.settings-card textarea{min-height:110px!important;resize:vertical!important}.settings-card label{display:block!important;margin:0 0 7px!important;line-height:1.4!important}.account-item{min-width:0!important}.account-item-content{min-width:0!important}.settings-quick-card{border-color:var(--pt-accent-border)!important}.settings-quick-icon{color:var(--pt-accent)!important}
