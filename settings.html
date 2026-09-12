@@ -47,6 +47,7 @@
 <link rel="stylesheet" href="css/public-session.css?v=20260911">
   <link rel="stylesheet" href="css/pastele-theme.css?v=20260912">
   <script src="js/theme.js?v=20260912"></script>
+<link rel="stylesheet" href="css/ui-final-fix.css?v=20260912-final">
 </head>
 
 
@@ -275,58 +276,16 @@
               </label>
 
 
-              <!-- Telegram -->
-
-              <label class="field">
-
-                <span>Username Telegram</span>
-
-                <div class="input-wrap">
-
-                  <i class="fa-brands fa-telegram"></i>
-
-                  <input
-                    class="input"
-                    id="telegram_username"
-                    name="telegram_username"
-                    type="text"
-                    autocomplete="off"
-                    maxlength="64"
-                    placeholder="@username"
-                  >
-
-                </div>
-
-              </label>
-
-
-              <!-- WhatsApp -->
-
-              <label class="field">
-
-                <span>No. WhatsApp aktif</span>
-
-                <div class="input-wrap">
-
-                  <i class="fa-brands fa-whatsapp"></i>
-
-                  <input
-                    class="input"
-                    id="whatsapp_number"
-                    name="whatsapp_number"
-                    type="tel"
-                    autocomplete="tel"
-                    maxlength="30"
-                    inputmode="tel"
-                    placeholder="+62..."
-                  >
-
-                </div>
-
-              </label>
-
+              <!-- Social Media -->
+              <div class="settings-social-grid">
+                <label class="field"><span>Telegram</span><div class="input-wrap"><i class="fa-brands fa-telegram"></i><input class="input" id="telegram_username" name="telegram_username" type="text" maxlength="100" placeholder="@username atau https://t.me/username"></div></label>
+                <label class="field"><span>YouTube</span><div class="input-wrap"><i class="fa-brands fa-youtube"></i><input class="input" id="youtube_url" name="youtube_url" type="url" maxlength="255" placeholder="https://youtube.com/@username"></div></label>
+                <label class="field"><span>Facebook</span><div class="input-wrap"><i class="fa-brands fa-facebook"></i><input class="input" id="facebook_url" name="facebook_url" type="url" maxlength="255" placeholder="https://facebook.com/username"></div></label>
+                <label class="field"><span>WhatsApp</span><div class="input-wrap"><i class="fa-brands fa-whatsapp"></i><input class="input" id="whatsapp_number" name="whatsapp_number" type="tel" maxlength="40" inputmode="tel" placeholder="+62... atau https://wa.me/..."></div></label>
+              </div>
 
               <!-- Bio -->
+
 
               <label class="field">
 
