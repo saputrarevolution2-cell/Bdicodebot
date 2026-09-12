@@ -50,3 +50,47 @@ html[data-theme="dark"] .settings-card,html[data-theme="dark"] .stat-card{
 /* Hide navbar on explicitly public/standalone pages even if stale markup exists. */
 body.public-no-navbar #navbar{display:none!important}
 @media(max-width:700px){html,body{overflow-x:hidden!important}.pastele-footer{margin-left:0!important}}
+
+/* FINAL UNIFIED OVERRIDES — shared aliases for legacy page CSS */
+:root {
+  --bg: var(--pt-bg);
+  --surface: var(--pt-surface);
+  --surface-2: var(--pt-surface-2);
+  --surface-3: var(--pt-surface-3);
+  --text: var(--pt-text);
+  --muted: var(--pt-muted);
+  --line: var(--pt-line);
+  --line-strong: var(--pt-line-strong);
+  --primary: var(--pt-primary);
+  --primary-2: var(--pt-primary-2);
+  --blue: var(--pt-blue);
+  --cyan: var(--pt-cyan);
+  --green: var(--pt-green);
+  --orange: var(--pt-orange);
+  --red: var(--pt-red);
+  --pink: var(--pt-pink);
+  --shadow: var(--pt-shadow);
+}
+html[data-theme="dark"] {
+  --bg: var(--pt-bg);
+  --surface: var(--pt-surface);
+  --surface-2: var(--pt-surface-2);
+  --surface-3: var(--pt-surface-3);
+  --text: var(--pt-text);
+  --muted: var(--pt-muted);
+  --line: var(--pt-line);
+  --line-strong: var(--pt-line-strong);
+  --shadow: var(--pt-shadow);
+}
+
+html, body { min-height: 100%; height: auto !important; }
+body { overflow-x: hidden !important; overflow-y: auto !important; }
+.index-page, .index-page main { height: auto !important; min-height: 0 !important; overflow: visible !important; }
+
+/* Public standalone pages never reserve navbar space. */
+body.public-no-navbar #navbar { display: none !important; }
+
+/* Keep shared content readable on small screens. */
+@media (max-width: 700px) {
+  .container, .page-container, .main-container, .content-container { width: min(100% - 20px, 1180px); }
+}
