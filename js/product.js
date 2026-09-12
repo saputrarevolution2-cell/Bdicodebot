@@ -1052,6 +1052,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const requestedType = String(params.get("type") || (shortCodeRoute ? "code" : "link")).trim().toLowerCase();
   const requestedId = String(params.get("id") || "").trim();
   const requestedSlug = String(params.get("slug") || routeSlug).trim();
+  const normalizedRequestedSlug = requestedSlug.toLowerCase();
   let item = null;
   let resolvedType = requestedType;
   let rpcType = requestedType;
@@ -1097,7 +1098,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (q.error) throw q.error;
         item = q.data;
       } else {
-        const q = await client.from("pastes").select("id,owner_id,title,slug,content,visibility,password,created_at,updated_at").eq("slug",requestedSlug).maybeSingle();
+        const q = await client.from("pastes").select("id,owner_id,title,slug,content,visibility,password,created_at,updated_at").ilike("slug",normalizedRequestedSlug).maybeSingle();
         if (q.error) throw q.error;
         item = q.data;
       }
@@ -1114,7 +1115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Canonical public Code route. The database.sql ships get_code_by_slug(text),
       // but keep a guarded direct lookup for older deployments so the page can
       // fail gracefully instead of showing a misleading generic product error.
-      const detailBySlug = await client.rpc("get_code_by_slug", { p_slug: requestedSlug });
+      const detailBySlug = await client.rpc("get_code_by_slug", { p_slug: normalizedRequestedSlug });
       if (!detailBySlug.error) {
         item = Array.isArray(detailBySlug.data) ? detailBySlug.data[0] : detailBySlug.data;
         if (!item || item.found === false) return false;
@@ -1126,8 +1127,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const legacy = await client
         .from("telegram_products")
         .select("id")
-        .eq("slug", requestedSlug)
-        .eq("status", "published")
+        .ilike("slug", normalizedRequestedSlug)
+        .in("status", ["published", "active", "live"])
         .maybeSingle();
       if (legacy.error) throw detailBySlug.error;
       if (!legacy.data?.id) return false;
@@ -1145,7 +1146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const q = requestedId
       ? await client.from(table).select("id").eq("id",requestedId).maybeSingle()
-      : await client.from(table).select("id").eq("slug",requestedSlug).maybeSingle();
+      : await client.from(table).select("id").ilike("slug",normalizedRequestedSlug).maybeSingle();
     if (q.error) throw q.error;
     if (!q.data?.id) return false;
     const id = q.data.id;
