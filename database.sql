@@ -4019,7 +4019,7 @@ GRANT EXECUTE ON FUNCTION public.get_market_item_detail_guest(text,uuid,text) TO
 
 -- Definitive secure detail for authenticated + guest-free access.
 DROP FUNCTION IF EXISTS public.get_market_item_detail(text,uuid);
-CREATE FUNCTION public.get_market_item_detail(p_type text,p_id uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; uid uuid:=auth.uid();
 BEGIN
  IF normalized IN ('product','link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
@@ -4189,3 +4189,64 @@ BEGIN
 END $$;
 
 COMMIT;
+
+
+-- ============================================================
+-- FINAL CANONICAL COMPATIBILITY PATCH — 2026-09-12
+-- Frontend <-> Database contract hardening
+-- ============================================================
+BEGIN;
+
+-- Notifications: the frontend and notification triggers use these
+-- optional metadata fields. Existing rows remain untouched.
+ALTER TABLE public.notifications
+  ADD COLUMN IF NOT EXISTS notification_type text NOT NULL DEFAULT 'system',
+  ADD COLUMN IF NOT EXISTS link_url text,
+  ADD COLUMN IF NOT EXISTS target_type text,
+  ADD COLUMN IF NOT EXISTS target_id uuid;
+
+CREATE INDEX IF NOT EXISTS notifications_user_created_idx
+  ON public.notifications(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS notifications_user_unread_idx
+  ON public.notifications(user_id, is_read, created_at DESC);
+
+-- Canonical public Code resolver.
+-- It deliberately accepts published/active/live rows to remain compatible
+-- with older data while keeping the returned detail protected by the
+-- canonical get_market_item_detail() access rules.
+CREATE OR REPLACE FUNCTION public.get_code_by_slug(p_slug text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  pid uuid;
+BEGIN
+  SELECT tp.id
+    INTO pid
+  FROM public.telegram_products tp
+  WHERE lower(btrim(coalesce(tp.slug,''))) =
+        lower(btrim(coalesce(p_slug,'')))
+    AND lower(coalesce(tp.status,'published')) IN
+        ('published','active','live')
+  ORDER BY tp.created_at DESC NULLS LAST
+  LIMIT 1;
+
+  IF pid IS NULL THEN
+    RETURN jsonb_build_object(
+      'found', false,
+      'error', 'CODE_NOT_FOUND'
+    );
+  END IF;
+
+  RETURN public.get_market_item_detail('code', pid);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_code_by_slug(text)
+  TO anon, authenticated;
+
+COMMIT;
+

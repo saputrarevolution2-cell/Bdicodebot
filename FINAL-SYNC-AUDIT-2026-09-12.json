@@ -1,0 +1,22 @@
+{
+  "name": "PasTele FULL FIX — Frontend / JS / CSS / Database Sync",
+  "date": "2026-09-12",
+  "html_files": 48,
+  "js_files": 60,
+  "css_files": 55,
+  "javascript_syntax_errors": [],
+  "css_brace_errors": [],
+  "missing_rpc_calls": [],
+  "database_files_identical": true,
+  "notifications_contract_fixed": true,
+  "code_route_resolver_fixed": true,
+  "cloudflare_code_redirects_present": true,
+  "notes": [
+    "database.sql is the canonical database file.",
+    "SUPABASE_MASTER_FINAL_FULL_FIX_IDEMPOTENT.sql is kept byte-identical to database.sql.",
+    "get_code_by_slug is case-insensitive and accepts published/active/live Code rows.",
+    "Notification metadata columns used by frontend are added idempotently.",
+    "Product route /c/f/<slug> and /c/p/<slug> resolve through product.html.",
+    "Global UI stability layer was added without removing existing page-specific CSS."
+  ]
+}
