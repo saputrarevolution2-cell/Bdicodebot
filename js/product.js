@@ -1046,12 +1046,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   const money = v => window.TC?.money ? TC.money(v) : `Rp ${Number(v||0).toLocaleString("id-ID")}`;
   const client = window.sb || window.supabaseClient || null;
   const params = new URLSearchParams(location.search);
-  const pathParts = (location.pathname || "").split("/").filter(Boolean);
-  const shortCodeRoute = pathParts.length >= 3 && pathParts[0].toLowerCase() === "c" && ["f","p"].includes(pathParts[1].toLowerCase());
-  const routeSlug = shortCodeRoute ? decodeURIComponent(pathParts.slice(2).join("/")).trim() : "";
-  const requestedType = String(params.get("type") || (shortCodeRoute ? "code" : "link")).trim().toLowerCase();
+  const parseShortRoute = (pathname) => {
+    const parts = String(pathname || "").split("/").filter(Boolean);
+    if (parts.length < 2) return null;
+    const root = parts[0].toLowerCase();
+    if (["c","ch","g"].includes(root) && parts.length >= 3 && ["f","p"].includes(parts[1].toLowerCase())) {
+      return { type: root === "c" ? "code" : root === "g" ? "group" : "channel", slug: decodeURIComponent(parts.slice(2).join("/")).trim() };
+    }
+    if (root === "p" && parts.length >= 2) return { type: "pastelink", slug: decodeURIComponent(parts.slice(1).join("/")).trim() };
+    if (root === "paste" && parts.length >= 2) return { type: "paste", slug: decodeURIComponent(parts.slice(1).join("/")).trim() };
+    return null;
+  };
+  const pathRoute = parseShortRoute(location.pathname);
+  // Backward compatibility: older Cloudflare deployments redirected /c/f/...
+  // to /product. Same-origin referrer normally retains the original path, so
+  // use it only when the current URL has no explicit route/query metadata.
+  let refRoute = null;
+  try { refRoute = parseShortRoute(document.referrer ? new URL(document.referrer).pathname : ""); } catch {}
+  const route = pathRoute || refRoute;
+  const requestedType = String(params.get("type") || route?.type || "link").trim().toLowerCase();
   const requestedId = String(params.get("id") || "").trim();
-  const requestedSlug = String(params.get("slug") || routeSlug).trim();
+  const requestedSlug = String(params.get("slug") || route?.slug || "").trim();
   const normalizedRequestedSlug = requestedSlug.toLowerCase();
   let item = null;
   let resolvedType = requestedType;
