@@ -253,3 +253,14 @@ textarea{resize:vertical}
 .admin-page textarea.input{min-height:120px!important;resize:vertical!important;line-height:1.55!important}
 .admin-page .pt-toolbar{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px!important}
 @media(max-width:760px){.admin-page .pt-toolbar{grid-template-columns:1fr!important}.admin-page .admin-layout{display:block!important}.admin-page .admin-side{margin-bottom:14px!important}.admin-page .admin-nav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-page .admin-nav a{min-width:0!important}}
+
+
+/* FINAL ADMIN UX HARDENING */
+.admin-page .pt-toolbar{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch!important}
+.admin-page .pt-toolbar>.btn{min-width:0}
+.admin-page .pt-toolbar input,.admin-page .pt-toolbar select{min-width:0!important}
+.admin-page .table-wrap{border:1px solid var(--admin-line);border-radius:14px;overflow:auto;background:var(--admin-surface)}
+.admin-page .table-wrap table{min-width:680px}
+.admin-page .table-wrap th,.admin-page .table-wrap td{white-space:nowrap}
+@media(max-width:900px){.admin-page .pt-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:560px){.admin-page .pt-toolbar{grid-template-columns:1fr!important}.admin-page .pt-toolbar .btn{width:100%}.admin-page .admin-page-head{align-items:flex-start!important;flex-direction:column!important}.admin-page .admin-nav{grid-template-columns:1fr!important}}
