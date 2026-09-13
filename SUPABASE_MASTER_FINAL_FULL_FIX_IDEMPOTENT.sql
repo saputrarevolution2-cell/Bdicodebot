@@ -4448,3 +4448,45 @@ END $$;
 GRANT EXECUTE ON FUNCTION public.admin_resolve_profile(text),public.admin_set_user_by_identifier(text,boolean,boolean),public.admin_adjust_balance_by_identifier(text,numeric,text),public.admin_resolve_product(text),public.admin_update_product_by_identifier(text,text,numeric),public.admin_delete_product_by_identifier(text),public.admin_resolve_order(text),public.admin_mark_order_paid_by_identifier(text,text),public.admin_cancel_order_by_identifier(text),public.admin_resolve_withdrawal(text),public.admin_process_withdrawal_by_identifier(text,text,text),public.admin_set_bot_active_by_identifier(text,boolean) TO authenticated;
 
 COMMIT;
+
+-- ============================================================
+-- ADMIN HUMAN IDENTIFIER EXTENSION 2026-09-14
+-- Keep UUIDs internal; admin UI can operate by slug/title/name.
+-- ============================================================
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.admin_resolve_paste(p_identifier text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
+BEGIN
+  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+  IF v='' THEN RAISE EXCEPTION 'PASTE_IDENTIFIER_REQUIRED'; END IF;
+  BEGIN r:=v::uuid; EXCEPTION WHEN invalid_text_representation THEN r:=NULL; END;
+  IF r IS NOT NULL AND EXISTS(SELECT 1 FROM public.pastes WHERE id=r) THEN RETURN r; END IF;
+  SELECT id INTO r FROM public.pastes WHERE lower(slug)=lower(v) OR lower(title)=lower(v) ORDER BY created_at DESC LIMIT 1;
+  IF r IS NULL THEN RAISE EXCEPTION 'PASTE_NOT_FOUND'; END IF; RETURN r;
+END $$;
+CREATE OR REPLACE FUNCTION public.admin_delete_paste_by_identifier(p_identifier text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN PERFORM public.admin_delete_paste(public.admin_resolve_paste(p_identifier)); END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_resolve_content(p_identifier text,p_source text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r uuid; v text:=btrim(coalesce(p_identifier,'')); src text:=lower(btrim(coalesce(p_source,'products')));
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF v='' THEN RAISE EXCEPTION 'CONTENT_IDENTIFIER_REQUIRED'; END IF;
+ BEGIN r:=v::uuid; EXCEPTION WHEN invalid_text_representation THEN r:=NULL; END;
+ IF src='products' THEN IF r IS NULL OR NOT EXISTS(SELECT 1 FROM public.products WHERE id=r) THEN SELECT id INTO r FROM public.products WHERE lower(slug)=lower(v) OR lower(title)=lower(v) ORDER BY created_at DESC LIMIT 1; END IF;
+ ELSIF src='pastelinks' THEN IF r IS NULL OR NOT EXISTS(SELECT 1 FROM public.pastelinks WHERE id=r) THEN SELECT id INTO r FROM public.pastelinks WHERE lower(slug)=lower(v) OR lower(title)=lower(v) ORDER BY created_at DESC LIMIT 1; END IF;
+ ELSIF src='telegram_products' THEN IF r IS NULL OR NOT EXISTS(SELECT 1 FROM public.telegram_products WHERE id=r) THEN SELECT id INTO r FROM public.telegram_products WHERE lower(slug)=lower(v) OR lower(title)=lower(v) ORDER BY created_at DESC LIMIT 1; END IF;
+ ELSIF src='telegram_channels' THEN IF r IS NULL OR NOT EXISTS(SELECT 1 FROM public.telegram_channels WHERE id=r) THEN SELECT id INTO r FROM public.telegram_channels WHERE lower(slug)=lower(v) OR lower(name)=lower(v) ORDER BY created_at DESC LIMIT 1; END IF;
+ ELSIF src='pastes' THEN IF r IS NULL OR NOT EXISTS(SELECT 1 FROM public.pastes WHERE id=r) THEN SELECT id INTO r FROM public.pastes WHERE lower(slug)=lower(v) OR lower(title)=lower(v) ORDER BY created_at DESC LIMIT 1; END IF;
+ ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE'; END IF;
+ IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF; RETURN r;
+END $$;
+CREATE OR REPLACE FUNCTION public.admin_update_content_by_identifier(p_identifier text,p_source text DEFAULT 'products',p_status text DEFAULT NULL,p_title text DEFAULT NULL,p_description text DEFAULT NULL,p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN RETURN public.admin_update_content(public.admin_resolve_content(p_identifier,p_source),p_status,p_title,p_description,p_source,p_slug,p_price); END $$;
+CREATE OR REPLACE FUNCTION public.admin_delete_content_by_identifier(p_identifier text,p_source text DEFAULT 'products')
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN PERFORM public.admin_delete_content(public.admin_resolve_content(p_identifier,p_source),p_source); END $$;
+GRANT EXECUTE ON FUNCTION public.admin_resolve_paste(text),public.admin_delete_paste_by_identifier(text),public.admin_resolve_content(text,text),public.admin_update_content_by_identifier(text,text,text,text,text,text,numeric),public.admin_delete_content_by_identifier(text,text) TO authenticated;
+COMMIT;

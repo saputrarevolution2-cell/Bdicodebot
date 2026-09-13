@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-09-14",
+  "rpc_arg_mismatches": [],
+  "js_files": 48,
+  "admin_identifier_wrappers_added": [
+    "admin_resolve_paste",
+    "admin_delete_paste_by_identifier",
+    "admin_resolve_content",
+    "admin_update_content_by_identifier",
+    "admin_delete_content_by_identifier"
+  ],
+  "notes": [
+    "All JS RPC argument names were checked against database.sql function contracts.",
+    "Admin content/paste actions no longer require manual UUID entry.",
+    "UUIDs remain internal DB identifiers."
+  ]
+}
