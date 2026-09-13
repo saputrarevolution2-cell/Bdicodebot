@@ -4321,3 +4321,28 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon, authenticated;
 
 COMMIT;
+
+-- ============================================================
+-- CREATE FLOW FINAL HARDENING 2026-09-13
+-- ============================================================
+BEGIN;
+
+-- Ensure browser clients can execute the public creation RPCs.
+GRANT EXECUTE ON FUNCTION public.create_pastelink_content(text,text,text,text,numeric,text,text[],timestamptz) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.create_code_content(text,text,text,text,numeric,text,uuid) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.create_telegram_content(text,text,text,text,numeric,text,text,text,text) TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_approved_bots() TO anon,authenticated;
+
+-- Keep public FREE content readable through the secure RPC even when RLS is enabled.
+CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE pid uuid;
+BEGIN
+  SELECT id INTO pid FROM public.pastelinks WHERE lower(btrim(slug))=lower(btrim(coalesce(p_slug,''))) LIMIT 1;
+  IF pid IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
+  RETURN public.get_market_item_detail('pastelink',pid);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon,authenticated;
+
+COMMIT;
