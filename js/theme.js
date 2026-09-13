@@ -44,7 +44,7 @@
   const cycle = () => {
     const current = localStorage.getItem(KEY) || 'auto';
     const index = Math.max(0, MODES.indexOf(current));
-    return set(['auto', 'light', 'dark'][(index + 1) % 3]);
+    return set(['auto', 'light', 'dark', 'system'][(index + 1) % 4]);
   };
 
   window.PasTeleTheme = Object.freeze({
