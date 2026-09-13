@@ -1,19 +1,12 @@
-# TeleCod short public URLs
-# The destination pages read the slug from the query string.
-# 200 = rewrite, so the browser keeps the short URL.
+# PasTele / TeleCod — canonical public content rewrites
+# IMPORTANT: destination uses extensionless routes because Cloudflare Pages
+# automatically normalizes *.html URLs to extensionless URLs.
 
-# PasteLink
-/p/* /paste-view.html?slug=:splat 200
-
-# Telegram Code
-/c/p/* /product.html?type=code&slug=:splat 200
-/c/f/* /product.html?type=code&slug=:splat 200
-
-# Telegram Channel / Group
-/ch/p/* /product.html?type=channel&slug=:splat 200
-/ch/f/* /product.html?type=channel&slug=:splat 200
-/g/p/* /product.html?type=group&slug=:splat 200
-/g/f/* /product.html?type=group&slug=:splat 200
-
-# Free Paste
-/paste/* /product.html?type=paste&slug=:splat 200
+/p/* /paste-view?slug=:splat 200
+/c/p/* /product?type=code&slug=:splat 200
+/c/f/* /product?type=code&slug=:splat 200
+/ch/p/* /product?type=channel&slug=:splat 200
+/ch/f/* /product?type=channel&slug=:splat 200
+/g/p/* /product?type=group&slug=:splat 200
+/g/f/* /product?type=group&slug=:splat 200
+/paste/* /product?type=paste&slug=:splat 200

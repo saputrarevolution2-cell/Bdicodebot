@@ -4346,3 +4346,105 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon,authenticated;
 
 COMMIT;
+
+
+-- ============================================================
+-- FINAL ADMIN UX COMPATIBILITY LAYER — HUMAN IDENTIFIERS
+-- Admin UI never needs to expose or type UUIDs. UUIDs remain internal
+-- database keys for referential integrity and are resolved server-side.
+-- Safe/idempotent: all functions use CREATE OR REPLACE.
+-- ============================================================
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.admin_resolve_profile(p_identifier text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r uuid; v text:=lower(btrim(coalesce(p_identifier,'')));
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF v='' THEN RAISE EXCEPTION 'USER_IDENTIFIER_REQUIRED'; END IF;
+ BEGIN r:=v::uuid; EXCEPTION WHEN invalid_text_representation THEN r:=NULL; END;
+ IF r IS NOT NULL AND EXISTS(SELECT 1 FROM public.profiles WHERE id=r) THEN RETURN r; END IF;
+ SELECT id INTO r FROM public.profiles WHERE lower(username)=v OR lower(auth_email)=v LIMIT 1;
+ IF r IS NULL THEN SELECT id INTO r FROM public.profiles WHERE lower(coalesce(display_name,''))=v LIMIT 1; END IF;
+ IF r IS NULL THEN RAISE EXCEPTION 'USER_NOT_FOUND'; END IF;
+ RETURN r;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_set_user_by_identifier(p_identifier text,p_banned boolean,p_admin boolean)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r jsonb; uid uuid:=public.admin_resolve_profile(p_identifier);
+BEGIN
+ PERFORM public.admin_set_user(uid,p_banned,p_admin); SELECT to_jsonb(p) INTO r FROM public.profiles p WHERE p.id=uid; RETURN r;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_adjust_balance_by_identifier(p_identifier text,p_amount numeric,p_reason text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN PERFORM public.admin_adjust_balance(public.admin_resolve_profile(p_identifier),p_amount,p_reason); END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_resolve_product(p_identifier text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ IF v='' THEN RAISE EXCEPTION 'PRODUCT_IDENTIFIER_REQUIRED'; END IF;
+ BEGIN r:=v::uuid; EXCEPTION WHEN invalid_text_representation THEN r:=NULL; END;
+ IF r IS NOT NULL AND EXISTS(SELECT 1 FROM public.products WHERE id=r) THEN RETURN r; END IF;
+ SELECT id INTO r FROM public.products WHERE lower(slug)=lower(v) OR lower(title)=lower(v) ORDER BY created_at DESC LIMIT 1;
+ IF r IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF; RETURN r;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_update_product_by_identifier(p_identifier text,p_status text,p_price numeric)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN RETURN public.admin_update_product(public.admin_resolve_product(p_identifier),p_status,p_price); END $$;
+CREATE OR REPLACE FUNCTION public.admin_delete_product_by_identifier(p_identifier text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN PERFORM public.admin_delete_product(public.admin_resolve_product(p_identifier)); END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_resolve_order(p_identifier text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ BEGIN r:=v::uuid; EXCEPTION WHEN invalid_text_representation THEN r:=NULL; END;
+ IF r IS NOT NULL AND EXISTS(SELECT 1 FROM public.orders WHERE id=r) THEN RETURN r; END IF;
+ SELECT id INTO r FROM public.orders WHERE lower(coalesce(payment_reference,''))=lower(v) OR lower(coalesce(item_id,''))=lower(v) ORDER BY created_at DESC LIMIT 1;
+ IF r IS NULL THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF; RETURN r;
+END $$;
+CREATE OR REPLACE FUNCTION public.admin_mark_order_paid_by_identifier(p_identifier text,p_payment_reference text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN RETURN public.admin_mark_order_paid(public.admin_resolve_order(p_identifier),p_payment_reference); END $$;
+CREATE OR REPLACE FUNCTION public.admin_cancel_order_by_identifier(p_identifier text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN PERFORM public.admin_cancel_order(public.admin_resolve_order(p_identifier)); END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_resolve_withdrawal(p_identifier text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ BEGIN r:=v::uuid; EXCEPTION WHEN invalid_text_representation THEN r:=NULL; END;
+ IF r IS NOT NULL AND EXISTS(SELECT 1 FROM public.withdrawals WHERE id=r) THEN RETURN r; END IF;
+ SELECT w.id INTO r FROM public.withdrawals w LEFT JOIN public.profiles p ON p.id=w.user_id
+ WHERE lower(coalesce(p.username,''))=lower(v) OR lower(coalesce(p.auth_email,''))=lower(v) OR lower(coalesce(w.account_number,''))=lower(v)
+ ORDER BY w.created_at DESC LIMIT 1;
+ IF r IS NULL THEN RAISE EXCEPTION 'WITHDRAWAL_NOT_FOUND'; END IF; RETURN r;
+END $$;
+CREATE OR REPLACE FUNCTION public.admin_process_withdrawal_by_identifier(p_identifier text,p_status text,p_note text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN RETURN public.admin_process_withdrawal(public.admin_resolve_withdrawal(p_identifier),p_status,p_note); END $$;
+
+CREATE OR REPLACE FUNCTION public.admin_set_bot_active_by_identifier(p_identifier text,p_active boolean)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r public.approved_bots; v text:=btrim(coalesce(p_identifier,'')); bid bigint;
+BEGIN
+ IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+ BEGIN bid:=v::bigint; EXCEPTION WHEN invalid_text_representation THEN bid:=NULL; END;
+ UPDATE public.approved_bots SET is_active=p_active,updated_at=now()
+ WHERE (bid IS NOT NULL AND bot_id=bid) OR lower(bot_username)=lower(regexp_replace(v,'^@',''))
+ RETURNING * INTO r;
+ IF r.id IS NULL THEN RAISE EXCEPTION 'BOT_NOT_FOUND'; END IF; RETURN to_jsonb(r);
+END $$;
+
+GRANT EXECUTE ON FUNCTION public.admin_resolve_profile(text),public.admin_set_user_by_identifier(text,boolean,boolean),public.admin_adjust_balance_by_identifier(text,numeric,text),public.admin_resolve_product(text),public.admin_update_product_by_identifier(text,text,numeric),public.admin_delete_product_by_identifier(text),public.admin_resolve_order(text),public.admin_mark_order_paid_by_identifier(text,text),public.admin_cancel_order_by_identifier(text),public.admin_resolve_withdrawal(text),public.admin_process_withdrawal_by_identifier(text,text,text),public.admin_set_bot_active_by_identifier(text,boolean) TO authenticated;
+
+COMMIT;
