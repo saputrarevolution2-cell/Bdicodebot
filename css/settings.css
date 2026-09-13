@@ -1654,3 +1654,99 @@ body.modal-open{
 }
 /* SETTINGS — no text overlap */
 .settings-grid,.settings-quick-grid{min-width:0!important}.settings-card{min-width:0!important;overflow:hidden!important}.settings-card input,.settings-card select,.settings-card textarea,.settings-card .input,.settings-card .select{width:100%!important;min-height:48px!important;padding:11px 14px!important}.settings-card textarea{min-height:110px!important;resize:vertical!important}.settings-card label{display:block!important;margin:0 0 7px!important;line-height:1.4!important}.account-item{min-width:0!important}.account-item-content{min-width:0!important}.settings-quick-card{border-color:var(--pt-accent-border)!important}.settings-quick-icon{color:var(--pt-accent)!important}
+
+
+/* =========================================================
+   FINAL FORM / ICON HARDENING
+   Prevent icon + label + input overlap across every setting form.
+   ========================================================= */
+.settings-page-body .settings-social-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px!important;
+  width:100%;
+}
+.settings-page-body .settings-social-grid .field{
+  min-width:0;
+}
+.settings-page-body .settings-social-grid .field>span{
+  display:block;
+  margin:0;
+}
+.settings-page-body .input-wrap{
+  display:block!important;
+  width:100%;
+  min-height:44px;
+}
+.settings-page-body .input-wrap>i{
+  left:14px!important;
+  top:22px!important;
+  width:16px!important;
+  height:16px!important;
+  display:grid!important;
+  place-items:center!important;
+  transform:translateY(-50%)!important;
+  line-height:1!important;
+}
+.settings-page-body .input-wrap>input,
+.settings-page-body .input-wrap>.input,
+.settings-page-body .input-wrap>select,
+.settings-page-body .input-wrap>.select{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:44px!important;
+  padding:10px 13px 10px 42px!important;
+}
+.settings-page-body .field:not(.has-icon) input,
+.settings-page-body .field:not(.has-icon) select{
+  padding-left:13px!important;
+}
+.settings-page-body .form-grid-2{
+  align-items:start!important;
+}
+.settings-page-body .password-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:8px!important;
+}
+.settings-page-body .password-row .input-wrap{
+  min-width:0!important;
+}
+.settings-page-body .password-row .btn{
+  min-width:46px!important;
+  padding-inline:13px!important;
+}
+.settings-page-body .choice-grid,
+.settings-page-body .radio-grid,
+.settings-page-body .toggle-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px!important;
+}
+.settings-page-body .choice-card,
+.settings-page-body .radio-card,
+.settings-page-body .toggle-card{
+  min-width:0!important;
+  overflow:hidden!important;
+}
+@media(max-width:760px){
+  .settings-page-body .settings-social-grid,
+  .settings-page-body .choice-grid,
+  .settings-page-body .radio-grid,
+  .settings-page-body .toggle-grid{grid-template-columns:1fr!important}
+  .settings-page-body .settings-grid{grid-template-columns:1fr!important}
+  .settings-page-body .payment-card,
+  .settings-page-body #appearanceSettings,
+  .settings-page-body #notificationSettings,
+  .settings-page-body .account-card,
+  .settings-page-body .danger-card{grid-column:auto!important}
+}
+@media(max-width:480px){
+  .settings-page-body .settings-container{width:calc(100% - 20px)!important}
+  .settings-page-body .settings-card{padding:15px!important}
+  .settings-page-body .settings-quick-grid{grid-template-columns:1fr 1fr!important}
+  .settings-page-body .settings-quick-card{min-height:64px;padding:10px!important}
+  .settings-page-body .settings-quick-icon{width:36px;height:36px;flex-basis:36px}
+  .settings-page-body .settings-quick-copy small{display:none}
+}
