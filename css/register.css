@@ -1236,3 +1236,61 @@ body {
 .register-success-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
 @media(max-width:520px){.register-success-card{padding:20px}.register-success-actions{grid-template-columns:1fr}}
 html[data-theme="dark"] .register-success-card{background:#0d131f;color:#f3f7ff;border-color:rgba(255,255,255,.08)}
+
+
+/* === extracted inline page styles (2026-09-13 cleanup) === */
+.register-security {
+      width: 100%;
+      margin: 10px 0 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    #registerTurnstile {
+      width: 100%;
+      min-height: 65px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+    }
+    #registerTurnstile > div {
+      max-width: 100%;
+    }
+    .register-security-status {
+      width: 100%;
+      min-height: 18px;
+      margin: 0;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.4;
+      opacity: .7;
+    }
+    .register-security-status.success {
+      opacity: 1;
+    }
+    .register-security-status.error {
+      opacity: 1;
+    }
+    #submit:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: saturate(.65);
+      transform: none;
+    }
+    #submit:not(:disabled) {
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    #google:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+    @media (max-width: 480px) {
+      #registerTurnstile {
+        min-height: 65px;
+      }
+    }
