@@ -1144,6 +1144,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       return true;
     }
 
+    // Channel/Group public routes must resolve through SECURITY DEFINER RPC.
+    // A direct table SELECT is still subject to RLS and can return no row for
+    // guests on older deployments, which caused the generic "not found" page.
+    if (["channel","group"].includes(requestedType) && !requestedId && requestedSlug) {
+      const resolved = await client.rpc("get_telegram_content_by_slug", { p_slug: normalizedRequestedSlug, p_type: requestedType });
+      if (resolved.error) throw resolved.error;
+      item = Array.isArray(resolved.data) ? resolved.data[0] : resolved.data;
+      if (!item || item.found === false) return false;
+      resolvedType = normalizeType(requestedType, item);
+      rpcType = "channel";
+      return true;
+    }
+
     const q = requestedId
       ? await client.from(table).select("id").eq("id",requestedId).maybeSingle()
       : await client.from(table).select("id").ilike("slug",normalizedRequestedSlug).maybeSingle();

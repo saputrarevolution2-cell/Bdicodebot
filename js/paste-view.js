@@ -1059,7 +1059,12 @@ document.addEventListener("DOMContentLoaded", async () => {
        DOM
        ======================================================= */
     const params = new URLSearchParams(location.search);
-    const slug = String(params.get("slug") || "").trim();
+    // Support both /p/<slug> and /paste-view.html?slug=<slug>.
+    const pathParts = (location.pathname || "").split("/").filter(Boolean);
+    const pathSlug = pathParts[0]?.toLowerCase() === "p" && pathParts.length >= 2
+        ? decodeURIComponent(pathParts.slice(1).join("/")).trim()
+        : "";
+    const slug = String(params.get("slug") || pathSlug).trim();
     const box = document.getElementById("pasteContent");
     if (!box) {
         console.error("[PasteLink] #pasteContent tidak ditemukan.");
