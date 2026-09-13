@@ -4250,3 +4250,74 @@ GRANT EXECUTE ON FUNCTION public.get_code_by_slug(text)
 
 COMMIT;
 
+
+
+-- ============================================================
+-- FINAL PUBLIC SLUG RESOLVER PATCH — FREE CODE / CHANNEL / GROUP / PASTELINK
+-- Fixes guest public URLs after static-host rewrites and RLS differences.
+-- Safe to run repeatedly.
+-- ============================================================
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.get_telegram_content_by_slug(
+  p_slug text,
+  p_type text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  r record;
+  wanted text := lower(btrim(coalesce(p_type,'')));
+BEGIN
+  SELECT tp.*, pr.username AS creator_username, pr.display_name AS creator_name,
+         tp.owner_id AS owner_id
+    INTO r
+  FROM public.telegram_channels tp
+  LEFT JOIN public.profiles pr ON pr.id = tp.owner_id
+  WHERE lower(btrim(coalesce(tp.slug,''))) = lower(btrim(coalesce(p_slug,'')))
+    AND lower(coalesce(tp.status,'published')) IN ('published','active','live')
+    AND (wanted = '' OR wanted NOT IN ('channel','group') OR lower(coalesce(tp.type,'channel')) = wanted)
+  ORDER BY tp.created_at DESC NULLS LAST
+  LIMIT 1;
+
+  IF r IS NULL THEN
+    RETURN jsonb_build_object('found',false,'error','TELEGRAM_CONTENT_NOT_FOUND');
+  END IF;
+
+  RETURN public.get_market_item_detail('channel', r.id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_telegram_content_by_slug(text,text) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  pid uuid;
+BEGIN
+  SELECT p.id INTO pid
+  FROM public.pastelinks p
+  WHERE lower(btrim(coalesce(p.slug,''))) = lower(btrim(coalesce(p_slug,'')))
+    AND lower(coalesce(p.visibility,'public')) = 'public'
+    AND (p.expires_at IS NULL OR p.expires_at > now())
+  ORDER BY p.created_at DESC NULLS LAST
+  LIMIT 1;
+
+  IF pid IS NULL THEN
+    RETURN jsonb_build_object('found',false,'error','PASTELINK_NOT_FOUND');
+  END IF;
+
+  RETURN public.get_market_item_detail('pastelink',pid);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon, authenticated;
+
+COMMIT;
