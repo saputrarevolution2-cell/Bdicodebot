@@ -1,12 +1,8 @@
-# PasTele / TeleCod — canonical public content rewrites
-# IMPORTANT: destination uses extensionless routes because Cloudflare Pages
-# automatically normalizes *.html URLs to extensionless URLs.
-
-/paste/* /product?type=paste&slug=:splat 200
-/p/* /view-pastelink?slug=:splat 200
-/c/p/* /view-code?slug=:splat 200
-/c/f/* /view-code?slug=:splat 200
-/ch/p/* /view-telegram?type=channel&slug=:splat 200
-/ch/f/* /view-telegram?type=channel&slug=:splat 200
-/g/p/* /view-telegram?type=group&slug=:splat 200
-/g/f/* /view-telegram?type=group&slug=:splat 200
+# PasTele canonical short public routes
+/p/*    /view-pastelink.html?slug=:splat    200
+/c/f/*  /view-code.html?slug=:splat         200
+/c/p/*  /view-code.html?slug=:splat         200
+/ch/f/* /view-telegram.html?slug=:splat    200
+/ch/p/* /view-telegram.html?slug=:splat     200
+/g/f/*  /view-telegram.html?slug=:splat     200
+/g/p/*  /view-telegram.html?slug=:splat     200

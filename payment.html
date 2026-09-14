@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <script src="js/theme-preload.js?v=20260912"></script>
-    <meta charset="utf-8">
+  <meta charset="utf-8">
     <meta
         name="viewport"
         content="width=device-width,initial-scale=1,viewport-fit=cover"
@@ -22,15 +21,10 @@
     <!-- =====================================================
          PAYMENT CSS
          ===================================================== -->
-    <script>
-        document.documentElement.classList.add("pastele-ready");
-    </script>
-<link rel="stylesheet" href="css/payment.css?v=20260914-css-clean">
-  <link rel="stylesheet" href="css/clean-global.css?v=20260914-settings-final">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
   
-  <script src="js/theme.js?v=20260912"></script>  
+  <link rel="stylesheet" href="css/payment.css">
 </head>
 <body class="public-no-navbar app-page payment-page">
     <!-- =====================================================
@@ -657,24 +651,6 @@
          SCRIPTS
          ===================================================== -->
     <!-- CANCEL BUTTON -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const cancel = document.getElementById("cancelPayment");
-            if (!cancel) return;
-            cancel.addEventListener("click", () => {
-                const confirmed = window.confirm(
-                    "Batalkan halaman pembayaran dan kembali?"
-                );
-                if (!confirmed) return;
-                if (document.referrer) {
-                    history.back();
-                } else {
-                    window.location.href = "marketplace.html";
-                }
-            });
-        });
-    </script>
-<script src="js/payment.js?v=20260910-clean-ui"></script><script src="js/session.js?v=20260911"></script><script src="js/notification-toast.js" defer></script>
-<script src="js/ui-fix.js?v=20260914-ui-fix"></script>
+    <script src="js/payment.js"></script>
 </body>
 </html>

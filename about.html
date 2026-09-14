@@ -2,41 +2,9 @@
 <html lang="id">
 
 <head>
-  <script src="js/theme-preload.js?v=20260912"></script>
-
   <!-- =====================================================
        THEME BOOTSTRAP
        ===================================================== -->
-  <script>
-    (() => {
-      try {
-        const KEY = "pastele-theme";
-        const mode = localStorage.getItem(KEY) || "system";
-
-        const dark =
-          mode === "dark" ||
-          (
-            mode === "system" &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches
-          );
-
-        document.documentElement.dataset.theme =
-          dark ? "dark" : "light";
-
-        document.documentElement.dataset.themeMode = mode;
-
-        document.documentElement.classList.add(
-          dark ? "theme-dark" : "theme-light"
-        );
-
-        document.documentElement.style.colorScheme =
-          dark ? "dark" : "light";
-
-      } catch (_) {}
-    })();
-  </script>
-
-
   <!-- =====================================================
        META
        ===================================================== -->
@@ -87,9 +55,6 @@
   <!-- =====================================================
        ICON
        ===================================================== -->
-  <link rel="stylesheet" href="css/clean-global.css?v=20260914-settings-final">
-
-
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -116,23 +81,7 @@
        ABOUT ONLY
        ===================================================== -->
   <!-- PasTele canonical UI stack -->
-  <link rel="stylesheet" href="css/base.css?v=20260914">
-  <link
-    rel="stylesheet"
-    href="css/about.css?v=20260914-css-clean"
-  >
-  <link rel="stylesheet" href="css/navbar.css?v=20260914">
-  <link rel="stylesheet" href="css/footer.css?v=20260914">
-
-
-
-  <script>
-    document.documentElement.classList.add("pastele-ready");
-  </script>
-
-
-  
-  <script src="js/theme.js?v=20260912"></script>  
+  <link rel="stylesheet" href="css/about.css">
 </head>
 
 
@@ -1031,11 +980,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script src="js/config.js?v=20260911"></script>
-  <script src="js/supabase.js?v=20260911"></script>
-  <script src="js/footer.js?v=20260911"></script>
-  <script src="js/about.js?v=20260911-about"></script>  <script src="js/navbar.js?v=20260912"></script>
-<script src="js/notification-toast.js" defer></script>
-<script src="js/ui-fix.js?v=20260914-ui-fix"></script>
+  <script src="js/about.js"></script>
 </body>
 </html>
