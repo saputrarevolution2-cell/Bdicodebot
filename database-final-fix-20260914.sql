@@ -343,3 +343,108 @@ BEGIN
  VALUES(p_profile_id,'Profil dikunjungi',visitor||' mengunjungi profil anda.','profile_visit','profile',uid);
 END $$;
 GRANT EXECUTE ON FUNCTION public.notify_profile_visit(uuid) TO authenticated;
+
+
+-- ============================================================
+-- PUBLISHED CONTENT VIEW + GUEST ENGAGEMENT FIX 2026-09-14
+-- ============================================================
+BEGIN;
+
+-- PasteLink keeps its real paid/free access instead of being forced to free.
+CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); paid boolean:=false; can_access boolean:=false;
+BEGIN
+  IF normalized IN ('product','link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id
+    INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
+    WHERE p.id=p_id AND p.status IN ('published','active','live');
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id
+    INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+    WHERE p.id=p_id AND p.status IN ('published','active','live');
+  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,p.name title
+    INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+    WHERE p.id=p_id AND p.status IN ('published','active','live');
+  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
+    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,
+           coalesce(p.access_type,CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END) access_type,
+           coalesce(p.price,0)::numeric price,
+           p.content_html AS content
+    INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id
+    WHERE p.id=p_id AND lower(coalesce(p.visibility,'public'))='public'
+      AND (p.expires_at IS NULL OR p.expires_at>now());
+  ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
+  IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
+  paid:=coalesce(r.access_type,'free')='paid' OR coalesce(r.price,0)>0;
+  IF NOT paid THEN can_access:=true;
+  ELSIF auth.uid() IS NOT NULL THEN
+    can_access := (r.owner_id=auth.uid())
+      OR EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND (p.is_premium=true OR coalesce(p.subscription_until,now()-interval '1 second')>now()))
+      OR EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=auth.uid() AND pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success'));
+  END IF;
+  IF NOT can_access AND paid THEN
+    RETURN (to_jsonb(r)-'content'-'content_html')||jsonb_build_object('found',true,'can_access',false,'is_paid',true);
+  END IF;
+  RETURN to_jsonb(r)||jsonb_build_object('found',true,'can_access',true,'is_paid',paid);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
+
+-- Guest likes use a token instead of a fake profile FK.
+ALTER TABLE public.content_likes ADD COLUMN IF NOT EXISTS guest_token text;
+ALTER TABLE public.content_likes ALTER COLUMN actor_id DROP NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS content_likes_guest_unique
+ON public.content_likes(guest_token,target_id,target_type)
+WHERE guest_token IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION public.toggle_content_like_guest(p_target_id uuid,p_target_type text,p_guest_token text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE target text:=lower(btrim(coalesce(p_target_type,''))); owner uuid; existing uuid;
+BEGIN
+ IF p_target_id IS NULL OR length(btrim(coalesce(p_guest_token,''))) < 16 THEN RAISE EXCEPTION 'INVALID_GUEST_LIKE'; END IF;
+ IF target IN ('product','link') THEN SELECT coalesce(creator_id,seller_id) INTO owner FROM public.products WHERE id=p_target_id AND status IN ('published','active','live');
+ ELSIF target IN ('telegram_product','code') THEN SELECT owner_id INTO owner FROM public.telegram_products WHERE id=p_target_id AND status IN ('published','active','live');
+ ELSIF target IN ('channel','group','telegram_channel') THEN SELECT owner_id INTO owner FROM public.telegram_channels WHERE id=p_target_id AND status IN ('published','active','live');
+ ELSIF target='pastelink' THEN SELECT user_id INTO owner FROM public.pastelinks WHERE id=p_target_id AND visibility='public' AND (expires_at IS NULL OR expires_at>now());
+ END IF;
+ IF owner IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
+ SELECT id INTO existing FROM public.content_likes WHERE guest_token=p_guest_token AND target_id=p_target_id AND target_type=target LIMIT 1;
+ IF existing IS NULL THEN
+   INSERT INTO public.content_likes(content_owner_id,actor_id,guest_token,target_id,target_type) VALUES(owner,NULL,p_guest_token,target_id,target);
+   RETURN jsonb_build_object('liked',true);
+ END IF;
+ DELETE FROM public.content_likes WHERE id=existing;
+ RETURN jsonb_build_object('liked',false);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.toggle_content_like_guest(uuid,text,text) TO anon,authenticated;
+
+-- Anonymous comments remain allowed and retain a guest token for identity.
+ALTER TABLE public.content_comments ADD COLUMN IF NOT EXISTS guest_token text;
+ALTER TABLE public.content_comments ADD COLUMN IF NOT EXISTS display_name text;
+DROP POLICY IF EXISTS comments_anon_insert ON public.content_comments;
+CREATE POLICY comments_anon_insert ON public.content_comments FOR INSERT TO anon
+WITH CHECK (user_id IS NULL AND length(btrim(coalesce(body,''))) BETWEEN 1 AND 2000);
+
+-- Canonical public view counter for all four published content families.
+CREATE OR REPLACE FUNCTION public.record_content_view(p_owner uuid,p_target_type text,p_target_id uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE t text:=lower(btrim(coalesce(p_target_type,'')));
+BEGIN
+ IF p_target_id IS NULL THEN RETURN; END IF;
+ INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
+ VALUES(p_owner,auth.uid(),'view',t,p_target_id);
+ IF t='telegram_product' THEN UPDATE public.telegram_products SET views=views+1 WHERE id=p_target_id;
+ ELSIF t='channel' THEN UPDATE public.telegram_channels SET views=views+1 WHERE id=p_target_id;
+ ELSIF t='pastelink' THEN UPDATE public.pastelinks SET views=views+1 WHERE id=p_target_id;
+ ELSIF t IN ('product','link') THEN UPDATE public.products SET views=views+1 WHERE id=p_target_id;
+ END IF;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.record_content_view(uuid,text,uuid) TO anon,authenticated;
+
+COMMIT;
