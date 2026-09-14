@@ -2586,12 +2586,1888 @@ window.PASTELE_CONFIG = Object.freeze({
 
 })();
 
+/* ============================================================
+   PasTele — GLOBAL SESSION GUARD
+   - 24 hours of INACTIVITY => sign out
+   - Activity refreshes the inactivity timer
+   - Works even when Supabase/client scripts finish loading late
+   - Public pages are never blocked
+   ============================================================ */
+(() => {
+  "use strict";
+
+  const INACTIVITY_MS = 24 * 60 * 60 * 1000;
+  const ACTIVITY_KEY = "pastele_last_activity";
+  const PUBLIC = new Set([
+    "index.html", "login.html", "register.html",
+    "forgot-password.html", "reset-password.html",
+    "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "about.html", "terms.html", "privacy.html"
+  ]);
+
+  const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
+  const isPublic = !isAdminPath && PUBLIC.has(file);
+  let locked = false;
+  let initialized = false;
+  let timer = null;
+
+  function setActivity() {
+    if (locked || isPublic) return;
+    try {
+      localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+    } catch (_) {}
+  }
+
+  function getLastActivity() {
+    try {
+      const value = Number(localStorage.getItem(ACTIVITY_KEY) || 0);
+      return Number.isFinite(value) ? value : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function isExpired() {
+    const last = getLastActivity();
+    return last > 0 && (Date.now() - last >= INACTIVITY_MS);
+  }
+
+  function loginUrl() {
+    return location.pathname.includes("/admin/") ? "../login.html" : "login.html";
+  }
+
+  function showExpired() {
+    if (document.getElementById("pt-session-modal")) return;
+
+    locked = true;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #pt-session-modal{
+        position:fixed;inset:0;z-index:2147483647;
+        display:grid;place-items:center;padding:20px;
+        background:rgba(2,6,23,.72);
+        backdrop-filter:blur(14px);
+      }
+      #pt-session-modal .pt-session-box{
+        width:min(440px,100%);
+        padding:32px 26px;
+        border:1px solid rgba(148,163,184,.22);
+        border-radius:26px;
+        text-align:center;
+        background:var(--surface,#fff);
+        color:var(--text,#0f172a);
+        box-shadow:0 30px 100px rgba(0,0,0,.35);
+      }
+      #pt-session-modal .pt-session-icon{
+        width:66px;height:66px;margin:0 auto 16px;
+        display:grid;place-items:center;border-radius:20px;
+        background:rgba(99,91,255,.12);
+        color:#635bff;font-size:27px;
+      }
+      #pt-session-modal h2{margin:0 0 9px;font-size:23px}
+      #pt-session-modal p{margin:0 auto 22px;max-width:350px;
+        color:var(--muted,#64748b);line-height:1.65}
+      #pt-session-modal a{
+        display:flex;align-items:center;justify-content:center;gap:9px;
+        min-height:48px;padding:12px 18px;border-radius:14px;
+        background:linear-gradient(135deg,#635bff,#8b5cf6);
+        color:#fff!important;text-decoration:none;font-weight:800;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const modal = document.createElement("div");
+    modal.id = "pt-session-modal";
+    modal.innerHTML = `
+      <div class="pt-session-box" role="dialog" aria-modal="true">
+        <div class="pt-session-icon"><i class="fa-solid fa-lock"></i></div>
+        <h2>Sesi Berakhir</h2>
+        <p>Sesi kamu berakhir karena tidak ada aktivitas selama 24 jam. Silakan login kembali untuk melanjutkan.</p>
+        <a href="${loginUrl()}"><i class="fa-solid fa-right-to-bracket"></i> Login Kembali</a>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  async function getClient() {
+    if (window.sb?.auth) return window.sb;
+
+    // Some pages load their bundled client after this guard.
+    for (let i = 0; i < 80; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (window.sb?.auth) return window.sb;
+    }
+    return null;
+  }
+
+  async function signOutAndLock() {
+    if (locked) return;
+    try {
+      const client = await getClient();
+      if (client?.auth) {
+        await client.auth.signOut({ scope: "global" });
+      }
+    } catch (error) {
+      console.warn("[PasTele] Session signOut:", error);
+    }
+    try { localStorage.removeItem(ACTIVITY_KEY); } catch (_) {}
+    showExpired();
+  }
+
+  function autoTheme() {
+    // Automatic day/night theme:
+    // 06:00–17:59 = light, 18:00–05:59 = dark.
+    try {
+      const hour = new Date().getHours();
+      const dark = hour >= 18 || hour < 6;
+      const root = document.documentElement;
+      root.dataset.theme = dark ? "dark" : "light";
+      root.dataset.themeMode = "auto";
+      root.style.colorScheme = dark ? "dark" : "light";
+    } catch (_) {}
+  }
+
+  function bindActivity() {
+    if (initialized) return;
+    initialized = true;
+
+    const events = ["click", "keydown", "touchstart", "pointerdown", "scroll"];
+    for (const event of events) {
+      document.addEventListener(event, setActivity, {
+        passive: true,
+        capture: true
+      });
+    }
+
+    // Also refresh when the user returns to the tab.
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        if (isExpired()) signOutAndLock();
+        else setActivity();
+      }
+    });
+
+    window.addEventListener("pageshow", () => {
+      if (isExpired()) signOutAndLock();
+      else setActivity();
+    });
+  }
+
+  async function init() {
+    autoTheme();
+
+    if (isPublic) return;
+
+    const client = await getClient();
+    if (!client?.auth) {
+      console.warn("[PasTele] Supabase client not available; session guard could not start.");
+      return;
+    }
+
+    try {
+      const result = await client.auth.getSession();
+      const session = result?.data?.session;
+
+      if (!session) {
+        showExpired();
+        return;
+      }
+
+      if (isExpired()) {
+        await signOutAndLock();
+        return;
+      }
+
+      setActivity();
+      bindActivity();
+
+      timer = window.setInterval(() => {
+        if (isExpired()) signOutAndLock();
+      }, 60 * 1000);
+
+      client.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT") showExpired();
+        if (event === "SIGNED_IN" && !locked) setActivity();
+      });
+    } catch (error) {
+      console.warn("[PasTele] Session guard:", error);
+    }
+  }
+
+  window.PasTeleSession = Object.freeze({
+    touch: setActivity,
+    expired: isExpired,
+    check: init,
+    autoTheme
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+
+/* PasTele — Live notification toast
+ * Shows new user notifications as a clean floating card for 3 seconds.
+ * Click opens the notification target URL when one is provided.
+ */
+(() => {
+  'use strict';
+  if (window.__PASTELE_NOTIFICATION_TOAST__) return;
+  window.__PASTELE_NOTIFICATION_TOAST__ = true;
+
+  const state = { userId: null, channel: null, seen: new Set(), poll: null };
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+  function ensureStyles() {
+    if (document.getElementById('pt-live-notification-style')) return;
+    const s = document.createElement('style');
+    s.id = 'pt-live-notification-style';
+    s.textContent = `
+      #ptLiveNotifications{position:fixed;top:18px;right:18px;width:min(410px,calc(100vw - 24px));z-index:2147483000;display:grid;gap:10px;pointer-events:none}
+      .pt-live-notice{pointer-events:auto;display:grid;grid-template-columns:42px 1fr 24px;gap:11px;align-items:start;padding:13px 14px;border:1px solid color-mix(in srgb,var(--primary,#229ed9) 22%,var(--line,#e5e7eb));border-radius:17px;background:color-mix(in srgb,var(--surface,#fff) 94%,transparent);color:var(--text,#14212b);box-shadow:0 18px 55px rgba(15,23,42,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transform:translateY(-12px) scale(.98);opacity:0;transition:transform .22s ease,opacity .22s ease;cursor:pointer;overflow:hidden}
+      html[data-theme="dark"] .pt-live-notice{box-shadow:0 20px 65px rgba(0,0,0,.42);border-color:rgba(148,163,184,.18)}
+      .pt-live-notice.is-in{transform:none;opacity:1}.pt-live-notice.is-out{transform:translateY(-10px) scale(.98);opacity:0}
+      .pt-live-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary,#229ed9),#7c5cff);color:#fff;font-size:16px}
+      .pt-live-copy{min-width:0}.pt-live-copy strong{display:block;font-size:13px;line-height:1.3;margin:1px 0 4px}.pt-live-copy span{display:block;font-size:12px;line-height:1.45;color:var(--muted,#718293);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pt-live-time{display:block;margin-top:6px;font-size:10px;color:var(--muted,#718293);font-weight:700}.pt-live-close{border:0;background:transparent;color:var(--muted,#718293);font-size:14px;cursor:pointer;padding:2px}.pt-live-notice:hover{transform:translateY(-2px);box-shadow:0 22px 65px rgba(15,23,42,.22)}
+      @media(max-width:600px){#ptLiveNotifications{top:10px;right:10px;width:calc(100vw - 20px)}.pt-live-notice{border-radius:15px}}
+      @media(prefers-reduced-motion:reduce){.pt-live-notice{transition:none}}
+    `;
+    document.head.appendChild(s);
+  }
+
+  function root() {
+    let el = document.getElementById('ptLiveNotifications');
+    if (!el) { el = document.createElement('div'); el.id = 'ptLiveNotifications'; el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+    return el;
+  }
+
+  function icon(type) {
+    return ({publish:'fa-bullhorn',purchase:'fa-bag-shopping',view:'fa-eye',sale:'fa-circle-check',like:'fa-heart',withdrawal:'fa-wallet'}[type] || 'fa-bell');
+  }
+
+  function remove(card) {
+    if (!card) return;
+    card.classList.remove('is-in'); card.classList.add('is-out');
+    setTimeout(() => card.remove(), 230);
+  }
+
+  function show(n) {
+    if (!n?.id || state.seen.has(n.id)) return;
+    state.seen.add(n.id);
+    const target = String(n.link_url || '').trim();
+    const card = document.createElement('article');
+    card.className = 'pt-live-notice';
+    card.setAttribute('role', target ? 'link' : 'status');
+    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc(icon(n.notification_type))}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja${target ? ' · Ketuk untuk membuka' : ''}</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
+    const close = card.querySelector('.pt-live-close');
+    close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
+    card.addEventListener('click', async () => {
+      if (target) window.location.assign(new URL(target, window.location.origin + "/").href);
+      try { await window.sb?.from('notifications').update({is_read:true}).eq('id',n.id).eq('user_id',state.userId); } catch (_) {}
+      remove(card);
+    });
+    root().prepend(card);
+    requestAnimationFrame(() => card.classList.add('is-in'));
+    setTimeout(() => remove(card), 3000);
+  }
+
+  async function init() {
+    if (!window.sb) return false;
+    let u = null;
+    try { u = (await window.sb.auth.getUser()).data?.user || null; } catch (_) { return false; }
+    if (!u?.id) return false;
+    state.userId = u.id;
+    ensureStyles(); root();
+
+    const channelName = `pastele-live-notifications-${u.id}`;
+    try {
+      state.channel = window.sb.channel(channelName)
+        .on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${u.id}`}, payload => show(payload.new))
+        .subscribe();
+    } catch (e) { console.warn('[PasTele] Realtime notification unavailable:', e); }
+
+    // Lightweight fallback for browsers/networks where Realtime is delayed.
+    let last = new Date().toISOString();
+    state.poll = setInterval(async () => {
+      try {
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        if (r.error) return;
+        for (const n of (r.data || [])) show(n);
+        if (r.data?.length) last = r.data[r.data.length - 1].created_at;
+      } catch (_) {}
+    }, 15000);
+    return true;
+  }
+
+  function boot() {
+    if (!document.body) return;
+    const run = () => { let tries=0; const tick=()=>{ if (window.sb) init(); else if (++tries<30) setTimeout(tick,200); }; tick(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',run,{once:true}); else run();
+  }
+  boot();
+})();
+
+/* PasTele — Global UI interaction safety layer */
+(function () {
+  'use strict';
+
+  function isModifiedClick(event) {
+    return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+  }
+
+  function getDestination(el) {
+    return el?.dataset?.href || el?.dataset?.url || el?.getAttribute?.('data-link') || null;
+  }
+
+  document.addEventListener('click', function (event) {
+    if (isModifiedClick(event)) return;
+
+    const trigger = event.target.closest('[data-href],[data-url],[data-link]');
+    if (!trigger || trigger.disabled || trigger.getAttribute('aria-disabled') === 'true') return;
+
+    const destination = getDestination(trigger);
+    if (!destination) return;
+
+    if (trigger.matches('a[href]')) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  document.addEventListener('keydown', function (event) {
+    const el = event.target.closest?.('[data-href],[data-url],[data-link][role="button"]');
+    if (!el) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    const destination = getDestination(el);
+    if (!destination) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  // Make explicitly marked cards keyboard accessible without guessing routes.
+  document.querySelectorAll('[data-href],[data-url],[data-link]').forEach(function (el) {
+    if (!el.hasAttribute('tabindex') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('tabindex', '0');
+    }
+    if (!el.hasAttribute('role') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('role', 'button');
+    }
+  });
+})();
+
+
+
+/* =========================================================
+   PasTele — Marketplace
+   FINAL SQL SYNC
+   PUBLIC MARKETPLACE
+   - Guest dapat browse marketplace
+   - Guest dapat membuka product
+   - Checkout/purchase ditangani oleh product/payment flow
+   - Tidak membutuhkan auth untuk membaca marketplace
+   SQL SOURCE:
+     marketplace_public
+     products
+     telegram_products
+     telegram_channels
+     content_likes
+     analytics_events
+   IMPORTANT:
+   - Tidak menggunakan content_comments
+   - Tidak mengambil content dari marketplace_public
+   - Tidak menggunakan kolom legacy_published_flag
+   - Tidak menggunakan kolom yang tidak ada di SQL
+   ========================================================= */
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+  /* =======================================================
+     DOM
+     ======================================================= */
+  const $ = (id) =>
+    document.getElementById(id);
+  const q =
+    $("q");
+  const market =
+    $("market");
+  /* =======================================================
+     STATE
+     ======================================================= */
+  let filter = "all";
+  let items = [];
+  let page = 1;
+  const pageSize = 10;
+  /* =======================================================
+     GLOBAL HELPERS
+     ======================================================= */
+  const TC =
+    window.TC || {};
+  const esc = (value) => {
+    const text =
+      String(value ?? "");
+    if (
+      typeof TC.esc === "function"
+    ) {
+      return TC.esc(text);
+    }
+    return text
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
+  };
+  const number = (value) => {
+    const n =
+      Number(value ?? 0);
+    return Number.isFinite(n)
+      ? n
+      : 0;
+  };
+  const lower = (value) => {
+    return String(value ?? "")
+      .trim()
+      .toLowerCase();
+  };
+  const formatNumber = (value) => {
+    return number(value)
+      .toLocaleString("id-ID");
+  };
+  const formatMoney = (value) => {
+    const amount =
+      number(value);
+    if (
+      typeof TC.money ===
+      "function"
+    ) {
+      return TC.money(amount);
+    }
+    return `Rp${amount.toLocaleString("id-ID")}`;
+  };
+  const toast = (
+    message,
+    type = "error"
+  ) => {
+    if (
+      typeof TC.toast ===
+      "function"
+    ) {
+      TC.toast(
+        message,
+        type
+      );
+      return;
+    }
+    if (
+      type === "error"
+    ) {
+      console.error(
+        message
+      );
+    } else {
+      console.log(
+        message
+      );
+    }
+  };
+  /* =======================================================
+     SUPABASE
+     ======================================================= */
+  const getSupabase = () => {
+    return (
+      window.sb ||
+      window.supabaseClient ||
+      window.supabase ||
+      null
+    );
+  };
+  /* =======================================================
+     TYPE NORMALIZATION
+     ======================================================= */
+  const typeOf = (item) => {
+    const type =
+      lower(item?.type);
+    if (
+      type === "pastelink" ||
+      type === "paste-link" ||
+      type === "paste_link"
+    ) {
+      return "pastelink";
+    }
+    if (
+      type === "telegram_channel" ||
+      type === "channel"
+    ) {
+      return "channel";
+    }
+    if (
+      type === "telegram_group" ||
+      type === "group"
+    ) {
+      return "group";
+    }
+    if (
+      type === "telegram_code" ||
+      type === "code"
+    ) {
+      return "code";
+    }
+    if (
+      type === "paste"
+    ) {
+      return "paste";
+    }
+    return type || "link";
+  };
+  const icon = (type) => {
+    switch (
+      typeOf({
+        type
+      })
+    ) {
+      case "code":
+        return "fa-code";
+      case "channel":
+        return "fa-broadcast-tower";
+      case "group":
+        return "fa-users";
+      case "paste":
+        return "fa-file-lines";
+      case "pastelink":
+        return "fa-link";
+      case "link":
+      default:
+        return "fa-link";
+    }
+  };
+  const typeLabel = (type) => {
+    switch (
+      typeOf({
+        type
+      })
+    ) {
+      case "code":
+        return "Code";
+      case "channel":
+        return "Channel";
+      case "group":
+        return "Group";
+      case "paste":
+        return "Paste";
+      case "pastelink":
+        return "PasteLink";
+      case "link":
+      default:
+        return "Link";
+    }
+  };
+  /* =======================================================
+     ACCESS
+     ======================================================= */
+  const accessType = (
+    item
+  ) => {
+    const access =
+      lower(
+        item?.access_type
+      );
+    const price =
+      number(
+        item?.price
+      );
+    if (
+      access === "paid" ||
+      price > 0
+    ) {
+      return "paid";
+    }
+    return "free";
+  };
+  const priceText = (
+    item
+  ) => {
+    const price =
+      number(
+        item?.price
+      );
+    return price > 0
+      ? formatMoney(price)
+      : "FREE";
+  };
+  /* =======================================================
+     CREATOR
+     ======================================================= */
+  const creatorText = (item) => {
+    const raw = String(item?.creator_username || item?.creator_name || "Creator").trim().replace(/^@/, "");
+    if (!raw) return "Creator";
+    if (raw.length <= 2) return raw[0] + "***";
+    return raw.slice(0, 2) + "***" + raw.slice(-1);
+  };
+  /* =======================================================
+     STORED STATS
+     ======================================================= */
+  const viewsText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.views
+    );
+  };
+  const salesText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.sales_count
+    );
+  };
+  const likesText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.likes_count
+    );
+  };
+  const sharesText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.shares_count
+    );
+  };
+  /* =======================================================
+     PRODUCT URL
+     ======================================================= */
+  const productUrl = (item) => {
+    const id = item?.id;
+    const slug = String(item?.slug || "").trim();
+    const type = typeOf(item);
+    const access = accessType(item) === "paid" ? "p" : "f";
+    if (slug) {
+      if (type === "pastelink") return `/p/${encodeURIComponent(slug)}`;
+      if (type === "code") return `/c/${access}/${encodeURIComponent(slug)}`;
+      if (type === "channel") return `/ch/${access}/${encodeURIComponent(slug)}`;
+      if (type === "group") return `/g/${access}/${encodeURIComponent(slug)}`;
+      if (type === "paste") return `/paste/${encodeURIComponent(slug)}`;
+    }
+    return id ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}` : "product.html";
+  };
+  /* =======================================================
+     FILTER
+     ======================================================= */
+  function matchesFilter(
+    item
+  ) {
+    const type =
+      typeOf(item);
+    const access =
+      accessType(item);
+    if (
+      filter === "all"
+    ) {
+      return true;
+    }
+    if (
+      filter === "free" ||
+      filter === "paid"
+    ) {
+      return (
+        access === filter
+      );
+    }
+    return (
+      type === filter
+    );
+  }
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+  function matchesSearch(
+    item
+  ) {
+    const query =
+      lower(
+        q?.value
+      );
+    if (!query) {
+      return true;
+    }
+    const searchable = [
+      item?.title,
+      item?.creator_name,
+      item?.creator_username,
+      item?.category,
+      item?.description,
+      item?.type,
+      item?.access_type
+    ]
+      .filter(
+        (value) =>
+          value !== null &&
+          value !== undefined
+      )
+      .join(" ")
+      .toLowerCase();
+    return searchable.includes(
+      query
+    );
+  }
+  /* =======================================================
+     FILTERED ITEMS
+     ======================================================= */
+  function filteredItems() {
+    return items.filter(
+      (item) =>
+        matchesFilter(item) &&
+        matchesSearch(item)
+    );
+  }
+  /* =======================================================
+     THUMBNAIL
+     ======================================================= */
+  const thumbnailHtml = (
+    item,
+    type,
+    title
+  ) => {
+    const thumbnail =
+      String(
+        item?.thumbnail_url || ""
+      ).trim();
+    if (!thumbnail) {
+      return `
+        <span class="product-thumb-fallback">
+          <i
+            class="fa-solid ${icon(type)}"
+            aria-hidden="true"
+          ></i>
+        </span>
+      `;
+    }
+    return `
+      <img
+        loading="lazy"
+        src="${esc(thumbnail)}"
+        alt="${esc(title)}"
+        onerror="
+          this.style.display='none';
+          const fallback=this.parentElement?.querySelector('.product-thumb-fallback');
+          if(fallback) fallback.hidden=false;
+        "
+      >
+      <span
+        class="product-thumb-fallback"
+        hidden
+      >
+        <i
+          class="fa-solid ${icon(type)}"
+          aria-hidden="true"
+        ></i>
+      </span>
+    `;
+  };
+  /* =======================================================
+     PRODUCT CARD
+     ======================================================= */
+  function card(
+    item
+  ) {
+    const type =
+      typeOf(item);
+    const access =
+      accessType(item);
+    const title =
+      String(
+        item?.title ||
+        "Untitled"
+      );
+    const creator =
+      creatorText(item);
+    const description =
+      String(
+        item?.description ||
+        ""
+      ).trim();
+    const href =
+      productUrl(item);
+    return `
+      <article class="product-card" data-share-id="${esc(item?.id||'')}" data-share-type="${esc(type)}" data-share-owner="${esc(item?.owner_id||'')}" data-share-url="${esc(href)}">
+      <a class="product-card-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
+        <!-- THUMBNAIL -->
+        <div class="product-thumb">
+          ${thumbnailHtml(
+            item,
+            type,
+            title
+          )}
+          <span
+            class="product-access ${access}"
+          >
+            <i
+              class="fa-solid ${
+                access === "paid"
+                  ? "fa-lock"
+                  : "fa-unlock"
+              }"
+              aria-hidden="true"
+            ></i>
+            ${
+              access === "paid"
+                ? "PAID"
+                : "FREE"
+            }
+          </span>
+        </div>
+        <!-- BODY -->
+        <div class="product-body">
+          <span class="product-type">
+            <i
+              class="fa-solid ${icon(type)}"
+              aria-hidden="true"
+            ></i>
+            ${esc(
+              typeLabel(type)
+            )}
+          </span>
+          <h3 class="product-title">
+            ${esc(title)}
+          </h3>
+          ${
+            description
+              ? `
+                <p class="product-description">
+                  ${esc(
+                    description
+                  )}
+                </p>
+              `
+              : ""
+          }
+          <div class="product-creator">
+            <i
+              class="fa-solid fa-user"
+              aria-hidden="true"
+            ></i>
+            <span>
+              ${esc(
+                creator
+              )}
+            </span>
+          </div>
+          <!-- ENGAGEMENT -->
+          <div class="market-card-stats">
+            <span>
+              <i
+                class="fa-solid fa-eye"
+                aria-hidden="true"
+              ></i>
+              ${viewsText(item)}
+            </span>
+            <span class="like">
+              <i
+                class="fa-solid fa-heart"
+                aria-hidden="true"
+              ></i>
+              ${likesText(item)}
+            </span>
+            <span class="share">
+              <i
+                class="fa-solid fa-share-nodes"
+                aria-hidden="true"
+              ></i>
+              ${sharesText(item)}
+            </span>
+          </div>
+          <!-- BOTTOM -->
+          <div class="product-bottom">
+            <div class="product-stats">
+              <span>
+                <i
+                  class="fa-solid fa-eye"
+                  aria-hidden="true"
+                ></i>
+                ${viewsText(item)}
+              </span>
+              ${
+                number(
+                  item?.sales_count
+                ) > 0
+                  ? `
+                    <span>
+                      <i
+                        class="fa-solid fa-cart-shopping"
+                        aria-hidden="true"
+                      ></i>
+                      ${salesText(
+                        item
+                      )}
+                    </span>
+                  `
+                  : ""
+              }
+            </div>
+            <strong
+              class="product-price ${
+                access === "free"
+                  ? "free"
+                  : ""
+              }"
+            >
+              ${priceText(item)}
+            </strong>
+          </div>
+        </div>
+      </a>
+    `;
+  }
+  /* =======================================================
+     TOP LIST
+     ======================================================= */
+  function list(
+    id,
+    array
+  ) {
+    const element =
+      $(id);
+    if (!element) {
+      return;
+    }
+    const rows =
+      array
+        .slice(0, 10)
+        .map(
+          (
+            item,
+            index
+          ) => {
+            const type =
+              typeOf(item);
+            const href =
+              productUrl(item);
+            const access =
+              accessType(item);
+            const title =
+              item?.title ||
+              "Untitled";
+            return `
+              <a
+                class="market-list-item"
+                href="${esc(href)}"
+                aria-label="Buka ${esc(title)}"
+              >
+                <span
+                  class="market-rank-number ${
+                    index === 0
+                      ? "top-one"
+                      : ""
+                  }"
+                >
+                  #${index + 1}
+                </span>
+                <div class="market-list-main">
+                  <strong
+                    class="market-list-title"
+                  >
+                    ${esc(title)}
+                  </strong>
+                  <div class="market-list-meta">
+                    <span>
+                      <i
+                        class="fa-solid ${icon(type)}"
+                        aria-hidden="true"
+                      ></i>
+                      ${esc(
+                        typeLabel(type)
+                      )}
+                    </span>
+                    <span>
+                      <i
+                        class="fa-solid fa-eye"
+                        aria-hidden="true"
+                      ></i>
+                      ${viewsText(item)}
+                    </span>
+                  </div>
+                </div>
+                <strong
+                  class="market-list-price ${
+                    access === "free"
+                      ? "free"
+                      : ""
+                  }"
+                >
+                  ${priceText(item)}
+                </strong>
+              </a>
+            `;
+          }
+        )
+        .join("");
+    element.innerHTML =
+      rows ||
+      `
+        <div class="market-empty">
+          <span>
+            <i
+              class="fa-solid fa-box-open"
+              aria-hidden="true"
+            ></i>
+          </span>
+          <div>
+            <strong>
+              Belum ada data
+            </strong>
+            <small>
+              Belum ada konten pada kategori ini.
+            </small>
+          </div>
+        </div>
+      `;
+  }
+  /* =======================================================
+     TOP LISTS
+     ======================================================= */
+  function renderTopLists() {
+    const byViews = (
+      a,
+      b
+    ) => {
+      return (
+        number(b?.views) -
+        number(a?.views)
+      );
+    };
+    list(
+      "topLink",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "link"
+        )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topCode",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "code"
+        )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topChannel",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "channel"
+        )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topGroup",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "group"
+        )
+        .slice()
+        .sort(byViews)
+    );
+  }
+  /* =======================================================
+     RESULT BAR
+     ======================================================= */
+  function updateResult(
+    count
+  ) {
+    const resultTitle =
+      $("resultTitle");
+    const resultCount =
+      $("resultCount");
+    const reset =
+      $("resetFilters");
+    const search =
+      q?.value?.trim();
+    if (resultTitle) {
+      if (
+        filter === "all"
+      ) {
+        resultTitle.textContent =
+          search
+            ? "Hasil pencarian"
+            : "Semua konten";
+      } else if (
+        filter === "free"
+      ) {
+        resultTitle.textContent =
+          "Konten Free";
+      } else if (
+        filter === "paid"
+      ) {
+        resultTitle.textContent =
+          "Konten Paid";
+      } else {
+        resultTitle.textContent =
+          `${typeLabel(
+            filter
+          )} marketplace`;
+      }
+    }
+    if (resultCount) {
+      resultCount.textContent =
+        `${count} konten`;
+    }
+    if (reset) {
+      reset.hidden =
+        filter === "all" &&
+        !search;
+    }
+  }
+  /* =======================================================
+     PAGINATION
+     ======================================================= */
+  function renderPager(
+    totalPages
+  ) {
+    const host =
+      $("marketPagination");
+    if (!host) {
+      return;
+    }
+    if (
+      totalPages <= 1
+    ) {
+      host.innerHTML = "";
+      return;
+    }
+    const buttons = [];
+    buttons.push(`
+      <button
+        type="button"
+        ${
+          page === 1
+            ? "disabled"
+            : ""
+        }
+        data-page="${page - 1}"
+        aria-label="Halaman sebelumnya"
+      >
+        ‹
+      </button>
+    `);
+    for (
+      let i = 1;
+      i <= totalPages;
+      i++
+    ) {
+      const shouldShow =
+        totalPages <= 9 ||
+        i <= 2 ||
+        i >= totalPages - 1 ||
+        Math.abs(
+          i - page
+        ) <= 1;
+      if (
+        !shouldShow
+      ) {
+        if (
+          i === 3 ||
+          i === totalPages - 2
+        ) {
+          buttons.push(
+            `<span aria-hidden="true">…</span>`
+          );
+        }
+        continue;
+      }
+      buttons.push(`
+        <button
+          type="button"
+          class="${
+            i === page
+              ? "active"
+              : ""
+          }"
+          data-page="${i}"
+          ${
+            i === page
+              ? 'aria-current="page"'
+              : ""
+          }
+        >
+          ${i}
+        </button>
+      `);
+    }
+    buttons.push(`
+      <button
+        type="button"
+        ${
+          page === totalPages
+            ? "disabled"
+            : ""
+        }
+        data-page="${page + 1}"
+        aria-label="Halaman berikutnya"
+      >
+        ›
+      </button>
+    `);
+    host.innerHTML =
+      buttons.join("");
+    host
+      .querySelectorAll(
+        "button[data-page]"
+      )
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              const nextPage =
+                Number(
+                  button.dataset.page
+                );
+              if (
+                !Number.isFinite(
+                  nextPage
+                ) ||
+                nextPage < 1 ||
+                nextPage > totalPages ||
+                nextPage === page
+              ) {
+                return;
+              }
+              page =
+                nextPage;
+              render();
+              const section =
+                document.querySelector(
+                  ".marketplace-page"
+                );
+              if (section) {
+                window.scrollTo({
+                  top:
+                    Math.max(
+                      0,
+                      section
+                        .getBoundingClientRect()
+                        .top +
+                        window.scrollY -
+                        24
+                    ),
+                  behavior:
+                    "smooth"
+                });
+              }
+            }
+          );
+        }
+      );
+  }
+  /* =======================================================
+     MAIN RENDER
+     ======================================================= */
+  function bindShareButtons(){
+    if(window.__PASTELE_MARKET_SHARE_BOUND__) return;
+    window.__PASTELE_MARKET_SHARE_BOUND__=true;
+    document.addEventListener("click",async e=>{
+      const btn=e.target.closest("[data-share-card]"); if(!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      const card=btn.closest("[data-share-id]"); if(!card) return;
+      const id=card.dataset.shareId,rawType=card.dataset.shareType, type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType),owner=card.dataset.shareOwner||null;
+      const url=new URL(card.dataset.shareUrl||location.href,location.origin).href;
+      try { if(navigator.share) await navigator.share({title:"PasTele",url}); else await navigator.clipboard.writeText(url); } catch(err){ if(err?.name==='AbortError') return; try{await navigator.clipboard.writeText(url)}catch(_){} }
+      try { await getSupabase().rpc("track_analytics",{p_event_type:"share",p_target_type:type,p_target_id:id,p_owner:owner}); } catch(err){ console.warn("[Marketplace] share tracking unavailable",err); }
+      btn.classList.add("shared"); setTimeout(()=>btn.classList.remove("shared"),900);
+    });
+  }
+
+  function render() {
+    if (!market) {
+      return;
+    }
+    const filtered =
+      filteredItems()
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(
+              b?.created_at ||
+              0
+            ) -
+            new Date(
+              a?.created_at ||
+              0
+            )
+        );
+    updateResult(
+      filtered.length
+    );
+    const totalPages =
+      Math.max(
+        1,
+        Math.ceil(
+          filtered.length /
+          pageSize
+        )
+      );
+    page =
+      Math.min(
+        page,
+        totalPages
+      );
+    const start =
+      (page - 1) *
+      pageSize;
+    const pageItems =
+      filtered.slice(
+        start,
+        start + pageSize
+      );
+    if (
+      pageItems.length
+    ) {
+      market.innerHTML =
+        pageItems
+          .map(card)
+          .join("");
+    } else {
+      const hasSearch =
+        Boolean(
+          q?.value?.trim()
+        );
+      const hasFilter =
+        filter !== "all";
+      market.innerHTML = `
+        <div class="market-empty">
+          <span>
+            <i
+              class="fa-solid ${
+                hasSearch ||
+                hasFilter
+                  ? "fa-magnifying-glass"
+                  : "fa-box-open"
+              }"
+              aria-hidden="true"
+            ></i>
+          </span>
+          <div>
+            <strong>
+              ${
+                hasSearch ||
+                hasFilter
+                  ? "Konten tidak ditemukan"
+                  : "Belum ada konten"
+              }
+            </strong>
+            <small>
+              ${
+                hasSearch ||
+                hasFilter
+                  ? "Coba ubah pencarian atau filter."
+                  : "Konten yang dipublikasikan akan muncul di sini."
+              }
+            </small>
+          </div>
+        </div>
+      `;
+    }
+    renderPager(
+      totalPages
+    );
+    renderTopLists();
+  }
+  /* =======================================================
+     LOADING
+     ======================================================= */
+  function setLoading() {
+    if (!market) {
+      return;
+    }
+    market.innerHTML = `
+      <div class="market-loading">
+        <span>
+          <i
+            class="fa-solid fa-circle-notch fa-spin"
+            aria-hidden="true"
+          ></i>
+        </span>
+        <div>
+          <strong>
+            Memuat marketplace
+          </strong>
+          <small>
+            Mengambil produk terbaru...
+          </small>
+        </div>
+      </div>
+    `;
+    const resultCount =
+      $("resultCount");
+    if (resultCount) {
+      resultCount.textContent =
+        "Memuat...";
+    }
+    const pagination =
+      $("marketPagination");
+    if (pagination) {
+      pagination.innerHTML = "";
+    }
+  }
+  /* =======================================================
+     ERROR
+     ======================================================= */
+  function setError(
+    message
+  ) {
+    if (!market) {
+      return;
+    }
+    market.innerHTML = `
+      <div class="market-error">
+        <span>
+          <i
+            class="fa-solid fa-triangle-exclamation"
+            aria-hidden="true"
+          ></i>
+        </span>
+        <div>
+          <strong>
+            Marketplace gagal dimuat
+          </strong>
+          <small>
+            ${esc(
+              message
+            )}
+          </small>
+          <button
+            type="button"
+            class="btn"
+            id="retryMarket"
+          >
+            <i
+              class="fa-solid fa-rotate-right"
+              aria-hidden="true"
+            ></i>
+            Coba lagi
+          </button>
+        </div>
+      </div>
+    `;
+    $("retryMarket")
+      ?.addEventListener(
+        "click",
+        load
+      );
+  }
+  /* =======================================================
+     COUNT BY TARGET
+     ======================================================= */
+  const countByTarget = (
+    rows
+  ) => {
+    const map =
+      Object.create(null);
+    for (
+      const row of rows || []
+    ) {
+      const id =
+        row?.target_id;
+      if (
+        id === null ||
+        id === undefined ||
+        id === ""
+      ) {
+        continue;
+      }
+      const key =
+        String(id);
+      map[key] =
+        (map[key] || 0) + 1;
+    }
+    return map;
+  };
+  /* =======================================================
+     ENGAGEMENT COUNTS
+     =======================================================
+     SQL FINAL:
+       content_likes
+         target_id
+         target_type
+         actor_id
+       analytics_events
+         target_id
+         target_type
+         event_type
+     IMPORTANT:
+       content_comments TIDAK digunakan karena
+       tidak ada pada SQL final.
+     */
+  async function loadEngagementCounts(
+    data
+  ) {
+    const client =
+      getSupabase();
+    if (
+      !client ||
+      !Array.isArray(data) ||
+      !data.length
+    ) {
+      return data;
+    }
+    const ids =
+      data
+        .map(
+          (item) =>
+            item?.id
+        )
+        .filter(
+          (id) =>
+            id !== null &&
+            id !== undefined &&
+            id !== ""
+        );
+    if (!ids.length) {
+      return data;
+    }
+    try {
+      /*
+       * Hanya query tabel yang benar-benar
+       * ada di SQL final.
+       */
+      const [
+        likesResult,
+        sharesResult
+      ] = await Promise.all([
+        client
+          .from(
+            "content_likes"
+          )
+          .select(
+            "target_id,target_type"
+          )
+          .in(
+            "target_id",
+            ids
+          ),
+        client
+          .from(
+            "analytics_events"
+          )
+          .select(
+            "target_id,target_type,event_type"
+          )
+          .in(
+            "target_id",
+            ids
+          )
+          .eq(
+            "event_type",
+            "share"
+          )
+      ]);
+      if (
+        likesResult?.error
+      ) {
+        console.warn(
+          "[Marketplace] Likes count unavailable:",
+          likesResult.error.message ||
+          likesResult.error
+        );
+      }
+      if (
+        sharesResult?.error
+      ) {
+        console.warn(
+          "[Marketplace] Shares count unavailable:",
+          sharesResult.error.message ||
+          sharesResult.error
+        );
+      }
+      /*
+       * Count likes.
+       *
+       * target_type digunakan untuk
+       * membedakan content target.
+       *
+       * Marketplace products memakai
+       * target_type = product.
+       */
+      const likes =
+        countByTarget(
+          (likesResult?.data || [])
+            .filter(
+              (row) => {
+                const targetType =
+                  lower(
+                    row?.target_type
+                  );
+                return (
+                  !targetType ||
+                  targetType ===
+                    "product"
+                );
+              }
+            )
+        );
+      /*
+       * Count shares.
+       */
+      const shares =
+        countByTarget(
+          (sharesResult?.data || [])
+            .filter(
+              (row) => {
+                const targetType =
+                  lower(
+                    row?.target_type
+                  );
+                return (
+                  !targetType ||
+                  targetType ===
+                    "product"
+                );
+              }
+            )
+        );
+      return data.map(
+        (item) => {
+          const key =
+            String(
+              item?.id
+            );
+          return {
+            ...item,
+            likes_count:
+              likes[key] || 0,
+            shares_count:
+              shares[key] || 0
+          };
+        }
+      );
+    } catch (error) {
+      /*
+       * Engagement adalah fitur tambahan.
+       * Marketplace tidak boleh gagal hanya
+       * karena statistik engagement.
+       */
+      console.warn(
+        "[Marketplace] Engagement unavailable:",
+        error
+      );
+      return data;
+    }
+  }
+  /* =======================================================
+     LOAD MARKETPLACE
+     ======================================================= */
+  async function load() {
+    const client = getSupabase();
+    if (!client) {
+      setError("Database belum terkonfigurasi.");
+      return;
+    }
+    setLoading();
+    try {
+      const base = [
+        "id","slug","title","type","access_type","price","thumbnail_url",
+        "description","views","sales_count","category","created_at"
+      ];
+      const queries = await Promise.all([
+        client.from("products")
+          .select(base.concat(["creator_id","seller_id"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("telegram_products")
+          .select(base.concat(["owner_id","product_type","bot_username"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("telegram_channels")
+          .select(base.concat(["owner_id","username","name"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("pastelinks")
+          .select("id,slug,title,access_type,price,description,views,created_at,user_id")
+          .eq("visibility","public").order("created_at",{ascending:false}).limit(500),
+        client.from("pastes")
+          .select("id,slug,title,description,created_at,owner_id")
+          .eq("visibility","public").order("created_at",{ascending:false}).limit(500)
+      ]);
+      const firstError = queries.find(x => x?.error)?.error;
+      if (firstError) console.warn("[Marketplace] one source failed:", firstError);
+
+      const normalize = (rows, type, ownerKey) => (Array.isArray(rows)?rows:[]).map(row => ({
+        ...row,
+        type: type === "channel" ? (String(row.type||"channel").toLowerCase()==="group" ? "group" : "channel") : type,
+        access_type: String(row.access_type || (Number(row.price||0)>0 ? "paid":"free")).toLowerCase(),
+        owner_id: row.owner_id || row[ownerKey] || row.creator_id || row.seller_id || row.user_id || null,
+        title: row.title || row.name || row.username || "Untitled",
+        creator_name: row.creator_name || "",
+        creator_username: row.creator_username || String(row.username||"").replace(/^@/,"")
+      }));
+      let data = [
+        ...normalize(queries[0]?.data,"link","creator_id"),
+        ...normalize(queries[1]?.data,"code","owner_id"),
+        ...normalize(queries[2]?.data,"channel","owner_id"),
+        ...normalize(queries[3]?.data,"pastelink","user_id"),
+        ...normalize(queries[4]?.data,"paste","owner_id")
+      ].filter(x => x.id && x.title);
+      // Load public creator names without relying on fragile nested relations.
+      const ownerIds=[...new Set(data.map(x=>x.owner_id).filter(Boolean))];
+      if(ownerIds.length){
+        const pr=await client.from("profiles").select("id,username,display_name,is_banned").in("id",ownerIds);
+        if(!pr.error){
+          const map=new Map((pr.data||[]).map(x=>[String(x.id),x]));
+          data=data.map(x=>{
+            const p=map.get(String(x.owner_id));
+            return p ? {...x,creator_name:p.display_name||p.username,creator_username:p.username} : x;
+          });
+        }
+      }
+      data.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+      items = await loadEngagementCounts(data);
+      page = 1;
+      render();
+    } catch(error) {
+      console.error("[Marketplace] Load error:", error);
+      setError(error?.message || "Marketplace gagal dimuat.");
+    }
+  }
+  /* =======================================================
+     FILTER BUTTONS
+     ======================================================= */
+  document
+    .querySelectorAll(
+      "#tabs .market-tab"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            document
+              .querySelectorAll(
+                "#tabs .market-tab"
+              )
+              .forEach(
+                (item) => {
+                  item.classList.remove(
+                    "active"
+                  );
+                }
+              );
+            button.classList.add(
+              "active"
+            );
+            filter =
+              button.dataset.v ||
+              "all";
+            page = 1;
+            render();
+          }
+        );
+      }
+    );
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+  function updateSearchButton() {
+    const button =
+      $("clearSearch");
+    if (!button) {
+      return;
+    }
+    button.hidden =
+      !q?.value?.trim();
+  }
+  q?.addEventListener(
+    "input",
+    () => {
+      updateSearchButton();
+      page = 1;
+      render();
+    }
+  );
+  /* =======================================================
+     CLEAR SEARCH
+     ======================================================= */
+  $("clearSearch")
+    ?.addEventListener(
+      "click",
+      () => {
+        if (q) {
+          q.value = "";
+        }
+        updateSearchButton();
+        page = 1;
+        render();
+        q?.focus();
+      }
+    );
+  /* =======================================================
+     RESET FILTERS
+     ======================================================= */
+  $("resetFilters")
+    ?.addEventListener(
+      "click",
+      () => {
+        filter =
+          "all";
+        if (q) {
+          q.value = "";
+        }
+        document
+          .querySelectorAll(
+            "#tabs .market-tab"
+          )
+          .forEach(
+            (button) => {
+              button.classList.toggle(
+                "active",
+                button.dataset.v ===
+                  "all"
+              );
+            }
+          );
+        updateSearchButton();
+        page = 1;
+        render();
+      }
+    );
+  /* =======================================================
+     INITIAL STATE
+     ======================================================= */
+  updateSearchButton();
+  await load();
+});
+
+
+
+
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
-/* PasTele clean notification bridge */
-window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
-  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
-  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
-  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
-  container.appendChild(el); setTimeout(()=>el.remove(),4200);
-};

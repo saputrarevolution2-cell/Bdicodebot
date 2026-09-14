@@ -2586,12 +2586,1052 @@ window.PASTELE_CONFIG = Object.freeze({
 
 })();
 
+/* ============================================================
+   PasTele — GLOBAL SESSION GUARD
+   - 24 hours of INACTIVITY => sign out
+   - Activity refreshes the inactivity timer
+   - Works even when Supabase/client scripts finish loading late
+   - Public pages are never blocked
+   ============================================================ */
+(() => {
+  "use strict";
+
+  const INACTIVITY_MS = 24 * 60 * 60 * 1000;
+  const ACTIVITY_KEY = "pastele_last_activity";
+  const PUBLIC = new Set([
+    "index.html", "login.html", "register.html",
+    "forgot-password.html", "reset-password.html",
+    "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "about.html", "terms.html", "privacy.html"
+  ]);
+
+  const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
+  const isPublic = !isAdminPath && PUBLIC.has(file);
+  let locked = false;
+  let initialized = false;
+  let timer = null;
+
+  function setActivity() {
+    if (locked || isPublic) return;
+    try {
+      localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+    } catch (_) {}
+  }
+
+  function getLastActivity() {
+    try {
+      const value = Number(localStorage.getItem(ACTIVITY_KEY) || 0);
+      return Number.isFinite(value) ? value : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function isExpired() {
+    const last = getLastActivity();
+    return last > 0 && (Date.now() - last >= INACTIVITY_MS);
+  }
+
+  function loginUrl() {
+    return location.pathname.includes("/admin/") ? "../login.html" : "login.html";
+  }
+
+  function showExpired() {
+    if (document.getElementById("pt-session-modal")) return;
+
+    locked = true;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #pt-session-modal{
+        position:fixed;inset:0;z-index:2147483647;
+        display:grid;place-items:center;padding:20px;
+        background:rgba(2,6,23,.72);
+        backdrop-filter:blur(14px);
+      }
+      #pt-session-modal .pt-session-box{
+        width:min(440px,100%);
+        padding:32px 26px;
+        border:1px solid rgba(148,163,184,.22);
+        border-radius:26px;
+        text-align:center;
+        background:var(--surface,#fff);
+        color:var(--text,#0f172a);
+        box-shadow:0 30px 100px rgba(0,0,0,.35);
+      }
+      #pt-session-modal .pt-session-icon{
+        width:66px;height:66px;margin:0 auto 16px;
+        display:grid;place-items:center;border-radius:20px;
+        background:rgba(99,91,255,.12);
+        color:#635bff;font-size:27px;
+      }
+      #pt-session-modal h2{margin:0 0 9px;font-size:23px}
+      #pt-session-modal p{margin:0 auto 22px;max-width:350px;
+        color:var(--muted,#64748b);line-height:1.65}
+      #pt-session-modal a{
+        display:flex;align-items:center;justify-content:center;gap:9px;
+        min-height:48px;padding:12px 18px;border-radius:14px;
+        background:linear-gradient(135deg,#635bff,#8b5cf6);
+        color:#fff!important;text-decoration:none;font-weight:800;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const modal = document.createElement("div");
+    modal.id = "pt-session-modal";
+    modal.innerHTML = `
+      <div class="pt-session-box" role="dialog" aria-modal="true">
+        <div class="pt-session-icon"><i class="fa-solid fa-lock"></i></div>
+        <h2>Sesi Berakhir</h2>
+        <p>Sesi kamu berakhir karena tidak ada aktivitas selama 24 jam. Silakan login kembali untuk melanjutkan.</p>
+        <a href="${loginUrl()}"><i class="fa-solid fa-right-to-bracket"></i> Login Kembali</a>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  async function getClient() {
+    if (window.sb?.auth) return window.sb;
+
+    // Some pages load their bundled client after this guard.
+    for (let i = 0; i < 80; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (window.sb?.auth) return window.sb;
+    }
+    return null;
+  }
+
+  async function signOutAndLock() {
+    if (locked) return;
+    try {
+      const client = await getClient();
+      if (client?.auth) {
+        await client.auth.signOut({ scope: "global" });
+      }
+    } catch (error) {
+      console.warn("[PasTele] Session signOut:", error);
+    }
+    try { localStorage.removeItem(ACTIVITY_KEY); } catch (_) {}
+    showExpired();
+  }
+
+  function autoTheme() {
+    // Automatic day/night theme:
+    // 06:00–17:59 = light, 18:00–05:59 = dark.
+    try {
+      const hour = new Date().getHours();
+      const dark = hour >= 18 || hour < 6;
+      const root = document.documentElement;
+      root.dataset.theme = dark ? "dark" : "light";
+      root.dataset.themeMode = "auto";
+      root.style.colorScheme = dark ? "dark" : "light";
+    } catch (_) {}
+  }
+
+  function bindActivity() {
+    if (initialized) return;
+    initialized = true;
+
+    const events = ["click", "keydown", "touchstart", "pointerdown", "scroll"];
+    for (const event of events) {
+      document.addEventListener(event, setActivity, {
+        passive: true,
+        capture: true
+      });
+    }
+
+    // Also refresh when the user returns to the tab.
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        if (isExpired()) signOutAndLock();
+        else setActivity();
+      }
+    });
+
+    window.addEventListener("pageshow", () => {
+      if (isExpired()) signOutAndLock();
+      else setActivity();
+    });
+  }
+
+  async function init() {
+    autoTheme();
+
+    if (isPublic) return;
+
+    const client = await getClient();
+    if (!client?.auth) {
+      console.warn("[PasTele] Supabase client not available; session guard could not start.");
+      return;
+    }
+
+    try {
+      const result = await client.auth.getSession();
+      const session = result?.data?.session;
+
+      if (!session) {
+        showExpired();
+        return;
+      }
+
+      if (isExpired()) {
+        await signOutAndLock();
+        return;
+      }
+
+      setActivity();
+      bindActivity();
+
+      timer = window.setInterval(() => {
+        if (isExpired()) signOutAndLock();
+      }, 60 * 1000);
+
+      client.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT") showExpired();
+        if (event === "SIGNED_IN" && !locked) setActivity();
+      });
+    } catch (error) {
+      console.warn("[PasTele] Session guard:", error);
+    }
+  }
+
+  window.PasTeleSession = Object.freeze({
+    touch: setActivity,
+    expired: isExpired,
+    check: init,
+    autoTheme
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+
+/* PasTele — Live notification toast
+ * Shows new user notifications as a clean floating card for 3 seconds.
+ * Click opens the notification target URL when one is provided.
+ */
+(() => {
+  'use strict';
+  if (window.__PASTELE_NOTIFICATION_TOAST__) return;
+  window.__PASTELE_NOTIFICATION_TOAST__ = true;
+
+  const state = { userId: null, channel: null, seen: new Set(), poll: null };
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+  function ensureStyles() {
+    if (document.getElementById('pt-live-notification-style')) return;
+    const s = document.createElement('style');
+    s.id = 'pt-live-notification-style';
+    s.textContent = `
+      #ptLiveNotifications{position:fixed;top:18px;right:18px;width:min(410px,calc(100vw - 24px));z-index:2147483000;display:grid;gap:10px;pointer-events:none}
+      .pt-live-notice{pointer-events:auto;display:grid;grid-template-columns:42px 1fr 24px;gap:11px;align-items:start;padding:13px 14px;border:1px solid color-mix(in srgb,var(--primary,#229ed9) 22%,var(--line,#e5e7eb));border-radius:17px;background:color-mix(in srgb,var(--surface,#fff) 94%,transparent);color:var(--text,#14212b);box-shadow:0 18px 55px rgba(15,23,42,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transform:translateY(-12px) scale(.98);opacity:0;transition:transform .22s ease,opacity .22s ease;cursor:pointer;overflow:hidden}
+      html[data-theme="dark"] .pt-live-notice{box-shadow:0 20px 65px rgba(0,0,0,.42);border-color:rgba(148,163,184,.18)}
+      .pt-live-notice.is-in{transform:none;opacity:1}.pt-live-notice.is-out{transform:translateY(-10px) scale(.98);opacity:0}
+      .pt-live-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary,#229ed9),#7c5cff);color:#fff;font-size:16px}
+      .pt-live-copy{min-width:0}.pt-live-copy strong{display:block;font-size:13px;line-height:1.3;margin:1px 0 4px}.pt-live-copy span{display:block;font-size:12px;line-height:1.45;color:var(--muted,#718293);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pt-live-time{display:block;margin-top:6px;font-size:10px;color:var(--muted,#718293);font-weight:700}.pt-live-close{border:0;background:transparent;color:var(--muted,#718293);font-size:14px;cursor:pointer;padding:2px}.pt-live-notice:hover{transform:translateY(-2px);box-shadow:0 22px 65px rgba(15,23,42,.22)}
+      @media(max-width:600px){#ptLiveNotifications{top:10px;right:10px;width:calc(100vw - 20px)}.pt-live-notice{border-radius:15px}}
+      @media(prefers-reduced-motion:reduce){.pt-live-notice{transition:none}}
+    `;
+    document.head.appendChild(s);
+  }
+
+  function root() {
+    let el = document.getElementById('ptLiveNotifications');
+    if (!el) { el = document.createElement('div'); el.id = 'ptLiveNotifications'; el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+    return el;
+  }
+
+  function icon(type) {
+    return ({publish:'fa-bullhorn',purchase:'fa-bag-shopping',view:'fa-eye',sale:'fa-circle-check',like:'fa-heart',withdrawal:'fa-wallet'}[type] || 'fa-bell');
+  }
+
+  function remove(card) {
+    if (!card) return;
+    card.classList.remove('is-in'); card.classList.add('is-out');
+    setTimeout(() => card.remove(), 230);
+  }
+
+  function show(n) {
+    if (!n?.id || state.seen.has(n.id)) return;
+    state.seen.add(n.id);
+    const target = String(n.link_url || '').trim();
+    const card = document.createElement('article');
+    card.className = 'pt-live-notice';
+    card.setAttribute('role', target ? 'link' : 'status');
+    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc(icon(n.notification_type))}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja${target ? ' · Ketuk untuk membuka' : ''}</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
+    const close = card.querySelector('.pt-live-close');
+    close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
+    card.addEventListener('click', async () => {
+      if (target) window.location.assign(new URL(target, window.location.origin + "/").href);
+      try { await window.sb?.from('notifications').update({is_read:true}).eq('id',n.id).eq('user_id',state.userId); } catch (_) {}
+      remove(card);
+    });
+    root().prepend(card);
+    requestAnimationFrame(() => card.classList.add('is-in'));
+    setTimeout(() => remove(card), 3000);
+  }
+
+  async function init() {
+    if (!window.sb) return false;
+    let u = null;
+    try { u = (await window.sb.auth.getUser()).data?.user || null; } catch (_) { return false; }
+    if (!u?.id) return false;
+    state.userId = u.id;
+    ensureStyles(); root();
+
+    const channelName = `pastele-live-notifications-${u.id}`;
+    try {
+      state.channel = window.sb.channel(channelName)
+        .on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${u.id}`}, payload => show(payload.new))
+        .subscribe();
+    } catch (e) { console.warn('[PasTele] Realtime notification unavailable:', e); }
+
+    // Lightweight fallback for browsers/networks where Realtime is delayed.
+    let last = new Date().toISOString();
+    state.poll = setInterval(async () => {
+      try {
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        if (r.error) return;
+        for (const n of (r.data || [])) show(n);
+        if (r.data?.length) last = r.data[r.data.length - 1].created_at;
+      } catch (_) {}
+    }, 15000);
+    return true;
+  }
+
+  function boot() {
+    if (!document.body) return;
+    const run = () => { let tries=0; const tick=()=>{ if (window.sb) init(); else if (++tries<30) setTimeout(tick,200); }; tick(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',run,{once:true}); else run();
+  }
+  boot();
+})();
+
+/* PasTele — Global UI interaction safety layer */
+(function () {
+  'use strict';
+
+  function isModifiedClick(event) {
+    return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+  }
+
+  function getDestination(el) {
+    return el?.dataset?.href || el?.dataset?.url || el?.getAttribute?.('data-link') || null;
+  }
+
+  document.addEventListener('click', function (event) {
+    if (isModifiedClick(event)) return;
+
+    const trigger = event.target.closest('[data-href],[data-url],[data-link]');
+    if (!trigger || trigger.disabled || trigger.getAttribute('aria-disabled') === 'true') return;
+
+    const destination = getDestination(trigger);
+    if (!destination) return;
+
+    if (trigger.matches('a[href]')) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  document.addEventListener('keydown', function (event) {
+    const el = event.target.closest?.('[data-href],[data-url],[data-link][role="button"]');
+    if (!el) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    const destination = getDestination(el);
+    if (!destination) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  // Make explicitly marked cards keyboard accessible without guessing routes.
+  document.querySelectorAll('[data-href],[data-url],[data-link]').forEach(function (el) {
+    if (!el.hasAttribute('tabindex') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('tabindex', '0');
+    }
+    if (!el.hasAttribute('role') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('role', 'button');
+    }
+  });
+})();
+
+
+
+/* =========================================================
+   PasTele — PasteLink View
+   FINAL SQL SYNC
+   SQL TABLE:
+   public.pastelinks
+   Relevant columns:
+   - id
+   - user_id
+   - slug
+   - title
+   - content_html
+   - visibility
+   - password_hash
+   - expires_at
+   - description
+   - tags
+   - allow_comments
+   - allow_download
+   - show_raw
+   - anonymous
+   - views
+   - created_at
+   - updated_at
+   RPC:
+   - increment_paste_view(uuid)
+   - record_content_view(uuid,text,uuid)
+   - track_analytics(text,text,uuid,uuid)
+   - toggle_content_like(uuid,text,uuid)
+   ========================================================= */
+document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
+    /* =======================================================
+       DOM
+       ======================================================= */
+    const params = new URLSearchParams(location.search);
+    // Support both /p/<slug> and /paste-view.html?slug=<slug>.
+    const pathParts = (location.pathname || "").split("/").filter(Boolean);
+    const pathSlug = pathParts[0]?.toLowerCase() === "p" && pathParts.length >= 2
+        ? decodeURIComponent(pathParts.slice(1).join("/")).trim()
+        : "";
+    const slug = String(params.get("slug") || pathSlug).trim();
+    const box = document.getElementById("pasteContent");
+    if (!box) {
+        console.error("[PasteLink] #pasteContent tidak ditemukan.");
+        return;
+    }
+    /* =======================================================
+       BASIC HELPERS
+       ======================================================= */
+    const esc = (value) => {
+        if (window.TC?.esc) {
+            return TC.esc(String(value ?? ""));
+        }
+        return String(value ?? "").replace(
+            /[&<>"']/g,
+            (char) =>
+                ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#039;"
+                })[char]
+        );
+    };
+    const client =
+        window.sb ||
+        window.supabaseClient ||
+        window.supabase;
+    if (!client) {
+        box.innerHTML = `
+            <div class="empty">
+                Tidak dapat terhubung ke database.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       URL SANITIZER
+       ======================================================= */
+    const safeUrl = (value) => {
+        let url = String(value || "").trim();
+        if (!url) return "";
+        if (/^www\./i.test(url)) {
+            url = "https://" + url;
+        }
+        try {
+            const parsed = new URL(url);
+            if (
+                parsed.protocol !== "http:" &&
+                parsed.protocol !== "https:"
+            ) {
+                return "";
+            }
+            return parsed.href;
+        } catch {
+            return "";
+        }
+    };
+    /* =======================================================
+       SAFE HTML / LINKIFY
+       -------------------------------------------------------
+       content_html memang berupa HTML dari PasteLink.
+       Kita tetap sanitasi elemen/script berbahaya sebelum
+       memasukkannya ke DOM.
+       ======================================================= */
+    const linkify = (raw) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(
+            String(raw || ""),
+            "text/html"
+        );
+        /* Remove dangerous elements */
+        doc.querySelectorAll(
+            "script,iframe,object,embed,style,link,meta,base,form"
+        ).forEach((element) => {
+            element.remove();
+        });
+        /* Remove inline event handlers */
+        doc.querySelectorAll("*").forEach((element) => {
+            [...element.attributes].forEach((attribute) => {
+                const name = attribute.name.toLowerCase();
+                if (
+                    name.startsWith("on") ||
+                    name === "srcdoc"
+                ) {
+                    element.removeAttribute(attribute.name);
+                }
+            });
+        });
+        /* Sanitize anchors */
+        doc.querySelectorAll("a").forEach((anchor) => {
+            const href = safeUrl(
+                anchor.getAttribute("href")
+            );
+            if (!href) {
+                anchor.replaceWith(
+                    document.createTextNode(
+                        anchor.textContent || ""
+                    )
+                );
+                return;
+            }
+            anchor.setAttribute("href", href);
+            anchor.setAttribute("target", "_blank");
+            anchor.setAttribute(
+                "rel",
+                "noopener noreferrer nofollow"
+            );
+        });
+        /*
+         * Remove javascript/data/blob URLs from media.
+         * Normal HTTPS images are allowed.
+         */
+        doc.querySelectorAll(
+            "img,video,audio,source"
+        ).forEach((element) => {
+            const attr =
+                element.hasAttribute("src")
+                    ? "src"
+                    : element.hasAttribute("poster")
+                        ? "poster"
+                        : null;
+            if (!attr) return;
+            const value =
+                element.getAttribute(attr);
+            if (!safeUrl(value)) {
+                element.removeAttribute(attr);
+            }
+        });
+        /* ===================================================
+           AUTO LINK PLAIN URLS
+           =================================================== */
+        const walker = doc.createTreeWalker(
+            doc.body,
+            NodeFilter.SHOW_TEXT
+        );
+        const textNodes = [];
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            if (
+                node.parentElement &&
+                !node.parentElement.closest(
+                    "a,pre,code,textarea"
+                )
+            ) {
+                textNodes.push(node);
+            }
+        }
+        const urlRegex =
+            /((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
+        textNodes.forEach((node) => {
+            const text = node.nodeValue || "";
+            let match;
+            let lastIndex = 0;
+            let changed = false;
+            const fragment =
+                document.createDocumentFragment();
+            urlRegex.lastIndex = 0;
+            while ((match = urlRegex.exec(text))) {
+                let url = match[1];
+                let trailing = "";
+                /*
+                 * Keep punctuation outside the anchor.
+                 */
+                while (
+                    /[.,!?;:)\]}]$/.test(url)
+                ) {
+                    trailing =
+                        url.slice(-1) + trailing;
+                    url = url.slice(0, -1);
+                }
+                if (match.index > lastIndex) {
+                    fragment.appendChild(
+                        document.createTextNode(
+                            text.slice(
+                                lastIndex,
+                                match.index
+                            )
+                        )
+                    );
+                }
+                const href = safeUrl(url);
+                if (href) {
+                    const anchor =
+                        document.createElement("a");
+                    anchor.href = href;
+                    anchor.target = "_blank";
+                    anchor.rel =
+                        "noopener noreferrer nofollow";
+                    anchor.textContent = url;
+                    fragment.appendChild(anchor);
+                    if (trailing) {
+                        fragment.appendChild(
+                            document.createTextNode(
+                                trailing
+                            )
+                        );
+                    }
+                    changed = true;
+                } else {
+                    fragment.appendChild(
+                        document.createTextNode(
+                            match[1]
+                        )
+                    );
+                    changed = true;
+                }
+                lastIndex =
+                    match.index + match[1].length;
+            }
+            if (!changed) return;
+            if (lastIndex < text.length) {
+                fragment.appendChild(
+                    document.createTextNode(
+                        text.slice(lastIndex)
+                    )
+                );
+            }
+            node.replaceWith(fragment);
+        });
+        return doc.body.innerHTML;
+    };
+    /* =======================================================
+       VALIDATE SLUG
+       ======================================================= */
+    if (!slug) {
+        box.innerHTML = `
+            <div class="empty">
+                Paste tidak ditemukan.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       LOAD PASTELINK
+       -------------------------------------------------------
+       Jangan gunakan select('*').
+       Ambil hanya kolom yang memang digunakan.
+       ======================================================= */
+    const result = await client.rpc("get_pastelink_by_slug", {
+        p_slug: slug
+    });
+    if (result.error) {
+        console.error(
+            "[PasteLink] Query error:",
+            result.error
+        );
+        box.innerHTML = `
+            <div class="empty">
+                Gagal memuat PasteLink.
+            </div>
+        `;
+        return;
+    }
+    let paste = Array.isArray(result.data)
+        ? result.data[0]
+        : result.data;
+    if (!paste || paste.found === false) {
+        box.innerHTML = `
+            <div class="empty">
+                PasteLink tidak ditemukan.
+            </div>
+        `;
+        return;
+    }
+
+    /* =======================================================
+       PAID / FREE ACCESS
+       ======================================================= */
+    let detail = null;
+    try {
+        const guestToken=String(new URLSearchParams(location.search).get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+        const detailResult = guestToken
+            ? await client.rpc("get_market_item_detail_guest", {p_type:"pastelink",p_id:paste.id,p_guest_token:guestToken})
+            : await client.rpc("get_market_item_detail", {p_type:"pastelink",p_id:paste.id});
+        if (!detailResult.error) {
+            detail = Array.isArray(detailResult.data) ? detailResult.data[0] : detailResult.data;
+            if (detail && detail.found !== false) {
+                paste = { ...paste, ...detail };
+            }
+        }
+    } catch (error) {
+        console.warn("[PasteLink] Detail RPC gagal:", error);
+    }
+
+    const accessType = String(paste.access_type || "free").toLowerCase();
+    const isPaid = accessType === "paid" && Number(paste.price || 0) > 0;
+    const canAccess = !isPaid || paste.can_access === true;
+
+    if (isPaid && !canAccess) {
+        const priceText = Number(paste.price || 0).toLocaleString("id-ID");
+        box.innerHTML = `
+            <article class="justpaste-view premium-view paste-locked">
+                <div class="paste-view-top">
+                    <span class="badge"><i class="fa-solid fa-lock"></i> PasteLink Paid</span>
+                    <span class="paste-live">Marketplace</span>
+                </div>
+                <h1>${esc(paste.title || "PasteLink")}</h1>
+                ${paste.description ? `<p class="paste-description muted">${esc(paste.description)}</p>` : ""}
+                <div class="paste-paywall">
+                    <div class="paste-paywall-icon"><i class="fa-solid fa-lock"></i></div>
+                    <h2>Konten ini berbayar</h2>
+                    <p>Beli akses untuk membuka seluruh isi PasteLink.</p>
+                    <div class="access-limit-note guest-buy-note"><i class="fa-solid fa-user-clock"></i><span>Guest bisa membeli tanpa akun. Login/daftar lebih disarankan agar pembelian tersimpan permanen; akses Guest dapat hilang dan mungkin perlu membeli kembali.</span></div>
+                    <strong class="paste-paywall-price">Rp ${priceText}</strong>
+                    <button type="button" class="btn primary" id="buyPasteLink">
+                        <i class="fa-solid fa-cart-shopping"></i> Beli Akses
+                    </button>
+                </div>
+            </article>
+        `;
+
+        document.getElementById("buyPasteLink")?.addEventListener("click", async () => {
+            let currentUser = null;
+            try { currentUser = typeof window.TC?.user === "function" ? await window.TC.user() : null; } catch (_) {}
+            const button = document.getElementById("buyPasteLink");
+            if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...'; }
+            try {
+                const key='pastele-guest-checkout-token'; let guestToken=localStorage.getItem(key); if(!guestToken){guestToken=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));localStorage.setItem(key,guestToken);} const buy = await client.rpc("buy_market_item_guest", { p_type: "pastelink", p_id: paste.id, p_guest_token: guestToken });
+                if (buy.error) throw buy.error;
+                const orderId = buy.data?.order_id;
+                if (!orderId) throw new Error("Order tidak berhasil dibuat.");
+                location.href = "payment.html?order_id=" + encodeURIComponent(orderId) + "&guest_token=" + encodeURIComponent(guestToken);
+            } catch (error) {
+                window.TC?.toast?.(error?.message || "Gagal membuat order.", "error");
+                if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Beli Akses'; }
+            }
+        });
+        return;
+    }
+
+    /* =======================================================
+       EXPIRATION
+       ======================================================= */
+    if (
+        paste.expires_at &&
+        new Date(paste.expires_at).getTime() <= Date.now()
+    ) {
+        box.innerHTML = `
+            <div class="empty">
+                Paste sudah expired.
+            </div>
+        `;
+        return;
+    }
+    /* =======================================================
+       TAGS
+       ======================================================= */
+    const tags = Array.isArray(paste.tags)
+        ? paste.tags
+        : [];
+    const tagHtml = tags
+        .filter((tag) => String(tag || "").trim())
+        .map(
+            (tag) =>
+                `<span class="paste-tag">#${esc(tag)}</span>`
+        )
+        .join("");
+    /* =======================================================
+       RENDER
+       ======================================================= */
+    const html = linkify(
+        paste.content_html || ""
+    );
+    box.innerHTML = `
+        <article
+            class="justpaste-view premium-view"
+            data-paste-id="${esc(paste.id)}"
+        >
+            <div class="paste-view-top">
+                <span class="badge">
+                    <i class="fa-solid fa-link"></i>
+                    PasteLink
+                </span>
+                <span class="paste-live">
+                    <i class="fa-solid fa-circle"></i>
+                    Published
+                </span>
+            </div>
+            <h1>
+                ${esc(paste.title || "Untitled Paste")}
+            </h1>
+            ${
+                paste.description
+                    ? `
+                        <p class="paste-description muted">
+                            ${esc(paste.description)}
+                        </p>
+                    `
+                    : ""
+            }
+            <div class="rich-output">
+                ${html}
+            </div>
+            ${
+                tagHtml
+                    ? `
+                        <div class="paste-tags">
+                            ${tagHtml}
+                        </div>
+                    `
+                    : ""
+            }
+            <div class="paste-actions">
+                <button
+                    type="button"
+                    class="btn"
+                    id="plike"
+                >
+                    <i class="fa-regular fa-heart"></i>
+                    Like
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    id="pshare"
+                >
+                    <i class="fa-solid fa-share-nodes"></i>
+                    Share
+                </button>
+            </div>
+        </article>
+    `;
+    /* =======================================================
+       VIEW TRACKING
+       -------------------------------------------------------
+       RPC memang tersedia di SQL.
+       Jangan block UI kalau analytics gagal.
+       ======================================================= */
+    try {
+        const viewResult = await client.rpc(
+            "increment_paste_view",
+            {
+                p_id: paste.id
+            }
+        );
+        if (viewResult.error) {
+            console.warn(
+                "[PasteLink] increment_paste_view:",
+                viewResult.error
+            );
+        }
+    } catch (error) {
+        console.warn(
+            "[PasteLink] View RPC gagal:",
+            error
+        );
+    }
+    try {
+        const analyticsResult = await client.rpc(
+            "record_content_view",
+            {
+                p_owner: paste.user_id,
+                p_target_type: "pastelink",
+                p_target_id: paste.id
+            }
+        );
+        if (analyticsResult.error) {
+            console.warn(
+                "[PasteLink] record_content_view:",
+                analyticsResult.error
+            );
+        }
+    } catch (error) {
+        console.warn(
+            "[PasteLink] Analytics RPC gagal:",
+            error
+        );
+    }
+    /* =======================================================
+       SHARE
+       ======================================================= */
+    const shareButton =
+        document.getElementById("pshare");
+    shareButton?.addEventListener(
+        "click",
+        async () => {
+            const url = location.href;
+            let copied = false;
+            try {
+                if (
+                    navigator.clipboard &&
+                    window.isSecureContext
+                ) {
+                    await navigator.clipboard.writeText(
+                        url
+                    );
+                    copied = true;
+                }
+            } catch {
+                copied = false;
+            }
+            /*
+             * Fallback Web Share API.
+             */
+            if (
+                !copied &&
+                navigator.share
+            ) {
+                try {
+                    await navigator.share({
+                        title:
+                            paste.title ||
+                            "PasteLink",
+                        url
+                    });
+                } catch {
+                    /* User cancelled share */
+                }
+            }
+            /* Track share */
+            try {
+                const shareResult =
+                    await client.rpc(
+                        "track_analytics",
+                        {
+                            p_owner: paste.user_id,
+                            p_event_type: "share",
+                            p_target_type: "pastelink",
+                            p_target_id: paste.id
+                        }
+                    );
+                if (shareResult.error) {
+                    console.warn(
+                        "[PasteLink] Share analytics:",
+                        shareResult.error
+                    );
+                }
+            } catch (error) {
+                console.warn(
+                    "[PasteLink] Share RPC gagal:",
+                    error
+                );
+            }
+            if (window.TC?.toast) {
+                TC.toast(
+                    copied
+                        ? "Link disalin"
+                        : "Link siap dibagikan",
+                    "success"
+                );
+            }
+        }
+    );
+    /* =======================================================
+       LIKE
+       ======================================================= */
+    const likeButton =
+        document.getElementById("plike");
+    likeButton?.addEventListener(
+        "click",
+        async () => {
+            let currentUser = null;
+            try {
+                if (
+                    window.TC &&
+                    typeof TC.user === "function"
+                ) {
+                    currentUser = await TC.user();
+                }
+            } catch {
+                currentUser = null;
+            }
+            if (!currentUser?.id) {
+                location.href =
+                    "login.html";
+                return;
+            }
+            likeButton.disabled = true;
+            try {
+                const likeResult =
+                    await client.rpc(
+                        "toggle_content_like",
+                        {
+                            p_owner: paste.user_id,
+                            p_target_type: "pastelink",
+                            p_target_id: paste.id
+                        }
+                    );
+                if (likeResult.error) {
+                    throw likeResult.error;
+                }
+                const liked =
+                    Boolean(
+                        likeResult.data?.liked
+                    );
+                likeButton.innerHTML = liked
+                    ? `
+                        <i class="fa-solid fa-heart"></i>
+                        Liked
+                    `
+                    : `
+                        <i class="fa-regular fa-heart"></i>
+                        Like
+                    `;
+                likeButton.classList.toggle(
+                    "active",
+                    liked
+                );
+                if (window.TC?.toast) {
+                    TC.toast(
+                        liked
+                            ? "Ditambahkan ke suka"
+                            : "Like dibatalkan",
+                        "success"
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "[PasteLink] Like error:",
+                    error
+                );
+                if (window.TC?.toast) {
+                    TC.toast(
+                        error?.message ||
+                            "Gagal memproses like.",
+                        "error"
+                    );
+                }
+            } finally {
+                likeButton.disabled = false;
+            }
+        }
+    );
+});
+
+
+
+
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
-/* PasTele clean notification bridge */
-window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
-  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
-  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
-  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
-  container.appendChild(el); setTimeout(()=>el.remove(),4200);
-};

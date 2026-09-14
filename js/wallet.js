@@ -2586,12 +2586,3175 @@ window.PASTELE_CONFIG = Object.freeze({
 
 })();
 
+/* ============================================================
+   PasTele — GLOBAL SESSION GUARD
+   - 24 hours of INACTIVITY => sign out
+   - Activity refreshes the inactivity timer
+   - Works even when Supabase/client scripts finish loading late
+   - Public pages are never blocked
+   ============================================================ */
+(() => {
+  "use strict";
+
+  const INACTIVITY_MS = 24 * 60 * 60 * 1000;
+  const ACTIVITY_KEY = "pastele_last_activity";
+  const PUBLIC = new Set([
+    "index.html", "login.html", "register.html",
+    "forgot-password.html", "reset-password.html",
+    "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "about.html", "terms.html", "privacy.html"
+  ]);
+
+  const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
+  const isPublic = !isAdminPath && PUBLIC.has(file);
+  let locked = false;
+  let initialized = false;
+  let timer = null;
+
+  function setActivity() {
+    if (locked || isPublic) return;
+    try {
+      localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+    } catch (_) {}
+  }
+
+  function getLastActivity() {
+    try {
+      const value = Number(localStorage.getItem(ACTIVITY_KEY) || 0);
+      return Number.isFinite(value) ? value : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function isExpired() {
+    const last = getLastActivity();
+    return last > 0 && (Date.now() - last >= INACTIVITY_MS);
+  }
+
+  function loginUrl() {
+    return location.pathname.includes("/admin/") ? "../login.html" : "login.html";
+  }
+
+  function showExpired() {
+    if (document.getElementById("pt-session-modal")) return;
+
+    locked = true;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #pt-session-modal{
+        position:fixed;inset:0;z-index:2147483647;
+        display:grid;place-items:center;padding:20px;
+        background:rgba(2,6,23,.72);
+        backdrop-filter:blur(14px);
+      }
+      #pt-session-modal .pt-session-box{
+        width:min(440px,100%);
+        padding:32px 26px;
+        border:1px solid rgba(148,163,184,.22);
+        border-radius:26px;
+        text-align:center;
+        background:var(--surface,#fff);
+        color:var(--text,#0f172a);
+        box-shadow:0 30px 100px rgba(0,0,0,.35);
+      }
+      #pt-session-modal .pt-session-icon{
+        width:66px;height:66px;margin:0 auto 16px;
+        display:grid;place-items:center;border-radius:20px;
+        background:rgba(99,91,255,.12);
+        color:#635bff;font-size:27px;
+      }
+      #pt-session-modal h2{margin:0 0 9px;font-size:23px}
+      #pt-session-modal p{margin:0 auto 22px;max-width:350px;
+        color:var(--muted,#64748b);line-height:1.65}
+      #pt-session-modal a{
+        display:flex;align-items:center;justify-content:center;gap:9px;
+        min-height:48px;padding:12px 18px;border-radius:14px;
+        background:linear-gradient(135deg,#635bff,#8b5cf6);
+        color:#fff!important;text-decoration:none;font-weight:800;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const modal = document.createElement("div");
+    modal.id = "pt-session-modal";
+    modal.innerHTML = `
+      <div class="pt-session-box" role="dialog" aria-modal="true">
+        <div class="pt-session-icon"><i class="fa-solid fa-lock"></i></div>
+        <h2>Sesi Berakhir</h2>
+        <p>Sesi kamu berakhir karena tidak ada aktivitas selama 24 jam. Silakan login kembali untuk melanjutkan.</p>
+        <a href="${loginUrl()}"><i class="fa-solid fa-right-to-bracket"></i> Login Kembali</a>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  async function getClient() {
+    if (window.sb?.auth) return window.sb;
+
+    // Some pages load their bundled client after this guard.
+    for (let i = 0; i < 80; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (window.sb?.auth) return window.sb;
+    }
+    return null;
+  }
+
+  async function signOutAndLock() {
+    if (locked) return;
+    try {
+      const client = await getClient();
+      if (client?.auth) {
+        await client.auth.signOut({ scope: "global" });
+      }
+    } catch (error) {
+      console.warn("[PasTele] Session signOut:", error);
+    }
+    try { localStorage.removeItem(ACTIVITY_KEY); } catch (_) {}
+    showExpired();
+  }
+
+  function autoTheme() {
+    // Automatic day/night theme:
+    // 06:00–17:59 = light, 18:00–05:59 = dark.
+    try {
+      const hour = new Date().getHours();
+      const dark = hour >= 18 || hour < 6;
+      const root = document.documentElement;
+      root.dataset.theme = dark ? "dark" : "light";
+      root.dataset.themeMode = "auto";
+      root.style.colorScheme = dark ? "dark" : "light";
+    } catch (_) {}
+  }
+
+  function bindActivity() {
+    if (initialized) return;
+    initialized = true;
+
+    const events = ["click", "keydown", "touchstart", "pointerdown", "scroll"];
+    for (const event of events) {
+      document.addEventListener(event, setActivity, {
+        passive: true,
+        capture: true
+      });
+    }
+
+    // Also refresh when the user returns to the tab.
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        if (isExpired()) signOutAndLock();
+        else setActivity();
+      }
+    });
+
+    window.addEventListener("pageshow", () => {
+      if (isExpired()) signOutAndLock();
+      else setActivity();
+    });
+  }
+
+  async function init() {
+    autoTheme();
+
+    if (isPublic) return;
+
+    const client = await getClient();
+    if (!client?.auth) {
+      console.warn("[PasTele] Supabase client not available; session guard could not start.");
+      return;
+    }
+
+    try {
+      const result = await client.auth.getSession();
+      const session = result?.data?.session;
+
+      if (!session) {
+        showExpired();
+        return;
+      }
+
+      if (isExpired()) {
+        await signOutAndLock();
+        return;
+      }
+
+      setActivity();
+      bindActivity();
+
+      timer = window.setInterval(() => {
+        if (isExpired()) signOutAndLock();
+      }, 60 * 1000);
+
+      client.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT") showExpired();
+        if (event === "SIGNED_IN" && !locked) setActivity();
+      });
+    } catch (error) {
+      console.warn("[PasTele] Session guard:", error);
+    }
+  }
+
+  window.PasTeleSession = Object.freeze({
+    touch: setActivity,
+    expired: isExpired,
+    check: init,
+    autoTheme
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+
+/* PasTele — Live notification toast
+ * Shows new user notifications as a clean floating card for 3 seconds.
+ * Click opens the notification target URL when one is provided.
+ */
+(() => {
+  'use strict';
+  if (window.__PASTELE_NOTIFICATION_TOAST__) return;
+  window.__PASTELE_NOTIFICATION_TOAST__ = true;
+
+  const state = { userId: null, channel: null, seen: new Set(), poll: null };
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+  function ensureStyles() {
+    if (document.getElementById('pt-live-notification-style')) return;
+    const s = document.createElement('style');
+    s.id = 'pt-live-notification-style';
+    s.textContent = `
+      #ptLiveNotifications{position:fixed;top:18px;right:18px;width:min(410px,calc(100vw - 24px));z-index:2147483000;display:grid;gap:10px;pointer-events:none}
+      .pt-live-notice{pointer-events:auto;display:grid;grid-template-columns:42px 1fr 24px;gap:11px;align-items:start;padding:13px 14px;border:1px solid color-mix(in srgb,var(--primary,#229ed9) 22%,var(--line,#e5e7eb));border-radius:17px;background:color-mix(in srgb,var(--surface,#fff) 94%,transparent);color:var(--text,#14212b);box-shadow:0 18px 55px rgba(15,23,42,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transform:translateY(-12px) scale(.98);opacity:0;transition:transform .22s ease,opacity .22s ease;cursor:pointer;overflow:hidden}
+      html[data-theme="dark"] .pt-live-notice{box-shadow:0 20px 65px rgba(0,0,0,.42);border-color:rgba(148,163,184,.18)}
+      .pt-live-notice.is-in{transform:none;opacity:1}.pt-live-notice.is-out{transform:translateY(-10px) scale(.98);opacity:0}
+      .pt-live-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary,#229ed9),#7c5cff);color:#fff;font-size:16px}
+      .pt-live-copy{min-width:0}.pt-live-copy strong{display:block;font-size:13px;line-height:1.3;margin:1px 0 4px}.pt-live-copy span{display:block;font-size:12px;line-height:1.45;color:var(--muted,#718293);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pt-live-time{display:block;margin-top:6px;font-size:10px;color:var(--muted,#718293);font-weight:700}.pt-live-close{border:0;background:transparent;color:var(--muted,#718293);font-size:14px;cursor:pointer;padding:2px}.pt-live-notice:hover{transform:translateY(-2px);box-shadow:0 22px 65px rgba(15,23,42,.22)}
+      @media(max-width:600px){#ptLiveNotifications{top:10px;right:10px;width:calc(100vw - 20px)}.pt-live-notice{border-radius:15px}}
+      @media(prefers-reduced-motion:reduce){.pt-live-notice{transition:none}}
+    `;
+    document.head.appendChild(s);
+  }
+
+  function root() {
+    let el = document.getElementById('ptLiveNotifications');
+    if (!el) { el = document.createElement('div'); el.id = 'ptLiveNotifications'; el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+    return el;
+  }
+
+  function icon(type) {
+    return ({publish:'fa-bullhorn',purchase:'fa-bag-shopping',view:'fa-eye',sale:'fa-circle-check',like:'fa-heart',withdrawal:'fa-wallet'}[type] || 'fa-bell');
+  }
+
+  function remove(card) {
+    if (!card) return;
+    card.classList.remove('is-in'); card.classList.add('is-out');
+    setTimeout(() => card.remove(), 230);
+  }
+
+  function show(n) {
+    if (!n?.id || state.seen.has(n.id)) return;
+    state.seen.add(n.id);
+    const target = String(n.link_url || '').trim();
+    const card = document.createElement('article');
+    card.className = 'pt-live-notice';
+    card.setAttribute('role', target ? 'link' : 'status');
+    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc(icon(n.notification_type))}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja${target ? ' · Ketuk untuk membuka' : ''}</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
+    const close = card.querySelector('.pt-live-close');
+    close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
+    card.addEventListener('click', async () => {
+      if (target) window.location.assign(new URL(target, window.location.origin + "/").href);
+      try { await window.sb?.from('notifications').update({is_read:true}).eq('id',n.id).eq('user_id',state.userId); } catch (_) {}
+      remove(card);
+    });
+    root().prepend(card);
+    requestAnimationFrame(() => card.classList.add('is-in'));
+    setTimeout(() => remove(card), 3000);
+  }
+
+  async function init() {
+    if (!window.sb) return false;
+    let u = null;
+    try { u = (await window.sb.auth.getUser()).data?.user || null; } catch (_) { return false; }
+    if (!u?.id) return false;
+    state.userId = u.id;
+    ensureStyles(); root();
+
+    const channelName = `pastele-live-notifications-${u.id}`;
+    try {
+      state.channel = window.sb.channel(channelName)
+        .on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${u.id}`}, payload => show(payload.new))
+        .subscribe();
+    } catch (e) { console.warn('[PasTele] Realtime notification unavailable:', e); }
+
+    // Lightweight fallback for browsers/networks where Realtime is delayed.
+    let last = new Date().toISOString();
+    state.poll = setInterval(async () => {
+      try {
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        if (r.error) return;
+        for (const n of (r.data || [])) show(n);
+        if (r.data?.length) last = r.data[r.data.length - 1].created_at;
+      } catch (_) {}
+    }, 15000);
+    return true;
+  }
+
+  function boot() {
+    if (!document.body) return;
+    const run = () => { let tries=0; const tick=()=>{ if (window.sb) init(); else if (++tries<30) setTimeout(tick,200); }; tick(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',run,{once:true}); else run();
+  }
+  boot();
+})();
+
+/* PasTele — Global UI interaction safety layer */
+(function () {
+  'use strict';
+
+  function isModifiedClick(event) {
+    return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+  }
+
+  function getDestination(el) {
+    return el?.dataset?.href || el?.dataset?.url || el?.getAttribute?.('data-link') || null;
+  }
+
+  document.addEventListener('click', function (event) {
+    if (isModifiedClick(event)) return;
+
+    const trigger = event.target.closest('[data-href],[data-url],[data-link]');
+    if (!trigger || trigger.disabled || trigger.getAttribute('aria-disabled') === 'true') return;
+
+    const destination = getDestination(trigger);
+    if (!destination) return;
+
+    if (trigger.matches('a[href]')) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  document.addEventListener('keydown', function (event) {
+    const el = event.target.closest?.('[data-href],[data-url],[data-link][role="button"]');
+    if (!el) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    const destination = getDestination(el);
+    if (!destination) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  // Make explicitly marked cards keyboard accessible without guessing routes.
+  document.querySelectorAll('[data-href],[data-url],[data-link]').forEach(function (el) {
+    if (!el.hasAttribute('tabindex') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('tabindex', '0');
+    }
+    if (!el.hasAttribute('role') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('role', 'button');
+    }
+  });
+})();
+
+
+
+/* =========================================================
+   PasTele — Wallet
+   FINAL PREMIUM
+   Real Supabase data
+   Existing schema only
+   Matched with wallet.html
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
+
+
+    /* =====================================================
+       DOM HELPERS
+       ===================================================== */
+
+    const $ = (id) => {
+        return document.getElementById(id);
+    };
+
+
+    const $$ = (selector, root = document) => {
+        try {
+            return Array.from(
+                root.querySelectorAll(selector)
+            );
+        } catch {
+            return [];
+        }
+    };
+
+
+    /* =====================================================
+       DOM
+       ===================================================== */
+
+    const availableEl =
+        $("available");
+
+    const availableCardEl =
+        $("availableCard");
+
+    const balanceHeroValueEl =
+        document.querySelector(
+            ".wallet-balance-hero .wallet-balance-value"
+        );
+
+    const pendingEl =
+        $("pending");
+
+    const incomeEl =
+        $("income");
+
+    const todayEl =
+        $("today");
+
+    const breakdownEl =
+        $("breakdown");
+
+    const recentActivityEl =
+        $("recentActivity");
+
+    const refreshBtn =
+        $("refreshWallet");
+
+    const copyBalanceBtn =
+        $("copyBalance");
+
+    const pendingCard =
+        $("pendingCard");
+
+    const withdrawPanel =
+        $("withdrawStatusPanel");
+
+
+    /* =====================================================
+       STATE
+       ===================================================== */
+
+    let profile = null;
+
+    let wallet = null;
+
+    let walletRows = [];
+
+    let transactionRows = [];
+
+    let allRows = [];
+
+    let isLoading = false;
+
+    let pendingModal = null;
+
+
+    /* =====================================================
+       GLOBALS
+       ===================================================== */
+
+    const getTC = () => {
+        return window.TC || {};
+    };
+
+
+    const getSB = () => {
+        return (
+            window.sb ||
+            window.supabaseClient ||
+            null
+        );
+    };
+
+
+    /* =====================================================
+       MONEY
+       ===================================================== */
+
+    const money = (value) => {
+
+        const number =
+            Number(value ?? 0);
+
+        const amount =
+            Number.isFinite(number)
+                ? number
+                : 0;
+
+        const TC =
+            getTC();
+
+        if (
+            typeof TC.money ===
+            "function"
+        ) {
+            try {
+                return TC.money(
+                    amount
+                );
+            } catch {}
+        }
+
+        return new Intl.NumberFormat(
+            "id-ID",
+            {
+                style: "currency",
+                currency: "IDR",
+                maximumFractionDigits: 0
+            }
+        ).format(amount);
+    };
+
+
+    /* =====================================================
+       TOAST
+       ===================================================== */
+
+    const showToast = (
+        message,
+        type = "info"
+    ) => {
+
+        const TC =
+            getTC();
+
+        if (
+            typeof TC.toast ===
+            "function"
+        ) {
+            try {
+
+                TC.toast(
+                    message,
+                    type
+                );
+
+                return;
+
+            } catch {}
+        }
+
+
+        const toast =
+            $("toast");
+
+        if (!toast) {
+            return;
+        }
+
+
+        toast.textContent =
+            String(
+                message || ""
+            );
+
+
+        toast.classList.add(
+            "show"
+        );
+
+
+        clearTimeout(
+            toast._walletTimer
+        );
+
+
+        toast._walletTimer =
+            setTimeout(
+                () => {
+
+                    toast.classList.remove(
+                        "show"
+                    );
+
+                },
+                2800
+            );
+    };
+
+
+    /* =====================================================
+       ESCAPE HTML
+       ===================================================== */
+
+    const esc = (value) => {
+
+        const TC =
+            getTC();
+
+        if (
+            typeof TC.esc ===
+            "function"
+        ) {
+            try {
+
+                return TC.esc(
+                    String(
+                        value ?? ""
+                    )
+                );
+
+            } catch {}
+        }
+
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    };
+
+
+    /* =====================================================
+       AMOUNT
+       ===================================================== */
+
+    const amountOf = (
+        row
+    ) => {
+
+        const value =
+            row?.net_amount ??
+            row?.amount ??
+            row?.value ??
+            0;
+
+        const amount =
+            Number(value);
+
+        return Number.isFinite(
+            amount
+        )
+            ? amount
+            : 0;
+    };
+
+
+    /* =====================================================
+       TYPE NORMALIZER
+       ===================================================== */
+
+    const normalizeType = (
+        value
+    ) => {
+
+        const type =
+            String(
+                value || ""
+            )
+                .trim()
+                .toLowerCase()
+                .replace(
+                    /[\s-]+/g,
+                    "_"
+                );
+
+
+        if (
+            type.includes(
+                "pastelink"
+            ) ||
+            type.includes(
+                "paste_link"
+            ) ||
+            type === "link"
+        ) {
+            return "link";
+        }
+
+
+        if (
+            type.includes(
+                "code"
+            ) ||
+            type === "file"
+        ) {
+            return "code";
+        }
+
+
+        if (
+            type.includes(
+                "channel"
+            ) ||
+            type.includes(
+                "broadcast"
+            )
+        ) {
+            return "channel";
+        }
+
+
+        if (
+            type.includes(
+                "group"
+            )
+        ) {
+            return "group";
+        }
+
+
+        return "other";
+    };
+
+
+    /* =====================================================
+       TYPE LABEL
+       ===================================================== */
+
+    const typeLabel = (
+        value
+    ) => {
+
+        switch (
+            normalizeType(value)
+        ) {
+
+            case "link":
+                return "PasteLink";
+
+            case "code":
+                return "Code";
+
+            case "channel":
+                return "Channel";
+
+            case "group":
+                return "Group";
+
+            default:
+                return "Transaksi";
+        }
+    };
+
+
+    /* =====================================================
+       TYPE ICON
+       ===================================================== */
+
+    const typeIcon = (
+        value
+    ) => {
+
+        switch (
+            normalizeType(value)
+        ) {
+
+            case "link":
+                return "fa-link";
+
+            case "code":
+                return "fa-code";
+
+            case "channel":
+                return "fa-broadcast-tower";
+
+            case "group":
+                return "fa-users";
+
+            default:
+                return "fa-wallet";
+        }
+    };
+
+
+    /* =====================================================
+       TYPE CLASS
+       ===================================================== */
+
+    const typeClass = (
+        value
+    ) => {
+
+        switch (
+            normalizeType(value)
+        ) {
+
+            case "link":
+                return "wallet-type-link";
+
+            case "code":
+                return "wallet-type-code";
+
+            case "channel":
+                return "wallet-type-channel";
+
+            case "group":
+                return "wallet-type-group";
+
+            default:
+                return "wallet-type-other";
+        }
+    };
+
+
+    /* =====================================================
+       STATUS
+       ===================================================== */
+
+    const statusOf = (
+        row
+    ) => {
+
+        return String(
+            row?.status ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+    };
+
+
+    /* =====================================================
+       STATUS HELPERS
+       ===================================================== */
+
+    const isGoodTransaction = (
+        row
+    ) => {
+
+        const status =
+            statusOf(row);
+
+        return [
+            "completed",
+            "complete",
+            "paid",
+            "available",
+            "success",
+            "successful",
+            "succeeded"
+        ].includes(
+            status
+        )
+        &&
+        amountOf(row) > 0;
+    };
+
+
+    const isPendingTransaction = (
+        row
+    ) => {
+
+        const status =
+            statusOf(row);
+
+        return [
+            "pending",
+            "waiting",
+            "hold",
+            "held",
+            "processing"
+        ].includes(
+            status
+        )
+        &&
+        amountOf(row) > 0;
+    };
+
+
+    const isFailedTransaction = (
+        row
+    ) => {
+
+        return [
+            "failed",
+            "cancelled",
+            "canceled",
+            "rejected",
+            "declined",
+            "expired"
+        ].includes(
+            statusOf(row)
+        );
+    };
+
+
+    /* =====================================================
+       DATE
+       ===================================================== */
+
+    const formatDate = (
+        value
+    ) => {
+
+        if (!value) {
+            return "-";
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "-";
+        }
+
+
+        return date.toLocaleString(
+            "id-ID",
+            {
+                dateStyle: "medium",
+                timeStyle: "short"
+            }
+        );
+    };
+
+
+    const isToday = (
+        value
+    ) => {
+
+        if (!value) {
+            return false;
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return false;
+        }
+
+
+        const now =
+            new Date();
+
+
+        return (
+            date.getFullYear() ===
+                now.getFullYear()
+            &&
+            date.getMonth() ===
+                now.getMonth()
+            &&
+            date.getDate() ===
+                now.getDate()
+        );
+    };
+
+
+    /* =====================================================
+       GET PROFILE
+       ===================================================== */
+
+    const getProfile = async () => {
+
+        const TC =
+            getTC();
+
+
+        if (
+            typeof TC.profile ===
+            "function"
+        ) {
+            try {
+
+                const result =
+                    await TC.profile();
+
+
+                if (
+                    result?.id
+                ) {
+                    return result;
+                }
+
+
+                if (
+                    result?.profile?.id
+                ) {
+                    return result.profile;
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "TC.profile:",
+                    error?.message ||
+                    error
+                );
+            }
+        }
+
+
+        const sb =
+            getSB();
+
+
+        if (
+            sb?.auth?.getUser
+        ) {
+
+            const {
+                data,
+                error
+            } =
+                await sb.auth.getUser();
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            if (
+                data?.user?.id
+            ) {
+                return data.user;
+            }
+        }
+
+
+        return null;
+    };
+
+
+    /* =====================================================
+       LOADING STATE
+       ===================================================== */
+
+    const setLoadingState = (
+        loading
+    ) => {
+
+        isLoading =
+            Boolean(loading);
+
+
+        if (refreshBtn) {
+
+            refreshBtn.disabled =
+                isLoading;
+
+
+            refreshBtn.classList.toggle(
+                "is-loading",
+                isLoading
+            );
+
+
+            const icon =
+                refreshBtn.querySelector(
+                    "i"
+                );
+
+
+            if (icon) {
+
+                icon.classList.toggle(
+                    "fa-spin",
+                    isLoading
+                );
+            }
+        }
+
+
+        if (pendingCard) {
+
+            pendingCard.disabled =
+                isLoading;
+
+
+            pendingCard.classList.toggle(
+                "is-loading",
+                isLoading
+            );
+        }
+
+
+        if (breakdownEl) {
+
+            breakdownEl.setAttribute(
+                "aria-busy",
+                isLoading
+                    ? "true"
+                    : "false"
+            );
+        }
+
+
+        if (recentActivityEl) {
+
+            recentActivityEl.setAttribute(
+                "aria-busy",
+                isLoading
+                    ? "true"
+                    : "false"
+            );
+        }
+    };
+
+
+    /* =====================================================
+       RENDER LOADING
+       ===================================================== */
+
+    const renderLoading = () => {
+
+        if (availableEl) {
+            availableEl.textContent =
+                "—";
+        }
+
+
+        if (availableCardEl) {
+            availableCardEl.textContent =
+                "—";
+        }
+
+
+        if (pendingEl) {
+            pendingEl.textContent =
+                "—";
+        }
+
+
+        if (incomeEl) {
+            incomeEl.textContent =
+                "—";
+        }
+
+
+        if (todayEl) {
+            todayEl.textContent =
+                "—";
+        }
+
+
+        if (breakdownEl) {
+
+            breakdownEl.innerHTML = `
+                <div class="wallet-loading">
+
+                    <span class="wallet-loading-icon">
+
+                        <i
+                            class="fa-solid fa-spinner fa-spin"
+                            aria-hidden="true"
+                        ></i>
+
+                    </span>
+
+                    <span>
+                        Memuat statistik...
+                    </span>
+
+                </div>
+            `;
+        }
+
+
+        if (recentActivityEl) {
+
+            recentActivityEl.innerHTML = `
+                <div class="wallet-loading">
+
+                    <span class="wallet-loading-icon">
+
+                        <i
+                            class="fa-solid fa-spinner fa-spin"
+                            aria-hidden="true"
+                        ></i>
+
+                    </span>
+
+                    <span>
+                        Memuat aktivitas...
+                    </span>
+
+                </div>
+            `;
+        }
+    };
+
+
+    /* =====================================================
+       ERROR STATE
+       ===================================================== */
+
+    const renderError = (
+        message
+    ) => {
+
+        if (availableEl) {
+            availableEl.textContent =
+                "—";
+        }
+
+
+        if (availableCardEl) {
+            availableCardEl.textContent =
+                "—";
+        }
+
+
+        if (pendingEl) {
+            pendingEl.textContent =
+                "—";
+        }
+
+
+        if (incomeEl) {
+            incomeEl.textContent =
+                "—";
+        }
+
+
+        if (todayEl) {
+            todayEl.textContent =
+                "—";
+        }
+
+
+        if (breakdownEl) {
+
+            breakdownEl.innerHTML = `
+                <div class="wallet-state">
+
+                    <div class="wallet-state-icon">
+
+                        <i
+                            class="fa-solid fa-triangle-exclamation"
+                            aria-hidden="true"
+                        ></i>
+
+                    </div>
+
+
+                    <strong>
+                        Wallet gagal dimuat
+                    </strong>
+
+
+                    <span>
+                        ${esc(
+                            message ||
+                            "Terjadi kesalahan saat mengambil data keuangan."
+                        )}
+                    </span>
+
+
+                    <button
+                        class="btn primary"
+                        id="walletRetry"
+                        type="button"
+                    >
+
+                        <i
+                            class="fa-solid fa-rotate"
+                            aria-hidden="true"
+                        ></i>
+
+                        Coba Lagi
+
+                    </button>
+
+                </div>
+            `;
+        }
+
+
+        if (recentActivityEl) {
+
+            recentActivityEl.innerHTML = `
+                <div class="wallet-activity-empty">
+
+                    <span class="wallet-activity-empty-icon">
+
+                        <i
+                            class="fa-solid fa-circle-exclamation"
+                            aria-hidden="true"
+                        ></i>
+
+                    </span>
+
+
+                    <div>
+
+                        <strong>
+                            Aktivitas tidak tersedia
+                        </strong>
+
+
+                        <span>
+                            Muat ulang halaman untuk mencoba lagi.
+                        </span>
+
+                    </div>
+
+                </div>
+            `;
+        }
+
+
+        $("walletRetry")
+            ?.addEventListener(
+                "click",
+                () => loadWallet()
+            );
+    };
+
+
+    /* =====================================================
+       FETCH WALLET DATA
+       ===================================================== */
+
+    const fetchWalletData =
+        async () => {
+
+            const sb =
+                getSB();
+
+
+            if (!sb) {
+
+                throw new Error(
+                    "Supabase belum tersedia. Periksa konfigurasi."
+                );
+            }
+
+
+            if (!profile?.id) {
+
+                throw new Error(
+                    "ID akun tidak ditemukan."
+                );
+            }
+
+
+            /*
+             * Release matured wallet balances.
+             *
+             * Non-blocking because this RPC
+             * may not be available for every role.
+             */
+            try {
+
+                const {
+                    error
+                } =
+                    await sb.rpc(
+                        "release_matured_wallet"
+                    );
+
+
+                if (error) {
+
+                    console.warn(
+                        "release_matured_wallet:",
+                        error.message
+                    );
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "release_matured_wallet:",
+                    error?.message ||
+                    error
+                );
+            }
+
+
+            const [
+                walletResponse,
+                walletTransactionsResponse,
+                transactionsResponse
+            ] =
+                await Promise.all([
+
+                    sb
+                        .from("wallets")
+                        .select("*")
+                        .eq(
+                            "user_id",
+                            profile.id
+                        )
+                        .maybeSingle(),
+
+
+                    sb
+                        .from(
+                            "wallet_transactions"
+                        )
+                        .select("*")
+                        .eq(
+                            "user_id",
+                            profile.id
+                        )
+                        .order(
+                            "created_at",
+                            {
+                                ascending:
+                                    false
+                            }
+                        )
+                        .limit(500),
+
+
+                    sb
+                        .from("transactions")
+                        .select("*")
+                        .eq(
+                            "user_id",
+                            profile.id
+                        )
+                        .order(
+                            "created_at",
+                            {
+                                ascending:
+                                    false
+                            }
+                        )
+                        .limit(500)
+                ]);
+
+
+            if (
+                walletResponse?.error
+            ) {
+                throw walletResponse.error;
+            }
+
+
+            if (
+                walletTransactionsResponse?.error
+            ) {
+                throw walletTransactionsResponse.error;
+            }
+
+
+            if (
+                transactionsResponse?.error
+            ) {
+                throw transactionsResponse.error;
+            }
+
+
+            return {
+
+                wallet:
+                    walletResponse?.data ||
+                    null,
+
+
+                walletRows:
+                    Array.isArray(
+                        walletTransactionsResponse?.data
+                    )
+                        ? walletTransactionsResponse.data
+                        : [],
+
+
+                transactionRows:
+                    Array.isArray(
+                        transactionsResponse?.data
+                    )
+                        ? transactionsResponse.data
+                        : []
+            };
+        };
+
+
+    /* =====================================================
+       BALANCE
+       ===================================================== */
+
+    const getAvailableBalance = (
+        walletData
+    ) => {
+
+        return Number(
+            walletData?.available_balance ??
+            walletData?.balance ??
+            profile?.balance ??
+            0
+        ) || 0;
+    };
+
+
+    const getPendingBalance = (
+        walletData
+    ) => {
+
+        return Number(
+            walletData?.pending_balance ??
+            0
+        ) || 0;
+    };
+
+
+    const renderBalances = (
+        walletData
+    ) => {
+
+        const available =
+            getAvailableBalance(
+                walletData
+            );
+
+
+        const pending =
+            getPendingBalance(
+                walletData
+            );
+
+
+        if (availableEl) {
+
+            availableEl.textContent =
+                money(
+                    available
+                );
+        }
+
+
+        if (availableCardEl) {
+
+            availableCardEl.textContent =
+                money(
+                    available
+                );
+        }
+
+
+        if (pendingEl) {
+
+            pendingEl.textContent =
+                money(
+                    pending
+                );
+        }
+    };
+
+
+    /* =====================================================
+       INCOME ROW FILTER
+       ===================================================== */
+
+    const isIncomeRow = (
+        row
+    ) => {
+
+        if (!row) {
+            return false;
+        }
+
+
+        const amount =
+            amountOf(row);
+
+
+        if (amount <= 0) {
+            return false;
+        }
+
+
+        if (
+            isGoodTransaction(row)
+        ) {
+            return true;
+        }
+
+
+        const type =
+            String(
+                row?.type ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        if (
+            /^sell_/i.test(type) &&
+            ![
+                "failed",
+                "cancelled",
+                "canceled",
+                "rejected",
+                "declined",
+                "expired"
+            ].includes(
+                statusOf(row)
+            )
+        ) {
+            return true;
+        }
+
+
+        return false;
+    };
+
+
+    /* =====================================================
+       DEDUPLICATE SELL TRANSACTIONS
+       ===================================================== */
+
+    const buildIncomeRows = () => {
+
+        const result = [];
+
+        const seen = new Set();
+
+
+        /*
+         * wallet_transactions first.
+         */
+        for (
+            const row of walletRows
+        ) {
+
+            if (
+                !isIncomeRow(row)
+            ) {
+                continue;
+            }
+
+
+            const key =
+                [
+                    row?.id,
+                    row?.reference,
+                    row?.transaction_id,
+                    row?.created_at,
+                    amountOf(row),
+                    row?.type
+                ]
+                    .filter(
+                        value =>
+                            value !==
+                                undefined &&
+                            value !==
+                                null
+                    )
+                    .join("|");
+
+
+            if (
+                key &&
+                seen.has(key)
+            ) {
+                continue;
+            }
+
+
+            if (key) {
+                seen.add(key);
+            }
+
+
+            result.push(row);
+        }
+
+
+        /*
+         * transactions sell_*.
+         */
+        for (
+            const row of transactionRows
+        ) {
+
+            if (
+                !/^sell_/i.test(
+                    String(
+                        row?.type ||
+                        ""
+                    )
+                )
+            ) {
+                continue;
+            }
+
+
+            if (
+                !isIncomeRow(row)
+            ) {
+                continue;
+            }
+
+
+            const reference =
+                String(
+                    row?.reference ||
+                    row?.payment_reference ||
+                    ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            const duplicate =
+                result.some(
+                    existing => {
+
+                        const existingRef =
+                            String(
+                                existing?.reference ||
+                                existing?.payment_reference ||
+                                ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+
+                        if (
+                            reference &&
+                            existingRef &&
+                            reference ===
+                                existingRef
+                        ) {
+                            return true;
+                        }
+
+
+                        const existingTime =
+                            existing?.created_at
+                                ? new Date(
+                                    existing.created_at
+                                ).getTime()
+                                : NaN;
+
+
+                        const rowTime =
+                            row?.created_at
+                                ? new Date(
+                                    row.created_at
+                                ).getTime()
+                                : NaN;
+
+
+                        const sameTime =
+                            Number.isFinite(
+                                existingTime
+                            ) &&
+                            Number.isFinite(
+                                rowTime
+                            ) &&
+                            Math.abs(
+                                existingTime -
+                                rowTime
+                            ) < 1500;
+
+
+                        return (
+                            sameTime &&
+                            amountOf(
+                                existing
+                            ) ===
+                            amountOf(row) &&
+                            normalizeType(
+                                existing?.type
+                            ) ===
+                            normalizeType(
+                                row?.type
+                            )
+                        );
+                    }
+                );
+
+
+            if (
+                duplicate
+            ) {
+                continue;
+            }
+
+
+            result.push(row);
+        }
+
+
+        return result;
+    };
+
+
+    /* =====================================================
+       INCOME STATS
+       ===================================================== */
+
+    const renderIncomeStats = (
+        rows
+    ) => {
+
+        const validRows =
+            rows.filter(
+                isIncomeRow
+            );
+
+
+        const totalIncome =
+            validRows.reduce(
+                (
+                    total,
+                    row
+                ) => {
+
+                    return (
+                        total +
+                        amountOf(row)
+                    );
+
+                },
+                0
+            );
+
+
+        const todayIncome =
+            validRows
+                .filter(
+                    row =>
+                        isToday(
+                            row?.created_at
+                        )
+                )
+                .reduce(
+                    (
+                        total,
+                        row
+                    ) => {
+
+                        return (
+                            total +
+                            amountOf(row)
+                        );
+
+                    },
+                    0
+                );
+
+
+        if (incomeEl) {
+
+            incomeEl.textContent =
+                money(
+                    totalIncome
+                );
+        }
+
+
+        if (todayEl) {
+
+            todayEl.textContent =
+                money(
+                    todayIncome
+                );
+        }
+    };
+
+
+    /* =====================================================
+       BREAKDOWN
+       ===================================================== */
+
+    const renderBreakdown = (
+        rows
+    ) => {
+
+        if (!breakdownEl) {
+            return;
+        }
+
+
+        const types = [
+
+            {
+                type: "link",
+                icon: "fa-link",
+                label: "PasteLink",
+                className:
+                    "wallet-breakdown-link"
+            },
+
+            {
+                type: "code",
+                icon: "fa-code",
+                label: "Code",
+                className:
+                    "wallet-breakdown-code"
+            },
+
+            {
+                type: "channel",
+                icon:
+                    "fa-broadcast-tower",
+                label: "Channel",
+                className:
+                    "wallet-breakdown-channel"
+            },
+
+            {
+                type: "group",
+                icon: "fa-users",
+                label: "Group",
+                className:
+                    "wallet-breakdown-group"
+            }
+        ];
+
+
+        const validRows =
+            rows.filter(
+                isIncomeRow
+            );
+
+
+        breakdownEl.innerHTML =
+            types
+                .map(
+                    item => {
+
+                        const matchingRows =
+                            validRows.filter(
+                                row =>
+                                    normalizeType(
+                                        row?.type
+                                    ) ===
+                                    item.type
+                            );
+
+
+                        const total =
+                            matchingRows.reduce(
+                                (
+                                    sum,
+                                    row
+                                ) => {
+
+                                    return (
+                                        sum +
+                                        amountOf(row)
+                                    );
+
+                                },
+                                0
+                            );
+
+
+                        const count =
+                            matchingRows.length;
+
+
+                        return `
+                            <a
+                                class="income-item ${item.className}"
+                                href="transactions.html?type=${encodeURIComponent(item.type)}"
+                                aria-label="${esc(item.label)}"
+                            >
+
+                                <span
+                                    class="income-item-icon"
+                                    aria-hidden="true"
+                                >
+
+                                    <i
+                                        class="fa-solid ${item.icon}"
+                                    ></i>
+
+                                </span>
+
+
+                                <span
+                                    class="income-item-main"
+                                >
+
+                                    <b>
+                                        ${esc(
+                                            item.label
+                                        )}
+                                    </b>
+
+
+                                    <small>
+                                        ${count.toLocaleString(
+                                            "id-ID"
+                                        )}
+                                        transaksi
+                                    </small>
+
+                                </span>
+
+
+                                <strong>
+                                    ${esc(
+                                        money(total)
+                                    )}
+                                </strong>
+
+
+                                <span
+                                    class="income-item-arrow"
+                                    aria-hidden="true"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-arrow-right"
+                                    ></i>
+
+                                </span>
+
+                            </a>
+                        `;
+                    }
+                )
+                .join("");
+
+
+        breakdownEl.setAttribute(
+            "aria-busy",
+            "false"
+        );
+    };
+
+
+    /* =====================================================
+       RECENT ACTIVITY
+       ===================================================== */
+
+    let activityPage = 1;
+    const ACTIVITY_PAGE_SIZE = 6;
+    const renderRecentActivity = (
+        rows
+    ) => {
+
+        if (!recentActivityEl) {
+            return;
+        }
+
+
+        const sortedRows =
+            [...rows]
+                .filter(
+                    row =>
+                        amountOf(row) !==
+                        0
+                )
+                .sort(
+                    (
+                        a,
+                        b
+                    ) => {
+
+                        const aTime =
+                            new Date(
+                                a?.created_at ||
+                                0
+                            ).getTime();
+
+
+                        const bTime =
+                            new Date(
+                                b?.created_at ||
+                                0
+                            ).getTime();
+
+
+                        return (
+                            bTime -
+                            aTime
+                        );
+                    }
+                )
+                ;
+        const totalPages = Math.max(1, Math.ceil(sortedRows.length / ACTIVITY_PAGE_SIZE));
+        activityPage = Math.min(Math.max(1, activityPage), totalPages);
+        const pageRows = sortedRows.slice((activityPage - 1) * ACTIVITY_PAGE_SIZE, activityPage * ACTIVITY_PAGE_SIZE);
+
+
+        if (
+            !sortedRows.length
+        ) {
+
+            recentActivityEl.innerHTML = `
+                <div
+                    class="wallet-activity-empty"
+                >
+
+                    <span
+                        class="wallet-activity-empty-icon"
+                    >
+
+                        <i
+                            class="fa-solid fa-receipt"
+                            aria-hidden="true"
+                        ></i>
+
+                    </span>
+
+
+                    <div>
+
+                        <strong>
+                            Belum ada aktivitas
+                        </strong>
+
+
+                        <span>
+                            Aktivitas keuangan akan muncul di sini.
+                        </span>
+
+                    </div>
+
+                </div>
+            `;
+
+
+            recentActivityEl.setAttribute(
+                "aria-busy",
+                "false"
+            );
+
+
+            return;
+        }
+
+
+        recentActivityEl.innerHTML =
+            pageRows
+                .map(
+                    renderActivityItem
+                )
+                .join("");
+        let pager = document.getElementById("walletActivityPagination");
+        if (!pager) { pager = document.createElement("div"); pager.id="walletActivityPagination"; pager.className="wallet-pagination"; recentActivityEl.parentElement?.appendChild(pager); }
+        if (totalPages > 1) {
+            pager.innerHTML = Array.from({length:totalPages},(_,i)=>`<button type="button" class="${i+1===activityPage?'active':''}" data-wallet-page="${i+1}">${i+1}</button>`).join("");
+            pager.querySelectorAll("[data-wallet-page]").forEach(b=>b.onclick=()=>{activityPage=Number(b.dataset.walletPage);renderRecentActivity(rows)});
+        } else pager.innerHTML="";
+
+
+        recentActivityEl.setAttribute(
+            "aria-busy",
+            "false"
+        );
+    };
+
+
+    /* =====================================================
+       ACTIVITY ITEM
+       ===================================================== */
+
+    const renderActivityItem = (
+        row
+    ) => {
+
+        const type =
+            normalizeType(
+                row?.type
+            );
+
+
+        const good =
+            isGoodTransaction(
+                row
+            );
+
+
+        const pending =
+            isPendingTransaction(
+                row
+            );
+
+
+        const failed =
+            isFailedTransaction(
+                row
+            );
+
+
+        const amount =
+            amountOf(row);
+
+
+        let stateClass =
+            "activity-neutral";
+
+
+        let statusText =
+            "Aktivitas";
+
+
+        let statusIcon =
+            "fa-circle-info";
+
+
+        if (good) {
+
+            stateClass =
+                "activity-success";
+
+            statusText =
+                "Berhasil";
+
+            statusIcon =
+                "fa-circle-check";
+
+        } else if (pending) {
+
+            stateClass =
+                "activity-pending";
+
+            statusText =
+                "Pending";
+
+            statusIcon =
+                "fa-clock";
+
+        } else if (failed) {
+
+            stateClass =
+                "activity-failed";
+
+            statusText =
+                "Gagal";
+
+            statusIcon =
+                "fa-circle-xmark";
+        }
+
+
+        const label =
+            type === "other"
+                ? String(
+                    row?.type ||
+                    "Transaksi"
+                )
+                : typeLabel(type);
+
+
+        const sign =
+            amount > 0
+                ? "+"
+                : "";
+
+
+        return `
+            <article
+                class="wallet-activity-item ${stateClass}"
+            >
+
+                <span
+                    class="wallet-activity-icon ${typeClass(type)}"
+                    aria-hidden="true"
+                >
+
+                    <i
+                        class="fa-solid ${typeIcon(type)}"
+                    ></i>
+
+                </span>
+
+
+                <div
+                    class="wallet-activity-main"
+                >
+
+                    <strong>
+                        ${esc(label)}
+                    </strong>
+
+
+                    <span>
+                        ${esc(
+                            formatDate(
+                                row?.created_at
+                            )
+                        )}
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="wallet-activity-amount"
+                >
+
+                    <strong>
+                        ${sign}${esc(
+                            money(amount)
+                        )}
+                    </strong>
+
+
+                    <small>
+
+                        <i
+                            class="fa-solid ${statusIcon}"
+                            aria-hidden="true"
+                        ></i>
+
+                        ${esc(
+                            statusText
+                        )}
+
+                    </small>
+
+                </div>
+
+            </article>
+        `;
+    };
+
+
+    /* =====================================================
+       WITHDRAW STATE
+       ===================================================== */
+
+    const updateWithdrawState = (
+        walletData
+    ) => {
+
+        if (!withdrawPanel) {
+            return;
+        }
+
+
+        const available =
+            getAvailableBalance(
+                walletData
+            );
+
+
+        const buttons =
+            $$(
+                ".wallet-withdraw-btn",
+                withdrawPanel
+            );
+
+
+        buttons.forEach(
+            btn => {
+
+                const disabled =
+                    available <= 0;
+
+
+                btn.classList.toggle(
+                    "is-disabled",
+                    disabled
+                );
+
+
+                if (disabled) {
+
+                    btn.setAttribute(
+                        "aria-disabled",
+                        "true"
+                    );
+
+
+                    btn.title =
+                        "Belum ada saldo yang dapat ditarik.";
+
+                } else {
+
+                    btn.removeAttribute(
+                        "aria-disabled"
+                    );
+
+
+                    btn.title =
+                        `Tarik ${money(
+                            available
+                        )}`;
+                }
+            }
+        );
+    };
+
+
+    /* =====================================================
+       PENDING DETAIL
+       ===================================================== */
+
+    const showPendingDetail =
+        async () => {
+
+            const sb =
+                getSB();
+
+
+            if (!sb) {
+
+                showToast(
+                    "Supabase belum tersedia.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            if (pendingModal) {
+                return;
+            }
+
+
+            try {
+
+                if (pendingCard) {
+
+                    pendingCard.classList.add(
+                        "is-loading"
+                    );
+
+
+                    pendingCard.disabled =
+                        true;
+                }
+
+
+                const {
+                    data,
+                    error
+                } =
+                    await sb.rpc(
+                        "get_pending_balance_detail"
+                    );
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                const rows =
+                    Array.isArray(data)
+                        ? data
+                        : [];
+
+
+                if (!rows.length) {
+
+                    showToast(
+                        "Tidak ada saldo yang sedang tertunda.",
+                        "info"
+                    );
+
+                    return;
+                }
+
+
+                const html =
+                    rows
+                        .slice(
+                            0,
+                            20
+                        )
+                        .map(
+                            row => {
+
+                                const amount =
+                                    money(
+                                        row?.amount ||
+                                        0
+                                    );
+
+
+                                const created =
+                                    formatDate(
+                                        row?.created_at
+                                    );
+
+
+                                const availableAt =
+                                    formatDate(
+                                        row?.available_at
+                                    );
+
+
+                                const holdLabel =
+                                    row?.hold_label ||
+                                    "H1";
+
+
+                                return `
+                                    <div
+                                        class="wallet-pending-item"
+                                    >
+
+                                        <div
+                                            class="wallet-pending-item-top"
+                                        >
+
+                                            <strong>
+                                                ${esc(
+                                                    amount
+                                                )}
+                                            </strong>
+
+
+                                            <span>
+                                                ${esc(
+                                                    holdLabel
+                                                )}
+                                            </span>
+
+                                        </div>
+
+
+                                        <div
+                                            class="wallet-pending-meta"
+                                        >
+
+                                            <span>
+
+                                                <i
+                                                    class="fa-regular fa-clock"
+                                                    aria-hidden="true"
+                                                ></i>
+
+                                                Terjual
+                                                ${esc(
+                                                    created
+                                                )}
+
+                                            </span>
+
+
+                                            <span>
+
+                                                <i
+                                                    class="fa-solid fa-unlock"
+                                                    aria-hidden="true"
+                                                ></i>
+
+                                                Tersedia
+                                                ${esc(
+                                                    availableAt
+                                                )}
+
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+                                `;
+                            }
+                        )
+                        .join("");
+
+
+                const overlay =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                overlay.className =
+                    "wallet-pending-modal";
+
+
+                overlay.innerHTML = `
+                    <div
+                        class="wallet-pending-dialog"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="pendingWalletTitle"
+                    >
+
+                        <button
+                            type="button"
+                            class="wallet-pending-close"
+                            aria-label="Tutup"
+                        >
+
+                            <i
+                                class="fa-solid fa-xmark"
+                                aria-hidden="true"
+                            ></i>
+
+                        </button>
+
+
+                        <span class="badge">
+
+                            <i
+                                class="fa-solid fa-clock"
+                                aria-hidden="true"
+                            ></i>
+
+                            SALDO PENDING
+
+                        </span>
+
+
+                        <h2 id="pendingWalletTitle">
+                            Kapan saldo tersedia?
+                        </h2>
+
+
+                        <p class="muted">
+
+                            Penjualan 05:00–20:59 WIB masuk
+                            <b>H1</b>.
+                            Penjualan 21:00–04:59 WIB masuk
+                            <b>H2</b>.
+
+                        </p>
+
+
+                        <div class="wallet-pending-list">
+
+                            ${html}
+
+                        </div>
+
+                    </div>
+                `;
+
+
+                document.body.appendChild(
+                    overlay
+                );
+
+
+                pendingModal =
+                    overlay;
+
+
+                const previousOverflow =
+                    document.body.style.overflow;
+
+
+                document.body.style.overflow =
+                    "hidden";
+
+
+                const close =
+                    () => {
+
+                        if (
+                            !pendingModal
+                        ) {
+                            return;
+                        }
+
+
+                        overlay.classList.add(
+                            "is-closing"
+                        );
+
+
+                        document.body.style.overflow =
+                            previousOverflow;
+
+
+                        document.removeEventListener(
+                            "keydown",
+                            escHandler
+                        );
+
+
+                        setTimeout(
+                            () => {
+
+                                overlay.remove();
+
+                                pendingModal =
+                                    null;
+
+                            },
+                            160
+                        );
+                    };
+
+
+                const escHandler =
+                    event => {
+
+                        if (
+                            event.key ===
+                            "Escape"
+                        ) {
+                            close();
+                        }
+                    };
+
+
+                overlay
+                    .querySelector(
+                        ".wallet-pending-close"
+                    )
+                    ?.addEventListener(
+                        "click",
+                        close
+                    );
+
+
+                overlay.addEventListener(
+                    "click",
+                    event => {
+
+                        if (
+                            event.target ===
+                            overlay
+                        ) {
+                            close();
+                        }
+                    }
+                );
+
+
+                document.addEventListener(
+                    "keydown",
+                    escHandler
+                );
+
+
+                requestAnimationFrame(
+                    () => {
+
+                        overlay
+                            .querySelector(
+                                ".wallet-pending-close"
+                            )
+                            ?.focus();
+                    }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Pending balance detail:",
+                    error
+                );
+
+
+                showToast(
+                    error?.message ||
+                    "Detail saldo pending gagal dimuat.",
+                    "error"
+                );
+
+            } finally {
+
+                if (pendingCard) {
+
+                    pendingCard.classList.remove(
+                        "is-loading"
+                    );
+
+
+                    pendingCard.disabled =
+                        false;
+                }
+            }
+        };
+
+
+    /* =====================================================
+       COPY BALANCE
+       ===================================================== */
+
+    const copyBalance =
+        async () => {
+
+            const value =
+                balanceHeroValueEl?.textContent ||
+                availableEl?.textContent ||
+                "Rp0";
+
+
+            if (
+                value === "—"
+            ) {
+
+                showToast(
+                    "Saldo belum selesai dimuat.",
+                    "info"
+                );
+
+                return;
+            }
+
+
+            try {
+
+                if (
+                    navigator.clipboard &&
+                    window.isSecureContext
+                ) {
+
+                    await navigator.clipboard.writeText(
+                        value
+                    );
+
+                } else {
+
+                    const textarea =
+                        document.createElement(
+                            "textarea"
+                        );
+
+
+                    textarea.value =
+                        value;
+
+
+                    textarea.setAttribute(
+                        "readonly",
+                        ""
+                    );
+
+
+                    textarea.style.position =
+                        "fixed";
+
+                    textarea.style.left =
+                        "-9999px";
+
+                    textarea.style.top =
+                        "0";
+
+
+                    document.body.appendChild(
+                        textarea
+                    );
+
+
+                    textarea.focus();
+
+                    textarea.select();
+
+
+                    document.execCommand(
+                        "copy"
+                    );
+
+
+                    textarea.remove();
+                }
+
+
+                showToast(
+                    "Saldo berhasil disalin.",
+                    "success"
+                );
+
+
+                if (
+                    copyBalanceBtn
+                ) {
+
+                    const icon =
+                        copyBalanceBtn.querySelector(
+                            "i"
+                        );
+
+
+                    if (icon) {
+
+                        icon.className =
+                            "fa-solid fa-check";
+
+
+                        clearTimeout(
+                            copyBalanceBtn._walletCopyTimer
+                        );
+
+
+                        copyBalanceBtn._walletCopyTimer =
+                            setTimeout(
+                                () => {
+
+                                    icon.className =
+                                        "fa-regular fa-copy";
+
+                                },
+                                1400
+                            );
+                    }
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "Copy balance:",
+                    error
+                );
+
+
+                showToast(
+                    "Saldo tidak dapat disalin.",
+                    "error"
+                );
+            }
+        };
+
+
+    /* =====================================================
+       WITHDRAW GUARD
+       ===================================================== */
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            const target =
+                event.target;
+
+
+            const withdraw =
+                target?.closest?.(
+                    "#withdrawBtn, .wallet-withdraw-btn"
+                );
+
+
+            if (!withdraw) {
+                return;
+            }
+
+
+            if (
+                withdraw.classList.contains(
+                    "is-disabled"
+                ) ||
+                withdraw.getAttribute(
+                    "aria-disabled"
+                ) === "true"
+            ) {
+
+                event.preventDefault();
+
+
+                showToast(
+                    "Belum ada saldo tersedia untuk ditarik.",
+                    "info"
+                );
+            }
+        }
+    );
+
+
+    /* =====================================================
+       EVENTS
+       ===================================================== */
+
+    pendingCard?.addEventListener(
+        "click",
+        showPendingDetail
+    );
+
+
+    refreshBtn?.addEventListener(
+        "click",
+        () => {
+
+            if (
+                !isLoading
+            ) {
+                loadWallet();
+            }
+        }
+    );
+
+
+    copyBalanceBtn?.addEventListener(
+        "click",
+        copyBalance
+    );
+
+
+    /* =====================================================
+       LOAD WALLET
+       ===================================================== */
+
+    async function loadWallet() {
+
+        if (
+            isLoading
+        ) {
+            return;
+        }
+
+
+        const sb =
+            getSB();
+
+
+        if (!sb) {
+
+            renderError(
+                "Supabase belum tersedia. Periksa config.js dan supabase.js."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            setLoadingState(
+                true
+            );
+
+
+            renderLoading();
+
+
+            profile =
+                await getProfile();
+
+
+            if (!profile?.id) {
+
+                location.replace(
+                    "login.html"
+                );
+
+                return;
+            }
+
+
+            const result =
+                await fetchWalletData();
+
+
+            wallet =
+                result.wallet;
+
+
+            walletRows =
+                result.walletRows ||
+                [];
+
+
+            transactionRows =
+                result.transactionRows ||
+                [];
+
+
+            /*
+             * Activity data.
+             *
+             * Keep wallet transactions and
+             * sell_* transaction records.
+             */
+            allRows = [
+                ...walletRows,
+                ...transactionRows.filter(
+                    row =>
+                        /^sell_/i.test(
+                            String(
+                                row?.type ||
+                                ""
+                            )
+                        )
+                )
+            ];
+
+
+            /*
+             * Deduplicated income rows
+             * for financial statistics.
+             */
+            const incomeRows =
+                buildIncomeRows();
+
+
+            renderBalances(
+                wallet
+            );
+
+
+            renderIncomeStats(
+                incomeRows
+            );
+
+
+            renderBreakdown(
+                incomeRows
+            );
+
+
+            renderRecentActivity(
+                allRows
+            );
+
+
+            updateWithdrawState(
+                wallet
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Wallet load error:",
+                error
+            );
+
+
+            renderError(
+                error?.message ||
+                "Wallet gagal dimuat."
+            );
+
+
+            showToast(
+                error?.message ||
+                "Wallet gagal dimuat.",
+                "error"
+            );
+
+        } finally {
+
+            setLoadingState(
+                false
+            );
+        }
+    }
+
+
+    /* =====================================================
+       INITIAL LOAD
+       ===================================================== */
+
+    await loadWallet();
+
+});
+
+
+
+
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
-/* PasTele clean notification bridge */
-window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
-  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
-  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
-  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
-  container.appendChild(el); setTimeout(()=>el.remove(),4200);
-};

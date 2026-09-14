@@ -2586,12 +2586,522 @@ window.PASTELE_CONFIG = Object.freeze({
 
 })();
 
-/* Page-ready marker */
-document.documentElement.classList.add("pastele-ready");
-/* PasTele clean notification bridge */
-window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
-  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
-  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
-  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
-  container.appendChild(el); setTimeout(()=>el.remove(),4200);
-};
+/* ============================================================
+   PasTele — GLOBAL SESSION GUARD
+   - 24 hours of INACTIVITY => sign out
+   - Activity refreshes the inactivity timer
+   - Works even when Supabase/client scripts finish loading late
+   - Public pages are never blocked
+   ============================================================ */
+(() => {
+  "use strict";
+
+  const INACTIVITY_MS = 24 * 60 * 60 * 1000;
+  const ACTIVITY_KEY = "pastele_last_activity";
+  const PUBLIC = new Set([
+    "index.html", "login.html", "register.html",
+    "forgot-password.html", "reset-password.html",
+    "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "about.html", "terms.html", "privacy.html"
+  ]);
+
+  const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
+  const isPublic = !isAdminPath && PUBLIC.has(file);
+  let locked = false;
+  let initialized = false;
+  let timer = null;
+
+  function setActivity() {
+    if (locked || isPublic) return;
+    try {
+      localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+    } catch (_) {}
+  }
+
+  function getLastActivity() {
+    try {
+      const value = Number(localStorage.getItem(ACTIVITY_KEY) || 0);
+      return Number.isFinite(value) ? value : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function isExpired() {
+    const last = getLastActivity();
+    return last > 0 && (Date.now() - last >= INACTIVITY_MS);
+  }
+
+  function loginUrl() {
+    return location.pathname.includes("/admin/") ? "../login.html" : "login.html";
+  }
+
+  function showExpired() {
+    if (document.getElementById("pt-session-modal")) return;
+
+    locked = true;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #pt-session-modal{
+        position:fixed;inset:0;z-index:2147483647;
+        display:grid;place-items:center;padding:20px;
+        background:rgba(2,6,23,.72);
+        backdrop-filter:blur(14px);
+      }
+      #pt-session-modal .pt-session-box{
+        width:min(440px,100%);
+        padding:32px 26px;
+        border:1px solid rgba(148,163,184,.22);
+        border-radius:26px;
+        text-align:center;
+        background:var(--surface,#fff);
+        color:var(--text,#0f172a);
+        box-shadow:0 30px 100px rgba(0,0,0,.35);
+      }
+      #pt-session-modal .pt-session-icon{
+        width:66px;height:66px;margin:0 auto 16px;
+        display:grid;place-items:center;border-radius:20px;
+        background:rgba(99,91,255,.12);
+        color:#635bff;font-size:27px;
+      }
+      #pt-session-modal h2{margin:0 0 9px;font-size:23px}
+      #pt-session-modal p{margin:0 auto 22px;max-width:350px;
+        color:var(--muted,#64748b);line-height:1.65}
+      #pt-session-modal a{
+        display:flex;align-items:center;justify-content:center;gap:9px;
+        min-height:48px;padding:12px 18px;border-radius:14px;
+        background:linear-gradient(135deg,#635bff,#8b5cf6);
+        color:#fff!important;text-decoration:none;font-weight:800;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const modal = document.createElement("div");
+    modal.id = "pt-session-modal";
+    modal.innerHTML = `
+      <div class="pt-session-box" role="dialog" aria-modal="true">
+        <div class="pt-session-icon"><i class="fa-solid fa-lock"></i></div>
+        <h2>Sesi Berakhir</h2>
+        <p>Sesi kamu berakhir karena tidak ada aktivitas selama 24 jam. Silakan login kembali untuk melanjutkan.</p>
+        <a href="${loginUrl()}"><i class="fa-solid fa-right-to-bracket"></i> Login Kembali</a>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  async function getClient() {
+    if (window.sb?.auth) return window.sb;
+
+    // Some pages load their bundled client after this guard.
+    for (let i = 0; i < 80; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (window.sb?.auth) return window.sb;
+    }
+    return null;
+  }
+
+  async function signOutAndLock() {
+    if (locked) return;
+    try {
+      const client = await getClient();
+      if (client?.auth) {
+        await client.auth.signOut({ scope: "global" });
+      }
+    } catch (error) {
+      console.warn("[PasTele] Session signOut:", error);
+    }
+    try { localStorage.removeItem(ACTIVITY_KEY); } catch (_) {}
+    showExpired();
+  }
+
+  function autoTheme() {
+    // Automatic day/night theme:
+    // 06:00–17:59 = light, 18:00–05:59 = dark.
+    try {
+      const hour = new Date().getHours();
+      const dark = hour >= 18 || hour < 6;
+      const root = document.documentElement;
+      root.dataset.theme = dark ? "dark" : "light";
+      root.dataset.themeMode = "auto";
+      root.style.colorScheme = dark ? "dark" : "light";
+    } catch (_) {}
+  }
+
+  function bindActivity() {
+    if (initialized) return;
+    initialized = true;
+
+    const events = ["click", "keydown", "touchstart", "pointerdown", "scroll"];
+    for (const event of events) {
+      document.addEventListener(event, setActivity, {
+        passive: true,
+        capture: true
+      });
+    }
+
+    // Also refresh when the user returns to the tab.
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        if (isExpired()) signOutAndLock();
+        else setActivity();
+      }
+    });
+
+    window.addEventListener("pageshow", () => {
+      if (isExpired()) signOutAndLock();
+      else setActivity();
+    });
+  }
+
+  async function init() {
+    autoTheme();
+
+    if (isPublic) return;
+
+    const client = await getClient();
+    if (!client?.auth) {
+      console.warn("[PasTele] Supabase client not available; session guard could not start.");
+      return;
+    }
+
+    try {
+      const result = await client.auth.getSession();
+      const session = result?.data?.session;
+
+      if (!session) {
+        showExpired();
+        return;
+      }
+
+      if (isExpired()) {
+        await signOutAndLock();
+        return;
+      }
+
+      setActivity();
+      bindActivity();
+
+      timer = window.setInterval(() => {
+        if (isExpired()) signOutAndLock();
+      }, 60 * 1000);
+
+      client.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT") showExpired();
+        if (event === "SIGNED_IN" && !locked) setActivity();
+      });
+    } catch (error) {
+      console.warn("[PasTele] Session guard:", error);
+    }
+  }
+
+  window.PasTeleSession = Object.freeze({
+    touch: setActivity,
+    expired: isExpired,
+    check: init,
+    autoTheme
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+
+/* PasTele — Live notification toast
+ * Shows new user notifications as a clean floating card for 3 seconds.
+ * Click opens the notification target URL when one is provided.
+ */
+(() => {
+  'use strict';
+  if (window.__PASTELE_NOTIFICATION_TOAST__) return;
+  window.__PASTELE_NOTIFICATION_TOAST__ = true;
+
+  const state = { userId: null, channel: null, seen: new Set(), poll: null };
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+  function ensureStyles() {
+    if (document.getElementById('pt-live-notification-style')) return;
+    const s = document.createElement('style');
+    s.id = 'pt-live-notification-style';
+    s.textContent = `
+      #ptLiveNotifications{position:fixed;top:18px;right:18px;width:min(410px,calc(100vw - 24px));z-index:2147483000;display:grid;gap:10px;pointer-events:none}
+      .pt-live-notice{pointer-events:auto;display:grid;grid-template-columns:42px 1fr 24px;gap:11px;align-items:start;padding:13px 14px;border:1px solid color-mix(in srgb,var(--primary,#229ed9) 22%,var(--line,#e5e7eb));border-radius:17px;background:color-mix(in srgb,var(--surface,#fff) 94%,transparent);color:var(--text,#14212b);box-shadow:0 18px 55px rgba(15,23,42,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transform:translateY(-12px) scale(.98);opacity:0;transition:transform .22s ease,opacity .22s ease;cursor:pointer;overflow:hidden}
+      html[data-theme="dark"] .pt-live-notice{box-shadow:0 20px 65px rgba(0,0,0,.42);border-color:rgba(148,163,184,.18)}
+      .pt-live-notice.is-in{transform:none;opacity:1}.pt-live-notice.is-out{transform:translateY(-10px) scale(.98);opacity:0}
+      .pt-live-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary,#229ed9),#7c5cff);color:#fff;font-size:16px}
+      .pt-live-copy{min-width:0}.pt-live-copy strong{display:block;font-size:13px;line-height:1.3;margin:1px 0 4px}.pt-live-copy span{display:block;font-size:12px;line-height:1.45;color:var(--muted,#718293);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pt-live-time{display:block;margin-top:6px;font-size:10px;color:var(--muted,#718293);font-weight:700}.pt-live-close{border:0;background:transparent;color:var(--muted,#718293);font-size:14px;cursor:pointer;padding:2px}.pt-live-notice:hover{transform:translateY(-2px);box-shadow:0 22px 65px rgba(15,23,42,.22)}
+      @media(max-width:600px){#ptLiveNotifications{top:10px;right:10px;width:calc(100vw - 20px)}.pt-live-notice{border-radius:15px}}
+      @media(prefers-reduced-motion:reduce){.pt-live-notice{transition:none}}
+    `;
+    document.head.appendChild(s);
+  }
+
+  function root() {
+    let el = document.getElementById('ptLiveNotifications');
+    if (!el) { el = document.createElement('div'); el.id = 'ptLiveNotifications'; el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+    return el;
+  }
+
+  function icon(type) {
+    return ({publish:'fa-bullhorn',purchase:'fa-bag-shopping',view:'fa-eye',sale:'fa-circle-check',like:'fa-heart',withdrawal:'fa-wallet'}[type] || 'fa-bell');
+  }
+
+  function remove(card) {
+    if (!card) return;
+    card.classList.remove('is-in'); card.classList.add('is-out');
+    setTimeout(() => card.remove(), 230);
+  }
+
+  function show(n) {
+    if (!n?.id || state.seen.has(n.id)) return;
+    state.seen.add(n.id);
+    const target = String(n.link_url || '').trim();
+    const card = document.createElement('article');
+    card.className = 'pt-live-notice';
+    card.setAttribute('role', target ? 'link' : 'status');
+    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc(icon(n.notification_type))}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja${target ? ' · Ketuk untuk membuka' : ''}</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
+    const close = card.querySelector('.pt-live-close');
+    close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
+    card.addEventListener('click', async () => {
+      if (target) window.location.assign(new URL(target, window.location.origin + "/").href);
+      try { await window.sb?.from('notifications').update({is_read:true}).eq('id',n.id).eq('user_id',state.userId); } catch (_) {}
+      remove(card);
+    });
+    root().prepend(card);
+    requestAnimationFrame(() => card.classList.add('is-in'));
+    setTimeout(() => remove(card), 3000);
+  }
+
+  async function init() {
+    if (!window.sb) return false;
+    let u = null;
+    try { u = (await window.sb.auth.getUser()).data?.user || null; } catch (_) { return false; }
+    if (!u?.id) return false;
+    state.userId = u.id;
+    ensureStyles(); root();
+
+    const channelName = `pastele-live-notifications-${u.id}`;
+    try {
+      state.channel = window.sb.channel(channelName)
+        .on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${u.id}`}, payload => show(payload.new))
+        .subscribe();
+    } catch (e) { console.warn('[PasTele] Realtime notification unavailable:', e); }
+
+    // Lightweight fallback for browsers/networks where Realtime is delayed.
+    let last = new Date().toISOString();
+    state.poll = setInterval(async () => {
+      try {
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        if (r.error) return;
+        for (const n of (r.data || [])) show(n);
+        if (r.data?.length) last = r.data[r.data.length - 1].created_at;
+      } catch (_) {}
+    }, 15000);
+    return true;
+  }
+
+  function boot() {
+    if (!document.body) return;
+    const run = () => { let tries=0; const tick=()=>{ if (window.sb) init(); else if (++tries<30) setTimeout(tick,200); }; tick(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',run,{once:true}); else run();
+  }
+  boot();
+})();
+
+/* PasTele — Global UI interaction safety layer */
+(function () {
+  'use strict';
+
+  function isModifiedClick(event) {
+    return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+  }
+
+  function getDestination(el) {
+    return el?.dataset?.href || el?.dataset?.url || el?.getAttribute?.('data-link') || null;
+  }
+
+  document.addEventListener('click', function (event) {
+    if (isModifiedClick(event)) return;
+
+    const trigger = event.target.closest('[data-href],[data-url],[data-link]');
+    if (!trigger || trigger.disabled || trigger.getAttribute('aria-disabled') === 'true') return;
+
+    const destination = getDestination(trigger);
+    if (!destination) return;
+
+    if (trigger.matches('a[href]')) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  document.addEventListener('keydown', function (event) {
+    const el = event.target.closest?.('[data-href],[data-url],[data-link][role="button"]');
+    if (!el) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    const destination = getDestination(el);
+    if (!destination) return;
+
+    event.preventDefault();
+    window.location.href = destination;
+  }, false);
+
+  // Make explicitly marked cards keyboard accessible without guessing routes.
+  document.querySelectorAll('[data-href],[data-url],[data-link]').forEach(function (el) {
+    if (!el.hasAttribute('tabindex') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('tabindex', '0');
+    }
+    if (!el.hasAttribute('role') && !el.matches('a,button,input,select,textarea')) {
+      el.setAttribute('role', 'button');
+    }
+  });
+})();
+
+
+
+/* =========================================================
+   PasTele — Withdrawals FINAL
+   Database-driven tier rules / H+2 settlement compatible UI
+   ========================================================= */
+document.addEventListener('DOMContentLoaded', async () => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const sb = window.sb;
+  if (!sb) return;
+  const money = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const toast = (m,t='info') => window.ptNotify ? window.ptNotify(m,t,'Withdraw') : window.TC?.toast?.(m,t);
+
+  const el={
+    bal:$('bal'),req:$('req'),done:$('done'),dailyBar:$('dailyBar'),dailyText:$('dailyText'),dailyPercent:$('dailyPercent'),
+    instantBtns:$('instantBtns'),instantAmount:$('instantAmount'),instantSubmit:$('instantSubmit'),instantValidation:$('instantValidation'),
+    manualBox:$('manualBox'),manualStatus:$('manualStatus'),manualStatusTitle:$('manualStatusTitle'),manualStatusText:$('manualStatusText'),
+    manualClosedNotice:$('manualClosedNotice'),manualClosedText:$('manualClosedText'),form:$('wd'),amount:$('amount'),method:$('method'),name:$('aname'),number:$('anum'),
+    manualSubmit:$('manualSubmit'),fee:$('withdrawFee'),net:$('withdrawNet'),history:$('history'),historyCount:$('historyCount'),
+    historySearch:$('historySearch'),historyStatus:$('historyStatus'),historySort:$('historySort'),historyResult:$('historyResult'),historyPagination:$('historyPagination'),
+    modal:$('withdrawConfirmModal'),close:$('withdrawConfirmClose'),cancel:$('withdrawConfirmCancel'),confirm:$('withdrawConfirmSubmit'),
+    cAmount:$('confirmAmount'),cFee:$('confirmFee'),cNet:$('confirmNet'),cMethod:$('confirmMethod'),cName:$('confirmAccountName'),cAccount:$('confirmAccount'),
+    saved:$('savedMethods'),refresh:$('refreshWithdraw')
+  };
+
+  let user=null, profile=null, limits=null, withdrawals=[];
+  let selectedInstant=50000, pending=null;
+
+  const showValidation=(node,msg,type='error')=>{if(!node)return;node.hidden=!msg;node.textContent=msg||'';node.dataset.type=type;};
+  const activeStatus = s => !['rejected','cancelled','canceled','failed'].includes(String(s||'').toLowerCase());
+  const jakartaDate = v => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v));
+  const today = jakartaDate(new Date());
+  const todayRows = mode => withdrawals.filter(w=>String(w.mode||'').toLowerCase()===mode && activeStatus(w.status) && jakartaDate(w.created_at)===today);
+
+  function tierLabel(t){return t==='premium'?'Premium':t==='subscription'?'Langganan 30 Hari':'Free';}
+  function setStaticText(){
+    const texts=[...document.querySelectorAll('.rule-info span')];
+    texts.forEach(x=>{const s=x.textContent||'';if(/Maks\. 5 pengajuan|Maks\. Rp500\.000 per hari/.test(s)){} });
+  }
+
+  async function load(){
+    const u=(await sb.auth.getUser()).data?.user;
+    if(!u){ location.href='login.html?next=withdrawals.html'; return; }
+    user=u;
+    const [pr,lim,wr,pm]=await Promise.all([
+      sb.from('profiles').select('username,display_name,is_premium,subscription_until,balance').eq('id',u.id).maybeSingle(),
+      sb.rpc('get_withdrawal_limits'),
+      sb.from('withdrawals').select('*').eq('user_id',u.id).order('created_at',{ascending:false}).limit(100),
+      sb.from('payment_methods').select('id,method_type,provider,account_name,account_number,is_default').eq('user_id',u.id).order('is_default',{ascending:false})
+    ]);
+    if(pr.error) throw pr.error; if(lim.error) throw lim.error; if(wr.error) throw wr.error;
+    profile=pr.data||{}; limits=lim.data||{}; withdrawals=wr.data||[];
+    renderBalance(); renderRules(); renderInstant(); renderManual(); renderHistory();
+    renderMethods(pm.data||[]);
+    renderPreview();
+  }
+
+  function renderBalance(){
+    const available=Number(profile.balance||0);
+    if(el.bal) el.bal.textContent=money(available);
+    if(el.req) el.req.textContent=String(withdrawals.filter(w=>['pending','processing','approved'].includes(String(w.status||'').toLowerCase())).length);
+    if(el.done) el.done.textContent=String(withdrawals.filter(w=>['completed','success','successful'].includes(String(w.status||'').toLowerCase())).length);
+  }
+
+  function renderRules(){
+    const m=limits.manual||{}, i=limits.instant||{};
+    if(el.fee) el.fee.textContent=money(m.fee);
+    if(el.dailyText) el.dailyText.textContent=`${money(i.used_amount)} / ${money(i.daily_limit)}`;
+    const pct=Math.min(100,Math.round((Number(i.used_amount||0)/Math.max(1,Number(i.daily_limit||1)))*100));
+    if(el.dailyPercent) el.dailyPercent.textContent=pct+'%'; if(el.dailyBar) el.dailyBar.style.width=pct+'%';
+    if(el.amount){el.amount.min='100000';el.amount.step='1000';el.amount.placeholder='100000';}
+    const manualInfo=[...document.querySelectorAll('#manualBox .rule-info span')];
+    manualInfo.forEach(x=>{if(/Minimum/.test(x.textContent||'')) x.textContent='Minimum Rp100.000'; if(/Maks\./.test(x.textContent||'')) x.textContent=`Maks. ${m.daily_max_count} pengajuan / hari`;});
+    const instantInfo=[...document.querySelectorAll('#instantBox .rule-info span')];
+    instantInfo.forEach(x=>{if(/Maks\. Rp/.test(x.textContent||'')) x.textContent=`Sisa limit hari ini ${money(i.remaining_amount)}`;});
+    const feeText=document.querySelector('#manualBox [id="manualFeeText"]'); if(feeText) feeText.textContent=`Fee ${tierLabel(limits.tier)}: ${money(m.fee)} per pengajuan.`;
+  }
+
+  function renderInstant(){
+    const i=limits.instant||{}; const remaining=Number(i.remaining_amount||0);
+    const amounts=[25000,50000,75000,100000,150000,200000,300000,500000].filter(x=>x<=Number(i.daily_limit||0));
+    if(!amounts.length){el.instantBtns.innerHTML='<div class="inline-loading">Limit WD Instant hari ini sudah habis.</div>';el.instantSubmit.disabled=true;return;}
+    selectedInstant=amounts.find(x=>x<=remaining)||amounts[0];
+    el.instantBtns.innerHTML=amounts.map(a=>`<button type="button" class="instant-amount-btn ${a===selectedInstant?'active':''}" data-amount="${a}" ${a>remaining?'disabled':''}>${money(a)}</button>`).join('');
+    el.instantBtns.querySelectorAll('[data-amount]').forEach(b=>b.addEventListener('click',()=>{selectedInstant=Number(b.dataset.amount);el.instantAmount.textContent=money(selectedInstant);el.instantBtns.querySelectorAll('.instant-amount-btn').forEach(x=>x.classList.toggle('active',x===b));showValidation(el.instantValidation,'','info');}));
+    el.instantAmount.textContent=money(selectedInstant);
+    el.instantSubmit.disabled=remaining<=0;
+  }
+
+  function renderManual(){
+    const s=limits.manual?.schedule||{}; const open=!!s.open; const m=limits.manual||{};
+    if(el.manualStatus){el.manualStatus.dataset.state=open?'open':'closed';el.manualStatus.classList.toggle('open',open);el.manualStatus.classList.toggle('closed',!open);}
+    if(el.manualStatusTitle) el.manualStatusTitle.textContent=open?'WD Manual sedang buka':'WD Manual sedang tutup';
+    if(el.manualStatusText) el.manualStatusText.textContent=s.reason||'WD Manual Senin-Jumat 09:00-17:00 WIB.';
+    if(el.manualClosedNotice) el.manualClosedNotice.hidden=open;
+    if(el.manualClosedText) el.manualClosedText.textContent=open?'':`Pengajuan WD Manual ditutup. Buka kembali ${s.next_open||'hari kerja berikutnya'} WIB.`;
+    if(el.manualSubmit){el.manualSubmit.disabled=!open || Number(m.remaining_count||0)<=0;el.manualSubmit.title=!open?'WD Manual sedang tutup':(Number(m.remaining_count||0)<=0?'Batas pengajuan hari ini tercapai':'');}
+    const info=[...document.querySelectorAll('#manualBox .rule-info span')]; info.forEach(x=>{if(/09:00|09\.00/.test(x.textContent||''))x.textContent='Senin-Jumat 09:00-17:00 WIB';});
+  }
+
+  function renderPreview(){const a=Number(el.amount?.value||0);const f=Number(limits?.manual?.fee||0);if(el.fee)el.fee.textContent=money(f);if(el.net)el.net.textContent=money(Math.max(0,a-f));}
+
+  function renderMethods(rows){if(!el.saved)return;if(!rows.length){el.saved.classList.add('hidden');return;}el.saved.classList.remove('hidden');el.saved.innerHTML=rows.slice(0,3).map(x=>`<button type="button" class="saved-method" data-name="${esc(x.account_name)}" data-number="${esc(x.account_number)}" data-method="${esc(x.method_type)}"><strong>${esc(x.account_name)}</strong><small>${esc(x.method_type)} · ${esc(x.account_number)}</small></button>`).join('');el.saved.querySelectorAll('.saved-method').forEach(b=>b.addEventListener('click',()=>{el.name.value=b.dataset.name||'';el.number.value=b.dataset.number||'';el.method.value=b.dataset.method||'ewallet';renderPreview();}));}
+
+  function renderHistory(){
+    let rows=[...withdrawals]; const q=String(el.historySearch?.value||'').trim().toLowerCase(); const st=String(el.historyStatus?.value||'all').toLowerCase();
+    if(q) rows=rows.filter(w=>`${w.mode} ${w.method} ${w.account_name} ${w.account_number} ${w.status}`.toLowerCase().includes(q));
+    if(st&&st!=='all') rows=rows.filter(w=>String(w.status||'').toLowerCase()===st);
+    if(String(el.historySort?.value||'newest')==='oldest') rows.reverse();
+    if(el.historyCount)el.historyCount.textContent=`${rows.length} transaksi`;
+    if(!el.history)return;
+    if(!rows.length){el.history.innerHTML='<div class="history-empty">Belum ada riwayat withdraw.</div>';return;}
+    el.history.innerHTML=rows.slice(0,30).map(w=>`<article class="withdraw-history-item"><div><strong>${money(w.amount)}</strong><small>${esc(w.mode||'-')} · ${esc(w.method||'-')} · ${new Date(w.created_at).toLocaleString('id-ID')}</small></div><div class="history-right"><b>${money(w.net_amount)}</b><span class="status-${esc(String(w.status||'pending').toLowerCase())}">${esc(w.status||'pending')}</span></div></article>`).join('');
+  }
+
+  function openConfirm(amount,mode){
+    const fee=mode==='instant'?Number(limits.instant?.fee||0):Number(limits.manual?.fee||0); const net=Math.max(0,amount-fee);
+    pending={amount,mode,fee,net};
+    el.cAmount.textContent=money(amount);el.cFee.textContent=money(fee);el.cNet.textContent=money(net);el.cMethod.textContent=mode==='instant'?'Instant · '+(el.method?.value||'ewallet'):(el.method?.value||'ewallet');el.cName.textContent=el.name?.value||'-';el.cAccount.textContent=el.number?.value||'-';
+    if(el.modal){el.modal.classList.remove('hidden');el.modal.setAttribute('aria-hidden','false');}else return execute(amount,mode);
+  }
+  function closeConfirm(){if(el.modal){el.modal.classList.add('hidden');el.modal.setAttribute('aria-hidden','true');}pending=null;}
+
+  async function execute(amount,mode){
+    if(mode==='manual'){
+      const fresh=await sb.rpc('get_withdrawal_limits'); if(fresh.error)throw fresh.error; limits=fresh.data||limits; renderRules();renderManual();
+      if(!limits.manual?.schedule?.open)throw new Error('WD Manual sedang tutup. '+(limits.manual?.schedule?.reason||''));
+      if(Number(limits.manual.remaining_count||0)<=0)throw new Error('Batas WD Manual hari ini sudah tercapai.');
+    }
+    const accountName=el.name?.value?.trim()||''; const accountNumber=el.number?.value?.trim()||''; if(accountName.length<2||accountNumber.length<5) throw new Error('Isi dulu nama pemegang dan nomor rekening/e-wallet pada form WD Manual. Data ini dipakai juga untuk WD Instant.'); const r=await sb.rpc('request_withdrawal_v2',{p_amount:amount,p_mode:mode,p_method:el.method?.value||'ewallet',p_account_name:accountName,p_account_number:accountNumber});
+    if(r.error)throw r.error; return r.data;
+  }
+
+  el.amount?.addEventListener('input',renderPreview);el.method?.addEventListener('change',renderPreview);
+  el.form?.addEventListener('submit',async e=>{e.preventDefault();const a=Number(el.amount.value||0);if(a<100000){showValidation($('withdrawValidation'),'Minimum WD Manual Rp100.000');return;}try{openConfirm(a,'manual');}catch(err){showValidation($('withdrawValidation'),err.message||String(err));}});
+  el.instantSubmit?.addEventListener('click',()=>{try{openConfirm(selectedInstant,'instant');}catch(e){showValidation(el.instantValidation,e.message||String(e));}});
+  el.confirm?.addEventListener('click',async()=>{if(!pending)return;el.confirm.disabled=true;try{await execute(pending.amount,pending.mode);toast('Pengajuan withdraw berhasil dibuat.','success');closeConfirm();await load();}catch(e){toast(String(e?.message||e).replace(/^.*?:/,'').trim(),'error');}finally{el.confirm.disabled=false;}});
+  el.close?.addEventListener('click',closeConfirm);el.cancel?.addEventListener('click',closeConfirm);el.refresh?.addEventListener('click',()=>load().catch(e=>toast(e.message||String(e),'error')));
+  el.historySearch?.addEventListener('input',renderHistory);el.historyStatus?.addEventListener('change',renderHistory);el.historySort?.addEventListener('change',renderHistory);el.clearHistorySearch?.addEventListener('click',()=>{el.historySearch.value='';renderHistory();});
+
+  try{await load();}catch(e){console.error('[PasTele Withdrawals]',e);toast(e.message||String(e),'error');}
+});
