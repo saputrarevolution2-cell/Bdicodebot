@@ -2588,3 +2588,62 @@ window.PASTELE_CONFIG = Object.freeze({
 
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
+
+/* =========================================================
+   PasTele AUTH PAGE HANDLER — REGISTER
+   Real form wiring + Turnstile + clean notifications
+   ========================================================= */
+(() => {
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const form=$('reg'); if(!form) return;
+  let busy=false, captchaToken='';
+  function notify(message,type='info'){
+    let box=$('pasteleAuthNotice');
+    if(!box){box=document.createElement('div');box.id='pasteleAuthNotice';box.setAttribute('role','status');box.setAttribute('aria-live','polite');document.body.appendChild(box);}
+    const icon=type==='success'?'fa-circle-check':type==='error'?'fa-circle-exclamation':'fa-circle-info';
+    box.className=`pt-auth-toast ${type}`; box.innerHTML=`<i class="fa-solid ${icon}"></i><span>${String(message).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}</span>`;
+    clearTimeout(window.__ptAuthToastTimer); window.__ptAuthToastTimer=setTimeout(()=>box.classList.add('hide'),4200);
+  }
+  function error(message){const e=$('authError');if(e){e.textContent=message;e.classList.remove('hidden');}notify(message,'error');}
+  function clear(){const e=$('authError');if(e){e.textContent='';e.classList.add('hidden');}}
+  function valid(){
+    const u=String($('username')?.value||'').trim().toLowerCase(), e=String($('email')?.value||'').trim(), p=String($('password')?.value||''), c=String($('confirm')?.value||'');
+    return /^[a-z0-9_]{3,32}$/.test(u)&&/^\S+@\S+\.\S+$/.test(e)&&p.length>=6&&p===c;
+  }
+  function setButton(){const b=$('submit');if(!b||busy)return; b.disabled=!valid();b.setAttribute('aria-disabled',String(!valid()));}
+  function setBusy(b,state){if(!b)return;b.disabled=state;b.setAttribute('aria-busy',String(state));const s=b.querySelector('span');if(state){b.dataset.originalText=s?.textContent||'Register';if(s)s.textContent='Membuat akun...';}else if(s&&b.dataset.originalText)s.textContent=b.dataset.originalText;}
+  ['username','email','password','confirm'].forEach(id=>$(id)?.addEventListener('input',()=>{clear();setButton();}));
+  $('togglePassword')?.addEventListener('click',()=>{const i=$('password');if(!i)return;i.type=i.type==='password'?'text':'password';const x=$('togglePassword').querySelector('i');if(x)x.className=i.type==='password'?'fa-solid fa-eye':'fa-solid fa-eye-slash';});
+  $('toggleConfirm')?.addEventListener('click',()=>{const i=$('confirm');if(!i)return;i.type=i.type==='password'?'text':'password';const x=$('toggleConfirm').querySelector('i');if(x)x.className=i.type==='password'?'fa-solid fa-eye':'fa-solid fa-eye-slash';});
+  function initTurnstile(){
+    const host=$('registerTurnstile'); if(!host)return;
+    const sitekey=host.dataset.sitekey||'';
+    const status=$('registerSecurityStatus');
+    if(!sitekey){captchaToken='';if(status)status.textContent='Verifikasi keamanan tidak dikonfigurasi.';setButton();return;}
+    if(!window.turnstile){if(status)status.textContent='Verifikasi keamanan tidak tersedia. Kamu tetap dapat mencoba mendaftar.';setButton();return;}
+    try{
+      window.turnstile.render(host,{sitekey,theme:host.dataset.theme||'auto',language:host.dataset.language||'id',action:host.dataset.action||'register',callback:(token)=>{captchaToken=token||'';if(status)status.innerHTML='<i class="fa-solid fa-circle-check"></i> Verifikasi keamanan berhasil.';setButton();},'expired-callback':()=>{captchaToken='';if(status)status.textContent='Verifikasi kedaluwarsa. Silakan ulangi.';setButton();},'error-callback':()=>{captchaToken='';if(status)status.textContent='Verifikasi tidak tersedia. Kamu dapat mencoba lagi.';setButton();}});
+    }catch(e){console.warn('[PasTele] Turnstile:',e);if(status)status.textContent='Verifikasi keamanan tidak tersedia.';setButton();}
+  }
+  if(document.readyState==='loading') window.addEventListener('load',initTurnstile,{once:true}); else setTimeout(initTurnstile,100);
+  form.addEventListener('submit',async ev=>{
+    ev.preventDefault();if(busy)return;clear();
+    const u=String($('username')?.value||'').trim().toLowerCase(), e=String($('email')?.value||'').trim().toLowerCase(), p=String($('password')?.value||''), c=String($('confirm')?.value||'');
+    if(!/^[a-z0-9_]{3,32}$/.test(u))return error('Username 3–32 karakter: huruf kecil, angka, dan underscore.');
+    if(!/^\S+@\S+\.\S+$/.test(e))return error('Email tidak valid.');
+    if(p.length<6)return error('Kata sandi minimal 6 karakter.');
+    if(p!==c)return error('Konfirmasi kata sandi tidak sama.');
+    const b=$('submit');busy=true;setBusy(b,true);
+    try{
+      if(!window.Auth?.register)throw new Error('Modul register belum siap. Muat ulang halaman.');
+      const result=await window.Auth.register(u,e,p,captchaToken);
+      const notice=$('authNotice');
+      if(result?.session){notify('Akun berhasil dibuat. Selamat datang di PasTele.','success');if(notice){notice.textContent='Akun berhasil dibuat. Mengalihkan...';notice.classList.remove('hidden');}setTimeout(()=>window.location.replace('dashboard.html'),500);}
+      else {notify('Akun berhasil dibuat. Cek email untuk verifikasi akun.','success');if(notice){notice.textContent='Pendaftaran berhasil. Silakan cek inbox/spam email kamu, lalu login. ';notice.classList.remove('hidden');}form.reset();captchaToken='';setButton();}
+    }catch(e){error(e?.message||'Pendaftaran gagal. Silakan coba lagi.');}
+    finally{busy=false;setBusy(b,false);setButton();}
+  });
+  $('google')?.addEventListener('click',async()=>{try{if(!window.Auth?.google)throw new Error('Pendaftaran Google belum tersedia.');await window.Auth.google();}catch(e){error(e?.message||'Pendaftaran Google gagal.');}});
+  setButton();
+})();

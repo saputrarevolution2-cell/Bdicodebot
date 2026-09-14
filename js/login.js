@@ -2588,3 +2588,107 @@ window.PASTELE_CONFIG = Object.freeze({
 
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
+
+/* =========================================================
+   PasTele AUTH PAGE HANDLER — LOGIN
+   Real form wiring + clean notifications
+   ========================================================= */
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const form1 = $('loginStep1'), form2 = $('loginStep2');
+  if (!form1 || !form2) return;
+  let identifier = '';
+  let account = null;
+  let busy = false;
+
+  function notify(message, type='info') {
+    let box = $('pasteleAuthNotice');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'pasteleAuthNotice';
+      box.setAttribute('role','status');
+      box.setAttribute('aria-live','polite');
+      document.body.appendChild(box);
+    }
+    const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info';
+    box.className = `pt-auth-toast ${type}`;
+    box.innerHTML = `<i class="fa-solid ${icon}"></i><span>${String(message).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}</span>`;
+    clearTimeout(window.__ptAuthToastTimer);
+    window.__ptAuthToastTimer = setTimeout(() => box.classList.add('hide'), 4200);
+  }
+  function setBusy(button, busyState, text) {
+    if (!button) return;
+    button.disabled = busyState;
+    button.setAttribute('aria-busy', String(busyState));
+    const span = button.querySelector('span');
+    if (busyState) {
+      button.dataset.originalText = span?.textContent || '';
+      if (span) span.textContent = text || 'Memproses...';
+    } else if (span && button.dataset.originalText) {
+      span.textContent = button.dataset.originalText;
+    }
+  }
+  function showError(message) {
+    const e = $('authError');
+    if (e) { e.textContent = message; e.classList.remove('hidden'); }
+    notify(message, 'error');
+  }
+  function clearError() { const e=$('authError'); if(e){e.textContent='';e.classList.add('hidden');} }
+  function openStep2(row) {
+    account = row || {};
+    form1.classList.add('hidden');
+    form2.classList.remove('hidden');
+    const state = $('loginVerifiedState');
+    if (state) {
+      state.classList.remove('hidden');
+      state.querySelector('[data-login-account], strong, span')?.setAttribute?.('title', identifier);
+    }
+    const pw = $('password');
+    if (pw) { pw.value=''; setTimeout(()=>pw.focus(),60); }
+    const submit = $('loginSubmit');
+    if (submit) { submit.disabled=false; submit.removeAttribute('aria-disabled'); }
+    const security = $('loginSecurityStatus');
+    if (security) security.innerHTML='<i class="fa-solid fa-shield-halved"></i><span>Siap untuk masuk.</span>';
+  }
+  form1.addEventListener('submit', async (ev) => {
+    ev.preventDefault(); if (busy) return; clearError();
+    const input = $('identifier'); identifier = String(input?.value || '').trim();
+    if (!identifier) { showError('Username atau Gmail wajib diisi.'); input?.focus(); return; }
+    const btn = $('continueLogin'); busy=true; setBusy(btn,true,'Memeriksa...');
+    try {
+      if (!window.Auth?.lookup) throw new Error('Modul login belum siap. Muat ulang halaman.');
+      const row = await window.Auth.lookup(identifier);
+      if (!row) throw new Error('Username atau Gmail tidak ditemukan.');
+      if (row.is_banned === true) throw new Error('Akun kamu telah diblokir.');
+      openStep2(row);
+    } catch (e) { showError(e?.message || 'Akun tidak dapat diperiksa.'); }
+    finally { busy=false; setBusy(btn,false); }
+  });
+  form2.addEventListener('submit', async (ev) => {
+    ev.preventDefault(); if (busy) return; clearError();
+    const password = String($('password')?.value || '');
+    if (!password) { showError('Kata sandi wajib diisi.'); $('password')?.focus(); return; }
+    const btn=$('loginSubmit'); busy=true; setBusy(btn,true,'Masuk...');
+    try {
+      if (!window.Auth?.login) throw new Error('Modul login belum siap.');
+      await window.Auth.login(identifier,password,'');
+      notify('Login berhasil. Mengalihkan ke dashboard...', 'success');
+      setTimeout(()=>window.Auth.redirectToDashboard(),250);
+    } catch(e) { showError(e?.message || 'Login gagal. Periksa username dan kata sandi.'); }
+    finally { busy=false; if (!document.hidden) setBusy(btn,false); }
+  });
+  $('changeAccount')?.addEventListener('click',()=>{
+    clearError(); form2.classList.add('hidden'); form1.classList.remove('hidden');
+    const input=$('identifier'); input?.focus();
+  });
+  $('google')?.addEventListener('click', async()=>{
+    try { if(!window.Auth?.google) throw new Error('Login Google belum tersedia.'); await window.Auth.google(); }
+    catch(e){ showError(e?.message || 'Login Google gagal.'); }
+  });
+  $('toggle')?.addEventListener('click',()=>{
+    const input=$('password'); if(!input)return; input.type=input.type==='password'?'text':'password';
+    const i=$('toggle')?.querySelector('i'); if(i)i.className=input.type==='password'?'fa-solid fa-eye':'fa-solid fa-eye-slash';
+  });
+  if ($('loginSubmit')) { $('loginSubmit').disabled=true; $('loginSubmit').setAttribute('aria-disabled','true'); }
+})();
