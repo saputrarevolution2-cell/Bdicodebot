@@ -503,11 +503,12 @@ window.PASTELE_CONFIG = Object.freeze({
       /*
        * Login ke Supabase Auth.
        */
+      const signInOptions = { email, password: pass };
+      if (String(captchaToken || '').trim()) {
+        signInOptions.options = { captchaToken: String(captchaToken).trim() };
+      }
       const { data, error } =
-        await client.auth.signInWithPassword({
-          email,
-          password: pass
-        });
+        await client.auth.signInWithPassword(signInOptions);
       if (error) {
         throw new Error(
           getErrorMessage(error)
@@ -517,6 +518,12 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error(
           "Login gagal. User tidak ditemukan."
         );
+      }
+      if (!data.user.email_confirmed_at) {
+        try { await client.auth.signOut({ scope: "local" }); } catch (_) {}
+        const err = new Error("Email belum diverifikasi. Silakan cek inbox/spam email kamu lalu verifikasi akun sebelum login.");
+        err.code = "EMAIL_NOT_CONFIRMED";
+        throw err;
       }
       /*
        * Cek status akun setelah login.
@@ -2601,6 +2608,8 @@ document.documentElement.classList.add("pastele-ready");
   let identifier = '';
   let account = null;
   let busy = false;
+  let captchaToken = '';
+  let resendBusy = false;
 
   function notify(message, type='info') {
     let box = $('pasteleAuthNotice');
@@ -2651,6 +2660,54 @@ document.documentElement.classList.add("pastele-ready");
     const security = $('loginSecurityStatus');
     if (security) security.innerHTML='<i class="fa-solid fa-shield-halved"></i><span>Siap untuk masuk.</span>';
   }
+  function showResendVerification() {
+    let wrap = $('resendVerificationWrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'resendVerificationWrap';
+      wrap.className = 'auth-resend-verification';
+      wrap.innerHTML = `<button type="button" class="btn" id="resendVerification"><i class="fa-solid fa-envelope-circle-check"></i><span>Kirim ulang email verifikasi</span></button>`;
+      form2.appendChild(wrap);
+      $('resendVerification')?.addEventListener('click', resendVerification);
+    }
+    wrap.classList.remove('hidden');
+  }
+  async function resendVerification() {
+    if (resendBusy || !identifier) return;
+    resendBusy = true;
+    const b = $('resendVerification');
+    setBusy(b, true, 'Mengirim...');
+    try {
+      if (!window.sb?.auth) throw new Error('Supabase Auth belum siap.');
+      let email = '';
+      if (/^\S+@\S+\.\S+$/.test(identifier)) email = identifier.toLowerCase();
+      else if (account?.auth_email) email = String(account.auth_email).toLowerCase();
+      else if (window.Auth?.lookup) { const row = await window.Auth.lookup(identifier); email = String(row?.auth_email || row?.email || '').toLowerCase(); }
+      if (!email) throw new Error('Email akun tidak dapat ditemukan.');
+      const { error } = await window.sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: new URL('auth-callback.html', location.origin).href } });
+      if (error) throw error;
+      notify('Email verifikasi berhasil dikirim ulang. Cek inbox dan folder spam.', 'success');
+    } catch (e) { notify(e?.message || 'Gagal mengirim ulang email verifikasi.', 'error'); }
+    finally { resendBusy = false; setBusy(b, false); }
+  }
+  function initLoginTurnstile() {
+    const host = $('loginTurnstile');
+    if (!host) return;
+    const status = $('loginSecurityStatus');
+    const btn = $('loginSubmit');
+    const sitekey = String(host.dataset.sitekey || '').trim();
+    if (!sitekey) { if (status) status.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i><span>Site Key Turnstile belum dikonfigurasi.</span>'; if(btn){btn.disabled=false;btn.removeAttribute('aria-disabled');} return; }
+    const render = () => {
+      if (!window.turnstile) { if(status)status.innerHTML='<i class="fa-solid fa-circle-exclamation"></i><span>Verifikasi keamanan belum tersedia. Muat ulang halaman.</span>'; return; }
+      try {
+        window.turnstile.render(host, { sitekey, theme: host.dataset.theme || 'auto', language: host.dataset.language || 'id', action: host.dataset.action || 'login', callback: (token) => { captchaToken = token || ''; if(status)status.innerHTML='<i class="fa-solid fa-circle-check"></i><span>Verifikasi keamanan berhasil.</span>'; if(btn){btn.disabled=!String($('password')?.value||'').trim();btn.removeAttribute('aria-disabled');} }, 'expired-callback': () => { captchaToken=''; if(status)status.innerHTML='<i class="fa-solid fa-clock"></i><span>Verifikasi kedaluwarsa. Silakan ulangi.</span>'; if(btn){btn.disabled=true;btn.setAttribute('aria-disabled','true');} }, 'error-callback': () => { captchaToken=''; if(status)status.innerHTML='<i class="fa-solid fa-circle-exclamation"></i><span>Verifikasi keamanan gagal. Silakan coba lagi.</span>'; } });
+      } catch(e) { console.warn('[PasTele] Turnstile login:', e); }
+    };
+    if (window.turnstile) render(); else window.addEventListener('load', render, { once:true });
+  }
+  initLoginTurnstile();
+  $('password')?.addEventListener('input', () => { const b=$('loginSubmit'); if(b) b.disabled = !String($('password')?.value||'').trim() || !captchaToken; });
+
   form1.addEventListener('submit', async (ev) => {
     ev.preventDefault(); if (busy) return; clearError();
     const input = $('identifier'); identifier = String(input?.value || '').trim();
@@ -2675,7 +2732,14 @@ document.documentElement.classList.add("pastele-ready");
       await window.Auth.login(identifier,password,'');
       notify('Login berhasil. Mengalihkan ke dashboard...', 'success');
       setTimeout(()=>window.Auth.redirectToDashboard(),250);
-    } catch(e) { showError(e?.message || 'Login gagal. Periksa username dan kata sandi.'); }
+    } catch(e) {
+      if (e?.code === 'EMAIL_NOT_CONFIRMED') {
+        showError(e.message);
+        showResendVerification();
+      } else {
+        showError(e?.message || 'Login gagal. Periksa username dan kata sandi.');
+      }
+    }
     finally { busy=false; if (!document.hidden) setBusy(btn,false); }
   });
   $('changeAccount')?.addEventListener('click',()=>{
@@ -2692,3 +2756,10 @@ document.documentElement.classList.add("pastele-ready");
   });
   if ($('loginSubmit')) { $('loginSubmit').disabled=true; $('loginSubmit').setAttribute('aria-disabled','true'); }
 })();
+/* PasTele clean notification bridge */
+window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
+  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
+  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
+  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
+  container.appendChild(el); setTimeout(()=>el.remove(),4200);
+};

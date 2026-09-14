@@ -2588,3 +2588,10 @@ window.PASTELE_CONFIG = Object.freeze({
 
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
+/* PasTele clean notification bridge */
+window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
+  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
+  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
+  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
+  container.appendChild(el); setTimeout(()=>el.remove(),4200);
+};

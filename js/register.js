@@ -2647,3 +2647,10 @@ document.documentElement.classList.add("pastele-ready");
   $('google')?.addEventListener('click',async()=>{try{if(!window.Auth?.google)throw new Error('Pendaftaran Google belum tersedia.');await window.Auth.google();}catch(e){error(e?.message||'Pendaftaran Google gagal.');}});
   setButton();
 })();
+/* PasTele clean notification bridge */
+window.ptNotify = window.ptNotify || function(message, type="info", title="PasTele") {
+  const container = document.getElementById("ptToastContainer") || (()=>{const x=document.createElement("div");x.id="ptToastContainer";document.body.appendChild(x);return x;})();
+  const icon={success:"fa-circle-check",error:"fa-circle-xmark",warning:"fa-triangle-exclamation",info:"fa-circle-info"}[type]||"fa-circle-info";
+  const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
+  container.appendChild(el); setTimeout(()=>el.remove(),4200);
+};
