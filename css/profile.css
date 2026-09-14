@@ -2324,3 +2324,93 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   PasTele PROFILE — SETTINGS STYLE ALIGNMENT / FINAL
+   Profile-only. Settings page is intentionally untouched.
+   ========================================================= */
+.profile-page-body{
+  --profile-accent:var(--primary,#635bff);
+  --profile-bg:var(--bg,#f5f7fb);
+  --profile-surface:var(--surface,#fff);
+  --profile-text:var(--text,#0f172a);
+  --profile-muted:var(--muted,#64748b);
+  --profile-line:var(--line,#e2e8f0);
+  background:var(--profile-bg)!important;
+  color:var(--profile-text);
+}
+.profile-page-body .profile-hero,
+.profile-page-body .profile-stat-card,
+.profile-page-body .profile-quick-card,
+.profile-page-body .profile-section,
+.profile-page-body .profile-modal-dialog{
+  border-color:var(--profile-line);
+}
+.profile-page-body .profile-hero,
+.profile-page-body .profile-stat-card,
+.profile-page-body .profile-quick-card,
+.profile-page-body .profile-section{
+  background:var(--profile-surface);
+}
+.profile-page-body .profile-heading h1,
+.profile-page-body .profile-section h2,
+.profile-page-body .profile-stat-card strong,
+.profile-page-body .profile-quick-copy strong,
+.profile-page-body .section-heading h2{
+  color:var(--profile-text);
+}
+.profile-page-body .profile-heading .muted,
+.profile-page-body .profile-section p,
+.profile-page-body .profile-quick-copy small,
+.profile-page-body .profile-stat-card span,
+.profile-page-body .login-item small,
+.profile-page-body .security-note,
+.profile-page-body .profile-handle{
+  color:var(--profile-muted);
+}
+.profile-page-body .profile-eyebrow,
+.profile-page-body .profile-stat-icon,
+.profile-page-body .profile-section .section-icon,
+.profile-page-body .profile-quick-arrow{
+  color:var(--profile-accent);
+}
+.profile-page-body .profile-actions .btn.primary,
+.profile-page-body .password-submit,
+.profile-page-body .profile-pagination button.active{
+  background:var(--profile-accent);
+}
+.profile-page-body .profile-actions .btn,
+.profile-page-body .profile-stat-card,
+.profile-page-body .profile-quick-card,
+.profile-page-body .profile-pagination button{
+  border-color:var(--profile-line);
+}
+.profile-page-body .profile-actions .btn:focus-visible,
+.profile-page-body .profile-stat-card:focus-visible,
+.profile-page-body .profile-quick-card:focus-visible,
+.profile-page-body input:focus-visible,
+.profile-page-body button:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--profile-accent) 40%,transparent);
+  outline-offset:2px;
+}
+.profile-page-body .profile-quick-card:hover,
+.profile-page-body .profile-stat-card:hover{
+  border-color:color-mix(in srgb,var(--profile-accent) 28%,var(--profile-line));
+}
+@media(max-width:760px){
+  .profile-page-body .profile-hero{grid-template-columns:58px minmax(0,1fr);padding:18px;gap:13px}
+  .profile-page-body .profile-avatar{width:58px;height:58px;min-width:58px;border-radius:17px;font-size:22px}
+  .profile-page-body .profile-actions{grid-column:1/-1;justify-content:stretch}
+  .profile-page-body .profile-actions .btn{flex:1 1 auto}
+  .profile-page-body .profile-social-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profile-page-body .profile-quick-actions{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .profile-page-body .profile-section-page{padding-top:18px;padding-bottom:48px}
+  .profile-page-body .profile-section-page > .profile-page{width:calc(100% - 20px)}
+  .profile-page-body .profile-heading h1{font-size:23px}
+  .profile-page-body .profile-actions{display:grid;grid-template-columns:1fr 1fr}
+  .profile-page-body .profile-actions .btn{width:100%}
+  .profile-page-body .profile-actions #adminBtn{grid-column:1/-1}
+}
