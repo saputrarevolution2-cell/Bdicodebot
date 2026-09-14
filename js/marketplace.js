@@ -3254,6 +3254,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       item?.shares_count
     );
   };
+  const commentsText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.comments_count
+    );
+  };
   /* =======================================================
      PRODUCT URL
      ======================================================= */
@@ -3474,33 +3481,35 @@ document.addEventListener("DOMContentLoaded", async () => {
             </span>
           </div>
           <!-- META -->
-          <div class="market-card-stats">
-            <span>
+          <div class="market-card-stats" aria-label="Statistik konten">
+            <span title="Dilihat">
               <i class="fa-solid fa-eye" aria-hidden="true"></i>
-              ${viewsText(item)}
+              <b>${viewsText(item)}</b>
             </span>
-            ${number(item?.sales_count) > 0 ? `
-              <span>
-                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-                ${salesText(item)}
-              </span>
-            ` : ""}
+            <span title="Terjual">
+              <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+              <b>${salesText(item)}</b>
+            </span>
+            <span class="like" title="Like">
+              <i class="fa-solid fa-heart" aria-hidden="true"></i>
+              <b>${likesText(item)}</b>
+            </span>
+            <span class="share" title="Share">
+              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+              <b>${sharesText(item)}</b>
+            </span>
+            <span class="comment" title="Komentar">
+              <i class="fa-solid fa-comment" aria-hidden="true"></i>
+              <b>${commentsText(item)}</b>
+            </span>
           </div>
           <!-- BOTTOM -->
           <div class="product-bottom">
-            <div class="product-stats">
-              <span class="product-type-mini">
-                <i class="fa-solid ${icon(type)}" aria-hidden="true"></i>
-                ${esc(typeLabel(type))}
-              </span>
-            </div>
-            <strong
-              class="product-price ${
-                access === "free"
-                  ? "free"
-                  : ""
-              }"
-            >
+            <span class="product-type-mini">
+              <i class="fa-solid ${icon(type)}" aria-hidden="true"></i>
+              ${esc(typeLabel(type))}
+            </span>
+            <strong class="product-price ${access === "free" ? "free" : ""}">
               ${priceText(item)}
             </strong>
           </div>
@@ -4134,34 +4143,20 @@ document.addEventListener("DOMContentLoaded", async () => {
        */
       const [
         likesResult,
-        sharesResult
+        sharesResult,
+        commentsResult
       ] = await Promise.all([
-        client
-          .from(
-            "content_likes"
-          )
-          .select(
-            "target_id,target_type"
-          )
-          .in(
-            "target_id",
-            ids
-          ),
-        client
-          .from(
-            "analytics_events"
-          )
-          .select(
-            "target_id,target_type,event_type"
-          )
-          .in(
-            "target_id",
-            ids
-          )
-          .eq(
-            "event_type",
-            "share"
-          )
+        client.from("content_likes")
+          .select("target_id,target_type")
+          .in("target_id", ids),
+        client.from("analytics_events")
+          .select("target_id,target_type,event_type")
+          .in("target_id", ids)
+          .eq("event_type", "share"),
+        // Optional: older databases may not have comments yet.
+        client.from("content_comments")
+          .select("target_id,target_type")
+          .in("target_id", ids)
       ]);
       if (
         likesResult?.error
@@ -4180,6 +4175,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           sharesResult.error.message ||
           sharesResult.error
         );
+      }
+      if (commentsResult?.error && !String(commentsResult.error.message || "").toLowerCase().includes("relation") && !String(commentsResult.error.message || "").toLowerCase().includes("does not exist")) {
+        console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
       }
       /*
        * Count likes.
@@ -4221,7 +4219,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return data.map((item) => ({
         ...item,
         likes_count: countForItem(likesResult?.data || [], item),
-        shares_count: countForItem(sharesResult?.data || [], item)
+        shares_count: countForItem(sharesResult?.data || [], item),
+        comments_count: countForItem(commentsResult?.data || [], item)
       }));
     } catch (error) {
       /*
