@@ -1567,7 +1567,7 @@ document.addEventListener(
                     accessUrl = purchase.access_url;
                 } else if (!order.buyer_id && guestToken) {
                     const type=String(order.item_type||"").toLowerCase(); const id=order.item_id||order.product_id;
-                    if(id){ const d=await client.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:guestToken}); const item=d.data; const slug=item?.slug; if(slug){ if(type==='pastelink') accessUrl=`paste-view.html?slug=${encodeURIComponent(slug)}&guest_token=${encodeURIComponent(guestToken)}`; else if(type==='telegram_product') accessUrl=`product.html?type=code&id=${encodeURIComponent(id)}`; else if(type==='channel') accessUrl=`product.html?type=channel&id=${encodeURIComponent(id)}`; else accessUrl=`product.html?type=product&id=${encodeURIComponent(id)}`; } }
+                    if(id){ const d=await client.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:guestToken}); const item=d.data; const slug=item?.slug; if(slug){ if(type==='pastelink') accessUrl=`view-pastelink.html?slug=${encodeURIComponent(slug)}&guest_token=${encodeURIComponent(guestToken)}`; else if(type==='telegram_product') accessUrl=`view-code.html?slug=${encodeURIComponent(slug)}`; else if(type==='channel') accessUrl=`view-telegram.html?type=channel&slug=${encodeURIComponent(slug)}`; else accessUrl=`product.html?type=product&id=${encodeURIComponent(id)}`; } }
                 } else {
                     const type = String(order.item_type || "").toLowerCase();
                     const id = order.item_id || order.product_id;
@@ -1576,12 +1576,12 @@ document.addEventListener(
                         if (data?.slug) accessUrl = `paste-view.html?slug=${encodeURIComponent(data.slug)}`;
                     } else if (id && type === "telegram_product") {
                         const { data } = await client.from("telegram_products").select("slug").eq("id",id).maybeSingle();
-                        if (data?.slug) accessUrl = `product.html?type=code&slug=${encodeURIComponent(data.slug)}`;
+                        if (data?.slug) accessUrl = `view-code.html?slug=${encodeURIComponent(data.slug)}`;
                     } else if (id && ["channel","telegram_channel","group","telegram_group"].includes(type)) {
                         const { data } = await client.from("telegram_channels").select("slug,type").eq("id",id).maybeSingle();
                         if (data?.slug) {
                             const prefix = String(data.type || type).toLowerCase() === "group" ? "g" : "ch";
-                            accessUrl = `product.html?type=${prefix === "g" ? "group" : "channel"}&slug=${encodeURIComponent(data.slug)}`;
+                            accessUrl = `view-telegram.html?type=${prefix === "g" ? "group" : "channel"}&slug=${encodeURIComponent(data.slug)}`;
                         }
                     } else if (id && ["product","link"].includes(type)) {
                         const { data } = await client.from("products").select("slug").eq("id",id).maybeSingle();
