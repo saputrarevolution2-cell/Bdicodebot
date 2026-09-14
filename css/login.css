@@ -2318,3 +2318,8 @@ body.theme-dark .admin-page{
   outline:3px solid rgba(34,158,217,.20);
   outline-offset:2px;
 }
+
+
+/* PasTele clean auth notifications */
+.pt-auth-toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,0);width:min(460px,calc(100vw - 28px));display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid rgba(34,158,217,.18);border-radius:14px;background:var(--card,#fff);color:var(--text,#17212b);box-shadow:0 16px 45px rgba(0,0,0,.16);z-index:99999;font-size:14px;font-weight:600;animation:ptToastIn .22s ease}.pt-auth-toast i{font-size:17px}.pt-auth-toast.success i{color:#16a34a}.pt-auth-toast.error i{color:#dc2626}.pt-auth-toast.info i{color:#229ed9}.pt-auth-toast.hide{opacity:0;transform:translate(-50%,10px);transition:.2s ease}@keyframes ptToastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(max-width:600px){.pt-auth-toast{bottom:max(14px,env(safe-area-inset-bottom));width:calc(100vw - 22px);font-size:13px}}
