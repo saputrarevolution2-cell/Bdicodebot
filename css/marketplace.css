@@ -2,6 +2,8 @@
 /* PasTele UI — CLEAN SAAS DESIGN SYSTEM v2026.09
    One page = one stylesheet. No cascade patches. */
 :root{
+  --pt-accent:var(--primary);
+  --pt-accent-border:var(--line);
   --bg:#f5f7fb;--surface:#fff;--surface-2:#f8fafc;--surface-3:#eef2f7;
   --text:#0f172a;--muted:#64748b;--line:#e2e8f0;--line-strong:#cbd5e1;
   --primary:#635bff;--primary-2:#8b5cf6;--cyan:#06b6d4;--blue:#3b82f6;
@@ -2522,3 +2524,81 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   MARKETPLACE FINAL SETTINGS-STYLE ALIGNMENT
+   Scope: Marketplace only. Settings page is untouched.
+   ========================================================= */
+.marketplace-page{
+  color:var(--text);
+}
+.marketplace-page .market-heading h1,
+.marketplace-page .market-resultbar strong,
+.marketplace-page .product-title,
+.marketplace-page .market-list-title{
+  color:var(--text);
+}
+.marketplace-page .market-heading .muted,
+.marketplace-page .product-description,
+.marketplace-page .product-creator,
+.marketplace-page .market-resultbar span,
+.marketplace-page .market-list-meta{
+  color:var(--muted);
+}
+.marketplace-page .market-search input,
+.marketplace-page .market-tabs,
+.marketplace-page .product-card,
+.marketplace-page .market-panel{
+  background:var(--surface)!important;
+  border-color:var(--line)!important;
+}
+.marketplace-page .market-search input:focus{
+  border-color:var(--primary)!important;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 12%,transparent);
+}
+.marketplace-page .market-tab.active{
+  background:color-mix(in srgb,var(--primary) 10%,var(--surface));
+  color:var(--primary);
+}
+.marketplace-page .product-card:hover{
+  border-color:color-mix(in srgb,var(--primary) 30%,var(--line))!important;
+}
+.marketplace-page .product-type,
+.marketplace-page .product-creator i,
+.marketplace-page .product-price,
+.marketplace-page .market-reset,
+.marketplace-page .market-list-meta i{
+  color:var(--primary)!important;
+}
+.marketplace-page .product-access.free,
+.marketplace-page .product-price.free{
+  color:var(--green)!important;
+}
+.marketplace-page .product-access.paid{
+  color:var(--primary)!important;
+}
+.marketplace-page .product-bottom{
+  border-top-color:var(--line)!important;
+}
+.marketplace-page .market-pagination button{
+  border-color:var(--line);
+  background:var(--surface);
+  color:var(--text);
+}
+.marketplace-page .market-pagination button.active{
+  border-color:var(--primary);
+  background:var(--primary);
+  color:#fff;
+}
+.marketplace-page .market-panel{
+  box-shadow:var(--shadow-sm);
+}
+.marketplace-page .market-panel + .market-panel{
+  margin-top:0;
+}
+@media(max-width:760px){
+  .marketplace-page .market-grid{
+    grid-template-columns:1fr!important;
+  }
+}
