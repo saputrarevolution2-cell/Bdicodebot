@@ -2595,3 +2595,757 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
   const el=document.createElement("div"); el.className=`pt-toast ${type}`; el.innerHTML=`<i class="fa-solid ${icon}"></i><div><strong>${String(title).replace(/[<>]/g,"")}</strong><span>${String(message).replace(/[<>]/g,"")}</span></div>`;
   container.appendChild(el); setTimeout(()=>el.remove(),4200);
 };
+
+
+/* =========================================================
+   PasTele — SETTINGS PAGE HANDLER
+   DATABASE-SYNCED / NO-INFINITE-LOADING
+   ---------------------------------------------------------
+   Tables used by this page:
+   - profiles
+   - payment_methods
+   - wallets (read-only balance)
+   - notifications (read-only unread count)
+   Supabase Auth:
+   - auth.getUser()
+   - auth.updateUser()
+   Notification preferences are device-local because the
+   supplied database.sql has no user notification-preference
+   table/columns.
+   ========================================================= */
+(() => {
+  "use strict";
+
+  const PAGE = "settings";
+  const TIMEOUT_MS = 12000;
+
+  const $ = (id) => document.getElementById(id);
+
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+  }[m]));
+
+  const toast = (message, type = "info") => {
+    if (typeof window.ptNotify === "function") {
+      window.ptNotify(message, type, "Settings");
+      return;
+    }
+    if (window.TC?.toast) {
+      window.TC.toast(message, type);
+      return;
+    }
+    console[type === "error" ? "error" : "log"]("[PasTele Settings]", message);
+  };
+
+  const withTimeout = async (promise, ms = TIMEOUT_MS) => {
+    let timer;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error("Permintaan database timeout.")), ms);
+        })
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const getClient = () => {
+    const sb = window.sb || window.supabaseClient;
+    if (!sb?.auth) throw new Error("Supabase belum siap.");
+    return sb;
+  };
+
+  const getUser = async () => {
+    const sb = getClient();
+    const { data, error } = await withTimeout(sb.auth.getUser());
+    if (error) throw error;
+    if (!data?.user?.id) throw new Error("Sesi login tidak ditemukan.");
+    return data.user;
+  };
+
+  const setBusy = (button, busy, loadingText = "Menyimpan...") => {
+    if (!button) return;
+    button.disabled = busy;
+    button.setAttribute("aria-busy", String(busy));
+    const normal = button.querySelector(".submit-text");
+    const loading = button.querySelector(".submit-loading");
+    if (normal) normal.hidden = busy;
+    if (loading) {
+      loading.hidden = !busy;
+      const textNode = loading.querySelector("span");
+      if (textNode) textNode.textContent = loadingText;
+    }
+  };
+
+  const setText = (id, value) => {
+    const el = $(id);
+    if (el) el.textContent = String(value ?? "");
+  };
+
+  /* ---------------------------------------------------------
+     PROFILE
+     --------------------------------------------------------- */
+  const PROFILE_FIELDS = [
+    "username",
+    "display_name",
+    "telegram_username",
+    "youtube_url",
+    "facebook_url",
+    "whatsapp_number",
+    "bio",
+    "website",
+    "country"
+  ];
+
+  const normalizeUsername = (value) =>
+    String(value || "").trim().toLowerCase().replace(/^@+/, "");
+
+  const normalizeUrl = (value) => {
+    const v = String(value || "").trim();
+    if (!v) return null;
+    if (/^https?:\/\//i.test(v)) return v;
+    return `https://${v}`;
+  };
+
+  const normalizeTelegram = (value) => {
+    const v = String(value || "").trim();
+    if (!v) return null;
+    if (/^https?:\/\/t\.me\//i.test(v)) return v;
+    return `@${v.replace(/^@+/, "")}`;
+  };
+
+  const normalizeWhatsapp = (value) => {
+    const v = String(value || "").trim();
+    if (!v) return null;
+    if (/^https?:\/\/wa\.me\//i.test(v)) return v;
+    return v;
+  };
+
+  const loadProfile = async (user) => {
+    const sb = getClient();
+    const { data, error } = await withTimeout(
+      sb.from("profiles")
+        .select(PROFILE_FIELDS.join(","))
+        .eq("id", user.id)
+        .maybeSingle()
+    );
+    if (error) throw error;
+    if (!data) throw new Error("Profile akun belum ditemukan.");
+
+    setText("username", data.username || "");
+    const usernameInput = $("username");
+    if (usernameInput) usernameInput.value = data.username || "";
+
+    const values = {
+      telegram_username: data.telegram_username || "",
+      youtube_url: data.youtube_url || "",
+      facebook_url: data.facebook_url || "",
+      whatsapp_number: data.whatsapp_number || "",
+      bio: data.bio || ""
+    };
+
+    Object.entries(values).forEach(([id, value]) => {
+      const el = $(id);
+      if (el) el.value = value;
+    });
+
+    const country = $("country");
+    if (country && data.country) country.value = data.country;
+
+    updateBioCounter();
+    return data;
+  };
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    const form = $("profileForm");
+    const button = $("saveProfile");
+    if (!form || button?.disabled) return;
+
+    try {
+      const user = await getUser();
+      const username = normalizeUsername($("username")?.value);
+
+      if (!/^[a-z0-9_]{3,32}$/.test(username)) {
+        throw new Error("Username hanya boleh berisi huruf kecil, angka, dan underscore, minimal 3 karakter.");
+      }
+
+      setBusy(button, true, "Menyimpan...");
+
+      /* Username must remain unique. Exclude the current profile. */
+      const sb = getClient();
+      const { data: same, error: checkError } = await withTimeout(
+        sb.from("profiles")
+          .select("id")
+          .eq("username", username)
+          .neq("id", user.id)
+          .maybeSingle()
+      );
+      if (checkError) throw checkError;
+      if (same?.id) throw new Error("Username tersebut sudah digunakan.");
+
+      const payload = {
+        username,
+        telegram_username: normalizeTelegram($("telegram_username")?.value),
+        youtube_url: normalizeUrl($("youtube_url")?.value),
+        facebook_url: normalizeUrl($("facebook_url")?.value),
+        whatsapp_number: normalizeWhatsapp($("whatsapp_number")?.value),
+        bio: String($("bio")?.value || "").trim() || null
+      };
+
+      const { error } = await withTimeout(
+        sb.from("profiles")
+          .update(payload)
+          .eq("id", user.id)
+      );
+      if (error) throw error;
+
+      toast("Profil berhasil disimpan.", "success");
+    } catch (error) {
+      console.error("[PasTele Settings] save profile:", error);
+      toast(error?.message || "Profil gagal disimpan.", "error");
+    } finally {
+      setBusy(button, false);
+    }
+  };
+
+  /* ---------------------------------------------------------
+     PASSWORD
+     --------------------------------------------------------- */
+  const updatePasswordStrength = () => {
+    const input = $("newpass");
+    const output = $("passwordStrength");
+    if (!input || !output) return;
+
+    const value = String(input.value || "");
+    if (!value) {
+      output.textContent = "";
+      output.removeAttribute("data-strength");
+      return;
+    }
+
+    let score = 0;
+    if (value.length >= 6) score++;
+    if (value.length >= 10) score++;
+    if (/[A-Z]/.test(value)) score++;
+    if (/[a-z]/.test(value)) score++;
+    if (/\d/.test(value)) score++;
+    if (/[^A-Za-z0-9]/.test(value)) score++;
+
+    const label =
+      score <= 2 ? "Password lemah" :
+      score <= 4 ? "Password cukup kuat" :
+      "Password kuat";
+
+    output.textContent = label;
+    output.dataset.strength = score <= 2 ? "weak" : score <= 4 ? "medium" : "strong";
+  };
+
+  const savePassword = async (event) => {
+    event.preventDefault();
+    const form = $("passForm");
+    const button = $("changePassword");
+    if (!form || button?.disabled) return;
+
+    try {
+      const password = String($("newpass")?.value || "");
+      if (password.length < 6) throw new Error("Password minimal 6 karakter.");
+
+      setBusy(button, true, "Menyimpan...");
+      const sb = getClient();
+
+      const { error } = await withTimeout(
+        sb.auth.updateUser({ password })
+      );
+      if (error) throw error;
+
+      form.reset();
+      updatePasswordStrength();
+      toast("Password berhasil diubah.", "success");
+    } catch (error) {
+      console.error("[PasTele Settings] password:", error);
+      toast(error?.message || "Password gagal diubah.", "error");
+    } finally {
+      setBusy(button, false);
+    }
+  };
+
+  /* ---------------------------------------------------------
+     PAYMENT METHODS
+     --------------------------------------------------------- */
+  const E_WALLETS_ID = [
+    ["DANA", "DANA"],
+    ["OVO", "OVO"],
+    ["GOPAY", "GoPay"],
+    ["SHOPEEPAY", "ShopeePay"],
+    ["LINKAJA", "LinkAja"],
+    ["QRIS", "QRIS"]
+  ];
+
+  const BANKS_ID = [
+    ["BCA", "BCA"],
+    ["BRI", "BRI"],
+    ["BNI", "BNI"],
+    ["MANDIRI", "Bank Mandiri"],
+    ["CIMB", "CIMB Niaga"],
+    ["BSI", "Bank Syariah Indonesia"],
+    ["BTN", "BTN"],
+    ["SEABANK", "SeaBank"],
+    ["JAGO", "Bank Jago"],
+    ["PERMATA", "PermataBank"]
+  ];
+
+  const fillProviders = (method = "ewallet", selected = "") => {
+    const select = $("provider");
+    if (!select) return;
+
+    const list = method === "bank" ? BANKS_ID : E_WALLETS_ID;
+    select.innerHTML = list.map(([value, label]) =>
+      `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`
+    ).join("");
+
+    if (selected && list.some(([v]) => v === selected)) {
+      select.value = selected;
+    } else if (list.length) {
+      select.value = list[0][0];
+    }
+  };
+
+  const getPaymentMethod = () =>
+    document.querySelector(".payment-tab.active")?.dataset.method || "ewallet";
+
+  const setPaymentMethod = (method) => {
+    document.querySelectorAll(".payment-tab").forEach((tab) => {
+      const active = tab.dataset.method === method;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+    fillProviders(method);
+  };
+
+  const loadPayments = async (user) => {
+    const box = $("savedPayments");
+    const count = $("savedPaymentCount");
+
+    if (box) {
+      box.innerHTML = `
+        <div class="payment-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Memuat payment...</span>
+        </div>`;
+    }
+
+    try {
+      const sb = getClient();
+      const { data, error } = await withTimeout(
+        sb.from("payment_methods")
+          .select("id,method_type,provider,account_name,account_number,country,is_default,created_at,updated_at")
+          .eq("user_id", user.id)
+          .order("is_default", { ascending: false })
+          .order("created_at", { ascending: false })
+      );
+      if (error) throw error;
+
+      const rows = Array.isArray(data) ? data : [];
+      if (count) count.textContent = String(rows.length);
+
+      if (!box) return rows;
+
+      if (!rows.length) {
+        box.innerHTML = `
+          <div class="payment-loading">
+            <i class="fa-solid fa-wallet"></i>
+            <span>Belum ada payment tersimpan.</span>
+          </div>`;
+        return rows;
+      }
+
+      box.innerHTML = rows.map((row) => {
+        const icon = row.method_type === "bank"
+          ? "fa-building-columns"
+          : "fa-wallet";
+        const number = String(row.account_number || "");
+        const masked = number.length > 4
+          ? `${"•".repeat(Math.max(0, Math.min(8, number.length - 4)))}${escapeHtml(number.slice(-4))}`
+          : escapeHtml(number);
+
+        return `
+          <article class="saved-payment-item" data-payment-id="${escapeHtml(row.id)}">
+            <div class="saved-payment-icon">
+              <i class="fa-solid ${icon}"></i>
+            </div>
+            <div class="saved-payment-content">
+              <strong>${escapeHtml(row.provider || row.method_type || "Payment")}</strong>
+              <span>${escapeHtml(row.account_name || "-")}</span>
+              <small>${masked}</small>
+            </div>
+            ${row.is_default ? `<span class="saved-payment-badge">Default</span>` : ""}
+            <button type="button" class="btn icon-btn payment-delete-btn"
+              data-payment-delete="${escapeHtml(row.id)}"
+              aria-label="Hapus payment"
+              title="Hapus payment">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </article>`;
+      }).join("");
+
+      return rows;
+    } catch (error) {
+      console.error("[PasTele Settings] load payment methods:", error);
+      if (count) count.textContent = "0";
+      if (box) {
+        box.innerHTML = `
+          <div class="payment-loading">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>Payment tidak dapat dimuat. Coba refresh halaman.</span>
+          </div>`;
+      }
+      return [];
+    }
+  };
+
+  const savePayment = async (event) => {
+    event.preventDefault();
+    const form = $("payForm");
+    const button = $("savePayment");
+    if (!form || button?.disabled) return;
+
+    try {
+      const user = await getUser();
+      const methodType = getPaymentMethod();
+      const provider = String($("provider")?.value || "").trim();
+      const accountName = String($("pname")?.value || "").trim();
+      const accountNumber = String($("pnumber")?.value || "").trim();
+      const country = String($("country")?.value || "ID").trim();
+
+      if (!provider) throw new Error("Provider payment wajib dipilih.");
+      if (!accountName) throw new Error("Nama pemegang rekening wajib diisi.");
+      if (!accountNumber) throw new Error("Nomor rekening / e-wallet wajib diisi.");
+
+      setBusy(button, true, "Menyimpan...");
+
+      const sb = getClient();
+
+      /* If this is the first method, make it default. */
+      const { count, error: countError } = await withTimeout(
+        sb.from("payment_methods")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+      );
+      if (countError) throw countError;
+
+      const payload = {
+        user_id: user.id,
+        method_type: methodType,
+        provider,
+        account_name: accountName,
+        account_number: accountNumber,
+        country: country || "ID",
+        is_default: Number(count || 0) === 0
+      };
+
+      const { error } = await withTimeout(
+        sb.from("payment_methods").insert(payload)
+      );
+      if (error) throw error;
+
+      form.reset();
+      setPaymentMethod("ewallet");
+      await loadPayments(user);
+      toast("Payment berhasil disimpan.", "success");
+    } catch (error) {
+      console.error("[PasTele Settings] save payment:", error);
+      toast(error?.message || "Payment gagal disimpan.", "error");
+    } finally {
+      setBusy(button, false);
+    }
+  };
+
+  const deletePayment = async (id, button) => {
+    if (!id || button?.disabled) return;
+
+    try {
+      const user = await getUser();
+      if (!window.confirm("Hapus payment tersimpan ini?")) return;
+
+      if (button) button.disabled = true;
+      const sb = getClient();
+
+      const { data: target, error: readError } = await withTimeout(
+        sb.from("payment_methods")
+          .select("id,is_default")
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .maybeSingle()
+      );
+      if (readError) throw readError;
+      if (!target) throw new Error("Payment tidak ditemukan.");
+
+      const { error } = await withTimeout(
+        sb.from("payment_methods")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", user.id)
+      );
+      if (error) throw error;
+
+      /* Keep one remaining method as default when needed. */
+      if (target.is_default) {
+        const { data: remaining } = await withTimeout(
+          sb.from("payment_methods")
+            .select("id")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: true })
+            .limit(1)
+        );
+        if (remaining?.[0]?.id) {
+          await withTimeout(
+            sb.from("payment_methods")
+              .update({ is_default: true })
+              .eq("id", remaining[0].id)
+              .eq("user_id", user.id)
+          );
+        }
+      }
+
+      await loadPayments(user);
+      toast("Payment berhasil dihapus.", "success");
+    } catch (error) {
+      console.error("[PasTele Settings] delete payment:", error);
+      toast(error?.message || "Payment gagal dihapus.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  };
+
+  /* ---------------------------------------------------------
+     ACCOUNT / SESSION
+     --------------------------------------------------------- */
+  const loadAccountInfo = async (user, profile) => {
+    setText("email", user.email || profile?.auth_email || "-");
+    setText("accountStatus", profile?.is_banned ? "Diblokir" : "Aktif");
+    setText("accountRole",
+      profile?.is_admin ? "Administrator" :
+      (profile?.role || "User")
+    );
+
+    const premiumActive = Boolean(
+      profile?.is_premium &&
+      (!profile?.subscription_until || new Date(profile.subscription_until) > new Date())
+    );
+
+    setText("premiumStatus", premiumActive ? "Premium aktif" : "Free");
+
+    const adminButton = $("adminBtn");
+    if (adminButton) adminButton.hidden = !Boolean(profile?.is_admin);
+
+    setText("sessionStatus", "Aktif");
+    setText(
+      "lastLogin",
+      user.last_sign_in_at
+        ? new Date(user.last_sign_in_at).toLocaleString("id-ID", {
+            dateStyle: "medium",
+            timeStyle: "short"
+          })
+        : "Belum tersedia"
+    );
+  };
+
+  /* ---------------------------------------------------------
+     LOCAL NOTIFICATION PREFERENCES
+     --------------------------------------------------------- */
+  const NOTIFY_KEY = "pastele-notification-preferences";
+
+  const loadNotificationPrefs = () => {
+    let saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(NOTIFY_KEY) || "{}") || {};
+    } catch (_) {}
+
+    ["notifyWallet", "notifySales", "notifyFollowers", "notifyAnnouncements"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.checked = saved[id] !== false;
+
+      el.addEventListener("change", () => {
+        const next = {};
+        ["notifyWallet", "notifySales", "notifyFollowers", "notifyAnnouncements"].forEach((key) => {
+          const node = $(key);
+          if (node) next[key] = node.checked;
+        });
+        localStorage.setItem(NOTIFY_KEY, JSON.stringify(next));
+        toast("Preferensi notifikasi diperbarui.", "success");
+      });
+    });
+  };
+
+  /* ---------------------------------------------------------
+     THEME
+     --------------------------------------------------------- */
+  const initTheme = () => {
+    const options = document.querySelectorAll("[data-theme-option]");
+    if (!options.length) return;
+
+    const apply = (mode) => {
+      if (window.PasTeleTheme?.set) {
+        window.PasTeleTheme.set(mode);
+      } else {
+        localStorage.setItem("pastele-theme", mode);
+        const dark =
+          mode === "dark" ||
+          (mode === "system" && window.matchMedia?.("(prefers-color-scheme: dark)")?.matches) ||
+          (mode === "auto" && ((new Date()).getHours() >= 18 || (new Date()).getHours() < 6));
+
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.classList.toggle("theme-dark", dark);
+        document.documentElement.classList.toggle("theme-light", !dark);
+      }
+
+      options.forEach((node) => {
+        const active = node.dataset.themeOption === mode;
+        node.classList.toggle("active", active);
+        node.setAttribute("aria-pressed", String(active));
+      });
+    };
+
+    const current = () => {
+      const value = localStorage.getItem("pastele-theme") || "auto";
+      return ["auto", "light", "dark", "system"].includes(value) ? value : "auto";
+    };
+
+    options.forEach((node) => {
+      node.addEventListener("click", () => {
+        apply(node.dataset.themeOption || "auto");
+      });
+    });
+
+    apply(current());
+  };
+
+  /* ---------------------------------------------------------
+     BIO COUNTER / PASSWORD EYE
+     --------------------------------------------------------- */
+  const updateBioCounter = () => {
+    const input = $("bio");
+    const counter = $("bioCounter");
+    if (!input || !counter) return;
+    counter.textContent = `${String(input.value || "").length}/500`;
+  };
+
+  const initPasswordToggles = () => {
+    document.querySelectorAll("[data-toggle-pass]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = $(button.dataset.togglePass);
+        if (!input) return;
+        const visible = input.type === "text";
+        input.type = visible ? "password" : "text";
+        button.setAttribute("aria-pressed", String(!visible));
+        button.setAttribute("aria-label", visible ? "Tampilkan password" : "Sembunyikan password");
+        const icon = button.querySelector("i");
+        if (icon) {
+          icon.classList.toggle("fa-eye", visible);
+          icon.classList.toggle("fa-eye-slash", !visible);
+        }
+      });
+    });
+  };
+
+  /* ---------------------------------------------------------
+     BOOT
+     --------------------------------------------------------- */
+  const boot = async () => {
+    const settingsPage =
+      $("profileForm") ||
+      $("payForm") ||
+      $("passForm") ||
+      $("notificationSettings");
+
+    if (!settingsPage) return;
+
+    initTheme();
+    loadNotificationPrefs();
+    initPasswordToggles();
+
+    $("bio")?.addEventListener("input", updateBioCounter);
+    $("newpass")?.addEventListener("input", updatePasswordStrength);
+
+    $("profileForm")?.addEventListener("submit", saveProfile);
+    $("passForm")?.addEventListener("submit", savePassword);
+    $("payForm")?.addEventListener("submit", savePayment);
+
+    document.querySelectorAll(".payment-tab").forEach((tab) => {
+      tab.addEventListener("click", () => setPaymentMethod(tab.dataset.method || "ewallet"));
+    });
+    setPaymentMethod("ewallet");
+
+    $("savedPayments")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-payment-delete]");
+      if (!button) return;
+      deletePayment(button.dataset.paymentDelete, button);
+    });
+
+    $("logout")?.addEventListener("click", async () => {
+      const button = $("logout");
+      if (button?.disabled) return;
+      if (!window.confirm("Keluar dari akun PasTele di perangkat ini?")) return;
+
+      if (button) button.disabled = true;
+      try {
+        const sb = getClient();
+        const { error } = await withTimeout(sb.auth.signOut());
+        if (error) throw error;
+        location.href = "login.html";
+      } catch (error) {
+        console.error("[PasTele Settings] logout:", error);
+        toast(error?.message || "Logout gagal.", "error");
+        if (button) button.disabled = false;
+      }
+    });
+
+    /* All database reads are isolated so one failed query cannot
+       leave the whole Settings page in a permanent loading state. */
+    try {
+      const user = await getUser();
+
+      let profile = null;
+      try {
+        profile = await loadProfile(user);
+      } catch (error) {
+        console.error("[PasTele Settings] profile load:", error);
+        toast("Profil belum dapat dimuat. Coba refresh halaman.", "error");
+      }
+
+      try {
+        await loadPayments(user);
+      } catch (error) {
+        console.error("[PasTele Settings] payments boot:", error);
+      }
+
+      try {
+        await loadAccountInfo(user, profile || {});
+      } catch (error) {
+        console.error("[PasTele Settings] account info:", error);
+      }
+
+      updateBioCounter();
+      updatePasswordStrength();
+    } catch (error) {
+      console.error("[PasTele Settings] boot:", error);
+      setText("sessionStatus", "Sesi tidak tersedia");
+      setText("lastLogin", "-");
+      setText("accountStatus", "Tidak dapat dimuat");
+      setText("accountRole", "-");
+      setText("premiumStatus", "-");
+      setText("email", "-");
+      toast(error?.message || "Sesi login tidak dapat diverifikasi.", "error");
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
+})();
