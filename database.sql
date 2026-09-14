@@ -1192,6 +1192,9 @@ BEGIN
  RETURN coalesce(v,0);
 END $$;
 
+-- Explicitly remove the historical incompatible return type before recreation.
+DROP FUNCTION IF EXISTS public.record_content_view(uuid,text,uuid) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.record_content_view(
  p_target_id uuid,p_target_type text,p_owner uuid DEFAULT NULL
 )
@@ -5238,20 +5241,4 @@ CREATE POLICY comments_anon_insert ON public.content_comments FOR INSERT TO anon
 WITH CHECK (user_id IS NULL AND length(btrim(coalesce(body,''))) BETWEEN 1 AND 2000);
 
 -- Canonical public view counter for all four published content families.
-CREATE OR REPLACE FUNCTION public.record_content_view(p_owner uuid,p_target_type text,p_target_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE t text:=lower(btrim(coalesce(p_target_type,'')));
-BEGIN
- IF p_target_id IS NULL THEN RETURN; END IF;
- INSERT INTO public.analytics_events(owner_id,actor_id,event_type,target_type,target_id)
- VALUES(p_owner,auth.uid(),'view',t,p_target_id);
- IF t='telegram_product' THEN UPDATE public.telegram_products SET views=views+1 WHERE id=p_target_id;
- ELSIF t='channel' THEN UPDATE public.telegram_channels SET views=views+1 WHERE id=p_target_id;
- ELSIF t='pastelink' THEN UPDATE public.pastelinks SET views=views+1 WHERE id=p_target_id;
- ELSIF t IN ('product','link') THEN UPDATE public.products SET views=views+1 WHERE id=p_target_id;
- END IF;
-END;
-$$;
-GRANT EXECUTE ON FUNCTION public.record_content_view(uuid,text,uuid) TO anon,authenticated;
-
 COMMIT;
