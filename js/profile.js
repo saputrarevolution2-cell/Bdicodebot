@@ -2858,11 +2858,11 @@ window.PASTELE_CONFIG = Object.freeze({
   function show(n) {
     if (!n?.id || state.seen.has(n.id)) return;
     state.seen.add(n.id);
-    const target = String(n.link_url || '').trim();
+    const target = '';
     const card = document.createElement('article');
     card.className = 'pt-live-notice';
     card.setAttribute('role', target ? 'link' : 'status');
-    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc(icon(n.notification_type))}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja${target ? ' · Ketuk untuk membuka' : ''}</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
+    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc('fa-bell')}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
     const close = card.querySelector('.pt-live-close');
     close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
     card.addEventListener('click', async () => {
@@ -2894,7 +2894,7 @@ window.PASTELE_CONFIG = Object.freeze({
     let last = new Date().toISOString();
     state.poll = setInterval(async () => {
       try {
-        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
         if (r.error) return;
         for (const n of (r.data || [])) show(n);
         if (r.data?.length) last = r.data[r.data.length - 1].created_at;
