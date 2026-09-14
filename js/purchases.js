@@ -1450,7 +1450,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     rows: [],
     filteredRows: [],
     page: 1,
-    pageSize: 8,
+    pageSize: 10,
     search: "",
     status: "all",
     type: "all",

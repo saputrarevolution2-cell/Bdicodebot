@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id), sb=()=>window.sb;
 const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
 const access=()=>document.querySelector('input[name="access"]:checked')?.value||"free";
-function setLoading(on){const b=$("submitBtn");if(!b)return;b.disabled=on;b.setAttribute("aria-busy",String(on));const n=b.querySelector(".normal"),l=b.querySelector(".loading");if(n)n.hidden=on;if(l)l.hidden=!on}
+function setLoading(on){const b=$("submitBtn");if(!b)return;b.disabled=!!on;b.setAttribute("aria-busy",String(!!on));}
 function requireClient(){if(!sb())throw new Error("Supabase belum siap. Refresh halaman dan coba lagi.")}
 const slugify=s=>String(s||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,70);let bots=[];
 function sync(){const paid=access()==="paid";$("priceBox").hidden=!paid;$("price").disabled=!paid;if(!paid)$("price").value="0"}

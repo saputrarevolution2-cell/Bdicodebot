@@ -4160,6 +4160,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           type:
             item.type ||
             'link',
+          access_type:
+            item.access_type ||
+            (Number(item.price || 0) > 0 ? 'paid' : 'free'),
           icon:
             normalize(
               item.type
@@ -4246,6 +4249,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             item.product_type ||
             item.type ||
             'code',
+          access_type:
+            item.access_type ||
+            (Number(item.price || 0) > 0 ? 'paid' : 'free'),
           icon:
             'fa-code',
           date:
@@ -4277,6 +4283,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           type:
             item.type ||
             'channel',
+          access_type:
+            item.access_type ||
+            (Number(item.price || 0) > 0 ? 'paid' : 'free'),
           icon:
             normalize(
               item.type
@@ -4313,8 +4322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
       }
     );
-    const recentPageSize =
-      5;
+    const recentPageSize = 10;
     let recentPage =
       1;
     const renderRecent =
@@ -4356,18 +4364,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                       const id = String(item.id || '').trim();
                       let href = '';
                       const type = normalize(item.type);
+                      const access = String(item.access_type || (Number(item.price || 0) > 0 ? 'paid' : 'free')).toLowerCase() === 'paid' ? 'p' : 'f';
                       if (type === 'paste') {
-                        href = slug ? `paste-view.html?slug=${encodeURIComponent(slug)}` : '';
+                        href = slug ? `/paste/${encodeURIComponent(slug)}` : '';
                       } else if (type === 'pastelink') {
                         href = slug ? `/p/${encodeURIComponent(slug)}` : '';
                       } else if (type === 'code') {
-                        href = slug ? `/c/${encodeURIComponent(slug)}` : (id ? `product.html?id=${encodeURIComponent(id)}` : '');
+                        href = slug ? `/c/${access}/${encodeURIComponent(slug)}` : (id ? `product.html?id=${encodeURIComponent(id)}&type=code` : '');
                       } else if (type === 'channel') {
-                        href = slug ? `/channel/${encodeURIComponent(slug)}` : '';
+                        href = slug ? `/ch/${access}/${encodeURIComponent(slug)}` : (id ? `product.html?id=${encodeURIComponent(id)}&type=channel` : '');
                       } else if (type === 'group') {
-                        href = slug ? `/g/${encodeURIComponent(slug)}` : '';
+                        href = slug ? `/g/${access}/${encodeURIComponent(slug)}` : (id ? `product.html?id=${encodeURIComponent(id)}&type=group` : '');
                       } else if (id) {
-                        href = `product.html?id=${encodeURIComponent(id)}`;
+                        href = `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`;
                       }
                       const tag = href ? 'a' : 'div';
                       const hrefAttr = href ? ` href="${esc(href)}" aria-label="Buka ${esc(item.title || 'konten')}"` : '';
@@ -4556,8 +4565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ).toUpperCase();
       }
     };
-    const activityPageSize =
-      5;
+    const activityPageSize = 10;
     let activityPage =
       1;
     const renderActivity =

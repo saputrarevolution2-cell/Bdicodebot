@@ -1426,7 +1426,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let filter = "all";
   let items = [];
   let page = 1;
-  const pageSize = 5;
+  const pageSize = 10;
   /* =======================================================
      GLOBAL HELPERS
      ======================================================= */
@@ -1682,23 +1682,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      PRODUCT URL
      ======================================================= */
-  const productUrl = (
-    item
-  ) => {
-    const id =
-      item?.id;
-    if (!id) {
-      return "product.html";
-    }
+  const productUrl = (item) => {
+    const id = item?.id;
+    const slug = String(item?.slug || "").trim();
     const type = typeOf(item);
-    if (type === "pastelink") {
-      return "paste-view.html?slug=" + encodeURIComponent(item.slug || "");
+    const access = accessType(item) === "paid" ? "p" : "f";
+    if (slug) {
+      if (type === "pastelink") return `/p/${encodeURIComponent(slug)}`;
+      if (type === "code") return `/c/${access}/${encodeURIComponent(slug)}`;
+      if (type === "channel") return `/ch/${access}/${encodeURIComponent(slug)}`;
+      if (type === "group") return `/g/${access}/${encodeURIComponent(slug)}`;
+      if (type === "paste") return `/paste/${encodeURIComponent(slug)}`;
     }
-    return (
-      "product.html" +
-      `?id=${encodeURIComponent(id)}` +
-      `&type=${encodeURIComponent(type)}`
-    );
+    return id ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}` : "product.html";
   };
   /* =======================================================
      FILTER
@@ -2719,125 +2715,72 @@ document.addEventListener("DOMContentLoaded", async () => {
      LOAD MARKETPLACE
      ======================================================= */
   async function load() {
-    const client =
-      getSupabase();
-    /*
-     * Marketplace PUBLIC.
-     *
-     * Tidak perlu:
-     *   auth.getUser()
-     *
-     * untuk browsing.
-     */
+    const client = getSupabase();
     if (!client) {
-      const message =
-        "Database belum terkonfigurasi.";
-      setError(
-        message
-      );
-      toast(
-        message,
-        "error"
-      );
+      setError("Database belum terkonfigurasi.");
       return;
     }
     setLoading();
     try {
-      /*
-       * marketplace_public berasal dari SQL FINAL.
-       *
-       * HANYA ambil field yang memang
-       * dibutuhkan marketplace.
-       *
-       * content sengaja TIDAK diambil.
-       */
-      const result =
-        await client
-          .from(
-            "marketplace_public"
-          )
-          .select(
-            [
-              "id",
-              "slug",
-              "title",
-              "type",
-              "access_type",
-              "price",
-              "thumbnail_url",
-              "description",
-              "views",
-              "sales_count",
-              "category",
-              "created_at",
-              "creator_name",
-              "creator_username",
-              "owner_id"
-            ].join(",")
-          )
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          )
-          .limit(500);
-      if (
-        result.error
-      ) {
-        throw result.error;
+      const base = [
+        "id","slug","title","type","access_type","price","thumbnail_url",
+        "description","views","sales_count","category","created_at"
+      ];
+      const queries = await Promise.all([
+        client.from("products")
+          .select(base.concat(["creator_id","seller_id"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("telegram_products")
+          .select(base.concat(["owner_id","product_type","bot_username"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("telegram_channels")
+          .select(base.concat(["owner_id","username","name"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("pastelinks")
+          .select("id,slug,title,access_type,price,description,views,created_at,user_id")
+          .eq("visibility","public").order("created_at",{ascending:false}).limit(500),
+        client.from("pastes")
+          .select("id,slug,title,description,created_at,owner_id")
+          .eq("visibility","public").order("created_at",{ascending:false}).limit(500)
+      ]);
+      const firstError = queries.find(x => x?.error)?.error;
+      if (firstError) console.warn("[Marketplace] one source failed:", firstError);
+
+      const normalize = (rows, type, ownerKey) => (Array.isArray(rows)?rows:[]).map(row => ({
+        ...row,
+        type: type === "channel" ? (String(row.type||"channel").toLowerCase()==="group" ? "group" : "channel") : type,
+        access_type: String(row.access_type || (Number(row.price||0)>0 ? "paid":"free")).toLowerCase(),
+        owner_id: row.owner_id || row[ownerKey] || row.creator_id || row.seller_id || row.user_id || null,
+        title: row.title || row.name || row.username || "Untitled",
+        creator_name: row.creator_name || "",
+        creator_username: row.creator_username || String(row.username||"").replace(/^@/,"")
+      }));
+      let data = [
+        ...normalize(queries[0]?.data,"link","creator_id"),
+        ...normalize(queries[1]?.data,"code","owner_id"),
+        ...normalize(queries[2]?.data,"channel","owner_id"),
+        ...normalize(queries[3]?.data,"pastelink","user_id"),
+        ...normalize(queries[4]?.data,"paste","owner_id")
+      ].filter(x => x.id && x.title);
+      // Load public creator names without relying on fragile nested relations.
+      const ownerIds=[...new Set(data.map(x=>x.owner_id).filter(Boolean))];
+      if(ownerIds.length){
+        const pr=await client.from("profiles").select("id,username,display_name,is_banned").in("id",ownerIds);
+        if(!pr.error){
+          const map=new Map((pr.data||[]).map(x=>[String(x.id),x]));
+          data=data.map(x=>{
+            const p=map.get(String(x.owner_id));
+            return p ? {...x,creator_name:p.display_name||p.username,creator_username:p.username} : x;
+          });
+        }
       }
-      let data =
-        Array.isArray(
-          result.data
-        )
-          ? result.data
-          : [];
-      /*
-       * Hanya produk yang valid.
-       *
-       * View SQL sudah memfilter:
-       *   published / active
-       *
-       * Jadi tidak perlu query
-       * products secara terpisah.
-       */
-      data =
-        data.filter(
-          (item) =>
-            Boolean(
-              item?.id
-            ) &&
-            Boolean(
-              item?.title
-            )
-        );
-      /*
-       * Engagement tidak wajib.
-       */
-      data =
-        await loadEngagementCounts(
-          data
-        );
-      items =
-        data;
+      data.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+      items = await loadEngagementCounts(data);
       page = 1;
       render();
-    } catch (error) {
-      console.error(
-        "[Marketplace] Load error:",
-        error
-      );
-      const message =
-        error?.message ||
-        "Marketplace gagal dimuat.";
-      setError(
-        message
-      );
-      toast(
-        message,
-        "error"
-      );
+    } catch(error) {
+      console.error("[Marketplace] Load error:", error);
+      setError(error?.message || "Marketplace gagal dimuat.");
     }
   }
   /* =======================================================

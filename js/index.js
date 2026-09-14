@@ -37,10 +37,10 @@
   const views=r=>n(r?.views||r?.view_count);
   const creator=r=>r?.creator_name||r?.display_name||r?.creator_username||r?.username||"Creator PasTele";
   const owner=r=>r?.creator_id||r?.owner_id||r?.user_id||r?.seller_id;
-  const access=r=>String(r?.access_type||"").toLowerCase()||(n(r?.price)>0?"paid":"free");
+  const access=r=>{const a=String(r?.access_type||"").trim().toLowerCase();return a==="paid"||n(r?.price)>0?"paid":"free"};
   const url=r=>{
     const t=typeOf(r,r._source),s=encodeURIComponent(r?.slug||"");
-    if(r._source==="pastelinks")return"paste-view.html?slug="+s;
+    if(r._source==="pastelinks")return"/p/"+s;
     const p=access(r)==="paid"?"p":"f";
     if(t==="code")return"/c/"+p+"/"+s;
     if(t==="channel")return"/ch/"+p+"/"+s;
@@ -95,8 +95,8 @@
     const [p,l,c,ch]=await Promise.all([
       table("products","id,title,slug,description,price,status,views,sales_count,creator_id,seller_id,created_at,updated_at,thumbnail_url"),
       table("pastelinks","id,title,slug,description,visibility,views,user_id,created_at,updated_at,expires_at"),
-      table("telegram_products","id,title,description,slug,product_type,access_type,price,is_published,owner_id,views,created_at,updated_at"),
-      table("telegram_channels","id,name,title,description,slug,type,access_type,price,is_published,owner_id,views,created_at,updated_at")
+      table("telegram_products","id,title,description,slug,product_type,type,access_type,price,status,owner_id,views,created_at,updated_at"),
+      table("telegram_channels","id,name,title,description,slug,type,access_type,price,status,owner_id,views,created_at,updated_at")
     ]);
     items=await addCreators([...p,...l,...c,...ch].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)));
     render();rank("topLink","link");rank("topCode","code");rank("topChannel","channel");rank("topGroup","group");
