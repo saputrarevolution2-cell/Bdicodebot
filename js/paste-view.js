@@ -1368,6 +1368,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="paste-paywall-icon"><i class="fa-solid fa-lock"></i></div>
                     <h2>Konten ini berbayar</h2>
                     <p>Beli akses untuk membuka seluruh isi PasteLink.</p>
+                    <div class="access-limit-note guest-buy-note"><i class="fa-solid fa-user-clock"></i><span>Guest bisa membeli tanpa akun. Login/daftar lebih disarankan agar pembelian tersimpan permanen; akses Guest dapat hilang dan mungkin perlu membeli kembali.</span></div>
                     <strong class="paste-paywall-price">Rp ${priceText}</strong>
                     <button type="button" class="btn primary" id="buyPasteLink">
                         <i class="fa-solid fa-cart-shopping"></i> Beli Akses

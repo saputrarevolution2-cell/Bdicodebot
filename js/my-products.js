@@ -3976,3 +3976,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
 })();
+
+
+/* FINAL DOM PAGINATION — 10 ITEMS */
+(function(){
+  const PAGE_SIZE=10;
+  function mount(){
+    const host=document.querySelector('#content'); if(!host || host.dataset.pastelePaged==='1') return;
+    const paginate=()=>{
+      const rows=[...host.querySelectorAll('.my-row')];
+      if(rows.length<=PAGE_SIZE){ host.querySelector('.my-products-pagination')?.remove(); return; }
+      let page=Number(host.dataset.page||1); const total=Math.ceil(rows.length/PAGE_SIZE); page=Math.min(Math.max(page,1),total); host.dataset.page=String(page);
+      rows.forEach((r,i)=>r.hidden=i<((page-1)*PAGE_SIZE)||i>=(page*PAGE_SIZE));
+      let nav=host.querySelector('.my-products-pagination'); if(!nav){nav=document.createElement('nav');nav.className='my-products-pagination';host.appendChild(nav);}
+      nav.innerHTML=`<button type="button" data-p="${page-1}" ${page<=1?'disabled':''}>‹</button>${Array.from({length:total},(_,i)=>`<button type="button" data-p="${i+1}" class="${i+1===page?'active':''}">${i+1}</button>`).join('')}<button type="button" data-p="${page+1}" ${page>=total?'disabled':''}>›</button>`;
+      nav.querySelectorAll('button[data-p]').forEach(b=>b.onclick=()=>{const p=Number(b.dataset.p);if(p>=1&&p<=total){host.dataset.page=String(p);paginate();host.scrollIntoView({behavior:'smooth',block:'start'});}});
+    };
+    const observer=new MutationObserver(()=>requestAnimationFrame(paginate)); observer.observe(host,{childList:true,subtree:true}); host.dataset.pastelePaged='1'; paginate();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+})();

@@ -1228,17 +1228,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         <p class="muted">${esc(item.description || "Konten ini membutuhkan akses berbayar.")}</p>
         <div class="access-limit-note">
           <i class="fa-solid fa-shield-halved"></i>
-          <span>${login ? "Silakan login untuk melanjutkan pembelian." : "Konten ini belum terbuka di akun kamu."}</span>
+          <span>${login ? "Kamu bisa membeli sebagai Guest. Login/daftar lebih disarankan agar pembelian tersimpan permanen di akun." : "Konten ini belum terbuka di akun kamu."}</span>
         </div>
         <div class="product-buy-area">
           <strong class="product-price">${money(paid)}</strong>
-          <button class="btn primary" id="productBuyBtn" type="button"><i class="fa-solid fa-qrcode"></i> ${login ? "Login untuk Membeli" : "Beli Akses"}</button>
+          <button class="btn primary" id="productBuyBtn" type="button"><i class="fa-solid fa-qrcode"></i> Beli Akses</button>
           <a class="btn" href="premium.html"><i class="fa-solid fa-gem"></i> Lihat Premium</a>
         </div>
       </div>`;
     $("productBuyBtn")?.addEventListener("click", async()=>{
       if (login) {
-        const next=encodeURIComponent(location.href); location.href=`login.html?redirect=${next}`; return;
+        const ok = window.confirm("Pembelian sebagai Guest: akses tidak dijamin permanen jika identitas Guest hilang. Login/daftar terlebih dahulu disarankan agar pembelian tersimpan selamanya di akun. Lanjut sebagai Guest?");
+        if (!ok) return;
       }
       const btn=$("productBuyBtn"); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
       try {
@@ -1313,15 +1314,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
     if (likeBtn) likeBtn.onclick=async()=>{
       const profile=await currentProfile();
-      if(!profile?.id){ location.href=`login.html?redirect=${encodeURIComponent(location.href)}`; return; }
-      const q=await client.rpc("toggle_content_like",{p_target_id:targetId,p_target_type:targetType,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
+      let q;
+      if(profile?.id){
+        q=await client.rpc("toggle_content_like",{p_target_id:targetId,p_target_type:targetType,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
+      } else {
+        const guestToken=guestCheckoutToken();
+        q=await client.rpc("toggle_content_like_guest",{p_target_id:targetId,p_target_type:targetType,p_guest_token:guestToken});
+      }
       if(q.error){toast(q.error.message||"Gagal menyukai.","error");return;}
       await loadEngagement();
     };
-    const comments=await client.from("content_comments").select("id,user_id,body,created_at").eq("target_id",targetId).eq("target_type",targetType).order("created_at",{ascending:false}).limit(100);
+    const comments=await client.from("content_comments").select("id,user_id,body,display_name,created_at").eq("target_id",targetId).eq("target_type",targetType).order("created_at",{ascending:false}).limit(100);
     if(!comments.error){
       if(commentCount) commentCount.textContent=String(comments.data.length);
-      if(list) list.innerHTML=comments.data.length?comments.data.map(c=>`<article class="product-comment-item"><div class="product-comment-avatar"><i class="fa-solid fa-user"></i></div><div><strong>User</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>';
+      if(list) list.innerHTML=comments.data.length?comments.data.map(c=>`<article class="product-comment-item"><div class="product-comment-avatar"><i class="fa-solid fa-user"></i></div><div><strong>${esc(c.display_name || (c.user_id ? "User" : "Guest"))}</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>';
     }
     const profile=await currentProfile();
     if(!profile?.id){

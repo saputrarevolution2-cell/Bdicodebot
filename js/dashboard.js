@@ -5118,3 +5118,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
 })();
+
+
+/* FINAL CANONICAL ROUTE GUARD */
+(function(){
+  const canonical=(href)=>{
+    try{ const u=new URL(href,location.origin); const m=u.pathname.match(/^\/c\/([^/]+)$/i); if(m){ const slug=m[1]; return `/c/f/${slug}`; } return u.pathname+u.search+u.hash; }catch{return href;}
+  };
+  window.PasTeleDashboardCanonicalRoute=canonical;
+})();

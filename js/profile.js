@@ -1917,6 +1917,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       String(me.id) === String(profile.id)
     );
 
+    if (!isOwn && me?.id && profile?.id) {
+      try { await sb.rpc("notify_profile_visit", { p_profile_id: profile.id }); }
+      catch (e) { console.warn("[Profile] visit notification unavailable:", e); }
+    }
+
   } catch (error) {
 
     console.error(

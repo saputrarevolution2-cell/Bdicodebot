@@ -1453,6 +1453,11 @@ document.addEventListener(
             ).trim();
 
         const guestToken = String(qs.get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+        /* Guest checkout notice */
+        if (guestToken) {
+          const note=document.createElement("div"); note.className="access-limit-note guest-payment-note"; note.innerHTML='<i class="fa-solid fa-user-clock"></i><span>Pembelian Guest berhasil dibuat. Simpan halaman/identitas Guest ini sampai pembayaran selesai. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</span>';
+          (content || document.body)?.prepend(note);
+        }
 
         /* ===================================================
            HTML ELEMENTS
