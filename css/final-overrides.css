@@ -1,0 +1,19 @@
+
+/* PasTele FINAL UI — compact Settings-like system */
+:root{--pt-primary:#229ed9;--pt-primary-dark:#168ac1;--pt-bg:#f6f8fb;--pt-card:#fff;--pt-border:#e5eaf0;--pt-text:#17212b;--pt-muted:#718096;--pt-radius:18px;--pt-shadow:0 8px 30px rgba(23,33,43,.06)}
+html,body{max-width:100%;overflow-x:hidden}body.app-page{background:var(--pt-bg);color:var(--pt-text)}
+.container,.ix-container,.marketplace-container,.product-container,.dashboard-container,.my-products-container,.withdrawals-container,.profile-container,.notifications-container{width:min(1180px,calc(100% - 32px));margin-inline:auto}
+.section{padding-block:28px}.card,.panel,.settings-card,.market-card,.marketplace-card,.my-section,.withdraw-box,.notification-card,.product-detail,.profile-card{border:1px solid var(--pt-border);border-radius:var(--pt-radius);box-shadow:var(--pt-shadow);background:var(--pt-card)}
+button,.btn,input,select,textarea{font:inherit}.btn,button{border-radius:12px}.btn.primary,button.primary{background:var(--pt-primary);border-color:var(--pt-primary)}
+main h1,main h2,main h3{letter-spacing:-.02em}main p{line-height:1.65}.muted{color:var(--pt-muted)}
+.grid,.market-grid,.marketplace-grid,.cards-grid{gap:16px}.ix-market-card,.marketplace-card{min-width:0}
+.my-products-pagination{display:flex;justify-content:center;align-items:center;gap:6px;margin:22px 0 4px}.my-products-pagination button{min-width:38px;height:38px;border:1px solid var(--pt-border);background:#fff;color:var(--pt-text);cursor:pointer}.my-products-pagination button.active{background:var(--pt-primary);border-color:var(--pt-primary);color:#fff}.my-products-pagination button:disabled{opacity:.45;cursor:not-allowed}
+.access-limit-note{border:1px solid rgba(34,158,217,.18);background:rgba(34,158,217,.06);border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;line-height:1.5}.guest-comment-note{margin-bottom:12px}
+@media(max-width:700px){.container,.ix-container,.marketplace-container,.product-container,.dashboard-container,.my-products-container,.withdrawals-container,.profile-container,.notifications-container{width:min(100% - 20px,1180px)}.section{padding-block:18px}.my-products-pagination{overflow:auto;justify-content:flex-start;padding:2px 4px}.my-products-pagination button{flex:0 0 38px}}
+@media(prefers-color-scheme:dark){:root{--pt-bg:#0f1720;--pt-card:#17212b;--pt-border:#293746;--pt-text:#f4f7fa;--pt-muted:#a9b5c1}.my-products-pagination button{background:#17212b;color:#f4f7fa}}
+
+.product-register-ticker{width:min(1180px,calc(100% - 32px));margin:14px auto 0;overflow:hidden;border:1px solid rgba(34,158,217,.18);background:#fff;border-radius:14px;box-shadow:var(--pt-shadow)}
+.product-register-ticker a{display:flex;align-items:center;gap:10px;padding:11px 14px;color:var(--pt-text);text-decoration:none;white-space:nowrap;overflow:hidden}.product-register-ticker span{overflow:hidden;text-overflow:ellipsis}.product-register-ticker a>i:first-child{color:var(--pt-primary)}.product-register-ticker a>i:last-child{margin-left:auto;color:var(--pt-primary);animation:ptTickerArrow 1.4s ease-in-out infinite}@keyframes ptTickerArrow{50%{transform:translateX(5px)}}
+.guest-buy-note{margin:10px 0;font-size:.92rem}
+@media(max-width:700px){.product-register-ticker{width:calc(100% - 20px)}.product-register-ticker a{font-size:.86rem}}
+.guest-payment-note{margin:0 auto 14px;width:min(1180px,calc(100% - 32px));font-size:.9rem}
