@@ -2688,3 +2688,208 @@ html[data-theme="dark"] .profile-page-body textarea{color-scheme:dark;}
   .profile-page-body .profile-quick-actions{grid-template-columns:1fr;gap:9px;}
   .profile-page-body .profile-content-tabs{overflow-x:auto;}
 }
+
+
+/* ============================================================
+   FINAL CLEAN ALIGNMENT — SETTINGS VISUAL SYSTEM
+   Keep Profile features; only normalize spacing, icon scale,
+   typography, card separation and dark-mode surfaces.
+   ============================================================ */
+.profile-page-body{
+  --pf-bg:#f6f8fc;
+  --pf-card:#ffffff;
+  --pf-soft:#f8fafc;
+  --pf-soft-2:#eef2f7;
+  --pf-text:#0f172a;
+  --pf-text-2:#334155;
+  --pf-muted:#64748b;
+  --pf-border:#e5e7eb;
+  --pf-border-strong:#d5dbe5;
+  --pf-primary:#635bff;
+  --pf-primary-soft:rgba(99,91,255,.10);
+  --pf-shadow-sm:0 2px 10px rgba(15,23,42,.045);
+  --pf-shadow:0 8px 28px rgba(15,23,42,.06);
+}
+html[data-theme="dark"] .profile-page-body,
+html.theme-dark .profile-page-body,
+body.theme-dark.profile-page-body{
+  --pf-bg:#0b111b;
+  --pf-card:#111a27;
+  --pf-soft:#151f2d;
+  --pf-soft-2:#1b2636;
+  --pf-text:#f8fafc;
+  --pf-text-2:#e5eaf2;
+  --pf-muted:#9aa9bd;
+  --pf-placeholder:#77879d;
+  --pf-border:rgba(255,255,255,.105);
+  --pf-border-strong:rgba(255,255,255,.18);
+  --pf-primary-soft:rgba(99,91,255,.15);
+  --pf-shadow-sm:0 2px 12px rgba(0,0,0,.18);
+  --pf-shadow:0 10px 30px rgba(0,0,0,.22);
+}
+.profile-page-body .profile-section-page{padding:28px 0 64px}
+.profile-page-body .profile-section-page>.profile-page{width:min(1160px,calc(100% - 32px));}
+
+/* Hero: clear 3-part separation */
+.profile-page-body .profile-hero{
+  grid-template-columns:76px minmax(0,1fr) auto;
+  gap:18px;
+  padding:22px;
+  margin-bottom:16px;
+  border-radius:18px;
+  background:var(--pf-card);
+  box-shadow:var(--pf-shadow-sm);
+}
+.profile-page-body .profile-avatar{width:76px;height:76px;min-width:76px;border-radius:18px;font-size:27px}
+.profile-page-body .profile-eyebrow{font-size:10px;gap:7px}
+.profile-page-body .profile-heading h1{font-size:28px;margin:6px 0 5px}
+.profile-page-body .profile-heading .muted{font-size:12px}
+.profile-page-body .profile-handle{margin-top:9px;padding:6px 10px;font-size:10px}
+.profile-page-body .profile-actions{gap:8px;max-width:420px}
+.profile-page-body .profile-actions .btn{min-height:42px;padding:9px 13px;border-radius:11px;font-size:11px;gap:8px;white-space:nowrap}
+.profile-page-body .profile-actions .btn i{width:15px;text-align:center;font-size:13px}
+
+/* Stats: icon is a real visual block, not a tiny glyph */
+.profile-page-body .profile-social-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.profile-page-body .profile-stat-card{
+  min-height:96px;padding:14px 16px;border-radius:15px;gap:4px;
+  display:grid;grid-template-columns:42px minmax(0,1fr);grid-template-rows:auto auto;column-gap:11px;align-content:center;
+  background:var(--pf-card);box-shadow:var(--pf-shadow-sm);
+}
+.profile-page-body .profile-stat-card .profile-stat-icon{
+  grid-row:1 / span 2;width:42px;height:42px;min-width:42px;display:grid;place-items:center;
+  margin:0;border-radius:12px;background:var(--pf-primary-soft);color:var(--pf-primary);font-size:15px;
+}
+.profile-page-body .profile-stat-card strong{font-size:19px;line-height:1.15;align-self:end}
+.profile-page-body .profile-stat-card>span:not(.profile-stat-icon){margin:0;font-size:11px;line-height:1.25;align-self:start}
+
+/* Quick actions: separate cards instead of five cramped columns */
+.profile-page-body .profile-quick-actions{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;margin-bottom:18px;
+}
+.profile-page-body .profile-quick-card{
+  grid-template-columns:46px minmax(0,1fr) 20px;
+  gap:12px;min-height:76px;padding:13px 14px;border-radius:15px;
+  background:var(--pf-card);box-shadow:var(--pf-shadow-sm);
+}
+.profile-page-body .profile-quick-icon{
+  width:46px;height:46px;min-width:46px;border-radius:12px;font-size:16px;
+  display:grid;place-items:center;
+}
+.profile-page-body .profile-quick-copy strong{font-size:12px;line-height:1.3}
+.profile-page-body .profile-quick-copy small{font-size:10px;line-height:1.35;margin-top:4px}
+.profile-page-body .profile-quick-arrow{font-size:11px;width:20px;text-align:center}
+
+/* Sections: consistent Settings-style cards */
+.profile-page-body .profile-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.profile-page-body .profile-section{padding:20px;border-radius:17px;box-shadow:var(--pf-shadow-sm);background:var(--pf-card)}
+.profile-page-body .section-heading{gap:12px;margin-bottom:17px}
+.profile-page-body .section-icon{width:44px;height:44px;min-width:44px;border-radius:12px;font-size:16px;background:var(--pf-primary-soft);color:var(--pf-primary)}
+.profile-page-body .section-heading h2{font-size:15px}
+.profile-page-body .section-heading p{font-size:11px;margin-top:4px}
+
+/* Details: labels and values no longer collide */
+.profile-page-body .profile-details{border-radius:12px}
+.profile-page-body .detail-row{grid-template-columns:minmax(120px,.75fr) minmax(0,1.25fr);min-height:50px;padding:10px 13px;gap:18px}
+.profile-page-body .detail-row small{font-size:10.5px}
+.profile-page-body .detail-row b{font-size:11.5px}
+
+/* Content metrics */
+.profile-page-body .content-counts{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.profile-page-body .content-count{min-height:64px;padding:11px 12px;border-radius:12px}
+.profile-page-body .content-count>span{gap:9px;font-size:10.5px}
+.profile-page-body .content-count>span i{width:34px;height:34px;min-width:34px;border-radius:10px;font-size:13px}
+.profile-page-body .content-count b{font-size:15px}
+
+/* Content toolbar: never let tabs, search and sort touch */
+.profile-page-body .profile-content-toolbar{grid-template-columns:minmax(0,1fr) 240px 150px;gap:12px;margin-bottom:14px}
+.profile-page-body .profile-content-tabs{gap:5px;padding:5px;border-radius:12px}
+.profile-page-body .profile-content-tabs button{min-height:36px;padding:8px 11px;gap:6px;font-size:10.5px}
+.profile-page-body .profile-content-tabs button i{width:13px;text-align:center;font-size:11px}
+.profile-page-body .profile-content-search input,
+.profile-page-body .profile-content-sort select{height:42px;border-radius:11px;font-size:11px}
+.profile-page-body .profile-content-search>i{left:12px;font-size:12px}
+
+/* Forms / security */
+.profile-page-body .password-input .input{height:42px;border-radius:11px;font-size:11px}
+.profile-page-body .password-submit{min-height:42px;border-radius:11px;font-size:11px}
+.profile-page-body .security-note{font-size:10.5px;line-height:1.55}
+
+/* Dark mode: every Profile surface follows the same variables */
+html[data-theme="dark"] .profile-page-body,
+html.theme-dark .profile-page-body,
+body.theme-dark.profile-page-body{background:var(--pf-bg)!important;color:var(--pf-text)!important}
+html[data-theme="dark"] .profile-page-body .profile-hero,
+html[data-theme="dark"] .profile-page-body .profile-stat-card,
+html[data-theme="dark"] .profile-page-body .profile-quick-card,
+html[data-theme="dark"] .profile-page-body .profile-section,
+html[data-theme="dark"] .profile-page-body .profile-details,
+html[data-theme="dark"] .profile-page-body .detail-row,
+html[data-theme="dark"] .profile-page-body .content-count,
+html[data-theme="dark"] .profile-page-body .profile-content-tabs,
+html[data-theme="dark"] .profile-page-body .profile-content-tabs button.active,
+html[data-theme="dark"] .profile-page-body .profile-content-search input,
+html[data-theme="dark"] .profile-page-body .profile-content-sort select,
+html[data-theme="dark"] .profile-page-body .password-input,
+html[data-theme="dark"] .profile-page-body .password-input .input,
+html[data-theme="dark"] .profile-page-body .login-item,
+html[data-theme="dark"] .profile-page-body .account-action-card,
+html[data-theme="dark"] .profile-page-body .security-note,
+html[data-theme="dark"] .profile-page-body .profile-modal-dialog,
+html[data-theme="dark"] .profile-page-body .profile-share-preview,
+html[data-theme="dark"] .profile-page-body .profile-share-url{
+  background:var(--pf-card)!important;color:var(--pf-text)!important;border-color:var(--pf-border)!important;
+}
+html[data-theme="dark"] .profile-page-body .profile-content-tabs,
+html[data-theme="dark"] .profile-page-body .content-count,
+html[data-theme="dark"] .profile-page-body .profile-content-search input,
+html[data-theme="dark"] .profile-page-body .profile-content-sort select,
+html[data-theme="dark"] .profile-page-body .password-input,
+html[data-theme="dark"] .profile-page-body .login-item,
+html[data-theme="dark"] .profile-page-body .account-action-card,
+html[data-theme="dark"] .profile-page-body .security-note,
+html[data-theme="dark"] .profile-page-body .detail-row:nth-child(even){background:var(--pf-soft)!important}
+html[data-theme="dark"] .profile-page-body .profile-hero::after{background:rgba(99,91,255,.07)}
+
+/* Responsive separation */
+@media(max-width:1050px){
+  .profile-page-body .profile-hero{grid-template-columns:68px minmax(0,1fr)}
+  .profile-page-body .profile-avatar{width:68px;height:68px;min-width:68px}
+  .profile-page-body .profile-actions{grid-column:2;justify-content:flex-start;max-width:none}
+  .profile-page-body .profile-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profile-page-body .profile-content-toolbar{grid-template-columns:minmax(0,1fr) 210px}
+  .profile-page-body .profile-content-sort{grid-column:2}
+}
+@media(max-width:760px){
+  .profile-page-body .profile-section-page{padding:22px 0 50px}
+  .profile-page-body .profile-section-page>.profile-page{width:calc(100% - 20px)}
+  .profile-page-body .profile-hero{grid-template-columns:58px minmax(0,1fr);padding:16px;gap:12px}
+  .profile-page-body .profile-avatar{width:58px;height:58px;min-width:58px;border-radius:14px;font-size:21px}
+  .profile-page-body .profile-heading h1{font-size:22px}
+  .profile-page-body .profile-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .profile-page-body .profile-actions .btn{width:100%;min-width:0}
+  .profile-page-body .profile-social-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .profile-page-body .profile-stat-card{min-height:88px}
+  .profile-page-body .profile-quick-actions{grid-template-columns:1fr;gap:9px}
+  .profile-page-body .profile-grid{grid-template-columns:1fr;gap:12px}
+  .profile-page-body .profile-section{padding:17px}
+  .profile-page-body .profile-content-toolbar{grid-template-columns:1fr;gap:9px}
+  .profile-page-body .profile-content-sort{grid-column:auto}
+  .profile-page-body .profile-content-tabs{width:100%}
+}
+@media(max-width:430px){
+  .profile-page-body .profile-section-page>.profile-page{width:calc(100% - 16px)}
+  .profile-page-body .profile-hero{grid-template-columns:52px minmax(0,1fr);padding:14px}
+  .profile-page-body .profile-avatar{width:52px;height:52px;min-width:52px}
+  .profile-page-body .profile-heading h1{font-size:20px}
+  .profile-page-body .profile-heading .muted{font-size:11px}
+  .profile-page-body .profile-stat-card{grid-template-columns:38px minmax(0,1fr);column-gap:9px;min-height:82px;padding:12px}
+  .profile-page-body .profile-stat-card .profile-stat-icon{width:38px;height:38px;min-width:38px;font-size:14px}
+  .profile-page-body .profile-stat-card strong{font-size:17px}
+  .profile-page-body .profile-stat-card>span:not(.profile-stat-icon){font-size:10px}
+  .profile-page-body .profile-quick-card{grid-template-columns:42px minmax(0,1fr) 18px;min-height:70px;padding:11px}
+  .profile-page-body .profile-quick-icon{width:42px;height:42px;min-width:42px;font-size:15px}
+  .profile-page-body .detail-row{grid-template-columns:1fr;gap:3px;min-height:0;padding:11px 12px}
+  .profile-page-body .detail-row b{text-align:left;white-space:normal;overflow:visible}
+}
