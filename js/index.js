@@ -1,260 +1,137 @@
-/* PasTele — Index page
- * Database source: public.marketplace_public
- * Public URLs:
- *   PasteLink /p/{slug}
- *   Code     /c/f/{slug} or /c/p/{slug}
- *   Channel  /ch/f/{slug} or /ch/p/{slug}
- *   Group    /g/f/{slug} or /g/p/{slug}
- */
+/* PasTele Index — DB aligned with public.marketplace_public */
 (() => {
-  'use strict';
+  "use strict";
 
-  const SUPABASE_URL = 'https://xczqjqyqvshjzjbxjvpk.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjelFqcXlxdnNoanp6amJ4anZwaiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM0MDAwMDAwLCJleHAiOjIwNTAwMDAwMDB9.placeholder';
+  // Same Supabase project pattern as the uploaded Settings page.
+  const CONFIG = window.PASTELE_CONFIG || Object.freeze({
+    SUPABASE_URL: "https://jxrndamvelqwhbcromye.supabase.co",
+    SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ4Y3pxanF5cXZzaGp6amJieHZwayIsInJvbGUiOiJhbm9uIn0.public-anon-key"
+  });
 
-  // If the project already exposes a shared client, reuse it.
   const sb = window.supabase?.createClient
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: "pastele-auth" }
       })
     : null;
 
+  const state = { items: [], filter: "all" };
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => [...document.querySelectorAll(s)];
+  const number = (n) => new Intl.NumberFormat("id-ID").format(Number(n) || 0);
+  const money = (n) => new Intl.NumberFormat("id-ID", {style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0);
+  const esc = (s="") => String(s).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
-  const state = { items: [], filter: 'all' };
-
-  const nf = new Intl.NumberFormat('id-ID');
-  const rupiah = (value) => new Intl.NumberFormat('id-ID', {
-    style: 'currency', currency: 'IDR', maximumFractionDigits: 0
-  }).format(Number(value) || 0);
-
-  function escapeHTML(value = '') {
-    return String(value).replace(/[&<>"']/g, (c) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-    }[c]));
+  function typeOf(item) {
+    const t = String(item?.type || "").toLowerCase();
+    if (t === "paste" || t === "pastelink") return "pastelink";
+    if (["code","channel","group","product","link"].includes(t)) return t;
+    return "link";
   }
 
-  function normalizeType(item) {
-    const type = String(item?.type || '').toLowerCase().trim();
-    if (type === 'paste' || type === 'pastelink') return 'pastelink';
-    if (type === 'code') return 'code';
-    if (type === 'channel') return 'channel';
-    if (type === 'group') return 'group';
-    if (type === 'product') return 'product';
-    return 'link';
+  function accessOf(item) {
+    return String(item?.access_type || "").toLowerCase() === "paid" || Number(item?.price) > 0 ? "paid" : "free";
   }
 
-  function accessType(item) {
-    const raw = String(item?.access_type || '').toLowerCase();
-    return raw === 'paid' || Number(item?.price) > 0 ? 'paid' : 'free';
-  }
-
-  function publicUrl(item) {
-    const slug = encodeURIComponent(String(item?.slug || '').trim());
-    const type = normalizeType(item);
-    const access = accessType(item);
-
-    if (!slug) return '#';
-    if (type === 'pastelink') return `/p/${slug}`;
-    if (type === 'code') return `/c/${access === 'paid' ? 'p' : 'f'}/${slug}`;
-    if (type === 'channel') return `/ch/${access === 'paid' ? 'p' : 'f'}/${slug}`;
-    if (type === 'group') return `/g/${access === 'paid' ? 'p' : 'f'}/${slug}`;
+  function urlOf(item) {
+    const slug = encodeURIComponent(String(item?.slug || "").trim());
+    const type = typeOf(item), access = accessOf(item);
+    if (!slug) return "#";
+    if (type === "pastelink" || type === "link" || type === "product") return `/p/${slug}`;
+    if (type === "code") return `/c/${access === "paid" ? "p" : "f"}/${slug}`;
+    if (type === "channel") return `/ch/${access === "paid" ? "p" : "f"}/${slug}`;
+    if (type === "group") return `/g/${access === "paid" ? "p" : "f"}/${slug}`;
     return `/p/${slug}`;
   }
 
-  function typeLabel(type) {
-    return ({
-      pastelink: 'PasteLink',
-      code: 'Code',
-      channel: 'Channel',
-      group: 'Group',
-      product: 'Produk',
-      link: 'Link'
-    })[type] || 'Konten';
-  }
+  const labels = {pastelink:"PasteLink",code:"Code",channel:"Channel",group:"Group",product:"Produk",link:"Link"};
+  const icons = {pastelink:"fa-link",code:"fa-code",channel:"fa-brands fa-telegram",group:"fa-users",product:"fa-box",link:"fa-arrow-up-right-from-square"};
 
-  function setStatus(message = '', error = false) {
-    const el = $('#status');
-    if (!el) return;
-    el.textContent = message;
-    el.classList.toggle('error', error);
-    el.hidden = !message;
+  function status(text="", error=false) {
+    const el = $("#status"); if (!el) return;
+    el.textContent = text; el.hidden = !text; el.classList.toggle("error", error);
   }
 
   function renderStats() {
-    const items = state.items;
-    const creators = new Set(items.map(x => x.owner_id).filter(Boolean)).size;
-    const views = items.reduce((n, x) => n + (Number(x.views) || 0), 0);
-    const sales = items.reduce((n, x) => n + (Number(x.sales_count) || 0), 0);
-
-    $('#statContent').textContent = nf.format(items.length);
-    $('#statCreators').textContent = nf.format(creators);
-    $('#statViews').textContent = nf.format(views);
-    $('#statSales').textContent = nf.format(sales);
+    const creators = new Set(state.items.map(x => x.owner_id).filter(Boolean)).size;
+    $("#statContent").textContent = number(state.items.length);
+    $("#statCreators").textContent = number(creators);
+    $("#statViews").textContent = number(state.items.reduce((a,x)=>a+(Number(x.views)||0),0));
+    $("#statSales").textContent = number(state.items.reduce((a,x)=>a+(Number(x.sales_count)||0),0));
   }
 
   function card(item) {
-    const type = normalizeType(item);
-    const access = accessType(item);
-    const title = escapeHTML(item.title || 'Tanpa judul');
-    const description = escapeHTML(item.description || 'Konten tersedia di PasTele.');
-    const creator = escapeHTML(item.creator_name || (item.creator_username ? `@${item.creator_username}` : 'Creator PasTele'));
-    const category = escapeHTML(item.category || 'General');
-    const views = nf.format(Number(item.views) || 0);
-    const sales = nf.format(Number(item.sales_count) || 0);
-    const price = access === 'paid' ? rupiah(item.price) : 'Gratis';
-    const href = publicUrl(item);
-
-    return `
-      <article class="content-card">
-        <a class="card-link" href="${href}" aria-label="Buka ${title}">
-          <div class="card-top">
-            <span class="badge type">${typeLabel(type)}</span>
-            <span class="badge ${access}">${access === 'paid' ? 'Berbayar' : 'Gratis'}</span>
-          </div>
-          <div class="card-icon">${type === 'code' ? '</>' : type === 'pastelink' ? '↗' : type === 'channel' ? '◉' : type === 'group' ? '◎' : '◆'}</div>
-          <h3>${title}</h3>
-          <p>${description}</p>
-          <div class="meta"><span>${category}</span><span>${creator}</span></div>
-          <div class="card-bottom">
-            <span>${price}</span>
-            <span>${views} views · ${sales} sales</span>
-          </div>
-        </a>
-      </article>
-    `;
+    const type = typeOf(item), access = accessOf(item);
+    const title = esc(item.title || "Tanpa judul");
+    const desc = esc(item.description || "Konten tersedia di PasTele.");
+    const creator = esc(item.creator_name || (item.creator_username ? "@"+item.creator_username : "Creator PasTele"));
+    const category = esc(item.category || "General");
+    const thumb = String(item.thumbnail_url || "").trim();
+    const icon = icons[type] || icons.link;
+    return `<article class="ix-card"><a class="ix-card-link" href="${urlOf(item)}">
+      <div class="ix-thumb">${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<i class="fa-solid ${icon}"></i>`}</div>
+      <div class="ix-card-top"><div class="ix-badges"><span class="ix-tag type">${labels[type]||"Konten"}</span><span class="ix-tag ${access}">${access==="paid"?"Berbayar":"Gratis"}</span></div></div>
+      <h3>${title}</h3><p class="ix-desc">${desc}</p>
+      <div class="ix-meta"><span>${category}</span><span>${creator}</span></div>
+      <div class="ix-card-bottom"><span>${access==="paid"?money(item.price):"Gratis"}</span><span>${number(item.views)} views · ${number(item.sales_count)} sales</span></div>
+    </a></article>`;
   }
 
-  function emptyState() {
-    return `
-      <div class="empty-state">
-        <div class="empty-icon">⌕</div>
-        <h3>Belum ada konten</h3>
-        <p>Belum ada konten yang sesuai dengan filter ini.</p>
-      </div>
-    `;
+  function renderCards() {
+    const grid = $("#publishedGrid");
+    const list = state.filter==="all" ? state.items : state.items.filter(x=>typeOf(x)===state.filter);
+    grid.innerHTML = list.length ? list.map(card).join("") : `<div class="ix-empty"><i class="fa-solid fa-box-open"></i><h3>Belum ada konten</h3><p>Belum ada konten yang sesuai dengan filter ini.</p></div>`;
+    status("");
   }
 
-  function renderMarketplace() {
-    const grid = $('#publishedGrid');
-    if (!grid) return;
-
-    const filtered = state.filter === 'all'
-      ? state.items
-      : state.items.filter(x => normalizeType(x) === state.filter);
-
-    grid.innerHTML = filtered.length ? filtered.map(card).join('') : emptyState();
-    setStatus('');
-  }
-
-  function rankingFor(type) {
-    return state.items
-      .filter(x => normalizeType(x) === type)
-      .slice()
-      .sort((a, b) => {
-        const scoreA = (Number(a.sales_count) || 0) * 1000 + (Number(a.views) || 0);
-        const scoreB = (Number(b.sales_count) || 0) * 1000 + (Number(b.views) || 0);
-        return scoreB - scoreA;
-      })
-      .slice(0, 5);
-  }
-
-  function renderRanking(target, type) {
+  function renderRank(target, type) {
     const el = $(target);
-    if (!el) return;
-    const rows = rankingFor(type);
-
-    if (!rows.length) {
-      el.innerHTML = '<div class="rank-empty">Belum ada data.</div>';
-      return;
-    }
-
-    el.innerHTML = rows.map((item, i) => `
-      <a class="rank-row" href="${publicUrl(item)}">
-        <span class="rank-number">${i + 1}</span>
-        <span class="rank-main">
-          <strong>${escapeHTML(item.title || 'Tanpa judul')}</strong>
-          <small>${nf.format(Number(item.views) || 0)} views · ${nf.format(Number(item.sales_count) || 0)} sales</small>
-        </span>
-        <span class="rank-arrow">›</span>
-      </a>
-    `).join('');
+    const list = state.items.filter(x=>typeOf(x)===type).slice().sort((a,b)=>
+      ((Number(b.sales_count)||0)*1000+(Number(b.views)||0))-((Number(a.sales_count)||0)*1000+(Number(a.views)||0))
+    ).slice(0,5);
+    el.innerHTML = list.length ? list.map((x,i)=>`<a class="ix-rank" href="${urlOf(x)}">
+      <span class="ix-rank-no">${i+1}</span><span class="ix-rank-main"><strong>${esc(x.title||"Tanpa judul")}</strong><small>${number(x.views)} views · ${number(x.sales_count)} sales</small></span><span class="ix-rank-arrow">›</span>
+    </a>`).join("") : `<div class="ix-rank-main"><small>Belum ada data.</small></div>`;
   }
 
   function renderRankings() {
-    renderRanking('#topLink', 'pastelink');
-    renderRanking('#topCode', 'code');
-    renderRanking('#topChannel', 'channel');
-    renderRanking('#topGroup', 'group');
+    renderRank("#topLink","pastelink"); renderRank("#topCode","code"); renderRank("#topChannel","channel"); renderRank("#topGroup","group");
   }
 
-  async function loadMarketplace() {
-    if (!sb) {
-      setStatus('Supabase client gagal dimuat.', true);
-      return;
-    }
-
-    setStatus('Memuat marketplace…');
-
-    const { data, error } = await sb
-      .from('marketplace_public')
-      .select('id,slug,title,type,access_type,price,thumbnail_url,description,views,sales_count,category,created_at,creator_name,creator_username,owner_id')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
+  async function load() {
+    if (!sb) { status("Supabase client gagal dimuat.", true); return; }
+    status("Memuat marketplace…");
+    const {data,error} = await sb.from("marketplace_public")
+      .select("id,slug,title,type,access_type,price,thumbnail_url,description,views,sales_count,category,created_at,creator_name,creator_username,owner_id")
+      .order("created_at",{ascending:false}).limit(100);
     if (error) {
-      console.error('[PasTele] marketplace_public:', error);
-      setStatus('Marketplace gagal dimuat. Periksa view marketplace_public dan policy Supabase.', true);
+      console.error("[PasTele] marketplace_public:",error);
+      status("Marketplace gagal dimuat. Periksa view marketplace_public dan policy Supabase.",true);
       return;
     }
-
     state.items = Array.isArray(data) ? data : [];
-    renderStats();
-    renderMarketplace();
-    renderRankings();
+    renderStats(); renderCards(); renderRankings();
   }
 
-  function setupFilters() {
-    $$('.filter').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.filter = btn.dataset.filter || 'all';
-        $$('.filter').forEach(x => {
-          const active = x === btn;
-          x.classList.toggle('active', active);
-          x.setAttribute('aria-selected', String(active));
-        });
-        renderMarketplace();
-      });
-    });
-  }
-
-  function setupRefresh() {
-    $('#refreshBtn')?.addEventListener('click', async () => {
-      const btn = $('#refreshBtn');
-      btn.disabled = true;
-      btn.classList.add('loading');
-      try { await loadMarketplace(); }
-      finally {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-      }
-    });
-  }
-
-  function setupTheme() {
+  function theme() {
     try {
-      const saved = localStorage.getItem('pastele-theme');
-      if (saved === 'dark' || saved === 'light') {
-        document.documentElement.dataset.theme = saved;
-      }
-    } catch (_) {}
+      const mode = localStorage.getItem("pastele-theme") || "auto";
+      const dark = mode==="dark" || (mode==="auto" && (new Date().getHours()>=18 || new Date().getHours()<6)) ||
+        (mode==="system" && matchMedia("(prefers-color-scheme:dark)").matches);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch {}
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    setupTheme();
-    setupFilters();
-    setupRefresh();
-    loadMarketplace();
+  document.addEventListener("DOMContentLoaded",()=>{
+    theme();
+    $$(".ix-filter").forEach(btn=>btn.addEventListener("click",()=>{
+      state.filter=btn.dataset.filter||"all";
+      $$(".ix-filter").forEach(x=>{const a=x===btn;x.classList.toggle("active",a);x.setAttribute("aria-selected",String(a));});
+      renderCards();
+    }));
+    $("#refreshBtn")?.addEventListener("click",async()=>{
+      const b=$("#refreshBtn");b.disabled=true;b.classList.add("loading");
+      try{await load()}finally{b.disabled=false;b.classList.remove("loading")}
+    });
+    load();
   });
 })();
