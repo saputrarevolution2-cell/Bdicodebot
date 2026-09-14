@@ -1211,3 +1211,135 @@ body.theme-dark .admin-page{
   outline:3px solid rgba(34,158,217,.20);
   outline-offset:2px;
 }
+
+/* =========================================================
+   PasTele Canonical UI — Settings-inspired finishing layer
+   Appended to each page stylesheet so every page shares the
+   same clean visual language without changing page logic.
+   ========================================================= */
+body.app-page:not(.settings-page-body), body.public-no-navbar.app-page, body.setup-shell.app-page {
+  --pt-bg:#f5f7fb;--pt-surface:#fff;--pt-soft:#f8fafc;--pt-border:#e5e7eb;--pt-border-strong:#d7dce5;
+  --pt-text:#111827;--pt-muted:#6b7280;--pt-soft-text:#4b5563;--pt-primary:#229ed9;--pt-primary-dark:#168ac1;
+  --pt-primary-soft:#eaf7ff;--pt-success:#16a34a;--pt-danger:#dc2626;--pt-warning:#d97706;
+  --pt-radius:20px;--pt-radius-sm:12px;--pt-shadow:0 10px 30px rgba(15,23,42,.07);--pt-shadow-sm:0 2px 8px rgba(15,23,42,.04);
+  min-height:100vh;background:var(--pt-bg);color:var(--pt-text);overflow-x:hidden;
+}
+html[data-theme="dark"] body.app-page:not(.settings-page-body), html.theme-dark body.app-page:not(.settings-page-body),
+body.theme-dark.app-page, body.theme-dark.public-no-navbar {
+  --pt-bg:#0b1220;--pt-surface:#111827;--pt-soft:#172033;--pt-border:#263247;--pt-border-strong:#344158;
+  --pt-text:#f8fafc;--pt-muted:#94a3b8;--pt-soft-text:#cbd5e1;--pt-primary-soft:rgba(34,158,217,.12);
+  --pt-shadow:0 12px 35px rgba(0,0,0,.22);--pt-shadow-sm:0 2px 8px rgba(0,0,0,.2);
+}
+body.app-page:not(.public-no-navbar):not(.settings-page-body){padding-top:72px}
+body.app-page *, body.public-no-navbar.app-page *, body.setup-shell.app-page *{box-sizing:border-box}
+body.app-page img{max-width:100%}
+body.app-page a{color:inherit;text-decoration:none}
+body.app-page button,body.app-page input,body.app-page select,body.app-page textarea{font:inherit}
+
+/* Page surfaces */
+body.app-page .container, body.app-page .page-container, body.app-page .section-container, body.app-page main>section>.container {
+  width:min(1160px,calc(100% - 32px));margin-inline:auto;
+}
+body.app-page .section, body.app-page main>section {padding-top:34px;padding-bottom:60px}
+body.app-page h1,body.app-page h2,body.app-page h3,body.app-page h4{color:var(--pt-text);letter-spacing:-.025em}
+body.app-page .muted,body.app-page small,.field-help{color:var(--pt-muted)}
+
+/* Canonical cards */
+body.app-page .card, body.app-page .panel, body.app-page .surface, body.app-page .form-card, body.app-page .content-card {
+  background:var(--pt-surface);border:1px solid var(--pt-border);border-radius:var(--pt-radius);box-shadow:var(--pt-shadow);
+}
+body.app-page .card{padding:22px}
+body.app-page .card-heading, body.app-page .section-heading, body.app-page .page-heading {
+  display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;
+}
+body.app-page .heading-icon,body.app-page .icon-box,body.app-page .section-icon {
+  width:44px;height:44px;min-width:44px;border-radius:14px;display:grid;place-items:center;
+  background:var(--pt-primary-soft);color:var(--pt-primary);font-size:18px;
+}
+body.app-page .card-heading h2,body.app-page .section-heading h2,body.app-page .page-heading h1{margin:0 0 5px}
+body.app-page .card-heading p,body.app-page .section-heading p,body.app-page .page-heading p{margin:0;color:var(--pt-muted);line-height:1.55}
+
+/* Buttons */
+body.app-page .btn, body.public-no-navbar.app-page .btn {
+  min-height:44px;padding:10px 16px;border:1px solid var(--pt-border);border-radius:12px;background:var(--pt-surface);color:var(--pt-text);
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;cursor:pointer;transition:.18s ease;box-shadow:var(--pt-shadow-sm);
+}
+body.app-page .btn:hover{transform:translateY(-1px);border-color:var(--pt-border-strong)}
+body.app-page .btn.primary,body.app-page .btn-primary,body.app-page button[type="submit"] {
+  border-color:transparent;background:linear-gradient(135deg,var(--pt-primary),var(--pt-primary-dark));color:#fff;
+}
+body.app-page .btn.danger,.btn-danger{color:#fff;background:var(--pt-danger);border-color:transparent}
+body.app-page .btn:disabled,body.app-page button:disabled{opacity:.58;cursor:not-allowed;transform:none}
+
+/* Forms */
+body.app-page .field{display:grid;gap:8px}
+body.app-page .field label,body.app-page form label{font-size:13px;font-weight:750;color:var(--pt-text)}
+body.app-page .input,body.app-page input:not([type="checkbox"]):not([type="radio"]),body.app-page select,body.app-page textarea {
+  width:100%;min-height:44px;padding:11px 13px;border:1px solid var(--pt-border-strong);border-radius:12px;
+  background:var(--pt-surface);color:var(--pt-text);outline:none;transition:border-color .16s,box-shadow .16s;
+}
+body.app-page textarea{min-height:120px;resize:vertical}
+body.app-page .input:focus,body.app-page input:focus,body.app-page select:focus,body.app-page textarea:focus{border-color:var(--pt-primary);box-shadow:0 0 0 3px rgba(34,158,217,.12)}
+body.app-page input::placeholder,body.app-page textarea::placeholder{color:var(--pt-muted)}
+body.app-page .list{display:grid;gap:16px}
+body.app-page .row{display:flex;gap:10px;align-items:center}
+body.app-page .row>*{min-width:0}
+
+/* Badges / notices / alerts */
+body.app-page .badge,body.app-page .chip,body.app-page .status-badge {
+  display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;letter-spacing:.04em;
+  background:var(--pt-primary-soft);color:var(--pt-primary);border:1px solid rgba(34,158,217,.16);
+}
+body.app-page .notice,body.app-page .alert,body.app-page .auth-notice,body.app-page .auth-error {
+  border-radius:12px;padding:12px 14px;border:1px solid var(--pt-border);background:var(--pt-soft);color:var(--pt-soft-text);line-height:1.5;
+}
+body.app-page .notice.success,body.app-page .alert.success{background:#ecfdf3;color:#166534;border-color:#bbf7d0}
+body.app-page .notice.error,body.app-page .alert.error,body.app-page .auth-error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+
+/* Tables / lists */
+body.app-page table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--pt-border);border-radius:14px;background:var(--pt-surface)}
+body.app-page th{background:var(--pt-soft);color:var(--pt-muted);font-size:12px;text-align:left;font-weight:800}
+body.app-page th,body.app-page td{padding:13px 14px;border-bottom:1px solid var(--pt-border)}
+body.app-page tr:last-child td{border-bottom:0}
+body.app-page .empty-state{padding:38px 20px;text-align:center;color:var(--pt-muted)}
+
+/* Search / filters / pagination */
+body.app-page .search,body.app-page .search-box{display:flex;gap:10px;align-items:center;background:var(--pt-surface);border:1px solid var(--pt-border);border-radius:14px;padding:8px}
+body.app-page .filters,body.app-page .filter-row{display:flex;gap:8px;flex-wrap:wrap}
+body.app-page .pagination{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin-top:20px}
+body.app-page .pagination button{min-width:40px;height:40px;border:1px solid var(--pt-border);border-radius:10px;background:var(--pt-surface);color:var(--pt-text);font-weight:700}
+body.app-page .pagination button.active{background:var(--pt-primary);border-color:var(--pt-primary);color:#fff}
+
+/* Auth pages — same Settings visual language, centered and compact */
+body.public-no-navbar.app-page{display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;min-height:100vh}
+body.public-no-navbar.app-page .auth-shell{width:min(460px,100%);margin:auto}
+body.public-no-navbar.app-page .auth-card{padding:28px;border-radius:22px;background:var(--pt-surface);border:1px solid var(--pt-border);box-shadow:var(--pt-shadow)}
+body.public-no-navbar.app-page .auth-logo{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;margin:0 auto 16px;background:var(--pt-primary-soft);color:var(--pt-primary);font-size:21px}
+body.public-no-navbar.app-page .auth-card>h1{text-align:center;margin:0 0 7px;font-size:26px}
+body.public-no-navbar.app-page .auth-card>.muted{text-align:center;margin:0 0 24px;line-height:1.55}
+body.public-no-navbar.app-page .auth-footer,body.public-no-navbar.app-page .auth-links{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px;color:var(--pt-muted);font-size:13px}
+
+/* Toast / notifications */
+#ptToastContainer{position:fixed;z-index:99999;right:18px;bottom:18px;display:grid;gap:10px;width:min(380px,calc(100vw - 28px));pointer-events:none}
+.pt-toast{pointer-events:auto;display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border:1px solid var(--pt-border);border-radius:14px;background:var(--pt-surface);box-shadow:0 18px 45px rgba(15,23,42,.16);color:var(--pt-text);animation:ptToastIn .2s ease}
+.pt-toast i{margin-top:2px;color:var(--pt-primary)}.pt-toast.success i{color:#16a34a}.pt-toast.error i{color:#dc2626}.pt-toast.warning i{color:#d97706}
+.pt-toast strong{display:block;font-size:13px;margin-bottom:2px}.pt-toast span{font-size:12px;color:var(--pt-muted);line-height:1.45}
+@keyframes ptToastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+@media(max-width:760px){
+  body.app-page:not(.public-no-navbar):not(.settings-page-body){padding-top:64px}
+  body.app-page .container,body.app-page .page-container,body.app-page .section-container,body.app-page main>section>.container{width:min(100% - 22px,1160px)}
+  body.app-page .section,body.app-page main>section{padding-top:22px;padding-bottom:42px}
+  body.app-page .card{padding:18px;border-radius:17px}
+  body.app-page .card-heading,body.app-page .section-heading,body.app-page .page-heading{margin-bottom:16px}
+  body.app-page .row{flex-wrap:wrap}
+  body.app-page .row>.btn{flex:0 0 auto}
+  body.public-no-navbar.app-page{padding:18px 12px}
+  body.public-no-navbar.app-page .auth-card{padding:22px 18px;border-radius:18px}
+  body.public-no-navbar.app-page .auth-card>h1{font-size:23px}
+  #ptToastContainer{right:12px;bottom:12px;width:calc(100vw - 24px)}
+}
+@media(max-width:430px){
+  body.app-page .btn{width:100%}
+  body.app-page .filters .btn,body.app-page .filter-row .btn{width:auto}
+}
