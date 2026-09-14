@@ -2,95 +2,85 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="description" content="PasTele — marketplace konten digital dan Telegram.">
-  <title>PasTele — Marketplace</title>
-
+  <meta name="theme-color" content="#229ed9">
+  <title>Marketplace — PasTele</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="stylesheet" href="index.css">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-  <div class="page-shell">
-    <header class="hero">
-      <div class="hero-bg" aria-hidden="true"></div>
-      <div class="container hero-inner">
-        <div class="eyebrow"><span class="pulse"></span> PasTele Marketplace</div>
-        <h1>Temukan. Beli. <span>Bagikan.</span></h1>
-        <p class="hero-copy">
-          Marketplace untuk PasteLink, Code, Channel, Group, dan produk digital.
-          Jelajahi konten publik dari creator di PasTele.
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#marketplace">Jelajahi Marketplace</a>
-          <a class="btn btn-secondary" href="/dashboard">Dashboard</a>
-        </div>
-
-        <div class="stats" aria-label="Statistik marketplace">
-          <div class="stat-card"><strong id="statContent">—</strong><span>Konten</span></div>
-          <div class="stat-card"><strong id="statCreators">—</strong><span>Creator</span></div>
-          <div class="stat-card"><strong id="statViews">—</strong><span>Total views</span></div>
-          <div class="stat-card"><strong id="statSales">—</strong><span>Penjualan</span></div>
+<body class="ix-page">
+  <header class="ix-hero">
+    <div class="ix-container ix-hero-inner">
+      <div>
+        <span class="ix-badge"><i class="fa-solid fa-store"></i> PASTELE MARKETPLACE</span>
+        <h1>Temukan konten terbaik<br><span>di PasTele.</span></h1>
+        <p class="ix-hero-copy">Marketplace untuk PasteLink, Code, Channel, Group, dan produk digital. Jelajahi konten creator dengan tampilan sederhana, cepat, dan nyaman.</p>
+        <div class="ix-actions">
+          <a class="ix-btn primary" href="#marketplace"><i class="fa-solid fa-compass"></i> Jelajahi marketplace</a>
+          <a class="ix-btn" href="/dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
         </div>
       </div>
-    </header>
+      <aside class="ix-hero-panel" aria-label="Ringkasan marketplace">
+        <div class="ix-panel-head"><strong>Marketplace overview</strong><span class="ix-live">LIVE</span></div>
+        <div class="ix-mini-grid">
+          <div class="ix-mini"><strong id="statContent">—</strong><small>Konten publik</small></div>
+          <div class="ix-mini"><strong id="statCreators">—</strong><small>Creator</small></div>
+          <div class="ix-mini"><strong id="statViews">—</strong><small>Total views</small></div>
+          <div class="ix-mini"><strong id="statSales">—</strong><small>Penjualan</small></div>
+        </div>
+      </aside>
+    </div>
+  </header>
 
-    <main id="marketplace" class="container main-content">
-      <section class="section-head">
+  <main id="marketplace" class="ix-main">
+    <div class="ix-container">
+      <section class="ix-section-head">
         <div>
-          <p class="section-kicker">Marketplace</p>
+          <p class="ix-kicker">Marketplace</p>
           <h2>Konten terbaru</h2>
-          <p class="muted">Pilih kategori untuk melihat konten yang tersedia.</p>
+          <p class="ix-muted">Pilih kategori dan buka konten yang kamu butuhkan.</p>
         </div>
-        <button id="refreshBtn" class="icon-btn" type="button" aria-label="Muat ulang" title="Muat ulang">↻</button>
+        <button id="refreshBtn" class="ix-btn ix-refresh" type="button" aria-label="Muat ulang" title="Muat ulang"><i class="fa-solid fa-rotate-right"></i></button>
       </section>
 
-      <div class="filters" role="tablist" aria-label="Filter konten">
-        <button class="filter active" data-filter="all" role="tab" aria-selected="true">Semua</button>
-        <button class="filter" data-filter="pastelink" role="tab" aria-selected="false">PasteLink</button>
-        <button class="filter" data-filter="code" role="tab" aria-selected="false">Code</button>
-        <button class="filter" data-filter="channel" role="tab" aria-selected="false">Channel</button>
-        <button class="filter" data-filter="group" role="tab" aria-selected="false">Group</button>
-        <button class="filter" data-filter="link" role="tab" aria-selected="false">Link</button>
-        <button class="filter" data-filter="product" role="tab" aria-selected="false">Produk</button>
+      <div class="ix-filters" role="tablist" aria-label="Kategori">
+        <button class="ix-filter active" data-filter="all" role="tab" aria-selected="true">Semua</button>
+        <button class="ix-filter" data-filter="pastelink" role="tab" aria-selected="false">PasteLink</button>
+        <button class="ix-filter" data-filter="code" role="tab" aria-selected="false">Code</button>
+        <button class="ix-filter" data-filter="channel" role="tab" aria-selected="false">Channel</button>
+        <button class="ix-filter" data-filter="group" role="tab" aria-selected="false">Group</button>
+        <button class="ix-filter" data-filter="link" role="tab" aria-selected="false">Link</button>
+        <button class="ix-filter" data-filter="product" role="tab" aria-selected="false">Produk</button>
       </div>
 
-      <div id="status" class="status" role="status" aria-live="polite">Memuat marketplace…</div>
-      <div id="publishedGrid" class="market-grid"></div>
+      <div id="status" class="ix-status" role="status" aria-live="polite">Memuat marketplace…</div>
+      <div id="publishedGrid" class="ix-grid"></div>
 
-      <section class="ranking-section">
-        <div class="section-head compact">
-          <div>
-            <p class="section-kicker">Ranking</p>
-            <h2>Konten populer</h2>
-          </div>
+      <section class="ix-ranking">
+        <div class="ix-section-head">
+          <div><p class="ix-kicker">Popular</p><h2>Konten populer</h2></div>
         </div>
-        <div class="ranking-grid">
-          <div class="ranking-card"><h3>PasteLink</h3><div id="topLink" class="ranking-list"></div></div>
-          <div class="ranking-card"><h3>Code</h3><div id="topCode" class="ranking-list"></div></div>
-          <div class="ranking-card"><h3>Channel</h3><div id="topChannel" class="ranking-list"></div></div>
-          <div class="ranking-card"><h3>Group</h3><div id="topGroup" class="ranking-list"></div></div>
+        <div class="ix-ranking-grid">
+          <article class="ix-rank-card"><h3><i class="fa-solid fa-link"></i> PasteLink</h3><div id="topLink" class="ix-rank-list"></div></article>
+          <article class="ix-rank-card"><h3><i class="fa-solid fa-code"></i> Code</h3><div id="topCode" class="ix-rank-list"></div></article>
+          <article class="ix-rank-card"><h3><i class="fa-brands fa-telegram"></i> Channel</h3><div id="topChannel" class="ix-rank-list"></div></article>
+          <article class="ix-rank-card"><h3><i class="fa-solid fa-users"></i> Group</h3><div id="topGroup" class="ix-rank-list"></div></article>
         </div>
       </section>
-    </main>
+    </div>
+  </main>
 
-    <footer class="footer">
-      <div class="container footer-inner">
-        <div><strong>PasTele</strong><span>Marketplace konten digital & Telegram.</span></div>
-        <div class="footer-links">
-          <a href="/terms">Ketentuan</a>
-          <a href="/privacy">Privasi</a>
-          <a href="/help">Bantuan</a>
-        </div>
-      </div>
-    </footer>
-  </div>
-
-  <noscript>PasTele membutuhkan JavaScript untuk menampilkan marketplace.</noscript>
+  <footer class="ix-footer">
+    <div class="ix-container ix-footer-inner">
+      <div class="ix-footer-brand"><strong>PasTele</strong><span>Marketplace konten digital & Telegram.</span></div>
+      <nav class="ix-footer-links" aria-label="Footer"><a href="/terms">Ketentuan</a><a href="/privacy">Privasi</a><a href="/help">Bantuan</a></nav>
+    </div>
+  </footer>
   <script src="index.js" defer></script>
 </body>
 </html>
