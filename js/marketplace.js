@@ -4221,58 +4221,39 @@ document.addEventListener("DOMContentLoaded", async () => {
        * Marketplace products memakai
        * target_type = product.
        */
-      const likes =
-        countByTarget(
-          (likesResult?.data || [])
-            .filter(
-              (row) => {
-                const targetType =
-                  lower(
-                    row?.target_type
-                  );
-                return (
-                  !targetType ||
-                  targetType ===
-                    "product"
-                );
-              }
-            )
-        );
-      /*
-       * Count shares.
-       */
-      const shares =
-        countByTarget(
-          (sharesResult?.data || [])
-            .filter(
-              (row) => {
-                const targetType =
-                  lower(
-                    row?.target_type
-                  );
-                return (
-                  !targetType ||
-                  targetType ===
-                    "product"
-                );
-              }
-            )
-        );
-      return data.map(
-        (item) => {
-          const key =
-            String(
-              item?.id
-            );
-          return {
-            ...item,
-            likes_count:
-              likes[key] || 0,
-            shares_count:
-              shares[key] || 0
-          };
+      const allowedTargetTypes = (item) => {
+        const type = typeOf(item);
+        if (type === "code") {
+          return new Set(["product", "telegram_product", "code", "telegram_code"]);
         }
-      );
+        if (type === "channel" || type === "group") {
+          return new Set(["product", "channel", "telegram_channel", "telegram_group", "group"]);
+        }
+        if (type === "pastelink") {
+          return new Set(["product", "pastelink", "paste_link"]);
+        }
+        if (type === "paste") {
+          return new Set(["product", "paste"]);
+        }
+        return new Set(["product", "link"]);
+      };
+
+      const countForItem = (rows, item) => {
+        const key = String(item?.id ?? "");
+        if (!key) return 0;
+        const allowed = allowedTargetTypes(item);
+        return (rows || []).reduce((total, row) => {
+          if (String(row?.target_id ?? "") !== key) return total;
+          const targetType = lower(row?.target_type);
+          return total + ((!targetType || allowed.has(targetType)) ? 1 : 0);
+        }, 0);
+      };
+
+      return data.map((item) => ({
+        ...item,
+        likes_count: countForItem(likesResult?.data || [], item),
+        shares_count: countForItem(sharesResult?.data || [], item)
+      }));
     } catch (error) {
       /*
        * Engagement adalah fitur tambahan.
