@@ -1,86 +1,142 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="PasTele — marketplace konten digital dan Telegram.">
-  <meta name="theme-color" content="#229ed9">
-  <title>Marketplace — PasTele</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="index.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#229ed9">
+<meta name="description" content="PasTele — marketplace dan platform creator untuk PasteLink, Telegram Code, Channel, Group, dan produk digital.">
+<title>PasTele — Create. Publish. Earn.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(()=>{try{const m=localStorage.getItem('pastele-theme')||'auto',d=m==='dark'||(m==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.dataset.theme=d?'dark':'light'}catch(e){}})();
+</script>
+<link rel="stylesheet" href="css/index.css">
 </head>
-<body class="ix-page">
-  <header class="ix-hero">
-    <div class="ix-container ix-hero-inner">
-      <div>
-        <span class="ix-badge"><i class="fa-solid fa-store"></i> PASTELE MARKETPLACE</span>
-        <h1>Temukan konten terbaik<br><span>di PasTele.</span></h1>
-        <p class="ix-hero-copy">Marketplace untuk PasteLink, Code, Channel, Group, dan produk digital. Jelajahi konten creator dengan tampilan sederhana, cepat, dan nyaman.</p>
-        <div class="ix-actions">
-          <a class="ix-btn primary" href="#marketplace"><i class="fa-solid fa-compass"></i> Jelajahi marketplace</a>
-          <a class="ix-btn" href="/dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-        </div>
-      </div>
-      <aside class="ix-hero-panel" aria-label="Ringkasan marketplace">
-        <div class="ix-panel-head"><strong>Marketplace overview</strong><span class="ix-live">LIVE</span></div>
-        <div class="ix-mini-grid">
-          <div class="ix-mini"><strong id="statContent">—</strong><small>Konten publik</small></div>
-          <div class="ix-mini"><strong id="statCreators">—</strong><small>Creator</small></div>
-          <div class="ix-mini"><strong id="statViews">—</strong><small>Total views</small></div>
-          <div class="ix-mini"><strong id="statSales">—</strong><small>Penjualan</small></div>
-        </div>
-      </aside>
+<body class="app-page index-page">
+<header class="ix-nav">
+  <div class="ix-container ix-nav-inner">
+    <a class="ix-brand" href="index.html"><span class="ix-brand-icon"><i class="fa-solid fa-paper-plane"></i></span><span>PasTele</span></a>
+    <nav class="ix-nav-links" aria-label="Navigasi utama">
+      <a class="active" href="#home"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
+      <a href="marketplace.html"><i class="fa-solid fa-store"></i><span>Marketplace</span></a>
+      <a href="#features"><i class="fa-solid fa-layer-group"></i><span>Fitur</span></a>
+      <a href="#how"><i class="fa-solid fa-circle-question"></i><span>Cara Kerja</span></a>
+    </nav>
+    <div class="ix-nav-actions">
+      <button id="themeBtn" class="ix-icon-btn" type="button" title="Tema"><i class="fa-solid fa-moon"></i></button>
+      <a id="loginBtn" class="ix-btn ix-btn-ghost" href="login.html"><i class="fa-solid fa-right-to-bracket"></i><span>Login</span></a>
+      <a id="registerBtn" class="ix-btn ix-btn-primary" href="register.html"><i class="fa-solid fa-user-plus"></i><span>Register</span></a>
+      <button id="menuBtn" class="ix-menu-btn" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
     </div>
-  </header>
+  </div>
+</header>
+<div id="mobileMenu" class="ix-mobile-menu">
+  <a href="#home"><i class="fa-solid fa-house"></i> Beranda</a>
+  <a href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a>
+  <a href="#features"><i class="fa-solid fa-layer-group"></i> Fitur</a>
+  <a href="#how"><i class="fa-solid fa-circle-question"></i> Cara Kerja</a>
+  <a href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+  <a href="register.html"><i class="fa-solid fa-user-plus"></i> Register</a>
+</div>
 
-  <main id="marketplace" class="ix-main">
-    <div class="ix-container">
-      <section class="ix-section-head">
-        <div>
-          <p class="ix-kicker">Marketplace</p>
-          <h2>Konten terbaru</h2>
-          <p class="ix-muted">Pilih kategori dan buka konten yang kamu butuhkan.</p>
-        </div>
-        <button id="refreshBtn" class="ix-btn ix-refresh" type="button" aria-label="Muat ulang" title="Muat ulang"><i class="fa-solid fa-rotate-right"></i></button>
-      </section>
+<main id="home">
+<section class="ix-hero">
+ <div class="ix-orb ix-orb-a"></div><div class="ix-orb ix-orb-b"></div>
+ <div class="ix-container ix-hero-grid">
+  <div class="ix-hero-copy">
+   <span class="ix-badge"><i class="fa-solid fa-sparkles"></i> CREATOR & DIGITAL MARKETPLACE</span>
+   <h1>Create. Publish.<br><span>Earn with PasTele.</span></h1>
+   <p>Tempat untuk membuat, menerbitkan, menemukan, membeli, dan memonetisasi PasteLink, Telegram Code, Channel, Group, serta produk digital dalam satu platform.</p>
+   <div class="ix-hero-actions">
+    <a class="ix-btn ix-btn-primary ix-btn-lg" href="marketplace.html"><i class="fa-solid fa-store"></i> Jelajahi Marketplace</a>
+    <a class="ix-btn ix-btn-soft ix-btn-lg" href="register.html"><i class="fa-solid fa-rocket"></i> Mulai Gratis</a>
+   </div>
+   <div class="ix-trust"><span><i class="fa-solid fa-circle-check"></i> Free & Paid</span><span><i class="fa-solid fa-shield-halved"></i> Pembayaran terverifikasi</span><span><i class="fa-solid fa-mobile-screen-button"></i> Android & Desktop</span></div>
+  </div>
+  <div class="ix-hero-panel">
+   <div class="ix-panel-top"><span><i class="fa-solid fa-chart-line"></i> Creator Dashboard</span><span class="ix-live"><i class="fa-solid fa-circle"></i> Live</span></div>
+   <div class="ix-earn-card"><div><div class="ix-mini-label">Total sales</div><strong id="heroSales">0</strong></div><div class="ix-earn-icon"><i class="fa-solid fa-wallet"></i></div></div>
+   <div class="ix-mini-grid"><div><i class="fa-solid fa-link"></i><b>PasteLink</b><small>Share & publish</small></div><div><i class="fa-solid fa-key"></i><b>Code</b><small>Free / Paid</small></div><div><i class="fa-solid fa-tower-broadcast"></i><b>Channel</b><small>Monetize</small></div><div><i class="fa-solid fa-users"></i><b>Group</b><small>Grow community</small></div></div>
+   <div class="ix-progress"><span><b>Creator revenue</b><b>70%</b></span><div><i></i></div><small>Creator mendapatkan 70% • Platform 30%</small></div>
+  </div>
+ </div>
+</section>
 
-      <div class="ix-filters" role="tablist" aria-label="Kategori">
-        <button class="ix-filter active" data-filter="all" role="tab" aria-selected="true">Semua</button>
-        <button class="ix-filter" data-filter="pastelink" role="tab" aria-selected="false">PasteLink</button>
-        <button class="ix-filter" data-filter="code" role="tab" aria-selected="false">Code</button>
-        <button class="ix-filter" data-filter="channel" role="tab" aria-selected="false">Channel</button>
-        <button class="ix-filter" data-filter="group" role="tab" aria-selected="false">Group</button>
-        <button class="ix-filter" data-filter="link" role="tab" aria-selected="false">Link</button>
-        <button class="ix-filter" data-filter="product" role="tab" aria-selected="false">Produk</button>
-      </div>
+<section class="ix-section ix-stats-section">
+ <div class="ix-container">
+  <div class="ix-stats">
+   <div class="ix-stat"><span class="ix-stat-icon blue"><i class="fa-solid fa-cubes"></i></span><div><strong id="statContent">0</strong><small>Konten aktif</small></div></div>
+   <div class="ix-stat"><span class="ix-stat-icon purple"><i class="fa-solid fa-users"></i></span><div><strong id="statCreators">0</strong><small>Creator</small></div></div>
+   <div class="ix-stat"><span class="ix-stat-icon green"><i class="fa-solid fa-eye"></i></span><div><strong id="statViews">0</strong><small>Total views</small></div></div>
+   <div class="ix-stat"><span class="ix-stat-icon orange"><i class="fa-solid fa-bag-shopping"></i></span><div><strong id="statSales">0</strong><small>Penjualan</small></div></div>
+  </div>
+ </div>
+</section>
 
-      <div id="status" class="ix-status" role="status" aria-live="polite">Memuat marketplace…</div>
-      <div id="publishedGrid" class="ix-grid"></div>
+<section id="market" class="ix-section">
+ <div class="ix-container">
+  <div class="ix-section-head"><div><span class="ix-kicker"><i class="fa-solid fa-store"></i> MARKETPLACE</span><h2>Temukan konten yang kamu butuhkan.</h2><p>Jelajahi konten publik dari creator PasTele. Free bisa langsung dibuka, Paid dapat dibeli dengan pembayaran terverifikasi.</p></div><a class="ix-link" href="marketplace.html">Lihat semua <i class="fa-solid fa-arrow-right"></i></a></div>
+  <div class="ix-filter" id="marketFilter">
+   <button class="active" data-filter="all"><i class="fa-solid fa-border-all"></i> Semua</button><button data-filter="pastelink"><i class="fa-solid fa-link"></i> PasteLink</button><button data-filter="code"><i class="fa-solid fa-key"></i> Code</button><button data-filter="channel"><i class="fa-solid fa-tower-broadcast"></i> Channel</button><button data-filter="group"><i class="fa-solid fa-users"></i> Group</button><button data-filter="product"><i class="fa-solid fa-box-open"></i> Produk</button>
+  </div>
+  <div id="marketGrid" class="ix-market-grid"><div class="ix-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat marketplace...</span></div></div>
+  <div id="marketEmpty" class="ix-empty hidden"><i class="fa-solid fa-box-open"></i><b>Belum ada konten</b><span>Creator belum menerbitkan konten yang sesuai.</span><a href="marketplace.html" class="ix-btn ix-btn-soft">Buka Marketplace</a></div>
+ </div>
+</section>
 
-      <section class="ix-ranking">
-        <div class="ix-section-head">
-          <div><p class="ix-kicker">Popular</p><h2>Konten populer</h2></div>
-        </div>
-        <div class="ix-ranking-grid">
-          <article class="ix-rank-card"><h3><i class="fa-solid fa-link"></i> PasteLink</h3><div id="topLink" class="ix-rank-list"></div></article>
-          <article class="ix-rank-card"><h3><i class="fa-solid fa-code"></i> Code</h3><div id="topCode" class="ix-rank-list"></div></article>
-          <article class="ix-rank-card"><h3><i class="fa-brands fa-telegram"></i> Channel</h3><div id="topChannel" class="ix-rank-list"></div></article>
-          <article class="ix-rank-card"><h3><i class="fa-solid fa-users"></i> Group</h3><div id="topGroup" class="ix-rank-list"></div></article>
-        </div>
-      </section>
-    </div>
-  </main>
+<section id="features" class="ix-section ix-soft-section">
+ <div class="ix-container">
+  <div class="ix-section-head center"><div><span class="ix-kicker"><i class="fa-solid fa-layer-group"></i> FITUR LENGKAP</span><h2>Satu platform untuk creator dan pembeli.</h2><p>Semua kebutuhan publikasi, monetisasi, pembayaran, dan pengelolaan konten dibuat dalam satu alur yang sederhana.</p></div></div>
+  <div class="ix-feature-grid">
+   <article><span><i class="fa-solid fa-link"></i></span><h3>PasteLink</h3><p>Buat halaman teks/link yang rapi, bagikan dengan slug pendek, dan kelola kontenmu.</p><a href="create-pastelink.html">Buat PasteLink <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-key"></i></span><h3>Telegram Code</h3><p>Publikasikan code untuk file atau bot Telegram dalam format Free maupun Paid.</p><a href="create-code.html">Buat Code <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-tower-broadcast"></i></span><h3>Channel & Group</h3><p>Promosikan channel atau group Telegram dan monetisasi akses sesuai kebutuhan.</p><a href="create-telegram.html">Publikasikan <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-store"></i></span><h3>Marketplace</h3><p>Temukan berbagai konten creator dengan filter Free/Paid dan kategori yang jelas.</p><a href="marketplace.html">Belanja sekarang <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-qrcode"></i></span><h3>Pembayaran</h3><p>Alur pembayaran Bayar.gg dengan status order dan verifikasi sebelum akses diberikan.</p><a href="marketplace.html">Lihat marketplace <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-wallet"></i></span><h3>Creator Wallet</h3><p>Pantau saldo, transaksi, penghasilan, dan proses withdrawal dari dashboard.</p><a href="wallet.html">Buka Wallet <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-chart-pie"></i></span><h3>Analytics</h3><p>Lihat views, sales, likes, comments, dan performa konten untuk memahami audiens.</p><a href="dashboard.html">Buka Dashboard <i class="fa-solid fa-arrow-right"></i></a></article>
+   <article><span><i class="fa-solid fa-shield-halved"></i></span><h3>Access Control</h3><p>Konten Paid tetap terlindungi dan hanya dibuka setelah akses pembelian terverifikasi.</p><a href="about.html">Pelajari <i class="fa-solid fa-arrow-right"></i></a></article>
+  </div>
+ </div>
+</section>
 
-  <footer class="ix-footer">
-    <div class="ix-container ix-footer-inner">
-      <div class="ix-footer-brand"><strong>PasTele</strong><span>Marketplace konten digital & Telegram.</span></div>
-      <nav class="ix-footer-links" aria-label="Footer"><a href="/terms">Ketentuan</a><a href="/privacy">Privasi</a><a href="/help">Bantuan</a></nav>
-    </div>
-  </footer>
-  <script src="index.js" defer></script>
+<section id="how" class="ix-section">
+ <div class="ix-container">
+  <div class="ix-section-head center"><div><span class="ix-kicker"><i class="fa-solid fa-route"></i> CARA KERJA</span><h2>Mulai dalam beberapa langkah.</h2><p>Baik sebagai creator maupun pembeli, alurnya dibuat singkat dan mudah dipahami.</p></div></div>
+  <div class="ix-steps">
+   <div><b>01</b><span><i class="fa-solid fa-user-plus"></i></span><h3>Daftar / Login</h3><p>Buat akun gratis untuk mengelola konten, wallet, pembelian, dan creator profile.</p></div>
+   <div><b>02</b><span><i class="fa-solid fa-pen-to-square"></i></span><h3>Buat Konten</h3><p>Pilih PasteLink, Code, Channel, Group, atau produk yang tersedia di platform.</p></div>
+   <div><b>03</b><span><i class="fa-solid fa-globe"></i></span><h3>Publish</h3><p>Dapatkan URL pendek dan bagikan kontenmu ke audiens.</p></div>
+   <div><b>04</b><span><i class="fa-solid fa-coins"></i></span><h3>Earn</h3><p>Untuk konten Paid, creator mendapatkan bagian revenue setelah pembayaran berhasil.</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="ix-section ix-creator-section">
+ <div class="ix-container ix-creator-card">
+  <div><span class="ix-kicker"><i class="fa-solid fa-rocket"></i> CREATOR ECONOMY</span><h2>Bangun konten. Bangun audiens. Dapatkan penghasilan.</h2><p>PasTele memberi creator ruang untuk mempublikasikan konten dan menjual akses secara terstruktur. Revenue settlement dilakukan di sisi server.</p><div class="ix-creator-points"><span><i class="fa-solid fa-circle-check"></i> Creator 70%</span><span><i class="fa-solid fa-circle-check"></i> Platform 30%</span><span><i class="fa-solid fa-circle-check"></i> Settlement terverifikasi</span></div><a href="register.html" class="ix-btn ix-btn-primary"><i class="fa-solid fa-user-plus"></i> Daftar sebagai Creator</a></div>
+  <div class="ix-money"><i class="fa-solid fa-wallet"></i><strong>70%</strong><span>Creator share</span><small>Revenue dari penjualan Paid</small></div>
+ </div>
+</section>
+
+<section class="ix-section ix-final">
+ <div class="ix-container ix-final-inner"><span class="ix-final-icon"><i class="fa-solid fa-paper-plane"></i></span><h2>Siap mulai di PasTele?</h2><p>Jelajahi marketplace atau buat akun untuk mulai membangun dan memonetisasi kontenmu.</p><div><a href="marketplace.html" class="ix-btn ix-btn-primary ix-btn-lg"><i class="fa-solid fa-store"></i> Marketplace</a><a href="register.html" class="ix-btn ix-btn-soft ix-btn-lg"><i class="fa-solid fa-user-plus"></i> Register</a></div></div>
+</section>
+</main>
+
+<footer class="ix-footer">
+ <div class="ix-container ix-footer-grid">
+  <div><a class="ix-brand" href="index.html"><span class="ix-brand-icon"><i class="fa-solid fa-paper-plane"></i></span><span>PasTele</span></a><p>Platform creator dan marketplace digital untuk ekosistem Telegram dan content sharing.</p></div>
+  <div><b>Platform</b><a href="marketplace.html">Marketplace</a><a href="create-pastelink.html">PasteLink</a><a href="create-code.html">Telegram Code</a><a href="create-telegram.html">Channel / Group</a></div>
+  <div><b>Akun</b><a href="login.html">Login</a><a href="register.html">Register</a><a href="dashboard.html">Dashboard</a><a href="wallet.html">Wallet</a></div>
+  <div><b>Informasi</b><a href="about.html">Tentang PasTele</a><a href="subscription.html">Subscription</a><a href="premium.html">Premium</a></div>
+ </div>
+ <div class="ix-container ix-footer-bottom"><span>© <span id="year"></span> PasTele. All rights reserved.</span><span><i class="fa-solid fa-shield-halved"></i> Secure digital platform</span></div>
+</footer>
+<script src="js/index.js"></script>
 </body>
 </html>
