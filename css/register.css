@@ -1775,3 +1775,83 @@ body.app-page{padding-top:72px}
   .pastele-footer .footer-container{grid-template-columns:1fr}
 }
 
+
+/* =========================================================
+   PasTele Premium SaaS Polish — 2026
+   Safe additive layer. Settings page remains untouched.
+   ========================================================= */
+:root{
+  --pt-saas-radius:18px;
+  --pt-saas-radius-sm:12px;
+  --pt-saas-border:rgba(15,23,42,.08);
+  --pt-saas-shadow:0 12px 38px rgba(15,23,42,.055);
+  --pt-saas-shadow-hover:0 18px 48px rgba(15,23,42,.09);
+}
+html[data-theme="dark"]{
+  --pt-saas-border:rgba(148,163,184,.16);
+  --pt-saas-shadow:0 18px 48px rgba(0,0,0,.22);
+  --pt-saas-shadow-hover:0 22px 58px rgba(0,0,0,.30);
+}
+.app-page main .card,
+.app-page main .panel,
+.app-page main .box,
+.app-page main .section-card,
+.app-page main .content-card,
+.app-page main .stat-card,
+.app-page main .kpi-card,
+.app-page main .form-card,
+.app-page main .table-card{
+  border-radius:var(--pt-saas-radius);
+  border-color:var(--pt-saas-border);
+  box-shadow:var(--pt-saas-shadow);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.app-page main .card:hover,
+.app-page main .panel:hover,
+.app-page main .box:hover,
+.app-page main .section-card:hover,
+.app-page main .content-card:hover,
+.app-page main .stat-card:hover,
+.app-page main .kpi-card:hover{
+  box-shadow:var(--pt-saas-shadow-hover);
+}
+.app-page main input,
+.app-page main select,
+.app-page main textarea{
+  border-radius:var(--pt-saas-radius-sm);
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.app-page main input:focus,
+.app-page main select:focus,
+.app-page main textarea:focus{
+  outline:none;
+  border-color:color-mix(in srgb,var(--primary,#229ed9) 55%,transparent);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--primary,#229ed9) 10%,transparent);
+}
+.app-page main button,
+.app-page main .btn,
+.app-page main .button{
+  border-radius:12px;
+  font-weight:750;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.app-page main button:not(:disabled):hover,
+.app-page main .btn:not(:disabled):hover,
+.app-page main .button:not(:disabled):hover{transform:translateY(-1px)}
+.app-page main table{border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:14px}
+.app-page main th{font-weight:800;letter-spacing:.01em}
+.withdraw-inline-note{display:flex;align-items:flex-start;gap:8px;margin:10px 0 14px;color:var(--wd-muted,#718293);font-size:12px;line-height:1.5}
+.withdraw-inline-note i{color:var(--wd-primary,#229ed9);margin-top:2px}
+.instant-amount-btn{min-height:44px;padding:10px 14px;border:1px solid var(--wd-border,rgba(15,35,52,.08));background:var(--wd-card,#fff);color:var(--wd-text,#102331);border-radius:12px;font-weight:800;cursor:pointer}
+.instant-amount-btn.active{border-color:var(--wd-primary,#229ed9);box-shadow:0 0 0 3px rgba(34,158,217,.10);color:var(--wd-primary,#229ed9)}
+.instant-amount-btn:disabled{opacity:.45;cursor:not-allowed}
+.saved-method{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;padding:11px 13px;border:1px solid var(--wd-border,rgba(15,35,52,.08));background:var(--wd-card,#fff);border-radius:12px;color:inherit;text-align:left;cursor:pointer}
+.saved-method small{color:var(--wd-muted,#718293)}
+.history-empty{padding:28px;text-align:center;color:var(--wd-muted,#718293);border:1px dashed var(--wd-border,rgba(15,35,52,.08));border-radius:14px}
+.withdraw-history-item{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 0;border-bottom:1px solid var(--wd-border-soft,rgba(15,35,52,.05))}
+.withdraw-history-item:last-child{border-bottom:0}
+.withdraw-history-item small{display:block;color:var(--wd-muted,#718293);margin-top:4px}
+.history-right{text-align:right;display:grid;gap:5px}.history-right span{font-size:11px;font-weight:800;text-transform:capitalize}
+.status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
+@media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
+@media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
