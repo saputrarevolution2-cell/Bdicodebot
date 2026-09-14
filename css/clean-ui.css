@@ -1,0 +1,228 @@
+/* PasTele — Shared Clean UI System
+   Visual language aligned with the final Settings page.
+   Loaded after each page stylesheet. Functionality/layout contracts are preserved.
+*/
+.app-page:not(.settings-page-body){
+  --pt-clean-bg:#f5f7fb;
+  --pt-clean-surface:#fff;
+  --pt-clean-surface-soft:#f8fafc;
+  --pt-clean-border:#e5e7eb;
+  --pt-clean-border-strong:#d7dce5;
+  --pt-clean-text:#111827;
+  --pt-clean-text-soft:#4b5563;
+  --pt-clean-muted:#6b7280;
+  --pt-clean-primary:#229ed9;
+  --pt-clean-primary-dark:#168ac1;
+  --pt-clean-primary-soft:#eaf7ff;
+  --pt-clean-shadow-sm:0 2px 8px rgba(15,23,42,.04);
+  --pt-clean-shadow:0 10px 30px rgba(15,23,42,.07);
+  --pt-clean-shadow-lg:0 20px 55px rgba(15,23,42,.12);
+}
+html[data-theme="dark"] .app-page:not(.settings-page-body),
+html.theme-dark .app-page:not(.settings-page-body),
+body.theme-dark.app-page:not(.settings-page-body){
+  --pt-clean-bg:#0b1220;
+  --pt-clean-surface:#111827;
+  --pt-clean-surface-soft:#172033;
+  --pt-clean-border:#263247;
+  --pt-clean-border-strong:#344158;
+  --pt-clean-text:#f8fafc;
+  --pt-clean-text-soft:#cbd5e1;
+  --pt-clean-muted:#94a3b8;
+  --pt-clean-primary-soft:rgba(34,158,217,.12);
+  --pt-clean-shadow-sm:0 2px 8px rgba(0,0,0,.2);
+  --pt-clean-shadow:0 12px 35px rgba(0,0,0,.22);
+  --pt-clean-shadow-lg:0 20px 60px rgba(0,0,0,.35);
+}
+
+/* Make existing page variables inherit the Settings palette where they exist. */
+.app-page:not(.settings-page-body){
+  --pt-primary:var(--pt-clean-primary);
+  --pt-primary-dark:var(--pt-clean-primary-dark);
+  --pt-accent:var(--pt-clean-primary);
+  --primary:var(--pt-clean-primary);
+  --primary-2:var(--pt-clean-primary-dark);
+  --surface:var(--pt-clean-surface);
+  --surface-2:var(--pt-clean-surface-soft);
+  --surface-3:#eef2f7;
+  --line:var(--pt-clean-border);
+  --line-strong:var(--pt-clean-border-strong);
+  --text:var(--pt-clean-text);
+  --muted:var(--pt-clean-muted);
+}
+
+/* Cards / panels — same restrained language as Settings. */
+.app-page:not(.settings-page-body) .card,
+.app-page:not(.settings-page-body) .panel,
+.app-page:not(.settings-page-body) .box,
+.app-page:not(.settings-page-body) .dashboard-card,
+.app-page:not(.settings-page-body) .stat-card,
+.app-page:not(.settings-page-body) .content-card,
+.app-page:not(.settings-page-body) .form-card,
+.app-page:not(.settings-page-body) .create-card,
+.app-page:not(.settings-page-body) .market-card,
+.app-page:not(.settings-page-body) .product-card,
+.app-page:not(.settings-page-body) .payment-card,
+.app-page:not(.settings-page-body) .withdrawal-card,
+.app-page:not(.settings-page-body) .transaction-card,
+.app-page:not(.settings-page-body) .history-card,
+.app-page:not(.settings-page-body) .purchase-card,
+.app-page:not(.settings-page-body) .notification-card,
+.app-page:not(.settings-page-body) .profile-section,
+.app-page:not(.settings-page-body) .settings-card{
+  background:var(--pt-clean-surface)!important;
+  color:var(--pt-clean-text);
+  border:1px solid var(--pt-clean-border)!important;
+  border-radius:16px;
+  box-shadow:var(--pt-clean-shadow-sm)!important;
+}
+.app-page:not(.settings-page-body) .card:hover,
+.app-page:not(.settings-page-body) .panel:hover,
+.app-page:not(.settings-page-body) .product-card:hover,
+.app-page:not(.settings-page-body) .market-card:hover{
+  border-color:var(--pt-clean-border-strong)!important;
+  box-shadow:var(--pt-clean-shadow)!important;
+}
+
+/* Headings and section labels. */
+.app-page:not(.settings-page-body) .page-header,
+.app-page:not(.settings-page-body) .section-head,
+.app-page:not(.settings-page-body) .section-header,
+.app-page:not(.settings-page-body) .content-header,
+.app-page:not(.settings-page-body) .page-title-row{
+  color:var(--pt-clean-text);
+}
+.app-page:not(.settings-page-body) .page-header h1,
+.app-page:not(.settings-page-body) .section-head h1,
+.app-page:not(.settings-page-body) .section-head h2,
+.app-page:not(.settings-page-body) .section-header h1,
+.app-page:not(.settings-page-body) .section-header h2,
+.app-page:not(.settings-page-body) .content-header h1,
+.app-page:not(.settings-page-body) .content-header h2,
+.app-page:not(.settings-page-body) .page-title-row h1,
+.app-page:not(.settings-page-body) .page-title-row h2{
+  color:var(--pt-clean-text);
+  letter-spacing:-.025em;
+}
+.app-page:not(.settings-page-body) .page-header p,
+.app-page:not(.settings-page-body) .section-head p,
+.app-page:not(.settings-page-body) .section-header p,
+.app-page:not(.settings-page-body) .content-header p{
+  color:var(--pt-clean-muted);
+}
+
+/* Icon boxes: match Settings icon treatment. */
+.app-page:not(.settings-page-body) .iconbox,
+.app-page:not(.settings-page-body) .section-icon,
+.app-page:not(.settings-page-body) .stat-icon,
+.app-page:not(.settings-page-body) .kpi-icon,
+.app-page:not(.settings-page-body) .detail-icon,
+.app-page:not(.settings-page-body) .feature-icon,
+.app-page:not(.settings-page-body) .step-icon,
+.app-page:not(.settings-page-body) .preview-icon,
+.app-page:not(.settings-page-body) .profile-quick-icon,
+.app-page:not(.settings-page-body) .view-icon,
+.app-page:not(.settings-page-body) .payment-icon,
+.app-page:not(.settings-page-body) .withdraw-icon,
+.app-page:not(.settings-page-body) .wallet-icon{
+  background:var(--pt-clean-primary-soft)!important;
+  border-color:rgba(34,158,217,.14)!important;
+  color:var(--pt-clean-primary)!important;
+}
+
+/* Buttons. */
+.app-page:not(.settings-page-body) .btn,
+.app-page:not(.settings-page-body) .button,
+.app-page:not(.settings-page-body) button:not(.navbar-toggle):not(.menu-toggle){
+  border-radius:12px;
+  font-weight:750;
+  -webkit-tap-highlight-color:transparent;
+}
+.app-page:not(.settings-page-body) .btn.primary,
+.app-page:not(.settings-page-body) .btn-primary,
+.app-page:not(.settings-page-body) .button-primary,
+.app-page:not(.settings-page-body) button.primary,
+.app-page:not(.settings-page-body) .btn-success{
+  background:var(--pt-clean-primary)!important;
+  border-color:var(--pt-clean-primary)!important;
+  color:#fff!important;
+  box-shadow:0 8px 20px rgba(34,158,217,.18)!important;
+}
+.app-page:not(.settings-page-body) .btn.primary:hover,
+.app-page:not(.settings-page-body) .btn-primary:hover,
+.app-page:not(.settings-page-body) .button-primary:hover{
+  background:var(--pt-clean-primary-dark)!important;
+  border-color:var(--pt-clean-primary-dark)!important;
+}
+
+/* Forms. */
+.app-page:not(.settings-page-body) input:not([type="checkbox"]):not([type="radio"]),
+.app-page:not(.settings-page-body) select,
+.app-page:not(.settings-page-body) textarea,
+.app-page:not(.settings-page-body) .input{
+  background:var(--pt-clean-surface)!important;
+  color:var(--pt-clean-text)!important;
+  border:1px solid var(--pt-clean-border)!important;
+  border-radius:12px;
+}
+.app-page:not(.settings-page-body) input:not([type="checkbox"]):not([type="radio"]):focus,
+.app-page:not(.settings-page-body) select:focus,
+.app-page:not(.settings-page-body) textarea:focus,
+.app-page:not(.settings-page-body) .input:focus{
+  border-color:var(--pt-clean-primary)!important;
+  box-shadow:0 0 0 3px rgba(34,158,217,.10)!important;
+  outline:none;
+}
+.app-page:not(.settings-page-body) label{color:var(--pt-clean-text-soft)}
+.app-page:not(.settings-page-body) .field-hint,
+.app-page:not(.settings-page-body) small,
+.app-page:not(.settings-page-body) .muted{color:var(--pt-clean-muted)}
+
+/* Tables/lists/status rows. */
+.app-page:not(.settings-page-body) .list-item,
+.app-page:not(.settings-page-body) .table-row,
+.app-page:not(.settings-page-body) .history-item,
+.app-page:not(.settings-page-body) .notification-item{
+  border-color:var(--pt-clean-border)!important;
+}
+.app-page:not(.settings-page-body) .list-item:hover,
+.app-page:not(.settings-page-body) .history-item:hover,
+.app-page:not(.settings-page-body) .notification-item:hover{
+  background:var(--pt-clean-surface-soft)!important;
+}
+
+/* Pills / badges. */
+.app-page:not(.settings-page-body) .badge,
+.app-page:not(.settings-page-body) .pill,
+.app-page:not(.settings-page-body) .status-badge,
+.app-page:not(.settings-page-body) .tag{
+  border-radius:999px;
+}
+.app-page:not(.settings-page-body) .badge.primary,
+.app-page:not(.settings-page-body) .status-badge.primary,
+.app-page:not(.settings-page-body) .tag.primary{
+  background:var(--pt-clean-primary-soft)!important;
+  color:var(--pt-clean-primary)!important;
+  border-color:rgba(34,158,217,.16)!important;
+}
+
+/* Responsive rhythm aligned with Settings. */
+@media (max-width:900px){
+  .app-page:not(.settings-page-body) .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .app-page:not(.settings-page-body) .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:640px){
+  .app-page:not(.settings-page-body) .grid-4,
+  .app-page:not(.settings-page-body) .grid-3,
+  .app-page:not(.settings-page-body) .grid-2{grid-template-columns:1fr!important}
+  .app-page:not(.settings-page-body) .card,
+  .app-page:not(.settings-page-body) .panel,
+  .app-page:not(.settings-page-body) .box,
+  .app-page:not(.settings-page-body) .dashboard-card,
+  .app-page:not(.settings-page-body) .form-card,
+  .app-page:not(.settings-page-body) .create-card,
+  .app-page:not(.settings-page-body) .product-card,
+  .app-page:not(.settings-page-body) .market-card{border-radius:14px}
+  .app-page:not(.settings-page-body) .btn,
+  .app-page:not(.settings-page-body) .button{min-height:44px}
+}
