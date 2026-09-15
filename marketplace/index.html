@@ -8,7 +8,7 @@
   <title>Marketplace — PasTele</title>
   <!-- PasTele canonical UI stack -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/marketplace.css?v=20260915-final-public-2x4-pastelink">
+  <link rel="stylesheet" href="css/marketplace.css?v=20260916-final-db-ui">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -28,7 +28,7 @@
             </span>
             <h1>Temukan Konten Terbaik</h1>
             <p class="market-subtitle">
-              Link, Code, Channel &amp; Group <span>•</span> Free &amp; Paid
+              Link, Code, Channel, Group, PasteLink &amp; Paste <span>•</span> Free &amp; Paid
             </p>
           </div>
 </div>
@@ -74,6 +74,10 @@
             >
               <i class="fa-solid fa-link"></i>
               PasteLink
+            </button>
+            <button type="button" class="market-tab" data-v="paste">
+              <i class="fa-solid fa-paste"></i>
+              Paste
             </button>
             <button
               type="button"
@@ -200,6 +204,17 @@
               <div class="market-list-loading"></div>
             </div>
           </section>
+          <!-- PASTE -->
+          <section class="market-panel">
+            <div class="market-panel-head">
+              <div>
+                <span class="market-panel-icon"><i class="fa-solid fa-paste"></i></span>
+                <div><h2>Paste Populer</h2><small>Paste paling banyak dilihat</small></div>
+              </div>
+              <span class="top-label">TOP 10</span>
+            </div>
+            <div class="market-ranking" id="topPaste"><div class="market-list-loading"></div></div>
+          </section>
           <!-- GROUP -->
           <section class="market-panel">
             <div class="market-panel-head">
@@ -222,6 +237,6 @@
       </div>
     </section>
   </main>
-  <div id="toast"></div><script src="js/marketplace.js?v=20260915-final-public-2x4-pastelink"></script>
+  <div id="toast"></div><script src="js/marketplace.js?v=20260916-final-db-ui"></script>
 </body>
 </html>
