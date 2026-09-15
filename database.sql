@@ -40,20 +40,17 @@ SUPABASE MASTER FULL FIX — IDEMPOTENT
 
 -- ============================================================
 -- PasTele / Bdicodebot
--- DATABASE MASTER RESET + FULL RPC
--- DEVELOPMENT RESET ONLY
+-- CANONICAL MASTER / PRODUCTION SAFE
 --
 -- IMPORTANT:
--- 1) This resets ONLY public application tables/functions.
--- 2) Supabase auth.users is NOT deleted.
--- 3) Existing public data WILL BE DELETED.
+-- 1) Application data is preserved; this file does not DROP application tables.
+-- 2) Supabase auth.users is never deleted.
+-- 3) Existing functions/triggers/views may be replaced to match this schema.
 -- 4) Run in Supabase SQL Editor as postgres/service-role.
--- 5) After this SQL, deploy the matching Edge Functions from the ZIP.
--- 6) Marketplace seller earnings are 70%; platform fee is 30%.
--- 7) Seller earnings enter PENDING first.
--- 8) Paid before 21:00 WIB => H1, available at next calendar-day 00:00 WIB.
--- 9) Paid at/after 21:00 WIB => H2, available at second calendar-day 00:00 WIB.
--- 10) pg_cron releases matured pending balances hourly when available.
+-- 5) Marketplace seller earnings are 70%; platform fee is 30%.
+-- 6) Seller earnings enter PENDING first.
+-- 7) H1/H2 settlement rules are retained from the project specification.
+-- 8) This file contains ONE canonical marketplace_public view.
 -- ============================================================
 
 BEGIN;
@@ -542,27 +539,7 @@ ON CONFLICT(id) DO NOTHING;
 -- PUBLIC VIEWS
 -- ============================================================
 
-DROP VIEW IF EXISTS public.marketplace_public CASCADE;
-DROP VIEW IF EXISTS public.profile_public CASCADE;
 
-CREATE VIEW public.profile_public
-WITH (security_invoker = true)
-AS
-SELECT p.id,p.username,p.display_name,p.avatar_url,p.country,p.created_at
-FROM public.profiles AS p
-WHERE p.is_banned=false;
-
-CREATE VIEW public.marketplace_public
-WITH (security_invoker = true)
-AS
-SELECT p.id,p.slug,p.title,p.type,p.access_type,p.price,p.thumbnail_url,p.description,p.content,
-       p.views,p.sales_count,p.category,p.created_at,
-       pr.display_name AS creator_name,pr.username AS creator_username,
-       p.creator_id AS owner_id
-FROM public.products AS p
-LEFT JOIN public.profile_public AS pr
-  ON pr.id=COALESCE(p.creator_id,p.seller_id)
-WHERE p.status IN ('published','active');
 
 -- ============================================================
 -- AUTH PROFILE + WALLET AUTOMATION
@@ -2537,36 +2514,7 @@ COMMIT;
 
 -- Final marketplace view: every supported publishable source.
 BEGIN;
-DROP VIEW IF EXISTS public.marketplace_public CASCADE;
-CREATE VIEW public.marketplace_public
-WITH (security_invoker = true)
-AS
-SELECT p.id,p.slug,p.title,p.type,p.access_type,p.price,p.thumbnail_url,p.description,
-       p.views,p.sales_count,p.category,p.created_at,
-       pr.display_name creator_name,pr.username creator_username,
-       coalesce(p.creator_id,p.seller_id) owner_id
-FROM public.products p LEFT JOIN public.profile_public pr ON pr.id=coalesce(p.creator_id,p.seller_id)
-WHERE p.status IN ('published','active')
-UNION ALL
-SELECT p.id,p.slug,p.title,'code'::text,p.access_type,p.price,p.thumbnail_url,p.description,
-       p.views,p.sales_count,p.category,p.created_at,pr.display_name,pr.username,p.owner_id
-FROM public.telegram_products p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
-WHERE p.status='published'
-UNION ALL
-SELECT p.id,p.slug,p.name,CASE WHEN p.type='group' THEN 'group' ELSE 'channel' END,p.access_type,p.price,
-       NULL::text,p.description,p.views,p.sales_count,p.category,p.created_at,pr.display_name,pr.username,p.owner_id
-FROM public.telegram_channels p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
-WHERE p.status='published'
-UNION ALL
-SELECT p.id,p.slug,p.title,'pastelink'::text,p.access_type,p.price,NULL::text,p.description,
-       p.views,0::bigint,'General'::text,p.created_at,pr.display_name,pr.username,p.user_id
-FROM public.pastelinks p LEFT JOIN public.profile_public pr ON pr.id=p.user_id
-WHERE p.visibility='public'
-UNION ALL
-SELECT p.id,p.slug,p.title,'paste'::text,'free'::text,0::numeric,NULL::text,NULLIF(left(coalesce(p.content,''),180),''),
-       0::bigint,0::bigint,'General'::text,p.created_at,pr.display_name,pr.username,p.owner_id
-FROM public.pastes p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
-WHERE p.visibility='public';
+
 COMMIT;
 
 -- Final admin content editor contract for paid PasteLink.
@@ -4594,40 +4542,9 @@ COMMIT;
 -- ============================================================
 BEGIN;
 
--- Public marketplace: the frontend no longer depends on a security-invoker
--- UNION view, but keep the view correct for other clients.
-DROP VIEW IF EXISTS public.marketplace_public;
-CREATE VIEW public.marketplace_public
-WITH (security_invoker=true)
-AS
-SELECT p.id,p.slug,p.title,coalesce(p.type,'link') AS type,p.access_type,p.price,p.thumbnail_url,p.description,
-       p.views,p.sales_count,p.category,p.created_at,
-       pr.display_name AS creator_name,pr.username AS creator_username,
-       coalesce(p.creator_id,p.seller_id) AS owner_id
-FROM public.products p LEFT JOIN public.profile_public pr ON pr.id=coalesce(p.creator_id,p.seller_id)
-WHERE p.status IN ('published','active')
-UNION ALL
-SELECT p.id,p.slug,p.title,'code'::text,p.access_type,p.price,p.thumbnail_url,p.description,
-       p.views,p.sales_count,p.category,p.created_at,pr.display_name,pr.username,p.owner_id
-FROM public.telegram_products p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
-WHERE p.status IN ('published','active')
-UNION ALL
-SELECT p.id,p.slug,p.name,CASE WHEN lower(coalesce(p.type,'channel'))='group' THEN 'group' ELSE 'channel' END,
-       p.access_type,p.price,NULL::text,p.description,p.views,p.sales_count,p.category,p.created_at,
-       pr.display_name,pr.username,p.owner_id
-FROM public.telegram_channels p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
-WHERE p.status IN ('published','active')
-UNION ALL
-SELECT p.id,p.slug,p.title,'pastelink'::text,p.access_type,p.price,NULL::text,p.description,
-       p.views,0::bigint,'General'::text,p.created_at,pr.display_name,pr.username,p.user_id
-FROM public.pastelinks p LEFT JOIN public.profile_public pr ON pr.id=p.user_id
-WHERE p.visibility='public' AND (p.expires_at IS NULL OR p.expires_at>now())
-UNION ALL
-SELECT p.id,p.slug,p.title,'paste'::text,'free'::text,0::numeric,NULL::text,
-       left(coalesce(p.content,''),180),0::bigint,0::bigint,'General'::text,p.created_at,
-       pr.display_name,pr.username,p.owner_id
-FROM public.pastes p LEFT JOIN public.profile_public pr ON pr.id=p.owner_id
-WHERE p.visibility='public';
+-- Canonical public marketplace view.
+-- Does NOT expose protected content/content_html for paid items.
+
 
 GRANT SELECT ON public.marketplace_public TO anon,authenticated;
 
@@ -4945,8 +4862,8 @@ GRANT EXECUTE ON FUNCTION public.notify_profile_visit(uuid) TO authenticated;
 -- ============================================================
 BEGIN;
 
--- Public marketplace: the frontend no longer depends on a security-invoker
--- UNION view, but keep the view correct for other clients.
+-- Canonical public marketplace view.
+-- Does NOT expose protected content/content_html for paid items.
 DROP VIEW IF EXISTS public.marketplace_public;
 CREATE VIEW public.marketplace_public
 WITH (security_invoker=true)
