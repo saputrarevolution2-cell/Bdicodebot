@@ -2607,7 +2607,8 @@ window.PASTELE_CONFIG = Object.freeze({
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
-  const isPublic = !isAdminPath && PUBLIC.has(file);
+  const isMarketplacePath = !isAdminPath && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
+  const isPublic = !isAdminPath && (PUBLIC.has(file) || isMarketplacePath);
   let locked = false;
   let initialized = false;
   let timer = null;
@@ -2638,6 +2639,8 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   function showExpired() {
+    // Marketplace is always public. Never show the session-expired lock here.
+    if (isPublic) return;
     if (document.getElementById("pt-session-modal")) return;
 
     locked = true;
