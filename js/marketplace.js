@@ -3770,6 +3770,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         .sort(byViews)
     );
     list(
+      "topPasteLink",
+      items
+        .filter(item => typeOf(item) === "pastelink")
+        .slice()
+        .sort(byViews)
+    );
+    list(
       "topPaste",
       items
         .filter(item => typeOf(item) === "paste")
@@ -4322,6 +4329,52 @@ document.addEventListener("DOMContentLoaded", async () => {
         description: String(row.description || "").trim(),
         creator_name: row.creator_name || "",
         creator_username: String(row.creator_username || "").replace(/^@/, "")
+      })).filter(row => row.id && row.title);
+
+      /*
+       * PASTELINK SAFETY FALLBACK
+       * The canonical marketplace_public view should already contain
+       * PasteLink rows. If a stale view/cache/RLS situation returns no
+       * PasteLink rows, read only the public pastelinks rows directly.
+       * This does not expose private content: only public + unexpired
+       * listings are accepted.
+       */
+      if (!data.some(row => typeOf(row) === "pastelink")) {
+        try {
+          const fallback = await client
+            .from("pastelinks")
+            .select("id,slug,title,visibility,access_type,price,description,views,created_at,user_id,expires_at")
+            .eq("visibility", "public")
+            .order("created_at", { ascending: false })
+            .limit(1000);
+
+          if (!fallback.error && Array.isArray(fallback.data)) {
+            const now = Date.now();
+            const pastelinkRows = fallback.data
+              .filter(row => !row.expires_at || new Date(row.expires_at).getTime() > now)
+              .map(row => ({
+                ...row,
+                type: "pastelink",
+                owner_id: row.user_id || null,
+                creator_name: "",
+                creator_username: ""
+              }))
+              .filter(row => row.id && row.title);
+
+            const existingIds = new Set(data.map(row => String(row.id)));
+            data.push(...pastelinkRows.filter(row => !existingIds.has(String(row.id))));
+          }
+        } catch (fallbackError) {
+          console.warn("[Marketplace] PasteLink fallback unavailable:", fallbackError);
+        }
+      }
+
+      // Final normalization after every source has been merged.
+      data = data.map(row => ({
+        ...row,
+        type: typeOf(row),
+        access_type: accessType(row),
+        title: String(row.title || "Untitled").trim()
       })).filter(row => row.id && row.title);
 
       /* Enrich Telegram-specific cards without making them required.
