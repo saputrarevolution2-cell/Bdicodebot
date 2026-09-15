@@ -2858,11 +2858,11 @@ window.PASTELE_CONFIG = Object.freeze({
   function show(n) {
     if (!n?.id || state.seen.has(n.id)) return;
     state.seen.add(n.id);
-    const target = '';
+    const target = String(n.link_url || '').trim();
     const card = document.createElement('article');
     card.className = 'pt-live-notice';
     card.setAttribute('role', target ? 'link' : 'status');
-    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc('bell')}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
+    card.innerHTML = `<div class="pt-live-icon"><i class="fa-solid ${esc(icon(n.notification_type))}"></i></div><div class="pt-live-copy"><strong>${esc(n.title || 'Notifikasi')}</strong><span>${esc(n.body || '')}</span><small class="pt-live-time">Baru saja${target ? ' · Ketuk untuk membuka' : ''}</small></div><button class="pt-live-close" type="button" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>`;
     const close = card.querySelector('.pt-live-close');
     close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
     card.addEventListener('click', async () => {
@@ -2894,7 +2894,7 @@ window.PASTELE_CONFIG = Object.freeze({
     let last = new Date().toISOString();
     state.poll = setInterval(async () => {
       try {
-        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
         if (r.error) return;
         for (const n of (r.data || [])) show(n);
         if (r.data?.length) last = r.data[r.data.length - 1].created_at;
@@ -3148,7 +3148,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       case "code":
         return "fa-code";
       case "channel":
-        return "fa-tower-broadcast";
+        return "fa-broadcast-tower";
       case "group":
         return "fa-users";
       case "paste":
@@ -3252,13 +3252,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   ) => {
     return formatNumber(
       item?.shares_count
-    );
-  };
-  const commentsText = (
-    item
-  ) => {
-    return formatNumber(
-      item?.comments_count
     );
   };
   /* =======================================================
@@ -3480,36 +3473,65 @@ document.addEventListener("DOMContentLoaded", async () => {
               )}
             </span>
           </div>
-          <!-- META -->
-          <div class="market-card-stats" aria-label="Statistik konten">
-            <span title="Dilihat">
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-              <b>${viewsText(item)}</b>
+          <!-- ENGAGEMENT -->
+          <div class="market-card-stats">
+            <span>
+              <i
+                class="fa-solid fa-eye"
+                aria-hidden="true"
+              ></i>
+              ${viewsText(item)}
             </span>
-            <span title="Terjual">
-              <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-              <b>${salesText(item)}</b>
+            <span class="like">
+              <i
+                class="fa-solid fa-heart"
+                aria-hidden="true"
+              ></i>
+              ${likesText(item)}
             </span>
-            <span class="like" title="Like">
-              <i class="fa-solid fa-heart" aria-hidden="true"></i>
-              <b>${likesText(item)}</b>
-            </span>
-            <span class="share" title="Share">
-              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
-              <b>${sharesText(item)}</b>
-            </span>
-            <span class="comment" title="Komentar">
-              <i class="fa-solid fa-comment" aria-hidden="true"></i>
-              <b>${commentsText(item)}</b>
+            <span class="share">
+              <i
+                class="fa-solid fa-share-nodes"
+                aria-hidden="true"
+              ></i>
+              ${sharesText(item)}
             </span>
           </div>
           <!-- BOTTOM -->
           <div class="product-bottom">
-            <span class="product-type-mini">
-              <i class="fa-solid ${icon(type)}" aria-hidden="true"></i>
-              ${esc(typeLabel(type))}
-            </span>
-            <strong class="product-price ${access === "free" ? "free" : ""}">
+            <div class="product-stats">
+              <span>
+                <i
+                  class="fa-solid fa-eye"
+                  aria-hidden="true"
+                ></i>
+                ${viewsText(item)}
+              </span>
+              ${
+                number(
+                  item?.sales_count
+                ) > 0
+                  ? `
+                    <span>
+                      <i
+                        class="fa-solid fa-cart-shopping"
+                        aria-hidden="true"
+                      ></i>
+                      ${salesText(
+                        item
+                      )}
+                    </span>
+                  `
+                  : ""
+              }
+            </div>
+            <strong
+              class="product-price ${
+                access === "free"
+                  ? "free"
+                  : ""
+              }"
+            >
               ${priceText(item)}
             </strong>
           </div>
@@ -4143,20 +4165,34 @@ document.addEventListener("DOMContentLoaded", async () => {
        */
       const [
         likesResult,
-        sharesResult,
-        commentsResult
+        sharesResult
       ] = await Promise.all([
-        client.from("content_likes")
-          .select("target_id,target_type")
-          .in("target_id", ids),
-        client.from("analytics_events")
-          .select("target_id,target_type,event_type")
-          .in("target_id", ids)
-          .eq("event_type", "share"),
-        // Optional: older databases may not have comments yet.
-        client.from("content_comments")
-          .select("target_id,target_type")
-          .in("target_id", ids)
+        client
+          .from(
+            "content_likes"
+          )
+          .select(
+            "target_id,target_type"
+          )
+          .in(
+            "target_id",
+            ids
+          ),
+        client
+          .from(
+            "analytics_events"
+          )
+          .select(
+            "target_id,target_type,event_type"
+          )
+          .in(
+            "target_id",
+            ids
+          )
+          .eq(
+            "event_type",
+            "share"
+          )
       ]);
       if (
         likesResult?.error
@@ -4176,9 +4212,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           sharesResult.error
         );
       }
-      if (commentsResult?.error && !String(commentsResult.error.message || "").toLowerCase().includes("relation") && !String(commentsResult.error.message || "").toLowerCase().includes("does not exist")) {
-        console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
-      }
       /*
        * Count likes.
        *
@@ -4188,40 +4221,58 @@ document.addEventListener("DOMContentLoaded", async () => {
        * Marketplace products memakai
        * target_type = product.
        */
-      const allowedTargetTypes = (item) => {
-        const type = typeOf(item);
-        if (type === "code") {
-          return new Set(["product", "telegram_product", "code", "telegram_code"]);
+      const likes =
+        countByTarget(
+          (likesResult?.data || [])
+            .filter(
+              (row) => {
+                const targetType =
+                  lower(
+                    row?.target_type
+                  );
+                return (
+                  !targetType ||
+                  targetType ===
+                    "product"
+                );
+              }
+            )
+        );
+      /*
+       * Count shares.
+       */
+      const shares =
+        countByTarget(
+          (sharesResult?.data || [])
+            .filter(
+              (row) => {
+                const targetType =
+                  lower(
+                    row?.target_type
+                  );
+                return (
+                  !targetType ||
+                  targetType ===
+                    "product"
+                );
+              }
+            )
+        );
+      return data.map(
+        (item) => {
+          const key =
+            String(
+              item?.id
+            );
+          return {
+            ...item,
+            likes_count:
+              likes[key] || 0,
+            shares_count:
+              shares[key] || 0
+          };
         }
-        if (type === "channel" || type === "group") {
-          return new Set(["product", "channel", "telegram_channel", "telegram_group", "group"]);
-        }
-        if (type === "pastelink") {
-          return new Set(["product", "pastelink", "paste_link"]);
-        }
-        if (type === "paste") {
-          return new Set(["product", "paste"]);
-        }
-        return new Set(["product", "link"]);
-      };
-
-      const countForItem = (rows, item) => {
-        const key = String(item?.id ?? "");
-        if (!key) return 0;
-        const allowed = allowedTargetTypes(item);
-        return (rows || []).reduce((total, row) => {
-          if (String(row?.target_id ?? "") !== key) return total;
-          const targetType = lower(row?.target_type);
-          return total + ((!targetType || allowed.has(targetType)) ? 1 : 0);
-        }, 0);
-      };
-
-      return data.map((item) => ({
-        ...item,
-        likes_count: countForItem(likesResult?.data || [], item),
-        shares_count: countForItem(sharesResult?.data || [], item),
-        comments_count: countForItem(commentsResult?.data || [], item)
-      }));
+      );
     } catch (error) {
       /*
        * Engagement adalah fitur tambahan.
