@@ -1,1 +1,0 @@
-(async()=>{const el=document.getElementById('adminContent');try{await Admin.guard();const data=Admin.rows(await Admin.rpc('admin_payments',{p_limit:200,p_offset:0}));el.innerHTML=Admin.table(data)}catch(e){el.innerHTML='<div class="empty">'+Admin.esc(e.message)+'</div>'}})();
