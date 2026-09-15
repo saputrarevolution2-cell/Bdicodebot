@@ -1173,10 +1173,12 @@ window.PASTELE_CONFIG = Object.freeze({
       user = null;
     }
     /*
-     * If no authenticated user, allow another initialization
-     * attempt later.
+     * Marketplace is public. Guests must still get the same navbar
+     * shell without being forced to authenticate. Other pages keep
+     * the original authenticated-only navbar behavior.
      */
-    if (!user) {
+    const isGuest = !user;
+    if (isGuest && !isMarketplacePath) {
       host.dataset.ready = '';
       return;
     }
@@ -1219,7 +1221,7 @@ window.PASTELE_CONFIG = Object.freeze({
       user?.user_metadata?.username ||
       user?.user_metadata?.full_name ||
       user?.email?.split('@')[0] ||
-      'Account';
+      (isGuest ? 'Masuk' : 'Account');
     /* ========================================================
        PREMIUM STATUS
        ======================================================== */
@@ -1361,7 +1363,24 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        NAVIGATION GROUPS
        ======================================================== */
-    const groups = isAdmin
+    const groups = isGuest
+      ? [
+          [
+            'Menu',
+            [
+              ['marketplace.html', 'fa-store', 'Marketplace'],
+              ['about.html', 'fa-circle-info', 'Tentang']
+            ]
+          ],
+          [
+            'Akun',
+            [
+              ['login.html', 'fa-right-to-bracket', 'Login'],
+              ['register.html', 'fa-user-plus', 'Daftar']
+            ]
+          ]
+        ]
+      : isAdmin
       ? [
           [
             'Admin',
@@ -1587,7 +1606,7 @@ window.PASTELE_CONFIG = Object.freeze({
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
+            href="${base}${isAdmin ? 'index.html' : (isGuest ? 'marketplace.html' : 'dashboard.html')}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
@@ -1838,12 +1857,48 @@ window.PASTELE_CONFIG = Object.freeze({
       document.getElementById('ptTheme');
     const logoutButton =
       document.getElementById('ptLogout');
+    if (isGuest && logoutButton) {
+      logoutButton.classList.remove('logout');
+      logoutButton.innerHTML = `
+        <span class="pt-link-icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
+        <span class="pt-link-label">Login / Daftar</span>
+        <i class="fa-solid fa-arrow-right pt-link-arrow" aria-hidden="true"></i>
+      `;
+    }
     const balanceElement =
       document.getElementById('ptBalance');
     const notificationElement =
       document.getElementById('ptNotif');
     const themeText =
       document.getElementById('ptThemeText');
+
+    /* Guest marketplace: keep the profile control useful but never
+       expose private account actions or a fake logout/session state. */
+    if (isGuest && dropdown) {
+      dropdown.innerHTML = `
+        <div class="pt-profile">
+          <span class="pt-avatar pt-avatar-lg">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+          </span>
+          <div class="pt-profile-text">
+            <strong>Pengunjung</strong>
+            <small>Marketplace publik</small>
+          </div>
+        </div>
+        <div class="pt-guest-actions">
+          <a class="pt-profile-link" href="${base}login.html">
+            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+            <span>Login</span>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+          <a class="pt-profile-link" href="${base}register.html">
+            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+            <span>Buat akun</span>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      `;
+    }
     /* ========================================================
        DRAWER STATE
        ======================================================== */
@@ -2231,6 +2286,10 @@ window.PASTELE_CONFIG = Object.freeze({
         }
         closeDrawer();
         closeDropdown();
+        if (isGuest) {
+          location.href = `${base}login.html`;
+          return;
+        }
         try {
           if (
             window.TC?.logout
@@ -3419,8 +3478,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       ).trim();
     const href =
       productUrl(item);
+    const ctaLabel = access === "paid" ? "Beli Sekarang" : "Ambil Sekarang";
     return `
       <article class="product-card" data-share-id="${esc(item?.id||'')}" data-share-type="${esc(type)}" data-share-owner="${esc(item?.owner_id||'')}" data-share-url="${esc(href)}">
+      <button type="button" class="product-favorite" data-favorite-id="${esc(item?.id||'')}" aria-label="Favorit ${esc(title)}">
+        <i class="fa-regular fa-heart" aria-hidden="true"></i>
+      </button>
       <a class="product-card-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
         <!-- THUMBNAIL -->
         <div class="product-thumb">
@@ -3516,6 +3579,10 @@ document.addEventListener("DOMContentLoaded", async () => {
               ${priceText(item)}
             </strong>
           </div>
+          <span class="product-cta ${access === "free" ? "free" : ""}">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+            ${ctaLabel}
+          </span>
         </div>
       </a>
     `;
@@ -4365,6 +4432,34 @@ document.addEventListener("DOMContentLoaded", async () => {
         render();
       }
     );
+  /* =======================================================
+     FAVORITE UI
+     Public marketplace: the heart never blocks browsing. Guests
+     are asked to login; authenticated users get a clear feedback
+     message until the project's favorite RPC is wired by schema.
+     ======================================================= */
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest(".product-favorite");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const iconEl = button.querySelector("i");
+    if (iconEl?.classList.contains("fa-regular")) {
+      iconEl.classList.remove("fa-regular");
+      iconEl.classList.add("fa-solid");
+      button.classList.add("active");
+    } else {
+      iconEl?.classList.remove("fa-solid");
+      iconEl?.classList.add("fa-regular");
+      button.classList.remove("active");
+    }
+    try {
+      const user = await window.TC?.user?.();
+      if (!user) window.TC?.toast?.("Login untuk menyimpan favorit.", "info");
+      else window.TC?.toast?.("Favorit dipilih.", "success");
+    } catch (_) {}
+  });
+
   /* =======================================================
      INITIAL STATE
      ======================================================= */
