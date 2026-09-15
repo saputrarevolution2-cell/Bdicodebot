@@ -3284,11 +3284,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      CREATOR
      ======================================================= */
+  const maskUsername = (value) => {
+    const raw = String(value || "").trim().replace(/^@/, "");
+    if (!raw) return "**";
+    if (raw.length <= 2) return "**";
+    return raw.slice(0, 1) + "**" + raw.slice(-1);
+  };
+
   const creatorText = (item) => {
-    const raw = String(item?.creator_username || item?.creator_name || "Creator").trim().replace(/^@/, "");
-    if (!raw) return "Creator";
-    if (raw.length <= 2) return raw[0] + "***";
-    return raw.slice(0, 2) + "***" + raw.slice(-1);
+    const username = String(item?.creator_username || "").trim().replace(/^@/, "");
+    const name = String(item?.creator_name || "").trim();
+    // Username is always masked on the public marketplace.
+    if (username) return "@" + maskUsername(username);
+    return name || "Creator";
+  };
+
+  const publicTelegramIdentity = (item, type) => {
+    if (type === "code" && item?.bot_username) {
+      return "Bot @" + maskUsername(item.bot_username);
+    }
+    if ((type === "channel" || type === "group") && (item?.channel_name || item?.channel_username)) {
+      const label = type === "group" ? "Group" : "Channel";
+      const name = String(item?.channel_name || "").trim();
+      const username = String(item?.channel_username || "").trim();
+      return name ? label + " • " + name : label + " • @" + maskUsername(username);
+    }
+    return null;
   };
   /* =======================================================
      STORED STATS
@@ -3544,11 +3565,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid ${type === "code" ? "fa-robot" : type === "channel" ? "fa-broadcast-tower" : type === "group" ? "fa-users" : type === "pastelink" ? "fa-link" : "fa-user"}" aria-hidden="true"></i>
             <span>
               ${esc(
-                type === "code" && item?.bot_username ? "Bot @" + String(item.bot_username).replace(/^@/, "") :
-                (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username) ?
-                  ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, ""))) :
-                type === "pastelink" ? "PasteLink • " + creator :
-                creator
+                publicTelegramIdentity(item, type) ||
+                (type === "pastelink" ? "PasteLink • " + creator : creator)
               )}
             </span>
           </div>
@@ -3750,17 +3768,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           (item) =>
             typeOf(item) ===
             "group"
-        )
-        .slice()
-        .sort(byViews)
-    );
-    list(
-      "topPaste",
-      items
-        .filter(
-          (item) =>
-            typeOf(item) ===
-            "paste"
         )
         .slice()
         .sort(byViews)
@@ -3980,13 +3987,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       const owner=cardEl.dataset.shareOwner||null;
       if(!id || !window.sb?.rpc) return;
       try{
-        await window.sb.rpc("record_content_view",{
-          p_target_id:id,
+        await window.sb.rpc("track_analytics",{
+          p_event_type:"view",
           p_target_type:type,
+          p_target_id:id,
           p_owner:owner
         });
       }catch(err){
-        console.warn("[Marketplace] view tracking unavailable",err);
+        console.warn("[Marketplace] quest/view tracking unavailable",err);
       }
     });
   }
@@ -4187,49 +4195,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      COUNT BY TARGET
      ======================================================= */
-  const canonicalTargetType = (itemOrType) => {
-    const t = typeof itemOrType === "string"
-      ? typeOf({type:itemOrType})
-      : typeOf(itemOrType);
-    switch (t) {
-      case "code": return "telegram_product";
-      case "channel": return "channel";
-      case "group": return "group";
-      case "pastelink": return "pastelink";
-      case "paste": return "paste";
-      case "link": return "link";
-      default: return "product";
-    }
-  };
-
-  const engagementKey = (targetId, targetType) =>
-    `${lower(targetType)}:${String(targetId)}`;
-
-  const countByTarget = (rows) => {
-    const map = Object.create(null);
-    for (const row of rows || []) {
-      const id = row?.target_id;
-      if (!id) continue;
-      const targetType = lower(row?.target_type || "");
-      const key = engagementKey(id, targetType);
-      map[key] = (map[key] || 0) + 1;
+  const countByTarget = (
+    rows
+  ) => {
+    const map =
+      Object.create(null);
+    for (
+      const row of rows || []
+    ) {
+      const id =
+        row?.target_id;
+      if (
+        id === null ||
+        id === undefined ||
+        id === ""
+      ) {
+        continue;
+      }
+      const key =
+        String(id);
+      map[key] =
+        (map[key] || 0) + 1;
     }
     return map;
   };
-
   /* =======================================================
-     ENGAGEMENT COUNTS — DATABASE CANONICAL
+     ENGAGEMENT COUNTS
      =======================================================
-     content_likes       -> likes
-     content_comments    -> comments
-     analytics_events    -> shares
-     marketplace_public  -> views + sales_count
-     ======================================================= */
-  async function loadEngagementCounts(data) {
+     SQL FINAL:
+       content_likes
+         target_id
+         target_type
+         actor_id
+       analytics_events
+         target_id
+         target_type
+         event_type
+     IMPORTANT:
+       content_comments TIDAK digunakan karena
+       tidak ada pada SQL final.
+     */
+  async function loadEngagementCounts(
+    data
+  ) {
     const client = getSupabase();
     if (!client || !Array.isArray(data) || !data.length) return data;
-
-    const ids = data.map(item => item?.id).filter(Boolean);
+    const ids = data.map(item => item?.id).filter(id => id !== null && id !== undefined && id !== "");
     if (!ids.length) return data;
 
     try {
@@ -4237,33 +4248,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         client.from("content_likes")
           .select("target_id,target_type")
           .in("target_id", ids),
-
         client.from("content_comments")
           .select("target_id,target_type")
           .in("target_id", ids),
-
         client.from("analytics_events")
           .select("target_id,target_type,event_type")
           .in("target_id", ids)
           .eq("event_type", "share")
       ]);
 
-      const likes = countByTarget(likesResult?.data || []);
-      const comments = countByTarget(commentsResult?.data || []);
-      const shares = countByTarget(sharesResult?.data || []);
+      const validProductTarget = row => {
+        const targetType = lower(row?.target_type);
+        return !targetType || ["product","link","code","channel","group","pastelink","paste","telegram_product","telegram_channel"].includes(targetType);
+      };
+      const likes = countByTarget((likesResult?.data || []).filter(validProductTarget));
+      const comments = countByTarget((commentsResult?.data || []).filter(validProductTarget));
+      const shares = countByTarget((sharesResult?.data || []).filter(validProductTarget));
 
-      if (likesResult?.error) {
-        console.warn("[Marketplace] Likes count unavailable:", likesResult.error.message || likesResult.error);
-      }
-      if (commentsResult?.error) {
-        console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
-      }
-      if (sharesResult?.error) {
-        console.warn("[Marketplace] Shares count unavailable:", sharesResult.error.message || sharesResult.error);
-      }
+      if (likesResult?.error) console.warn("[Marketplace] Likes count unavailable:", likesResult.error.message || likesResult.error);
+      if (commentsResult?.error) console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
+      if (sharesResult?.error) console.warn("[Marketplace] Shares count unavailable:", sharesResult.error.message || sharesResult.error);
 
       return data.map(item => {
-        const key = engagementKey(item?.id, canonicalTargetType(item));
+        const key = String(item?.id);
         return {
           ...item,
           likes_count: likes[key] || 0,
@@ -4273,15 +4280,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } catch (error) {
       console.warn("[Marketplace] Engagement unavailable:", error);
-      return data.map(item => ({
-        ...item,
-        likes_count: 0,
-        comments_count: 0,
-        shares_count: 0
-      }));
+      return data;
     }
   }
-
   /* =======================================================
      LOAD MARKETPLACE
      ======================================================= */
