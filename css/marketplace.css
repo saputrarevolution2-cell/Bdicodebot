@@ -2592,3 +2592,40 @@ html.theme-dark .marketplace-page .product-access,
 body.theme-dark .marketplace-page .product-access{box-shadow:0 4px 12px rgba(0,0,0,.28)}
 .marketplace-page .market-grid{gap:18px}
 @media(max-width:680px){.marketplace-page .market-grid{gap:14px}.market-card-stats{gap:5px 8px;font-size:8.5px}.market-card-stats i{font-size:8px}}
+
+
+/* =========================================================
+   MARKETPLACE PUBLIC / CLEAN COMPACT UI
+   ========================================================= */
+#navbar .pt-guest-actions{display:flex;align-items:center;gap:7px;margin-left:auto}
+#navbar .pt-guest-actions a{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 12px;border-radius:11px;text-decoration:none;font-size:12px;font-weight:800;transition:.18s ease}
+#navbar .pt-guest-login{color:var(--nav-text);background:var(--nav-soft);border:1px solid var(--nav-line)}
+#navbar .pt-guest-register{color:#fff;background:linear-gradient(135deg,#635bff,#8b5cf6);border:1px solid transparent;box-shadow:0 7px 18px rgba(99,91,255,.18)}
+#navbar .pt-guest-actions a:hover{transform:translateY(-1px)}
+
+.market-heading{max-width:760px}
+.market-heading h1{font-size:clamp(30px,4.5vw,48px);line-height:1.08;letter-spacing:-.045em;margin:11px 0 8px}
+.market-heading p{font-size:13px;line-height:1.6;margin:0;color:var(--market-muted)}
+.product-context{display:flex;align-items:center;gap:5px;min-width:0;margin:0 0 8px;padding:6px 8px;border:1px solid var(--market-border);border-radius:9px;background:var(--market-soft);color:var(--market-muted);font-size:8.5px;line-height:1.25}
+.product-context i{flex:0 0 auto;font-size:8px;color:var(--market-accent)}
+.product-context b{flex:0 0 auto;font-size:8px;color:var(--market-text);font-weight:850}
+.product-context em{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;color:var(--market-muted)}
+.product-card{border-radius:13px}
+.product-thumb{height:126px}
+.product-body{padding:11px 12px 12px}
+.product-title{font-size:12px;margin:5px 0 4px}
+.product-description{font-size:9px;margin-bottom:7px;-webkit-line-clamp:2}
+.product-creator{font-size:9px;margin-bottom:7px}
+.market-card-stats{gap:4px 8px;font-size:8px;padding-top:1px}
+.market-card-stats i{font-size:7px}
+.product-bottom{margin-top:8px;padding-top:8px;gap:8px}
+.product-price{font-size:11px}
+.market-grid{gap:18px}
+@media(max-width:680px){
+  #navbar .pt-guest-actions a{min-height:38px;padding:7px 9px;font-size:11px}
+  #navbar .pt-guest-actions a i{font-size:10px}
+  .market-heading h1{font-size:31px}
+  .market-heading p{font-size:12px}
+  .market-grid{gap:14px}
+  .product-thumb{height:116px}
+}
