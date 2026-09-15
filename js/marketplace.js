@@ -3373,6 +3373,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
   /* =======================================================
+     MARKET SORT
+     ======================================================= */
+  $("marketSort")?.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
+  $("searchSubmit")?.addEventListener("click", () => {
+    page = 1;
+    render();
+    q?.focus();
+  });
+  document.querySelectorAll("[data-ranking-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = button.dataset.rankingFilter;
+      if (target === "creator") return;
+      filter = "all";
+      document.querySelectorAll("#tabs .market-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.v === "all");
+      });
+      page = 1;
+      render();
+      document.getElementById("market")?.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+  /* =======================================================
      SEARCH
      ======================================================= */
   function matchesSearch(
