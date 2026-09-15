@@ -2887,6 +2887,41 @@ $$;
 
 COMMIT;
 
+
+
+-- ============================================================
+-- CASHI PAYMENT GATEWAY
+-- Same authoritative settlement rules as the marketplace ledger:
+-- creator 70%, platform 30%, settlement H+2 (48 hours).
+-- Cashi itself is verified in the server-side webhook/check-status
+-- layer; this RPC only accepts service_role execution.
+-- ============================================================
+BEGIN;
+CREATE OR REPLACE FUNCTION public.settle_cashi_order(
+  p_order_id uuid,
+  p_invoice_id text,
+  p_gateway_status text,
+  p_final_amount numeric,
+  p_gateway_payload jsonb DEFAULT '{}'::jsonb
+)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=public
+AS $$
+BEGIN
+  RETURN public.settle_bayargg_order(
+    p_order_id,
+    p_invoice_id,
+    p_gateway_status,
+    p_final_amount,
+    coalesce(p_gateway_payload,'{}'::jsonb) || jsonb_build_object('provider','CASHI')
+  );
+END;
+$$;
+REVOKE ALL ON FUNCTION public.settle_cashi_order(uuid,text,text,numeric,jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.settle_cashi_order(uuid,text,text,numeric,jsonb) TO service_role;
+COMMIT;
+
 -- ============================================================
 -- FINAL PUBLICATION NOTIFICATION TRIGGERS
 -- Notify every registered user when an existing draft is
