@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Marketplace — PasTele</title>
+  <!-- PasTele canonical UI stack -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="css/marketplace.css?v=20260915-final-public-2x4-pastelink">
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/favicon.svg">
+</head>
+<body class="app-page marketplace-public">
+  <div id="navbar"></div>
+  <main>
+    <section class="section marketplace-page">
+      <div class="container">
+        <!-- HEADER -->
+        <div class="market-header">
+          <div class="market-heading">
+            <span class="badge">
+              <i class="fa-solid fa-store"></i>
+              MARKETPLACE
+            </span>
+            <h1>Temukan Konten Terbaik</h1>
+            <p class="market-subtitle">
+              Link, Code, Channel &amp; Group <span>•</span> Free &amp; Paid
+            </p>
+          </div>
+</div>
+        <!-- SEARCH + FILTER -->
+        <div class="market-hero-tools">
+          <div class="market-hero-note market-hero-note-left">
+            <span class="market-note-icon"><i class="fa-solid fa-box-open"></i></span>
+            <span><strong>Ribuan Konten</strong><small>Siap Dibeli Hari Ini</small></span>
+          </div>
+          <div class="market-toolbar">
+            <div class="market-search">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input
+                id="q"
+                type="search"
+                autocomplete="off"
+                placeholder="Cari judul, creator, kategori..."
+              >
+              <button type="button" class="market-search-submit" id="searchSubmit" aria-label="Cari">
+                Cari
+              </button>
+              <button
+                type="button"
+                id="clearSearch"
+                aria-label="Hapus pencarian"
+                hidden
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div class="market-tabs" id="tabs">
+            <button
+              type="button"
+              class="market-tab active"
+              data-v="all"
+            >
+              Semua
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="link"
+            >
+              <i class="fa-solid fa-link"></i>
+              Link
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="pastelink"
+            >
+              <i class="fa-solid fa-link"></i>
+              PasteLink
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="code"
+            >
+              <i class="fa-solid fa-code"></i>
+              Code
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="channel"
+            >
+              <i class="fa-solid fa-broadcast-tower"></i>
+              Channel
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="group"
+            >
+              <i class="fa-solid fa-users"></i>
+              Group
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="free"
+            >
+              Free
+            </button>
+            <button
+              type="button"
+              class="market-tab"
+              data-v="paid"
+            >
+              Paid
+            </button>
+            </div>
+          </div>
+          <div class="market-hero-note market-hero-note-right">
+            <span class="market-note-icon"><i class="fa-solid fa-shield-heart"></i></span>
+            <span><strong>Aman & Terpercaya</strong><small>Konten Terverifikasi</small></span>
+          </div>
+        </div>
+        <!-- RESULT BAR -->
+        <div class="market-resultbar">
+          <div class="market-result-title">
+            <strong id="resultTitle">Semua konten</strong>
+            <span id="resultCount">Memuat...</span>
+          </div>
+          <div class="market-result-actions">
+            <button type="button" class="market-filter-button" id="resetFilters" hidden>
+              <i class="fa-solid fa-filter"></i> Filter
+            </button>
+            <label class="market-sort">
+              <span class="sr-only">Urutkan</span>
+              <select id="marketSort" aria-label="Urutkan konten">
+                <option value="newest">Terbaru</option>
+                <option value="popular">Terpopuler</option>
+                <option value="sales">Terlaris</option>
+              </select>
+              <i class="fa-solid fa-chevron-down"></i>
+            </label>
+          </div>
+        </div>
+        <!-- PRODUCTS -->
+        <div class="market-grid" id="market">
+          <div class="market-loading">
+            <span>
+              <i class="fa-solid fa-circle-notch"></i>
+            </span>
+            <div>
+              <strong>Memuat marketplace</strong>
+              <small>Mengambil produk terbaru...</small>
+            </div>
+          </div>
+        </div>
+        <div class="market-pagination" id="marketPagination" aria-label="Halaman marketplace"></div>
+        <!-- TOP LISTS -->
+        <div class="market-rank-grid">
+          <section class="market-panel market-panel-feature">
+            <div class="market-panel-head">
+              <div>
+                <span class="market-panel-icon"><i class="fa-solid fa-trophy"></i></span>
+                <div>
+                  <h2>Top Konten</h2>
+                  <small>Konten paling banyak dilihat minggu ini</small>
+                </div>
+              </div>
+              <button type="button" class="market-see-all" data-ranking-filter="all">Lihat Semua</button>
+            </div>
+            <div class="market-ranking" id="topLink">
+              <div class="market-list-loading"></div>
+            </div>
+          </section>
+
+          <section class="market-panel market-panel-feature">
+            <div class="market-panel-head">
+              <div>
+                <span class="market-panel-icon creator-icon"><i class="fa-solid fa-fire"></i></span>
+                <div>
+                  <h2>Creator Populer</h2>
+                  <small>Creator dengan konten terbaik</small>
+                </div>
+              </div>
+              <button type="button" class="market-see-all" data-ranking-filter="creator">Lihat Semua</button>
+            </div>
+            <div class="market-ranking" id="topCode">
+              <div class="market-list-loading"></div>
+            </div>
+          </section>
+
+          <section class="market-panel market-panel-legacy" id="topChannelPanel" hidden>
+            <div class="market-panel-head"><h2>Channel & VIP</h2></div>
+            <div class="market-ranking" id="topChannel"></div>
+          </section>
+          <section class="market-panel market-panel-legacy" id="topGroupPanel" hidden>
+            <div class="market-panel-head"><h2>Group teramai</h2></div>
+            <div class="market-ranking" id="topGroup"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="toast"></div><script src="js/marketplace.js?v=20260915-final-public-2x4-pastelink"></script>
+</body>
+</html>
