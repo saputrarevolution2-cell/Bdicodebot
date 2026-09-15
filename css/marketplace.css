@@ -2591,3 +2591,152 @@ body.theme-dark .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-
 @media(max-width:680px){.marketplace-page .container{width:calc(100% - 20px)}.market-toolbar{gap:9px}.market-grid{grid-template-columns:1fr;gap:14px}.product-thumb{height:170px;flex-basis:170px}.market-rank-grid{grid-template-columns:1fr;gap:14px}.market-header{align-items:flex-start}.market-heading h1{font-size:25px}.market-subtitle{font-size:12px}.market-card-stats{gap:7px 10px}.product-body{padding:13px}.market-tabs{overflow-x:auto}}
 @media(prefers-reduced-motion:reduce){.product-card,.product-share,.product-favorite{transition:none!important}}
 html[data-theme="dark"] .product-share,html[data-theme="dark"] .product-favorite{background:rgba(16,23,34,.92);border-color:rgba(255,255,255,.12)}
+
+
+/* =========================================================
+   MARKETPLACE FINAL PREMIUM POLISH
+   Consistent spacing, cards, controls and responsive rhythm.
+   ========================================================= */
+.marketplace-page{
+  padding-top:clamp(24px,4vw,42px);
+  padding-bottom:clamp(38px,5vw,64px);
+}
+.market-header{
+  margin-bottom:18px;
+  align-items:flex-end;
+}
+.market-heading h1{
+  font-size:clamp(27px,3.4vw,38px);
+  letter-spacing:-.035em;
+  line-height:1.08;
+}
+.market-toolbar{
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.market-search{
+  min-width:0;
+}
+.market-search input{
+  min-height:48px;
+  padding-left:44px;
+  padding-right:44px;
+  font-size:13px;
+}
+.market-tabs{
+  max-width:min(100%,700px);
+  min-height:48px;
+  gap:5px;
+}
+.market-tab{
+  min-height:36px;
+  padding:8px 13px;
+  border-radius:10px;
+  white-space:nowrap;
+}
+.market-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:16px !important;
+  align-items:stretch;
+}
+.product-card{
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 5px 18px rgba(20,45,60,.045);
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.product-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 30px rgba(20,45,60,.09);
+}
+.product-thumb{
+  height:158px;
+}
+.product-body{
+  min-height:210px;
+  padding:15px 16px 15px;
+}
+.product-title{
+  min-height:38px;
+  margin:7px 0 5px;
+  font-size:14px;
+  line-height:1.35;
+}
+.product-description{
+  min-height:30px;
+  margin-bottom:10px;
+  font-size:10.5px;
+  line-height:1.5;
+}
+.product-creator{
+  min-height:21px;
+  margin-bottom:11px;
+}
+.market-card-stats{
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:5px;
+  width:100%;
+  padding:9px 0 2px;
+  border-top:1px solid var(--market-border);
+}
+.market-card-stats span{
+  justify-content:center;
+  min-width:0;
+  gap:4px;
+  font-size:9px;
+  white-space:nowrap;
+}
+.product-bottom{
+  align-items:center;
+  margin-top:10px;
+  padding-top:11px;
+}
+.product-cta{
+  min-height:35px;
+  padding:8px 11px;
+  border-radius:9px;
+  font-size:10px;
+}
+.market-rank-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:16px;
+  margin-top:28px;
+}
+.market-panel{
+  border-radius:18px;
+  overflow:hidden;
+}
+.market-panel-head{
+  min-height:62px;
+  padding:12px 14px;
+}
+.market-ranking{
+  min-height:80px;
+}
+@media (max-width:1050px){
+  .market-toolbar{grid-template-columns:1fr;}
+  .market-tabs{width:100%;max-width:none;overflow-x:auto;}
+}
+@media (max-width:900px){
+  .market-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+}
+@media (max-width:680px){
+  .marketplace-page{padding-top:20px;}
+  .market-heading h1{font-size:27px;}
+  .market-toolbar{gap:9px;}
+  .market-grid{grid-template-columns:1fr !important;gap:12px !important;}
+  .product-thumb{height:170px;}
+  .product-body{min-height:0;padding:14px;}
+  .product-title,.product-description{min-height:0;}
+  .market-rank-grid{grid-template-columns:1fr !important;gap:12px;margin-top:22px;}
+}
+@media (max-width:380px){
+  .market-card-stats{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    row-gap:7px;
+  }
+}
