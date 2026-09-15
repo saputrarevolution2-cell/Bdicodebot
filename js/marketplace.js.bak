@@ -1,4 +1,4 @@
-/* PasTele — self-contained wallet page script. One HTML -> one JS -> one CSS. */
+/* PasTele — self-contained marketplace page script. One HTML -> one JS -> one CSS. */
 /* PasTele / Bdicodebot — NEW PROJECT CONFIG
  * Put ONLY the Supabase project URL and anon/publishable key here.
  * Never put service_role / secret keys in this browser file.
@@ -1173,10 +1173,12 @@ window.PASTELE_CONFIG = Object.freeze({
       user = null;
     }
     /*
-     * If no authenticated user, allow another initialization
-     * attempt later.
+     * Marketplace is public. Guests must still get the same navbar
+     * shell without being forced to authenticate. Other pages keep
+     * the original authenticated-only navbar behavior.
      */
-    if (!user) {
+    const isGuest = !user;
+    if (isGuest && !isMarketplacePath) {
       host.dataset.ready = '';
       return;
     }
@@ -1219,7 +1221,7 @@ window.PASTELE_CONFIG = Object.freeze({
       user?.user_metadata?.username ||
       user?.user_metadata?.full_name ||
       user?.email?.split('@')[0] ||
-      'Account';
+      (isGuest ? 'Masuk' : 'Account');
     /* ========================================================
        PREMIUM STATUS
        ======================================================== */
@@ -1361,7 +1363,24 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        NAVIGATION GROUPS
        ======================================================== */
-    const groups = isAdmin
+    const groups = isGuest
+      ? [
+          [
+            'Menu',
+            [
+              ['marketplace.html', 'fa-store', 'Marketplace'],
+              ['about.html', 'fa-circle-info', 'Tentang']
+            ]
+          ],
+          [
+            'Akun',
+            [
+              ['login.html', 'fa-right-to-bracket', 'Login'],
+              ['register.html', 'fa-user-plus', 'Daftar']
+            ]
+          ]
+        ]
+      : isAdmin
       ? [
           [
             'Admin',
@@ -1587,7 +1606,7 @@ window.PASTELE_CONFIG = Object.freeze({
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
+            href="${base}${isAdmin ? 'index.html' : (isGuest ? 'marketplace.html' : 'dashboard.html')}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
@@ -1838,12 +1857,48 @@ window.PASTELE_CONFIG = Object.freeze({
       document.getElementById('ptTheme');
     const logoutButton =
       document.getElementById('ptLogout');
+    if (isGuest && logoutButton) {
+      logoutButton.classList.remove('logout');
+      logoutButton.innerHTML = `
+        <span class="pt-link-icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
+        <span class="pt-link-label">Login / Daftar</span>
+        <i class="fa-solid fa-arrow-right pt-link-arrow" aria-hidden="true"></i>
+      `;
+    }
     const balanceElement =
       document.getElementById('ptBalance');
     const notificationElement =
       document.getElementById('ptNotif');
     const themeText =
       document.getElementById('ptThemeText');
+
+    /* Guest marketplace: keep the profile control useful but never
+       expose private account actions or a fake logout/session state. */
+    if (isGuest && dropdown) {
+      dropdown.innerHTML = `
+        <div class="pt-profile">
+          <span class="pt-avatar pt-avatar-lg">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+          </span>
+          <div class="pt-profile-text">
+            <strong>Pengunjung</strong>
+            <small>Marketplace publik</small>
+          </div>
+        </div>
+        <div class="pt-guest-actions">
+          <a class="pt-profile-link" href="${base}login.html">
+            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+            <span>Login</span>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+          <a class="pt-profile-link" href="${base}register.html">
+            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+            <span>Buat akun</span>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      `;
+    }
     /* ========================================================
        DRAWER STATE
        ======================================================== */
@@ -2231,6 +2286,10 @@ window.PASTELE_CONFIG = Object.freeze({
         }
         closeDrawer();
         closeDropdown();
+        if (isGuest) {
+          location.href = `${base}login.html`;
+          return;
+        }
         try {
           if (
             window.TC?.logout
@@ -2607,7 +2666,8 @@ window.PASTELE_CONFIG = Object.freeze({
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
-  const isPublic = !isAdminPath && PUBLIC.has(file);
+  const isMarketplacePath = !isAdminPath && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
+  const isPublic = Boolean(window.PASTELE_MARKETPLACE_PUBLIC) || (!isAdminPath && (PUBLIC.has(file) || isMarketplacePath));
   let locked = false;
   let initialized = false;
   let timer = null;
@@ -2638,6 +2698,8 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   function showExpired() {
+    // Marketplace is always public. Never show the session-expired lock here.
+    if (isPublic || window.PASTELE_MARKETPLACE_PUBLIC) return;
     if (document.getElementById("pt-session-modal")) return;
 
     locked = true;
@@ -2964,2793 +3026,1447 @@ window.PASTELE_CONFIG = Object.freeze({
 
 
 /* =========================================================
-   PasTele — Wallet
-   FINAL PREMIUM
-   Real Supabase data
-   Existing schema only
-   Matched with wallet.html
+   PasTele — Marketplace
+   FINAL SQL SYNC
+   PUBLIC MARKETPLACE
+   - Guest dapat browse marketplace
+   - Guest dapat membuka product
+   - Checkout/purchase ditangani oleh product/payment flow
+   - Tidak membutuhkan auth untuk membaca marketplace
+   SQL SOURCE:
+     marketplace_public
+     products
+     telegram_products
+     telegram_channels
+     content_likes
+     analytics_events
+   IMPORTANT:
+   - Tidak menggunakan content_comments
+   - Tidak mengambil content dari marketplace_public
+   - Tidak menggunakan kolom legacy_published_flag
+   - Tidak menggunakan kolom yang tidak ada di SQL
    ========================================================= */
-
 document.addEventListener("DOMContentLoaded", async () => {
-    "use strict";
-
-
-    /* =====================================================
-       DOM HELPERS
-       ===================================================== */
-
-    const $ = (id) => {
-        return document.getElementById(id);
-    };
-
-
-    const $$ = (selector, root = document) => {
-        try {
-            return Array.from(
-                root.querySelectorAll(selector)
-            );
-        } catch {
-            return [];
-        }
-    };
-
-
-    /* =====================================================
-       DOM
-       ===================================================== */
-
-    const availableEl =
-        $("available");
-
-    const availableCardEl =
-        $("availableCard");
-
-    const balanceHeroValueEl =
-        document.querySelector(
-            ".wallet-balance-hero .wallet-balance-value"
-        );
-
-    const pendingEl =
-        $("pending");
-
-    const incomeEl =
-        $("income");
-
-    const todayEl =
-        $("today");
-
-    const breakdownEl =
-        $("breakdown");
-
-    const recentActivityEl =
-        $("recentActivity");
-
-    const refreshBtn =
-        $("refreshWallet");
-
-    const copyBalanceBtn =
-        $("copyBalance");
-
-    const pendingCard =
-        $("pendingCard");
-
-    const withdrawPanel =
-        $("withdrawStatusPanel");
-
-
-    /* =====================================================
-       STATE
-       ===================================================== */
-
-    let profile = null;
-
-    let wallet = null;
-
-    let walletRows = [];
-
-    let transactionRows = [];
-
-    let allRows = [];
-
-    let isLoading = false;
-
-    let pendingModal = null;
-
-
-    /* =====================================================
-       GLOBALS
-       ===================================================== */
-
-    const getTC = () => {
-        return window.TC || {};
-    };
-
-
-    const getSB = () => {
-        return (
-            window.sb ||
-            window.supabaseClient ||
-            null
-        );
-    };
-
-
-    /* =====================================================
-       MONEY
-       ===================================================== */
-
-    const money = (value) => {
-
-        const number =
-            Number(value ?? 0);
-
-        const amount =
-            Number.isFinite(number)
-                ? number
-                : 0;
-
-        const TC =
-            getTC();
-
-        if (
-            typeof TC.money ===
-            "function"
-        ) {
-            try {
-                return TC.money(
-                    amount
-                );
-            } catch {}
-        }
-
-        return new Intl.NumberFormat(
-            "id-ID",
-            {
-                style: "currency",
-                currency: "IDR",
-                maximumFractionDigits: 0
-            }
-        ).format(amount);
-    };
-
-
-    /* =====================================================
-       TOAST
-       ===================================================== */
-
-    const showToast = (
-        message,
-        type = "info"
-    ) => {
-
-        const TC =
-            getTC();
-
-        if (
-            typeof TC.toast ===
-            "function"
-        ) {
-            try {
-
-                TC.toast(
-                    message,
-                    type
-                );
-
-                return;
-
-            } catch {}
-        }
-
-
-        const toast =
-            $("toast");
-
-        if (!toast) {
-            return;
-        }
-
-
-        toast.textContent =
-            String(
-                message || ""
-            );
-
-
-        toast.classList.add(
-            "show"
-        );
-
-
-        clearTimeout(
-            toast._walletTimer
-        );
-
-
-        toast._walletTimer =
-            setTimeout(
-                () => {
-
-                    toast.classList.remove(
-                        "show"
-                    );
-
-                },
-                2800
-            );
-    };
-
-
-    /* =====================================================
-       ESCAPE HTML
-       ===================================================== */
-
-    const esc = (value) => {
-
-        const TC =
-            getTC();
-
-        if (
-            typeof TC.esc ===
-            "function"
-        ) {
-            try {
-
-                return TC.esc(
-                    String(
-                        value ?? ""
-                    )
-                );
-
-            } catch {}
-        }
-
-
-        return String(
-            value ?? ""
-        )
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
-    };
-
-
-    /* =====================================================
-       AMOUNT
-       ===================================================== */
-
-    const amountOf = (
-        row
-    ) => {
-
-        const value =
-            row?.net_amount ??
-            row?.amount ??
-            row?.value ??
-            0;
-
-        const amount =
-            Number(value);
-
-        return Number.isFinite(
-            amount
-        )
-            ? amount
-            : 0;
-    };
-
-
-    /* =====================================================
-       TYPE NORMALIZER
-       ===================================================== */
-
-    const normalizeType = (
-        value
-    ) => {
-
-        const type =
-            String(
-                value || ""
-            )
-                .trim()
-                .toLowerCase()
-                .replace(
-                    /[\s-]+/g,
-                    "_"
-                );
-
-
-        if (
-            type.includes(
-                "pastelink"
-            ) ||
-            type.includes(
-                "paste_link"
-            ) ||
-            type === "link"
-        ) {
-            return "link";
-        }
-
-
-        if (
-            type.includes(
-                "code"
-            ) ||
-            type === "file"
-        ) {
-            return "code";
-        }
-
-
-        if (
-            type.includes(
-                "channel"
-            ) ||
-            type.includes(
-                "broadcast"
-            )
-        ) {
-            return "channel";
-        }
-
-
-        if (
-            type.includes(
-                "group"
-            )
-        ) {
-            return "group";
-        }
-
-
-        return "other";
-    };
-
-
-    /* =====================================================
-       TYPE LABEL
-       ===================================================== */
-
-    const typeLabel = (
-        value
-    ) => {
-
-        switch (
-            normalizeType(value)
-        ) {
-
-            case "link":
-                return "PasteLink";
-
-            case "code":
-                return "Code";
-
-            case "channel":
-                return "Channel";
-
-            case "group":
-                return "Group";
-
-            default:
-                return "Transaksi";
-        }
-    };
-
-
-    /* =====================================================
-       TYPE ICON
-       ===================================================== */
-
-    const typeIcon = (
-        value
-    ) => {
-
-        switch (
-            normalizeType(value)
-        ) {
-
-            case "link":
-                return "fa-link";
-
-            case "code":
-                return "fa-code";
-
-            case "channel":
-                return "fa-broadcast-tower";
-
-            case "group":
-                return "fa-users";
-
-            default:
-                return "fa-wallet";
-        }
-    };
-
-
-    /* =====================================================
-       TYPE CLASS
-       ===================================================== */
-
-    const typeClass = (
-        value
-    ) => {
-
-        switch (
-            normalizeType(value)
-        ) {
-
-            case "link":
-                return "wallet-type-link";
-
-            case "code":
-                return "wallet-type-code";
-
-            case "channel":
-                return "wallet-type-channel";
-
-            case "group":
-                return "wallet-type-group";
-
-            default:
-                return "wallet-type-other";
-        }
-    };
-
-
-    /* =====================================================
-       STATUS
-       ===================================================== */
-
-    const statusOf = (
-        row
-    ) => {
-
-        return String(
-            row?.status ||
-            ""
-        )
-            .trim()
-            .toLowerCase();
-    };
-
-
-    /* =====================================================
-       STATUS HELPERS
-       ===================================================== */
-
-    const isGoodTransaction = (
-        row
-    ) => {
-
-        const status =
-            statusOf(row);
-
-        return [
-            "completed",
-            "complete",
-            "paid",
-            "available",
-            "success",
-            "successful",
-            "succeeded"
-        ].includes(
-            status
-        )
-        &&
-        amountOf(row) > 0;
-    };
-
-
-    const isPendingTransaction = (
-        row
-    ) => {
-
-        const status =
-            statusOf(row);
-
-        return [
-            "pending",
-            "waiting",
-            "hold",
-            "held",
-            "processing"
-        ].includes(
-            status
-        )
-        &&
-        amountOf(row) > 0;
-    };
-
-
-    const isFailedTransaction = (
-        row
-    ) => {
-
-        return [
-            "failed",
-            "cancelled",
-            "canceled",
-            "rejected",
-            "declined",
-            "expired"
-        ].includes(
-            statusOf(row)
-        );
-    };
-
-
-    /* =====================================================
-       DATE
-       ===================================================== */
-
-    const formatDate = (
-        value
-    ) => {
-
-        if (!value) {
-            return "-";
-        }
-
-
-        const date =
-            new Date(value);
-
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "-";
-        }
-
-
-        return date.toLocaleString(
-            "id-ID",
-            {
-                dateStyle: "medium",
-                timeStyle: "short"
-            }
-        );
-    };
-
-
-    const isToday = (
-        value
-    ) => {
-
-        if (!value) {
-            return false;
-        }
-
-
-        const date =
-            new Date(value);
-
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return false;
-        }
-
-
-        const now =
-            new Date();
-
-
-        return (
-            date.getFullYear() ===
-                now.getFullYear()
-            &&
-            date.getMonth() ===
-                now.getMonth()
-            &&
-            date.getDate() ===
-                now.getDate()
-        );
-    };
-
-
-    /* =====================================================
-       GET PROFILE
-       ===================================================== */
-
-    const getProfile = async () => {
-
-        const TC =
-            getTC();
-
-
-        if (
-            typeof TC.profile ===
-            "function"
-        ) {
-            try {
-
-                const result =
-                    await TC.profile();
-
-
-                if (
-                    result?.id
-                ) {
-                    return result;
-                }
-
-
-                if (
-                    result?.profile?.id
-                ) {
-                    return result.profile;
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "TC.profile:",
-                    error?.message ||
-                    error
-                );
-            }
-        }
-
-
-        const sb =
-            getSB();
-
-
-        if (
-            sb?.auth?.getUser
-        ) {
-
-            const {
-                data,
-                error
-            } =
-                await sb.auth.getUser();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (
-                data?.user?.id
-            ) {
-                return data.user;
-            }
-        }
-
-
-        return null;
-    };
-
-
-    /* =====================================================
-       LOADING STATE
-       ===================================================== */
-
-    const setLoadingState = (
-        loading
-    ) => {
-
-        isLoading =
-            Boolean(loading);
-
-
-        if (refreshBtn) {
-
-            refreshBtn.disabled =
-                isLoading;
-
-
-            refreshBtn.classList.toggle(
-                "is-loading",
-                isLoading
-            );
-
-
-            const icon =
-                refreshBtn.querySelector(
-                    "i"
-                );
-
-
-            if (icon) {
-
-                icon.classList.toggle(
-                    "fa-spin",
-                    isLoading
-                );
-            }
-        }
-
-
-        if (pendingCard) {
-
-            pendingCard.disabled =
-                isLoading;
-
-
-            pendingCard.classList.toggle(
-                "is-loading",
-                isLoading
-            );
-        }
-
-
-        if (breakdownEl) {
-
-            breakdownEl.setAttribute(
-                "aria-busy",
-                isLoading
-                    ? "true"
-                    : "false"
-            );
-        }
-
-
-        if (recentActivityEl) {
-
-            recentActivityEl.setAttribute(
-                "aria-busy",
-                isLoading
-                    ? "true"
-                    : "false"
-            );
-        }
-    };
-
-
-    /* =====================================================
-       RENDER LOADING
-       ===================================================== */
-
-    const renderLoading = () => {
-
-        if (availableEl) {
-            availableEl.textContent =
-                "—";
-        }
-
-
-        if (availableCardEl) {
-            availableCardEl.textContent =
-                "—";
-        }
-
-
-        if (pendingEl) {
-            pendingEl.textContent =
-                "—";
-        }
-
-
-        if (incomeEl) {
-            incomeEl.textContent =
-                "—";
-        }
-
-
-        if (todayEl) {
-            todayEl.textContent =
-                "—";
-        }
-
-
-        if (breakdownEl) {
-
-            breakdownEl.innerHTML = `
-                <div class="wallet-loading">
-
-                    <span class="wallet-loading-icon">
-
-                        <i
-                            class="fa-solid fa-spinner fa-spin"
-                            aria-hidden="true"
-                        ></i>
-
-                    </span>
-
-                    <span>
-                        Memuat statistik...
-                    </span>
-
-                </div>
-            `;
-        }
-
-
-        if (recentActivityEl) {
-
-            recentActivityEl.innerHTML = `
-                <div class="wallet-loading">
-
-                    <span class="wallet-loading-icon">
-
-                        <i
-                            class="fa-solid fa-spinner fa-spin"
-                            aria-hidden="true"
-                        ></i>
-
-                    </span>
-
-                    <span>
-                        Memuat aktivitas...
-                    </span>
-
-                </div>
-            `;
-        }
-    };
-
-
-    /* =====================================================
-       ERROR STATE
-       ===================================================== */
-
-    const renderError = (
-        message
-    ) => {
-
-        if (availableEl) {
-            availableEl.textContent =
-                "—";
-        }
-
-
-        if (availableCardEl) {
-            availableCardEl.textContent =
-                "—";
-        }
-
-
-        if (pendingEl) {
-            pendingEl.textContent =
-                "—";
-        }
-
-
-        if (incomeEl) {
-            incomeEl.textContent =
-                "—";
-        }
-
-
-        if (todayEl) {
-            todayEl.textContent =
-                "—";
-        }
-
-
-        if (breakdownEl) {
-
-            breakdownEl.innerHTML = `
-                <div class="wallet-state">
-
-                    <div class="wallet-state-icon">
-
-                        <i
-                            class="fa-solid fa-triangle-exclamation"
-                            aria-hidden="true"
-                        ></i>
-
-                    </div>
-
-
-                    <strong>
-                        Wallet gagal dimuat
-                    </strong>
-
-
-                    <span>
-                        ${esc(
-                            message ||
-                            "Terjadi kesalahan saat mengambil data keuangan."
-                        )}
-                    </span>
-
-
-                    <button
-                        class="btn primary"
-                        id="walletRetry"
-                        type="button"
-                    >
-
-                        <i
-                            class="fa-solid fa-rotate"
-                            aria-hidden="true"
-                        ></i>
-
-                        Coba Lagi
-
-                    </button>
-
-                </div>
-            `;
-        }
-
-
-        if (recentActivityEl) {
-
-            recentActivityEl.innerHTML = `
-                <div class="wallet-activity-empty">
-
-                    <span class="wallet-activity-empty-icon">
-
-                        <i
-                            class="fa-solid fa-circle-exclamation"
-                            aria-hidden="true"
-                        ></i>
-
-                    </span>
-
-
-                    <div>
-
-                        <strong>
-                            Aktivitas tidak tersedia
-                        </strong>
-
-
-                        <span>
-                            Muat ulang halaman untuk mencoba lagi.
-                        </span>
-
-                    </div>
-
-                </div>
-            `;
-        }
-
-
-        $("walletRetry")
-            ?.addEventListener(
-                "click",
-                () => loadWallet()
-            );
-    };
-
-
-    /* =====================================================
-       FETCH WALLET DATA
-       ===================================================== */
-
-    const fetchWalletData =
-        async () => {
-
-            const sb =
-                getSB();
-
-
-            if (!sb) {
-
-                throw new Error(
-                    "Supabase belum tersedia. Periksa konfigurasi."
-                );
-            }
-
-
-            if (!profile?.id) {
-
-                throw new Error(
-                    "ID akun tidak ditemukan."
-                );
-            }
-
-
-            /*
-             * Release matured wallet balances.
-             *
-             * Non-blocking because this RPC
-             * may not be available for every role.
-             */
-            try {
-
-                const {
-                    error
-                } =
-                    await sb.rpc(
-                        "release_matured_wallet"
-                    );
-
-
-                if (error) {
-
-                    console.warn(
-                        "release_matured_wallet:",
-                        error.message
-                    );
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "release_matured_wallet:",
-                    error?.message ||
-                    error
-                );
-            }
-
-
-            const [
-                walletResponse,
-                walletTransactionsResponse,
-                transactionsResponse
-            ] =
-                await Promise.all([
-
-                    sb
-                        .from("wallets")
-                        .select("*")
-                        .eq(
-                            "user_id",
-                            profile.id
-                        )
-                        .maybeSingle(),
-
-
-                    sb
-                        .from(
-                            "wallet_transactions"
-                        )
-                        .select("*")
-                        .eq(
-                            "user_id",
-                            profile.id
-                        )
-                        .order(
-                            "created_at",
-                            {
-                                ascending:
-                                    false
-                            }
-                        )
-                        .limit(500),
-
-
-                    sb
-                        .from("transactions")
-                        .select("*")
-                        .eq(
-                            "user_id",
-                            profile.id
-                        )
-                        .order(
-                            "created_at",
-                            {
-                                ascending:
-                                    false
-                            }
-                        )
-                        .limit(500)
-                ]);
-
-
-            if (
-                walletResponse?.error
-            ) {
-                throw walletResponse.error;
-            }
-
-
-            if (
-                walletTransactionsResponse?.error
-            ) {
-                throw walletTransactionsResponse.error;
-            }
-
-
-            if (
-                transactionsResponse?.error
-            ) {
-                throw transactionsResponse.error;
-            }
-
-
-            return {
-
-                wallet:
-                    walletResponse?.data ||
-                    null,
-
-
-                walletRows:
-                    Array.isArray(
-                        walletTransactionsResponse?.data
-                    )
-                        ? walletTransactionsResponse.data
-                        : [],
-
-
-                transactionRows:
-                    Array.isArray(
-                        transactionsResponse?.data
-                    )
-                        ? transactionsResponse.data
-                        : []
-            };
-        };
-
-
-    /* =====================================================
-       BALANCE
-       ===================================================== */
-
-    const getAvailableBalance = (
-        walletData
-    ) => {
-
-        return Number(
-            walletData?.available_balance ??
-            walletData?.balance ??
-            profile?.balance ??
-            0
-        ) || 0;
-    };
-
-
-    const getPendingBalance = (
-        walletData
-    ) => {
-
-        return Number(
-            walletData?.pending_balance ??
-            0
-        ) || 0;
-    };
-
-
-    const renderBalances = (
-        walletData
-    ) => {
-
-        const available =
-            getAvailableBalance(
-                walletData
-            );
-
-
-        const pending =
-            getPendingBalance(
-                walletData
-            );
-
-
-        if (availableEl) {
-
-            availableEl.textContent =
-                money(
-                    available
-                );
-        }
-
-
-        if (availableCardEl) {
-
-            availableCardEl.textContent =
-                money(
-                    available
-                );
-        }
-
-
-        if (pendingEl) {
-
-            pendingEl.textContent =
-                money(
-                    pending
-                );
-        }
-    };
-
-
-    /* =====================================================
-       INCOME ROW FILTER
-       ===================================================== */
-
-    const isIncomeRow = (
-        row
-    ) => {
-
-        if (!row) {
-            return false;
-        }
-
-
-        const amount =
-            amountOf(row);
-
-
-        if (amount <= 0) {
-            return false;
-        }
-
-
-        if (
-            isGoodTransaction(row)
-        ) {
-            return true;
-        }
-
-
-        const type =
-            String(
-                row?.type ||
-                ""
-            )
-                .trim()
-                .toLowerCase();
-
-
-        if (
-            /^sell_/i.test(type) &&
-            ![
-                "failed",
-                "cancelled",
-                "canceled",
-                "rejected",
-                "declined",
-                "expired"
-            ].includes(
-                statusOf(row)
-            )
-        ) {
-            return true;
-        }
-
-
-        return false;
-    };
-
-
-    /* =====================================================
-       DEDUPLICATE SELL TRANSACTIONS
-       ===================================================== */
-
-    const buildIncomeRows = () => {
-
-        const result = [];
-
-        const seen = new Set();
-
-
-        /*
-         * wallet_transactions first.
-         */
-        for (
-            const row of walletRows
-        ) {
-
-            if (
-                !isIncomeRow(row)
-            ) {
-                continue;
-            }
-
-
-            const key =
-                [
-                    row?.id,
-                    row?.reference,
-                    row?.transaction_id,
-                    row?.created_at,
-                    amountOf(row),
-                    row?.type
-                ]
-                    .filter(
-                        value =>
-                            value !==
-                                undefined &&
-                            value !==
-                                null
-                    )
-                    .join("|");
-
-
-            if (
-                key &&
-                seen.has(key)
-            ) {
-                continue;
-            }
-
-
-            if (key) {
-                seen.add(key);
-            }
-
-
-            result.push(row);
-        }
-
-
-        /*
-         * transactions sell_*.
-         */
-        for (
-            const row of transactionRows
-        ) {
-
-            if (
-                !/^sell_/i.test(
-                    String(
-                        row?.type ||
-                        ""
-                    )
-                )
-            ) {
-                continue;
-            }
-
-
-            if (
-                !isIncomeRow(row)
-            ) {
-                continue;
-            }
-
-
-            const reference =
-                String(
-                    row?.reference ||
-                    row?.payment_reference ||
-                    ""
-                )
-                    .trim()
-                    .toLowerCase();
-
-
-            const duplicate =
-                result.some(
-                    existing => {
-
-                        const existingRef =
-                            String(
-                                existing?.reference ||
-                                existing?.payment_reference ||
-                                ""
-                            )
-                                .trim()
-                                .toLowerCase();
-
-
-                        if (
-                            reference &&
-                            existingRef &&
-                            reference ===
-                                existingRef
-                        ) {
-                            return true;
-                        }
-
-
-                        const existingTime =
-                            existing?.created_at
-                                ? new Date(
-                                    existing.created_at
-                                ).getTime()
-                                : NaN;
-
-
-                        const rowTime =
-                            row?.created_at
-                                ? new Date(
-                                    row.created_at
-                                ).getTime()
-                                : NaN;
-
-
-                        const sameTime =
-                            Number.isFinite(
-                                existingTime
-                            ) &&
-                            Number.isFinite(
-                                rowTime
-                            ) &&
-                            Math.abs(
-                                existingTime -
-                                rowTime
-                            ) < 1500;
-
-
-                        return (
-                            sameTime &&
-                            amountOf(
-                                existing
-                            ) ===
-                            amountOf(row) &&
-                            normalizeType(
-                                existing?.type
-                            ) ===
-                            normalizeType(
-                                row?.type
-                            )
-                        );
-                    }
-                );
-
-
-            if (
-                duplicate
-            ) {
-                continue;
-            }
-
-
-            result.push(row);
-        }
-
-
-        return result;
-    };
-
-
-    /* =====================================================
-       INCOME STATS
-       ===================================================== */
-
-    const renderIncomeStats = (
-        rows
-    ) => {
-
-        const validRows =
-            rows.filter(
-                isIncomeRow
-            );
-
-
-        const totalIncome =
-            validRows.reduce(
-                (
-                    total,
-                    row
-                ) => {
-
-                    return (
-                        total +
-                        amountOf(row)
-                    );
-
-                },
-                0
-            );
-
-
-        const todayIncome =
-            validRows
-                .filter(
-                    row =>
-                        isToday(
-                            row?.created_at
-                        )
-                )
-                .reduce(
-                    (
-                        total,
-                        row
-                    ) => {
-
-                        return (
-                            total +
-                            amountOf(row)
-                        );
-
-                    },
-                    0
-                );
-
-
-        if (incomeEl) {
-
-            incomeEl.textContent =
-                money(
-                    totalIncome
-                );
-        }
-
-
-        if (todayEl) {
-
-            todayEl.textContent =
-                money(
-                    todayIncome
-                );
-        }
-    };
-
-
-    /* =====================================================
-       BREAKDOWN
-       ===================================================== */
-
-    const renderBreakdown = (
-        rows
-    ) => {
-
-        if (!breakdownEl) {
-            return;
-        }
-
-
-        const types = [
-
-            {
-                type: "link",
-                icon: "fa-link",
-                label: "PasteLink",
-                className:
-                    "wallet-breakdown-link"
-            },
-
-            {
-                type: "code",
-                icon: "fa-code",
-                label: "Code",
-                className:
-                    "wallet-breakdown-code"
-            },
-
-            {
-                type: "channel",
-                icon:
-                    "fa-broadcast-tower",
-                label: "Channel",
-                className:
-                    "wallet-breakdown-channel"
-            },
-
-            {
-                type: "group",
-                icon: "fa-users",
-                label: "Group",
-                className:
-                    "wallet-breakdown-group"
-            }
-        ];
-
-
-        const validRows =
-            rows.filter(
-                isIncomeRow
-            );
-
-
-        breakdownEl.innerHTML =
-            types
-                .map(
-                    item => {
-
-                        const matchingRows =
-                            validRows.filter(
-                                row =>
-                                    normalizeType(
-                                        row?.type
-                                    ) ===
-                                    item.type
-                            );
-
-
-                        const total =
-                            matchingRows.reduce(
-                                (
-                                    sum,
-                                    row
-                                ) => {
-
-                                    return (
-                                        sum +
-                                        amountOf(row)
-                                    );
-
-                                },
-                                0
-                            );
-
-
-                        const count =
-                            matchingRows.length;
-
-
-                        return `
-                            <a
-                                class="income-item ${item.className}"
-                                href="transactions.html?type=${encodeURIComponent(item.type)}"
-                                aria-label="${esc(item.label)}"
-                            >
-
-                                <span
-                                    class="income-item-icon"
-                                    aria-hidden="true"
-                                >
-
-                                    <i
-                                        class="fa-solid ${item.icon}"
-                                    ></i>
-
-                                </span>
-
-
-                                <span
-                                    class="income-item-main"
-                                >
-
-                                    <b>
-                                        ${esc(
-                                            item.label
-                                        )}
-                                    </b>
-
-
-                                    <small>
-                                        ${count.toLocaleString(
-                                            "id-ID"
-                                        )}
-                                        transaksi
-                                    </small>
-
-                                </span>
-
-
-                                <strong>
-                                    ${esc(
-                                        money(total)
-                                    )}
-                                </strong>
-
-
-                                <span
-                                    class="income-item-arrow"
-                                    aria-hidden="true"
-                                >
-
-                                    <i
-                                        class="fa-solid fa-arrow-right"
-                                    ></i>
-
-                                </span>
-
-                            </a>
-                        `;
-                    }
-                )
-                .join("");
-
-
-        breakdownEl.setAttribute(
-            "aria-busy",
-            "false"
-        );
-    };
-
-
-    /* =====================================================
-       RECENT ACTIVITY
-       ===================================================== */
-
-    let activityPage = 1;
-    const ACTIVITY_PAGE_SIZE = 6;
-    const renderRecentActivity = (
-        rows
-    ) => {
-
-        if (!recentActivityEl) {
-            return;
-        }
-
-
-        const sortedRows =
-            [...rows]
-                .filter(
-                    row =>
-                        amountOf(row) !==
-                        0
-                )
-                .sort(
-                    (
-                        a,
-                        b
-                    ) => {
-
-                        const aTime =
-                            new Date(
-                                a?.created_at ||
-                                0
-                            ).getTime();
-
-
-                        const bTime =
-                            new Date(
-                                b?.created_at ||
-                                0
-                            ).getTime();
-
-
-                        return (
-                            bTime -
-                            aTime
-                        );
-                    }
-                )
-                ;
-        const totalPages = Math.max(1, Math.ceil(sortedRows.length / ACTIVITY_PAGE_SIZE));
-        activityPage = Math.min(Math.max(1, activityPage), totalPages);
-        const pageRows = sortedRows.slice((activityPage - 1) * ACTIVITY_PAGE_SIZE, activityPage * ACTIVITY_PAGE_SIZE);
-
-
-        if (
-            !sortedRows.length
-        ) {
-
-            recentActivityEl.innerHTML = `
-                <div
-                    class="wallet-activity-empty"
-                >
-
-                    <span
-                        class="wallet-activity-empty-icon"
-                    >
-
-                        <i
-                            class="fa-solid fa-receipt"
-                            aria-hidden="true"
-                        ></i>
-
-                    </span>
-
-
-                    <div>
-
-                        <strong>
-                            Belum ada aktivitas
-                        </strong>
-
-
-                        <span>
-                            Aktivitas keuangan akan muncul di sini.
-                        </span>
-
-                    </div>
-
-                </div>
-            `;
-
-
-            recentActivityEl.setAttribute(
-                "aria-busy",
-                "false"
-            );
-
-
-            return;
-        }
-
-
-        recentActivityEl.innerHTML =
-            pageRows
-                .map(
-                    renderActivityItem
-                )
-                .join("");
-        let pager = document.getElementById("walletActivityPagination");
-        if (!pager) { pager = document.createElement("div"); pager.id="walletActivityPagination"; pager.className="wallet-pagination"; recentActivityEl.parentElement?.appendChild(pager); }
-        if (totalPages > 1) {
-            pager.innerHTML = Array.from({length:totalPages},(_,i)=>`<button type="button" class="${i+1===activityPage?'active':''}" data-wallet-page="${i+1}">${i+1}</button>`).join("");
-            pager.querySelectorAll("[data-wallet-page]").forEach(b=>b.onclick=()=>{activityPage=Number(b.dataset.walletPage);renderRecentActivity(rows)});
-        } else pager.innerHTML="";
-
-
-        recentActivityEl.setAttribute(
-            "aria-busy",
-            "false"
-        );
-    };
-
-
-    /* =====================================================
-       ACTIVITY ITEM
-       ===================================================== */
-
-    const renderActivityItem = (
-        row
-    ) => {
-
-        const type =
-            normalizeType(
-                row?.type
-            );
-
-
-        const good =
-            isGoodTransaction(
-                row
-            );
-
-
-        const pending =
-            isPendingTransaction(
-                row
-            );
-
-
-        const failed =
-            isFailedTransaction(
-                row
-            );
-
-
-        const amount =
-            amountOf(row);
-
-
-        let stateClass =
-            "activity-neutral";
-
-
-        let statusText =
-            "Aktivitas";
-
-
-        let statusIcon =
-            "fa-circle-info";
-
-
-        if (good) {
-
-            stateClass =
-                "activity-success";
-
-            statusText =
-                "Berhasil";
-
-            statusIcon =
-                "fa-circle-check";
-
-        } else if (pending) {
-
-            stateClass =
-                "activity-pending";
-
-            statusText =
-                "Pending";
-
-            statusIcon =
-                "fa-clock";
-
-        } else if (failed) {
-
-            stateClass =
-                "activity-failed";
-
-            statusText =
-                "Gagal";
-
-            statusIcon =
-                "fa-circle-xmark";
-        }
-
-
-        const label =
-            type === "other"
-                ? String(
-                    row?.type ||
-                    "Transaksi"
-                )
-                : typeLabel(type);
-
-
-        const sign =
-            amount > 0
-                ? "+"
-                : "";
-
-
-        return `
-            <article
-                class="wallet-activity-item ${stateClass}"
-            >
-
-                <span
-                    class="wallet-activity-icon ${typeClass(type)}"
-                    aria-hidden="true"
-                >
-
-                    <i
-                        class="fa-solid ${typeIcon(type)}"
-                    ></i>
-
-                </span>
-
-
-                <div
-                    class="wallet-activity-main"
-                >
-
-                    <strong>
-                        ${esc(label)}
-                    </strong>
-
-
-                    <span>
-                        ${esc(
-                            formatDate(
-                                row?.created_at
-                            )
-                        )}
-                    </span>
-
-                </div>
-
-
-                <div
-                    class="wallet-activity-amount"
-                >
-
-                    <strong>
-                        ${sign}${esc(
-                            money(amount)
-                        )}
-                    </strong>
-
-
-                    <small>
-
-                        <i
-                            class="fa-solid ${statusIcon}"
-                            aria-hidden="true"
-                        ></i>
-
-                        ${esc(
-                            statusText
-                        )}
-
-                    </small>
-
-                </div>
-
-            </article>
-        `;
-    };
-
-
-    /* =====================================================
-       WITHDRAW STATE
-       ===================================================== */
-
-    const updateWithdrawState = (
-        walletData
-    ) => {
-
-        if (!withdrawPanel) {
-            return;
-        }
-
-
-        const available =
-            getAvailableBalance(
-                walletData
-            );
-
-
-        const buttons =
-            $$(
-                ".wallet-withdraw-btn",
-                withdrawPanel
-            );
-
-
-        buttons.forEach(
-            btn => {
-
-                const disabled =
-                    available <= 0;
-
-
-                btn.classList.toggle(
-                    "is-disabled",
-                    disabled
-                );
-
-
-                if (disabled) {
-
-                    btn.setAttribute(
-                        "aria-disabled",
-                        "true"
-                    );
-
-
-                    btn.title =
-                        "Belum ada saldo yang dapat ditarik.";
-
-                } else {
-
-                    btn.removeAttribute(
-                        "aria-disabled"
-                    );
-
-
-                    btn.title =
-                        `Tarik ${money(
-                            available
-                        )}`;
-                }
-            }
-        );
-    };
-
-
-    /* =====================================================
-       PENDING DETAIL
-       ===================================================== */
-
-    const showPendingDetail =
-        async () => {
-
-            const sb =
-                getSB();
-
-
-            if (!sb) {
-
-                showToast(
-                    "Supabase belum tersedia.",
-                    "error"
-                );
-
-                return;
-            }
-
-
-            if (pendingModal) {
-                return;
-            }
-
-
-            try {
-
-                if (pendingCard) {
-
-                    pendingCard.classList.add(
-                        "is-loading"
-                    );
-
-
-                    pendingCard.disabled =
-                        true;
-                }
-
-
-                const {
-                    data,
-                    error
-                } =
-                    await sb.rpc(
-                        "get_pending_balance_detail"
-                    );
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                const rows =
-                    Array.isArray(data)
-                        ? data
-                        : [];
-
-
-                if (!rows.length) {
-
-                    showToast(
-                        "Tidak ada saldo yang sedang tertunda.",
-                        "info"
-                    );
-
-                    return;
-                }
-
-
-                const html =
-                    rows
-                        .slice(
-                            0,
-                            20
-                        )
-                        .map(
-                            row => {
-
-                                const amount =
-                                    money(
-                                        row?.amount ||
-                                        0
-                                    );
-
-
-                                const created =
-                                    formatDate(
-                                        row?.created_at
-                                    );
-
-
-                                const availableAt =
-                                    formatDate(
-                                        row?.available_at
-                                    );
-
-
-                                const holdLabel =
-                                    row?.hold_label ||
-                                    "H1";
-
-
-                                return `
-                                    <div
-                                        class="wallet-pending-item"
-                                    >
-
-                                        <div
-                                            class="wallet-pending-item-top"
-                                        >
-
-                                            <strong>
-                                                ${esc(
-                                                    amount
-                                                )}
-                                            </strong>
-
-
-                                            <span>
-                                                ${esc(
-                                                    holdLabel
-                                                )}
-                                            </span>
-
-                                        </div>
-
-
-                                        <div
-                                            class="wallet-pending-meta"
-                                        >
-
-                                            <span>
-
-                                                <i
-                                                    class="fa-regular fa-clock"
-                                                    aria-hidden="true"
-                                                ></i>
-
-                                                Terjual
-                                                ${esc(
-                                                    created
-                                                )}
-
-                                            </span>
-
-
-                                            <span>
-
-                                                <i
-                                                    class="fa-solid fa-unlock"
-                                                    aria-hidden="true"
-                                                ></i>
-
-                                                Tersedia
-                                                ${esc(
-                                                    availableAt
-                                                )}
-
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-                                `;
-                            }
-                        )
-                        .join("");
-
-
-                const overlay =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                overlay.className =
-                    "wallet-pending-modal";
-
-
-                overlay.innerHTML = `
-                    <div
-                        class="wallet-pending-dialog"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="pendingWalletTitle"
-                    >
-
-                        <button
-                            type="button"
-                            class="wallet-pending-close"
-                            aria-label="Tutup"
-                        >
-
-                            <i
-                                class="fa-solid fa-xmark"
-                                aria-hidden="true"
-                            ></i>
-
-                        </button>
-
-
-                        <span class="badge">
-
-                            <i
-                                class="fa-solid fa-clock"
-                                aria-hidden="true"
-                            ></i>
-
-                            SALDO PENDING
-
-                        </span>
-
-
-                        <h2 id="pendingWalletTitle">
-                            Kapan saldo tersedia?
-                        </h2>
-
-
-                        <p class="muted">
-
-                            Penjualan 05:00–20:59 WIB masuk
-                            <b>H1</b>.
-                            Penjualan 21:00–04:59 WIB masuk
-                            <b>H2</b>.
-
-                        </p>
-
-
-                        <div class="wallet-pending-list">
-
-                            ${html}
-
-                        </div>
-
-                    </div>
-                `;
-
-
-                document.body.appendChild(
-                    overlay
-                );
-
-
-                pendingModal =
-                    overlay;
-
-
-                const previousOverflow =
-                    document.body.style.overflow;
-
-
-                document.body.style.overflow =
-                    "hidden";
-
-
-                const close =
-                    () => {
-
-                        if (
-                            !pendingModal
-                        ) {
-                            return;
-                        }
-
-
-                        overlay.classList.add(
-                            "is-closing"
-                        );
-
-
-                        document.body.style.overflow =
-                            previousOverflow;
-
-
-                        document.removeEventListener(
-                            "keydown",
-                            escHandler
-                        );
-
-
-                        setTimeout(
-                            () => {
-
-                                overlay.remove();
-
-                                pendingModal =
-                                    null;
-
-                            },
-                            160
-                        );
-                    };
-
-
-                const escHandler =
-                    event => {
-
-                        if (
-                            event.key ===
-                            "Escape"
-                        ) {
-                            close();
-                        }
-                    };
-
-
-                overlay
-                    .querySelector(
-                        ".wallet-pending-close"
-                    )
-                    ?.addEventListener(
-                        "click",
-                        close
-                    );
-
-
-                overlay.addEventListener(
-                    "click",
-                    event => {
-
-                        if (
-                            event.target ===
-                            overlay
-                        ) {
-                            close();
-                        }
-                    }
-                );
-
-
-                document.addEventListener(
-                    "keydown",
-                    escHandler
-                );
-
-
-                requestAnimationFrame(
-                    () => {
-
-                        overlay
-                            .querySelector(
-                                ".wallet-pending-close"
-                            )
-                            ?.focus();
-                    }
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Pending balance detail:",
-                    error
-                );
-
-
-                showToast(
-                    error?.message ||
-                    "Detail saldo pending gagal dimuat.",
-                    "error"
-                );
-
-            } finally {
-
-                if (pendingCard) {
-
-                    pendingCard.classList.remove(
-                        "is-loading"
-                    );
-
-
-                    pendingCard.disabled =
-                        false;
-                }
-            }
-        };
-
-
-    /* =====================================================
-       COPY BALANCE
-       ===================================================== */
-
-    const copyBalance =
-        async () => {
-
-            const value =
-                balanceHeroValueEl?.textContent ||
-                availableEl?.textContent ||
-                "Rp0";
-
-
-            if (
-                value === "—"
-            ) {
-
-                showToast(
-                    "Saldo belum selesai dimuat.",
-                    "info"
-                );
-
-                return;
-            }
-
-
-            try {
-
-                if (
-                    navigator.clipboard &&
-                    window.isSecureContext
-                ) {
-
-                    await navigator.clipboard.writeText(
-                        value
-                    );
-
-                } else {
-
-                    const textarea =
-                        document.createElement(
-                            "textarea"
-                        );
-
-
-                    textarea.value =
-                        value;
-
-
-                    textarea.setAttribute(
-                        "readonly",
-                        ""
-                    );
-
-
-                    textarea.style.position =
-                        "fixed";
-
-                    textarea.style.left =
-                        "-9999px";
-
-                    textarea.style.top =
-                        "0";
-
-
-                    document.body.appendChild(
-                        textarea
-                    );
-
-
-                    textarea.focus();
-
-                    textarea.select();
-
-
-                    document.execCommand(
-                        "copy"
-                    );
-
-
-                    textarea.remove();
-                }
-
-
-                showToast(
-                    "Saldo berhasil disalin.",
-                    "success"
-                );
-
-
-                if (
-                    copyBalanceBtn
-                ) {
-
-                    const icon =
-                        copyBalanceBtn.querySelector(
-                            "i"
-                        );
-
-
-                    if (icon) {
-
-                        icon.className =
-                            "fa-solid fa-check";
-
-
-                        clearTimeout(
-                            copyBalanceBtn._walletCopyTimer
-                        );
-
-
-                        copyBalanceBtn._walletCopyTimer =
-                            setTimeout(
-                                () => {
-
-                                    icon.className =
-                                        "fa-regular fa-copy";
-
-                                },
-                                1400
-                            );
-                    }
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "Copy balance:",
-                    error
-                );
-
-
-                showToast(
-                    "Saldo tidak dapat disalin.",
-                    "error"
-                );
-            }
-        };
-
-
-    /* =====================================================
-       WITHDRAW GUARD
-       ===================================================== */
-
-    document.addEventListener(
-        "click",
-        event => {
-
-            const target =
-                event.target;
-
-
-            const withdraw =
-                target?.closest?.(
-                    "#withdrawBtn, .wallet-withdraw-btn"
-                );
-
-
-            if (!withdraw) {
-                return;
-            }
-
-
-            if (
-                withdraw.classList.contains(
-                    "is-disabled"
-                ) ||
-                withdraw.getAttribute(
-                    "aria-disabled"
-                ) === "true"
-            ) {
-
-                event.preventDefault();
-
-
-                showToast(
-                    "Belum ada saldo tersedia untuk ditarik.",
-                    "info"
-                );
-            }
-        }
-    );
-
-
-    /* =====================================================
-       EVENTS
-       ===================================================== */
-
-    pendingCard?.addEventListener(
-        "click",
-        showPendingDetail
-    );
-
-
-    refreshBtn?.addEventListener(
-        "click",
-        () => {
-
-            if (
-                !isLoading
-            ) {
-                loadWallet();
-            }
-        }
-    );
-
-
-    copyBalanceBtn?.addEventListener(
-        "click",
-        copyBalance
-    );
-
-
-    /* =====================================================
-       LOAD WALLET
-       ===================================================== */
-
-    async function loadWallet() {
-
-        if (
-            isLoading
-        ) {
-            return;
-        }
-
-
-        const sb =
-            getSB();
-
-
-        if (!sb) {
-
-            renderError(
-                "Supabase belum tersedia. Periksa config.js dan supabase.js."
-            );
-
-            return;
-        }
-
-
-        try {
-
-            setLoadingState(
-                true
-            );
-
-
-            renderLoading();
-
-
-            profile =
-                await getProfile();
-
-
-            if (!profile?.id) {
-
-                location.replace(
-                    "login.html"
-                );
-
-                return;
-            }
-
-
-            const result =
-                await fetchWalletData();
-
-
-            wallet =
-                result.wallet;
-
-
-            walletRows =
-                result.walletRows ||
-                [];
-
-
-            transactionRows =
-                result.transactionRows ||
-                [];
-
-
-            /*
-             * Activity data.
-             *
-             * Keep wallet transactions and
-             * sell_* transaction records.
-             */
-            allRows = [
-                ...walletRows,
-                ...transactionRows.filter(
-                    row =>
-                        /^sell_/i.test(
-                            String(
-                                row?.type ||
-                                ""
-                            )
-                        )
-                )
-            ];
-
-
-            /*
-             * Deduplicated income rows
-             * for financial statistics.
-             */
-            const incomeRows =
-                buildIncomeRows();
-
-
-            renderBalances(
-                wallet
-            );
-
-
-            renderIncomeStats(
-                incomeRows
-            );
-
-
-            renderBreakdown(
-                incomeRows
-            );
-
-
-            renderRecentActivity(
-                allRows
-            );
-
-
-            updateWithdrawState(
-                wallet
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Wallet load error:",
-                error
-            );
-
-
-            renderError(
-                error?.message ||
-                "Wallet gagal dimuat."
-            );
-
-
-            showToast(
-                error?.message ||
-                "Wallet gagal dimuat.",
-                "error"
-            );
-
-        } finally {
-
-            setLoadingState(
-                false
-            );
-        }
+  "use strict";
+  /* =======================================================
+     DOM
+     ======================================================= */
+  const $ = (id) =>
+    document.getElementById(id);
+  const q =
+    $("q");
+  const market =
+    $("market");
+  /* =======================================================
+     STATE
+     ======================================================= */
+  let filter = "all";
+  let items = [];
+  let page = 1;
+  const pageSize = 10;
+  /* =======================================================
+     GLOBAL HELPERS
+     ======================================================= */
+  const TC =
+    window.TC || {};
+  const esc = (value) => {
+    const text =
+      String(value ?? "");
+    if (
+      typeof TC.esc === "function"
+    ) {
+      return TC.esc(text);
     }
+    return text
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
+  };
+  const number = (value) => {
+    const n =
+      Number(value ?? 0);
+    return Number.isFinite(n)
+      ? n
+      : 0;
+  };
+  const lower = (value) => {
+    return String(value ?? "")
+      .trim()
+      .toLowerCase();
+  };
+  const formatNumber = (value) => {
+    return number(value)
+      .toLocaleString("id-ID");
+  };
+  const formatMoney = (value) => {
+    const amount =
+      number(value);
+    if (
+      typeof TC.money ===
+      "function"
+    ) {
+      return TC.money(amount);
+    }
+    return `Rp${amount.toLocaleString("id-ID")}`;
+  };
+  const toast = (
+    message,
+    type = "error"
+  ) => {
+    if (
+      typeof TC.toast ===
+      "function"
+    ) {
+      TC.toast(
+        message,
+        type
+      );
+      return;
+    }
+    if (
+      type === "error"
+    ) {
+      console.error(
+        message
+      );
+    } else {
+      console.log(
+        message
+      );
+    }
+  };
+  /* =======================================================
+     SUPABASE
+     ======================================================= */
+  const getSupabase = () => {
+    return (
+      window.sb ||
+      window.supabaseClient ||
+      window.supabase ||
+      null
+    );
+  };
+  /* =======================================================
+     TYPE NORMALIZATION
+     ======================================================= */
+  const typeOf = (item) => {
+    const type =
+      lower(item?.type);
+    if (
+      type === "pastelink" ||
+      type === "paste-link" ||
+      type === "paste_link"
+    ) {
+      return "pastelink";
+    }
+    if (
+      type === "telegram_channel" ||
+      type === "channel"
+    ) {
+      return "channel";
+    }
+    if (
+      type === "telegram_group" ||
+      type === "group"
+    ) {
+      return "group";
+    }
+    if (
+      type === "telegram_code" ||
+      type === "code"
+    ) {
+      return "code";
+    }
+    if (
+      type === "paste"
+    ) {
+      return "paste";
+    }
+    return type || "link";
+  };
+  const icon = (type) => {
+    switch (
+      typeOf({
+        type
+      })
+    ) {
+      case "code":
+        return "fa-code";
+      case "channel":
+        return "fa-broadcast-tower";
+      case "group":
+        return "fa-users";
+      case "paste":
+        return "fa-file-lines";
+      case "pastelink":
+        return "fa-link";
+      case "link":
+      default:
+        return "fa-link";
+    }
+  };
+  const typeLabel = (type) => {
+    switch (
+      typeOf({
+        type
+      })
+    ) {
+      case "code":
+        return "Code";
+      case "channel":
+        return "Channel";
+      case "group":
+        return "Group";
+      case "paste":
+        return "Paste";
+      case "pastelink":
+        return "PasteLink";
+      case "link":
+      default:
+        return "Link";
+    }
+  };
+  /* =======================================================
+     ACCESS
+     ======================================================= */
+  const accessType = (
+    item
+  ) => {
+    const access =
+      lower(
+        item?.access_type
+      );
+    const price =
+      number(
+        item?.price
+      );
+    if (
+      access === "paid" ||
+      price > 0
+    ) {
+      return "paid";
+    }
+    return "free";
+  };
+  const priceText = (
+    item
+  ) => {
+    const price =
+      number(
+        item?.price
+      );
+    return price > 0
+      ? formatMoney(price)
+      : "FREE";
+  };
+  /* =======================================================
+     CREATOR
+     ======================================================= */
+  const creatorText = (item) => {
+    const raw = String(item?.creator_username || item?.creator_name || "Creator").trim().replace(/^@/, "");
+    if (!raw) return "Creator";
+    if (raw.length <= 2) return raw[0] + "***";
+    return raw.slice(0, 2) + "***" + raw.slice(-1);
+  };
+  /* =======================================================
+     STORED STATS
+     ======================================================= */
+  const viewsText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.views
+    );
+  };
+  const salesText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.sales_count
+    );
+  };
+  const likesText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.likes_count
+    );
+  };
+  const sharesText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.shares_count
+    );
+  };
+  const commentsText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.comments_count
+    );
+  };
+  /* =======================================================
+     PRODUCT URL
+     ======================================================= */
+  const productUrl = (item) => {
+    const id = item?.id;
+    const slug = String(item?.slug || "").trim();
+    const type = typeOf(item);
+    const access = accessType(item) === "paid" ? "p" : "f";
+    if (slug) {
+      if (type === "pastelink") return `/p/${encodeURIComponent(slug)}`;
+      if (type === "code") return `/c/${access}/${encodeURIComponent(slug)}`;
+      if (type === "channel") return `/ch/${access}/${encodeURIComponent(slug)}`;
+      if (type === "group") return `/g/${access}/${encodeURIComponent(slug)}`;
+      if (type === "paste") return `/paste/${encodeURIComponent(slug)}`;
+    }
+    return id ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}` : "product.html";
+  };
+  /* =======================================================
+     FILTER
+     ======================================================= */
+  function matchesFilter(
+    item
+  ) {
+    const type =
+      typeOf(item);
+    const access =
+      accessType(item);
+    if (
+      filter === "all"
+    ) {
+      return true;
+    }
+    if (
+      filter === "free" ||
+      filter === "paid"
+    ) {
+      return (
+        access === filter
+      );
+    }
+    return (
+      type === filter
+    );
+  }
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+  function matchesSearch(
+    item
+  ) {
+    const query =
+      lower(
+        q?.value
+      );
+    if (!query) {
+      return true;
+    }
+    const searchable = [
+      item?.title,
+      item?.creator_name,
+      item?.creator_username,
+      item?.category,
+      item?.description,
+      item?.type,
+      item?.access_type
+    ]
+      .filter(
+        (value) =>
+          value !== null &&
+          value !== undefined
+      )
+      .join(" ")
+      .toLowerCase();
+    return searchable.includes(
+      query
+    );
+  }
+  /* =======================================================
+     FILTERED ITEMS
+     ======================================================= */
+  function filteredItems() {
+    return items.filter(
+      (item) =>
+        matchesFilter(item) &&
+        matchesSearch(item)
+    );
+  }
+  /* =======================================================
+     THUMBNAIL
+     ======================================================= */
+  const thumbnailHtml = (
+    item,
+    type,
+    title
+  ) => {
+    const thumbnail =
+      String(
+        item?.thumbnail_url || ""
+      ).trim();
+    if (!thumbnail) {
+      return `
+        <span class="product-thumb-fallback">
+          <i
+            class="fa-solid ${icon(type)}"
+            aria-hidden="true"
+          ></i>
+        </span>
+      `;
+    }
+    return `
+      <img
+        loading="lazy"
+        src="${esc(thumbnail)}"
+        alt="${esc(title)}"
+        onerror="
+          this.style.display='none';
+          const fallback=this.parentElement?.querySelector('.product-thumb-fallback');
+          if(fallback) fallback.hidden=false;
+        "
+      >
+      <span
+        class="product-thumb-fallback"
+        hidden
+      >
+        <i
+          class="fa-solid ${icon(type)}"
+          aria-hidden="true"
+        ></i>
+      </span>
+    `;
+  };
+  /* =======================================================
+     PRODUCT CARD
+     ======================================================= */
+  function card(
+    item
+  ) {
+    const type =
+      typeOf(item);
+    const access =
+      accessType(item);
+    const title =
+      String(
+        item?.title ||
+        "Untitled"
+      );
+    const creator =
+      creatorText(item);
+    const description =
+      String(
+        item?.description ||
+        ""
+      ).trim();
+    const href =
+      productUrl(item);
+    const ctaLabel = access === "paid" ? "Beli Sekarang" : "Ambil Sekarang";
+    return `
+      <article class="product-card" data-share-id="${esc(item?.id||'')}" data-share-type="${esc(type)}" data-share-owner="${esc(item?.owner_id||'')}" data-share-url="${esc(href)}">
+      <button type="button" class="product-favorite" data-favorite-id="${esc(item?.id||'')}" aria-label="Favorit ${esc(title)}">
+        <i class="fa-regular fa-heart" aria-hidden="true"></i>
+      </button>
+      <a class="product-card-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
+        <!-- THUMBNAIL -->
+        <div class="product-thumb">
+          ${thumbnailHtml(
+            item,
+            type,
+            title
+          )}
+          <span
+            class="product-access ${access}"
+          >
+            <i
+              class="fa-solid ${
+                access === "paid"
+                  ? "fa-lock"
+                  : "fa-unlock"
+              }"
+              aria-hidden="true"
+            ></i>
+            ${
+              access === "paid"
+                ? "PAID"
+                : "FREE"
+            }
+          </span>
+        </div>
+        <!-- BODY -->
+        <div class="product-body">
+          <span class="product-type">
+            <i
+              class="fa-solid ${icon(type)}"
+              aria-hidden="true"
+            ></i>
+            ${esc(
+              typeLabel(type)
+            )}
+          </span>
+          <h3 class="product-title">
+            ${esc(title)}
+          </h3>
+          ${
+            description
+              ? `
+                <p class="product-description">
+                  ${esc(
+                    description
+                  )}
+                </p>
+              `
+              : ""
+          }
+          <div class="product-creator">
+            <i
+              class="fa-solid fa-user"
+              aria-hidden="true"
+            ></i>
+            <span>
+              ${esc(
+                creator
+              )}
+            </span>
+          </div>
+          <!-- ENGAGEMENT -->
+          <div class="market-card-stats" aria-label="Statistik konten">
+            <span title="Dilihat">
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              ${viewsText(item)}
+            </span>
+            <span class="sold" title="Terjual">
+              <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+              ${salesText(item)}
+            </span>
+            <span class="like" title="Like">
+              <i class="fa-solid fa-heart" aria-hidden="true"></i>
+              ${likesText(item)}
+            </span>
+            <span class="share" title="Share">
+              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+              ${sharesText(item)}
+            </span>
+            <span class="comment" title="Komentar">
+              <i class="fa-solid fa-comment" aria-hidden="true"></i>
+              ${commentsText(item)}
+            </span>
+          </div>
+          <!-- BOTTOM -->
+          <div class="product-bottom">
+            <strong
+              class="product-price ${
+                access === "free" ? "free" : ""
+              }"
+            >
+              ${priceText(item)}
+            </strong>
+          </div>
+          <span class="product-cta ${access === "free" ? "free" : ""}">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+            ${ctaLabel}
+          </span>
+        </div>
+      </a>
+    `;
+  }
+  /* =======================================================
+     TOP LIST
+     ======================================================= */
+  function list(
+    id,
+    array
+  ) {
+    const element =
+      $(id);
+    if (!element) {
+      return;
+    }
+    const rows =
+      array
+        .slice(0, 10)
+        .map(
+          (
+            item,
+            index
+          ) => {
+            const type =
+              typeOf(item);
+            const href =
+              productUrl(item);
+            const access =
+              accessType(item);
+            const title =
+              item?.title ||
+              "Untitled";
+            return `
+              <a
+                class="market-list-item"
+                href="${esc(href)}"
+                aria-label="Buka ${esc(title)}"
+              >
+                <span
+                  class="market-rank-number ${
+                    index === 0
+                      ? "top-one"
+                      : ""
+                  }"
+                >
+                  #${index + 1}
+                </span>
+                <div class="market-list-main">
+                  <strong
+                    class="market-list-title"
+                  >
+                    ${esc(title)}
+                  </strong>
+                  <div class="market-list-meta">
+                    <span>
+                      <i
+                        class="fa-solid ${icon(type)}"
+                        aria-hidden="true"
+                      ></i>
+                      ${esc(
+                        typeLabel(type)
+                      )}
+                    </span>
+                    <span>
+                      <i
+                        class="fa-solid fa-eye"
+                        aria-hidden="true"
+                      ></i>
+                      ${viewsText(item)}
+                    </span>
+                  </div>
+                </div>
+                <strong
+                  class="market-list-price ${
+                    access === "free"
+                      ? "free"
+                      : ""
+                  }"
+                >
+                  ${priceText(item)}
+                </strong>
+              </a>
+            `;
+          }
+        )
+        .join("");
+    element.innerHTML =
+      rows ||
+      `
+        <div class="market-empty">
+          <span>
+            <i
+              class="fa-solid fa-box-open"
+              aria-hidden="true"
+            ></i>
+          </span>
+          <div>
+            <strong>
+              Belum ada data
+            </strong>
+            <small>
+              Belum ada konten pada kategori ini.
+            </small>
+          </div>
+        </div>
+      `;
+  }
+  /* =======================================================
+     TOP LISTS
+     ======================================================= */
+  function renderTopLists() {
+    const byViews = (
+      a,
+      b
+    ) => {
+      return (
+        number(b?.views) -
+        number(a?.views)
+      );
+    };
+    list(
+      "topLink",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "link"
+        )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topCode",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "code"
+        )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topChannel",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "channel"
+        )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topGroup",
+      items
+        .filter(
+          (item) =>
+            typeOf(item) ===
+            "group"
+        )
+        .slice()
+        .sort(byViews)
+    );
+  }
+  /* =======================================================
+     RESULT BAR
+     ======================================================= */
+  function updateResult(
+    count
+  ) {
+    const resultTitle =
+      $("resultTitle");
+    const resultCount =
+      $("resultCount");
+    const reset =
+      $("resetFilters");
+    const search =
+      q?.value?.trim();
+    if (resultTitle) {
+      if (
+        filter === "all"
+      ) {
+        resultTitle.textContent =
+          search
+            ? "Hasil pencarian"
+            : "Semua konten";
+      } else if (
+        filter === "free"
+      ) {
+        resultTitle.textContent =
+          "Konten Free";
+      } else if (
+        filter === "paid"
+      ) {
+        resultTitle.textContent =
+          "Konten Paid";
+      } else {
+        resultTitle.textContent =
+          `${typeLabel(
+            filter
+          )} marketplace`;
+      }
+    }
+    if (resultCount) {
+      resultCount.textContent =
+        `${count} konten`;
+    }
+    if (reset) {
+      reset.hidden =
+        filter === "all" &&
+        !search;
+    }
+  }
+  /* =======================================================
+     PAGINATION
+     ======================================================= */
+  function renderPager(
+    totalPages
+  ) {
+    const host =
+      $("marketPagination");
+    if (!host) {
+      return;
+    }
+    if (
+      totalPages <= 1
+    ) {
+      host.innerHTML = "";
+      return;
+    }
+    const buttons = [];
+    buttons.push(`
+      <button
+        type="button"
+        ${
+          page === 1
+            ? "disabled"
+            : ""
+        }
+        data-page="${page - 1}"
+        aria-label="Halaman sebelumnya"
+      >
+        ‹
+      </button>
+    `);
+    for (
+      let i = 1;
+      i <= totalPages;
+      i++
+    ) {
+      const shouldShow =
+        totalPages <= 9 ||
+        i <= 2 ||
+        i >= totalPages - 1 ||
+        Math.abs(
+          i - page
+        ) <= 1;
+      if (
+        !shouldShow
+      ) {
+        if (
+          i === 3 ||
+          i === totalPages - 2
+        ) {
+          buttons.push(
+            `<span aria-hidden="true">…</span>`
+          );
+        }
+        continue;
+      }
+      buttons.push(`
+        <button
+          type="button"
+          class="${
+            i === page
+              ? "active"
+              : ""
+          }"
+          data-page="${i}"
+          ${
+            i === page
+              ? 'aria-current="page"'
+              : ""
+          }
+        >
+          ${i}
+        </button>
+      `);
+    }
+    buttons.push(`
+      <button
+        type="button"
+        ${
+          page === totalPages
+            ? "disabled"
+            : ""
+        }
+        data-page="${page + 1}"
+        aria-label="Halaman berikutnya"
+      >
+        ›
+      </button>
+    `);
+    host.innerHTML =
+      buttons.join("");
+    host
+      .querySelectorAll(
+        "button[data-page]"
+      )
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              const nextPage =
+                Number(
+                  button.dataset.page
+                );
+              if (
+                !Number.isFinite(
+                  nextPage
+                ) ||
+                nextPage < 1 ||
+                nextPage > totalPages ||
+                nextPage === page
+              ) {
+                return;
+              }
+              page =
+                nextPage;
+              render();
+              const section =
+                document.querySelector(
+                  ".marketplace-page"
+                );
+              if (section) {
+                window.scrollTo({
+                  top:
+                    Math.max(
+                      0,
+                      section
+                        .getBoundingClientRect()
+                        .top +
+                        window.scrollY -
+                        24
+                    ),
+                  behavior:
+                    "smooth"
+                });
+              }
+            }
+          );
+        }
+      );
+  }
+  /* =======================================================
+     MAIN RENDER
+     ======================================================= */
+  /* =======================================================
+     QUEST / ACTIVITY TRACKING
+     Uses the existing analytics_events table so marketplace
+     actions can be consumed by the Quest system without
+     inventing a new database table.
+     ======================================================= */
+  function bindQuestActivity(){
+    if(window.__PASTELE_MARKET_QUEST_BOUND__) return;
+    window.__PASTELE_MARKET_QUEST_BOUND__=true;
+    document.addEventListener("click", async e=>{
+      const link=e.target.closest(".product-card-link");
+      if(!link) return;
+      const cardEl=link.closest("[data-share-id]");
+      if(!cardEl) return;
+      const id=cardEl.dataset.shareId;
+      const rawType=cardEl.dataset.shareType;
+      const type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType);
+      const owner=cardEl.dataset.shareOwner||null;
+      if(!id || !window.sb?.rpc) return;
+      try{
+        await window.sb.rpc("track_analytics",{
+          p_event_type:"view",
+          p_target_type:type,
+          p_target_id:id,
+          p_owner:owner
+        });
+      }catch(err){
+        console.warn("[Marketplace] quest/view tracking unavailable",err);
+      }
+    });
+  }
 
+  function bindShareButtons(){
+    if(window.__PASTELE_MARKET_SHARE_BOUND__) return;
+    window.__PASTELE_MARKET_SHARE_BOUND__=true;
+    document.addEventListener("click",async e=>{
+      const btn=e.target.closest("[data-share-card]"); if(!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      const card=btn.closest("[data-share-id]"); if(!card) return;
+      const id=card.dataset.shareId,rawType=card.dataset.shareType, type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType),owner=card.dataset.shareOwner||null;
+      const url=new URL(card.dataset.shareUrl||location.href,location.origin).href;
+      try { if(navigator.share) await navigator.share({title:"PasTele",url}); else await navigator.clipboard.writeText(url); } catch(err){ if(err?.name==='AbortError') return; try{await navigator.clipboard.writeText(url)}catch(_){} }
+      try { await getSupabase().rpc("track_analytics",{p_event_type:"share",p_target_type:type,p_target_id:id,p_owner:owner}); } catch(err){ console.warn("[Marketplace] share tracking unavailable",err); }
+      btn.classList.add("shared"); setTimeout(()=>btn.classList.remove("shared"),900);
+    });
+  }
 
-    /* =====================================================
-       INITIAL LOAD
-       ===================================================== */
+  function render() {
+    if (!market) {
+      return;
+    }
+    const filtered =
+      filteredItems()
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(
+              b?.created_at ||
+              0
+            ) -
+            new Date(
+              a?.created_at ||
+              0
+            )
+        );
+    updateResult(
+      filtered.length
+    );
+    const totalPages =
+      Math.max(
+        1,
+        Math.ceil(
+          filtered.length /
+          pageSize
+        )
+      );
+    page =
+      Math.min(
+        page,
+        totalPages
+      );
+    const start =
+      (page - 1) *
+      pageSize;
+    const pageItems =
+      filtered.slice(
+        start,
+        start + pageSize
+      );
+    if (
+      pageItems.length
+    ) {
+      market.innerHTML =
+        pageItems
+          .map(card)
+          .join("");
+    } else {
+      const hasSearch =
+        Boolean(
+          q?.value?.trim()
+        );
+      const hasFilter =
+        filter !== "all";
+      market.innerHTML = `
+        <div class="market-empty">
+          <span>
+            <i
+              class="fa-solid ${
+                hasSearch ||
+                hasFilter
+                  ? "fa-magnifying-glass"
+                  : "fa-box-open"
+              }"
+              aria-hidden="true"
+            ></i>
+          </span>
+          <div>
+            <strong>
+              ${
+                hasSearch ||
+                hasFilter
+                  ? "Konten tidak ditemukan"
+                  : "Belum ada konten"
+              }
+            </strong>
+            <small>
+              ${
+                hasSearch ||
+                hasFilter
+                  ? "Coba ubah pencarian atau filter."
+                  : "Konten yang dipublikasikan akan muncul di sini."
+              }
+            </small>
+          </div>
+        </div>
+      `;
+    }
+    renderPager(
+      totalPages
+    );
+    renderTopLists();
+  }
+  /* =======================================================
+     LOADING
+     ======================================================= */
+  function setLoading() {
+    if (!market) {
+      return;
+    }
+    market.innerHTML = `
+      <div class="market-loading">
+        <span>
+          <i
+            class="fa-solid fa-circle-notch fa-spin"
+            aria-hidden="true"
+          ></i>
+        </span>
+        <div>
+          <strong>
+            Memuat marketplace
+          </strong>
+          <small>
+            Mengambil produk terbaru...
+          </small>
+        </div>
+      </div>
+    `;
+    const resultCount =
+      $("resultCount");
+    if (resultCount) {
+      resultCount.textContent =
+        "Memuat...";
+    }
+    const pagination =
+      $("marketPagination");
+    if (pagination) {
+      pagination.innerHTML = "";
+    }
+  }
+  /* =======================================================
+     ERROR
+     ======================================================= */
+  function setError(
+    message
+  ) {
+    if (!market) {
+      return;
+    }
+    market.innerHTML = `
+      <div class="market-error">
+        <span>
+          <i
+            class="fa-solid fa-triangle-exclamation"
+            aria-hidden="true"
+          ></i>
+        </span>
+        <div>
+          <strong>
+            Marketplace gagal dimuat
+          </strong>
+          <small>
+            ${esc(
+              message
+            )}
+          </small>
+          <button
+            type="button"
+            class="btn"
+            id="retryMarket"
+          >
+            <i
+              class="fa-solid fa-rotate-right"
+              aria-hidden="true"
+            ></i>
+            Coba lagi
+          </button>
+        </div>
+      </div>
+    `;
+    $("retryMarket")
+      ?.addEventListener(
+        "click",
+        load
+      );
+  }
+  /* =======================================================
+     COUNT BY TARGET
+     ======================================================= */
+  const countByTarget = (
+    rows
+  ) => {
+    const map =
+      Object.create(null);
+    for (
+      const row of rows || []
+    ) {
+      const id =
+        row?.target_id;
+      if (
+        id === null ||
+        id === undefined ||
+        id === ""
+      ) {
+        continue;
+      }
+      const key =
+        String(id);
+      map[key] =
+        (map[key] || 0) + 1;
+    }
+    return map;
+  };
+  /* =======================================================
+     ENGAGEMENT COUNTS
+     =======================================================
+     SQL FINAL:
+       content_likes
+         target_id
+         target_type
+         actor_id
+       analytics_events
+         target_id
+         target_type
+         event_type
+     IMPORTANT:
+       content_comments TIDAK digunakan karena
+       tidak ada pada SQL final.
+     */
+  async function loadEngagementCounts(
+    data
+  ) {
+    const client = getSupabase();
+    if (!client || !Array.isArray(data) || !data.length) return data;
+    const ids = data.map(item => item?.id).filter(id => id !== null && id !== undefined && id !== "");
+    if (!ids.length) return data;
 
-    await loadWallet();
+    try {
+      const [likesResult, commentsResult, sharesResult] = await Promise.all([
+        client.from("content_likes")
+          .select("target_id,target_type")
+          .in("target_id", ids),
+        client.from("content_comments")
+          .select("target_id,target_type")
+          .in("target_id", ids),
+        client.from("analytics_events")
+          .select("target_id,target_type,event_type")
+          .in("target_id", ids)
+          .eq("event_type", "share")
+      ]);
 
+      const validProductTarget = row => {
+        const targetType = lower(row?.target_type);
+        return !targetType || ["product","link","code","channel","group","pastelink","paste","telegram_product","telegram_channel"].includes(targetType);
+      };
+      const likes = countByTarget((likesResult?.data || []).filter(validProductTarget));
+      const comments = countByTarget((commentsResult?.data || []).filter(validProductTarget));
+      const shares = countByTarget((sharesResult?.data || []).filter(validProductTarget));
+
+      if (likesResult?.error) console.warn("[Marketplace] Likes count unavailable:", likesResult.error.message || likesResult.error);
+      if (commentsResult?.error) console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
+      if (sharesResult?.error) console.warn("[Marketplace] Shares count unavailable:", sharesResult.error.message || sharesResult.error);
+
+      return data.map(item => {
+        const key = String(item?.id);
+        return {
+          ...item,
+          likes_count: likes[key] || 0,
+          comments_count: comments[key] || 0,
+          shares_count: shares[key] || 0
+        };
+      });
+    } catch (error) {
+      console.warn("[Marketplace] Engagement unavailable:", error);
+      return data;
+    }
+  }
+  /* =======================================================
+     LOAD MARKETPLACE
+     ======================================================= */
+  async function load() {
+    const client = getSupabase();
+    if (!client) {
+      setError("Database belum terkonfigurasi.");
+      return;
+    }
+    setLoading();
+    try {
+      const base = [
+        "id","slug","title","type","access_type","price","thumbnail_url",
+        "description","views","sales_count","category","created_at"
+      ];
+      const queries = await Promise.all([
+        client.from("products")
+          .select(base.concat(["creator_id","seller_id"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("telegram_products")
+          .select(base.concat(["owner_id","product_type","bot_username"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("telegram_channels")
+          .select(base.concat(["owner_id","username","name"]).join(","))
+          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+        client.from("pastelinks")
+          .select("id,slug,title,access_type,price,description,views,created_at,user_id")
+          .eq("visibility","public").order("created_at",{ascending:false}).limit(500),
+        client.from("pastes")
+          .select("id,slug,title,description,created_at,owner_id")
+          .eq("visibility","public").order("created_at",{ascending:false}).limit(500)
+      ]);
+      const firstError = queries.find(x => x?.error)?.error;
+      if (firstError) console.warn("[Marketplace] one source failed:", firstError);
+
+      const normalize = (rows, type, ownerKey) => (Array.isArray(rows)?rows:[]).map(row => ({
+        ...row,
+        type: type === "channel" ? (String(row.type||"channel").toLowerCase()==="group" ? "group" : "channel") : type,
+        access_type: String(row.access_type || (Number(row.price||0)>0 ? "paid":"free")).toLowerCase(),
+        owner_id: row.owner_id || row[ownerKey] || row.creator_id || row.seller_id || row.user_id || null,
+        title: row.title || row.name || row.username || "Untitled",
+        creator_name: row.creator_name || "",
+        creator_username: row.creator_username || String(row.username||"").replace(/^@/,"")
+      }));
+      let data = [
+        ...normalize(queries[0]?.data,"link","creator_id"),
+        ...normalize(queries[1]?.data,"code","owner_id"),
+        ...normalize(queries[2]?.data,"channel","owner_id"),
+        ...normalize(queries[3]?.data,"pastelink","user_id"),
+        ...normalize(queries[4]?.data,"paste","owner_id")
+      ].filter(x => x.id && x.title);
+      // Load public creator names without relying on fragile nested relations.
+      const ownerIds=[...new Set(data.map(x=>x.owner_id).filter(Boolean))];
+      if(ownerIds.length){
+        const pr=await client.from("profiles").select("id,username,display_name,is_banned").in("id",ownerIds);
+        if(!pr.error){
+          const map=new Map((pr.data||[]).map(x=>[String(x.id),x]));
+          data=data.map(x=>{
+            const p=map.get(String(x.owner_id));
+            return p ? {...x,creator_name:p.display_name||p.username,creator_username:p.username} : x;
+          });
+        }
+      }
+      data.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+      items = await loadEngagementCounts(data);
+      page = 1;
+      render();
+    } catch(error) {
+      console.error("[Marketplace] Load error:", error);
+      setError(error?.message || "Marketplace gagal dimuat.");
+    }
+  }
+  /* =======================================================
+     FILTER BUTTONS
+     ======================================================= */
+  document
+    .querySelectorAll(
+      "#tabs .market-tab"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            document
+              .querySelectorAll(
+                "#tabs .market-tab"
+              )
+              .forEach(
+                (item) => {
+                  item.classList.remove(
+                    "active"
+                  );
+                }
+              );
+            button.classList.add(
+              "active"
+            );
+            filter =
+              button.dataset.v ||
+              "all";
+            page = 1;
+            render();
+          }
+        );
+      }
+    );
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+  function updateSearchButton() {
+    const button =
+      $("clearSearch");
+    if (!button) {
+      return;
+    }
+    button.hidden =
+      !q?.value?.trim();
+  }
+  q?.addEventListener(
+    "input",
+    () => {
+      updateSearchButton();
+      page = 1;
+      render();
+    }
+  );
+  /* =======================================================
+     CLEAR SEARCH
+     ======================================================= */
+  $("clearSearch")
+    ?.addEventListener(
+      "click",
+      () => {
+        if (q) {
+          q.value = "";
+        }
+        updateSearchButton();
+        page = 1;
+        render();
+        q?.focus();
+      }
+    );
+  /* =======================================================
+     RESET FILTERS
+     ======================================================= */
+  $("resetFilters")
+    ?.addEventListener(
+      "click",
+      () => {
+        filter =
+          "all";
+        if (q) {
+          q.value = "";
+        }
+        document
+          .querySelectorAll(
+            "#tabs .market-tab"
+          )
+          .forEach(
+            (button) => {
+              button.classList.toggle(
+                "active",
+                button.dataset.v ===
+                  "all"
+              );
+            }
+          );
+        updateSearchButton();
+        page = 1;
+        render();
+      }
+    );
+  /* =======================================================
+     FAVORITE UI
+     Public marketplace: the heart never blocks browsing. Guests
+     are asked to login; authenticated users get a clear feedback
+     message until the project's favorite RPC is wired by schema.
+     ======================================================= */
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest(".product-favorite");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const iconEl = button.querySelector("i");
+    if (iconEl?.classList.contains("fa-regular")) {
+      iconEl.classList.remove("fa-regular");
+      iconEl.classList.add("fa-solid");
+      button.classList.add("active");
+    } else {
+      iconEl?.classList.remove("fa-solid");
+      iconEl?.classList.add("fa-regular");
+      button.classList.remove("active");
+    }
+    try {
+      const user = await window.TC?.user?.();
+      if (!user) window.TC?.toast?.("Login untuk menyimpan favorit.", "info");
+      else window.TC?.toast?.("Favorit dipilih.", "success");
+    } catch (_) {}
+  });
+
+  /* =======================================================
+     INITIAL STATE
+     ======================================================= */
+  bindShareButtons();
+  bindQuestActivity();
+  updateSearchButton();
+  await load();
 });
 
 

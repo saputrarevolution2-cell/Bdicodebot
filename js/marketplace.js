@@ -1110,8 +1110,6 @@ window.PASTELE_CONFIG = Object.freeze({
     const currentPath = location.pathname.replace(/\/+$/, '');
     const currentFile =
       (currentPath.split('/').pop() || 'dashboard.html').toLowerCase();
-    const isMarketplacePath =
-      !isAdmin && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
     /*
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
@@ -2701,7 +2699,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
   function showExpired() {
     // Marketplace is always public. Never show the session-expired lock here.
-    if (isPublic || isMarketplacePath || window.PASTELE_MARKETPLACE_PUBLIC || document.body?.dataset?.publicPage === "marketplace") return;
+    if (isPublic || window.PASTELE_MARKETPLACE_PUBLIC) return;
     if (document.getElementById("pt-session-modal")) return;
 
     locked = true;
@@ -2821,11 +2819,6 @@ window.PASTELE_CONFIG = Object.freeze({
 
   async function init() {
     autoTheme();
-
-    // HARD PUBLIC BYPASS: Marketplace must never depend on auth/session.
-    if (isMarketplacePath || window.PASTELE_MARKETPLACE_PUBLIC || document.body?.dataset?.publicPage === "marketplace") {
-      return;
-    }
 
     if (isPublic) return;
 
@@ -3543,12 +3536,13 @@ document.addEventListener("DOMContentLoaded", async () => {
               : ""
           }
           <div class="product-creator">
-            <i
-              class="fa-solid fa-user"
-              aria-hidden="true"
-            ></i>
+            <i class="fa-solid ${type === "code" ? "fa-robot" : type === "channel" ? "fa-broadcast-tower" : type === "group" ? "fa-users" : type === "pastelink" ? "fa-link" : "fa-user"}" aria-hidden="true"></i>
             <span>
               ${esc(
+                type === "code" && item?.bot_username ? "Bot @" + String(item.bot_username).replace(/^@/, "") :
+                (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username) ?
+                  ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, ""))) :
+                type === "pastelink" ? "PasteLink • " + creator :
                 creator
               )}
             </span>
@@ -4277,67 +4271,87 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     setLoading();
     try {
-      const base = [
-        "id","slug","title","type","access_type","price","thumbnail_url",
-        "description","views","sales_count","category","created_at"
-      ];
-      const queries = await Promise.all([
-        client.from("products")
-          .select(base.concat(["creator_id","seller_id"]).join(","))
-          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
-        client.from("telegram_products")
-          .select(base.concat(["owner_id","product_type","bot_username"]).join(","))
-          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
-        client.from("telegram_channels")
-          .select(base.concat(["owner_id","username","name"]).join(","))
-          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
-        client.from("pastelinks")
-          .select("id,slug,title,access_type,price,description,views,created_at,user_id")
-          .eq("visibility","public").order("created_at",{ascending:false}).limit(500),
-        client.from("pastes")
-          .select("id,slug,title,description,created_at,owner_id")
-          .eq("visibility","public").order("created_at",{ascending:false}).limit(500)
-      ]);
-      const firstError = queries.find(x => x?.error)?.error;
-      if (firstError) console.warn("[Marketplace] one source failed:", firstError);
+      /*
+       * IMPORTANT: Marketplace is public. Use the canonical public view
+       * as the single source of truth so Link, Code, Channel, Group,
+       * PasteLink and Paste all appear consistently for guests.
+       */
+      const { data: publicRows, error: publicError } = await client
+        .from("marketplace_public")
+        .select("id,slug,title,type,access_type,price,thumbnail_url,description,views,sales_count,category,created_at,creator_name,creator_username,owner_id")
+        .order("created_at", { ascending: false })
+        .limit(1000);
 
-      const normalize = (rows, type, ownerKey) => (Array.isArray(rows)?rows:[]).map(row => ({
-        ...row,
-        type: type === "channel" ? (String(row.type||"channel").toLowerCase()==="group" ? "group" : "channel") : type,
-        access_type: String(row.access_type || (Number(row.price||0)>0 ? "paid":"free")).toLowerCase(),
-        owner_id: row.owner_id || row[ownerKey] || row.creator_id || row.seller_id || row.user_id || null,
-        title: row.title || row.name || row.username || "Untitled",
-        creator_name: row.creator_name || "",
-        creator_username: row.creator_username || String(row.username||"").replace(/^@/,"")
-      }));
-      let data = [
-        ...normalize(queries[0]?.data,"link","creator_id"),
-        ...normalize(queries[1]?.data,"code","owner_id"),
-        ...normalize(queries[2]?.data,"channel","owner_id"),
-        ...normalize(queries[3]?.data,"pastelink","user_id"),
-        ...normalize(queries[4]?.data,"paste","owner_id")
-      ].filter(x => x.id && x.title);
-      // Load public creator names without relying on fragile nested relations.
-      const ownerIds=[...new Set(data.map(x=>x.owner_id).filter(Boolean))];
-      if(ownerIds.length){
-        const pr=await client.from("profiles").select("id,username,display_name,is_banned").in("id",ownerIds);
-        if(!pr.error){
-          const map=new Map((pr.data||[]).map(x=>[String(x.id),x]));
-          data=data.map(x=>{
-            const p=map.get(String(x.owner_id));
-            return p ? {...x,creator_name:p.display_name||p.username,creator_username:p.username} : x;
-          });
-        }
+      if (publicError) {
+        console.warn("[Marketplace] marketplace_public unavailable:", publicError);
+        throw publicError;
       }
-      data.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+
+      let data = (publicRows || []).map(row => ({
+        ...row,
+        type: typeOf(row),
+        access_type: String(row.access_type || (Number(row.price || 0) > 0 ? "paid" : "free")).toLowerCase(),
+        owner_id: row.owner_id || null,
+        title: row.title || "Untitled",
+        description: String(row.description || "").trim(),
+        creator_name: row.creator_name || "",
+        creator_username: String(row.creator_username || "").replace(/^@/, "")
+      })).filter(row => row.id && row.title);
+
+      /* Enrich Telegram-specific cards without making them required.
+         If RLS blocks these optional reads, the public cards remain visible. */
+      const codeIds = data.filter(x => x.type === "code").map(x => x.id);
+      const channelIds = data.filter(x => x.type === "channel" || x.type === "group").map(x => x.id);
+
+      if (codeIds.length) {
+        try {
+          const r = await client.from("telegram_products")
+            .select("id,bot_username,product_type")
+            .in("id", codeIds);
+          if (!r.error) {
+            const m = new Map((r.data || []).map(x => [String(x.id), x]));
+            data = data.map(x => {
+              const extra = m.get(String(x.id));
+              return extra ? { ...x, bot_username: extra.bot_username || "", product_type: extra.product_type || "" } : x;
+            });
+          }
+        } catch (_) {}
+      }
+
+      if (channelIds.length) {
+        try {
+          const r = await client.from("telegram_channels")
+            .select("id,username,name,type,description")
+            .in("id", channelIds);
+          if (!r.error) {
+            const m = new Map((r.data || []).map(x => [String(x.id), x]));
+            data = data.map(x => {
+              const extra = m.get(String(x.id));
+              if (!extra) return x;
+              return {
+                ...x,
+                type: lower(extra.type) === "group" ? "group" : x.type,
+                channel_username: String(extra.username || "").replace(/^@/, ""),
+                channel_name: extra.name || "",
+                description: x.description || extra.description || ""
+              };
+            });
+          }
+        } catch (_) {}
+      }
+
+      /* Creator names are already exposed safely by marketplace_public.
+         Do not make a private profiles query a prerequisite for guests. */
+      data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       items = await loadEngagementCounts(data);
       page = 1;
       render();
-    } catch(error) {
+    } catch (error) {
       console.error("[Marketplace] Load error:", error);
-      setError(error?.message || "Marketplace gagal dimuat.");
+      setError("Konten Marketplace belum dapat dimuat. Periksa akses public marketplace_public di Supabase.");
     }
   }
+
   /* =======================================================
      FILTER BUTTONS
      ======================================================= */
