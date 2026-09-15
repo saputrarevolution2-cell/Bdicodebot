@@ -1,4 +1,7 @@
-# PasTele canonical short public routes
+# PasTele canonical public routes
+/marketplace /marketplace.html 200
+/marketplace/ /marketplace.html 200
+
 /p/*    /view-pastelink.html?slug=:splat    200
 /c/f/*  /view-code.html?slug=:splat         200
 /c/p/*  /view-code.html?slug=:splat         200
