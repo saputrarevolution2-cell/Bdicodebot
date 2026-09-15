@@ -3489,6 +3489,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       <button type="button" class="product-favorite" data-favorite-id="${esc(item?.id||'')}" aria-label="Favorit ${esc(title)}">
         <i class="fa-regular fa-heart" aria-hidden="true"></i>
       </button>
+      <button type="button" class="product-share" data-share-card aria-label="Bagikan ${esc(title)}">
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+      </button>
       <a class="product-card-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
         <!-- THUMBNAIL -->
         <div class="product-thumb">
@@ -3616,7 +3619,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             const type =
               typeOf(item);
             const href =
-              productUrl(item);
+              item?._creatorRow
+                ? (item.creator_username
+                    ? `/profile.html?username=${encodeURIComponent(item.creator_username)}`
+                    : `/profile.html?id=${encodeURIComponent(item.id)}`)
+                : productUrl(item);
             const access =
               accessType(item);
             const title =
@@ -3654,11 +3661,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                       )}
                     </span>
                     <span>
-                      <i
-                        class="fa-solid fa-eye"
-                        aria-hidden="true"
-                      ></i>
+                      <i class="fa-solid fa-eye" aria-hidden="true"></i>
                       ${viewsText(item)}
+                    </span>
+                    <span>
+                      <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                      ${salesText(item)}
                     </span>
                   </div>
                 </div>
@@ -3701,59 +3709,52 @@ document.addEventListener("DOMContentLoaded", async () => {
      TOP LISTS
      ======================================================= */
   function renderTopLists() {
-    const byViews = (
-      a,
-      b
-    ) => {
-      return (
-        number(b?.views) -
-        number(a?.views)
-      );
-    };
+    const byPerformance = (a, b) =>
+      (number(b?.views) + number(b?.sales_count) * 5 + number(b?.likes_count) * 2) -
+      (number(a?.views) + number(a?.sales_count) * 5 + number(a?.likes_count) * 2);
+
+    // Top Konten: all public marketplace content, regardless of type.
     list(
       "topLink",
-      items
-        .filter(
-          (item) =>
-            typeOf(item) ===
-            "link"
-        )
-        .slice()
-        .sort(byViews)
+      items.slice().sort(byPerformance)
     );
-    list(
-      "topCode",
-      items
-        .filter(
-          (item) =>
-            typeOf(item) ===
-            "code"
-        )
-        .slice()
-        .sort(byViews)
-    );
-    list(
-      "topChannel",
-      items
-        .filter(
-          (item) =>
-            typeOf(item) ===
-            "channel"
-        )
-        .slice()
-        .sort(byViews)
-    );
-    list(
-      "topGroup",
-      items
-        .filter(
-          (item) =>
-            typeOf(item) ===
-            "group"
-        )
-        .slice()
-        .sort(byViews)
-    );
+
+    // Creator Populer: aggregate public content by creator.
+    const creators = new Map();
+    for (const item of items) {
+      const key = String(item?.owner_id || item?.creator_username || item?.creator_name || "unknown");
+      const current = creators.get(key) || {
+        id: key,
+        title: item?.creator_name || (item?.creator_username ? "@" + item.creator_username : "Creator"),
+        creator_name: item?.creator_name || "",
+        creator_username: item?.creator_username || "",
+        views: 0,
+        sales_count: 0,
+        likes_count: 0,
+        shares_count: 0,
+        comments_count: 0,
+        price: 0,
+        access_type: "free",
+        type: "link",
+        slug: item?.slug || "",
+        _items: 0
+      };
+      current.views += number(item?.views);
+      current.sales_count += number(item?.sales_count);
+      current.likes_count += number(item?.likes_count);
+      current.shares_count += number(item?.shares_count);
+      current.comments_count += number(item?.comments_count);
+      current._items += 1;
+      creators.set(key, current);
+    }
+    const creatorRows = Array.from(creators.values())
+      .sort((a,b) =>
+        (b.views + b.sales_count * 5 + b.likes_count * 2) -
+        (a.views + a.sales_count * 5 + a.likes_count * 2)
+      )
+      .map(x => ({...x, _creatorRow: true, title: x.creator_name || (x.creator_username ? "@" + x.creator_username : "Creator")}));
+
+    list("topCode", creatorRows);
   }
   /* =======================================================
      RESULT BAR
@@ -4177,52 +4178,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      COUNT BY TARGET
      ======================================================= */
-  const countByTarget = (
-    rows
-  ) => {
-    const map =
-      Object.create(null);
-    for (
-      const row of rows || []
-    ) {
-      const id =
-        row?.target_id;
-      if (
-        id === null ||
-        id === undefined ||
-        id === ""
-      ) {
-        continue;
-      }
-      const key =
-        String(id);
-      map[key] =
-        (map[key] || 0) + 1;
+  /* =======================================================
+     ENGAGEMENT COUNTS — aligned with database.sql
+     Tables:
+       content_likes(target_id,target_type)
+       content_comments(target_id,target_type)
+       analytics_events(target_id,target_type,event_type)
+     UUID + target_type are combined so identical UUIDs across
+     different content sources cannot contaminate each other.
+     ======================================================= */
+  const targetKey = (id, type) => `${String(type || "").toLowerCase()}:${String(id || "")}`;
+
+  const analyticsTargetType = (item) => {
+    const type = typeOf(item);
+    if (type === "code") return "telegram_product";
+    if (type === "channel" || type === "group") return "channel";
+    return type || "product";
+  };
+
+  const countByTarget = (rows) => {
+    const map = Object.create(null);
+    for (const row of rows || []) {
+      if (row?.target_id == null) continue;
+      const key = targetKey(row.target_id, row.target_type);
+      map[key] = (map[key] || 0) + 1;
     }
     return map;
   };
-  /* =======================================================
-     ENGAGEMENT COUNTS
-     =======================================================
-     SQL FINAL:
-       content_likes
-         target_id
-         target_type
-         actor_id
-       analytics_events
-         target_id
-         target_type
-         event_type
-     IMPORTANT:
-       content_comments TIDAK digunakan karena
-       tidak ada pada SQL final.
-     */
-  async function loadEngagementCounts(
-    data
-  ) {
+
+  async function loadEngagementCounts(data) {
     const client = getSupabase();
     if (!client || !Array.isArray(data) || !data.length) return data;
-    const ids = data.map(item => item?.id).filter(id => id !== null && id !== undefined && id !== "");
+
+    const ids = data.map(item => item?.id).filter(Boolean);
     if (!ids.length) return data;
 
     try {
@@ -4239,20 +4227,16 @@ document.addEventListener("DOMContentLoaded", async () => {
           .eq("event_type", "share")
       ]);
 
-      const validProductTarget = row => {
-        const targetType = lower(row?.target_type);
-        return !targetType || ["product","link","code","channel","group","pastelink","paste","telegram_product","telegram_channel"].includes(targetType);
-      };
-      const likes = countByTarget((likesResult?.data || []).filter(validProductTarget));
-      const comments = countByTarget((commentsResult?.data || []).filter(validProductTarget));
-      const shares = countByTarget((sharesResult?.data || []).filter(validProductTarget));
+      const likes = countByTarget(likesResult?.data || []);
+      const comments = countByTarget(commentsResult?.data || []);
+      const shares = countByTarget(sharesResult?.data || []);
 
-      if (likesResult?.error) console.warn("[Marketplace] Likes count unavailable:", likesResult.error.message || likesResult.error);
-      if (commentsResult?.error) console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
-      if (sharesResult?.error) console.warn("[Marketplace] Shares count unavailable:", sharesResult.error.message || sharesResult.error);
+      if (likesResult?.error) console.warn("[Marketplace] likes:", likesResult.error.message || likesResult.error);
+      if (commentsResult?.error) console.warn("[Marketplace] comments:", commentsResult.error.message || commentsResult.error);
+      if (sharesResult?.error) console.warn("[Marketplace] shares:", sharesResult.error.message || sharesResult.error);
 
       return data.map(item => {
-        const key = String(item?.id);
+        const key = targetKey(item?.id, analyticsTargetType(item));
         return {
           ...item,
           likes_count: likes[key] || 0,
@@ -4261,7 +4245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         };
       });
     } catch (error) {
-      console.warn("[Marketplace] Engagement unavailable:", error);
+      console.warn("[Marketplace] engagement unavailable:", error);
       return data;
     }
   }
