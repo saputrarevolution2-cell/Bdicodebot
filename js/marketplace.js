@@ -3254,6 +3254,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       item?.shares_count
     );
   };
+  const commentsText = (
+    item
+  ) => {
+    return formatNumber(
+      item?.comments_count
+    );
+  };
   /* =======================================================
      PRODUCT URL
      ======================================================= */
@@ -3474,62 +3481,33 @@ document.addEventListener("DOMContentLoaded", async () => {
             </span>
           </div>
           <!-- ENGAGEMENT -->
-          <div class="market-card-stats">
-            <span>
-              <i
-                class="fa-solid fa-eye"
-                aria-hidden="true"
-              ></i>
+          <div class="market-card-stats" aria-label="Statistik konten">
+            <span title="Dilihat">
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
               ${viewsText(item)}
             </span>
-            <span class="like">
-              <i
-                class="fa-solid fa-heart"
-                aria-hidden="true"
-              ></i>
+            <span class="sold" title="Terjual">
+              <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+              ${salesText(item)}
+            </span>
+            <span class="like" title="Like">
+              <i class="fa-solid fa-heart" aria-hidden="true"></i>
               ${likesText(item)}
             </span>
-            <span class="share">
-              <i
-                class="fa-solid fa-share-nodes"
-                aria-hidden="true"
-              ></i>
+            <span class="share" title="Share">
+              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
               ${sharesText(item)}
+            </span>
+            <span class="comment" title="Komentar">
+              <i class="fa-solid fa-comment" aria-hidden="true"></i>
+              ${commentsText(item)}
             </span>
           </div>
           <!-- BOTTOM -->
           <div class="product-bottom">
-            <div class="product-stats">
-              <span>
-                <i
-                  class="fa-solid fa-eye"
-                  aria-hidden="true"
-                ></i>
-                ${viewsText(item)}
-              </span>
-              ${
-                number(
-                  item?.sales_count
-                ) > 0
-                  ? `
-                    <span>
-                      <i
-                        class="fa-solid fa-cart-shopping"
-                        aria-hidden="true"
-                      ></i>
-                      ${salesText(
-                        item
-                      )}
-                    </span>
-                  `
-                  : ""
-              }
-            </div>
             <strong
               class="product-price ${
-                access === "free"
-                  ? "free"
-                  : ""
+                access === "free" ? "free" : ""
               }"
             >
               ${priceText(item)}
@@ -3895,6 +3873,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      MAIN RENDER
      ======================================================= */
+  /* =======================================================
+     QUEST / ACTIVITY TRACKING
+     Uses the existing analytics_events table so marketplace
+     actions can be consumed by the Quest system without
+     inventing a new database table.
+     ======================================================= */
+  function bindQuestActivity(){
+    if(window.__PASTELE_MARKET_QUEST_BOUND__) return;
+    window.__PASTELE_MARKET_QUEST_BOUND__=true;
+    document.addEventListener("click", async e=>{
+      const link=e.target.closest(".product-card-link");
+      if(!link) return;
+      const cardEl=link.closest("[data-share-id]");
+      if(!cardEl) return;
+      const id=cardEl.dataset.shareId;
+      const rawType=cardEl.dataset.shareType;
+      const type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType);
+      const owner=cardEl.dataset.shareOwner||null;
+      if(!id || !window.sb?.rpc) return;
+      try{
+        await window.sb.rpc("track_analytics",{
+          p_event_type:"view",
+          p_target_type:type,
+          p_target_id:id,
+          p_owner:owner
+        });
+      }catch(err){
+        console.warn("[Marketplace] quest/view tracking unavailable",err);
+      }
+    });
+  }
+
   function bindShareButtons(){
     if(window.__PASTELE_MARKET_SHARE_BOUND__) return;
     window.__PASTELE_MARKET_SHARE_BOUND__=true;
@@ -4134,155 +4144,48 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadEngagementCounts(
     data
   ) {
-    const client =
-      getSupabase();
-    if (
-      !client ||
-      !Array.isArray(data) ||
-      !data.length
-    ) {
-      return data;
-    }
-    const ids =
-      data
-        .map(
-          (item) =>
-            item?.id
-        )
-        .filter(
-          (id) =>
-            id !== null &&
-            id !== undefined &&
-            id !== ""
-        );
-    if (!ids.length) {
-      return data;
-    }
+    const client = getSupabase();
+    if (!client || !Array.isArray(data) || !data.length) return data;
+    const ids = data.map(item => item?.id).filter(id => id !== null && id !== undefined && id !== "");
+    if (!ids.length) return data;
+
     try {
-      /*
-       * Hanya query tabel yang benar-benar
-       * ada di SQL final.
-       */
-      const [
-        likesResult,
-        sharesResult
-      ] = await Promise.all([
-        client
-          .from(
-            "content_likes"
-          )
-          .select(
-            "target_id,target_type"
-          )
-          .in(
-            "target_id",
-            ids
-          ),
-        client
-          .from(
-            "analytics_events"
-          )
-          .select(
-            "target_id,target_type,event_type"
-          )
-          .in(
-            "target_id",
-            ids
-          )
-          .eq(
-            "event_type",
-            "share"
-          )
+      const [likesResult, commentsResult, sharesResult] = await Promise.all([
+        client.from("content_likes")
+          .select("target_id,target_type")
+          .in("target_id", ids),
+        client.from("content_comments")
+          .select("target_id,target_type")
+          .in("target_id", ids),
+        client.from("analytics_events")
+          .select("target_id,target_type,event_type")
+          .in("target_id", ids)
+          .eq("event_type", "share")
       ]);
-      if (
-        likesResult?.error
-      ) {
-        console.warn(
-          "[Marketplace] Likes count unavailable:",
-          likesResult.error.message ||
-          likesResult.error
-        );
-      }
-      if (
-        sharesResult?.error
-      ) {
-        console.warn(
-          "[Marketplace] Shares count unavailable:",
-          sharesResult.error.message ||
-          sharesResult.error
-        );
-      }
-      /*
-       * Count likes.
-       *
-       * target_type digunakan untuk
-       * membedakan content target.
-       *
-       * Marketplace products memakai
-       * target_type = product.
-       */
-      const likes =
-        countByTarget(
-          (likesResult?.data || [])
-            .filter(
-              (row) => {
-                const targetType =
-                  lower(
-                    row?.target_type
-                  );
-                return (
-                  !targetType ||
-                  targetType ===
-                    "product"
-                );
-              }
-            )
-        );
-      /*
-       * Count shares.
-       */
-      const shares =
-        countByTarget(
-          (sharesResult?.data || [])
-            .filter(
-              (row) => {
-                const targetType =
-                  lower(
-                    row?.target_type
-                  );
-                return (
-                  !targetType ||
-                  targetType ===
-                    "product"
-                );
-              }
-            )
-        );
-      return data.map(
-        (item) => {
-          const key =
-            String(
-              item?.id
-            );
-          return {
-            ...item,
-            likes_count:
-              likes[key] || 0,
-            shares_count:
-              shares[key] || 0
-          };
-        }
-      );
+
+      const validProductTarget = row => {
+        const targetType = lower(row?.target_type);
+        return !targetType || ["product","link","code","channel","group","pastelink","paste","telegram_product","telegram_channel"].includes(targetType);
+      };
+      const likes = countByTarget((likesResult?.data || []).filter(validProductTarget));
+      const comments = countByTarget((commentsResult?.data || []).filter(validProductTarget));
+      const shares = countByTarget((sharesResult?.data || []).filter(validProductTarget));
+
+      if (likesResult?.error) console.warn("[Marketplace] Likes count unavailable:", likesResult.error.message || likesResult.error);
+      if (commentsResult?.error) console.warn("[Marketplace] Comments count unavailable:", commentsResult.error.message || commentsResult.error);
+      if (sharesResult?.error) console.warn("[Marketplace] Shares count unavailable:", sharesResult.error.message || sharesResult.error);
+
+      return data.map(item => {
+        const key = String(item?.id);
+        return {
+          ...item,
+          likes_count: likes[key] || 0,
+          comments_count: comments[key] || 0,
+          shares_count: shares[key] || 0
+        };
+      });
     } catch (error) {
-      /*
-       * Engagement adalah fitur tambahan.
-       * Marketplace tidak boleh gagal hanya
-       * karena statistik engagement.
-       */
-      console.warn(
-        "[Marketplace] Engagement unavailable:",
-        error
-      );
+      console.warn("[Marketplace] Engagement unavailable:", error);
       return data;
     }
   }
@@ -4462,6 +4365,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      INITIAL STATE
      ======================================================= */
+  bindShareButtons();
+  bindQuestActivity();
   updateSearchButton();
   await load();
 });
