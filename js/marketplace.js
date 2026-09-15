@@ -2606,12 +2606,8 @@ window.PASTELE_CONFIG = Object.freeze({
   ]);
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
-  const normalizedPath = (location.pathname || "").replace(/\/+$/, "").toLowerCase() || "/";
   const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
-  // Marketplace is PUBLIC for every common route form:
-  // /marketplace, /marketplace/, /marketplace.html
-  const isMarketplaceRoute = /^\/marketplace(?:\.html)?$/i.test(normalizedPath);
-  const isPublic = !isAdminPath && (PUBLIC.has(file) || isMarketplaceRoute);
+  const isPublic = !isAdminPath && PUBLIC.has(file);
   let locked = false;
   let initialized = false;
   let timer = null;
@@ -2762,8 +2758,6 @@ window.PASTELE_CONFIG = Object.freeze({
   async function init() {
     autoTheme();
 
-    // NEVER expire/lock a Marketplace visitor. Marketplace is public.
-    if (isMarketplaceRoute) return;
     if (isPublic) return;
 
     const client = await getClient();
