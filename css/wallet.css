@@ -2172,3 +2172,143 @@ body.theme-dark .pastele-footer{
 .wallet-page .wallet-withdraw-content{
   min-width:0;
 }
+
+
+/* WALLET — SETTINGS PARITY FINAL OVERRIDES
+   Keep balance readable in Light mode, make Detail accents gold,
+   and normalize icon boxes so every icon fills its intended form. */
+:root{
+  --wallet-detail-gold:#f59e0b;
+  --wallet-detail-gold-dark:#d97706;
+  --wallet-detail-gold-soft:rgba(245,158,11,.12);
+  --wallet-detail-gold-line:rgba(245,158,11,.28);
+}
+
+/* Balance: never use gold/white text on a light hero. */
+html[data-theme="light"] .wallet-page .wallet-balance-hero,
+html.theme-light .wallet-page .wallet-balance-hero,
+body.theme-light .wallet-page .wallet-balance-hero{
+  background:#ffffff!important;
+  color:#0f172a!important;
+  border:1px solid #e5e7eb!important;
+  box-shadow:0 14px 35px rgba(15,23,42,.07)!important;
+}
+html[data-theme="light"] .wallet-page .wallet-balance-label,
+html.theme-light .wallet-page .wallet-balance-label,
+body.theme-light .wallet-page .wallet-balance-label{
+  color:#64748b!important;
+}
+html[data-theme="light"] .wallet-page .wallet-balance-value,
+html.theme-light .wallet-page .wallet-balance-value,
+body.theme-light .wallet-page .wallet-balance-value{
+  color:#0f172a!important;
+  -webkit-text-fill-color:#0f172a!important;
+  text-shadow:none!important;
+}
+html[data-theme="light"] .wallet-page .wallet-balance-note,
+html.theme-light .wallet-page .wallet-balance-note,
+body.theme-light .wallet-page .wallet-balance-note{
+  color:#64748b!important;
+}
+html[data-theme="dark"] .wallet-page .wallet-balance-value,
+html.theme-dark .wallet-page .wallet-balance-value,
+body.theme-dark .wallet-page .wallet-balance-value{
+  color:#f8fafc!important;
+  -webkit-text-fill-color:#f8fafc!important;
+}
+
+/* Details use a clear yellow/gold accent. */
+.wallet-page .wallet-detail,
+.wallet-page .wallet-card-detail,
+.wallet-page .detail,
+.wallet-page [class*="detail"]{
+  color:var(--wallet-detail-gold)!important;
+}
+.wallet-page .wallet-card-icon.wallet-icon-amber,
+.wallet-page .wallet-detail-icon{
+  color:var(--wallet-detail-gold)!important;
+  background:var(--wallet-detail-gold-soft)!important;
+  border-color:var(--wallet-detail-gold-line)!important;
+}
+
+/* Normalize icon containers — no tiny icon boxes. */
+.wallet-page .wallet-heading-icon{
+  width:48px!important;height:48px!important;min-width:48px!important;
+  display:grid!important;place-items:center!important;
+  font-size:20px!important;line-height:1!important;
+  flex:0 0 48px!important;
+}
+.wallet-page .wallet-balance-icon{
+  width:56px!important;height:56px!important;min-width:56px!important;
+  display:grid!important;place-items:center!important;
+  font-size:23px!important;line-height:1!important;
+  flex:0 0 56px!important;
+}
+.wallet-page .wallet-card-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;
+  display:grid!important;place-items:center!important;
+  font-size:17px!important;line-height:1!important;
+  flex:0 0 42px!important;
+}
+.wallet-page .wallet-quick-icon{
+  width:44px!important;height:44px!important;min-width:44px!important;
+  display:grid!important;place-items:center!important;
+  font-size:18px!important;line-height:1!important;
+  flex:0 0 44px!important;
+}
+.wallet-page .panel-icon,
+.wallet-page .wallet-panel-icon{
+  width:40px!important;height:40px!important;min-width:40px!important;
+  display:grid!important;place-items:center!important;
+  font-size:17px!important;line-height:1!important;
+  flex:0 0 40px!important;
+}
+.wallet-page .wallet-info-icon,
+.wallet-page .wallet-withdraw-icon,
+.wallet-page .wallet-activity-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;
+  display:grid!important;place-items:center!important;
+  font-size:17px!important;line-height:1!important;
+  flex:0 0 42px!important;
+}
+
+/* Icons themselves should not render as tiny glyphs. */
+.wallet-page .wallet-heading-icon i,
+.wallet-page .wallet-balance-icon i,
+.wallet-page .wallet-card-icon i,
+.wallet-page .wallet-quick-icon i,
+.wallet-page .panel-icon i,
+.wallet-page .wallet-panel-icon i,
+.wallet-page .wallet-info-icon i,
+.wallet-page .wallet-withdraw-icon i,
+.wallet-page .wallet-activity-icon i{
+  display:block!important;
+  font-size:1em!important;
+  line-height:1!important;
+  width:auto!important;height:auto!important;
+}
+
+/* Text columns stay aligned beside icons. */
+.wallet-page .wallet-card-top,
+.wallet-page .wallet-panel-title,
+.wallet-page .wallet-quick-card,
+.wallet-page .wallet-withdraw-btn,
+.wallet-page .wallet-info-row{
+  align-items:center!important;
+}
+.wallet-page .wallet-card-top > div,
+.wallet-page .wallet-panel-title > div,
+.wallet-page .wallet-quick-content,
+.wallet-page .wallet-withdraw-content{
+  min-width:0!important;
+}
+
+/* Mobile keeps the same visual weight rather than shrinking selected icons. */
+@media (max-width:640px){
+  .wallet-page .wallet-heading-icon{width:44px!important;height:44px!important;min-width:44px!important;flex-basis:44px!important;font-size:18px!important}
+  .wallet-page .wallet-balance-icon{width:50px!important;height:50px!important;min-width:50px!important;flex-basis:50px!important;font-size:21px!important}
+  .wallet-page .wallet-card-icon{width:40px!important;height:40px!important;min-width:40px!important;flex-basis:40px!important;font-size:16px!important}
+  .wallet-page .wallet-quick-icon{width:42px!important;height:42px!important;min-width:42px!important;flex-basis:42px!important;font-size:17px!important}
+  .wallet-page .panel-icon,.wallet-page .wallet-panel-icon{width:38px!important;height:38px!important;min-width:38px!important;flex-basis:38px!important;font-size:16px!important}
+  .wallet-page .wallet-info-icon,.wallet-page .wallet-withdraw-icon,.wallet-page .wallet-activity-icon{width:40px!important;height:40px!important;min-width:40px!important;flex-basis:40px!important;font-size:16px!important}
+}
