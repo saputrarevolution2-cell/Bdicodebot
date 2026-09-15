@@ -1110,6 +1110,8 @@ window.PASTELE_CONFIG = Object.freeze({
     const currentPath = location.pathname.replace(/\/+$/, '');
     const currentFile =
       (currentPath.split('/').pop() || 'dashboard.html').toLowerCase();
+    const isMarketplacePath =
+      !isAdmin && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
     /*
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
@@ -2699,7 +2701,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
   function showExpired() {
     // Marketplace is always public. Never show the session-expired lock here.
-    if (isPublic || window.PASTELE_MARKETPLACE_PUBLIC) return;
+    if (isPublic || isMarketplacePath || window.PASTELE_MARKETPLACE_PUBLIC || document.body?.dataset?.publicPage === "marketplace") return;
     if (document.getElementById("pt-session-modal")) return;
 
     locked = true;
@@ -2819,6 +2821,11 @@ window.PASTELE_CONFIG = Object.freeze({
 
   async function init() {
     autoTheme();
+
+    // HARD PUBLIC BYPASS: Marketplace must never depend on auth/session.
+    if (isMarketplacePath || window.PASTELE_MARKETPLACE_PUBLIC || document.body?.dataset?.publicPage === "marketplace") {
+      return;
+    }
 
     if (isPublic) return;
 
