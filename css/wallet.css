@@ -2314,109 +2314,38 @@ body.theme-dark .wallet-page .wallet-balance-value{
 }
 
 /* ============================================================
-   WALLET FINAL VISUAL FIX — LIGHT MODE / GOLD DETAIL / EMPTY STATE
+   SECURITY INFO — GOLD / YELLOW ACCENT
    ============================================================ */
-html[data-theme="light"] .wallet-page .wallet-heading-icon,
-html.theme-light .wallet-page .wallet-heading-icon,
-body.theme-light.wallet-page .wallet-heading-icon{
-  background:#fff7df!important;
-  border:1px solid #f5c451!important;
-  color:#d99000!important;
-  box-shadow:0 8px 22px rgba(245,158,11,.14)!important;
+.wallet-page .wallet-info{
+  background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(250,204,21,.07)) !important;
+  border:1px solid rgba(245,158,11,.42) !important;
+  box-shadow:0 8px 24px rgba(245,158,11,.08) !important;
 }
-html[data-theme="light"] .wallet-page .wallet-heading-icon i,
-html.theme-light .wallet-page .wallet-heading-icon i,
-body.theme-light.wallet-page .wallet-heading-icon i{
-  color:#d99000!important;
-  -webkit-text-fill-color:#d99000!important;
+.wallet-page .wallet-info-icon{
+  background:linear-gradient(135deg,#f59e0b,#facc15) !important;
+  color:#ffffff !important;
+  border:1px solid rgba(255,255,255,.28) !important;
+  box-shadow:0 6px 16px rgba(245,158,11,.22) !important;
 }
-
-/* The wallet icon on the light balance card must always be visible. */
-html[data-theme="light"] .wallet-page .wallet-balance-icon,
-html.theme-light .wallet-page .wallet-balance-icon,
-body.theme-light.wallet-page .wallet-balance-icon{
-  background:#fff7df!important;
-  border:1px solid #f5c451!important;
-  color:#d99000!important;
-  box-shadow:0 10px 26px rgba(245,158,11,.16)!important;
-  opacity:1!important;
+.wallet-page .wallet-info-icon i{
+  color:#ffffff !important;
+  font-size:17px !important;
 }
-html[data-theme="light"] .wallet-page .wallet-balance-icon i,
-html.theme-light .wallet-page .wallet-balance-icon i,
-body.theme-light.wallet-page .wallet-balance-icon i{
-  color:#d99000!important;
-  -webkit-text-fill-color:#d99000!important;
-  opacity:1!important;
+.wallet-page .wallet-info strong{
+  color:#d97706 !important;
+  font-size:12px !important;
+}
+.wallet-page .wallet-info p{
+  color:#92400e !important;
 }
 
-/* Detail / pending-detail accent: yellow, not green/blue/purple. */
-.wallet-page .wallet-pending-click .wallet-card-label,
-.wallet-page .wallet-pending-click .wallet-card-icon,
-.wallet-page .wallet-pending-click .wallet-card-icon i,
-.wallet-page .wallet-pending-click .wallet-card-detail,
-.wallet-page .wallet-pending-click [class*="detail"]{
-  color:#f59e0b!important;
+html[data-theme="dark"] .wallet-page .wallet-info{
+  background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(250,204,21,.07)) !important;
+  border-color:rgba(245,158,11,.34) !important;
 }
-.wallet-page .wallet-pending-click .wallet-card-icon{
-  background:rgba(245,158,11,.12)!important;
-  border:1px solid rgba(245,158,11,.28)!important;
+html[data-theme="dark"] .wallet-page .wallet-info strong{
+  color:#fbbf24 !important;
 }
-.wallet-page .wallet-pending-dialog > .badge,
-.wallet-page .wallet-pending-dialog > .badge i,
-.wallet-page .wallet-pending-dialog .wallet-pending-meta i,
-.wallet-page .wallet-pending-dialog .wallet-detail,
-.wallet-page .wallet-pending-dialog [class*="detail"]{
-  color:#f59e0b!important;
-}
-
-/* Empty activity icon should have the same visual weight as the form. */
-.wallet-page .wallet-activity-empty{
-  min-height:132px!important;
-  gap:16px!important;
-  padding:26px 18px!important;
-  border-radius:16px!important;
-}
-.wallet-page .wallet-activity-empty-icon{
-  width:56px!important;
-  height:56px!important;
-  min-width:56px!important;
-  flex:0 0 56px!important;
-  display:grid!important;
-  place-items:center!important;
-  border-radius:15px!important;
-  font-size:22px!important;
-  line-height:1!important;
-  background:var(--wallet-surface-2)!important;
-  border:1px solid var(--wallet-border)!important;
-}
-.wallet-page .wallet-activity-empty-icon i{
-  display:block!important;
-  font-size:1em!important;
-  line-height:1!important;
-}
-.wallet-page .wallet-activity-empty strong{
-  font-size:14px!important;
-  line-height:1.4!important;
-}
-.wallet-page .wallet-activity-empty > div > span{
-  font-size:12px!important;
-  line-height:1.5!important;
-}
-
-@media(max-width:640px){
-  .wallet-page .wallet-activity-empty{
-    min-height:118px!important;
-    gap:13px!important;
-    padding:22px 14px!important;
-  }
-  .wallet-page .wallet-activity-empty-icon{
-    width:50px!important;
-    height:50px!important;
-    min-width:50px!important;
-    flex-basis:50px!important;
-    border-radius:14px!important;
-    font-size:20px!important;
-  }
-  .wallet-page .wallet-activity-empty strong{font-size:13px!important}
-  .wallet-page .wallet-activity-empty > div > span{font-size:11px!important}
+html[data-theme="dark"] .wallet-page .wallet-info p{
+  color:#fcd34d !important;
 }
