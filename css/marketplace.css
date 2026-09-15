@@ -93,6 +93,45 @@ html[data-theme="dark"] body,[data-theme="dark"] .card,[data-theme="dark"] .pane
   min-width: 0;
 }
 
+/* =========================================================
+   MARKETPLACE THEME PARITY
+   Light = fully light, Dark = fully dark.
+   ========================================================= */
+.marketplace-page{background:var(--market-bg);color:var(--market-text)}
+html[data-theme="dark"] .marketplace-page,
+html.theme-dark .marketplace-page,
+body.theme-dark .marketplace-page{
+  --market-border:rgba(255,255,255,.11);
+  --market-border-soft:rgba(255,255,255,.06);
+  --market-text:#f8fafc;
+  --market-text-soft:#dbe4ec;
+  --market-muted:#94a3b8;
+  --market-bg:#080d16;
+  --market-card:#101722;
+  --market-soft:#151e2b;
+  --market-soft-2:#1b2635;
+  --market-accent:#38bdf8;
+  --market-accent-soft:rgba(56,189,248,.12);
+  --market-green:#34d399;
+  --market-green-soft:rgba(52,211,153,.12);
+  --market-purple:#a78bfa;
+  --market-purple-soft:rgba(167,139,250,.12);
+  --market-danger:#f87171;
+  --market-danger-soft:rgba(248,113,113,.12);
+  --market-warning:#fbbf24;
+  --market-warning-soft:rgba(251,191,36,.13);
+  --market-shadow:0 8px 26px rgba(0,0,0,.22);
+  --market-shadow-hover:0 16px 36px rgba(0,0,0,.34);
+}
+html[data-theme="light"] .marketplace-page,
+html.theme-light .marketplace-page,
+body.theme-light .marketplace-page{
+  background:#f7fafc;
+  color:#17242c;
+}
+
+
+
 
 /* =========================================================
    PAGE FOUNDATION
@@ -754,44 +793,29 @@ html[data-theme="dark"] body,[data-theme="dark"] .card,[data-theme="dark"] .pane
    SOCIAL / ENGAGEMENT STATS
    ========================================================= */
 
-.market-card-stats {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-
-  gap: 7px 10px;
-
-  margin-top: auto;
-  padding-top: 1px;
-
-  color: var(--market-muted);
-
-  font-size: 9px;
+.market-card-stats{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px 9px;
+  margin-top:auto;
+  padding-top:2px;
+  color:var(--market-muted);
+  font-size:9px;
+  line-height:1.2;
 }
-
-.market-card-stats span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-
-  white-space: nowrap;
+.market-card-stats span{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  white-space:nowrap;
 }
-
-.market-card-stats i {
-  font-size: 9px;
-}
-
-.market-card-stats .like i {
-  color: #ef5d83;
-}
-
-.market-card-stats .comment i {
-  color: var(--market-purple);
-}
-
-.market-card-stats .share i {
-  color: #21a66c;
-}
+.market-card-stats i{font-size:8px;line-height:1}
+.market-card-stats .like i{color:#ef5d83}
+.market-card-stats .comment i{color:var(--market-purple)}
+.market-card-stats .share i{color:#21a66c}
+.market-card-stats .sold i{color:var(--market-warning)}
 
 
 /* =========================================================
@@ -1952,17 +1976,6 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 @media(prefers-reduced-motion:reduce){
   .plan-card,.wallet-pending-click{transition:none!important}
 }
-/* MARKETPLACE — clean list-card */
-.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
-.product-card{border:1px solid var(--pt-accent-border)!important;border-radius:17px!important;overflow:hidden!important}
-.product-card .product-body{padding:16px!important}.product-title{font-size:16px!important;line-height:1.3!important}.product-creator{font-size:12px!important}
-.market-card-stats,.product-stats{display:flex!important;gap:12px!important;flex-wrap:wrap!important}.market-card-stats>*{white-space:nowrap!important}
-.product-price,.product-access{border-color:var(--pt-accent-border)!important}.product-access.free{color:#15905f!important}.product-access.paid{color:var(--pt-accent)!important}
-.market-search{flex:1 1 100%!important}.market-toolbar{flex-wrap:wrap!important}
-@media(max-width:760px){.market-grid{grid-template-columns:1fr!important}}
-.product-description,.market-card-stats .like,.market-card-stats .share{display:none!important}.product-creator{color:var(--market-muted)!important}.product-creator i{color:var(--pt-accent)!important}.product-bottom{border-top:1px solid var(--pt-accent-border)!important;padding-top:12px!important}.product-stats{font-size:12px!important}.product-stats span{display:inline-flex!important;align-items:center!important;gap:5px!important}.product-stats i{color:var(--pt-accent)!important}.product-price{font-weight:900!important;color:var(--pt-accent)!important}
-
-
 /* PasTele — Canonical Navbar v2026.09.14
    Scope: #navbar only. Safe to load on every app page. */
 
@@ -2547,7 +2560,35 @@ html[data-theme="dark"]{
 @media(max-width:640px){.marketplace-page .container{width:calc(100% - 24px)}.marketplace-page .market-toolbar{align-items:stretch;flex-direction:column}.marketplace-page .market-search{width:100%}}
 
 
-/* Dark mode parity */
-html[data-theme="dark"] .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-page .market-search input,.marketplace-page .market-search .input,.marketplace-page .market-card,.marketplace-page .market-panel{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}.marketplace-page .market-search input::placeholder{color:#94a3b8}.marketplace-page .market-heading .badge{background:rgba(34,158,217,.12);},
-html.theme-dark .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-page .market-search input,.marketplace-page .market-search .input,.marketplace-page .market-card,.marketplace-page .market-panel{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}.marketplace-page .market-search input::placeholder{color:#94a3b8}.marketplace-page .market-heading .badge{background:rgba(34,158,217,.12);},
-body.theme-dark .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-page .market-search input,.marketplace-page .market-search .input,.marketplace-page .market-card,.marketplace-page .market-panel{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}.marketplace-page .market-search input::placeholder{color:#94a3b8}.marketplace-page .market-heading .badge{background:rgba(34,158,217,.12);}
+
+/* Marketplace surface parity — no hard-coded light/dark leftovers. */
+.marketplace-page .market-toolbar,
+.marketplace-page .market-resultbar,
+.marketplace-page .market-grid,
+.marketplace-page .market-rank-grid{color:var(--market-text)}
+.marketplace-page .product-card,
+.marketplace-page .market-panel,
+.marketplace-page .market-tabs,
+.marketplace-page .market-search input{
+  background:var(--market-card);
+  color:var(--market-text);
+  border-color:var(--market-border);
+}
+.marketplace-page .product-description,
+.marketplace-page .product-creator,
+.marketplace-page .market-resultbar span,
+.marketplace-page .market-panel-head small{color:var(--market-muted)}
+.marketplace-page .market-heading h1,
+.marketplace-page .market-panel-head h2,
+.marketplace-page .product-title,
+.marketplace-page .product-price{color:var(--market-text)}
+.marketplace-page .market-search input::placeholder{color:var(--market-muted)}
+.marketplace-page .product-access{background:color-mix(in srgb,var(--market-card) 94%,transparent);color:var(--market-text)}
+html[data-theme="dark"] .marketplace-page .product-thumb,
+html.theme-dark .marketplace-page .product-thumb,
+body.theme-dark .marketplace-page .product-thumb{background:linear-gradient(135deg,rgba(56,189,248,.10),rgba(167,139,250,.10))}
+html[data-theme="dark"] .marketplace-page .product-access,
+html.theme-dark .marketplace-page .product-access,
+body.theme-dark .marketplace-page .product-access{box-shadow:0 4px 12px rgba(0,0,0,.28)}
+.marketplace-page .market-grid{gap:18px}
+@media(max-width:680px){.marketplace-page .market-grid{gap:14px}.market-card-stats{gap:5px 8px;font-size:8.5px}.market-card-stats i{font-size:8px}}
