@@ -2088,24 +2088,87 @@ html[data-theme="dark"]{
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
 
 
-/* =========================================================
-   SETTINGS VISUAL PARITY — existing page stylesheet only
-   The Settings page is the visual reference. Keep page-specific
-   selectors here so existing JS/HTML contracts remain intact.
-   ========================================================= */
+/* ============================================================
+   THEME CONSISTENCY — WALLET PAGE
+   Light theme must never inherit the dark footer palette.
+   ============================================================ */
+html[data-theme="light"] body.wallet-page,
+html.theme-light body.wallet-page,
+body.theme-light.wallet-page{
+  background:var(--wallet-bg);
+  color:var(--wallet-text);
+}
 
-.wallet-page { background:#f5f7fb;color:#111827; }
-.wallet-page .wallet-container{width:min(1160px,calc(100% - 32px));margin:0 auto;}
-.wallet-page .wallet-heading{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
-.wallet-page .wallet-heading-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff;color:#229ed9;border:1px solid rgba(34,158,217,.14);}
-.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
-.wallet-page .wallet-balance-hero:hover,.wallet-page .wallet-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
-.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#6b7280;font-size:12px;font-weight:750;}
-.wallet-page .wallet-copy-btn{width:36px;height:36px;border-radius:10px;background:#eaf7ff;color:#229ed9;}
-@media(max-width:640px){.wallet-page .wallet-container{width:calc(100% - 24px)}.wallet-page .wallet-heading{align-items:flex-start;flex-wrap:wrap}}
+html[data-theme="light"] .pastele-footer,
+html.theme-light .pastele-footer,
+body.theme-light .pastele-footer{
+  --footer-bg:#ffffff;
+  --footer-surface:#f8fafc;
+  --footer-text:#0f172a;
+  --footer-muted:#64748b;
+  --footer-line:#e5e7eb;
+  background:var(--footer-bg);
+  color:var(--footer-text);
+  border-top:1px solid var(--footer-line);
+}
+html[data-theme="light"] .pastele-footer .footer-brand-name,
+html[data-theme="light"] .pastele-footer .footer-column h3,
+html.theme-light .pastele-footer .footer-brand-name,
+html.theme-light .pastele-footer .footer-column h3,
+body.theme-light .pastele-footer .footer-brand-name,
+body.theme-light .pastele-footer .footer-column h3{
+  color:var(--footer-text)!important;
+}
+html[data-theme="light"] .pastele-footer .footer-description,
+html[data-theme="light"] .pastele-footer .footer-column a,
+html[data-theme="light"] .pastele-footer .footer-copyright,
+html[data-theme="light"] .pastele-footer .footer-meta span,
+html.theme-light .pastele-footer .footer-description,
+html.theme-light .pastele-footer .footer-column a,
+html.theme-light .pastele-footer .footer-copyright,
+html.theme-light .pastele-footer .footer-meta span,
+body.theme-light .pastele-footer .footer-description,
+body.theme-light .pastele-footer .footer-column a,
+body.theme-light .pastele-footer .footer-copyright,
+body.theme-light .pastele-footer .footer-meta span{
+  color:var(--footer-muted)!important;
+}
+html[data-theme="light"] .pastele-footer .footer-bottom,
+html.theme-light .pastele-footer .footer-bottom,
+body.theme-light .pastele-footer .footer-bottom{
+  border-top-color:var(--footer-line);
+}
+html[data-theme="light"] .pastele-footer .footer-dot,
+html.theme-light .pastele-footer .footer-dot,
+body.theme-light .pastele-footer .footer-dot{
+  color:#cbd5e1;
+}
 
+html[data-theme="dark"] .pastele-footer,
+html.theme-dark .pastele-footer,
+body.theme-dark .pastele-footer{
+  background:#0b1220;
+  color:#f8fafc;
+}
 
-/* Dark mode parity */
-html[data-theme="dark"] .wallet-page{background:#0b1220;color:#f8fafc}.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#111827;border-color:#263247;color:#f8fafc}.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#94a3b8}.wallet-page .wallet-heading-icon,.wallet-page .wallet-copy-btn{background:rgba(34,158,217,.12);},
-html.theme-dark .wallet-page{background:#0b1220;color:#f8fafc}.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#111827;border-color:#263247;color:#f8fafc}.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#94a3b8}.wallet-page .wallet-heading-icon,.wallet-page .wallet-copy-btn{background:rgba(34,158,217,.12);},
-body.theme-dark .wallet-page{background:#0b1220;color:#f8fafc}.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#111827;border-color:#263247;color:#f8fafc}.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#94a3b8}.wallet-page .wallet-heading-icon,.wallet-page .wallet-copy-btn{background:rgba(34,158,217,.12);}
+/* Keep all wallet text/icon alignment predictable. */
+.wallet-page .wallet-heading-icon,
+.wallet-page .wallet-card-icon,
+.wallet-page .wallet-quick-icon,
+.wallet-page .panel-icon,
+.wallet-page .wallet-info-icon,
+.wallet-page .wallet-withdraw-icon{
+  flex:0 0 auto;
+}
+.wallet-page .wallet-card-top,
+.wallet-page .wallet-panel-title,
+.wallet-page .wallet-quick-card,
+.wallet-page .wallet-view-all,
+.wallet-page .wallet-withdraw-btn{
+  align-items:center;
+}
+.wallet-page .wallet-quick-content,
+.wallet-page .wallet-panel-title > div,
+.wallet-page .wallet-withdraw-content{
+  min-width:0;
+}
