@@ -1,746 +1,3 @@
-
-/* ============================================================
-   PasTele Premium SaaS Foundation
-   Page-local CSS only: shared visual language without a shared
-   CSS dependency. Layout remains page-specific.
-   ============================================================ */
-:root{
-  --pt-primary:#2563eb;--pt-primary-2:#4f46e5;--pt-text:#0f172a;--pt-muted:#64748b;
-  --pt-border:rgba(148,163,184,.22);--pt-surface:rgba(255,255,255,.86);
-  --pt-shadow:0 18px 55px rgba(15,23,42,.08);--pt-radius:18px;
-}
-html{scroll-behavior:smooth}
-body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-button,input,select,textarea{font:inherit}
-button,.btn{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease,opacity .18s ease}
-button:not(:disabled):hover,.btn:not(.disabled):not([aria-disabled="true"]):hover{transform:translateY(-1px)}
-button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid rgba(37,99,235,.20);outline-offset:2px}
-.card,.panel,.surface,.admin-card,.product-card{border-radius:var(--pt-radius);box-shadow:var(--pt-shadow)}
-input,select,textarea{border-radius:12px}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
-[data-theme="dark"]{--pt-text:#e5e7eb;--pt-muted:#94a3b8;--pt-border:rgba(148,163,184,.18);--pt-surface:rgba(15,23,42,.82);--pt-shadow:0 18px 55px rgba(0,0,0,.28)}
-
-/* PasTele — embedded clean UI system */
-/* PasTele — Shared Clean UI System
-   Visual language aligned with the final Settings page.
-   Loaded after each page stylesheet. Functionality/layout contracts are preserved.
-*/
-.app-page:not(.settings-page-body){
-  --pt-clean-bg:#f5f7fb;
-  --pt-clean-surface:#fff;
-  --pt-clean-surface-soft:#f8fafc;
-  --pt-clean-border:#e5e7eb;
-  --pt-clean-border-strong:#d7dce5;
-  --pt-clean-text:#111827;
-  --pt-clean-text-soft:#4b5563;
-  --pt-clean-muted:#6b7280;
-  --pt-clean-primary:#229ed9;
-  --pt-clean-primary-dark:#168ac1;
-  --pt-clean-primary-soft:#eaf7ff;
-  --pt-clean-shadow-sm:0 2px 8px rgba(15,23,42,.04);
-  --pt-clean-shadow:0 10px 30px rgba(15,23,42,.07);
-  --pt-clean-shadow-lg:0 20px 55px rgba(15,23,42,.12);
-}
-html[data-theme="dark"] .app-page:not(.settings-page-body),
-html.theme-dark .app-page:not(.settings-page-body),
-body.theme-dark.app-page:not(.settings-page-body){
-  --pt-clean-bg:#0b1220;
-  --pt-clean-surface:#111827;
-  --pt-clean-surface-soft:#172033;
-  --pt-clean-border:#263247;
-  --pt-clean-border-strong:#344158;
-  --pt-clean-text:#f8fafc;
-  --pt-clean-text-soft:#cbd5e1;
-  --pt-clean-muted:#94a3b8;
-  --pt-clean-primary-soft:rgba(34,158,217,.12);
-  --pt-clean-shadow-sm:0 2px 8px rgba(0,0,0,.2);
-  --pt-clean-shadow:0 12px 35px rgba(0,0,0,.22);
-  --pt-clean-shadow-lg:0 20px 60px rgba(0,0,0,.35);
-}
-
-/* Make existing page variables inherit the Settings palette where they exist. */
-.app-page:not(.settings-page-body){
-  --pt-primary:var(--pt-clean-primary);
-  --pt-primary-dark:var(--pt-clean-primary-dark);
-  --pt-accent:var(--pt-clean-primary);
-  --primary:var(--pt-clean-primary);
-  --primary-2:var(--pt-clean-primary-dark);
-  --surface:var(--pt-clean-surface);
-  --surface-2:var(--pt-clean-surface-soft);
-  --surface-3:#eef2f7;
-  --line:var(--pt-clean-border);
-  --line-strong:var(--pt-clean-border-strong);
-  --text:var(--pt-clean-text);
-  --muted:var(--pt-clean-muted);
-}
-
-/* Cards / panels — same restrained language as Settings. */
-.app-page:not(.settings-page-body) .card,
-.app-page:not(.settings-page-body) .panel,
-.app-page:not(.settings-page-body) .box,
-.app-page:not(.settings-page-body) .dashboard-card,
-.app-page:not(.settings-page-body) .stat-card,
-.app-page:not(.settings-page-body) .content-card,
-.app-page:not(.settings-page-body) .form-card,
-.app-page:not(.settings-page-body) .create-card,
-.app-page:not(.settings-page-body) .market-card,
-.app-page:not(.settings-page-body) .product-card,
-.app-page:not(.settings-page-body) .payment-card,
-.app-page:not(.settings-page-body) .withdrawal-card,
-.app-page:not(.settings-page-body) .transaction-card,
-.app-page:not(.settings-page-body) .history-card,
-.app-page:not(.settings-page-body) .purchase-card,
-.app-page:not(.settings-page-body) .notification-card,
-.app-page:not(.settings-page-body) .profile-section,
-.app-page:not(.settings-page-body) .settings-card{
-  background:var(--pt-clean-surface)!important;
-  color:var(--pt-clean-text);
-  border:1px solid var(--pt-clean-border)!important;
-  border-radius:16px;
-  box-shadow:var(--pt-clean-shadow-sm)!important;
-}
-.app-page:not(.settings-page-body) .card:hover,
-.app-page:not(.settings-page-body) .panel:hover,
-.app-page:not(.settings-page-body) .product-card:hover,
-.app-page:not(.settings-page-body) .market-card:hover{
-  border-color:var(--pt-clean-border-strong)!important;
-  box-shadow:var(--pt-clean-shadow)!important;
-}
-
-/* Headings and section labels. */
-.app-page:not(.settings-page-body) .page-header,
-.app-page:not(.settings-page-body) .section-head,
-.app-page:not(.settings-page-body) .section-header,
-.app-page:not(.settings-page-body) .content-header,
-.app-page:not(.settings-page-body) .page-title-row{
-  color:var(--pt-clean-text);
-}
-.app-page:not(.settings-page-body) .page-header h1,
-.app-page:not(.settings-page-body) .section-head h1,
-.app-page:not(.settings-page-body) .section-head h2,
-.app-page:not(.settings-page-body) .section-header h1,
-.app-page:not(.settings-page-body) .section-header h2,
-.app-page:not(.settings-page-body) .content-header h1,
-.app-page:not(.settings-page-body) .content-header h2,
-.app-page:not(.settings-page-body) .page-title-row h1,
-.app-page:not(.settings-page-body) .page-title-row h2{
-  color:var(--pt-clean-text);
-  letter-spacing:-.025em;
-}
-.app-page:not(.settings-page-body) .page-header p,
-.app-page:not(.settings-page-body) .section-head p,
-.app-page:not(.settings-page-body) .section-header p,
-.app-page:not(.settings-page-body) .content-header p{
-  color:var(--pt-clean-muted);
-}
-
-/* Icon boxes: match Settings icon treatment. */
-.app-page:not(.settings-page-body) .iconbox,
-.app-page:not(.settings-page-body) .section-icon,
-.app-page:not(.settings-page-body) .stat-icon,
-.app-page:not(.settings-page-body) .kpi-icon,
-.app-page:not(.settings-page-body) .detail-icon,
-.app-page:not(.settings-page-body) .feature-icon,
-.app-page:not(.settings-page-body) .step-icon,
-.app-page:not(.settings-page-body) .preview-icon,
-.app-page:not(.settings-page-body) .profile-quick-icon,
-.app-page:not(.settings-page-body) .view-icon,
-.app-page:not(.settings-page-body) .payment-icon,
-.app-page:not(.settings-page-body) .withdraw-icon,
-.app-page:not(.settings-page-body) .wallet-icon{
-  background:var(--pt-clean-primary-soft)!important;
-  border-color:rgba(34,158,217,.14)!important;
-  color:var(--pt-clean-primary)!important;
-}
-
-/* Buttons. */
-.app-page:not(.settings-page-body) .btn,
-.app-page:not(.settings-page-body) .button,
-.app-page:not(.settings-page-body) button:not(.navbar-toggle):not(.menu-toggle){
-  border-radius:12px;
-  font-weight:750;
-  -webkit-tap-highlight-color:transparent;
-}
-.app-page:not(.settings-page-body) .btn.primary,
-.app-page:not(.settings-page-body) .btn-primary,
-.app-page:not(.settings-page-body) .button-primary,
-.app-page:not(.settings-page-body) button.primary,
-.app-page:not(.settings-page-body) .btn-success{
-  background:var(--pt-clean-primary)!important;
-  border-color:var(--pt-clean-primary)!important;
-  color:#fff!important;
-  box-shadow:0 8px 20px rgba(34,158,217,.18)!important;
-}
-.app-page:not(.settings-page-body) .btn.primary:hover,
-.app-page:not(.settings-page-body) .btn-primary:hover,
-.app-page:not(.settings-page-body) .button-primary:hover{
-  background:var(--pt-clean-primary-dark)!important;
-  border-color:var(--pt-clean-primary-dark)!important;
-}
-
-/* Forms. */
-.app-page:not(.settings-page-body) input:not([type="checkbox"]):not([type="radio"]),
-.app-page:not(.settings-page-body) select,
-.app-page:not(.settings-page-body) textarea,
-.app-page:not(.settings-page-body) .input{
-  background:var(--pt-clean-surface)!important;
-  color:var(--pt-clean-text)!important;
-  border:1px solid var(--pt-clean-border)!important;
-  border-radius:12px;
-}
-.app-page:not(.settings-page-body) input:not([type="checkbox"]):not([type="radio"]):focus,
-.app-page:not(.settings-page-body) select:focus,
-.app-page:not(.settings-page-body) textarea:focus,
-.app-page:not(.settings-page-body) .input:focus{
-  border-color:var(--pt-clean-primary)!important;
-  box-shadow:0 0 0 3px rgba(34,158,217,.10)!important;
-  outline:none;
-}
-.app-page:not(.settings-page-body) label{color:var(--pt-clean-text-soft)}
-.app-page:not(.settings-page-body) .field-hint,
-.app-page:not(.settings-page-body) small,
-.app-page:not(.settings-page-body) .muted{color:var(--pt-clean-muted)}
-
-/* Tables/lists/status rows. */
-.app-page:not(.settings-page-body) .list-item,
-.app-page:not(.settings-page-body) .table-row,
-.app-page:not(.settings-page-body) .history-item,
-.app-page:not(.settings-page-body) .notification-item{
-  border-color:var(--pt-clean-border)!important;
-}
-.app-page:not(.settings-page-body) .list-item:hover,
-.app-page:not(.settings-page-body) .history-item:hover,
-.app-page:not(.settings-page-body) .notification-item:hover{
-  background:var(--pt-clean-surface-soft)!important;
-}
-
-/* Pills / badges. */
-.app-page:not(.settings-page-body) .badge,
-.app-page:not(.settings-page-body) .pill,
-.app-page:not(.settings-page-body) .status-badge,
-.app-page:not(.settings-page-body) .tag{
-  border-radius:999px;
-}
-.app-page:not(.settings-page-body) .badge.primary,
-.app-page:not(.settings-page-body) .status-badge.primary,
-.app-page:not(.settings-page-body) .tag.primary{
-  background:var(--pt-clean-primary-soft)!important;
-  color:var(--pt-clean-primary)!important;
-  border-color:rgba(34,158,217,.16)!important;
-}
-
-/* Responsive rhythm aligned with Settings. */
-@media (max-width:900px){
-  .app-page:not(.settings-page-body) .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  .app-page:not(.settings-page-body) .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-}
-@media (max-width:640px){
-  .app-page:not(.settings-page-body) .grid-4,
-  .app-page:not(.settings-page-body) .grid-3,
-  .app-page:not(.settings-page-body) .grid-2{grid-template-columns:1fr!important}
-  .app-page:not(.settings-page-body) .card,
-  .app-page:not(.settings-page-body) .panel,
-  .app-page:not(.settings-page-body) .box,
-  .app-page:not(.settings-page-body) .dashboard-card,
-  .app-page:not(.settings-page-body) .form-card,
-  .app-page:not(.settings-page-body) .create-card,
-  .app-page:not(.settings-page-body) .product-card,
-  .app-page:not(.settings-page-body) .market-card{border-radius:14px}
-  .app-page:not(.settings-page-body) .btn,
-  .app-page:not(.settings-page-body) .button{min-height:44px}
-}
-
-
-/* =========================================================
-   PasTele — UNIFIED PAGE POLISH
-   Reference: Settings page visual language
-   Applies to app pages while preserving existing JS/HTML
-   ========================================================= */
-
-.app-page:not(.settings-page-body) {
-  background: var(--pt-clean-bg) !important;
-  color: var(--pt-clean-text) !important;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-.app-page:not(.settings-page-body) main,
-.app-page:not(.settings-page-body) .wallet-main,
-.app-page:not(.settings-page-body) .withdrawals-main,
-.app-page:not(.settings-page-body) .purchases-main {
-  min-height: calc(100vh - 72px);
-}
-
-.app-page:not(.settings-page-body) > section,
-.app-page:not(.settings-page-body) .section,
-.app-page:not(.settings-page-body) .dashboard-fixed {
-  width: 100%;
-  padding-top: 34px;
-  padding-bottom: 70px;
-}
-
-.app-page:not(.settings-page-body) .container,
-.app-page:not(.settings-page-body) .dash-container,
-.app-page:not(.settings-page-body) .wallet-container,
-.app-page:not(.settings-page-body) .withdrawals-container,
-.app-page:not(.settings-page-body) .profile-page,
-.app-page:not(.settings-page-body) .my-products-container,
-.app-page:not(.settings-page-body) .purchases-container,
-.app-page:not(.settings-page-body) .plans-wrap {
-  width: min(1160px, calc(100% - 32px)) !important;
-  max-width: 1160px;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* Unified page heading */
-.app-page:not(.settings-page-body) .page-heading,
-.app-page:not(.settings-page-body) .page-header,
-.app-page:not(.settings-page-body) .market-header,
-.app-page:not(.settings-page-body) .wallet-heading,
-.app-page:not(.settings-page-body) .withdraw-header,
-.app-page:not(.settings-page-body) .purchases-header,
-.app-page:not(.settings-page-body) .tx-header,
-.app-page:not(.settings-page-body) .plan-hero,
-.app-page:not(.settings-page-body) .profile-heading,
-.app-page:not(.settings-page-body) .dash-head {
-  color: var(--pt-clean-text);
-}
-
-.app-page:not(.settings-page-body) h1,
-.app-page:not(.settings-page-body) h2,
-.app-page:not(.settings-page-body) h3,
-.app-page:not(.settings-page-body) h4 {
-  color: var(--pt-clean-text);
-}
-
-.app-page:not(.settings-page-body) p,
-.app-page:not(.settings-page-body) .muted,
-.app-page:not(.settings-page-body) .eyebrow,
-.app-page:not(.settings-page-body) .field-hint {
-  color: var(--pt-clean-muted);
-}
-
-/* Consistent icon + text rhythm */
-.app-page:not(.settings-page-body) .badge,
-.app-page:not(.settings-page-body) .page-badge,
-.app-page:not(.settings-page-body) .wallet-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: var(--pt-clean-primary-soft) !important;
-  border: 1px solid rgba(34,158,217,.16) !important;
-  color: var(--pt-clean-primary) !important;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .06em;
-}
-
-.app-page:not(.settings-page-body) .badge i,
-.app-page:not(.settings-page-body) .page-badge i,
-.app-page:not(.settings-page-body) .wallet-badge i,
-.app-page:not(.settings-page-body) .eyebrow i,
-.app-page:not(.settings-page-body) .section-kicker i {
-  flex: 0 0 auto;
-}
-
-.app-page:not(.settings-page-body) .iconbox,
-.app-page:not(.settings-page-body) .section-icon,
-.app-page:not(.settings-page-body) .stat-icon,
-.app-page:not(.settings-page-body) .kpi-icon,
-.app-page:not(.settings-page-body) .detail-icon,
-.app-page:not(.settings-page-body) .feature-icon,
-.app-page:not(.settings-page-body) .step-icon,
-.app-page:not(.settings-page-body) .preview-icon,
-.app-page:not(.settings-page-body) .profile-quick-icon,
-.app-page:not(.settings-page-body) .view-icon,
-.app-page:not(.settings-page-body) .payment-icon,
-.app-page:not(.settings-page-body) .withdraw-icon,
-.app-page:not(.settings-page-body) .wallet-icon,
-.app-page:not(.settings-page-body) .overview-icon,
-.app-page:not(.settings-page-body) .purchase-stat-icon,
-.app-page:not(.settings-page-body) .tx-summary-icon,
-.app-page:not(.settings-page-body) .plan-icon,
-.app-page:not(.settings-page-body) .benefit-icon,
-.app-page:not(.settings-page-body) .premium-icon,
-.app-page:not(.settings-page-body) .profile-stat-icon {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--pt-clean-primary-soft) !important;
-  color: var(--pt-clean-primary) !important;
-  border: 1px solid rgba(34,158,217,.14) !important;
-  box-shadow: none !important;
-}
-
-/* Do not let colorful legacy modifiers change the icon/text alignment. */
-.app-page:not(.settings-page-body) .iconbox i,
-.app-page:not(.settings-page-body) .section-icon i,
-.app-page:not(.settings-page-body) .stat-icon i,
-.app-page:not(.settings-page-body) .overview-icon i,
-.app-page:not(.settings-page-body) .purchase-stat-icon i,
-.app-page:not(.settings-page-body) .tx-summary-icon i,
-.app-page:not(.settings-page-body) .plan-icon i,
-.app-page:not(.settings-page-body) .benefit-icon i,
-.app-page:not(.settings-page-body) .premium-icon i,
-.app-page:not(.settings-page-body) .profile-stat-icon i {
-  color: inherit !important;
-}
-
-/* Clean card system */
-.app-page:not(.settings-page-body) .card,
-.app-page:not(.settings-page-body) .panel,
-.app-page:not(.settings-page-body) .box,
-.app-page:not(.settings-page-body) .dashboard-card,
-.app-page:not(.settings-page-body) .stat-card,
-.app-page:not(.settings-page-body) .content-card,
-.app-page:not(.settings-page-body) .form-card,
-.app-page:not(.settings-page-body) .create-card,
-.app-page:not(.settings-page-body) .market-card,
-.app-page:not(.settings-page-body) .product-card,
-.app-page:not(.settings-page-body) .payment-card,
-.app-page:not(.settings-page-body) .withdrawal-card,
-.app-page:not(.settings-page-body) .transaction-card,
-.app-page:not(.settings-page-body) .history-card,
-.app-page:not(.settings-page-body) .purchase-card,
-.app-page:not(.settings-page-body) .notification-card,
-.app-page:not(.settings-page-body) .profile-section,
-.app-page:not(.settings-page-body) .overview-card,
-.app-page:not(.settings-page-body) .wallet-card,
-.app-page:not(.settings-page-body) .purchase-stat-card,
-.app-page:not(.settings-page-body) .tx-summary-item,
-.app-page:not(.settings-page-body) .benefit-card,
-.app-page:not(.settings-page-body) .plan-card,
-.app-page:not(.settings-page-body) .premium-benefit,
-.app-page:not(.settings-page-body) .premium-benefit-item {
-  border-radius: 16px !important;
-  border: 1px solid var(--pt-clean-border) !important;
-  background: var(--pt-clean-surface) !important;
-  color: var(--pt-clean-text) !important;
-  box-shadow: var(--pt-clean-shadow-sm) !important;
-}
-
-/* Remove excessive gradients / visual noise from page-level cards */
-.app-page:not(.settings-page-body) .overview-card,
-.app-page:not(.settings-page-body) .wallet-card,
-.app-page:not(.settings-page-body) .purchase-stat-card,
-.app-page:not(.settings-page-body) .tx-summary-item,
-.app-page:not(.settings-page-body) .benefit-card,
-.app-page:not(.settings-page-body) .plan-card {
-  background-image: none !important;
-}
-
-/* Consistent spacing between content blocks */
-.app-page:not(.settings-page-body) .dash-stat-grid,
-.app-page:not(.settings-page-body) .count-grid,
-.app-page:not(.settings-page-body) .wallet-stats,
-.app-page:not(.settings-page-body) .withdraw-stats,
-.app-page:not(.settings-page-body) .products-overview,
-.app-page:not(.settings-page-body) .purchases-summary,
-.app-page:not(.settings-page-body) .tx-summary,
-.app-page:not(.settings-page-body) .market-grid,
-.app-page:not(.settings-page-body) .plan-grid,
-.app-page:not(.settings-page-body) .profile-social-stats,
-.app-page:not(.settings-page-body) .profile-quick-actions {
-  gap: 16px !important;
-}
-
-.app-page:not(.settings-page-body) .panel,
-.app-page:not(.settings-page-body) .card,
-.app-page:not(.settings-page-body) .box,
-.app-page:not(.settings-page-body) .dashboard-card,
-.app-page:not(.settings-page-body) .form-card {
-  margin-bottom: 16px;
-}
-
-/* Search and form controls: icon must never overlap text */
-.app-page:not(.settings-page-body) .market-search,
-.app-page:not(.settings-page-body) .search-box,
-.app-page:not(.settings-page-body) .tx-search,
-.app-page:not(.settings-page-body) .purchases-search,
-.app-page:not(.settings-page-body) .search-wrap {
-  position: relative;
-  min-width: 0;
-}
-
-.app-page:not(.settings-page-body) .market-search input,
-.app-page:not(.settings-page-body) .search-box input,
-.app-page:not(.settings-page-body) .tx-search input,
-.app-page:not(.settings-page-body) .purchases-search input,
-.app-page:not(.settings-page-body) .search-wrap input {
-  width: 100%;
-  min-height: 46px;
-  padding-left: 46px !important;
-  padding-right: 44px !important;
-}
-
-.app-page:not(.settings-page-body) .market-search > i:first-child,
-.app-page:not(.settings-page-body) .search-box > i:first-child,
-.app-page:not(.settings-page-body) .tx-search > i:first-child,
-.app-page:not(.settings-page-body) .purchases-search > i:first-child,
-.app-page:not(.settings-page-body) .search-wrap > i:first-child {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  pointer-events: none;
-  color: var(--pt-clean-muted) !important;
-}
-
-.app-page:not(.settings-page-body) input::placeholder,
-.app-page:not(.settings-page-body) textarea::placeholder {
-  color: var(--pt-clean-muted) !important;
-  opacity: .9;
-}
-
-/* Selects: keep filter icon and text separated */
-.app-page:not(.settings-page-body) .select-wrap {
-  position: relative;
-  min-width: 0;
-}
-.app-page:not(.settings-page-body) .select-wrap select {
-  min-height: 44px;
-  padding-left: 42px !important;
-  padding-right: 36px !important;
-}
-.app-page:not(.settings-page-body) .select-wrap > i:first-child {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Toolbars */
-.app-page:not(.settings-page-body) .market-toolbar,
-.app-page:not(.settings-page-body) .products-toolbar,
-.app-page:not(.settings-page-body) .purchases-toolbar,
-.app-page:not(.settings-page-body) .tx-toolbar {
-  gap: 12px !important;
-  margin-top: 18px;
-  margin-bottom: 20px;
-}
-
-/* Buttons follow Settings: compact, readable, consistent */
-.app-page:not(.settings-page-body) .btn,
-.app-page:not(.settings-page-body) button,
-.app-page:not(.settings-page-body) .button {
-  min-height: 42px;
-  border-radius: 12px;
-  font-weight: 750;
-  letter-spacing: -.005em;
-}
-
-.app-page:not(.settings-page-body) .btn i,
-.app-page:not(.settings-page-body) button i,
-.app-page:not(.settings-page-body) .button i {
-  margin-right: 7px;
-  flex: 0 0 auto;
-}
-
-.app-page:not(.settings-page-body) .btn.primary,
-.app-page:not(.settings-page-body) .btn-primary,
-.app-page:not(.settings-page-body) .button-primary,
-.app-page:not(.settings-page-body) button.primary,
-.app-page:not(.settings-page-body) .btn-success,
-.app-page:not(.settings-page-body) .create-product-btn {
-  background: var(--pt-clean-primary) !important;
-  border-color: var(--pt-clean-primary) !important;
-  color: #fff !important;
-}
-
-/* Lists / rows */
-.app-page:not(.settings-page-body) .list-item,
-.app-page:not(.settings-page-body) .history-item,
-.app-page:not(.settings-page-body) .notification-item,
-.app-page:not(.settings-page-body) .table-row,
-.app-page:not(.settings-page-body) .transaction-row,
-.app-page:not(.settings-page-body) .purchase-row {
-  border-color: var(--pt-clean-border) !important;
-  color: var(--pt-clean-text);
-}
-
-.app-page:not(.settings-page-body) .list-item:hover,
-.app-page:not(.settings-page-body) .history-item:hover,
-.app-page:not(.settings-page-body) .notification-item:hover,
-.app-page:not(.settings-page-body) .transaction-row:hover,
-.app-page:not(.settings-page-body) .purchase-row:hover {
-  background: var(--pt-clean-surface-soft) !important;
-}
-
-/* Tables stay readable on mobile */
-.app-page:not(.settings-page-body) table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.app-page:not(.settings-page-body) th {
-  color: var(--pt-clean-muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-.app-page:not(.settings-page-body) td {
-  color: var(--pt-clean-text);
-  border-color: var(--pt-clean-border);
-}
-
-/* Status colors remain semantic, not decorative */
-.app-page:not(.settings-page-body) .status-badge,
-.app-page:not(.settings-page-body) .status,
-.app-page:not(.settings-page-body) .pill,
-.app-page:not(.settings-page-body) .tag {
-  border-radius: 999px;
-  font-weight: 750;
-}
-
-/* Profile / wallet / withdrawal hero panels */
-.app-page:not(.settings-page-body) .profile-hero,
-.app-page:not(.settings-page-body) .wallet-balance-hero,
-.app-page:not(.settings-page-body) .balance-panel,
-.app-page:not(.settings-page-body) .plan-profile,
-.app-page:not(.settings-page-body) .plan-hero {
-  border: 1px solid var(--pt-clean-border);
-  border-radius: 18px;
-  background: var(--pt-clean-surface) !important;
-  color: var(--pt-clean-text);
-  box-shadow: var(--pt-clean-shadow-sm);
-  background-image: none !important;
-}
-
-/* Marketplace cards: clean thumbnail/content separation */
-.app-page:not(.settings-page-body) .market-card,
-.app-page:not(.settings-page-body) .product-card {
-  overflow: hidden;
-}
-.app-page:not(.settings-page-body) .market-card img,
-.app-page:not(.settings-page-body) .product-card img {
-  display: block;
-}
-.app-page:not(.settings-page-body) .market-card .card-body,
-.app-page:not(.settings-page-body) .product-card .card-body,
-.app-page:not(.settings-page-body) .market-card .content,
-.app-page:not(.settings-page-body) .product-card .content {
-  color: var(--pt-clean-text);
-}
-
-/* Footer separation */
-.app-page:not(.settings-page-body) footer {
-  border-top: 1px solid var(--pt-clean-border);
-  background: var(--pt-clean-surface);
-  color: var(--pt-clean-muted);
-}
-
-/* Dark mode */
-html[data-theme="dark"] .app-page:not(.settings-page-body),
-html.theme-dark .app-page:not(.settings-page-body),
-body.theme-dark.app-page:not(.settings-page-body) {
-  background: var(--pt-clean-bg) !important;
-}
-html[data-theme="dark"] .app-page:not(.settings-page-body) footer,
-html.theme-dark .app-page:not(.settings-page-body) footer {
-  background: var(--pt-clean-surface);
-}
-
-/* Mobile — Settings-like rhythm */
-@media (max-width: 640px) {
-  .app-page:not(.settings-page-body) > section,
-  .app-page:not(.settings-page-body) .section,
-  .app-page:not(.settings-page-body) .dashboard-fixed {
-    padding-top: 22px;
-    padding-bottom: 48px;
-  }
-
-  .app-page:not(.settings-page-body) .container,
-  .app-page:not(.settings-page-body) .dash-container,
-  .app-page:not(.settings-page-body) .wallet-container,
-  .app-page:not(.settings-page-body) .withdrawals-container,
-  .app-page:not(.settings-page-body) .profile-page,
-  .app-page:not(.settings-page-body) .my-products-container,
-  .app-page:not(.settings-page-body) .purchases-container,
-  .app-page:not(.settings-page-body) .plans-wrap {
-    width: min(100% - 20px, 1160px) !important;
-  }
-
-  .app-page:not(.settings-page-body) .card,
-  .app-page:not(.settings-page-body) .panel,
-  .app-page:not(.settings-page-body) .box,
-  .app-page:not(.settings-page-body) .dashboard-card,
-  .app-page:not(.settings-page-body) .market-card,
-  .app-page:not(.settings-page-body) .product-card,
-  .app-page:not(.settings-page-body) .wallet-card,
-  .app-page:not(.settings-page-body) .purchase-stat-card,
-  .app-page:not(.settings-page-body) .tx-summary-item,
-  .app-page:not(.settings-page-body) .plan-card,
-  .app-page:not(.settings-page-body) .profile-hero,
-  .app-page:not(.settings-page-body) .wallet-balance-hero,
-  .app-page:not(.settings-page-body) .balance-panel,
-  .app-page:not(.settings-page-body) .plan-profile,
-  .app-page:not(.settings-page-body) .plan-hero {
-    border-radius: 14px !important;
-  }
-
-  .app-page:not(.settings-page-body) .iconbox,
-  .app-page:not(.settings-page-body) .section-icon,
-  .app-page:not(.settings-page-body) .stat-icon,
-  .app-page:not(.settings-page-body) .overview-icon,
-  .app-page:not(.settings-page-body) .purchase-stat-icon,
-  .app-page:not(.settings-page-body) .tx-summary-icon,
-  .app-page:not(.settings-page-body) .plan-icon,
-  .app-page:not(.settings-page-body) .benefit-icon,
-  .app-page:not(.settings-page-body) .premium-icon,
-  .app-page:not(.settings-page-body) .profile-stat-icon {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border-radius: 11px;
-  }
-
-  .app-page:not(.settings-page-body) .market-toolbar,
-  .app-page:not(.settings-page-body) .products-toolbar,
-  .app-page:not(.settings-page-body) .purchases-toolbar,
-  .app-page:not(.settings-page-body) .tx-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .app-page:not(.settings-page-body) .market-search,
-  .app-page:not(.settings-page-body) .search-box,
-  .app-page:not(.settings-page-body) .tx-search,
-  .app-page:not(.settings-page-body) .purchases-search {
-    width: 100%;
-  }
-}
-
-@media (min-width: 641px) {
-  .app-page:not(.settings-page-body) .market-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* Prevent accidental horizontal overflow from legacy page CSS */
-.app-page:not(.settings-page-body) .container,
-.app-page:not(.settings-page-body) .dash-container,
-.app-page:not(.settings-page-body) .wallet-container,
-.app-page:not(.settings-page-body) .withdrawals-container,
-.app-page:not(.settings-page-body) .profile-page,
-.app-page:not(.settings-page-body) .my-products-container,
-.app-page:not(.settings-page-body) .purchases-container,
-.app-page:not(.settings-page-body) .plans-wrap,
-.app-page:not(.settings-page-body) .card,
-.app-page:not(.settings-page-body) .panel {
-  min-width: 0;
-}
-
 /* CLEAN REBUILD — marketplace.css */
 /* PasTele UI — CLEAN SAAS DESIGN SYSTEM v2026.09
    One page = one stylesheet. No cascade patches. */
@@ -836,45 +93,6 @@ html[data-theme="dark"] body,[data-theme="dark"] .card,[data-theme="dark"] .pane
   min-width: 0;
 }
 
-/* =========================================================
-   MARKETPLACE THEME PARITY
-   Light = fully light, Dark = fully dark.
-   ========================================================= */
-.marketplace-page{background:var(--market-bg);color:var(--market-text)}
-html[data-theme="dark"] .marketplace-page,
-html.theme-dark .marketplace-page,
-body.theme-dark .marketplace-page{
-  --market-border:rgba(255,255,255,.11);
-  --market-border-soft:rgba(255,255,255,.06);
-  --market-text:#f8fafc;
-  --market-text-soft:#dbe4ec;
-  --market-muted:#94a3b8;
-  --market-bg:#080d16;
-  --market-card:#101722;
-  --market-soft:#151e2b;
-  --market-soft-2:#1b2635;
-  --market-accent:#38bdf8;
-  --market-accent-soft:rgba(56,189,248,.12);
-  --market-green:#34d399;
-  --market-green-soft:rgba(52,211,153,.12);
-  --market-purple:#a78bfa;
-  --market-purple-soft:rgba(167,139,250,.12);
-  --market-danger:#f87171;
-  --market-danger-soft:rgba(248,113,113,.12);
-  --market-warning:#fbbf24;
-  --market-warning-soft:rgba(251,191,36,.13);
-  --market-shadow:0 8px 26px rgba(0,0,0,.22);
-  --market-shadow-hover:0 16px 36px rgba(0,0,0,.34);
-}
-html[data-theme="light"] .marketplace-page,
-html.theme-light .marketplace-page,
-body.theme-light .marketplace-page{
-  background:#f7fafc;
-  color:#17242c;
-}
-
-
-
 
 /* =========================================================
    PAGE FOUNDATION
@@ -917,32 +135,11 @@ body.theme-light .marketplace-page{
   letter-spacing: -.025em;
 }
 
-.market-heading .muted,
-.market-heading .market-subtitle {
+.market-heading .muted {
   margin: 0;
   color: var(--market-muted);
   font-size: 12px;
   line-height: 1.55;
-  letter-spacing: .01em;
-}
-
-.market-heading .market-subtitle {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.market-heading .market-subtitle span {
-  color: var(--market-accent);
-  font-weight: 900;
-}
-
-@media (max-width: 700px) {
-  .market-heading .market-subtitle {
-    font-size: 11px;
-    gap: 5px;
-  }
 }
 
 
@@ -1250,9 +447,9 @@ body.theme-light .marketplace-page{
   display: grid;
 
   grid-template-columns:
-    repeat(4, minmax(0, 1fr));
+    repeat(3, minmax(0, 1fr));
 
-  gap: 24px;
+  gap: 12px;
 
   width: 100%;
   min-height: 50px;
@@ -1321,7 +518,7 @@ body.theme-light .marketplace-page{
   place-items: center;
 
   width: 100%;
-  height: 128px;
+  height: 142px;
 
   overflow: hidden;
 
@@ -1557,29 +754,44 @@ body.theme-light .marketplace-page{
    SOCIAL / ENGAGEMENT STATS
    ========================================================= */
 
-.market-card-stats{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:5px 9px;
-  margin-top:auto;
-  padding-top:2px;
-  color:var(--market-muted);
-  font-size:9px;
-  line-height:1.2;
+.market-card-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 7px 10px;
+
+  margin-top: auto;
+  padding-top: 1px;
+
+  color: var(--market-muted);
+
+  font-size: 9px;
 }
-.market-card-stats span{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  min-width:0;
-  white-space:nowrap;
+
+.market-card-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  white-space: nowrap;
 }
-.market-card-stats i{font-size:8px;line-height:1}
-.market-card-stats .like i{color:#ef5d83}
-.market-card-stats .comment i{color:var(--market-purple)}
-.market-card-stats .share i{color:#21a66c}
-.market-card-stats .sold i{color:var(--market-warning)}
+
+.market-card-stats i {
+  font-size: 9px;
+}
+
+.market-card-stats .like i {
+  color: #ef5d83;
+}
+
+.market-card-stats .comment i {
+  color: var(--market-purple);
+}
+
+.market-card-stats .share i {
+  color: #21a66c;
+}
 
 
 /* =========================================================
@@ -2322,7 +1534,6 @@ body.theme-dark .product-thumb {
   .market-grid {
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
-    gap: 20px;
   }
 
 }
@@ -2419,7 +1630,7 @@ body.theme-dark .product-thumb {
 
   .market-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 9px;
   }
 
   .product-card {
@@ -2427,7 +1638,7 @@ body.theme-dark .product-thumb {
   }
 
   .product-thumb {
-    height: 135px;
+    height: 155px;
   }
 
   .product-body {
@@ -2741,6 +1952,17 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 @media(prefers-reduced-motion:reduce){
   .plan-card,.wallet-pending-click{transition:none!important}
 }
+/* MARKETPLACE — clean list-card */
+.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+.product-card{border:1px solid var(--pt-accent-border)!important;border-radius:17px!important;overflow:hidden!important}
+.product-card .product-body{padding:16px!important}.product-title{font-size:16px!important;line-height:1.3!important}.product-creator{font-size:12px!important}
+.market-card-stats,.product-stats{display:flex!important;gap:12px!important;flex-wrap:wrap!important}.market-card-stats>*{white-space:nowrap!important}
+.product-price,.product-access{border-color:var(--pt-accent-border)!important}.product-access.free{color:#15905f!important}.product-access.paid{color:var(--pt-accent)!important}
+.market-search{flex:1 1 100%!important}.market-toolbar{flex-wrap:wrap!important}
+@media(max-width:760px){.market-grid{grid-template-columns:1fr!important}}
+.product-description,.market-card-stats .like,.market-card-stats .share{display:none!important}.product-creator{color:var(--market-muted)!important}.product-creator i{color:var(--pt-accent)!important}.product-bottom{border-top:1px solid var(--pt-accent-border)!important;padding-top:12px!important}.product-stats{font-size:12px!important}.product-stats span{display:inline-flex!important;align-items:center!important;gap:5px!important}.product-stats i{color:var(--pt-accent)!important}.product-price{font-weight:900!important;color:var(--pt-accent)!important}
+
+
 /* PasTele — Canonical Navbar v2026.09.14
    Scope: #navbar only. Safe to load on every app page. */
 
@@ -3320,779 +2542,52 @@ html[data-theme="dark"]{
 .marketplace-page .market-search input:focus,.marketplace-page .market-search .input:focus{border-color:#229ed9!important;box-shadow:0 0 0 3px rgba(34,158,217,.10)!important;outline:none;}
 .marketplace-page .market-search > .fa-xmark { position:absolute;right:14px;top:50%;transform:translateY(-50%); }
 .marketplace-page .market-tab { border-radius:999px!important; font-weight:750; }
-.marketplace-page .market-grid { gap:24px; }
+.marketplace-page .market-grid { gap:16px; }
 .marketplace-page .market-card,.marketplace-page .market-panel { border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);background:#fff; }
 @media(max-width:640px){.marketplace-page .container{width:calc(100% - 24px)}.marketplace-page .market-toolbar{align-items:stretch;flex-direction:column}.marketplace-page .market-search{width:100%}}
 
 
-
-/* Marketplace surface parity — no hard-coded light/dark leftovers. */
-.marketplace-page .market-toolbar,
-.marketplace-page .market-resultbar,
-.marketplace-page .market-grid,
-.marketplace-page .market-rank-grid{color:var(--market-text)}
-.marketplace-page .product-card,
-.marketplace-page .market-panel,
-.marketplace-page .market-tabs,
-.marketplace-page .market-search input{
-  background:var(--market-card);
-  color:var(--market-text);
-  border-color:var(--market-border);
-}
-.marketplace-page .product-description,
-.marketplace-page .product-creator,
-.marketplace-page .market-resultbar span,
-.marketplace-page .market-panel-head small{color:var(--market-muted)}
-.marketplace-page .market-heading h1,
-.marketplace-page .market-panel-head h2,
-.marketplace-page .product-title,
-.marketplace-page .product-price{color:var(--market-text)}
-.marketplace-page .market-search input::placeholder{color:var(--market-muted)}
-.marketplace-page .product-access{background:color-mix(in srgb,var(--market-card) 94%,transparent);color:var(--market-text)}
-html[data-theme="dark"] .marketplace-page .product-thumb,
-html.theme-dark .marketplace-page .product-thumb,
-body.theme-dark .marketplace-page .product-thumb{background:linear-gradient(135deg,rgba(56,189,248,.10),rgba(167,139,250,.10))}
-html[data-theme="dark"] .marketplace-page .product-access,
-html.theme-dark .marketplace-page .product-access,
-body.theme-dark .marketplace-page .product-access{box-shadow:0 4px 12px rgba(0,0,0,.28)}
-.marketplace-page .market-grid{gap:18px}
-@media(max-width:680px){.marketplace-page .market-grid{gap:14px}.market-card-stats{gap:5px 8px;font-size:8.5px}.market-card-stats i{font-size:8px}}
-
-/* =========================================================
-   MARKETPLACE FINAL CARD CLEANUP
-   ========================================================= */
-.marketplace-page .market-heading{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  justify-content:flex-start;
-  gap:0;
-  min-width:0;
-}
-.marketplace-page .market-heading .badge{margin-bottom:10px}
-.marketplace-page .market-heading h1{margin:0 0 6px;line-height:1.12}
-.marketplace-page .market-heading .market-subtitle{
-  display:block;
-  margin:0;
-  max-width:620px;
-  line-height:1.5;
-}
-.marketplace-page .market-heading .market-subtitle span{margin:0 4px}
-
-.marketplace-page .market-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:24px;
-  align-items:stretch;
-}
-.marketplace-page .product-card{
-  width:100%;
-  min-width:0;
-  border:1px solid var(--market-border);
-  border-radius:16px;
-  background:var(--market-card);
-  box-shadow:0 3px 12px rgba(15,23,42,.055);
-  overflow:hidden;
-}
-.marketplace-page .product-card + .product-card{margin:0}
-.marketplace-page .product-thumb{height:140px}
-.marketplace-page .product-body{padding:13px 14px 14px}
-.marketplace-page .product-title{font-size:13px;line-height:1.35}
-.marketplace-page .product-description{font-size:11px;line-height:1.5}
-.marketplace-page .market-card-stats{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:10px;font-size:9px;line-height:1.3}
-.marketplace-page .market-card-stats i{font-size:9px}
-
-html[data-theme="dark"] .marketplace-page .product-card,
-html.theme-dark .marketplace-page .product-card,
-body.theme-dark .marketplace-page .product-card{
-  background:var(--market-card);
-  border-color:var(--market-border);
-  box-shadow:0 4px 16px rgba(0,0,0,.22);
-}
-
-@media(max-width:1000px){
-  .marketplace-page .market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
-}
-@media(max-width:640px){
-  .marketplace-page .market-grid{grid-template-columns:1fr;gap:16px}
-  .marketplace-page .market-heading h1{font-size:24px}
-  .marketplace-page .market-heading .market-subtitle{font-size:11px}
-  .marketplace-page .product-thumb{height:135px}
-}
-
-/* =========================================================
-   MARKETPLACE FINAL RESPONSIVE CARD GRID
-   Android/mobile = 2 cards | Desktop = 4 cards
-   ========================================================= */
-.marketplace-page .market-grid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:22px;
-  width:100%;
-  align-items:stretch;
-}
-.marketplace-page .product-card{
-  min-width:0;
-  width:100%;
-  border-radius:15px;
-}
-.marketplace-page .product-thumb{height:118px}
-.marketplace-page .product-body{padding:11px 12px 12px}
-.marketplace-page .product-title{font-size:13px;line-height:1.3}
-.marketplace-page .product-description{font-size:10.5px;line-height:1.45}
-.marketplace-page .market-card-stats{gap:5px 8px;margin-top:9px;font-size:8.5px;line-height:1.25}
-.marketplace-page .market-card-stats i{font-size:8px}
-
-@media (max-width:1100px){
-  .marketplace-page .market-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:18px;
-  }
-}
-
-@media (max-width:680px){
-  .marketplace-page .market-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:14px;
-  }
-  .marketplace-page .product-card{border-radius:14px}
-  .marketplace-page .product-thumb{height:105px}
-  .marketplace-page .product-body{padding:9px 10px 10px}
-  .marketplace-page .product-title{font-size:12px}
-  .marketplace-page .product-description{font-size:9.5px;line-height:1.4}
-  .marketplace-page .market-card-stats{gap:4px 6px;font-size:7.8px}
-  .marketplace-page .market-card-stats i{font-size:7.5px}
-}
+/* Dark mode parity */
+html[data-theme="dark"] .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-page .market-search input,.marketplace-page .market-search .input,.marketplace-page .market-card,.marketplace-page .market-panel{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}.marketplace-page .market-search input::placeholder{color:#94a3b8}.marketplace-page .market-heading .badge{background:rgba(34,158,217,.12);},
+html.theme-dark .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-page .market-search input,.marketplace-page .market-search .input,.marketplace-page .market-card,.marketplace-page .market-panel{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}.marketplace-page .market-search input::placeholder{color:#94a3b8}.marketplace-page .market-heading .badge{background:rgba(34,158,217,.12);},
+body.theme-dark .marketplace-page{background:#0b1220;color:#f8fafc}.marketplace-page .market-search input,.marketplace-page .market-search .input,.marketplace-page .market-card,.marketplace-page .market-panel{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}.marketplace-page .market-search input::placeholder{color:#94a3b8}.marketplace-page .market-heading .badge{background:rgba(34,158,217,.12);}
 
 
 /* =========================================================
-   MARKETPLACE FINAL GRID — PUBLIC CLEAN CARD LAYOUT
-   Android/mobile: 2 cards | Desktop: 4 cards
-   This block intentionally comes last to override legacy CSS.
+   FINAL MARKETPLACE UI — CLEAN GRID / NO OVERLAP
    ========================================================= */
-.marketplace-page #market.market-grid{
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-  gap:24px !important;
-  width:100% !important;
-  align-items:stretch !important;
-}
-.marketplace-page #market.market-grid > .product-card{
-  grid-column:auto !important;
-  width:100% !important;
-  min-width:0 !important;
-  margin:0 !important;
-  float:none !important;
-}
-@media (max-width:1100px){
-  .marketplace-page #market.market-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    gap:20px !important;
-  }
-}
-@media (max-width:680px){
-  .marketplace-page #market.market-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    gap:14px !important;
-  }
-  .marketplace-page #market.market-grid > .product-card{
-    border-radius:14px !important;
-  }
-}
-
-
-/* =========================================================
-   MARKETPLACE PUBLIC REFERENCE UI — FINAL OVERRIDES
-   Guest-safe + 2-col mobile + 4-col desktop.
-   ========================================================= */
-.marketplace-public .marketplace-page{background:var(--market-bg,#f7fafc)}
-.marketplace-public .market-header{display:block;text-align:center;margin:18px 0 18px}
-.marketplace-public .market-heading{align-items:center;text-align:center}
-.marketplace-public .market-heading .badge{margin:0 auto 8px}
-.marketplace-public .market-heading h1{font-size:clamp(26px,4vw,36px);margin:0 0 5px}
-.marketplace-public .market-heading .market-subtitle{justify-content:center;color:var(--market-muted);font-size:13px}
-.marketplace-public .market-toolbar{display:block;margin:0 0 16px}
-.marketplace-public .market-search{width:100%;margin-bottom:10px}
-.marketplace-public .market-search input{min-height:62px;border-radius:16px!important;padding-left:52px!important;padding-right:48px!important;font-size:14px}
-.marketplace-public .market-search > i{left:20px;font-size:17px}
-.marketplace-public .market-search button{right:12px}
-.marketplace-public .market-tabs{width:100%;padding:5px;border-radius:16px;gap:3px}
-.marketplace-public .market-tab{min-height:42px;padding:0 15px;font-size:12px}
-.marketplace-public .market-resultbar{margin:0 2px 12px;min-height:32px}
-.marketplace-public .market-resultbar strong{font-size:15px}
-.marketplace-public .market-resultbar span{font-size:11px}
-.marketplace-public .market-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px!important}
-.marketplace-public .product-card{position:relative;display:flex;flex-direction:column;border-radius:18px!important;overflow:hidden;box-shadow:0 5px 18px rgba(15,23,42,.07)!important;transition:transform .18s ease,box-shadow .18s ease}
-.marketplace-public .product-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(15,23,42,.11)!important}
-.marketplace-public .product-card-link{display:flex;flex-direction:column;height:100%;color:inherit;text-decoration:none}
-.marketplace-public .product-thumb{height:148px!important;position:relative;background:linear-gradient(135deg,#eef7fc,#f1edff)!important}
-.marketplace-public .product-body{display:flex;flex-direction:column;flex:1;padding:15px 15px 14px!important}
-.marketplace-public .product-type{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.marketplace-public .product-title{font-size:17px!important;margin:8px 0 6px!important;line-height:1.22!important}
-.marketplace-public .product-description{font-size:11px!important;line-height:1.45!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.marketplace-public .product-creator{margin:4px 0 9px;font-size:11px}
-.marketplace-public .market-card-stats{gap:7px 10px!important;font-size:10px!important;margin-top:auto!important;padding-top:8px}
-.marketplace-public .market-card-stats i{font-size:9px!important}
-.marketplace-public .product-bottom{margin-top:10px;padding-top:10px;align-items:center}
-.marketplace-public .product-price{font-size:18px!important}
-.marketplace-public .product-cta{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:43px;margin-top:10px;border-radius:12px;background:#229ed9;color:#fff;font-size:12px;font-weight:900;box-shadow:0 7px 16px rgba(34,158,217,.18)}
-.marketplace-public .product-cta.free{background:transparent;color:#229ed9;border:2px solid #229ed9;box-shadow:none}
-.marketplace-public .product-favorite{position:absolute;z-index:4;top:12px;right:12px;width:36px;height:36px;border:1px solid rgba(255,255,255,.9);border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.92);color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.10);cursor:pointer}
-.marketplace-public .product-favorite:hover{color:#ef5d83;transform:scale(1.05)}
-.marketplace-public .market-rank-grid{margin-top:22px;gap:18px}
-.marketplace-public .market-panel{border-radius:18px!important}
-#navbar .pt-guest-actions{display:grid;gap:4px}
-#navbar .pt-guest-actions .pt-profile-link{border-top:0;padding-top:9px}
-@media(max-width:1100px){.marketplace-public .market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:680px){
-  .marketplace-public .marketplace-page .container{width:calc(100% - 20px)}
-  .marketplace-public .market-heading{margin-top:8px}
-  .marketplace-public .market-heading h1{font-size:25px}
-  .marketplace-public .market-heading .market-subtitle{font-size:11px}
-  .marketplace-public .market-search input{min-height:58px;border-radius:15px!important}
-  .marketplace-public .market-tab{min-height:40px;padding:0 13px}
-  .marketplace-public .market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
-  .marketplace-public .product-thumb{height:116px!important}
-  .marketplace-public .product-body{padding:11px 10px 11px!important}
-  .marketplace-public .product-title{font-size:14px!important}
-  .marketplace-public .product-type{font-size:9px}
-  .marketplace-public .product-description{font-size:9.5px!important}
-  .marketplace-public .product-creator{font-size:9.5px}
-  .marketplace-public .market-card-stats{font-size:8px!important;gap:5px 6px!important}
-  .marketplace-public .market-card-stats i{font-size:7.5px!important}
-  .marketplace-public .product-price{font-size:15px!important}
-  .marketplace-public .product-cta{min-height:39px;font-size:10.5px}
-  .marketplace-public .product-favorite{width:31px;height:31px;top:9px;right:9px}
-}
-
-.marketplace-public .product-favorite.active{color:#ef5d83}.marketplace-public .product-favorite.active i{font-weight:900}
-
-
-/* =========================================================
-   PASTELE MARKETPLACE — CANONICAL FINAL GRID
-   Mobile/Android: 2 cards | Desktop: 4 cards
-   ========================================================= */
-.marketplace-public .market-grid,
-.marketplace-page .market-grid#market {
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-  gap:20px !important;
-  width:100% !important;
-  align-items:stretch !important;
-}
-.marketplace-public .market-grid > .product-card,
-.marketplace-page .market-grid#market > .product-card {
-  display:flex !important;
-  flex-direction:column !important;
-  grid-column:auto !important;
-  width:100% !important;
-  min-width:0 !important;
-  margin:0 !important;
-  float:none !important;
-  align-self:stretch !important;
-  overflow:hidden !important;
-  border:1px solid var(--market-border) !important;
-  border-radius:16px !important;
-  background:var(--market-card) !important;
-  box-shadow:0 4px 16px rgba(15,23,42,.055) !important;
-}
-.marketplace-public .product-card-link,
-.marketplace-page .product-card-link { min-width:0; }
-.marketplace-public .product-thumb { height:130px !important; }
-.marketplace-public .product-body { min-width:0; }
-.marketplace-public .product-title,
-.marketplace-public .product-description { overflow-wrap:anywhere; }
-
-@media (max-width:1100px) {
-  .marketplace-public .market-grid,
-  .marketplace-page .market-grid#market {
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    gap:18px !important;
-  }
-}
-@media (max-width:680px) {
-  .marketplace-public .market-grid,
-  .marketplace-page .market-grid#market {
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    gap:14px !important;
-  }
-  .marketplace-public .product-thumb { height:108px !important; }
-  .marketplace-public .product-body { padding:10px !important; }
-  .marketplace-public .product-title { font-size:12px !important; }
-  .marketplace-public .product-description { font-size:9.5px !important; }
-  .marketplace-public .market-card-stats { font-size:7.8px !important; gap:4px 6px !important; }
-}
-
-/* Dark/light surfaces are inherited from the canonical market variables. */
-html[data-theme="dark"] .marketplace-public,
-html.theme-dark .marketplace-public,
-body.theme-dark .marketplace-public { color-scheme:dark; }
-
-
-/* =========================================================
-   PASSTELE MARKETPLACE — CARD POLISH / PRIVACY
-   Cleaner hierarchy, equal card heights, masked usernames.
-   ========================================================= */
-.marketplace-public .market-grid,
-.marketplace-page .market-grid#market{
-  align-items:stretch !important;
-  row-gap:22px !important;
-  column-gap:22px !important;
-}
-.marketplace-public .product-card,
-.marketplace-page .product-card{
-  min-height:0 !important;
-  height:100% !important;
-  border:1px solid var(--market-border,#e6edf3) !important;
-  border-radius:20px !important;
-  background:var(--market-card,#fff) !important;
-  box-shadow:0 8px 26px rgba(15,23,42,.06) !important;
-}
-.marketplace-public .product-card-link,
-.marketplace-page .product-card-link{
-  height:100% !important;
-}
-.marketplace-public .product-thumb{
-  height:156px !important;
-  flex:0 0 156px !important;
-  overflow:hidden !important;
-}
-.marketplace-public .product-thumb img{
-  width:100%;height:100%;object-fit:cover;display:block;
-}
-.marketplace-public .product-body{
-  display:flex !important;
-  min-height:245px !important;
-  padding:16px !important;
-  gap:0 !important;
-}
-.marketplace-public .product-type{
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:6px !important;
-  width:max-content !important;
-  max-width:100% !important;
-  min-height:24px !important;
-  padding:4px 8px !important;
-  border-radius:8px !important;
-  background:var(--market-soft,#f1f7fb) !important;
-  font-size:9px !important;
-  letter-spacing:.06em !important;
-}
-.marketplace-public .product-title{
-  display:-webkit-box !important;
-  -webkit-line-clamp:2 !important;
-  -webkit-box-orient:vertical !important;
-  min-height:40px !important;
-  overflow:hidden !important;
-  margin:9px 0 6px !important;
-  font-size:15px !important;
-  line-height:1.3 !important;
-  overflow-wrap:anywhere !important;
-}
-.marketplace-public .product-description{
-  min-height:31px !important;
-  margin:0 0 8px !important;
-  font-size:10.5px !important;
-  line-height:1.48 !important;
-  color:var(--market-muted,#64748b) !important;
-}
-.marketplace-public .product-creator{
-  display:flex !important;
-  align-items:center !important;
-  gap:7px !important;
-  min-height:28px !important;
-  margin:0 0 10px !important;
-  padding:6px 8px !important;
-  border-radius:9px !important;
-  background:var(--market-soft,#f8fafc) !important;
-  color:var(--market-muted,#64748b) !important;
-  overflow:hidden !important;
-}
-.marketplace-public .product-creator span{
-  min-width:0 !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  white-space:nowrap !important;
-}
-.marketplace-public .market-card-stats{
-  display:grid !important;
-  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
-  align-items:center !important;
-  gap:5px !important;
-  width:100% !important;
-  margin-top:auto !important;
-  padding:9px 0 !important;
-  border-top:1px solid var(--market-border,#edf1f5) !important;
-  border-bottom:1px solid var(--market-border,#edf1f5) !important;
-  font-size:9px !important;
-}
-.marketplace-public .market-card-stats span{
-  min-width:0 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:3px !important;
-  white-space:nowrap !important;
-  overflow:hidden !important;
-}
-.marketplace-public .market-card-stats i{font-size:8px !important;flex:0 0 auto}
-.marketplace-public .product-bottom{
-  display:flex !important;
-  justify-content:space-between !important;
-  align-items:center !important;
-  min-height:38px !important;
-  margin:8px 0 0 !important;
-  padding:0 !important;
-}
-.marketplace-public .product-price{font-size:17px !important;line-height:1 !important}
-.marketplace-public .product-cta{
-  min-height:40px !important;
-  margin-top:8px !important;
-  border-radius:11px !important;
-  font-size:11px !important;
-}
-.marketplace-public .product-favorite{
-  width:34px !important;height:34px !important;top:11px !important;right:11px !important;
-  backdrop-filter:blur(8px);
-}
-@media(max-width:1100px){
-  .marketplace-public .market-grid,.marketplace-page .market-grid#market{gap:18px !important}
-}
-@media(max-width:680px){
-  .marketplace-public .market-grid,.marketplace-page .market-grid#market{gap:15px !important}
-  .marketplace-public .product-card,.marketplace-page .product-card{border-radius:15px !important}
-  .marketplace-public .product-thumb{height:112px !important;flex-basis:112px !important}
-  .marketplace-public .product-body{min-height:225px !important;padding:11px !important}
-  .marketplace-public .product-type{min-height:21px !important;padding:3px 6px !important;font-size:8px !important}
-  .marketplace-public .product-title{min-height:34px !important;font-size:12px !important;line-height:1.35 !important;margin:7px 0 5px !important}
-  .marketplace-public .product-description{min-height:27px !important;font-size:9px !important;line-height:1.4 !important;margin-bottom:6px !important}
-  .marketplace-public .product-creator{min-height:24px !important;margin-bottom:7px !important;padding:5px 6px !important;font-size:8.5px !important}
-  .marketplace-public .market-card-stats{grid-template-columns:repeat(5,minmax(0,1fr)) !important;gap:2px !important;padding:7px 0 !important;font-size:7px !important}
-  .marketplace-public .market-card-stats i{font-size:6.5px !important}
-  .marketplace-public .product-price{font-size:13px !important}
-  .marketplace-public .product-cta{min-height:36px !important;font-size:9px !important;margin-top:6px !important}
-}
-
-/* =========================================================
-   PASSTELE MARKETPLACE — FINAL CONTENT GRID / CARD RESET
-   Purpose: remove conflicting legacy card rules and make every
-   content card visually aligned on desktop + mobile.
-   ========================================================= */
-.marketplace-public .market-grid,
-.marketplace-page .market-grid#market{
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-  gap:24px !important;
-  align-items:stretch !important;
-}
-
-.marketplace-public .product-card,
-.marketplace-page .product-card{
-  display:flex !important;
-  flex-direction:column !important;
-  width:100% !important;
-  min-width:0 !important;
-  height:auto !important;
-  min-height:460px !important;
-  margin:0 !important;
-  overflow:hidden !important;
-  position:relative !important;
-  box-sizing:border-box !important;
-  border:1px solid var(--market-border,#e5eaf0) !important;
-  border-radius:18px !important;
-  background:var(--market-card,#fff) !important;
-}
-
-.marketplace-public .product-card-link,
-.marketplace-page .product-card-link{
-  display:flex !important;
-  flex-direction:column !important;
-  flex:1 1 auto !important;
-  min-width:0 !important;
-  height:auto !important;
-  text-decoration:none !important;
-}
-
-.marketplace-public .product-thumb,
-.marketplace-page .product-thumb{
-  position:relative !important;
-  width:100% !important;
-  height:180px !important;
-  min-height:180px !important;
-  flex:0 0 180px !important;
-  overflow:hidden !important;
-  box-sizing:border-box !important;
-}
-
-.marketplace-public .product-thumb img,
-.marketplace-page .product-thumb img{
-  display:block !important;
-  width:100% !important;
-  height:100% !important;
-  object-fit:cover !important;
-}
-
-.marketplace-public .product-thumb-fallback,
-.marketplace-page .product-thumb-fallback{
-  position:absolute !important;
-  inset:0 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-}
-
-.marketplace-public .product-body,
-.marketplace-page .product-body{
-  display:flex !important;
-  flex-direction:column !important;
-  flex:1 1 auto !important;
-  min-width:0 !important;
-  min-height:280px !important;
-  padding:15px !important;
-  box-sizing:border-box !important;
-}
-
-.marketplace-public .product-type,
-.marketplace-page .product-type{
-  align-self:flex-start !important;
-  max-width:100% !important;
-  min-height:24px !important;
-  box-sizing:border-box !important;
-  white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-}
-
-.marketplace-public .product-title,
-.marketplace-page .product-title{
-  width:100% !important;
-  min-width:0 !important;
-  min-height:42px !important;
-  max-height:42px !important;
-  margin:9px 0 6px !important;
-  display:-webkit-box !important;
-  -webkit-box-orient:vertical !important;
-  -webkit-line-clamp:2 !important;
-  overflow:hidden !important;
-  overflow-wrap:anywhere !important;
-  line-height:1.35 !important;
-}
-
-.marketplace-public .product-description,
-.marketplace-page .product-description{
-  width:100% !important;
-  min-width:0 !important;
-  min-height:32px !important;
-  max-height:32px !important;
-  margin:0 0 9px !important;
-  display:-webkit-box !important;
-  -webkit-box-orient:vertical !important;
-  -webkit-line-clamp:2 !important;
-  overflow:hidden !important;
-  overflow-wrap:anywhere !important;
-}
-
-.marketplace-public .product-creator,
-.marketplace-page .product-creator{
-  width:100% !important;
-  min-width:0 !important;
-  min-height:32px !important;
-  max-width:100% !important;
-  margin:0 0 10px !important;
-  padding:7px 9px !important;
-  box-sizing:border-box !important;
-  display:flex !important;
-  align-items:center !important;
-  gap:7px !important;
-  border-radius:9px !important;
-  overflow:hidden !important;
-}
-
-.marketplace-public .product-creator i,
-.marketplace-page .product-creator i{
-  flex:0 0 auto !important;
-}
-
-.marketplace-public .product-creator span,
-.marketplace-page .product-creator span{
-  min-width:0 !important;
-  max-width:100% !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  white-space:nowrap !important;
-}
-
-.marketplace-public .market-card-stats,
-.marketplace-page .market-card-stats{
-  width:100% !important;
-  min-width:0 !important;
-  margin:0 !important;
-  padding:9px 0 !important;
-  box-sizing:border-box !important;
-  display:grid !important;
-  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
-  gap:5px !important;
-  align-items:center !important;
-  border-top:1px solid var(--market-border,#edf0f3) !important;
-  border-bottom:1px solid var(--market-border,#edf0f3) !important;
-}
-
-.marketplace-public .market-card-stats span,
-.marketplace-page .market-card-stats span{
-  min-width:0 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:4px !important;
-  overflow:hidden !important;
-  white-space:nowrap !important;
-  line-height:1.2 !important;
-}
-
-.marketplace-public .market-card-stats i,
-.marketplace-page .market-card-stats i{
-  flex:0 0 auto !important;
-}
-
-.marketplace-public .product-bottom,
-.marketplace-page .product-bottom{
-  width:100% !important;
-  min-width:0 !important;
-  min-height:36px !important;
-  margin:10px 0 0 !important;
-  padding:0 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-start !important;
-  box-sizing:border-box !important;
-}
-
-.marketplace-public .product-price,
-.marketplace-page .product-price{
-  max-width:100% !important;
-  white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-}
-
-.marketplace-public .product-cta,
-.marketplace-page .product-cta{
-  width:100% !important;
-  min-height:42px !important;
-  margin-top:9px !important;
-  box-sizing:border-box !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:7px !important;
-  border-radius:11px !important;
-  white-space:nowrap !important;
-}
-
-@media (max-width:1100px){
-  .marketplace-public .market-grid,
-  .marketplace-page .market-grid#market{
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    gap:20px !important;
-  }
-}
-
-@media (max-width:680px){
-  .marketplace-public .market-grid,
-  .marketplace-page .market-grid#market{
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    gap:12px !important;
-  }
-
-  .marketplace-public .product-card,
-  .marketplace-page .product-card{
-    min-height:390px !important;
-    border-radius:14px !important;
-  }
-
-  .marketplace-public .product-thumb,
-  .marketplace-page .product-thumb{
-    height:105px !important;
-    min-height:105px !important;
-    flex-basis:105px !important;
-  }
-
-  .marketplace-public .product-body,
-  .marketplace-page .product-body{
-    min-height:285px !important;
-    padding:9px !important;
-  }
-
-  .marketplace-public .product-type,
-  .marketplace-page .product-type{
-    min-height:20px !important;
-    padding:3px 6px !important;
-    font-size:7.5px !important;
-    border-radius:6px !important;
-  }
-
-  .marketplace-public .product-title,
-  .marketplace-page .product-title{
-    min-height:34px !important;
-    max-height:34px !important;
-    margin:6px 0 4px !important;
-    font-size:11.5px !important;
-    line-height:1.42 !important;
-  }
-
-  .marketplace-public .product-description,
-  .marketplace-page .product-description{
-    min-height:25px !important;
-    max-height:25px !important;
-    margin-bottom:6px !important;
-    font-size:8.5px !important;
-    line-height:1.45 !important;
-  }
-
-  .marketplace-public .product-creator,
-  .marketplace-page .product-creator{
-    min-height:24px !important;
-    margin-bottom:7px !important;
-    padding:5px 6px !important;
-    gap:5px !important;
-    font-size:8px !important;
-    border-radius:7px !important;
-  }
-
-  .marketplace-public .market-card-stats,
-  .marketplace-page .market-card-stats{
-    gap:1px !important;
-    padding:7px 0 !important;
-    font-size:7px !important;
-  }
-
-  .marketplace-public .market-card-stats span,
-  .marketplace-page .market-card-stats span{
-    gap:2px !important;
-  }
-
-  .marketplace-public .market-card-stats i,
-  .marketplace-page .market-card-stats i{
-    font-size:6.5px !important;
-  }
-
-  .marketplace-public .product-bottom,
-  .marketplace-page .product-bottom{
-    min-height:30px !important;
-    margin-top:7px !important;
-  }
-
-  .marketplace-public .product-price,
-  .marketplace-page .product-price{
-    font-size:12px !important;
-  }
-
-  .marketplace-public .product-cta,
-  .marketplace-page .product-cta{
-    min-height:34px !important;
-    margin-top:6px !important;
-    border-radius:9px !important;
-    font-size:8.5px !important;
-  }
-}
+.marketplace-page{padding-bottom:56px}
+.marketplace-page .market-header{margin-bottom:18px}
+.market-subtitle{margin:0;color:var(--muted,#64748b);font-size:13px;line-height:1.55}
+.market-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) auto;align-items:center;gap:10px;margin-bottom:12px}
+.market-search{min-width:0}
+.market-search input{display:block;box-sizing:border-box;padding-left:42px!important;padding-right:42px!important}
+.market-tabs{max-width:100%;min-width:0}
+.market-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
+.product-card{position:relative;min-width:0;height:100%;border-radius:18px}
+.product-card-link{display:flex;flex-direction:column;height:100%;min-width:0}
+.product-thumb{height:160px;flex:0 0 160px}
+.product-body{min-width:0;display:flex;flex-direction:column;flex:1;padding:14px 15px 15px}
+.product-title{overflow-wrap:anywhere;word-break:break-word}
+.product-description{overflow-wrap:anywhere}
+.product-creator{padding-right:44px}
+.product-share,.product-favorite{position:absolute;z-index:8;display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(255,255,255,.55);border-radius:10px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 5px 16px rgba(15,23,42,.10);cursor:pointer}
+.product-favorite{top:10px;right:10px}
+.product-share{top:10px;right:50px}
+.product-share i,.product-favorite i{color:var(--market-accent,#229ed9)!important;font-size:12px}
+.product-favorite:hover,.product-share:hover{transform:translateY(-1px);background:#fff}
+.market-card-stats{gap:7px 11px;margin-top:auto;padding-top:11px}
+.product-bottom{margin-top:11px;padding-top:11px}
+.product-cta{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;min-height:38px;padding:0 12px;border-radius:10px;background:var(--market-accent,#229ed9);color:#fff;font-size:11px;font-weight:850}
+.product-cta.free{background:var(--market-green,#159447)}
+.market-rank-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:22px}
+.market-panel{border-radius:18px}
+.market-ranking{min-height:54px}
+.market-list-item{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--market-border,#e3ebef)}
+.market-list-item:last-child{border-bottom:0}
+.market-list-main{min-width:0}
+.market-list-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+@media(max-width:1000px){.market-toolbar{grid-template-columns:1fr}.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.marketplace-page .container{width:calc(100% - 20px)}.market-toolbar{gap:9px}.market-grid{grid-template-columns:1fr;gap:14px}.product-thumb{height:170px;flex-basis:170px}.market-rank-grid{grid-template-columns:1fr;gap:14px}.market-header{align-items:flex-start}.market-heading h1{font-size:25px}.market-subtitle{font-size:12px}.market-card-stats{gap:7px 10px}.product-body{padding:13px}.market-tabs{overflow-x:auto}}
+@media(prefers-reduced-motion:reduce){.product-card,.product-share,.product-favorite{transition:none!important}}
+html[data-theme="dark"] .product-share,html[data-theme="dark"] .product-favorite{background:rgba(16,23,34,.92);border-color:rgba(255,255,255,.12)}
