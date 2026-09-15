@@ -1899,7 +1899,7 @@ FOR SELECT TO anon,authenticated USING(true);
 -- ============================================================
 
 GRANT USAGE ON SCHEMA public TO anon,authenticated,service_role;
-GRANT SELECT ON public.profile_public,public.marketplace_public TO anon,authenticated;
+GRANT SELECT ON public.profile_public TO anon,authenticated;
 GRANT SELECT (id,username,display_name,avatar_url,country,created_at)
 ON public.profiles TO anon;
 GRANT SELECT ON public.products,public.pastelinks,public.pastes,public.announcements TO anon,authenticated;
@@ -4551,8 +4551,8 @@ COMMIT;
 
 
 -- ============================================================
--- PasTele FINAL FIX PACK — 2026-09-14
--- Run AFTER database.sql. Idempotent.
+-- PasTele FINAL FIX PACK — consolidated into single canonical SQL
+-- Safe to run as one script. No early references to marketplace_public.
 -- ============================================================
 BEGIN;
 
@@ -4560,7 +4560,7 @@ BEGIN;
 -- Does NOT expose protected content/content_html for paid items.
 
 
-GRANT SELECT ON public.marketplace_public TO anon,authenticated;
+-- marketplace_public is granted after its canonical CREATE VIEW below.
 
 -- Anonymous comments are allowed; user_id remains NULL for guests.
 DROP POLICY IF EXISTS comments_anon_insert ON public.content_comments;
