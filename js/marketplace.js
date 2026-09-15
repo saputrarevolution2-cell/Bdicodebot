@@ -1111,6 +1111,10 @@ window.PASTELE_CONFIG = Object.freeze({
     const currentPath = location.pathname.replace(/\/+$/, '');
     const currentFile =
       (currentPath.split('/').pop() || 'dashboard.html').toLowerCase();
+    // Marketplace is a public route, including clean URLs /marketplace and /marketplace/.
+    // Keep this local to the navbar scope so guest rendering never throws a ReferenceError.
+    const isMarketplacePath =
+      !isAdmin && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
     /*
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
