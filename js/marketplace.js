@@ -3284,32 +3284,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      CREATOR
      ======================================================= */
-  const maskUsername = (value) => {
-    const raw = String(value || "").trim().replace(/^@/, "");
-    if (!raw) return "**";
-    if (raw.length <= 2) return "**";
-    return raw.slice(0, 1) + "**" + raw.slice(-1);
-  };
-
   const creatorText = (item) => {
     const username = String(item?.creator_username || "").trim().replace(/^@/, "");
+    if (username) return "@" + username;
     const name = String(item?.creator_name || "").trim();
-    // Username is always masked on the public marketplace.
-    if (username) return "@" + maskUsername(username);
     return name || "Creator";
   };
 
-  const publicTelegramIdentity = (item, type) => {
-    if (type === "code" && item?.bot_username) {
-      return "Bot @" + maskUsername(item.bot_username);
-    }
-    if ((type === "channel" || type === "group") && (item?.channel_name || item?.channel_username)) {
-      const label = type === "group" ? "Group" : "Channel";
-      const name = String(item?.channel_name || "").trim();
-      const username = String(item?.channel_username || "").trim();
-      return name ? label + " • " + name : label + " • @" + maskUsername(username);
-    }
-    return null;
+  // Canonical target_type used by the database RPCs.
+  const canonicalTargetType = (value) => {
+    const t = typeOf(typeof value === "string" ? { type: value } : (value || {}));
+    if (t === "code") return "telegram_product";
+    if (t === "pastelink") return "pastelink";
+    if (t === "paste") return "paste";
+    if (t === "channel") return "channel";
+    if (t === "group") return "group";
+    if (t === "link") return "link";
+    return "product";
   };
   /* =======================================================
      STORED STATS
@@ -3510,6 +3501,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       <button type="button" class="product-favorite" data-favorite-id="${esc(item?.id||'')}" aria-label="Favorit ${esc(title)}">
         <i class="fa-regular fa-heart" aria-hidden="true"></i>
       </button>
+      <button type="button" class="product-share" data-share-card aria-label="Bagikan ${esc(title)}">
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+      </button>
       <a class="product-card-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
         <!-- THUMBNAIL -->
         <div class="product-thumb">
@@ -3565,8 +3559,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid ${type === "code" ? "fa-robot" : type === "channel" ? "fa-broadcast-tower" : type === "group" ? "fa-users" : type === "pastelink" ? "fa-link" : "fa-user"}" aria-hidden="true"></i>
             <span>
               ${esc(
-                publicTelegramIdentity(item, type) ||
-                (type === "pastelink" ? "PasteLink • " + creator : creator)
+                type === "code" && item?.bot_username ? "Bot @" + String(item.bot_username).replace(/^@/, "") :
+                (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username) ?
+                  ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, ""))) :
+                type === "pastelink" ? "PasteLink • " + creator :
+                creator
               )}
             </span>
           </div>
@@ -3769,6 +3766,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             typeOf(item) ===
             "group"
         )
+        .slice()
+        .sort(byViews)
+    );
+    list(
+      "topPaste",
+      items
+        .filter(item => typeOf(item) === "paste")
         .slice()
         .sort(byViews)
     );
@@ -3983,14 +3987,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       if(!cardEl) return;
       const id=cardEl.dataset.shareId;
       const rawType=cardEl.dataset.shareType;
-      const type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType);
+      const type=canonicalTargetType(rawType);
       const owner=cardEl.dataset.shareOwner||null;
       if(!id || !window.sb?.rpc) return;
       try{
-        await window.sb.rpc("track_analytics",{
-          p_event_type:"view",
-          p_target_type:type,
+        await window.sb.rpc("record_content_view",{
           p_target_id:id,
+          p_target_type:type,
           p_owner:owner
         });
       }catch(err){
@@ -4006,7 +4009,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const btn=e.target.closest("[data-share-card]"); if(!btn) return;
       e.preventDefault(); e.stopPropagation();
       const card=btn.closest("[data-share-id]"); if(!card) return;
-      const id=card.dataset.shareId,rawType=card.dataset.shareType, type=rawType==='code'?'telegram_product':(rawType==='channel'||rawType==='group'?'channel':rawType),owner=card.dataset.shareOwner||null;
+      const id=card.dataset.shareId,rawType=card.dataset.shareType, type=canonicalTargetType(rawType),owner=card.dataset.shareOwner||null;
       const url=new URL(card.dataset.shareUrl||location.href,location.origin).href;
       try { if(navigator.share) await navigator.share({title:"PasTele",url}); else await navigator.clipboard.writeText(url); } catch(err){ if(err?.name==='AbortError') return; try{await navigator.clipboard.writeText(url)}catch(_){} }
       try { await getSupabase().rpc("track_analytics",{p_event_type:"share",p_target_type:type,p_target_id:id,p_owner:owner}); } catch(err){ console.warn("[Marketplace] share tracking unavailable",err); }
@@ -4213,7 +4216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         continue;
       }
       const key =
-        String(id);
+        `${lower(row?.target_type)}:${String(id)}`;
       map[key] =
         (map[key] || 0) + 1;
     }
@@ -4270,7 +4273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (sharesResult?.error) console.warn("[Marketplace] Shares count unavailable:", sharesResult.error.message || sharesResult.error);
 
       return data.map(item => {
-        const key = String(item?.id);
+        const key = `${canonicalTargetType(item)}:${String(item?.id)}`;
         return {
           ...item,
           likes_count: likes[key] || 0,
