@@ -1177,7 +1177,26 @@ window.PASTELE_CONFIG = Object.freeze({
      * attempt later.
      */
     if (!user) {
-      host.dataset.ready = '';
+      // Marketplace is PUBLIC: guests must be able to browse it.
+      // Do not stop navbar initialization or redirect guests to login.
+      host.innerHTML = `
+        <header class="pt-nav pt-nav-guest">
+          <div class="pt-nav-inner">
+            <button class="pt-menu-btn" id="ptMenu" type="button" aria-label="Buka menu" aria-expanded="false">
+              <i class="fa-solid fa-bars" aria-hidden="true"></i>
+            </button>
+            <a class="pt-brand" href="marketplace.html" aria-label="PasTele Marketplace">
+              <span class="pt-brand-mark"><i class="fa-brands fa-telegram" aria-hidden="true"></i></span>
+              <span class="pt-brand-name">PasTele</span>
+            </a>
+            <span class="pt-spacer"></span>
+            <div class="pt-guest-actions">
+              <a class="pt-guest-login" href="login.html"><i class="fa-solid fa-right-to-bracket"></i><span>Login</span></a>
+              <a class="pt-guest-register" href="register.html"><i class="fa-solid fa-user-plus"></i><span>Daftar</span></a>
+            </div>
+          </div>
+        </header>`;
+      host.dataset.ready = '1';
       return;
     }
     /* ========================================================
@@ -3215,6 +3234,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       : "FREE";
   };
   /* =======================================================
+     TYPE-SPECIFIC META
+     ======================================================= */
+  const typeMeta = (item, type) => {
+    const description = String(item?.description || "").trim();
+    const bot = String(item?.bot_username || "").trim().replace(/^@/, "");
+    const name = String(item?.name || "").trim();
+    const username = String(item?.username || "").trim().replace(/^@/, "");
+    if (type === "code") {
+      const value = bot ? `@${bot}` : "Bot Telegram";
+      return `<span class="product-context"><i class="fa-solid fa-robot"></i><b>Bot</b><em>${esc(value)}</em></span>`;
+    }
+    if (type === "channel") {
+      const value = name || (username ? `@${username}` : "Channel Telegram");
+      return `<span class="product-context"><i class="fa-solid fa-broadcast-tower"></i><b>Channel</b><em>${esc(value)}</em></span>`;
+    }
+    if (type === "group") {
+      const value = name || (username ? `@${username}` : "Group Telegram");
+      const vip = /\bvip\b|premium|private/i.test(`${value} ${description}`);
+      return `<span class="product-context"><i class="fa-solid fa-users"></i><b>${vip ? "Group VIP" : "Group Chat"}</b><em>${esc(value)}</em></span>`;
+    }
+    if (type === "pastelink") {
+      return description
+        ? `<span class="product-context"><i class="fa-solid fa-link"></i><b>PasteLink</b><em>${esc(description)}</em></span>`
+        : `<span class="product-context"><i class="fa-solid fa-link"></i><b>PasteLink</b><em>Konten siap dibuka</em></span>`;
+    }
+    if (type === "link") {
+      return `<span class="product-context"><i class="fa-solid fa-link"></i><b>Link</b><em>${esc(description || "Link siap dibuka")}</em></span>`;
+    }
+    return description ? `<span class="product-context"><i class="fa-solid fa-file-lines"></i><b>Info</b><em>${esc(description)}</em></span>` : "";
+  };
+  /* =======================================================
      CREATOR
      ======================================================= */
   const creatorText = (item) => {
@@ -3470,16 +3520,10 @@ document.addEventListener("DOMContentLoaded", async () => {
               : ""
           }
           <div class="product-creator">
-            <i
-              class="fa-solid fa-user"
-              aria-hidden="true"
-            ></i>
-            <span>
-              ${esc(
-                creator
-              )}
-            </span>
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+            <span>${esc(creator)}</span>
           </div>
+          ${typeMeta(item, type)}
           <!-- ENGAGEMENT -->
           <div class="market-card-stats" aria-label="Statistik konten">
             <span title="Dilihat">
@@ -4200,58 +4244,92 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     setLoading();
     try {
-      const base = [
+      // PUBLIC SOURCE FIRST — guests must be able to browse Marketplace.
+      // marketplace_public is intentionally used instead of making the page
+      // depend on authenticated reads from products/telegram tables.
+      const publicFields = [
         "id","slug","title","type","access_type","price","thumbnail_url",
-        "description","views","sales_count","category","created_at"
-      ];
-      const queries = await Promise.all([
-        client.from("products")
-          .select(base.concat(["creator_id","seller_id"]).join(","))
-          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
-        client.from("telegram_products")
-          .select(base.concat(["owner_id","product_type","bot_username"]).join(","))
-          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
-        client.from("telegram_channels")
-          .select(base.concat(["owner_id","username","name"]).join(","))
-          .in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
-        client.from("pastelinks")
-          .select("id,slug,title,access_type,price,description,views,created_at,user_id")
-          .eq("visibility","public").order("created_at",{ascending:false}).limit(500),
-        client.from("pastes")
-          .select("id,slug,title,description,created_at,owner_id")
-          .eq("visibility","public").order("created_at",{ascending:false}).limit(500)
-      ]);
-      const firstError = queries.find(x => x?.error)?.error;
-      if (firstError) console.warn("[Marketplace] one source failed:", firstError);
+        "description","views","sales_count","category","created_at","owner_id",
+        "creator_name","creator_username"
+      ].join(",");
+      const publicResult = await client
+        .from("marketplace_public")
+        .select(publicFields)
+        .order("created_at", { ascending: false })
+        .limit(500);
 
-      const normalize = (rows, type, ownerKey) => (Array.isArray(rows)?rows:[]).map(row => ({
+      let data = Array.isArray(publicResult?.data) ? publicResult.data : [];
+
+      // Keep Marketplace usable if the public view is temporarily unavailable.
+      // This fallback is best-effort and never turns a guest into a login-required user.
+      if (publicResult?.error) {
+        console.warn("[Marketplace] marketplace_public failed, trying public sources:", publicResult.error.message || publicResult.error);
+        const base = [
+          "id","slug","title","type","access_type","price","thumbnail_url",
+          "description","views","sales_count","category","created_at"
+        ];
+        const results = await Promise.allSettled([
+          client.from("products").select(base.concat(["creator_id","seller_id"]).join(",")).in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+          client.from("telegram_products").select(base.concat(["owner_id","product_type","bot_username"]).join(",")).in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+          client.from("telegram_channels").select(base.concat(["owner_id","username","name"]).join(",")).in("status",["published","active"]).order("created_at",{ascending:false}).limit(500),
+          client.from("pastelinks").select("id,slug,title,access_type,price,description,views,created_at,user_id").eq("visibility","public").order("created_at",{ascending:false}).limit(500),
+          client.from("pastes").select("id,slug,title,description,created_at,owner_id").eq("visibility","public").order("created_at",{ascending:false}).limit(500)
+        ]);
+        const normalize = (result, type, ownerKey) => {
+          const rows = result.status === "fulfilled" ? result.value?.data : [];
+          return (Array.isArray(rows) ? rows : []).map(row => ({
+            ...row,
+            type: type === "channel" ? (String(row.type||"channel").toLowerCase()==="group" ? "group" : "channel") : type,
+            access_type: String(row.access_type || (Number(row.price||0)>0 ? "paid":"free")).toLowerCase(),
+            owner_id: row.owner_id || row[ownerKey] || row.creator_id || row.seller_id || row.user_id || null,
+            title: row.title || row.name || row.username || "Untitled",
+            creator_name: row.creator_name || "",
+            creator_username: row.creator_username || String(row.username||"").replace(/^@/,"")
+          }));
+        };
+        data = [
+          ...normalize(results[0],"link","creator_id"),
+          ...normalize(results[1],"code","owner_id"),
+          ...normalize(results[2],"channel","owner_id"),
+          ...normalize(results[3],"pastelink","user_id"),
+          ...normalize(results[4],"paste","owner_id")
+        ].filter(x => x.id && x.title);
+      }
+
+      data = data.map(row => ({
         ...row,
-        type: type === "channel" ? (String(row.type||"channel").toLowerCase()==="group" ? "group" : "channel") : type,
+        type: typeOf(row),
         access_type: String(row.access_type || (Number(row.price||0)>0 ? "paid":"free")).toLowerCase(),
-        owner_id: row.owner_id || row[ownerKey] || row.creator_id || row.seller_id || row.user_id || null,
+        owner_id: row.owner_id || row.creator_id || row.seller_id || row.user_id || null,
         title: row.title || row.name || row.username || "Untitled",
         creator_name: row.creator_name || "",
         creator_username: row.creator_username || String(row.username||"").replace(/^@/,"")
-      }));
-      let data = [
-        ...normalize(queries[0]?.data,"link","creator_id"),
-        ...normalize(queries[1]?.data,"code","owner_id"),
-        ...normalize(queries[2]?.data,"channel","owner_id"),
-        ...normalize(queries[3]?.data,"pastelink","user_id"),
-        ...normalize(queries[4]?.data,"paste","owner_id")
-      ].filter(x => x.id && x.title);
-      // Load public creator names without relying on fragile nested relations.
-      const ownerIds=[...new Set(data.map(x=>x.owner_id).filter(Boolean))];
-      if(ownerIds.length){
-        const pr=await client.from("profiles").select("id,username,display_name,is_banned").in("id",ownerIds);
-        if(!pr.error){
-          const map=new Map((pr.data||[]).map(x=>[String(x.id),x]));
-          data=data.map(x=>{
-            const p=map.get(String(x.owner_id));
-            return p ? {...x,creator_name:p.display_name||p.username,creator_username:p.username} : x;
-          });
-        }
+      })).filter(x => x.id && x.title);
+
+      // Optional metadata enrichment. It is deliberately non-blocking and
+      // harmless for guests when RLS does not expose these source tables.
+      const codeIds = data.filter(x => typeOf(x) === "code").map(x => x.id).filter(Boolean);
+      const chatIds = data.filter(x => ["channel","group"].includes(typeOf(x))).map(x => x.id).filter(Boolean);
+      const enrich = [];
+      if (codeIds.length) enrich.push(client.from("telegram_products").select("id,bot_username,product_type").in("id", codeIds));
+      if (chatIds.length) enrich.push(client.from("telegram_channels").select("id,name,username,type,description").in("id", chatIds));
+      if (enrich.length) {
+        try {
+          const results = await Promise.allSettled(enrich);
+          const meta = new Map();
+          for (const result of results) {
+            const rows = result.status === "fulfilled" ? result.value?.data : [];
+            for (const row of (Array.isArray(rows) ? rows : [])) meta.set(String(row.id), row);
+          }
+          if (meta.size) {
+            data = data.map(item => {
+              const m = meta.get(String(item.id));
+              return m ? { ...item, ...m, bot_username: m.bot_username || item.bot_username } : item;
+            });
+          }
+        } catch (_) {}
       }
+
       data.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
       items = await loadEngagementCounts(data);
       page = 1;
@@ -4261,6 +4339,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setError(error?.message || "Marketplace gagal dimuat.");
     }
   }
+
   /* =======================================================
      FILTER BUTTONS
      ======================================================= */
