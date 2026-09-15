@@ -123,10 +123,10 @@ window.PASTELE_CONFIG = Object.freeze({
         zIndex: 9999,
         padding: "13px 16px",
         borderRadius: "13px",
-        background: "#17212b",
-        color: "#fff",
-        border: "1px solid rgba(34,158,217,.35)",
-        boxShadow: "0 10px 35px rgba(0,0,0,.3)",
+        background: "var(--surface, #ffffff)",
+        color: "var(--text, #0f172a)",
+        border: "1px solid var(--line, #e5e7eb)",
+        boxShadow: "0 10px 35px rgba(15,23,42,.14)",
         maxWidth: "min(420px,calc(100vw - 36px))"
       });
       clearTimeout(window.__tcToast);
@@ -2717,15 +2717,26 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   function autoTheme() {
-    // Automatic day/night theme:
-    // 06:00–17:59 = light, 18:00–05:59 = dark.
+    // Respect the canonical PasTele theme selection.
+    // This guard must never overwrite an explicit Light/Dark/System choice.
     try {
-      const hour = new Date().getHours();
-      const dark = hour >= 18 || hour < 6;
       const root = document.documentElement;
-      root.dataset.theme = dark ? "dark" : "light";
-      root.dataset.themeMode = "auto";
-      root.style.colorScheme = dark ? "dark" : "light";
+      const mode = localStorage.getItem("pastele-theme") || "auto";
+      let theme = "light";
+      if (mode === "dark") theme = "dark";
+      else if (mode === "system") {
+        theme = window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      } else if (mode === "auto") {
+        const hour = new Date().getHours();
+        theme = (hour >= 18 || hour < 6) ? "dark" : "light";
+      }
+      root.dataset.theme = theme;
+      root.dataset.themeMode = mode;
+      root.classList.toggle("theme-dark", theme === "dark");
+      root.classList.toggle("theme-light", theme === "light");
+      root.style.colorScheme = theme;
+      document.body?.classList.toggle("theme-dark", theme === "dark");
+      document.body?.classList.toggle("theme-light", theme === "light");
     } catch (_) {}
   }
 
