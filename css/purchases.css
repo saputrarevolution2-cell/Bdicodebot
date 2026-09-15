@@ -2673,3 +2673,27 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.purchases-page{background:#f5f7fb;color:#111827;}
+.purchases-page .purchases-container{width:min(1160px,calc(100% - 32px));margin:0 auto;}
+.purchases-page .purchases-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.purchases-page .purchases-icon,.purchases-page .purchase-stat-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff!important;color:#229ed9!important;border:1px solid rgba(34,158,217,.14);}
+.purchases-page .purchase-stat-card,.purchases-page .purchase-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.purchases-page .purchase-stat-card:hover,.purchases-page .purchase-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
+.purchases-page .purchases-search{position:relative;}
+.purchases-page .purchases-search>i.fa-magnifying-glass{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;pointer-events:none;z-index:2;}
+.purchases-page .purchases-search input{padding-left:42px!important;min-height:46px;border-radius:12px!important;}
+@media(max-width:640px){.purchases-page .purchases-container{width:calc(100% - 24px)}.purchases-page .purchases-header{align-items:flex-start;flex-direction:column}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .purchases-page{background:#0b1220;color:#f8fafc}.purchases-page .purchase-stat-card,.purchases-page .purchase-card{background:#111827;border-color:#263247;color:#f8fafc}.purchases-page .purchases-search input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important},
+html.theme-dark .purchases-page{background:#0b1220;color:#f8fafc}.purchases-page .purchase-stat-card,.purchases-page .purchase-card{background:#111827;border-color:#263247;color:#f8fafc}.purchases-page .purchases-search input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important},
+body.theme-dark .purchases-page{background:#0b1220;color:#f8fafc}.purchases-page .purchase-stat-card,.purchases-page .purchase-card{background:#111827;border-color:#263247;color:#f8fafc}.purchases-page .purchases-search input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}

@@ -226,3 +226,494 @@ body.theme-dark.app-page:not(.settings-page-body){
   .app-page:not(.settings-page-body) .btn,
   .app-page:not(.settings-page-body) .button{min-height:44px}
 }
+
+
+/* =========================================================
+   PasTele — UNIFIED PAGE POLISH
+   Reference: Settings page visual language
+   Applies to app pages while preserving existing JS/HTML
+   ========================================================= */
+
+.app-page:not(.settings-page-body) {
+  background: var(--pt-clean-bg) !important;
+  color: var(--pt-clean-text) !important;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.app-page:not(.settings-page-body) main,
+.app-page:not(.settings-page-body) .wallet-main,
+.app-page:not(.settings-page-body) .withdrawals-main,
+.app-page:not(.settings-page-body) .purchases-main {
+  min-height: calc(100vh - 72px);
+}
+
+.app-page:not(.settings-page-body) > section,
+.app-page:not(.settings-page-body) .section,
+.app-page:not(.settings-page-body) .dashboard-fixed {
+  width: 100%;
+  padding-top: 34px;
+  padding-bottom: 70px;
+}
+
+.app-page:not(.settings-page-body) .container,
+.app-page:not(.settings-page-body) .dash-container,
+.app-page:not(.settings-page-body) .wallet-container,
+.app-page:not(.settings-page-body) .withdrawals-container,
+.app-page:not(.settings-page-body) .profile-page,
+.app-page:not(.settings-page-body) .my-products-container,
+.app-page:not(.settings-page-body) .purchases-container,
+.app-page:not(.settings-page-body) .plans-wrap {
+  width: min(1160px, calc(100% - 32px)) !important;
+  max-width: 1160px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Unified page heading */
+.app-page:not(.settings-page-body) .page-heading,
+.app-page:not(.settings-page-body) .page-header,
+.app-page:not(.settings-page-body) .market-header,
+.app-page:not(.settings-page-body) .wallet-heading,
+.app-page:not(.settings-page-body) .withdraw-header,
+.app-page:not(.settings-page-body) .purchases-header,
+.app-page:not(.settings-page-body) .tx-header,
+.app-page:not(.settings-page-body) .plan-hero,
+.app-page:not(.settings-page-body) .profile-heading,
+.app-page:not(.settings-page-body) .dash-head {
+  color: var(--pt-clean-text);
+}
+
+.app-page:not(.settings-page-body) h1,
+.app-page:not(.settings-page-body) h2,
+.app-page:not(.settings-page-body) h3,
+.app-page:not(.settings-page-body) h4 {
+  color: var(--pt-clean-text);
+}
+
+.app-page:not(.settings-page-body) p,
+.app-page:not(.settings-page-body) .muted,
+.app-page:not(.settings-page-body) .eyebrow,
+.app-page:not(.settings-page-body) .field-hint {
+  color: var(--pt-clean-muted);
+}
+
+/* Consistent icon + text rhythm */
+.app-page:not(.settings-page-body) .badge,
+.app-page:not(.settings-page-body) .page-badge,
+.app-page:not(.settings-page-body) .wallet-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--pt-clean-primary-soft) !important;
+  border: 1px solid rgba(34,158,217,.16) !important;
+  color: var(--pt-clean-primary) !important;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.app-page:not(.settings-page-body) .badge i,
+.app-page:not(.settings-page-body) .page-badge i,
+.app-page:not(.settings-page-body) .wallet-badge i,
+.app-page:not(.settings-page-body) .eyebrow i,
+.app-page:not(.settings-page-body) .section-kicker i {
+  flex: 0 0 auto;
+}
+
+.app-page:not(.settings-page-body) .iconbox,
+.app-page:not(.settings-page-body) .section-icon,
+.app-page:not(.settings-page-body) .stat-icon,
+.app-page:not(.settings-page-body) .kpi-icon,
+.app-page:not(.settings-page-body) .detail-icon,
+.app-page:not(.settings-page-body) .feature-icon,
+.app-page:not(.settings-page-body) .step-icon,
+.app-page:not(.settings-page-body) .preview-icon,
+.app-page:not(.settings-page-body) .profile-quick-icon,
+.app-page:not(.settings-page-body) .view-icon,
+.app-page:not(.settings-page-body) .payment-icon,
+.app-page:not(.settings-page-body) .withdraw-icon,
+.app-page:not(.settings-page-body) .wallet-icon,
+.app-page:not(.settings-page-body) .overview-icon,
+.app-page:not(.settings-page-body) .purchase-stat-icon,
+.app-page:not(.settings-page-body) .tx-summary-icon,
+.app-page:not(.settings-page-body) .plan-icon,
+.app-page:not(.settings-page-body) .benefit-icon,
+.app-page:not(.settings-page-body) .premium-icon,
+.app-page:not(.settings-page-body) .profile-stat-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pt-clean-primary-soft) !important;
+  color: var(--pt-clean-primary) !important;
+  border: 1px solid rgba(34,158,217,.14) !important;
+  box-shadow: none !important;
+}
+
+/* Do not let colorful legacy modifiers change the icon/text alignment. */
+.app-page:not(.settings-page-body) .iconbox i,
+.app-page:not(.settings-page-body) .section-icon i,
+.app-page:not(.settings-page-body) .stat-icon i,
+.app-page:not(.settings-page-body) .overview-icon i,
+.app-page:not(.settings-page-body) .purchase-stat-icon i,
+.app-page:not(.settings-page-body) .tx-summary-icon i,
+.app-page:not(.settings-page-body) .plan-icon i,
+.app-page:not(.settings-page-body) .benefit-icon i,
+.app-page:not(.settings-page-body) .premium-icon i,
+.app-page:not(.settings-page-body) .profile-stat-icon i {
+  color: inherit !important;
+}
+
+/* Clean card system */
+.app-page:not(.settings-page-body) .card,
+.app-page:not(.settings-page-body) .panel,
+.app-page:not(.settings-page-body) .box,
+.app-page:not(.settings-page-body) .dashboard-card,
+.app-page:not(.settings-page-body) .stat-card,
+.app-page:not(.settings-page-body) .content-card,
+.app-page:not(.settings-page-body) .form-card,
+.app-page:not(.settings-page-body) .create-card,
+.app-page:not(.settings-page-body) .market-card,
+.app-page:not(.settings-page-body) .product-card,
+.app-page:not(.settings-page-body) .payment-card,
+.app-page:not(.settings-page-body) .withdrawal-card,
+.app-page:not(.settings-page-body) .transaction-card,
+.app-page:not(.settings-page-body) .history-card,
+.app-page:not(.settings-page-body) .purchase-card,
+.app-page:not(.settings-page-body) .notification-card,
+.app-page:not(.settings-page-body) .profile-section,
+.app-page:not(.settings-page-body) .overview-card,
+.app-page:not(.settings-page-body) .wallet-card,
+.app-page:not(.settings-page-body) .purchase-stat-card,
+.app-page:not(.settings-page-body) .tx-summary-item,
+.app-page:not(.settings-page-body) .benefit-card,
+.app-page:not(.settings-page-body) .plan-card,
+.app-page:not(.settings-page-body) .premium-benefit,
+.app-page:not(.settings-page-body) .premium-benefit-item {
+  border-radius: 16px !important;
+  border: 1px solid var(--pt-clean-border) !important;
+  background: var(--pt-clean-surface) !important;
+  color: var(--pt-clean-text) !important;
+  box-shadow: var(--pt-clean-shadow-sm) !important;
+}
+
+/* Remove excessive gradients / visual noise from page-level cards */
+.app-page:not(.settings-page-body) .overview-card,
+.app-page:not(.settings-page-body) .wallet-card,
+.app-page:not(.settings-page-body) .purchase-stat-card,
+.app-page:not(.settings-page-body) .tx-summary-item,
+.app-page:not(.settings-page-body) .benefit-card,
+.app-page:not(.settings-page-body) .plan-card {
+  background-image: none !important;
+}
+
+/* Consistent spacing between content blocks */
+.app-page:not(.settings-page-body) .dash-stat-grid,
+.app-page:not(.settings-page-body) .count-grid,
+.app-page:not(.settings-page-body) .wallet-stats,
+.app-page:not(.settings-page-body) .withdraw-stats,
+.app-page:not(.settings-page-body) .products-overview,
+.app-page:not(.settings-page-body) .purchases-summary,
+.app-page:not(.settings-page-body) .tx-summary,
+.app-page:not(.settings-page-body) .market-grid,
+.app-page:not(.settings-page-body) .plan-grid,
+.app-page:not(.settings-page-body) .profile-social-stats,
+.app-page:not(.settings-page-body) .profile-quick-actions {
+  gap: 16px !important;
+}
+
+.app-page:not(.settings-page-body) .panel,
+.app-page:not(.settings-page-body) .card,
+.app-page:not(.settings-page-body) .box,
+.app-page:not(.settings-page-body) .dashboard-card,
+.app-page:not(.settings-page-body) .form-card {
+  margin-bottom: 16px;
+}
+
+/* Search and form controls: icon must never overlap text */
+.app-page:not(.settings-page-body) .market-search,
+.app-page:not(.settings-page-body) .search-box,
+.app-page:not(.settings-page-body) .tx-search,
+.app-page:not(.settings-page-body) .purchases-search,
+.app-page:not(.settings-page-body) .search-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.app-page:not(.settings-page-body) .market-search input,
+.app-page:not(.settings-page-body) .search-box input,
+.app-page:not(.settings-page-body) .tx-search input,
+.app-page:not(.settings-page-body) .purchases-search input,
+.app-page:not(.settings-page-body) .search-wrap input {
+  width: 100%;
+  min-height: 46px;
+  padding-left: 46px !important;
+  padding-right: 44px !important;
+}
+
+.app-page:not(.settings-page-body) .market-search > i:first-child,
+.app-page:not(.settings-page-body) .search-box > i:first-child,
+.app-page:not(.settings-page-body) .tx-search > i:first-child,
+.app-page:not(.settings-page-body) .purchases-search > i:first-child,
+.app-page:not(.settings-page-body) .search-wrap > i:first-child {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  pointer-events: none;
+  color: var(--pt-clean-muted) !important;
+}
+
+.app-page:not(.settings-page-body) input::placeholder,
+.app-page:not(.settings-page-body) textarea::placeholder {
+  color: var(--pt-clean-muted) !important;
+  opacity: .9;
+}
+
+/* Selects: keep filter icon and text separated */
+.app-page:not(.settings-page-body) .select-wrap {
+  position: relative;
+  min-width: 0;
+}
+.app-page:not(.settings-page-body) .select-wrap select {
+  min-height: 44px;
+  padding-left: 42px !important;
+  padding-right: 36px !important;
+}
+.app-page:not(.settings-page-body) .select-wrap > i:first-child {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Toolbars */
+.app-page:not(.settings-page-body) .market-toolbar,
+.app-page:not(.settings-page-body) .products-toolbar,
+.app-page:not(.settings-page-body) .purchases-toolbar,
+.app-page:not(.settings-page-body) .tx-toolbar {
+  gap: 12px !important;
+  margin-top: 18px;
+  margin-bottom: 20px;
+}
+
+/* Buttons follow Settings: compact, readable, consistent */
+.app-page:not(.settings-page-body) .btn,
+.app-page:not(.settings-page-body) button,
+.app-page:not(.settings-page-body) .button {
+  min-height: 42px;
+  border-radius: 12px;
+  font-weight: 750;
+  letter-spacing: -.005em;
+}
+
+.app-page:not(.settings-page-body) .btn i,
+.app-page:not(.settings-page-body) button i,
+.app-page:not(.settings-page-body) .button i {
+  margin-right: 7px;
+  flex: 0 0 auto;
+}
+
+.app-page:not(.settings-page-body) .btn.primary,
+.app-page:not(.settings-page-body) .btn-primary,
+.app-page:not(.settings-page-body) .button-primary,
+.app-page:not(.settings-page-body) button.primary,
+.app-page:not(.settings-page-body) .btn-success,
+.app-page:not(.settings-page-body) .create-product-btn {
+  background: var(--pt-clean-primary) !important;
+  border-color: var(--pt-clean-primary) !important;
+  color: #fff !important;
+}
+
+/* Lists / rows */
+.app-page:not(.settings-page-body) .list-item,
+.app-page:not(.settings-page-body) .history-item,
+.app-page:not(.settings-page-body) .notification-item,
+.app-page:not(.settings-page-body) .table-row,
+.app-page:not(.settings-page-body) .transaction-row,
+.app-page:not(.settings-page-body) .purchase-row {
+  border-color: var(--pt-clean-border) !important;
+  color: var(--pt-clean-text);
+}
+
+.app-page:not(.settings-page-body) .list-item:hover,
+.app-page:not(.settings-page-body) .history-item:hover,
+.app-page:not(.settings-page-body) .notification-item:hover,
+.app-page:not(.settings-page-body) .transaction-row:hover,
+.app-page:not(.settings-page-body) .purchase-row:hover {
+  background: var(--pt-clean-surface-soft) !important;
+}
+
+/* Tables stay readable on mobile */
+.app-page:not(.settings-page-body) table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.app-page:not(.settings-page-body) th {
+  color: var(--pt-clean-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.app-page:not(.settings-page-body) td {
+  color: var(--pt-clean-text);
+  border-color: var(--pt-clean-border);
+}
+
+/* Status colors remain semantic, not decorative */
+.app-page:not(.settings-page-body) .status-badge,
+.app-page:not(.settings-page-body) .status,
+.app-page:not(.settings-page-body) .pill,
+.app-page:not(.settings-page-body) .tag {
+  border-radius: 999px;
+  font-weight: 750;
+}
+
+/* Profile / wallet / withdrawal hero panels */
+.app-page:not(.settings-page-body) .profile-hero,
+.app-page:not(.settings-page-body) .wallet-balance-hero,
+.app-page:not(.settings-page-body) .balance-panel,
+.app-page:not(.settings-page-body) .plan-profile,
+.app-page:not(.settings-page-body) .plan-hero {
+  border: 1px solid var(--pt-clean-border);
+  border-radius: 18px;
+  background: var(--pt-clean-surface) !important;
+  color: var(--pt-clean-text);
+  box-shadow: var(--pt-clean-shadow-sm);
+  background-image: none !important;
+}
+
+/* Marketplace cards: clean thumbnail/content separation */
+.app-page:not(.settings-page-body) .market-card,
+.app-page:not(.settings-page-body) .product-card {
+  overflow: hidden;
+}
+.app-page:not(.settings-page-body) .market-card img,
+.app-page:not(.settings-page-body) .product-card img {
+  display: block;
+}
+.app-page:not(.settings-page-body) .market-card .card-body,
+.app-page:not(.settings-page-body) .product-card .card-body,
+.app-page:not(.settings-page-body) .market-card .content,
+.app-page:not(.settings-page-body) .product-card .content {
+  color: var(--pt-clean-text);
+}
+
+/* Footer separation */
+.app-page:not(.settings-page-body) footer {
+  border-top: 1px solid var(--pt-clean-border);
+  background: var(--pt-clean-surface);
+  color: var(--pt-clean-muted);
+}
+
+/* Dark mode */
+html[data-theme="dark"] .app-page:not(.settings-page-body),
+html.theme-dark .app-page:not(.settings-page-body),
+body.theme-dark.app-page:not(.settings-page-body) {
+  background: var(--pt-clean-bg) !important;
+}
+html[data-theme="dark"] .app-page:not(.settings-page-body) footer,
+html.theme-dark .app-page:not(.settings-page-body) footer {
+  background: var(--pt-clean-surface);
+}
+
+/* Mobile — Settings-like rhythm */
+@media (max-width: 640px) {
+  .app-page:not(.settings-page-body) > section,
+  .app-page:not(.settings-page-body) .section,
+  .app-page:not(.settings-page-body) .dashboard-fixed {
+    padding-top: 22px;
+    padding-bottom: 48px;
+  }
+
+  .app-page:not(.settings-page-body) .container,
+  .app-page:not(.settings-page-body) .dash-container,
+  .app-page:not(.settings-page-body) .wallet-container,
+  .app-page:not(.settings-page-body) .withdrawals-container,
+  .app-page:not(.settings-page-body) .profile-page,
+  .app-page:not(.settings-page-body) .my-products-container,
+  .app-page:not(.settings-page-body) .purchases-container,
+  .app-page:not(.settings-page-body) .plans-wrap {
+    width: min(100% - 20px, 1160px) !important;
+  }
+
+  .app-page:not(.settings-page-body) .card,
+  .app-page:not(.settings-page-body) .panel,
+  .app-page:not(.settings-page-body) .box,
+  .app-page:not(.settings-page-body) .dashboard-card,
+  .app-page:not(.settings-page-body) .market-card,
+  .app-page:not(.settings-page-body) .product-card,
+  .app-page:not(.settings-page-body) .wallet-card,
+  .app-page:not(.settings-page-body) .purchase-stat-card,
+  .app-page:not(.settings-page-body) .tx-summary-item,
+  .app-page:not(.settings-page-body) .plan-card,
+  .app-page:not(.settings-page-body) .profile-hero,
+  .app-page:not(.settings-page-body) .wallet-balance-hero,
+  .app-page:not(.settings-page-body) .balance-panel,
+  .app-page:not(.settings-page-body) .plan-profile,
+  .app-page:not(.settings-page-body) .plan-hero {
+    border-radius: 14px !important;
+  }
+
+  .app-page:not(.settings-page-body) .iconbox,
+  .app-page:not(.settings-page-body) .section-icon,
+  .app-page:not(.settings-page-body) .stat-icon,
+  .app-page:not(.settings-page-body) .overview-icon,
+  .app-page:not(.settings-page-body) .purchase-stat-icon,
+  .app-page:not(.settings-page-body) .tx-summary-icon,
+  .app-page:not(.settings-page-body) .plan-icon,
+  .app-page:not(.settings-page-body) .benefit-icon,
+  .app-page:not(.settings-page-body) .premium-icon,
+  .app-page:not(.settings-page-body) .profile-stat-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 11px;
+  }
+
+  .app-page:not(.settings-page-body) .market-toolbar,
+  .app-page:not(.settings-page-body) .products-toolbar,
+  .app-page:not(.settings-page-body) .purchases-toolbar,
+  .app-page:not(.settings-page-body) .tx-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-page:not(.settings-page-body) .market-search,
+  .app-page:not(.settings-page-body) .search-box,
+  .app-page:not(.settings-page-body) .tx-search,
+  .app-page:not(.settings-page-body) .purchases-search {
+    width: 100%;
+  }
+}
+
+@media (min-width: 641px) {
+  .app-page:not(.settings-page-body) .market-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Prevent accidental horizontal overflow from legacy page CSS */
+.app-page:not(.settings-page-body) .container,
+.app-page:not(.settings-page-body) .dash-container,
+.app-page:not(.settings-page-body) .wallet-container,
+.app-page:not(.settings-page-body) .withdrawals-container,
+.app-page:not(.settings-page-body) .profile-page,
+.app-page:not(.settings-page-body) .my-products-container,
+.app-page:not(.settings-page-body) .purchases-container,
+.app-page:not(.settings-page-body) .plans-wrap,
+.app-page:not(.settings-page-body) .card,
+.app-page:not(.settings-page-body) .panel {
+  min-width: 0;
+}

@@ -1832,3 +1832,25 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.premium-page{background:#f5f7fb;color:#111827;}
+.premium-page .plans-wrap{width:min(1160px,calc(100% - 32px));margin:0 auto;}
+.premium-page .plan-hero{margin-bottom:24px;}
+.premium-page .plan-hero .badge{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:7px 12px;border-radius:999px;background:#eaf7ff;color:#229ed9;border:1px solid rgba(34,158,217,.18);font-size:11px;font-weight:800;letter-spacing:.08em;}
+.premium-page .plan-profile,.premium-page .benefit-card,.premium-page .premium-price,.premium-page .plan-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.premium-page .plan-profile:hover,.premium-page .benefit-card:hover,.premium-page .premium-price:hover,.premium-page .plan-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
+.premium-page .benefit-icon,.premium-page .premium-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff!important;color:#229ed9!important;border-color:rgba(34,158,217,.14)!important;}
+@media(max-width:640px){.premium-page .plans-wrap{width:calc(100% - 24px)}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .premium-page{background:#0b1220;color:#f8fafc}.premium-page .plan-profile,.premium-page .benefit-card,.premium-page .premium-price,.premium-page .plan-card{background:#111827;border-color:#263247;color:#f8fafc}.premium-page .plan-hero .badge{background:rgba(34,158,217,.12);},
+html.theme-dark .premium-page{background:#0b1220;color:#f8fafc}.premium-page .plan-profile,.premium-page .benefit-card,.premium-page .premium-price,.premium-page .plan-card{background:#111827;border-color:#263247;color:#f8fafc}.premium-page .plan-hero .badge{background:rgba(34,158,217,.12);},
+body.theme-dark .premium-page{background:#0b1220;color:#f8fafc}.premium-page .plan-profile,.premium-page .benefit-card,.premium-page .premium-price,.premium-page .plan-card{background:#111827;border-color:#263247;color:#f8fafc}.premium-page .plan-hero .badge{background:rgba(34,158,217,.12);}

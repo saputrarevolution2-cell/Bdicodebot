@@ -2086,3 +2086,26 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.wallet-page { background:#f5f7fb;color:#111827; }
+.wallet-page .wallet-container{width:min(1160px,calc(100% - 32px));margin:0 auto;}
+.wallet-page .wallet-heading{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.wallet-page .wallet-heading-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff;color:#229ed9;border:1px solid rgba(34,158,217,.14);}
+.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.wallet-page .wallet-balance-hero:hover,.wallet-page .wallet-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
+.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#6b7280;font-size:12px;font-weight:750;}
+.wallet-page .wallet-copy-btn{width:36px;height:36px;border-radius:10px;background:#eaf7ff;color:#229ed9;}
+@media(max-width:640px){.wallet-page .wallet-container{width:calc(100% - 24px)}.wallet-page .wallet-heading{align-items:flex-start;flex-wrap:wrap}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .wallet-page{background:#0b1220;color:#f8fafc}.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#111827;border-color:#263247;color:#f8fafc}.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#94a3b8}.wallet-page .wallet-heading-icon,.wallet-page .wallet-copy-btn{background:rgba(34,158,217,.12);},
+html.theme-dark .wallet-page{background:#0b1220;color:#f8fafc}.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#111827;border-color:#263247;color:#f8fafc}.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#94a3b8}.wallet-page .wallet-heading-icon,.wallet-page .wallet-copy-btn{background:rgba(34,158,217,.12);},
+body.theme-dark .wallet-page{background:#0b1220;color:#f8fafc}.wallet-page .wallet-balance-hero,.wallet-page .wallet-card{background:#111827;border-color:#263247;color:#f8fafc}.wallet-page .wallet-balance-label,.wallet-page .wallet-card-label{color:#94a3b8}.wallet-page .wallet-heading-icon,.wallet-page .wallet-copy-btn{background:rgba(34,158,217,.12);}

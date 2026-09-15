@@ -1335,3 +1335,27 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.transactions-page{background:#f5f7fb;color:#111827;}
+.transactions-page .container{width:min(1160px,calc(100% - 32px));margin:0 auto;}
+.transactions-page .tx-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.transactions-page .tx-summary-item,.transactions-page .tx-list,.transactions-page .transaction-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.transactions-page .tx-summary-item:hover,.transactions-page .transaction-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
+.transactions-page .tx-summary-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff!important;color:#229ed9!important;}
+.transactions-page .tx-search{position:relative;}
+.transactions-page .tx-search>i.fa-magnifying-glass{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;pointer-events:none;z-index:2;}
+.transactions-page .tx-search input{padding-left:42px!important;min-height:46px;border-radius:12px!important;}
+@media(max-width:640px){.transactions-page .container{width:calc(100% - 24px)}.transactions-page .tx-header{align-items:flex-start;flex-direction:column}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .transactions-page{background:#0b1220;color:#f8fafc}.transactions-page .tx-summary-item,.transactions-page .tx-list,.transactions-page .transaction-card{background:#111827;border-color:#263247;color:#f8fafc}.transactions-page .tx-search input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important},
+html.theme-dark .transactions-page{background:#0b1220;color:#f8fafc}.transactions-page .tx-summary-item,.transactions-page .tx-list,.transactions-page .transaction-card{background:#111827;border-color:#263247;color:#f8fafc}.transactions-page .tx-search input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important},
+body.theme-dark .transactions-page{background:#0b1220;color:#f8fafc}.transactions-page .tx-summary-item,.transactions-page .tx-list,.transactions-page .transaction-card{background:#111827;border-color:#263247;color:#f8fafc}.transactions-page .tx-search input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}

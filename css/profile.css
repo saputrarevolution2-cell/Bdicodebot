@@ -2893,3 +2893,24 @@ html[data-theme="dark"] .profile-page-body .profile-hero::after{background:rgba(
   .profile-page-body .detail-row{grid-template-columns:1fr;gap:3px;min-height:0;padding:11px 12px}
   .profile-page-body .detail-row b{text-align:left;white-space:normal;overflow:visible}
 }
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.profile-page-body{background:#f5f7fb;color:#111827;}
+.profile-page-body .profile-page{width:min(1160px,calc(100% - 32px));margin:0 auto;}
+.profile-page-body .profile-hero,.profile-page-body .profile-stat-card,.profile-page-body .profile-quick-card,.profile-page-body .profile-section{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.profile-page-body .profile-hero:hover,.profile-page-body .profile-stat-card:hover,.profile-page-body .profile-quick-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
+.profile-page-body .profile-avatar,.profile-page-body .profile-stat-icon,.profile-page-body .profile-quick-icon{border-radius:12px;}
+.profile-page-body .profile-stat-icon,.profile-page-body .profile-quick-icon{background:#eaf7ff!important;color:#229ed9!important;border-color:rgba(34,158,217,.14)!important;}
+@media(max-width:640px){.profile-page-body .profile-page{width:calc(100% - 24px)}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .profile-page-body{background:#0b1220;color:#f8fafc}.profile-page-body .profile-hero,.profile-page-body .profile-stat-card,.profile-page-body .profile-quick-card,.profile-page-body .profile-section{background:#111827;border-color:#263247;color:#f8fafc},
+html.theme-dark .profile-page-body{background:#0b1220;color:#f8fafc}.profile-page-body .profile-hero,.profile-page-body .profile-stat-card,.profile-page-body .profile-quick-card,.profile-page-body .profile-section{background:#111827;border-color:#263247;color:#f8fafc},
+body.theme-dark .profile-page-body{background:#0b1220;color:#f8fafc}.profile-page-body .profile-hero,.profile-page-body .profile-stat-card,.profile-page-body .profile-quick-card,.profile-page-body .profile-section{background:#111827;border-color:#263247;color:#f8fafc}

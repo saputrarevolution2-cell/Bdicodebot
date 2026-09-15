@@ -2281,3 +2281,27 @@ html[data-theme="dark"]{
 .status-completed,.status-success,.status-successful{color:#16a36b}.status-pending,.status-processing,.status-approved{color:#d79517}.status-rejected,.status-cancelled,.status-canceled,.status-failed{color:#d95763}
 @media(max-width:680px){.app-page main .card,.app-page main .panel,.app-page main .box{border-radius:15px}.withdraw-history-item{align-items:flex-start}.history-right{min-width:105px}}
 @media(prefers-reduced-motion:reduce){.app-page main .card,.app-page main .panel,.app-page main .box,.app-page main button,.app-page main .btn,.app-page main .button{transition:none}}
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.my-products-page{background:#f5f7fb;color:#111827;}
+.my-products-page .my-products-container{width:min(1160px,calc(100% - 32px));margin:0 auto;}
+.my-products-page .page-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.my-products-page .overview-card,.my-products-page .products-toolbar,.my-products-page .product-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.my-products-page .overview-card:hover,.my-products-page .product-card:hover{border-color:#d7dce5;box-shadow:0 10px 30px rgba(15,23,42,.07);}
+.my-products-page .overview-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff!important;color:#229ed9!important;}
+.my-products-page .search-box{position:relative;}
+.my-products-page .search-box>.fa-magnifying-glass{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;pointer-events:none;z-index:2;}
+.my-products-page .search-box input{padding-left:42px!important;min-height:46px;border-radius:12px!important;}
+@media(max-width:640px){.my-products-page .my-products-container{width:calc(100% - 24px)}.my-products-page .page-heading{align-items:flex-start;flex-direction:column}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .my-products-page{background:#0b1220;color:#f8fafc}.my-products-page .overview-card,.my-products-page .products-toolbar,.my-products-page .product-card{background:#111827;border-color:#263247;color:#f8fafc}.my-products-page .search-box input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important},
+html.theme-dark .my-products-page{background:#0b1220;color:#f8fafc}.my-products-page .overview-card,.my-products-page .products-toolbar,.my-products-page .product-card{background:#111827;border-color:#263247;color:#f8fafc}.my-products-page .search-box input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important},
+body.theme-dark .my-products-page{background:#0b1220;color:#f8fafc}.my-products-page .overview-card,.my-products-page .products-toolbar,.my-products-page .product-card{background:#111827;border-color:#263247;color:#f8fafc}.my-products-page .search-box input{background:#111827!important;color:#f8fafc!important;border-color:#263247!important}

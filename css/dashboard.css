@@ -4290,3 +4290,28 @@ body.theme-dark.dashboard-page{
 @media(prefers-reduced-motion:reduce){
   .dashboard-page *{scroll-behavior:auto!important;transition:none!important}
 }
+
+
+/* =========================================================
+   SETTINGS VISUAL PARITY — existing page stylesheet only
+   The Settings page is the visual reference. Keep page-specific
+   selectors here so existing JS/HTML contracts remain intact.
+   ========================================================= */
+
+.dashboard-page { background: #f5f7fb; color:#111827; }
+.dashboard-page .dash-container { width:min(1160px,calc(100% - 32px)); margin:0 auto; }
+.dashboard-page .dash-head { margin-bottom:26px; }
+.dashboard-page .dash-title { display:flex; align-items:center; gap:12px; }
+.dashboard-page .dash-logo { width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff;color:#229ed9;border:1px solid rgba(34,158,217,.14);flex:0 0 auto; }
+.dashboard-page .eyebrow { color:#6b7280; font-size:12px; font-weight:800; letter-spacing:.08em; }
+.dashboard-page .dash-stat, .dashboard-page .count-card, .dashboard-page .panel { background:#fff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 2px 8px rgba(15,23,42,.04); }
+.dashboard-page .dash-stat:hover, .dashboard-page .count-card:hover, .dashboard-page .panel:hover { border-color:#d7dce5; box-shadow:0 10px 30px rgba(15,23,42,.07); }
+.dashboard-page .dash-stat > i, .dashboard-page .count-card > i, .dashboard-page .panel-icon { width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#eaf7ff;color:#229ed9; }
+.dashboard-page .panel-head { padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid #e5e7eb; }
+@media(max-width:640px){.dashboard-page .dash-container{width:min(100% - 24px,1160px)}.dashboard-page .dash-stat-grid,.dashboard-page .count-grid{gap:12px!important}}
+
+
+/* Dark mode parity */
+html[data-theme="dark"] .dashboard-page{background:#0b1220;color:#f8fafc}.dashboard-page .dash-stat,.dashboard-page .count-card,.dashboard-page .panel{background:#111827;border-color:#263247;color:#f8fafc}.dashboard-page .panel-head{border-color:#263247}.dashboard-page .eyebrow{color:#94a3b8}.dashboard-page .dash-logo,.dashboard-page .dash-stat>i,.dashboard-page .count-card>i,.dashboard-page .panel-icon{background:rgba(34,158,217,.12);},
+html.theme-dark .dashboard-page{background:#0b1220;color:#f8fafc}.dashboard-page .dash-stat,.dashboard-page .count-card,.dashboard-page .panel{background:#111827;border-color:#263247;color:#f8fafc}.dashboard-page .panel-head{border-color:#263247}.dashboard-page .eyebrow{color:#94a3b8}.dashboard-page .dash-logo,.dashboard-page .dash-stat>i,.dashboard-page .count-card>i,.dashboard-page .panel-icon{background:rgba(34,158,217,.12);},
+body.theme-dark .dashboard-page{background:#0b1220;color:#f8fafc}.dashboard-page .dash-stat,.dashboard-page .count-card,.dashboard-page .panel{background:#111827;border-color:#263247;color:#f8fafc}.dashboard-page .panel-head{border-color:#263247}.dashboard-page .eyebrow{color:#94a3b8}.dashboard-page .dash-logo,.dashboard-page .dash-stat>i,.dashboard-page .count-card>i,.dashboard-page .panel-icon{background:rgba(34,158,217,.12);}
