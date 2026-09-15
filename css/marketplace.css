@@ -174,11 +174,32 @@ body.theme-light .marketplace-page{
   letter-spacing: -.025em;
 }
 
-.market-heading .muted {
+.market-heading .muted,
+.market-heading .market-subtitle {
   margin: 0;
   color: var(--market-muted);
   font-size: 12px;
   line-height: 1.55;
+  letter-spacing: .01em;
+}
+
+.market-heading .market-subtitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.market-heading .market-subtitle span {
+  color: var(--market-accent);
+  font-weight: 900;
+}
+
+@media (max-width: 700px) {
+  .market-heading .market-subtitle {
+    font-size: 11px;
+    gap: 5px;
+  }
 }
 
 
