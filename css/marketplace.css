@@ -3773,3 +3773,326 @@ body.theme-dark .marketplace-public { color-scheme:dark; }
   .marketplace-public .product-price{font-size:13px !important}
   .marketplace-public .product-cta{min-height:36px !important;font-size:9px !important;margin-top:6px !important}
 }
+
+/* =========================================================
+   PASSTELE MARKETPLACE — FINAL CONTENT GRID / CARD RESET
+   Purpose: remove conflicting legacy card rules and make every
+   content card visually aligned on desktop + mobile.
+   ========================================================= */
+.marketplace-public .market-grid,
+.marketplace-page .market-grid#market{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:24px !important;
+  align-items:stretch !important;
+}
+
+.marketplace-public .product-card,
+.marketplace-page .product-card{
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:460px !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  position:relative !important;
+  box-sizing:border-box !important;
+  border:1px solid var(--market-border,#e5eaf0) !important;
+  border-radius:18px !important;
+  background:var(--market-card,#fff) !important;
+}
+
+.marketplace-public .product-card-link,
+.marketplace-page .product-card-link{
+  display:flex !important;
+  flex-direction:column !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  height:auto !important;
+  text-decoration:none !important;
+}
+
+.marketplace-public .product-thumb,
+.marketplace-page .product-thumb{
+  position:relative !important;
+  width:100% !important;
+  height:180px !important;
+  min-height:180px !important;
+  flex:0 0 180px !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+
+.marketplace-public .product-thumb img,
+.marketplace-page .product-thumb img{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+}
+
+.marketplace-public .product-thumb-fallback,
+.marketplace-page .product-thumb-fallback{
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.marketplace-public .product-body,
+.marketplace-page .product-body{
+  display:flex !important;
+  flex-direction:column !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  min-height:280px !important;
+  padding:15px !important;
+  box-sizing:border-box !important;
+}
+
+.marketplace-public .product-type,
+.marketplace-page .product-type{
+  align-self:flex-start !important;
+  max-width:100% !important;
+  min-height:24px !important;
+  box-sizing:border-box !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.marketplace-public .product-title,
+.marketplace-page .product-title{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  margin:9px 0 6px !important;
+  display:-webkit-box !important;
+  -webkit-box-orient:vertical !important;
+  -webkit-line-clamp:2 !important;
+  overflow:hidden !important;
+  overflow-wrap:anywhere !important;
+  line-height:1.35 !important;
+}
+
+.marketplace-public .product-description,
+.marketplace-page .product-description{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:32px !important;
+  max-height:32px !important;
+  margin:0 0 9px !important;
+  display:-webkit-box !important;
+  -webkit-box-orient:vertical !important;
+  -webkit-line-clamp:2 !important;
+  overflow:hidden !important;
+  overflow-wrap:anywhere !important;
+}
+
+.marketplace-public .product-creator,
+.marketplace-page .product-creator{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:32px !important;
+  max-width:100% !important;
+  margin:0 0 10px !important;
+  padding:7px 9px !important;
+  box-sizing:border-box !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  border-radius:9px !important;
+  overflow:hidden !important;
+}
+
+.marketplace-public .product-creator i,
+.marketplace-page .product-creator i{
+  flex:0 0 auto !important;
+}
+
+.marketplace-public .product-creator span,
+.marketplace-page .product-creator span{
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+.marketplace-public .market-card-stats,
+.marketplace-page .market-card-stats{
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:9px 0 !important;
+  box-sizing:border-box !important;
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  gap:5px !important;
+  align-items:center !important;
+  border-top:1px solid var(--market-border,#edf0f3) !important;
+  border-bottom:1px solid var(--market-border,#edf0f3) !important;
+}
+
+.marketplace-public .market-card-stats span,
+.marketplace-page .market-card-stats span{
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:4px !important;
+  overflow:hidden !important;
+  white-space:nowrap !important;
+  line-height:1.2 !important;
+}
+
+.marketplace-public .market-card-stats i,
+.marketplace-page .market-card-stats i{
+  flex:0 0 auto !important;
+}
+
+.marketplace-public .product-bottom,
+.marketplace-page .product-bottom{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:36px !important;
+  margin:10px 0 0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  box-sizing:border-box !important;
+}
+
+.marketplace-public .product-price,
+.marketplace-page .product-price{
+  max-width:100% !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.marketplace-public .product-cta,
+.marketplace-page .product-cta{
+  width:100% !important;
+  min-height:42px !important;
+  margin-top:9px !important;
+  box-sizing:border-box !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:7px !important;
+  border-radius:11px !important;
+  white-space:nowrap !important;
+}
+
+@media (max-width:1100px){
+  .marketplace-public .market-grid,
+  .marketplace-page .market-grid#market{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:20px !important;
+  }
+}
+
+@media (max-width:680px){
+  .marketplace-public .market-grid,
+  .marketplace-page .market-grid#market{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+
+  .marketplace-public .product-card,
+  .marketplace-page .product-card{
+    min-height:390px !important;
+    border-radius:14px !important;
+  }
+
+  .marketplace-public .product-thumb,
+  .marketplace-page .product-thumb{
+    height:105px !important;
+    min-height:105px !important;
+    flex-basis:105px !important;
+  }
+
+  .marketplace-public .product-body,
+  .marketplace-page .product-body{
+    min-height:285px !important;
+    padding:9px !important;
+  }
+
+  .marketplace-public .product-type,
+  .marketplace-page .product-type{
+    min-height:20px !important;
+    padding:3px 6px !important;
+    font-size:7.5px !important;
+    border-radius:6px !important;
+  }
+
+  .marketplace-public .product-title,
+  .marketplace-page .product-title{
+    min-height:34px !important;
+    max-height:34px !important;
+    margin:6px 0 4px !important;
+    font-size:11.5px !important;
+    line-height:1.42 !important;
+  }
+
+  .marketplace-public .product-description,
+  .marketplace-page .product-description{
+    min-height:25px !important;
+    max-height:25px !important;
+    margin-bottom:6px !important;
+    font-size:8.5px !important;
+    line-height:1.45 !important;
+  }
+
+  .marketplace-public .product-creator,
+  .marketplace-page .product-creator{
+    min-height:24px !important;
+    margin-bottom:7px !important;
+    padding:5px 6px !important;
+    gap:5px !important;
+    font-size:8px !important;
+    border-radius:7px !important;
+  }
+
+  .marketplace-public .market-card-stats,
+  .marketplace-page .market-card-stats{
+    gap:1px !important;
+    padding:7px 0 !important;
+    font-size:7px !important;
+  }
+
+  .marketplace-public .market-card-stats span,
+  .marketplace-page .market-card-stats span{
+    gap:2px !important;
+  }
+
+  .marketplace-public .market-card-stats i,
+  .marketplace-page .market-card-stats i{
+    font-size:6.5px !important;
+  }
+
+  .marketplace-public .product-bottom,
+  .marketplace-page .product-bottom{
+    min-height:30px !important;
+    margin-top:7px !important;
+  }
+
+  .marketplace-public .product-price,
+  .marketplace-page .product-price{
+    font-size:12px !important;
+  }
+
+  .marketplace-public .product-cta,
+  .marketplace-page .product-cta{
+    min-height:34px !important;
+    margin-top:6px !important;
+    border-radius:9px !important;
+    font-size:8.5px !important;
+  }
+}
