@@ -3858,199 +3858,224 @@ document.addEventListener("DOMContentLoaded", async () => {
   const renderPurchaseRow = (row) => {
 
     const type = row._type;
-
     const status = row._status;
-
     const title = esc(row._title);
-
     const amount = money(row._amount);
+    const date = esc(formatDate(row.created_at));
+    const id = esc(row.id || "");
+    const productId = row._productId ? esc(row._productId) : "";
+    const accessUrl = getAccessUrl(row);
+    const canAccess = status === "paid" && Boolean(accessUrl);
 
-    const date = esc(
-      formatDate(row.created_at)
+    /* Extra fields are taken only from the current purchase row. */
+    const botUsername = esc(
+      row.bot_username ||
+      row.username ||
+      row._botUsername ||
+      row.product_username ||
+      row.creator_username ||
+      ""
     );
 
-    const id = esc(
-      row.id || ""
+    const fullLink = esc(accessUrl || row.url || row.link || "");
+
+    const views = Number(
+      row.views ?? row.view_count ?? row._views ?? 0
     );
-
-    const productId =
-      row._productId
-        ? esc(row._productId)
-        : "";
-
-    const accessUrl =
-      getAccessUrl(row);
-
-    const canAccess =
-      status === "paid" &&
-      Boolean(accessUrl);
-
+    const sold = Number(
+      row.sold ?? row.sales_count ?? row._sold ?? 0
+    );
 
     return `
       <article
-        class="purchase-item"
+        class="purchase-item purchase-collapsed"
         data-purchase-id="${id}"
         data-type="${esc(type)}"
         data-status="${esc(status)}"
       >
 
-        <div
-          class="purchase-item-icon type-${esc(type)}"
-          aria-hidden="true"
+        <button
+          type="button"
+          class="purchase-summary-toggle"
+          data-purchase-toggle="${id}"
+          aria-expanded="false"
+          aria-controls="purchase-detail-${id}"
+          title="Tampilkan detail pembelian"
         >
+          <span class="purchase-summary-main">
 
-          <i
-            class="fa-solid ${typeIcon(type)}"
-          ></i>
-
-        </div>
-
-
-        <div class="purchase-item-main">
-
-          <div class="purchase-item-top">
-
-            <span class="purchase-type">
-              ${esc(typeLabel(type))}
+            <span class="purchase-summary-icon type-${esc(type)}" aria-hidden="true">
+              <i class="fa-solid ${typeIcon(type)}"></i>
             </span>
 
-            <span
-              class="purchase-status status-${esc(status)}"
-            >
+            <span class="purchase-summary-text">
+              <span class="purchase-summary-title">${title}</span>
 
-              <i
-                class="fa-solid ${statusIcon(status)}"
-                aria-hidden="true"
-              ></i>
-
-              ${esc(statusLabel(status))}
-
+              <span class="purchase-summary-meta">
+                <span>${esc(typeLabel(type))}</span>
+                <span class="purchase-summary-dot">•</span>
+                <span class="purchase-status status-${esc(status)}">
+                  <i class="fa-solid ${statusIcon(status)}" aria-hidden="true"></i>
+                  ${esc(statusLabel(status))}
+                </span>
+                <span class="purchase-summary-dot">•</span>
+                <span>${date}</span>
+              </span>
             </span>
 
-          </div>
-
-
-          <h3 class="purchase-title">
-            ${title}
-          </h3>
-
-
-          <div class="purchase-meta">
-
-            <span>
-
-              <i
-                class="fa-regular fa-calendar"
-                aria-hidden="true"
-              ></i>
-
-              ${date}
-
+            <span class="purchase-summary-price">
+              ${amount}
             </span>
+          </span>
 
+          <span class="purchase-summary-chevron" aria-hidden="true">
+            <i class="fa-solid fa-chevron-down"></i>
+          </span>
+        </button>
+
+        <div
+          class="purchase-detail"
+          id="purchase-detail-${id}"
+          hidden
+        >
+          <div class="purchase-detail-inner">
+
+            <div class="purchase-detail-heading">
+              <div>
+                <span class="purchase-detail-label">
+                  <i class="fa-solid fa-receipt" aria-hidden="true"></i>
+                  DETAIL PEMBELIAN
+                </span>
+                <h3>${title}</h3>
+              </div>
+
+              <span class="purchase-status status-${esc(status)}">
+                <i class="fa-solid ${statusIcon(status)}" aria-hidden="true"></i>
+                ${esc(statusLabel(status))}
+              </span>
+            </div>
+
+            <div class="purchase-detail-grid">
+
+              <div class="purchase-detail-field">
+                <span>Produk</span>
+                <strong>${esc(typeLabel(type))}</strong>
+              </div>
+
+              <div class="purchase-detail-field">
+                <span>Tanggal</span>
+                <strong>${date}</strong>
+              </div>
+
+              <div class="purchase-detail-field">
+                <span>Harga</span>
+                <strong>${amount}</strong>
+              </div>
+
+              ${
+                botUsername
+                  ? `
+                    <div class="purchase-detail-field">
+                      <span>Bot</span>
+                      <strong>${botUsername}</strong>
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                productId
+                  ? `
+                    <div class="purchase-detail-field">
+                      <span>Code</span>
+                      <strong class="purchase-code-value">${productId}</strong>
+                    </div>
+                  `
+                  : ""
+              }
+
+              <div class="purchase-detail-field">
+                <span>Dilihat</span>
+                <strong>${views.toLocaleString("id-ID")}</strong>
+              </div>
+
+              <div class="purchase-detail-field">
+                <span>Terjual</span>
+                <strong>${sold.toLocaleString("id-ID")}</strong>
+              </div>
+
+            </div>
 
             ${
-              productId
+              fullLink
                 ? `
-                  <span>
-
-                    <i
-                      class="fa-solid fa-hashtag"
-                      aria-hidden="true"
-                    ></i>
-
-                    ${productId}
-
-                  </span>
+                  <div class="purchase-link-box">
+                    <span>
+                      <i class="fa-solid fa-link" aria-hidden="true"></i>
+                      LINK LENGKAP
+                    </span>
+                    <code>${fullLink}</code>
+                  </div>
                 `
                 : ""
             }
 
+            <div class="purchase-detail-actions">
+
+              ${
+                canAccess
+                  ? `
+                    <a
+                      class="purchase-access-btn"
+                      href="${esc(accessUrl)}"
+                      title="Buka produk"
+                      aria-label="Buka ${title}"
+                    >
+                      <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                      <span>Buka</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      class="purchase-copy-btn"
+                      data-copy-purchase-link="${esc(accessUrl)}"
+                      title="Salin link"
+                    >
+                      <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                      <span>Salin</span>
+                    </button>
+                  `
+                  : `
+                    <button
+                      type="button"
+                      class="purchase-access-btn is-disabled"
+                      disabled
+                    >
+                      <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                      <span>Akses</span>
+                    </button>
+                  `
+              }
+
+              <button
+                type="button"
+                class="purchase-delete-btn"
+                data-delete-purchase="${id}"
+                title="Hapus dari daftar pembelian"
+                aria-label="Hapus ${title} dari daftar pembelian"
+              >
+                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                <span>Hapus</span>
+              </button>
+
+            </div>
+
           </div>
-
-        </div>
-
-
-        <div class="purchase-item-price">
-
-          <span>
-            Total
-          </span>
-
-          <strong>
-            ${amount}
-          </strong>
-
-        </div>
-
-
-        <div class="purchase-item-actions">
-
-          ${
-            canAccess
-              ? `
-                <a
-                  class="purchase-access-btn"
-                  href="${esc(accessUrl)}"
-                  title="Buka produk"
-                  aria-label="Buka ${title}"
-                >
-
-                  <i
-                    class="fa-solid fa-arrow-up-right-from-square"
-                    aria-hidden="true"
-                  ></i>
-
-                  <span>
-                    Buka
-                  </span>
-
-                </a>
-              `
-              : `
-                <button
-                  type="button"
-                  class="purchase-access-btn is-disabled"
-                  disabled
-                  title="Produk belum dapat diakses"
-                  aria-label="Produk belum dapat diakses"
-                >
-
-                  <i
-                    class="fa-solid fa-lock"
-                    aria-hidden="true"
-                  ></i>
-
-                  <span>
-                    Akses
-                  </span>
-
-                </button>
-              `
-          }
-
-
-          <button
-            type="button"
-            class="purchase-delete-btn"
-            data-delete-purchase="${id}"
-            title="Hapus dari daftar pembelian"
-            aria-label="Hapus ${title} dari daftar pembelian"
-          >
-
-            <i
-              class="fa-solid fa-trash-can"
-              aria-hidden="true"
-            ></i>
-
-          </button>
-
         </div>
 
       </article>
     `;
   };
-
 
   /* =======================================================
      EMPTY
@@ -4457,18 +4482,57 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const bindPurchaseActions = () => {
 
-    $$("[data-delete-purchase]")
-      .forEach(button => {
+    $$("[data-purchase-toggle]").forEach(toggle => {
+      toggle.addEventListener("click", () => {
+        const item = toggle.closest(".purchase-item");
+        const detailId = toggle.getAttribute("aria-controls");
+        const detail = detailId ? document.getElementById(detailId) : null;
 
-        button.addEventListener(
-          "click",
-          () => deletePurchase(
-            button.dataset.deletePurchase,
-            button
-          )
+        if (!item || !detail) return;
+
+        const willOpen = detail.hidden;
+
+        detail.hidden = !willOpen;
+        item.classList.toggle("is-expanded", willOpen);
+        toggle.setAttribute("aria-expanded", String(willOpen));
+        toggle.setAttribute(
+          "title",
+          willOpen ? "Sembunyikan detail pembelian" : "Tampilkan detail pembelian"
         );
-
       });
+    });
+
+    $$("[data-copy-purchase-link]").forEach(button => {
+      button.addEventListener("click", async () => {
+        const value = String(button.dataset.copyPurchaseLink || "").trim();
+        if (!value) return;
+
+        try {
+          await navigator.clipboard.writeText(value);
+          toast("Link berhasil disalin.", "success");
+        } catch (_) {
+          const area = document.createElement("textarea");
+          area.value = value;
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand("copy");
+          area.remove();
+          toast("Link berhasil disalin.", "success");
+        }
+      });
+    });
+
+    $$("[data-delete-purchase]").forEach(button => {
+      button.addEventListener(
+        "click",
+        () => deletePurchase(
+          button.dataset.deletePurchase,
+          button
+        )
+      );
+    });
 
   };
 
