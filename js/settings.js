@@ -878,6 +878,17 @@ window.PASTELE_CONFIG = Object.freeze({
       return data;
     },
     /* =====================================================
+       CHANGE EMAIL / GMAIL
+       ===================================================== */
+    async updateEmail(email) {
+      const client = assertSupabase();
+      const cleanEmail = normalizeEmail(email);
+      if (!isEmail(cleanEmail)) throw new Error("Masukkan Gmail / email yang valid.");
+      const { data, error } = await client.auth.updateUser({ email: cleanEmail });
+      if (error) throw new Error(getErrorMessage(error));
+      return data;
+    },
+    /* =====================================================
        ENSURE USER ALLOWED
        ===================================================== */
     async ensureUserAllowed(user) {
@@ -3258,6 +3269,81 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
   };
 
   /* ---------------------------------------------------------
+     EMAIL / GMAIL SETTINGS
+     --------------------------------------------------------- */
+  const loadCurrentEmail = async (user) => {
+    const email = String(user?.email || "").trim();
+    setText("email", email || "-");
+    setText("currentEmail", email || "-");
+    const badge = $("emailVerifiedBadge");
+    if (badge) {
+      const verified = !!user?.email_confirmed_at;
+      badge.classList.toggle("is-unverified", !verified);
+      badge.innerHTML = verified
+        ? '<i class="fa-solid fa-circle-check"></i> Terverifikasi'
+        : '<i class="fa-solid fa-circle-exclamation"></i> Belum terverifikasi';
+    }
+  };
+
+  const saveEmail = async (event) => {
+    event.preventDefault();
+    const button = $("changeEmail");
+    if (!button || button.disabled) return;
+    try {
+      const user = await getUser();
+      const email = normalizeEmail($("newEmail")?.value);
+      if (!isEmail(email)) throw new Error("Masukkan Gmail / email yang valid.");
+      if (email === normalizeEmail(user?.email)) throw new Error("Gmail baru sama dengan Gmail saat ini.");
+      setBusy(button, true, "Mengirim...");
+      if (window.Auth?.updateEmail) await window.Auth.updateEmail(email);
+      else {
+        const { error } = await withTimeout(getClient().auth.updateUser({ email }));
+        if (error) throw error;
+      }
+      $("emailForm")?.reset();
+      toast("Permintaan ganti Gmail berhasil dikirim. Cek email baru untuk konfirmasi.", "success");
+    } catch (error) {
+      console.error("[PasTele Settings] change email:", error);
+      toast(error?.message || "Gagal mengganti Gmail.", "error");
+    } finally {
+      setBusy(button, false);
+    }
+  };
+
+  /* ---------------------------------------------------------
+     APP PREFERENCES
+     --------------------------------------------------------- */
+  const PREF_KEY = "pastele-preferences";
+  const loadPreferences = () => {
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch (_) {}
+    const language = $("languagePreference");
+    const time = $("timeFormatPreference");
+    if (language) language.value = ["id","en","zh"].includes(data.language) ? data.language : "id";
+    if (time) time.value = data.timeFormat === "12" ? "12" : "24";
+    if ($("prefMotion")) $("prefMotion").checked = data.motion !== false;
+    if ($("prefMobile")) $("prefMobile").checked = data.mobile !== false;
+    if ($("prefConfirm")) $("prefConfirm").checked = data.confirm !== false;
+    document.documentElement.dataset.language = language?.value || "id";
+    document.documentElement.classList.toggle("reduce-motion", data.motion === false);
+  };
+
+  const savePreferences = () => {
+    const data = {
+      language: $("languagePreference")?.value || "id",
+      timeFormat: $("timeFormatPreference")?.value || "24",
+      motion: $("prefMotion")?.checked !== false,
+      mobile: $("prefMobile")?.checked !== false,
+      confirm: $("prefConfirm")?.checked !== false,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(PREF_KEY, JSON.stringify(data));
+    document.documentElement.dataset.language = data.language;
+    document.documentElement.classList.toggle("reduce-motion", !data.motion);
+    toast("Preferensi berhasil disimpan.", "success");
+  };
+
+  /* ---------------------------------------------------------
      BOOT
      --------------------------------------------------------- */
   const boot = async () => {
@@ -3272,6 +3358,10 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
     initTheme();
     loadNotificationPrefs();
     initPasswordToggles();
+    loadPreferences();
+
+    $("emailForm")?.addEventListener("submit", saveEmail);
+    $("savePreferences")?.addEventListener("click", savePreferences);
 
     $("bio")?.addEventListener("input", updateBioCounter);
     $("newpass")?.addEventListener("input", updatePasswordStrength);
@@ -3313,6 +3403,7 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
        leave the whole Settings page in a permanent loading state. */
     try {
       const user = await getUser();
+      await loadCurrentEmail(user);
 
       let profile = null;
       try {
