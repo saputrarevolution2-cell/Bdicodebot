@@ -76,3 +76,137 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}b
 @media(max-width:380px){.settings-quick-grid{grid-template-columns:1fr}.pay-tabs{grid-template-columns:1fr}.settings-modal-actions{flex-direction:column-reverse}.settings-modal-actions .btn{width:100%}}
 html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* ============================================================
+   FINAL NAVBAR SCROLL / DRAWER FIX
+   Keep the navbar independent from page overflow and make the
+   mobile navigation drawer itself scrollable.
+   ============================================================ */
+
+html {
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body.settings-page,
+body.app-page.settings-page {
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Navbar must stay above page content and never become part of a
+   clipped scrolling container. */
+#navbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 4000 !important;
+  width: 100%;
+  isolation: isolate;
+  overflow: visible !important;
+  flex: 0 0 auto;
+}
+
+#navbar .pt-nav {
+  position: relative;
+  z-index: 4001;
+  overflow: visible !important;
+}
+
+#navbar .pt-nav-inner {
+  overflow: visible !important;
+}
+
+/* Dropdown / mobile drawer gets its own scrolling context. */
+#navbar .pt-user-dropdown,
+#navbar .pt-nav-dropdown,
+#navbar .nav-user-menu,
+#navbar .user-dropdown {
+  max-height: min(78vh, 620px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+#navbar .pt-drawer,
+#navbar .pt-nav-drawer,
+#navbar .nav-drawer,
+#navbar .mobile-nav,
+#navbar .mobile-menu {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  z-index: 5000 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* Common overlay names used by the navbar implementations. */
+#navbar .pt-drawer-backdrop,
+#navbar .drawer-backdrop,
+#navbar .nav-backdrop,
+#navbar .mobile-nav-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 4900 !important;
+}
+
+/* When the navbar opens a drawer, prevent the document itself from
+   moving underneath it; the drawer remains scrollable. */
+body.nav-open,
+body.menu-open,
+body.drawer-open {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+/* Never let generic section/container overflow clip the navbar. */
+#navbar,
+#navbar * {
+  scrollbar-width: thin;
+}
+
+/* iOS safe-area support */
+@supports (height: 100dvh) {
+  #navbar .pt-drawer,
+  #navbar .pt-nav-drawer,
+  #navbar .nav-drawer,
+  #navbar .mobile-nav,
+  #navbar .mobile-menu {
+    height: 100dvh !important;
+  }
+}
+
+@media (max-width: 780px) {
+  #navbar {
+    position: sticky !important;
+    top: 0 !important;
+  }
+
+  #navbar .pt-drawer,
+  #navbar .pt-nav-drawer,
+  #navbar .nav-drawer,
+  #navbar .mobile-nav,
+  #navbar .mobile-menu {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #navbar .pt-drawer,
+  #navbar .pt-nav-drawer,
+  #navbar .nav-drawer,
+  #navbar .mobile-nav,
+  #navbar .mobile-menu {
+    scroll-behavior: auto !important;
+  }
+}
