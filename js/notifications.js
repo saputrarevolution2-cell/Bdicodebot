@@ -3174,107 +3174,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* =======================================================
        RENDER
        ======================================================= */
-    content.innerHTML = rows
-        .map((item, index) => {
-            const isAnnouncement =
-                item.source === "announcement";
-            const body = String(item.body || "");
-            const isLong = body.length > 300;
-            const preview = isLong
-                ? body.slice(0, 300) + "..."
-                : body;
-            const unreadClass =
-                !isAnnouncement && !item.is_read
-                    ? "unread"
-                    : "";
-            const image = item.image_url
-                ? `
-                    <img
-                        class="notice-image"
-                        src="${escapeHtml(item.image_url)}"
-                        alt=""
-                        loading="lazy"
-                        onerror="this.style.display='none'"
-                    >
-                `
-                : "";
-            return `
-                <article
-                    class="notice-card ${escapeHtml(item.source)} ${unreadClass}"
-                    data-index="${index}"
-                    data-notification-id="${escapeHtml(
-                        item.notification_id || ""
-                    )}"
-                    ${item.link_url ? `data-link-url="${escapeHtml(item.link_url)}" tabindex="0" role="link"` : ""}
-                >
-                    ${image}
-                    <div class="notice-inner">
-                        <div class="notice-head">
-                            <span class="badge">
-                                <i class="fa-solid ${
-                                    isAnnouncement
-                                        ? "fa-bullhorn"
-                                        : "fa-bell"
-                                }"></i>
-                                ${
-                                    isAnnouncement
-                                        ? "SIARAN ADMIN"
-                                        : "NOTIFIKASI"
-                                }
-                            </span>
-                            ${
-                                !isAnnouncement && !item.is_read
-                                    ? `
-                                        <span class="notice-unread">
-                                            BARU
-                                        </span>
-                                    `
-                                    : ""
-                            }
-                        </div>
-                        <h2>
-                            ${escapeHtml(item.title)}
-                        </h2>
-                        <div
-                            class="notice-short ${
-                                isLong ? "" : "expanded"
-                            }"
-                            id="notice-body-${index}"
-                        >
-                            ${escapeHtml(
-                                isLong ? preview : body
-                            )}
-                        </div>
-                        ${
-                            isLong
-                                ? `
-                                    <button
-                                        type="button"
-                                        class="btn notice-more"
-                                        data-more="${index}"
-                                    >
-                                        Baca selengkapnya
-                                    </button>
-                                `
-                                : ""
-                        }
-                        <small class="notice-date">
-                            <i class="fa-regular fa-clock"></i>
-                            ${formatDate(item.created_at)}
-                        </small>
-                    </div>
-                </article>
-            `;
-        })
-        .join("");
+    const totalEl = document.getElementById("noticeTotal");
+    const unreadEl = document.getElementById("noticeUnread");
+    const unreadCount = rows.filter(item => item.source === "notification" && !item.is_read).length;
+    if (totalEl) totalEl.textContent = String(rows.length);
+    if (unreadEl) unreadEl.textContent = String(unreadCount);
+
+    content.innerHTML = rows.map((item, index) => {
+        const isAnnouncement = item.source === "announcement";
+        const body = String(item.body || "").trim();
+        const isLong = body.length > 260;
+        const preview = isLong ? body.slice(0, 260).trimEnd() + "…" : body;
+        const unreadClass = !isAnnouncement && !item.is_read ? "unread" : "";
+        const typeLabel = isAnnouncement ? "Pengumuman" : "Notifikasi";
+        const typeIcon = isAnnouncement ? "fa-bullhorn" : "fa-bell";
+        const image = item.image_url ? `
+          <div class="notice-media">
+            <img class="notice-image" src="${escapeHtml(item.image_url)}" alt="" loading="lazy"
+                 onerror="this.closest('.notice-media')?.remove()">
+          </div>` : "";
+
+        return `
+          <article class="notice-card ${escapeHtml(item.source)} ${unreadClass}"
+                   data-index="${index}"
+                   data-notification-id="${escapeHtml(item.notification_id || "")}"
+                   ${item.link_url ? `data-link-url="${escapeHtml(item.link_url)}" tabindex="0" role="link"` : ""}>
+            ${image}
+            <div class="notice-inner">
+              <div class="notice-topline">
+                <div class="notice-source">
+                  <span class="notice-type-icon ${isAnnouncement ? "announcement" : "notification"}">
+                    <i class="fa-solid ${typeIcon}"></i>
+                  </span>
+                  <div>
+                    <strong>${typeLabel}</strong>
+                    <small>${formatDate(item.created_at)}</small>
+                  </div>
+                </div>
+                ${!isAnnouncement && !item.is_read
+                    ? `<span class="notice-unread"><i class="fa-solid fa-circle"></i> Baru</span>`
+                    : `<span class="notice-read"><i class="fa-solid fa-check"></i> Dibaca</span>`}
+              </div>
+
+              <h2>${escapeHtml(item.title)}</h2>
+
+              ${body ? `<div class="notice-short ${isLong ? "is-truncated" : "expanded"}">${escapeHtml(preview)}</div>` : ""}
+
+              <div class="notice-bottom">
+                ${isLong ? `
+                  <button type="button" class="notice-more" data-more="${index}">
+                    <span>Baca selengkapnya</span><i class="fa-solid fa-arrow-right"></i>
+                  </button>` : `<span></span>`}
+                ${item.link_url ? `
+                  <span class="notice-link-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</span>` : ""}
+              </div>
+            </div>
+          </article>
+        `;
+    }).join("");
+
     rows.forEach((item, index) => {
         if (!item.link_url) return;
         const card = document.querySelector(`[data-index="${index}"]`);
         if (!card) return;
         card.classList.add("is-clickable");
-        const open = () => { window.location.assign(new URL(item.link_url, window.location.origin + "/").href); };
-        card.addEventListener("click", (e) => { if (e.target.closest("button")) return; open(); });
-        card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+        const open = () => {
+            try { window.location.assign(new URL(item.link_url, window.location.origin + "/").href); }
+            catch (_) { window.location.assign(item.link_url); }
+        };
+        card.addEventListener("click", (e) => {
+            if (e.target.closest("button")) return;
+            open();
+        });
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                open();
+            }
+        });
     });
 
     /* =======================================================
