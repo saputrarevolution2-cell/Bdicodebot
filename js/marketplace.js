@@ -9,22 +9,8 @@ window.PASTELE_CONFIG = Object.freeze({
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
 
-/* PasTele — zero-flash theme preload. Must run in <head>. */
-(() => {
-  try {
-    const key = 'pastele-theme';
-    const mode = localStorage.getItem(key) || 'auto';
-    const hour = new Date().getHours();
-    const dark = mode === 'dark' ||
-      (mode === 'auto' && (hour >= 18 || hour < 6)) ||
-      (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    const root = document.documentElement;
-    root.dataset.theme = dark ? 'dark' : 'light';
-    root.dataset.themeMode = mode;
-    root.classList.add(dark ? 'theme-dark' : 'theme-light');
-    root.style.colorScheme = dark ? 'dark' : 'light';
-  } catch (_) {}
-})();
+/* PasTele — manual Light/Dark theme preload */
+(() => { try { const key='pastele-theme'; const mode=localStorage.getItem(key)==='dark'?'dark':'light'; const root=document.documentElement; root.dataset.theme=mode; root.dataset.themeMode=mode; root.classList.add(mode==='dark'?'theme-dark':'theme-light'); root.style.colorScheme=mode; } catch(_){} })();
 
 /* =========================================================
    PasTele — Supabase client
@@ -1006,47 +992,16 @@ window.PASTELE_CONFIG = Object.freeze({
   );
 })();
 
-/* PasTele — Canonical global theme manager.
-   Synced with Login/Register: manual Light/Dark only. */
+/* PasTele — manual Light/Dark theme manager */
 (() => {
   'use strict';
-  const root = document.documentElement;
-  const KEY = 'pastele-theme';
-  const normalize = mode => mode === 'dark' ? 'dark' : 'light';
-
-  const apply = (mode = localStorage.getItem(KEY) || 'light') => {
-    const selected = normalize(mode);
-    localStorage.setItem(KEY, selected);
-    root.dataset.theme = selected;
-    root.dataset.themeMode = selected;
-    root.classList.toggle('theme-dark', selected === 'dark');
-    root.classList.toggle('theme-light', selected === 'light');
-    root.style.colorScheme = selected;
-    if (document.body) {
-      document.body.classList.toggle('theme-dark', selected === 'dark');
-      document.body.classList.toggle('theme-light', selected === 'light');
-    }
-    document.querySelectorAll('[data-theme-option]').forEach(button => {
-      const active = button.dataset.themeOption === selected;
-      button.classList.toggle('active', active);
-      button.setAttribute('aria-pressed', String(active));
-    });
-    window.dispatchEvent(new CustomEvent('pastele-theme-change', {
-      detail: { mode: selected, theme: selected }
-    }));
-    return selected;
-  };
-
-  const set = mode => apply(normalize(mode));
-  const cycle = () => set((localStorage.getItem(KEY) || 'light') === 'dark' ? 'light' : 'dark');
-
-  window.PasTeleTheme = Object.freeze({
-    get: () => normalize(localStorage.getItem(KEY) || 'light'),
-    resolved: () => normalize(localStorage.getItem(KEY) || 'light'),
-    set, cycle, apply
-  });
-
-  apply();
+  const root=document.documentElement, KEY='pastele-theme';
+  const normalize=m=>m==='dark'?'dark':'light';
+  const apply=(m=localStorage.getItem(KEY)||'light')=>{ const mode=normalize(m); root.dataset.theme=mode; root.dataset.themeMode=mode; root.classList.toggle('theme-dark',mode==='dark'); root.classList.toggle('theme-light',mode==='light'); root.style.colorScheme=mode; document.body?.classList.toggle('theme-dark',mode==='dark'); document.body?.classList.toggle('theme-light',mode==='light'); document.querySelectorAll('[data-theme-option]').forEach(b=>b.classList.toggle('active',b.dataset.themeOption===mode)); window.dispatchEvent(new CustomEvent('pastele-theme-change',{detail:{mode,theme:mode}})); return mode; };
+  const set=m=>{const mode=normalize(m); localStorage.setItem(KEY,mode); return apply(mode)};
+  const cycle=()=>set(normalize(localStorage.getItem(KEY)||'light')==='dark'?'light':'dark');
+  window.PasTeleTheme=Object.freeze({get:()=>normalize(localStorage.getItem(KEY)||'light'),resolved:()=>normalize(localStorage.getItem(KEY)||'light'),set,cycle,apply});
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>apply(),{once:true}); else apply();
 })();
 
 /* ============================================================
@@ -2148,78 +2103,17 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        THEME LABEL
        ======================================================== */
-    const getThemeMode = () => {
-      const stored =
-        localStorage.getItem(
-          'pastele-theme'
-        );
-      return stored === 'dark' ? 'dark' : 'light';
-    };
+    const getThemeMode = () => localStorage.getItem('pastele-theme') === 'dark' ? 'dark' : 'light';
     const updateThemeLabel = () => {
       if (!themeText) return;
-      const mode =
-        getThemeMode();
-      const labels = {
-        light: 'Terang',
-        dark: 'Gelap'
-      };
-      themeText.textContent = labels[mode] || 'Terang';
+      themeText.textContent = getThemeMode() === 'dark' ? 'Gelap' : 'Terang';
     };
     updateThemeLabel();
-    /* ========================================================
-       THEME BUTTON
-       ======================================================== */
-    themeButton?.addEventListener(
-      'click',
-      async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        try {
-          if (
-            window.PasTeleTheme?.cycle
-          ) {
-            await window.PasTeleTheme.cycle();
-            /*
-             * Allow theme.js to update
-             * localStorage before reading it.
-             */
-            setTimeout(
-              updateThemeLabel,
-              0
-            );
-          } else {
-            const current = getThemeMode();
-            const next = current === 'dark' ? 'light' : 'dark';
-            localStorage.setItem(
-              'pastele-theme',
-              next
-            );
-            /*
-             * Apply class/data attribute
-             * immediately where possible.
-             */
-            if (next === 'dark') {
-              document.documentElement
-                .setAttribute(
-                  'data-theme',
-                  'dark'
-                );
-            } else if (next === 'light') {
-              document.documentElement
-                .setAttribute(
-                  'data-theme',
-                  'light'
-                );
-            } else {
-              document.documentElement.setAttribute('data-theme', 'light');
-            }
-            updateThemeLabel();
-          }
-        } catch (_) {
-          updateThemeLabel();
-        }
-      }
-    );
+    themeButton?.addEventListener('click', (event) => {
+      event.preventDefault(); event.stopPropagation();
+      try { window.PasTeleTheme?.cycle(); } catch (_) {}
+      updateThemeLabel();
+    });
     /* ========================================================
        LOGOUT
        ======================================================== */
@@ -2741,16 +2635,7 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   function autoTheme() {
-    // Automatic day/night theme:
-    // 06:00–17:59 = light, 18:00–05:59 = dark.
-    try {
-      const hour = new Date().getHours();
-      const dark = hour >= 18 || hour < 6;
-      const root = document.documentElement;
-      root.dataset.theme = dark ? "dark" : "light";
-      root.dataset.themeMode = "auto";
-      root.style.colorScheme = dark ? "dark" : "light";
-    } catch (_) {}
+    try { return window.PasTeleTheme?.apply(localStorage.getItem("pastele-theme") || "light"); } catch (_) { return "light"; }
   }
 
   function bindActivity() {
@@ -2780,8 +2665,6 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   async function init() {
-    autoTheme();
-
     if (isPublic) return;
 
     const client = await getClient();
