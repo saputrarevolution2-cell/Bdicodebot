@@ -3107,13 +3107,60 @@ document.addEventListener("DOMContentLoaded", () => {
     select.innerHTML = '<option value="">Memuat bot...</option>';
     if (status) status.hidden = true;
 
-    try {
-      const { data, error } = await requireClient().rpc("get_active_approved_bots");
-      if (error) throw error;
+    const normalizeBotRow = (row) => {
+      if (!row || typeof row !== "object") return null;
+      const id = row.id ?? row.approved_bot_id ?? null;
+      const username = normalizeBotUsername(
+        row.bot_username ?? row.username ?? row.botUsername ?? ""
+      );
+      const name = String(
+        row.bot_name ?? row.name ?? row.botName ?? ""
+      ).trim();
+      const botId = row.bot_id ?? row.telegram_bot_id ?? null;
+      const active =
+        row.is_active === undefined || row.is_active === null
+          ? true
+          : row.is_active === true || String(row.is_active).toLowerCase() === "true";
 
-      bots = Array.isArray(data) ? data : [];
+      if (!id || !username) return null;
+      return {
+        id,
+        bot_username: username,
+        bot_name: name,
+        bot_id: botId,
+        is_active: active
+      };
+    };
+
+    const normalizeRpcData = (data) => {
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.data)) return data.data;
+      if (data && Array.isArray(data.rows)) return data.rows;
+      if (data && typeof data === "object") {
+        /* Some PostgREST/RPC responses may contain a single JSON object. */
+        if (data.id || data.approved_bot_id) return [data];
+      }
+      return [];
+    };
+
+    const renderBots = (rows) => {
+      const unique = new Map();
+      rows
+        .map(normalizeBotRow)
+        .filter(Boolean)
+        .filter((row) => row.is_active === true)
+        .forEach((row) => {
+          unique.set(String(row.id), row);
+        });
+
+      bots = [...unique.values()].sort((a, b) => {
+        const aa = (a.bot_name || a.bot_username).toLowerCase();
+        const bb = (b.bot_name || b.bot_username).toLowerCase();
+        return aa.localeCompare(bb, "id");
+      });
 
       if (!bots.length) {
+        select.disabled = true;
         select.innerHTML = '<option value="">Belum ada bot aktif</option>';
         if (status) {
           status.hidden = false;
@@ -3121,7 +3168,7 @@ document.addEventListener("DOMContentLoaded", () => {
             '<i class="fa-solid fa-circle-info"></i>' +
             '<span>Belum ada bot aktif yang disetujui admin.</span>';
         }
-        return;
+        return false;
       }
 
       select.disabled = false;
@@ -3130,22 +3177,62 @@ document.addEventListener("DOMContentLoaded", () => {
         bots.map((bot) => {
           const username = normalizeBotUsername(bot.bot_username);
           const name = String(bot.bot_name || "").trim();
-          const label = name && name.toLowerCase() !== username.toLowerCase()
-            ? ` — ${esc(name)}`
-            : "";
+          const label =
+            name && name.toLowerCase() !== username.toLowerCase()
+              ? ` — ${esc(name)}`
+              : "";
           return `<option value="${esc(bot.id)}">🤖 @${esc(username)}${label}</option>`;
         }).join("");
 
+      if (status) status.hidden = true;
+      return true;
+    };
+
+    try {
+      const client = requireClient();
+
+      /*
+       * Primary source: SECURITY DEFINER RPC from the canonical database.
+       * It is intentionally public-readable and returns only active bots.
+       */
+      const rpc = await client.rpc("get_active_approved_bots");
+      if (!rpc.error) {
+        const rpcRows = normalizeRpcData(rpc.data);
+        if (renderBots(rpcRows)) return;
+      } else {
+        console.warn("[PasTele][CreateCode] RPC bot list failed:", rpc.error);
+      }
+
+      /*
+       * Fallback: read the public approved_bots policy directly.
+       * This handles deployments where the RPC exists but is stale,
+       * has a different return shape, or was not exposed correctly.
+       */
+      const direct = await client
+        .from("approved_bots")
+        .select("id,bot_username,bot_name,bot_id,is_active")
+        .eq("is_active", true)
+        .order("bot_name", { ascending: true });
+
+      if (!direct.error && renderBots(direct.data || [])) return;
+      if (direct.error) {
+        console.warn("[PasTele][CreateCode] approved_bots fallback failed:", direct.error);
+      }
+
+      throw direct.error || rpc.error || new Error("BOT_LIST_EMPTY");
+
     } catch (error) {
-      console.error("[PasTele] get_active_approved_bots:", error);
+      console.error("[PasTele][CreateCode] loadBots failed:", error);
+      bots = [];
+      select.disabled = true;
       select.innerHTML = '<option value="">Bot gagal dimuat</option>';
       if (status) {
         status.hidden = false;
         status.innerHTML =
           '<i class="fa-solid fa-triangle-exclamation"></i>' +
-          '<span>Daftar bot tidak dapat dimuat. Pastikan RPC database tersedia.</span>';
+          '<span>Daftar bot tidak dapat dimuat. Coba refresh halaman.</span>';
       }
-      toast("Daftar bot gagal dimuat.", "error");
+      toast("Daftar bot gagal dimuat. Coba refresh halaman.", "error");
     }
   }
 
