@@ -12,7 +12,7 @@ window.PASTELE_CONFIG = Object.freeze({
 (() => {
   try {
     const key = 'pastele-theme';
-    const mode = localStorage.getItem(key) || 'auto';
+    const mode = localStorage.getItem(key) || 'light';
     const hour = new Date().getHours();
     const dark = mode === 'dark' ||
       (mode === 'auto' && (hour >= 18 || hour < 6)) ||
@@ -1010,19 +1010,12 @@ window.PASTELE_CONFIG = Object.freeze({
   'use strict';
   const root = document.documentElement;
   const KEY = 'pastele-theme';
-  const MODES = ['auto', 'light', 'dark', 'system'];
+  const MODES = ['light', 'dark'];
 
-  const resolve = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    if (mode === 'system') {
-      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    const hour = new Date().getHours();
-    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
-  };
+  const resolve = (mode) => mode === 'dark' ? 'dark' : 'light';
 
-  const apply = (mode = localStorage.getItem(KEY) || 'auto') => {
-    if (!MODES.includes(mode)) mode = 'auto';
+  const apply = (mode = localStorage.getItem(KEY) || 'light') => {
+    if (!MODES.includes(mode)) mode = 'light';
     const theme = resolve(mode);
     root.dataset.theme = theme;
     root.dataset.themeMode = mode;
@@ -1043,33 +1036,26 @@ window.PASTELE_CONFIG = Object.freeze({
   };
 
   const set = (mode) => {
-    if (!MODES.includes(mode)) mode = 'auto';
+    if (!MODES.includes(mode)) mode = 'light';
     localStorage.setItem(KEY, mode);
     return apply(mode);
   };
 
   const cycle = () => {
-    const current = localStorage.getItem(KEY) || 'auto';
+    const current = localStorage.getItem(KEY) || 'light';
     const index = Math.max(0, MODES.indexOf(current));
-    return set(['auto', 'light', 'dark', 'system'][(index + 1) % 4]);
+    return set(['light', 'dark'][(index + 1) % 2]);
   };
 
   window.PasTeleTheme = Object.freeze({
-    get: () => localStorage.getItem(KEY) || 'auto',
-    resolved: () => resolve(localStorage.getItem(KEY) || 'auto'),
+    get: () => localStorage.getItem(KEY) || 'light',
+    resolved: () => resolve(localStorage.getItem(KEY) || 'light'),
     set,
     cycle,
     apply
   });
 
   apply();
-  window.setInterval(() => {
-    if ((localStorage.getItem(KEY) || 'auto') === 'auto') apply('auto');
-  }, 60 * 1000);
-
-  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change', () => {
-    if ((localStorage.getItem(KEY) || 'auto') === 'system') apply('system');
-  });
 })();
 
 /* ============================================================
@@ -2298,6 +2284,9 @@ window.PASTELE_CONFIG = Object.freeze({
 (() => {
   'use strict';
 
+  /* Register uses its own controlled footer markup. */
+  if (document.body?.classList.contains('register-page')) return;
+
   /* =======================================================
      PREVENT DUPLICATE FOOTER
      ======================================================= */
@@ -2743,4 +2732,10 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
     document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+})();
+
+/* Register static footer year */
+(() => {
+  const year = document.getElementById('registerFooterYear');
+  if (year) year.textContent = String(new Date().getFullYear());
 })();
