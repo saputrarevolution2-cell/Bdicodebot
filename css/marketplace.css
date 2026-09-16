@@ -1960,7 +1960,7 @@ body.admin-page .admin-extra-grid>.card{height:100%}
 .product-price,.product-access{border-color:var(--pt-accent-border)!important}.product-access.free{color:#15905f!important}.product-access.paid{color:var(--pt-accent)!important}
 .market-search{flex:1 1 100%!important}.market-toolbar{flex-wrap:wrap!important}
 @media(max-width:760px){.market-grid{grid-template-columns:1fr!important}}
-.product-description,.market-card-stats .like,.market-card-stats .share{display:none!important}.product-creator{color:var(--market-muted)!important}.product-creator i{color:var(--pt-accent)!important}.product-bottom{border-top:1px solid var(--pt-accent-border)!important;padding-top:12px!important}.product-stats{font-size:12px!important}.product-stats span{display:inline-flex!important;align-items:center!important;gap:5px!important}.product-stats i{color:var(--pt-accent)!important}.product-price{font-weight:900!important;color:var(--pt-accent)!important}
+product-creator{color:var(--market-muted)!important}.product-creator i{color:var(--pt-accent)!important}.product-bottom{border-top:1px solid var(--pt-accent-border)!important;padding-top:12px!important}.product-stats{font-size:12px!important}.product-stats span{display:inline-flex!important;align-items:center!important;gap:5px!important}.product-stats i{color:var(--pt-accent)!important}.product-price{font-weight:900!important;color:var(--pt-accent)!important}
 
 
 /* PasTele — Canonical Navbar v2026.09.14
@@ -2761,3 +2761,111 @@ html[data-theme="dark"] .product-share,html[data-theme="dark"] .product-favorite
 .pt-chat-reply{display:none;align-items:center;justify-content:space-between;padding:7px 9px;margin-bottom:7px;border-radius:10px;background:var(--login-surface-2,#f8fafc);font-size:10px}.pt-chat-reply.is-open{display:flex}.pt-chat-reply button{border:0;background:transparent;color:inherit;cursor:pointer}
 @media(max-width:600px){.pt-chat-modal{right:12px;bottom:12px;width:calc(100vw - 24px);height:min(760px,calc(100svh - 24px));border-radius:19px}.pt-chat-bubble{max-width:84%}}
 html[data-theme="dark"] .pt-chat-backdrop{background:rgba(0,0,0,.58)}
+
+/* =========================================================
+   PasTele Marketplace — Login/Register visual sync
+   Final compatibility layer
+   ========================================================= */
+.marketplace-public{
+  --market-text:var(--text);
+  --market-text-soft:var(--text);
+  --market-muted:var(--muted);
+  --market-card:var(--surface);
+  --market-soft:var(--surface-2);
+  --market-soft-2:var(--surface-3);
+  --market-border:var(--line);
+  --market-border-soft:color-mix(in srgb,var(--line) 55%,transparent);
+  --market-accent:var(--primary);
+  --market-accent-soft:color-mix(in srgb,var(--primary) 11%,transparent);
+  background:var(--bg);
+  color:var(--text);
+}
+html[data-theme="dark"] .marketplace-public{
+  --market-text:var(--text);
+  --market-text-soft:var(--text);
+  --market-muted:var(--muted);
+  --market-card:var(--surface);
+  --market-soft:var(--surface-2);
+  --market-soft-2:var(--surface-3);
+  --market-border:var(--line);
+  --market-border-soft:rgba(255,255,255,.08);
+  --market-accent:var(--primary);
+  --market-accent-soft:rgba(99,91,255,.14);
+}
+.marketplace-public .market-heading h1,
+.marketplace-public .market-heading p,
+.marketplace-public .product-title,
+.marketplace-public .product-creator,
+.marketplace-public .product-description,
+.marketplace-public .product-type,
+.marketplace-public .market-resultbar,
+.marketplace-public .market-panel-head,
+.marketplace-public .market-list-title,
+.marketplace-public .market-list-meta{
+  color:var(--text);
+}
+.marketplace-public .market-heading .market-subtitle,
+.marketplace-public .product-description,
+.marketplace-public .market-list-meta,
+.marketplace-public .market-panel-head small,
+.marketplace-public .market-resultbar span{
+  color:var(--muted);
+}
+.marketplace-public .market-search input,
+.marketplace-public .market-tabs,
+.marketplace-public .product-card,
+.marketplace-public .market-panel,
+.marketplace-public .market-resultbar{
+  background:var(--surface);
+  border-color:var(--line);
+  color:var(--text);
+}
+.marketplace-public .market-tab{color:var(--muted)}
+.marketplace-public .market-tab.active{
+  color:var(--primary);
+  background:color-mix(in srgb,var(--primary) 10%,var(--surface));
+  border-color:color-mix(in srgb,var(--primary) 25%,var(--line));
+}
+.marketplace-public .product-card:hover,
+.marketplace-public .market-panel:hover{
+  border-color:color-mix(in srgb,var(--primary) 28%,var(--line))!important;
+  box-shadow:var(--shadow);
+}
+.marketplace-public .product-description{
+  display:-webkit-box!important;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:34px;
+}
+.marketplace-public .market-card-stats{
+  color:var(--muted);
+  border-top-color:var(--line);
+}
+.marketplace-public .market-card-stats span{color:var(--muted)}
+.marketplace-public .market-card-stats i{color:var(--primary)}
+.marketplace-public .product-bottom{border-top-color:var(--line)!important}
+.marketplace-public .market-list-item{border-bottom-color:var(--line)}
+.marketplace-public .market-list-item:hover{background:var(--surface-2)}
+.marketplace-public .market-pagination button{
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--line);
+}
+.marketplace-public .market-pagination button.active{
+  color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  border-color:transparent;
+}
+@media(max-width:1050px){
+  .marketplace-public .market-toolbar{display:grid;grid-template-columns:1fr;align-items:stretch}
+  .marketplace-public .market-tabs{width:100%}
+}
+@media(max-width:680px){
+  .marketplace-public .marketplace-page{padding-top:20px;padding-bottom:36px}
+  .marketplace-public .market-heading h1{font-size:28px}
+  .marketplace-public .market-grid{grid-template-columns:1fr!important;gap:12px!important}
+  .marketplace-public .market-rank-grid{grid-template-columns:1fr;gap:12px}
+  .marketplace-public .product-thumb{height:170px}
+  .marketplace-public .product-body{padding:14px!important}
+}
