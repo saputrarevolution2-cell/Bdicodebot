@@ -3126,36 +3126,131 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderMethods(rows){if(!el.saved)return;if(!rows.length){el.saved.classList.add('hidden');return;}el.saved.classList.remove('hidden');el.saved.innerHTML=rows.slice(0,3).map(x=>`<button type="button" class="saved-method" data-name="${esc(x.account_name)}" data-number="${esc(x.account_number)}" data-method="${esc(x.method_type)}"><strong>${esc(x.account_name)}</strong><small>${esc(x.method_type)} · ${esc(x.account_number)}</small></button>`).join('');el.saved.querySelectorAll('.saved-method').forEach(b=>b.addEventListener('click',()=>{el.name.value=b.dataset.name||'';el.number.value=b.dataset.number||'';el.method.value=b.dataset.method||'ewallet';renderPreview();}));}
 
   function renderHistory(){
-    let rows=[...withdrawals]; const q=String(el.historySearch?.value||'').trim().toLowerCase(); const st=String(el.historyStatus?.value||'all').toLowerCase();
-    if(q) rows=rows.filter(w=>`${w.mode} ${w.method} ${w.account_name} ${w.account_number} ${w.status}`.toLowerCase().includes(q));
-    if(st&&st!=='all') rows=rows.filter(w=>String(w.status||'').toLowerCase()===st);
-    if(String(el.historySort?.value||'newest')==='oldest') rows.reverse();
-    if(el.historyCount)el.historyCount.textContent=`${rows.length} transaksi`;
+    let rows=[...withdrawals];
+    const q=String(el.historySearch?.value||'').trim().toLowerCase();
+    const st=String(el.historyStatus?.value||'all').toLowerCase();
+    const sort=String(el.historySort?.value||'newest').toLowerCase();
+
+    if(q){
+      rows=rows.filter(w=>{
+        const hay=[
+          w.mode,w.method,w.account_name,w.account_number,w.status,
+          w.note,w.reference,w.id
+        ].map(v=>String(v??'')).join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    if(st&&st!=='all'){
+      rows=rows.filter(w=>String(w.status||'').toLowerCase()===st);
+    }
+
+    rows.sort((a,b)=>{
+      if(sort==='oldest'){
+        return new Date(a.created_at||0)-new Date(b.created_at||0);
+      }
+      if(sort==='highest'){
+        return Number(b.amount||0)-Number(a.amount||0);
+      }
+      if(sort==='lowest'){
+        return Number(a.amount||0)-Number(b.amount||0);
+      }
+      return new Date(b.created_at||0)-new Date(a.created_at||0);
+    });
+
+    if(el.historyCount){
+      el.historyCount.textContent=`${rows.length} transaksi`;
+    }
+    if(el.historyResult){
+      el.historyResult.textContent=rows.length
+        ? `Menampilkan ${Math.min(rows.length,30)} dari ${rows.length} transaksi`
+        : 'Tidak ada transaksi yang cocok';
+    }
+
     if(!el.history)return;
+
     if(!rows.length){
-      el.history.innerHTML='<div class="history-empty"><i class="fa-solid fa-clock-rotate-left"></i><strong>Belum ada riwayat penarikan</strong><span>Riwayat WD kamu akan muncul di sini setelah ada pengajuan.</span></div>';
+      el.history.innerHTML=`
+        <div class="history-empty">
+          <div class="history-empty-icon">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <strong>Belum ada riwayat penarikan</strong>
+          <span>
+            ${q||st!=='all'
+              ? 'Coba ubah kata kunci atau filter untuk melihat transaksi lain.'
+              : 'Riwayat WD kamu akan muncul di sini setelah ada pengajuan.'}
+          </span>
+        </div>`;
       return;
     }
+
+    const statusMeta=(status)=>{
+      status=String(status||'pending').toLowerCase();
+      if(['completed','success','successful'].includes(status))
+        return {label:'Berhasil',cls:'success',icon:'fa-circle-check'};
+      if(['rejected'].includes(status))
+        return {label:'Ditolak',cls:'rejected',icon:'fa-circle-xmark'};
+      if(['failed'].includes(status))
+        return {label:'Gagal',cls:'failed',icon:'fa-triangle-exclamation'};
+      if(['cancelled','canceled'].includes(status))
+        return {label:'Dibatalkan',cls:'cancelled',icon:'fa-ban'};
+      if(['processing','approved'].includes(status))
+        return {label:'Diproses',cls:'processing',icon:'fa-arrows-rotate'};
+      return {label:'Menunggu',cls:'pending',icon:'fa-hourglass-half'};
+    };
+
     el.history.innerHTML=rows.slice(0,30).map(w=>{
       const status=String(w.status||'pending').toLowerCase();
-      const mode=String(w.mode||'-').toLowerCase();
-      const statusLabel=status==='completed'||status==='success'||status==='successful'?'Berhasil':
-        status==='rejected'?'Ditolak':
-        status==='failed'?'Gagal':
-        status==='cancelled'||status==='canceled'?'Dibatalkan':'Menunggu';
-      const icon=mode==='instant'?'fa-bolt':'fa-building-columns';
+      const mode=String(w.mode||'manual').toLowerCase();
+      const meta=statusMeta(status);
       const amount=Number(w.amount||0);
-      const net=Number(w.net_amount ?? Math.max(0,amount-Number(w.fee||withdrawFee(mode))));
+      const fee=Number(w.fee ?? withdrawFee(mode));
+      const net=Number(w.net_amount ?? Math.max(0,amount-fee));
+      const created=w.created_at ? new Date(w.created_at) : null;
+      const dateText=created && !Number.isNaN(created.getTime())
+        ? created.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})
+        : '-';
+      const timeText=created && !Number.isNaN(created.getTime())
+        ? created.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})
+        : '';
+      const method=String(w.method||'-');
+      const accountName=String(w.account_name||'-');
+      const accountNumber=String(w.account_number||'-');
+      const modeLabel=mode==='instant'?'WD Instant':'WD Manual';
+      const modeIcon=mode==='instant'?'fa-bolt':'fa-building-columns';
+
       return `<article class="withdraw-history-item">
-        <div class="history-item-icon ${mode==='instant'?'instant':'manual'}"><i class="fa-solid ${icon}"></i></div>
-        <div class="history-item-main">
-          <strong>${money(amount)}</strong>
-          <small>${esc(mode==='instant'?'WD Instant':'WD Manual')} · ${esc(w.method||'-')} · ${esc(w.account_name||'-')}</small>
-          <small>${new Date(w.created_at).toLocaleString('id-ID')}</small>
+        <div class="history-item-icon ${mode==='instant'?'instant':'manual'}">
+          <i class="fa-solid ${modeIcon}"></i>
         </div>
+
+        <div class="history-item-main">
+          <div class="history-item-top">
+            <strong>${money(amount)}</strong>
+            <span class="history-mode">${esc(modeLabel)}</span>
+          </div>
+
+          <div class="history-item-meta">
+            <span><i class="fa-solid fa-wallet"></i>${esc(method)}</span>
+            <span><i class="fa-solid fa-user"></i>${esc(accountName)}</span>
+            <span><i class="fa-regular fa-calendar"></i>${esc(dateText)}${timeText?' · '+esc(timeText):''}</span>
+          </div>
+
+          <div class="history-account">
+            <i class="fa-solid fa-hashtag"></i>
+            <span>${esc(accountNumber)}</span>
+          </div>
+        </div>
+
         <div class="history-right">
+          <div class="history-net-label">Diterima</div>
           <b>${money(net)}</b>
-          <span class="status-${esc(status)}">${esc(statusLabel)}</span>
+          <span class="history-fee">Fee ${money(fee)}</span>
+          <span class="history-status ${esc(meta.cls)}">
+            <i class="fa-solid ${meta.icon}"></i>
+            ${esc(meta.label)}
+          </span>
         </div>
       </article>`;
     }).join('');
