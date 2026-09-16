@@ -1,285 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-  <meta
-    name="color-scheme"
-    content="light dark"
-  >
-  <meta
-    name="theme-color"
-    content="#ffffff"
-  >
-  <!-- =====================================================
-       THEME PRELOAD
-       ===================================================== -->
-  <!-- =====================================================
-       FONTS
-       ===================================================== -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="description" content="Buat akun PasTele.">
+  <script>
+    (() => { try {
+      const mode = localStorage.getItem('pastele-theme') || 'light';
+      document.documentElement.dataset.theme = mode === 'dark' ? 'dark' : 'light';
+    } catch (_) { document.documentElement.dataset.theme = 'light'; } })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin
-  >
-  <!-- =====================================================
-       SUPABASE
-       ===================================================== -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
-  <title>Register — PasTele</title>
-  <!-- =====================================================
-       CLOUDFLARE TURNSTILE
-       EXPLICIT RENDERING
-       ===================================================== -->
-  <script
-    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-    async
-    defer
-  ></script>
-  <!-- =====================================================
-       CORE CONFIGURATION
-       ===================================================== -->
-  <!-- =====================================================
-       AUTHENTICATION
-       ===================================================== -->
-  
-  <!-- =====================================================
-       FONT AWESOME
-       ===================================================== -->
-  <!-- =====================================================
-       STYLES
-       ===================================================== -->
-  <!-- =====================================================
-       REGISTER SECURITY
-       ===================================================== -->
-  
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-
-
-  
-  <link rel="stylesheet" href="css/register.css">
-
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <title>Daftar — PasTele</title>
+  <link rel="stylesheet" href="css/register.css?v=20260916-final">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 </head>
 <body class="public-no-navbar app-page register-page">
+  <div class="register-background" aria-hidden="true">
+    <span class="register-orb register-orb-a"></span>
+    <span class="register-orb register-orb-b"></span>
+    <span class="register-grid"></span>
+  </div>
 
-  
-  <!-- =====================================================
-       AUTH SHELL
-       ===================================================== -->
   <main class="auth-shell">
-    <div class="card auth-card">
-      <!-- LOGO -->
-      <div
-        class="auth-logo"
-        aria-hidden="true"
-      >
-        <i class="fa-solid fa-user-plus"></i>
+    <section class="auth-card" aria-labelledby="registerTitle">
+      <div class="auth-top">
+        <a class="auth-brand" href="index.html" aria-label="PasTele">
+          <span class="auth-logo"><i class="fa-solid fa-bolt"></i></span>
+          <span>PasTele</span>
+        </a>
+        <button class="theme-button" id="registerThemeButton" type="button" aria-label="Ganti tema" title="Ganti tema">
+          <i class="fa-solid fa-moon"></i>
+        </button>
       </div>
-      <!-- TITLE -->
-      <h1>Buat akun PasTele</h1>
-      <p class="muted">
-        Mulai publish, share, dan monetize konten digital kamu.
-      </p>
-      <!-- AUTH ERROR -->
-      <div
-        class="auth-error hidden"
-        id="authError"
-        role="alert"
-        aria-live="polite"
-      ></div>
-      <!-- AUTH NOTICE -->
-      <div
-        class="notice hidden"
-        id="authNotice"
-        role="status"
-        aria-live="polite"
-      ></div>
-      <!-- REGISTER PROGRESS -->
-      <div
-        class="auth-progress"
-        aria-label="Kelengkapan formulir"
-      >
-        <i id="regProgress"></i>
+
+      <div class="auth-heading">
+        <span class="auth-eyebrow"><i class="fa-solid fa-user-plus"></i> Create account</span>
+        <h1 id="registerTitle">Buat akun PasTele</h1>
+        <p>Daftar untuk publish, share, dan monetize konten digital kamu.</p>
       </div>
-      <!-- =================================================
-           REGISTER FORM
-           ================================================= -->
-      <form
-        class="list"
-        id="reg"
-        autocomplete="on"
-        novalidate
-      >
-        <!-- USERNAME -->
+
+      <div class="auth-error hidden" id="authError" role="alert" aria-live="polite"></div>
+      <div class="notice hidden" id="authNotice" role="status" aria-live="polite"></div>
+      <div class="auth-progress" aria-label="Kelengkapan formulir"><i id="regProgress"></i></div>
+
+      <form id="reg" class="register-form" autocomplete="on" novalidate>
         <div class="field">
-          <label for="username">
-            Username
-          </label>
-          <input
-            id="username"
-            name="username"
-            class="input"
-            type="text"
-            autocomplete="username"
-            maxlength="32"
-            minlength="3"
-            pattern="[A-Za-z0-9_]+"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
-            placeholder="username"
-            required
-          >
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <i class="field-leading fa-regular fa-user"></i>
+            <input id="username" name="username" class="input" type="text" autocomplete="username" maxlength="32" minlength="3" pattern="[A-Za-z0-9_]+" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="username" required>
+          </div>
+          <small class="field-help">3–32 karakter, huruf kecil, angka, dan underscore.</small>
         </div>
-        <!-- EMAIL -->
+
         <div class="field">
-          <label for="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            class="input"
-            type="email"
-            autocomplete="email"
-            inputmode="email"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
-            placeholder="nama@email.com"
-            required
-          >
-        </div>
-        <!-- PASSWORD -->
-        <div class="field">
-          <label for="password">
-            Kata sandi
-          </label>
-          <div class="row">
-            <input
-              id="password"
-              name="password"
-              class="input"
-              type="password"
-              autocomplete="new-password"
-              minlength="6"
-              placeholder="Minimal 6 karakter"
-              required
-            >
-            <button
-              class="btn toggle"
-              id="togglePassword"
-              type="button"
-              data-t="password"
-              aria-label="Tampilkan kata sandi"
-              title="Tampilkan kata sandi"
-            >
-              <i
-                class="fa-solid fa-eye"
-                aria-hidden="true"
-              ></i>
-            </button>
+          <label for="email">Gmail / Email</label>
+          <div class="input-wrap">
+            <i class="field-leading fa-regular fa-envelope"></i>
+            <input id="email" name="email" class="input" type="email" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="nama@gmail.com" required>
           </div>
         </div>
-        <!-- CONFIRM PASSWORD -->
+
         <div class="field">
-          <label for="confirm">
-            Konfirmasi kata sandi
-          </label>
-          <div class="row">
-            <input
-              id="confirm"
-              name="confirm"
-              class="input"
-              type="password"
-              autocomplete="new-password"
-              minlength="6"
-              placeholder="Ulangi kata sandi"
-              required
-            >
-            <button
-              class="btn toggle"
-              id="toggleConfirm"
-              type="button"
-              data-t="confirm"
-              aria-label="Tampilkan konfirmasi kata sandi"
-              title="Tampilkan konfirmasi kata sandi"
-            >
-              <i
-                class="fa-solid fa-eye"
-                aria-hidden="true"
-              ></i>
-            </button>
+          <label for="password">Kata sandi</label>
+          <div class="password-wrap">
+            <i class="field-leading fa-solid fa-lock"></i>
+            <input id="password" name="password" class="input" type="password" autocomplete="new-password" minlength="6" placeholder="Minimal 6 karakter" required>
+            <button class="password-toggle" id="togglePassword" type="button" aria-label="Tampilkan kata sandi"><i class="fa-regular fa-eye"></i></button>
           </div>
         </div>
-        <!-- =================================================
-             CLOUDFLARE TURNSTILE
-             ================================================= -->
+
+        <div class="field">
+          <label for="confirm">Konfirmasi kata sandi</label>
+          <div class="password-wrap">
+            <i class="field-leading fa-solid fa-lock"></i>
+            <input id="confirm" name="confirm" class="input" type="password" autocomplete="new-password" minlength="6" placeholder="Ulangi kata sandi" required>
+            <button class="password-toggle" id="toggleConfirm" type="button" aria-label="Tampilkan konfirmasi kata sandi"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </div>
+
         <div class="register-security">
-          <div
-            id="registerTurnstile"
-            data-sitekey="0x4AAAAAAErjLed781i5lbu8"
-            data-theme="auto"
-            data-language="id"
-            data-action="register"
-            aria-label="Verifikasi keamanan pendaftaran"
-          ></div>
-          <div
-            id="registerSecurityStatus"
-            class="register-security-status"
-            role="status"
-            aria-live="polite"
-          >
-            Memuat verifikasi keamanan...
-          </div>
+          <div id="registerTurnstile" data-sitekey="0x4AAAAAAErjLed781i5lbu8" data-theme="light" data-language="id" data-action="register" aria-label="Verifikasi keamanan pendaftaran"></div>
+          <div id="registerSecurityStatus" class="register-security-status" role="status" aria-live="polite">Memuat verifikasi keamanan...</div>
         </div>
-        <!-- REGISTER -->
-        <button
-          class="btn primary"
-          id="submit"
-          type="submit"
-          disabled
-          aria-disabled="true"
-        >
-          <i
-            class="fa-solid fa-user-plus"
-            aria-hidden="true"
-          ></i>
-          <span>
-            Register
-          </span>
+
+        <button class="btn primary" id="submit" type="submit" disabled aria-disabled="true">
+          <i class="fa-solid fa-user-plus"></i><span>Daftar sekarang</span>
         </button>
       </form>
-      <!-- GOOGLE REGISTER -->
-      <button
-        class="btn page-style-1"
-        id="google"
-        type="button"
-      >
-        <i
-          class="fa-brands fa-google"
-          aria-hidden="true"
-        ></i>
-        <span>
-          Daftar dengan Google
-        </span>
+
+      <div class="auth-divider"><span>atau</span></div>
+
+      <button class="btn google-register-btn" id="google" type="button">
+        <span class="google-icon">G</span><span>Daftar dengan Google</span>
       </button>
-    </div>
+
+      <div class="auth-account-action">
+        <p>Sudah punya akun?</p>
+        <a class="btn secondary-action" href="login.html">
+          <span>Masuk sekarang</span><i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="auth-trust">
+        <span><i class="fa-solid fa-lock"></i> Koneksi aman</span>
+        <span><i class="fa-solid fa-shield-halved"></i> Verifikasi keamanan</span>
+      </div>
+
+      <a class="back-home" href="index.html"><i class="fa-solid fa-arrow-left"></i> Kembali ke beranda</a>
+    </section>
   </main>
-  <!-- =====================================================
-       REGISTER LOGIC
-       ===================================================== -->
-  <!-- =====================================================
-       SITE SHELL
-       ===================================================== -->
-  <script src="js/register.js"></script>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo"><i class="fa-solid fa-bolt"></i></span>
+        <div><strong>PasTele</strong><small>Marketplace & digital content platform</small></div>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="index.html">Beranda</a><a href="marketplace.html">Marketplace</a><a href="terms.html">Ketentuan</a><a href="privacy.html">Privasi</a><a href="contact.html">Bantuan</a>
+      </nav>
+      <div class="footer-bottom"><span>© <span id="footerYear"></span> PasTele. All rights reserved.</span><span class="footer-secure"><i class="fa-solid fa-shield-halved"></i> Secure access</span></div>
+    </div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script src="js/register.js?v=20260916-final"></script>
+  <script>
+    (() => {
+      const root = document.documentElement, btn = document.getElementById('registerThemeButton');
+      const apply = mode => { mode = mode === 'dark' ? 'dark' : 'light'; root.dataset.theme = mode; root.style.colorScheme = mode; localStorage.setItem('pastele-theme', mode); if(btn) btn.innerHTML = mode === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>'; };
+      apply(localStorage.getItem('pastele-theme') || 'light');
+      btn?.addEventListener('click', () => apply(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+      const y = document.getElementById('footerYear'); if(y) y.textContent = new Date().getFullYear();
+    })();
+  </script>
 </body>
 </html>
