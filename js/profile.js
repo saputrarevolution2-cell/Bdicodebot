@@ -3233,11 +3233,14 @@ document.addEventListener("DOMContentLoaded", async () => {
      DOM
      ======================================================= */
 
-  const nameEl = $("name");
+  const nameEl = $("profileNameText") || $("name");
   const avatarEl = $("avatar");
   const bioEl = $("bio");
   const handleEl = $("handle");
   const verifyEl = $("profileVerify");
+  const planLabelEl = $("profilePlanLabel");
+  const quickActionsEl = $("profileQuickActions");
+  const loginSecuritySection = $("loginSecuritySection");
 
   const followBtn = $("followBtn");
   const settingsBtn = $("settingsBtn");
@@ -3262,19 +3265,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const clearContentSearchBtn = $("clearProfileContentSearch");
   const contentSortEl = $("profileContentSort");
   const contentResultEl = $("profileContentResult");
-
-  const passwordSection = document.querySelector(".password-section");
-  const passwordForm = $("profilePass");
-  const passwordInput = $("profileNewPass");
-  const passwordToggle = $("profilePassToggle");
-  const passwordStrength = $("profilePasswordStrength");
-  const passwordSubmit = $("profilePasswordSubmit");
-  const passwordSubmitText = passwordSubmit?.querySelector(
-    ".password-submit-text"
-  );
-  const passwordSubmitLoading = passwordSubmit?.querySelector(
-    ".password-submit-loading"
-  );
 
   const currentLoginEl = $("currentLogin");
   const lastLoginEl = $("lastLogin");
@@ -3535,17 +3525,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     "user";
 
   setText(
-    "name",
+    "profileNameText",
     profileName
   );
 
-  setText(
-    "avatar",
-    String(profileName)
-      .trim()
-      .slice(0, 1)
-      .toUpperCase() || "U"
-  );
+  if (avatarEl) {
+    const avatarUrl = String(profile.avatar_url || "").trim();
+
+    if (avatarUrl) {
+      avatarEl.innerHTML =
+        `<img src="${esc(avatarUrl)}" alt="${esc(profileName)}" loading="eager" referrerpolicy="no-referrer">`;
+    } else {
+      avatarEl.textContent =
+        String(profileName)
+          .trim()
+          .slice(0, 1)
+          .toUpperCase() || "U";
+    }
+  }
 
   setText(
     "bio",
@@ -3568,56 +3565,70 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const renderVerification = () => {
 
-    if (!verifyEl) return;
+    if (verifyEl) {
+      verifyEl.hidden = true;
+      verifyEl.className = "profile-verify";
+      verifyEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+      verifyEl.removeAttribute("title");
+      verifyEl.removeAttribute("aria-label");
+    }
 
-    verifyEl.hidden = true;
+    if (planLabelEl) {
+      planLabelEl.hidden = true;
+      planLabelEl.textContent = "";
+      planLabelEl.className = "profile-plan-label";
+    }
 
-    const premium =
-      profile.is_premium === true;
+    const premium = profile.is_premium === true;
 
     const subscriptionActive =
       !premium &&
       profile.subscription_until &&
       new Date(profile.subscription_until) > new Date();
 
+    let plan = "free";
+
     if (premium) {
-
-      verifyEl.hidden = false;
-
-      verifyEl.className =
-        "profile-verify blue";
-
-      verifyEl.innerHTML =
-        '<i class="fa-solid fa-check"></i>';
-
-      verifyEl.title =
-        "Premium";
-
-      verifyEl.setAttribute(
-        "aria-label",
-        "Akun Premium"
-      );
-
-      return;
+      plan = "premium";
+    } else if (subscriptionActive) {
+      plan = "subscription";
     }
 
-    if (subscriptionActive) {
+    const planConfig = {
+      free: {
+        label: "Free",
+        className: "red",
+        title: "Akun Free",
+        aria: "Akun Free"
+      },
+      subscription: {
+        label: "Langganan",
+        className: "green",
+        title: "Langganan aktif",
+        aria: "Langganan aktif"
+      },
+      premium: {
+        label: "Premium",
+        className: "blue",
+        title: "Akun Premium",
+        aria: "Akun Premium"
+      }
+    }[plan];
 
+    if (verifyEl) {
       verifyEl.hidden = false;
+      verifyEl.className = `profile-verify ${planConfig.className}`;
+      verifyEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+      verifyEl.title = planConfig.title;
+      verifyEl.setAttribute("aria-label", planConfig.aria);
+    }
 
-      verifyEl.className =
-        "profile-verify green";
-
-      verifyEl.innerHTML =
-        '<i class="fa-solid fa-check"></i>';
-
-      verifyEl.title =
-        "Langganan aktif";
-
-      verifyEl.setAttribute(
-        "aria-label",
-        "Langganan aktif"
-      );
+    if (planLabelEl) {
+      planLabelEl.hidden = false;
+      planLabelEl.className =
+        `profile-plan-label ${planConfig.className}`;
+      planLabelEl.innerHTML =
+        `<i class="fa-solid fa-circle-check"></i> ${esc(planConfig.label)}`;
     }
   };
 
@@ -3655,8 +3666,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       settingsBtn.removeAttribute("hidden");
     }
 
-    if (passwordSection) {
-      passwordSection.removeAttribute("hidden");
+    if (quickActionsEl) {
+      quickActionsEl.removeAttribute("hidden");
+    }
+
+    if (loginSecuritySection) {
+      loginSecuritySection.removeAttribute("hidden");
     }
 
   } else {
@@ -3676,10 +3691,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /*
-     * Public profiles don't show password section.
+     * Public profiles show a clean Facebook-style public profile.
+     * Private wallet/purchase/manage shortcuts are hidden.
      */
-
-    passwordSection?.remove();
+    quickActionsEl?.remove();
+    loginSecuritySection?.remove();
   }
 
 
@@ -4454,109 +4470,128 @@ document.addEventListener("DOMContentLoaded", async () => {
       link: 0,
       code: 0,
       channel: 0,
-      group: 0
+      group: 0,
+      totalViews: 0,
+      totalSales: 0,
+      paid: 0,
+      free: 0
     };
 
     content.forEach((item) => {
+      const type = normalizeType(item.type);
 
-      const type =
-        normalizeType(item.type);
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          summary,
-          type
-        )
-      ) {
+      if (Object.prototype.hasOwnProperty.call(summary, type)) {
         summary[type]++;
+      }
+
+      summary.totalViews += Number(item.views || 0);
+      summary.totalSales += Number(item.sales_count || 0);
+
+      if (isPaid(item)) {
+        summary.paid++;
+      } else {
+        summary.free++;
       }
     });
 
     const rows = [
       {
+        type: "all",
+        icon: "fa-layer-group",
+        label: "Total konten",
+        value: content.length,
+        meta: "Konten publik"
+      },
+      {
+        type: "all",
+        icon: "fa-eye",
+        label: "Total dilihat",
+        value: summary.totalViews,
+        meta: "Semua konten"
+      },
+      {
+        type: "all",
+        icon: "fa-cart-shopping",
+        label: "Terjual",
+        value: summary.totalSales,
+        meta: "Total penjualan"
+      },
+      {
         type: "link",
         icon: "fa-link",
         label: "PasteLink",
-        count: summary.link,
-        color: "blue"
+        value: summary.link,
+        meta: "Konten Link"
       },
       {
         type: "code",
         icon: "fa-code",
         label: "Code",
-        count: summary.code,
-        color: "purple"
+        value: summary.code,
+        meta: "Konten Code"
       },
       {
         type: "channel",
         icon: "fa-broadcast-tower",
         label: "Channel",
-        count: summary.channel,
-        color: "orange"
+        value: summary.channel,
+        meta: "Konten Channel"
       },
       {
         type: "group",
         icon: "fa-users",
         label: "Group",
-        count: summary.group,
-        color: "pink"
+        value: summary.group,
+        meta: "Konten Group"
+      },
+      {
+        type: "all",
+        icon: "fa-tags",
+        label: "Akses",
+        value: `${num(summary.free)} Free · ${num(summary.paid)} Paid`,
+        meta: "Distribusi konten"
       }
     ];
 
-    countsEl.innerHTML =
-      rows.map(
-        (row) => `
-          <a
-            class="content-count"
-            href="#publicContentSection"
-            data-summary-type="${esc(row.type)}"
-          >
-            <span>
-              <i class="fa-solid ${esc(row.icon)}"></i>
-              ${esc(row.label)}
-            </span>
+    countsEl.innerHTML = rows.map((row, index) => `
+      <button
+        type="button"
+        class="content-count content-count-${esc(row.type)}"
+        data-summary-type="${esc(row.type)}"
+        aria-label="${esc(row.label)}"
+      >
+        <span class="content-count-icon">
+          <i class="fa-solid ${esc(row.icon)}"></i>
+        </span>
+        <span class="content-count-copy">
+          <small>${esc(row.label)}</small>
+          <b>${typeof row.value === "number" ? num(row.value) : esc(row.value)}</b>
+          <em>${esc(row.meta)}</em>
+        </span>
+        ${row.type !== "all" ? '<i class="fa-solid fa-arrow-right content-count-arrow"></i>' : ""}
+      </button>
+    `).join("");
 
-            <b>${num(row.count)}</b>
-          </a>
-        `
-      ).join("");
+    countsEl.querySelectorAll("[data-summary-type]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const requestedType = button.dataset.summaryType || "all";
 
-    countsEl
-      .querySelectorAll(
-        "[data-summary-type]"
-      )
-      .forEach((button) => {
+        if (!["link", "code", "channel", "group"].includes(requestedType)) {
+          activeType = "all";
+        } else {
+          activeType = requestedType;
+        }
 
-        button.addEventListener(
-          "click",
-          (event) => {
+        activePage = 1;
+        syncContentTabs();
+        renderContent();
 
-            event.preventDefault();
-
-            const requestedType =
-              button.dataset.summaryType;
-
-            activeType =
-              requestedType || "all";
-
-            activePage = 1;
-
-            syncContentTabs();
-
-            renderContent();
-
-            document
-              .getElementById(
-                "publicContentSection"
-              )
-              ?.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-              });
-          }
-        );
-
+        document.getElementById("publicContentSection")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
       });
+    });
   };
 
 
@@ -4772,48 +4807,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const renderContentCard = (item) => {
 
-    const type =
-      normalizeType(item.type);
-
-    const icon =
-      getContentIcon(type);
-
-    const label =
-      getContentLabel(type);
-
-    const paid =
-      isPaid(item);
-
-    const title =
-      item.title ||
-      "Untitled";
-
-    const views =
-      Number(item.views || 0);
-
-    const sales =
-      Number(item.sales_count || 0);
-
-    const created =
-      formatDate(item.created_at);
-
-    const price =
-      Number(item.price || 0);
+    const type = normalizeType(item.type);
+    const icon = getContentIcon(type);
+    const label = getContentLabel(type);
+    const paid = isPaid(item);
+    const title = item.title || "Untitled";
+    const description = String(item.description || "").trim();
+    const views = Number(item.views || 0);
+    const sales = Number(item.sales_count || 0);
+    const created = formatDate(item.created_at);
+    const price = Number(item.price || 0);
 
     const productUrl =
-      `product.html?id=${encodeURIComponent(
-        item.id
-      )}&type=${encodeURIComponent(
-        type
-      )}`;
+      `product.html?id=${encodeURIComponent(item.id)}&type=${encodeURIComponent(type)}`;
 
-    const accessLabel =
-      paid
-        ? "PAID"
-        : "FREE";
-
-    const meta =
-      `${label} · ${num(views)} views · ${created}`;
+    const accessLabel = paid ? "Berbayar" : "Gratis";
+    const descriptionText = description || "Tidak ada deskripsi untuk konten ini.";
+    const excerpt =
+      descriptionText.length > 125
+        ? `${descriptionText.slice(0, 125).trim()}…`
+        : descriptionText;
 
     return `
       <a
@@ -4821,33 +4834,40 @@ document.addEventListener("DOMContentLoaded", async () => {
         href="${esc(productUrl)}"
         aria-label="${esc(title)}"
       >
+        <div class="profile-content-card-top">
+          <span class="content-icon content-icon-${esc(type)}">
+            <i class="fa-solid ${esc(icon)}"></i>
+          </span>
 
-        <span class="content-icon">
-          <i class="fa-solid ${esc(icon)}"></i>
-        </span>
+          <span class="content-type-badge">
+            ${esc(label)}
+          </span>
 
-        <main>
+          <span class="content-access ${paid ? "paid" : "free"}">
+            ${esc(accessLabel)}
+          </span>
+        </div>
 
-          <strong title="${esc(title)}">
+        <div class="profile-content-card-body">
+          <strong class="content-title" title="${esc(title)}">
             ${esc(title)}
           </strong>
 
-          <small>
-            ${esc(meta)}
-            · ${esc(accessLabel)}
-            ${sales > 0
-              ? ` · ${num(sales)} penjualan`
-              : ""}
-          </small>
+          <p class="content-description">
+            ${esc(excerpt)}
+          </p>
+        </div>
 
-        </main>
+        <div class="profile-content-card-meta">
+          <span><i class="fa-solid fa-eye"></i> ${num(views)}</span>
+          <span><i class="fa-solid fa-cart-shopping"></i> ${num(sales)}</span>
+          <span><i class="fa-regular fa-clock"></i> ${esc(created)}</span>
+        </div>
 
-        <b>
-          ${paid
-            ? esc(money(price))
-            : "FREE"}
-        </b>
-
+        <div class="profile-content-card-bottom">
+          <b>${paid ? esc(money(price)) : "FREE"}</b>
+          <span>Lihat konten <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
       </a>
     `;
   };
@@ -5337,315 +5357,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       activePage = 1;
 
       renderContent();
-    }
-  );
-
-
-  /* =======================================================
-     PASSWORD STRENGTH
-     ======================================================= */
-
-  const getPasswordStrength = (password) => {
-
-    const value =
-      String(password || "");
-
-    if (!value) {
-      return {
-        score: 0,
-        label: "",
-        className: ""
-      };
-    }
-
-    let score = 0;
-
-    if (value.length >= 6) {
-      score++;
-    }
-
-    if (value.length >= 10) {
-      score++;
-    }
-
-    if (/[a-z]/.test(value)) {
-      score++;
-    }
-
-    if (/[A-Z]/.test(value)) {
-      score++;
-    }
-
-    if (/[0-9]/.test(value)) {
-      score++;
-    }
-
-    if (/[^A-Za-z0-9]/.test(value)) {
-      score++;
-    }
-
-
-    if (
-      value.length < 6
-    ) {
-
-      return {
-        score,
-        label: "Terlalu pendek",
-        className: "weak"
-      };
-    }
-
-    if (score <= 2) {
-
-      return {
-        score,
-        label: "Password lemah",
-        className: "weak"
-      };
-    }
-
-    if (score <= 4) {
-
-      return {
-        score,
-        label: "Password cukup kuat",
-        className: "medium"
-      };
-    }
-
-    return {
-      score,
-      label: "Password kuat",
-      className: "strong"
-    };
-  };
-
-
-  const renderPasswordStrength = () => {
-
-    if (!passwordStrength) {
-      return;
-    }
-
-    const result =
-      getPasswordStrength(
-        passwordInput?.value
-      );
-
-    passwordStrength.className =
-      "password-strength";
-
-    if (!result.label) {
-      passwordStrength.textContent = "";
-      return;
-    }
-
-    passwordStrength.classList.add(
-      result.className
-    );
-
-    passwordStrength.textContent =
-      result.label;
-  };
-
-
-  passwordInput?.addEventListener(
-    "input",
-    renderPasswordStrength
-  );
-
-
-  /* =======================================================
-     PASSWORD TOGGLE
-     ======================================================= */
-
-  passwordToggle?.addEventListener(
-    "click",
-    () => {
-
-      if (!passwordInput) {
-        return;
-      }
-
-      const visible =
-        passwordInput.type === "text";
-
-      passwordInput.type =
-        visible
-          ? "password"
-          : "text";
-
-      passwordToggle.innerHTML =
-        `<i class="fa-solid ${
-          visible
-            ? "fa-eye"
-            : "fa-eye-slash"
-        }"></i>`;
-
-      passwordToggle.setAttribute(
-        "aria-label",
-        visible
-          ? "Tampilkan password"
-          : "Sembunyikan password"
-      );
-
-      passwordToggle.setAttribute(
-        "aria-pressed",
-        visible
-          ? "false"
-          : "true"
-      );
-    }
-  );
-
-
-  /* =======================================================
-     PASSWORD BUTTON STATE
-     ======================================================= */
-
-  const setPasswordLoading = (
-    loading
-  ) => {
-
-    if (!passwordSubmit) {
-      return;
-    }
-
-    passwordSubmit.disabled =
-      loading;
-
-    passwordSubmit.classList.toggle(
-      "loading",
-      loading
-    );
-
-    if (passwordSubmitText) {
-      passwordSubmitText.hidden =
-        loading;
-    }
-
-    if (passwordSubmitLoading) {
-      passwordSubmitLoading.hidden =
-        !loading;
-    }
-  };
-
-
-  /* =======================================================
-     PASSWORD CHANGE
-     ======================================================= */
-
-  passwordForm?.addEventListener(
-    "submit",
-    async (event) => {
-
-      event.preventDefault();
-
-      if (!passwordInput) {
-        return;
-      }
-
-      const password =
-        String(
-          passwordInput.value || ""
-        );
-
-      if (password.length < 6) {
-
-        toast(
-          "Password minimal 6 karakter.",
-          "error"
-        );
-
-        passwordInput.focus();
-
-        return;
-      }
-
-      if (password.length > 128) {
-
-        toast(
-          "Password terlalu panjang.",
-          "error"
-        );
-
-        passwordInput.focus();
-
-        return;
-      }
-
-      if (!me) {
-
-        toast(
-          "Sesi login tidak ditemukan.",
-          "error"
-        );
-
-        return;
-      }
-
-      setPasswordLoading(
-        true
-      );
-
-      try {
-
-        const result =
-          await sb.auth.updateUser({
-            password
-          });
-
-        if (result.error) {
-          throw result.error;
-        }
-
-        toast(
-          "Password berhasil diubah.",
-          "success"
-        );
-
-        passwordForm.reset();
-
-        if (passwordStrength) {
-          passwordStrength.textContent = "";
-          passwordStrength.className =
-            "password-strength";
-        }
-
-        if (
-          passwordInput.type !==
-          "password"
-        ) {
-          passwordInput.type =
-            "password";
-
-          passwordToggle &&
-            (
-              passwordToggle.innerHTML =
-                '<i class="fa-solid fa-eye"></i>'
-            );
-        }
-
-      } catch (error) {
-
-        console.error(
-          "[Profile] Password update error:",
-          error
-        );
-
-        toast(
-          error?.message ||
-          "Password gagal diubah.",
-          "error"
-        );
-
-      } finally {
-
-        setPasswordLoading(
-          false
-        );
-      }
     }
   );
 
