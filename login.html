@@ -106,13 +106,14 @@
 
       <!-- STEP 2 -->
       <form id="loginStep2" class="login-form hidden" autocomplete="on" novalidate>
-        <div class="account-chip">
-          <span class="account-chip-icon"><i class="fa-solid fa-user"></i></span>
+        <div class="account-chip" aria-label="Profil akun terverifikasi">
+          <span class="account-chip-avatar" id="accountAvatar">U</span>
           <span class="account-chip-text">
-            <small>Akun</small>
-            <strong id="accountUsername">Username</strong>
+            <small>Profil terverifikasi</small>
+            <strong id="accountDisplayName">Nama Pengguna</strong>
+            <em id="accountUsername">@username</em>
           </span>
-          <i class="fa-solid fa-circle-check account-chip-check"></i>
+          <i class="fa-solid fa-circle-check account-chip-check" aria-hidden="true"></i>
         </div>
 
         <div class="password-heading">
