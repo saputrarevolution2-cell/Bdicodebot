@@ -3762,6 +3762,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         )
       );
+    if (!currentDays.length) {
+      chart.innerHTML = `
+        <div class="chart-empty-state">
+          <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+          <span>Belum ada data performa.</span>
+        </div>
+      `;
+      return;
+    }
+
     chart.innerHTML =
       currentDays
         .map(
@@ -3909,13 +3919,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* =====================================================
        DATABASE
        ===================================================== */
-    /* Release any creator earnings whose H+2 settlement has matured.
-       The RPC is safe to call from the authenticated dashboard; failures
-       must not prevent the rest of the dashboard from loading. */
+    /* =====================================================
+       WALLET SETTLEMENT
+       Canonical SQL uses H+2 / 48 hours.
+       Failure here must never block the dashboard.
+       ===================================================== */
     try {
       await supabase.rpc('release_matured_wallet');
-    } catch (error) {
-      console.warn('[PasTele][Wallet] Matured settlement release skipped:', error);
+    } catch (walletReleaseError) {
+      console.warn(
+        'Wallet settlement refresh skipped:',
+        walletReleaseError
+      );
     }
 
     const [
@@ -4284,11 +4299,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             'creator_id',
             user.id
           ),
-        /* WALLET LEDGER — canonical fields from the final SQL. */
         supabase
           .from('wallets')
-          .select('balance,available_balance,pending_balance,updated_at')
-          .eq('user_id', user.id)
+          .select(
+            'balance,available_balance,pending_balance,updated_at'
+          )
+          .eq(
+            'user_id',
+            user.id
+          )
           .maybeSingle()
       ]);
     /* =====================================================
@@ -5055,43 +5074,145 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /* =====================================================
-       WALLET + PERIOD REVENUE
+       FINANCE OVERVIEW
+       Canonical wallet fields:
+       balance / available_balance / pending_balance.
        ===================================================== */
-    const wallet = walletResult?.error ? null : (walletResult?.data || null);
-    const profileBalance = Number(profile?.balance || 0);
-    const availableBalance = Number(
-      wallet?.available_balance ?? profileBalance
-    );
-    const pendingBalance = Number(
-      wallet?.pending_balance ?? Math.max(0, Number(wallet?.balance || profileBalance) - availableBalance)
-    );
+    const wallet =
+      walletResult?.data || null;
 
-    const localDayKey = (value) => {
-      const date = value instanceof Date ? value : new Date(value);
-      if (Number.isNaN(date.getTime())) return '';
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+    const profileBalance =
+      Number(
+        profile?.balance || 0
+      );
+
+    const availableBalance =
+      Number(
+        wallet?.available_balance ??
+        profileBalance
+      );
+
+    const pendingBalance =
+      Number(
+        wallet?.pending_balance ??
+        Math.max(
+          0,
+          Number(
+            wallet?.balance ??
+            profileBalance
+          ) -
+          availableBalance
+        )
+      );
+
+    const nowLocal =
+      new Date();
+
+    const isSameLocalDay = (
+      value
+    ) => {
+      const date =
+        safeDate(value);
+      if (!date) {
+        return false;
+      }
+      return (
+        date.getFullYear() ===
+          nowLocal.getFullYear() &&
+        date.getMonth() ===
+          nowLocal.getMonth() &&
+        date.getDate() ===
+          nowLocal.getDate()
+      );
     };
-    const now = new Date();
-    const todayKey = localDayKey(now);
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    const todayRevenue = saleRows.reduce((sum, sale) => {
-      return localDayKey(sale.date) === todayKey ? sum + Number(sale.revenue || 0) : sum;
-    }, 0);
-    const monthRevenue = saleRows.reduce((sum, sale) => {
-      const date = new Date(sale.date);
-      if (Number.isNaN(date.getTime())) return sum;
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      return key === monthKey ? sum + Number(sale.revenue || 0) : sum;
-    }, 0);
+    const isSameLocalMonth = (
+      value
+    ) => {
+      const date =
+        safeDate(value);
+      if (!date) {
+        return false;
+      }
+      return (
+        date.getFullYear() ===
+          nowLocal.getFullYear() &&
+        date.getMonth() ===
+          nowLocal.getMonth()
+      );
+    };
 
-    if ($('pendingBalance')) $('pendingBalance').textContent = money(pendingBalance);
-    if ($('availableBalance')) $('availableBalance').textContent = money(availableBalance);
-    if ($('todayRevenue')) $('todayRevenue').textContent = money(todayRevenue);
-    if ($('monthRevenue')) $('monthRevenue').textContent = money(monthRevenue);
+    const todayRevenue =
+      saleRows.reduce(
+        (
+          total,
+          sale
+        ) =>
+          total +
+          (
+            isSameLocalDay(
+              sale.date
+            )
+              ? Number(
+                  sale.revenue || 0
+                )
+              : 0
+          ),
+        0
+      );
+
+    const monthRevenue =
+      saleRows.reduce(
+        (
+          total,
+          sale
+        ) =>
+          total +
+          (
+            isSameLocalMonth(
+              sale.date
+            )
+              ? Number(
+                  sale.revenue || 0
+                )
+              : 0
+          ),
+        0
+      );
+
+    if ($('pendingBalance')) {
+      $('pendingBalance').textContent =
+        money(
+          Math.max(
+            0,
+            pendingBalance
+          )
+        );
+    }
+
+    if ($('availableBalance')) {
+      $('availableBalance').textContent =
+        money(
+          Math.max(
+            0,
+            availableBalance
+          )
+        );
+    }
+
+    if ($('todayRevenue')) {
+      $('todayRevenue').textContent =
+        money(
+          todayRevenue
+        );
+    }
+
+    if ($('monthRevenue')) {
+      $('monthRevenue').textContent =
+        money(
+          monthRevenue
+        );
+    }
 
     /* =====================================================
        INTERACTIONS
