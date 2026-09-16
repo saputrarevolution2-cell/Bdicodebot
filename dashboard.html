@@ -64,7 +64,7 @@
        ===================================================== -->
   <!-- PasTele canonical UI stack -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/dashboard.css?v=20260916-final">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -272,6 +272,50 @@
           <em>
             Wallet income
           </em>
+        </a>
+
+      </section>
+
+
+      <!-- ===================================================
+           FINANCE OVERVIEW
+           =================================================== -->
+      <section class="finance-grid" aria-label="Ringkasan saldo dan pendapatan">
+
+        <a class="finance-card pending" href="wallet.html">
+          <span class="finance-icon"><i class="fa-solid fa-hourglass-half"></i></span>
+          <span class="finance-copy">
+            <small>Saldo Pending H1–H2</small>
+            <strong id="pendingBalance">Rp0</strong>
+            <em>Menunggu settlement</em>
+          </span>
+        </a>
+
+        <a class="finance-card available" href="wallet.html">
+          <span class="finance-icon"><i class="fa-solid fa-wallet"></i></span>
+          <span class="finance-copy">
+            <small>Saldo Tersedia</small>
+            <strong id="availableBalance">Rp0</strong>
+            <em>Siap digunakan / WD</em>
+          </span>
+        </a>
+
+        <a class="finance-card today" href="wallet.html">
+          <span class="finance-icon"><i class="fa-solid fa-calendar-day"></i></span>
+          <span class="finance-copy">
+            <small>Pendapatan Hari Ini</small>
+            <strong id="todayRevenue">Rp0</strong>
+            <em>Creator earning 70%</em>
+          </span>
+        </a>
+
+        <a class="finance-card month" href="wallet.html">
+          <span class="finance-icon"><i class="fa-solid fa-calendar-days"></i></span>
+          <span class="finance-copy">
+            <small>Pendapatan Bulan Ini</small>
+            <strong id="monthRevenue">Rp0</strong>
+            <em>Creator earning 70%</em>
+          </span>
         </a>
 
       </section>
@@ -1372,6 +1416,6 @@
        ===================================================== -->
   <!-- =====================================================
        SITE SHELL
-       ===================================================== --><script src="js/dashboard.js"></script>
+       ===================================================== --><script src="js/dashboard.js?v=20260916-final"></script>
 </body>
 </html>
