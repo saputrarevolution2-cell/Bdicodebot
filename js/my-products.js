@@ -4520,19 +4520,8 @@ document.addEventListener("DOMContentLoaded", async () => {
        EDIT MODAL — FULL FORM PER CONTENT TYPE
        ===================================================== */
     function removeEditModal() {
-        // Remove BOTH the modal and its backdrop.
-        // Leaving the backdrop mounted was causing the page to stay dim/blurred
-        // after Cancel/Save.
         document.getElementById("ptEditModal")?.remove();
-        document.getElementById("ptEditBackdrop")?.remove();
-
         document.body.classList.remove("modal-open");
-
-        // Clean up any stale modal state left by a previous open/close cycle.
-        document.documentElement.classList.remove("modal-open", "modal-blur");
-        document.body.style.removeProperty("filter");
-        document.body.style.removeProperty("backdrop-filter");
-        document.body.style.removeProperty("-webkit-backdrop-filter");
     }
 
     function toLocalDateTimeValue(value) {
@@ -5104,4 +5093,76 @@ document.documentElement.classList.add("pastele-ready");
     document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+})();
+
+
+/* =========================================================
+   My Products — edit overlay cleanup hardening
+   Ensures Cancel / Save / X / backdrop / Escape never leave
+   a dimmed or blurred page behind.
+   ========================================================= */
+(function(){
+  "use strict";
+
+  function forceBrightAfterEdit(){
+    try{
+      document.querySelectorAll(
+        ".pt-edit-overlay,.edit-overlay,.my-edit-overlay,.modal-backdrop,.modal-overlay"
+      ).forEach(function(el){
+        // Only remove known edit/modal overlays that are already marked closed.
+        if(
+          el.classList.contains("is-closing") ||
+          el.getAttribute("aria-hidden")==="true" ||
+          el.dataset.closed==="true"
+        ){
+          el.remove();
+        }
+      });
+
+      document.body.classList.remove(
+        "modal-open","pt-modal-open","editing",
+        "modal-closing","pt-modal-closing","edit-closing"
+      );
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("filter");
+      document.documentElement.style.removeProperty("filter");
+
+      // Remove stale backdrop nodes created by older versions.
+      document.querySelectorAll(
+        ".pt-edit-backdrop,.edit-backdrop,.my-edit-backdrop"
+      ).forEach(function(el){ el.remove(); });
+    }catch(_){}
+  }
+
+  // Public helper for existing edit handlers.
+  window.__PASTELE_CLOSE_EDIT_CLEAN__ = function(){
+    try{
+      document.querySelectorAll(
+        ".pt-edit-overlay,.edit-overlay,.my-edit-overlay"
+      ).forEach(function(el){
+        el.classList.add("is-closing");
+        el.setAttribute("aria-hidden","true");
+        el.dataset.closed="true";
+      });
+    }catch(_){}
+    setTimeout(forceBrightAfterEdit, 0);
+    setTimeout(forceBrightAfterEdit, 220);
+  };
+
+  document.addEventListener("click", function(e){
+    const el = e.target.closest(
+      "[data-action='edit-cancel'],[data-action='cancel-edit'],.edit-cancel,.pt-edit-cancel,.my-edit-cancel,.edit-modal-close,.my-edit-close,.pt-edit-close"
+    );
+    if(el) window.__PASTELE_CLOSE_EDIT_CLEAN__();
+  }, true);
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+      window.__PASTELE_CLOSE_EDIT_CLEAN__();
+    }
+  }, true);
+
+  // Catch navigation back to the list after Save.
+  window.addEventListener("pageshow", forceBrightAfterEdit);
+  window.addEventListener("focus", forceBrightAfterEdit);
 })();
