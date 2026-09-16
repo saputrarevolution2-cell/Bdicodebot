@@ -2970,468 +2970,322 @@ window.PASTELE_CONFIG = Object.freeze({
 
 /* =========================================================
    PasTele — PREMIUM / ACCOUNT PLAN
-   FINAL SQL SYNC
-   PROFILE:
-   - username
-   - display_name
-   - is_premium
-   - subscription_until
-   RPC:
-   create_account_plan_order(
-       p_plan text,
-       p_days integer,
-       p_amount numeric
-   )
-   PREMIUM:
-   plan   = premium
-   days   = 0
-   amount = 250000
-   RPC creates:
-   orders.item_type = account_plan
-   orders.item_id   = premium
-   orders.status    = pending
+   DATABASE-SYNCED PREMIUM CHECKOUT
+   Source of truth: public.account_plan_catalog
+   RPC: create_account_plan_order(p_plan, p_days, p_amount)
    ========================================================= */
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-        "use strict";
-        /* ===================================================
-           DOM
-           =================================================== */
-        const $ = (id) =>
-            document.getElementById(id);
-        const status =
-            $("planStatus");
-        const planName =
-            $("planName");
-        const planUsername =
-            $("planUsername");
-        const planAvatar =
-            $("planAvatar");
-        const buyButton =
-            $("premiumBuy");
-        /* ===================================================
-           CLIENT
-           =================================================== */
-        const client =
-            window.sb ||
-            window.supabaseClient ||
-            window.supabase ||
-            null;
-        /* ===================================================
-           HELPERS
-           =================================================== */
-        const esc = (value) => {
-            if (window.TC?.esc) {
-                return TC.esc(
-                    String(
-                        value ?? ""
-                    )
-                );
-            }
-            return String(
-                value ?? ""
-            ).replace(
-                /[&<>"']/g,
-                (char) =>
-                    ({
-                        "&":
-                            "&amp;",
-                        "<":
-                            "&lt;",
-                        ">":
-                            "&gt;",
-                        '"':
-                            "&quot;",
-                        "'":
-                            "&#039;"
-                    })[char]
-            );
-        };
-        const toast = (
-            message,
-            type = "error"
-        ) => {
-            if (
-                window.TC &&
-                typeof TC.toast ===
-                    "function"
-            ) {
-                TC.toast(
-                    message,
-                    type
-                );
-                return;
-            }
-            if (
-                type === "error"
-            ) {
-                console.error(
-                    message
-                );
-            } else {
-                console.log(
-                    message
-                );
-            }
-        };
-        const setButtonLoading =
-            (
-                loading
-            ) => {
-                if (!buyButton) {
-                    return;
-                }
-                if (loading) {
-                    buyButton.disabled =
-                        true;
-                    buyButton.dataset
-                        .originalHtml ??=
-                        buyButton.innerHTML;
-                    buyButton.innerHTML = `
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        Menyiapkan checkout...
-                    `;
-                } else {
-                    buyButton.disabled =
-                        false;
-                    if (
-                        buyButton.dataset
-                            .originalHtml
-                    ) {
-                        buyButton.innerHTML =
-                            buyButton.dataset
-                                .originalHtml;
-                    }
-                }
-            };
-        /* ===================================================
-           DATABASE CHECK
-           =================================================== */
-        if (!client) {
-            toast(
-                "Database belum terkonfigurasi.",
-                "error"
-            );
-            return;
-        }
-        /* ===================================================
-           AUTH / PROFILE
-           =================================================== */
-        let profile = null;
-        try {
-            if (
-                !window.TC ||
-                typeof TC.profile !==
-                    "function"
-            ) {
-                throw new Error(
-                    "Sesi login tidak tersedia."
-                );
-            }
-            profile =
-                await TC.profile();
-        } catch (error) {
-            console.warn(
-                "[Premium] Profile error:",
-                error
-            );
-            const next =
-                encodeURIComponent(
-                    window.location.href
-                );
-            window.location.href =
-                `login.html?redirect=${next}`;
-            return;
-        }
-        if (!profile?.id) {
-            const next =
-                encodeURIComponent(
-                    window.location.href
-                );
-            window.location.href =
-                `login.html?redirect=${next}`;
-            return;
-        }
-        /* ===================================================
-           PROFILE UI
-           =================================================== */
-        const name =
-            String(
-                profile.display_name ||
-                    profile.username ||
-                    "User"
-            )
-                .trim()
-                .slice(0, 100);
-        if (planName) {
-            planName.replaceChildren(
-                document.createTextNode(
-                    name
-                )
-            );
-            const badge =
-                document.createElement(
-                    "span"
-                );
-            badge.className =
-                "verify-badge blue";
-            badge.innerHTML = `
-                <i class="fa-solid fa-check"></i>
-            `;
-            planName.appendChild(
-                badge
-            );
-        }
-        if (planUsername) {
-            planUsername.textContent =
-                profile.username
-                    ? `@${profile.username}`
-                    : "@user";
-        }
-        if (planAvatar) {
-            planAvatar.textContent =
-                name
-                    .charAt(0)
-                    .toUpperCase() ||
-                "U";
-        }
-        /* ===================================================
-           PREMIUM STATUS
-           =================================================== */
-        const premiumActive =
-            profile.is_premium === true;
-        if (
-            premiumActive &&
-            status
-        ) {
-            status.innerHTML = `
-                <div class="active-plan premium-active">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <div>
-                        <b>
-                            Premium Aktif
-                        </b>
-                        <span>
-                            Semua akses Paid sudah terbuka.
-                        </span>
-                    </div>
-                </div>
-            `;
-        }
-        /*
-         * If already premium, buying again
-         * should not create another account-plan
-         * order from this page.
-         */
-        if (
-            premiumActive &&
-            buyButton
-        ) {
-            buyButton.disabled =
-                true;
-            buyButton.innerHTML = `
-                <i class="fa-solid fa-circle-check"></i>
-                Premium Sudah Aktif
-            `;
-        }
-        /* ===================================================
-           PREMIUM CHECKOUT
-           =================================================== */
-        buyButton?.addEventListener(
-            "click",
-            async () => {
-                if (
-                    buyButton.disabled
-                ) {
-                    return;
-                }
-                /*
-                 * Re-check profile before creating
-                 * the order so an already activated
-                 * account cannot accidentally create
-                 * another checkout.
-                 */
-                let latestProfile =
-                    profile;
-                try {
-                    if (
-                        typeof TC.profile ===
-                        "function"
-                    ) {
-                        const fresh =
-                            await TC.profile();
-                        if (fresh?.id) {
-                            latestProfile =
-                                fresh;
-                        }
-                    }
-                } catch {
-                    /* Keep existing profile */
-                }
-                if (
-                    latestProfile
-                        ?.is_premium ===
-                    true
-                ) {
-                    if (status) {
-                        status.innerHTML = `
-                            <div class="active-plan premium-active">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <div>
-                                    <b>
-                                        Premium Aktif
-                                    </b>
-                                    <span>
-                                        Semua akses Paid sudah terbuka.
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    buyButton.disabled =
-                        true;
-                    buyButton.innerHTML = `
-                        <i class="fa-solid fa-circle-check"></i>
-                        Premium Sudah Aktif
-                    `;
-                    toast(
-                        "Akun kamu sudah Premium.",
-                        "success"
-                    );
-                    return;
-                }
-                setButtonLoading(
-                    true
-                );
-                try {
-                    /*
-                     * SQL validates:
-                     *
-                     * p_plan   = premium
-                     * p_days   = 0
-                     * p_amount = 250000
-                     */
-                    const result =
-                        await client.rpc(
-                            "create_account_plan_order",
-                            {
-                                p_plan:
-                                    "premium",
-                                p_days:
-                                    0,
-                                p_amount:
-                                    250000
-                            }
-                        );
-                    if (
-                        result.error
-                    ) {
-                        throw result.error;
-                    }
-                    const data =
-                        Array.isArray(
-                            result.data
-                        )
-                            ? result.data[0]
-                            : result.data;
-                    if (
-                        !data?.order_id
-                    ) {
-                        throw new Error(
-                            "Order Premium tidak berhasil dibuat."
-                        );
-                    }
-                    /*
-                     * Optional sanity check.
-                     */
-                    const createdOrderId =
-                        String(
-                            data.order_id
-                        ).trim();
-                    if (
-                        !createdOrderId
-                    ) {
-                        throw new Error(
-                            "Order ID Premium tidak valid."
-                        );
-                    }
-                    /*
-                     * Continue to the same payment
-                     * page used by marketplace orders.
-                     */
-                    window.location.href =
-                        `payment.html?order_id=${encodeURIComponent(
-                            createdOrderId
-                        )}`;
-                } catch (
-                    error
-                ) {
-                    console.error(
-                        "[Premium] Checkout error:",
-                        error
-                    );
-                    const message =
-                        String(
-                            error?.message ||
-                                ""
-                        );
-                    if (
-                        message
-                            .toLowerCase()
-                            .includes(
-                                "invalid_plan_amount"
-                            )
-                    ) {
-                        toast(
-                            "Harga Premium tidak sesuai konfigurasi database.",
-                            "error"
-                        );
-                    } else if (
-                        message
-                            .toLowerCase()
-                            .includes(
-                                "invalid_plan"
-                            )
-                    ) {
-                        toast(
-                            "Paket Premium tidak valid.",
-                            "error"
-                        );
-                    } else if (
-                        message
-                            .toLowerCase()
-                            .includes(
-                                "login_required"
-                            )
-                    ) {
-                        const next =
-                            encodeURIComponent(
-                                window.location.href
-                            );
-                        window.location.href =
-                            `login.html?redirect=${next}`;
-                        return;
-                    } else {
-                        toast(
-                            message ||
-                                "Checkout Premium gagal dibuat.",
-                            "error"
-                        );
-                    }
-                    setButtonLoading(
-                        false
-                    );
-                }
-            }
-        );
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const status = $("planStatus");
+  const planName = $("planName");
+  const planUsername = $("planUsername");
+  const planAvatar = $("planAvatar");
+  const buyButton = $("premiumBuy");
+  const priceEl = $("premiumPrice");
+  const priceNoteEl = $("premiumPriceNote");
+  const paymentInfoEl = $("premiumPaymentInfo");
+
+  const client =
+    window.sb ||
+    window.supabaseClient ||
+    null;
+
+  const esc = (value) => {
+    if (window.TC?.esc) return TC.esc(String(value ?? ""));
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[char]));
+  };
+
+  const money = (value) => {
+    if (window.TC?.money) return TC.money(value);
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0
+    }).format(Number(value || 0));
+  };
+
+  const toast = (message, type = "error") => {
+    if (window.TC?.toast) {
+      window.TC.toast(message, type);
+      return;
     }
-);
+    console[type === "error" ? "error" : "log"](message);
+  };
 
+  const setLoading = (loading) => {
+    if (!buyButton) return;
+    if (loading) {
+      buyButton.disabled = true;
+      if (!buyButton.dataset.originalHtml) {
+        buyButton.dataset.originalHtml = buyButton.innerHTML;
+      }
+      buyButton.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan checkout...';
+    } else {
+      buyButton.disabled = false;
+      if (buyButton.dataset.originalHtml) {
+        buyButton.innerHTML = buyButton.dataset.originalHtml;
+      }
+    }
+  };
 
+  const showActive = () => {
+    if (!status) return;
+    status.innerHTML = `
+      <div class="active-plan premium-active">
+        <div class="active-plan-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="active-plan-copy">
+          <b>Premium Aktif</b>
+          <span>Semua akses Paid sudah terbuka tanpa kuota harian.</span>
+        </div>
+        <span class="active-plan-badge">FULL ACCESS</span>
+      </div>
+    `;
+  };
 
+  if (!client) {
+    toast("Database belum terkonfigurasi.", "error");
+    return;
+  }
+
+  let profile = null;
+  try {
+    if (!window.TC?.profile) throw new Error("Sesi login tidak tersedia.");
+    profile = await TC.profile();
+  } catch (error) {
+    console.warn("[Premium] Profile error:", error);
+    const next = encodeURIComponent(window.location.href);
+    window.location.href = `login.html?redirect=${next}`;
+    return;
+  }
+
+  if (!profile?.id) {
+    const next = encodeURIComponent(window.location.href);
+    window.location.href = `login.html?redirect=${next}`;
+    return;
+  }
+
+  const displayName = String(
+    profile.display_name || profile.username || "User"
+  ).trim().slice(0, 100);
+
+  if (planName) {
+    planName.replaceChildren(document.createTextNode(displayName));
+    const badge = document.createElement("span");
+    badge.className = "verify-badge blue";
+    badge.innerHTML = '<i class="fa-solid fa-check"></i>';
+    planName.appendChild(badge);
+  }
+
+  if (planUsername) {
+    planUsername.textContent = profile.username
+      ? `@${profile.username}`
+      : "@user";
+  }
+
+  if (planAvatar) {
+    planAvatar.textContent =
+      displayName.charAt(0).toUpperCase() || "U";
+  }
+
+  /*
+   * Read Premium from account_plan_catalog.
+   * Do not hard-code Rp250.000 as the checkout source of truth.
+   */
+  let catalog = null;
+  try {
+    const result = await client
+      .from("account_plan_catalog")
+      .select([
+        "plan_code",
+        "plan_name",
+        "price",
+        "duration_days",
+        "code_daily_limit",
+        "pastelink_daily_limit",
+        "full_access",
+        "payment_provider",
+        "payment_method",
+        "is_active"
+      ].join(","))
+      .eq("plan_code", "premium")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (result.error) throw result.error;
+    catalog = result.data || null;
+  } catch (error) {
+    console.error("[Premium] Catalog error:", error);
+    if (priceEl) priceEl.textContent = "Tidak tersedia";
+    if (priceNoteEl) {
+      priceNoteEl.textContent =
+        "Konfigurasi Premium belum dapat dibaca dari database.";
+    }
+    if (buyButton) buyButton.disabled = true;
+    toast(
+      "Konfigurasi Premium belum tersedia. Pastikan account_plan_catalog sudah dijalankan.",
+      "error"
+    );
+    return;
+  }
+
+  if (!catalog || catalog.plan_code !== "premium") {
+    if (priceEl) priceEl.textContent = "Tidak tersedia";
+    if (priceNoteEl) {
+      priceNoteEl.textContent =
+        "Paket Premium belum aktif di database.";
+    }
+    if (buyButton) buyButton.disabled = true;
+    return;
+  }
+
+  const premiumPrice = Number(catalog.price || 0);
+  const premiumDays = Number(catalog.duration_days || 0);
+  const fullAccess = catalog.full_access === true;
+  const provider = String(catalog.payment_provider || "").trim();
+  const method = String(catalog.payment_method || "").trim();
+
+  if (!Number.isFinite(premiumPrice) || premiumPrice <= 0) {
+    if (buyButton) buyButton.disabled = true;
+    toast("Harga Premium di database tidak valid.", "error");
+    return;
+  }
+
+  if (priceEl) priceEl.textContent = money(premiumPrice);
+
+  if (priceNoteEl) {
+    priceNoteEl.textContent = fullAccess
+      ? "Full access seluruh konten Paid sesuai konfigurasi database."
+      : `${premiumDays > 0 ? `Aktif ${premiumDays} hari.` : "Aktivasi sesuai konfigurasi Premium."}`;
+  }
+
+  if (paymentInfoEl) {
+    const paymentText = [provider, method]
+      .filter(Boolean)
+      .map((v) => v.toUpperCase() === "BAYARGG" ? "Bayar.gg" : v.toUpperCase() === "QRIS" ? "QRIS" : v)
+      .join(" · ");
+    paymentInfoEl.textContent = paymentText
+      ? `Checkout melalui ${paymentText}.`
+      : "Checkout melalui konfigurasi pembayaran database.";
+  }
+
+  const premiumActive = profile.is_premium === true;
+
+  if (premiumActive) {
+    showActive();
+    if (buyButton) {
+      buyButton.disabled = true;
+      buyButton.innerHTML =
+        '<i class="fa-solid fa-circle-check"></i> Premium Sudah Aktif';
+    }
+    return;
+  }
+
+  buyButton?.addEventListener("click", async () => {
+    if (buyButton.disabled) return;
+
+    let latestProfile = profile;
+    try {
+      if (typeof TC?.profile === "function") {
+        const fresh = await TC.profile();
+        if (fresh?.id) latestProfile = fresh;
+      }
+    } catch (_) {}
+
+    if (latestProfile?.is_premium === true) {
+      showActive();
+      buyButton.disabled = true;
+      buyButton.innerHTML =
+        '<i class="fa-solid fa-circle-check"></i> Premium Sudah Aktif';
+      toast("Akun kamu sudah Premium.", "success");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      /*
+       * Database remains the final authority:
+       * - p_plan   = premium
+       * - p_days   = catalog.duration_days
+       * - p_amount = catalog.price
+       */
+      const result = await client.rpc("create_account_plan_order", {
+        p_plan: "premium",
+        p_days: premiumDays,
+        p_amount: premiumPrice
+      });
+
+      if (result.error) throw result.error;
+
+      const data = Array.isArray(result.data)
+        ? result.data[0]
+        : result.data;
+
+      if (!data?.order_id) {
+        throw new Error("Order Premium tidak berhasil dibuat.");
+      }
+
+      const orderId = String(data.order_id).trim();
+      if (!orderId) {
+        throw new Error("Order ID Premium tidak valid.");
+      }
+
+      window.location.href =
+        `payment.html?order_id=${encodeURIComponent(orderId)}`;
+    } catch (error) {
+      console.error("[Premium] Checkout error:", error);
+
+      const code = String(
+        error?.code ||
+        error?.message ||
+        ""
+      ).toLowerCase();
+
+      if (code.includes("login_required")) {
+        const next = encodeURIComponent(window.location.href);
+        window.location.href = `login.html?redirect=${next}`;
+        return;
+      }
+
+      if (code.includes("invalid_plan_amount")) {
+        toast(
+          "Harga Premium tidak sesuai konfigurasi database.",
+          "error"
+        );
+      } else if (code.includes("invalid_plan_duration")) {
+        toast(
+          "Durasi Premium tidak sesuai konfigurasi database.",
+          "error"
+        );
+      } else if (code.includes("invalid_plan")) {
+        toast("Paket Premium tidak valid.", "error");
+      } else if (code.includes("access_included")) {
+        toast("Akses Premium sudah termasuk dalam akun kamu.", "info");
+      } else {
+        toast(
+          error?.message || "Checkout Premium gagal dibuat.",
+          "error"
+        );
+      }
+
+      setLoading(false);
+    }
+  });
+});
 
 /* Page-ready marker */
+document.documentElement.classList.add("pastele-ready");
+
+
 document.documentElement.classList.add("pastele-ready");
 
 /* =========================================================
