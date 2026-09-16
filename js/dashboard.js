@@ -2038,7 +2038,7 @@ window.PASTELE_CONFIG = Object.freeze({
           await window.sb
             .from('wallets')
             .select(
-              'balance,available_balance'
+              'balance,available_balance,pending_balance'
             )
             .eq(
               'user_id',
@@ -5081,9 +5081,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const wallet =
       walletResult?.data || null;
 
+    const dashboardProfileResult =
+      await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', user.id)
+        .maybeSingle();
+
     const profileBalance =
       Number(
-        profile?.balance || 0
+        dashboardProfileResult?.data?.balance || 0
       );
 
     const availableBalance =
