@@ -3033,11 +3033,6 @@ document.addEventListener(
             ).trim();
 
         const guestToken = String(qs.get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
-        /* Guest checkout notice */
-        if (guestToken) {
-          const note=document.createElement("div"); note.className="access-limit-note guest-payment-note"; note.innerHTML='<i class="fa-solid fa-user-clock"></i><span>Pembelian Guest berhasil dibuat. Simpan halaman/identitas Guest ini sampai pembayaran selesai. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</span>';
-          (content || document.body)?.prepend(note);
-        }
 
         /* ===================================================
            HTML ELEMENTS
@@ -3091,6 +3086,16 @@ document.addEventListener(
 
         const statusIcon =
             $("statusIcon");
+
+        /* Guest checkout notice — content is initialized above. */
+        if (guestToken && content) {
+            const note = document.createElement("div");
+            note.className = "guest-payment-note";
+            note.innerHTML =
+                '<i class="fa-solid fa-user-clock" aria-hidden="true"></i>' +
+                '<span>Pembelian Guest berhasil dibuat. Simpan halaman ini sampai pembayaran selesai. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</span>';
+            content.prepend(note);
+        }
 
         /* ===================================================
            STATE
@@ -3437,38 +3442,24 @@ document.addEventListener(
         let user = null;
 
         try {
-            if (
-                !window.TC ||
-                typeof TC.user !==
-                    "function"
-            ) {
-                throw new Error(
-                    "Sesi login tidak tersedia."
-                );
+            if (window.TC && typeof TC.user === "function") {
+                user = await TC.user();
+            } else if (client?.auth?.getUser) {
+                user = (await client.auth.getUser())?.data?.user || null;
             }
-
-            user =
-                await TC.user();
         } catch (error) {
-            console.warn(
-                "[Payment] Auth error:",
-                error
-            );
-
-            window.location.href =
-                `login.html?redirect=${encodeURIComponent(
-                    window.location.href
-                )}`;
-
-            return;
+            console.warn("[Payment] Auth lookup:", error);
+            user = null;
         }
 
-        if (!user?.id) {
+        /*
+         * Guest orders are valid when guest_token is present.
+         * Authenticated orders continue to use the Supabase session.
+         * Never force a guest buyer to login just to open payment.
+         */
+        if (!user?.id && !guestToken) {
             window.location.href =
-                `login.html?redirect=${encodeURIComponent(
-                    window.location.href
-                )}`;
-
+                `login.html?redirect=${encodeURIComponent(window.location.href)}`;
             return;
         }
 
@@ -3491,11 +3482,23 @@ document.addEventListener(
            =================================================== */
 
         const loadOrder = async () => {
-                const { data, error } = await client.rpc("get_order_for_payment", { p_order_id: orderId, p_guest_token: guestToken || null });
-                if (error) throw error;
-                if (!data) throw new Error("Order tidak ditemukan atau tidak dapat diakses.");
-                return data;
-            };
+            const { data, error } = await client.rpc("get_order_for_payment", {
+                p_order_id: orderId,
+                p_guest_token: guestToken || null
+            });
+            if (error) throw error;
+
+            const row = Array.isArray(data)
+                ? (data[0] || null)
+                : (data?.data && typeof data.data === "object" && !Array.isArray(data.data)
+                    ? data.data
+                    : data);
+
+            if (!row) {
+                throw new Error("Order tidak ditemukan atau tidak dapat diakses.");
+            }
+            return row;
+        };
 
         /* ===================================================
            RENDER ORDER
