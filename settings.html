@@ -160,6 +160,18 @@
           </a>
 
 
+          <a href="#emailSettings" class="settings-quick-card settings-quick-email">
+            <span class="settings-quick-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
+            <span class="settings-quick-copy"><strong>Gmail</strong><small>Ubah email akun</small></span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </a>
+
+          <a href="#preferencesSettings" class="settings-quick-card settings-quick-preferences">
+            <span class="settings-quick-icon"><i class="fa-solid fa-sliders"></i></span>
+            <span class="settings-quick-copy"><strong>Preferensi</strong><small>Bahasa & pengalaman</small></span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </a>
+
           <a
             href="#securitySettings"
             class="settings-quick-card settings-quick-security"
@@ -506,6 +518,35 @@
 
           </section>
 
+
+          <!-- =================================================
+               EMAIL / GMAIL
+               ================================================= -->
+          <section class="card settings-card email-card" id="emailSettings">
+            <div class="card-heading">
+              <div class="heading-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+              <div><h2>Gmail / Email akun</h2><p>Ganti alamat email login dan kelola status verifikasi.</p></div>
+            </div>
+            <div class="account-email-current">
+              <span class="account-email-icon"><i class="fa-solid fa-envelope"></i></span>
+              <div><small>Email saat ini</small><strong id="currentEmail">Memuat...</strong></div>
+              <span class="email-verified-badge" id="emailVerifiedBadge"><i class="fa-solid fa-circle-check"></i> Terverifikasi</span>
+            </div>
+            <form id="emailForm" class="settings-form" novalidate>
+              <label class="field">
+                <span>Gmail / Email baru</span>
+                <div class="input-wrap"><i class="fa-solid fa-at"></i>
+                  <input class="input" id="newEmail" name="newEmail" type="email" autocomplete="email" maxlength="255" placeholder="nama@gmail.com" required>
+                </div>
+                <small class="field-hint">Konfirmasi akan dikirim ke email baru sebelum perubahan aktif.</small>
+              </label>
+              <button class="btn primary submit-btn" type="submit" id="changeEmail">
+                <i class="fa-solid fa-envelope-circle-check"></i><span class="submit-text">Ganti Gmail</span>
+                <span class="submit-loading" hidden><i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim...</span>
+              </button>
+            </form>
+            <div class="settings-info-box"><i class="fa-solid fa-shield-halved"></i><span>Email baru harus dikonfirmasi. Jangan bagikan link konfirmasi kepada orang lain.</span></div>
+          </section>
 
           <!-- =================================================
                PAYMENT
@@ -1096,6 +1137,31 @@
 
           </section>
 
+
+          <!-- =================================================
+               PREFERENCES
+               ================================================= -->
+          <section class="card settings-card" id="preferencesSettings">
+            <div class="card-heading">
+              <div class="heading-icon"><i class="fa-solid fa-sliders"></i></div>
+              <div><h2>Preferensi aplikasi</h2><p>Atur bahasa, pengalaman, dan perilaku aplikasi.</p></div>
+            </div>
+            <div class="preference-grid">
+              <label class="field"><span>Bahasa</span><div class="input-wrap select-wrap"><i class="fa-solid fa-language"></i>
+                <select class="select" id="languagePreference">
+                  <option value="id">Bahasa Indonesia</option><option value="en">English</option><option value="zh">中文</option>
+                </select></div></label>
+              <label class="field"><span>Format waktu</span><div class="input-wrap select-wrap"><i class="fa-solid fa-clock"></i>
+                <select class="select" id="timeFormatPreference"><option value="24">24 jam</option><option value="12">12 jam</option></select>
+              </div></label>
+            </div>
+            <div class="settings-toggle-list">
+              <label class="settings-toggle-row"><span class="settings-toggle-icon"><i class="fa-solid fa-bolt"></i></span><span class="settings-toggle-copy"><strong>Animasi antarmuka</strong><small>Gunakan animasi ringan pada navigasi dan kartu.</small></span><input type="checkbox" id="prefMotion" checked><span class="toggle-ui"></span></label>
+              <label class="settings-toggle-row"><span class="settings-toggle-icon"><i class="fa-solid fa-mobile-screen-button"></i></span><span class="settings-toggle-copy"><strong>Optimasi mobile</strong><small>Gunakan layout ringkas untuk layar kecil.</small></span><input type="checkbox" id="prefMobile" checked><span class="toggle-ui"></span></label>
+              <label class="settings-toggle-row"><span class="settings-toggle-icon"><i class="fa-solid fa-check-double"></i></span><span class="settings-toggle-copy"><strong>Konfirmasi tindakan penting</strong><small>Minta konfirmasi sebelum tindakan penting.</small></span><input type="checkbox" id="prefConfirm" checked><span class="toggle-ui"></span></label>
+            </div>
+            <div class="settings-action-row"><button class="btn primary" type="button" id="savePreferences"><i class="fa-solid fa-floppy-disk"></i> Simpan preferensi</button></div>
+          </section>
 
           <!-- =================================================
                ACCOUNT INFORMATION
