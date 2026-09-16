@@ -2967,21 +2967,340 @@ window.PASTELE_CONFIG = Object.freeze({
 })();
 
 
-document.addEventListener("DOMContentLoaded",()=>{
-"use strict";
-const $=id=>document.getElementById(id), sb=()=>window.sb;
-const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
-const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
-const access=()=>document.querySelector('input[name="access"]:checked')?.value||"free";
-function setLoading(on){const b=$("submitBtn");if(!b)return;b.disabled=!!on;b.setAttribute("aria-busy",String(!!on));}
-function requireClient(){if(!sb())throw new Error("Supabase belum siap. Refresh halaman dan coba lagi.")}
-const slugify=s=>String(s||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,70);let bots=[];
-function sync(){const paid=access()==="paid";$("priceBox").hidden=!paid;$("price").disabled=!paid;if(!paid)$("price").value="0"}
-function validate(){const title=$("title").value.trim(),bot=$("botId").value,content=$("content").value.trim(),desc=$("description").value.trim(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!bot)return toast("Pilih bot yang sudah ditambahkan admin.","error"),null;if(!content)return toast("Code / Delivery wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<5000||price>150000||price%1000))return toast("Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.","error"),null;return{title,bot,content,desc,a,price}}
-async function loadBots(){const select=$("botId");if(!select)return;select.disabled=true;select.innerHTML='<option value="">Memuat bot...</option>';try{requireClient();const {data,error}=await sb().rpc("get_active_approved_bots");if(error)throw error;bots=Array.isArray(data)?data:[];if(!bots.length){select.innerHTML='<option value="">Belum ada bot aktif dari admin</option>';$("botStatus").hidden=false;return}select.disabled=false;$("botStatus").hidden=true;select.innerHTML='<option value="">Pilih bot...</option>'+bots.map(b=>`<option value="${esc(b.id)}">🤖 @${esc(String(b.bot_username||"").replace(/^@/,""))}${b.bot_name&&b.bot_name!==b.bot_username?' — '+esc(b.bot_name):""}</option>`).join("")}catch(e){console.error(e);select.innerHTML='<option value="">Bot gagal dimuat</option>';$("botStatus").hidden=false;$("botStatus").textContent="Daftar bot belum dapat dimuat. Jalankan SQL final dan pastikan ada bot aktif."}}
-function finish(v,slug){const url=`${location.origin}/c/${v.a==="paid"?"p":"f"}/${encodeURIComponent(slug)}`,r=$("result");r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>Code berhasil dipublikasikan</h2><p><b>${esc(v.title)}</b> menggunakan bot <b>@${esc(v.botUsername)}</b>.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}">Buka Code</a><a class="btn secondary" href="my-products.html">Code Saya</a></div>`;$("copyUrl").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("Link berhasil disalin.","success")}catch{toast("Gagal menyalin link.","error")}};r.scrollIntoView({behavior:"smooth",block:"center"})}
-document.querySelectorAll('input[name="access"]').forEach(x=>x.addEventListener("change",sync));$("description")?.addEventListener("input",()=>$("counter").textContent=$("description").value.length);$("botId")?.addEventListener("change",()=>{const b=bots.find(x=>String(x.id)===$("botId").value);$("botUsernamePreview").textContent=b?"@"+String(b.bot_username||"").replace(/^@/,""):""});
-$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){throw new Error("Login/daftar diperlukan untuk membuat konten Paid.")}const b=bots.find(x=>String(x.id)===v.bot);if(!b)throw new Error("Bot tidak ditemukan atau sudah dinonaktifkan admin.");const slug=`${slugify(v.title)||"code"}-${crypto.randomUUID().slice(0,8)}`;const {data,error}=await sb().rpc("create_code_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_approved_bot_id:v.bot});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan Code.");finish({...v,botUsername:String(b.bot_username||"").replace(/^@/,"")},data.slug||slug);$("createForm").reset();sync();$("counter").textContent="0";$("botUsernamePreview").textContent="";toast("Code berhasil dipublikasikan.","success")}catch(e){console.error(e);toast(e?.code==="23505"?"Slug sudah digunakan. Silakan coba lagi.":e?.message||"Gagal menyimpan Code.","error")}finally{setLoading(false)}});sync();loadBots();
+document.addEventListener("DOMContentLoaded", () => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const supabase = () => window.sb || null;
+
+  const toast = (message, type = "info") => {
+    if (typeof window.TC?.toast === "function") {
+      window.TC.toast(message, type);
+      return;
+    }
+    const el = $("toast");
+    if (el) {
+      el.textContent = String(message || "");
+      el.className = `toast ${type}`;
+    } else {
+      window.alert(String(message || ""));
+    }
+  };
+
+  const esc = (value) => {
+    const s = String(value ?? "");
+    if (typeof window.TC?.esc === "function") return window.TC.esc(s);
+    return s.replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+    }[m]));
+  };
+
+  const normalizeBotUsername = (value) =>
+    String(value || "").trim().replace(/^@+/, "");
+
+  const slugify = (value) =>
+    String(value || "")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 70);
+
+  const getAccess = () =>
+    document.querySelector('input[name="access"]:checked')?.value === "paid"
+      ? "paid"
+      : "free";
+
+  let bots = [];
+  let saving = false;
+
+  function setLoading(on) {
+    saving = !!on;
+    const button = $("submitBtn");
+    if (!button) return;
+
+    button.disabled = saving;
+    button.setAttribute("aria-busy", String(saving));
+
+    const normal = button.querySelector(".normal");
+    const loading = button.querySelector(".loading");
+    if (normal) normal.hidden = saving;
+    if (loading) loading.hidden = !saving;
+  }
+
+  function requireClient() {
+    if (!supabase()) {
+      throw new Error("Supabase belum siap. Refresh halaman lalu coba lagi.");
+    }
+    return supabase();
+  }
+
+  function syncAccessUI() {
+    const paid = getAccess() === "paid";
+    const box = $("priceBox");
+    const price = $("price");
+
+    if (box) box.hidden = !paid;
+    if (price) {
+      price.disabled = !paid;
+      if (!paid) price.value = "0";
+    }
+  }
+
+  function validate() {
+    const title = $("title")?.value.trim() || "";
+    const botId = $("botId")?.value || "";
+    const content = $("content")?.value.trim() || "";
+    const description = $("description")?.value.trim() || "";
+    const access = getAccess();
+
+    const rawPrice = $("price")?.value ?? "0";
+    const price = access === "paid" ? Number(rawPrice) : 0;
+
+    if (title.length < 2 || title.length > 120) {
+      toast("Judul Code harus 2–120 karakter.", "error");
+      $("title")?.focus();
+      return null;
+    }
+
+    if (!botId) {
+      toast("Pilih bot yang sudah disetujui admin.", "error");
+      $("botId")?.focus();
+      return null;
+    }
+
+    if (!content) {
+      toast("Code / Delivery wajib diisi.", "error");
+      $("content")?.focus();
+      return null;
+    }
+
+    if (access === "paid" &&
+        (!Number.isInteger(price) || price < 5000 || price > 150000 || price % 1000 !== 0)) {
+      toast("Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.", "error");
+      $("price")?.focus();
+      return null;
+    }
+
+    return { title, botId, content, description, access, price };
+  }
+
+  async function getCurrentUser() {
+    try {
+      if (typeof window.TC?.user === "function") return await window.TC.user();
+      const { data, error } = await requireClient().auth.getUser();
+      if (error) throw error;
+      return data?.user || null;
+    } catch (error) {
+      console.warn("[PasTele] getCurrentUser:", error);
+      return null;
+    }
+  }
+
+  async function loadBots() {
+    const select = $("botId");
+    const status = $("botStatus");
+    if (!select) return;
+
+    select.disabled = true;
+    select.innerHTML = '<option value="">Memuat bot...</option>';
+    if (status) status.hidden = true;
+
+    try {
+      const { data, error } = await requireClient().rpc("get_active_approved_bots");
+      if (error) throw error;
+
+      bots = Array.isArray(data) ? data : [];
+
+      if (!bots.length) {
+        select.innerHTML = '<option value="">Belum ada bot aktif</option>';
+        if (status) {
+          status.hidden = false;
+          status.innerHTML =
+            '<i class="fa-solid fa-circle-info"></i>' +
+            '<span>Belum ada bot aktif yang disetujui admin.</span>';
+        }
+        return;
+      }
+
+      select.disabled = false;
+      select.innerHTML =
+        '<option value="">Pilih bot...</option>' +
+        bots.map((bot) => {
+          const username = normalizeBotUsername(bot.bot_username);
+          const name = String(bot.bot_name || "").trim();
+          const label = name && name.toLowerCase() !== username.toLowerCase()
+            ? ` — ${esc(name)}`
+            : "";
+          return `<option value="${esc(bot.id)}">🤖 @${esc(username)}${label}</option>`;
+        }).join("");
+
+    } catch (error) {
+      console.error("[PasTele] get_active_approved_bots:", error);
+      select.innerHTML = '<option value="">Bot gagal dimuat</option>';
+      if (status) {
+        status.hidden = false;
+        status.innerHTML =
+          '<i class="fa-solid fa-triangle-exclamation"></i>' +
+          '<span>Daftar bot tidak dapat dimuat. Pastikan RPC database tersedia.</span>';
+      }
+      toast("Daftar bot gagal dimuat.", "error");
+    }
+  }
+
+  function rpcErrorMessage(error) {
+    const raw = String(error?.message || error?.details || error || "").trim();
+    const code = String(error?.code || "").trim();
+
+    if (code === "42501") return "Akses ditolak oleh database. Silakan login dan coba lagi.";
+    if (/TITLE_AND_CONTENT_REQUIRED/i.test(raw)) return "Judul dan Code / Delivery wajib diisi.";
+    if (/INVALID_ACCESS_TYPE/i.test(raw)) return "Jenis akses tidak valid.";
+    if (/LOGIN_REQUIRED_FOR_PAID/i.test(raw)) return "Code Paid hanya dapat dibuat setelah login.";
+    if (/INVALID_PAID_PRICE/i.test(raw)) return "Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.";
+    if (/APPROVED_BOT_REQUIRED/i.test(raw)) return "Bot yang disetujui admin wajib dipilih.";
+    if (/BOT_NOT_FOUND_OR_INACTIVE/i.test(raw)) return "Bot tersebut sudah tidak aktif. Pilih bot lain.";
+    if (/duplicate key|23505|already exists/i.test(raw)) return "Slug Code sudah digunakan. Silakan gunakan judul lain.";
+    return raw || "Gagal menyimpan Code.";
+  }
+
+  function renderResult(payload) {
+    const result = $("result");
+    if (!result) return;
+
+    const slug = String(payload.slug || "").trim();
+    const access = payload.access === "paid" ? "p" : "f";
+    const url = `${location.origin}/c/${access}/${encodeURIComponent(slug)}`;
+    const botUsername = normalizeBotUsername(payload.botUsername);
+
+    result.hidden = false;
+    result.innerHTML = `
+      <div class="result-icon"><i class="fa-solid fa-circle-check"></i></div>
+      <span class="result-label">PUBLISHED</span>
+      <h2>Code berhasil dipublikasikan</h2>
+      <p>
+        <b>${esc(payload.title)}</b>
+        · <span>${payload.access === "paid" ? "Paid" : "Free"}</span>
+        · Bot <b>@${esc(botUsername)}</b>
+      </p>
+      <div class="result-url">
+        <input readonly value="${esc(url)}" aria-label="URL Code">
+        <button id="copyUrl" type="button" aria-label="Salin URL">
+          <i class="fa-regular fa-copy"></i>
+        </button>
+      </div>
+      <div class="result-actions">
+        <a class="btn primary" href="${esc(url)}">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Code
+        </a>
+        <a class="btn secondary" href="my-products.html">
+          <i class="fa-solid fa-box-open"></i> Code Saya
+        </a>
+      </div>
+    `;
+
+    $("copyUrl")?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast("Link Code berhasil disalin.", "success");
+      } catch {
+        toast("Gagal menyalin link.", "error");
+      }
+    });
+
+    result.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  document.querySelectorAll('input[name="access"]').forEach((radio) => {
+    radio.addEventListener("change", syncAccessUI);
+  });
+
+  $("description")?.addEventListener("input", () => {
+    const counter = $("counter");
+    if (counter) counter.textContent = String($("description").value.length);
+  });
+
+  $("botId")?.addEventListener("change", () => {
+    const selected = bots.find((bot) => String(bot.id) === String($("botId").value));
+    $("botUsernamePreview").textContent =
+      selected ? `@${normalizeBotUsername(selected.bot_username)}` : "";
+  });
+
+  $("createForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (saving) return;
+
+    const values = validate();
+    if (!values) return;
+
+    setLoading(true);
+
+    try {
+      const client = requireClient();
+
+      /*
+       * Database contract:
+       * create_code_content(
+       *   p_title, p_content, p_slug, p_access_type,
+       *   p_price, p_description, p_approved_bot_id
+       * )
+       *
+       * The SQL function is the authority for validation + INSERT.
+       */
+      const user = await getCurrentUser();
+
+      if (values.access === "paid" && !user?.id) {
+        throw new Error("LOGIN_REQUIRED_FOR_PAID");
+      }
+
+      const bot = bots.find((item) => String(item.id) === String(values.botId));
+      if (!bot) {
+        throw new Error("BOT_NOT_FOUND_OR_INACTIVE");
+      }
+
+      const slugBase = slugify(values.title) || "code";
+      const slug = `${slugBase}-${crypto.randomUUID().slice(0, 8)}`;
+
+      const { data, error } = await client.rpc("create_code_content", {
+        p_title: values.title,
+        p_content: values.content,
+        p_slug: slug,
+        p_access_type: values.access,
+        p_price: values.price,
+        p_description: values.description,
+        p_approved_bot_id: values.botId
+      });
+
+      if (error) throw error;
+
+      if (!data?.ok || !data?.slug) {
+        throw new Error("Database tidak mengonfirmasi pembuatan Code.");
+      }
+
+      renderResult({
+        title: values.title,
+        access: data.access_type || values.access,
+        slug: data.slug,
+        botUsername: bot.bot_username
+      });
+
+      $("createForm").reset();
+      $("counter").textContent = "0";
+      $("botUsernamePreview").textContent = "";
+      syncAccessUI();
+
+      toast("Code berhasil dipublikasikan.", "success");
+
+    } catch (error) {
+      console.error("[PasTele][CreateCode]", error);
+      toast(rpcErrorMessage(error), "error");
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  syncAccessUI();
+  loadBots();
 });
 
 /* Page-ready marker */
