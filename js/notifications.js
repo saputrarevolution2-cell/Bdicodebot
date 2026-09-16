@@ -3253,7 +3253,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                         class="btn notice-more"
                                         data-more="${index}"
                                     >
-                                        Baca selanjutnya
+                                        Baca selengkapnya
                                     </button>
                                 `
                                 : ""
@@ -3291,7 +3291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <section class="notice-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="noticeDetailTitle">
           <header class="notice-detail-head"><div><span class="badge"><i class="fa-solid fa-bell"></i> DETAIL NOTIFIKASI</span><h2 id="noticeDetailTitle"></h2></div><button type="button" class="notice-detail-x" data-notice-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></header>
           <div class="notice-detail-body" id="noticeDetailBody"></div>
-          <footer class="notice-detail-foot"><button type="button" class="btn" data-notice-close><i class="fa-solid fa-check"></i> Tutup, sudah dibaca</button><button type="button" class="btn primary" id="noticeDetailOpen" hidden><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</button></footer>
+          <footer class="notice-detail-foot"><button type="button" class="btn" data-notice-close><i class="fa-solid fa-check-double"></i> Sudah baca</button><button type="button" class="btn primary" id="noticeDetailOpen" hidden><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</button></footer>
         </section>`;
       document.body.appendChild(noticeModal);
     }
@@ -3322,7 +3322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !noticeModal.hidden) closeNoticeModal(); });
     /* =======================================================
-       READ STATE — only after explicit "Tutup, sudah dibaca"
+       READ STATE — only after explicit "Sudah baca"
        ======================================================= */
     const markOneRead = async (item) => {
       if (!item?.notification_id || item.is_read) return;
