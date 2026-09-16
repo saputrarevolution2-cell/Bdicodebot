@@ -118,8 +118,11 @@
     state("valid");
     verifiedState?.classList.remove("hidden");
     continueLogin?.classList.add("hidden");
-    step1?.classList.add("account-found");
+    // Step 1 benar-benar digantikan Step 2 — bukan ditumpuk.
+    step1?.classList.add("hidden");
+    step1?.setAttribute("aria-hidden", "true");
     step2?.classList.remove("hidden");
+    step2?.setAttribute("aria-hidden", "false");
     securityStatus.textContent="";
     securityStatus.className="login-security-status";
     renderTurnstile();
@@ -167,7 +170,10 @@
 
   function back(){
     foundAccount=null; loginBusy=false;
-    step2?.classList.add("hidden"); step1?.classList.remove("account-found");
+    step2?.classList.add("hidden");
+    step2?.setAttribute("aria-hidden", "true");
+    step1?.classList.remove("hidden");
+    step1?.setAttribute("aria-hidden", "false");
     continueLogin?.classList.remove("hidden");
     password.value="";
     loginSubmit.disabled=false; loginSubmit.classList.remove("loading");
@@ -206,20 +212,24 @@
 
   function schedule(){
     clearTimeout(lookupTimer);
-    if(step1?.classList.contains("account-found"))return;
+    if(step1?.classList.contains("hidden"))return;
     lookupTimer=setTimeout(check,450);
   }
 
   step1?.addEventListener("submit",async e=>{
     e.preventDefault();
     clearTimeout(lookupTimer);
-    if(foundAccount){openPassword(foundAccount);return;}
+    if(foundAccount){return;}
     await check();
     if(!foundAccount) toastShow("Akun tidak ditemukan. Periksa username atau Gmail kamu.","error");
   });
 
   identifier?.addEventListener("input",()=>{
-    if(foundAccount){back(); identifier.value=clean(identifier.value);}
+    if(foundAccount){
+      // Perubahan identifier berarti kembali ke Step 1.
+      back();
+      identifier.value=clean(identifier.value);
+    }
     resetVisual(); schedule();
   });
   identifier?.addEventListener("keydown",e=>{
