@@ -1008,18 +1008,13 @@ window.PASTELE_CONFIG = Object.freeze({
   'use strict';
   const root = document.documentElement;
   const KEY = 'pastele-theme';
-  const MODES = ['auto', 'light', 'dark', 'system'];
+  const MODES = ['light', 'dark'];
 
   const resolve = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    if (mode === 'system') {
-      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    const hour = new Date().getHours();
-    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
+    return mode === 'dark' ? 'dark' : 'light';
   };
 
-  const apply = (mode = localStorage.getItem(KEY) || 'auto') => {
+  const apply = (mode = localStorage.getItem(KEY) || 'light') => {
     if (!MODES.includes(mode)) mode = 'light';
     const theme = resolve(mode);
     root.dataset.theme = theme;
@@ -1048,8 +1043,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
   const cycle = () => {
     const current = localStorage.getItem(KEY) || 'light';
-    const index = Math.max(0, MODES.indexOf(current));
-    return set(['light', 'dark'][(index + 1) % 2]);
+    return set(current === 'dark' ? 'light' : 'dark');
   };
 
   window.PasTeleTheme = Object.freeze({
@@ -2121,13 +2115,8 @@ window.PASTELE_CONFIG = Object.freeze({
       if (!themeText) return;
       const mode =
         getThemeMode();
-      const labels = {
-        auto: 'Auto',
-        light: 'Terang',
-        dark: 'Gelap'
-      };
-      themeText.textContent =
-        labels[mode] || 'Auto';
+      const labels = { light: 'Terang', dark: 'Gelap' };
+      themeText.textContent = labels[mode] || 'Terang';
     };
     updateThemeLabel();
     /* ========================================================
@@ -2152,20 +2141,8 @@ window.PASTELE_CONFIG = Object.freeze({
               0
             );
           } else {
-            const modes = [
-              'auto',
-              'light',
-              'dark'
-            ];
-            const current =
-              getThemeMode();
-            const index =
-              modes.indexOf(current);
-            const next =
-              modes[
-                (index + 1) %
-                modes.length
-              ];
+            const current = getThemeMode();
+            const next = current === 'dark' ? 'light' : 'dark';
             localStorage.setItem(
               'pastele-theme',
               next
@@ -2187,10 +2164,7 @@ window.PASTELE_CONFIG = Object.freeze({
                   'light'
                 );
             } else {
-              document.documentElement
-                .removeAttribute(
-                  'data-theme'
-                );
+              document.documentElement.setAttribute('data-theme', 'light');
             }
             updateThemeLabel();
           }
@@ -2713,15 +2687,12 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   function autoTheme() {
-    // Automatic day/night theme:
-    // 06:00–17:59 = light, 18:00–05:59 = dark.
     try {
-      const hour = new Date().getHours();
-      const dark = hour >= 18 || hour < 6;
       const root = document.documentElement;
-      root.dataset.theme = dark ? "dark" : "light";
-      root.dataset.themeMode = "auto";
-      root.style.colorScheme = dark ? "dark" : "light";
+      const mode = localStorage.getItem('pastele-theme') === 'dark' ? 'dark' : 'light';
+      root.dataset.theme = mode;
+      root.dataset.themeMode = mode;
+      root.style.colorScheme = mode;
     } catch (_) {}
   }
 
