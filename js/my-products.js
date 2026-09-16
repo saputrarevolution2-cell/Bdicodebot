@@ -4520,8 +4520,19 @@ document.addEventListener("DOMContentLoaded", async () => {
        EDIT MODAL — FULL FORM PER CONTENT TYPE
        ===================================================== */
     function removeEditModal() {
+        // Remove BOTH the modal and its backdrop.
+        // Leaving the backdrop mounted was causing the page to stay dim/blurred
+        // after Cancel/Save.
         document.getElementById("ptEditModal")?.remove();
+        document.getElementById("ptEditBackdrop")?.remove();
+
         document.body.classList.remove("modal-open");
+
+        // Clean up any stale modal state left by a previous open/close cycle.
+        document.documentElement.classList.remove("modal-open", "modal-blur");
+        document.body.style.removeProperty("filter");
+        document.body.style.removeProperty("backdrop-filter");
+        document.body.style.removeProperty("-webkit-backdrop-filter");
     }
 
     function toLocalDateTimeValue(value) {
