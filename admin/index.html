@@ -1,10 +1,195 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><title>Admin · Overview</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-<link rel="stylesheet" href="css/index.css">
-
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PasTele Admin — Control Center</title>
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../assets/favicon.svg">
-</head><body class="app-page admin-page"> <div id="navbar"></div><main class="admin-main"><section class="section"><div class="container admin-layout"><aside class="card admin-side"><div class="admin-nav"><a href="index.html"><i class="fa-solid fa-chart-pie"></i><span>Overview</span></a><a href="users.html"><i class="fa-solid fa-users"></i><span>Users</span></a><a href="products.html"><i class="fa-solid fa-box"></i><span>Products</span></a><a href="content.html"><i class="fa-solid fa-layer-group"></i><span>Content</span></a><a href="orders.html"><i class="fa-solid fa-receipt"></i><span>Orders</span></a><a href="payments.html"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a><a href="withdrawals.html"><i class="fa-solid fa-money-bill-transfer"></i><span>Withdrawals</span></a><a href="transactions.html"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Transactions</span></a><a href="pastes.html"><i class="fa-solid fa-file-lines"></i><span>Pastes</span></a><a href="bots.html"><i class="fa-solid fa-robot"></i><span>Bots</span></a><a href="logs.html"><i class="fa-solid fa-list"></i><span>Logs</span></a><a href="security.html"><i class="fa-solid fa-shield-halved"></i><span>Security</span></a></div></aside><div class="admin-content"><div class="admin-title"><div><span class="badge"><i class="fa-solid fa-chart-pie"></i> Admin</span><h1>Overview</h1><p>Kelola platform dan data dari satu panel.</p></div></div><div class="card admin-card" id="adminContent"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div></div><div class="admin-extra-grid"><div class="card"><h2><i class="fa-solid fa-share-nodes"></i> Social Media</h2><p class="muted">Satu baris satu sosial: Nama|URL|FontAwesome icon.</p><textarea class="input" id="socialInput" rows="7" placeholder="Telegram|https://t.me/...|fa-brands fa-telegram"></textarea><button class="btn primary" id="saveSocial"><i class="fa-solid fa-floppy-disk"></i> Simpan sosial</button></div><div class="card"><h2><i class="fa-solid fa-bullhorn"></i> Siaran Admin</h2><input class="input" id="annTitle" placeholder="Judul siaran"><input class="input" id="annImage" placeholder="URL gambar (opsional)"><textarea class="input" id="annBody" rows="7" placeholder="Isi siaran lengkap"></textarea><button class="btn primary" id="publishAnn"><i class="fa-solid fa-paper-plane"></i> Publish siaran</button></div></div></div></div></section></main><div id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="css/index.css?v=20260916-admin-control">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="app-page admin-page">
+<div id="navbar"></div>
+<main class="admin-main">
+<section class="section">
+<div class="container admin-control-shell">
+<aside class="card admin-side">
+  <div class="admin-brand"><span class="admin-brand-icon"><i class="fa-solid fa-shield-halved"></i></span><div><strong>PasTele</strong><small>Control Center</small></div></div>
+  <nav class="admin-nav">
+    <a class="active" href="index.html"><i class="fa-solid fa-gauge-high"></i><span>Overview</span></a>
+    <a href="users.html"><i class="fa-solid fa-users"></i><span>Users</span></a>
+    <a href="products.html"><i class="fa-solid fa-box"></i><span>Products</span></a>
+    <a href="content.html"><i class="fa-solid fa-layer-group"></i><span>Content</span></a>
+    <a href="orders.html"><i class="fa-solid fa-receipt"></i><span>Orders</span></a>
+    <a href="payments.html"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a>
+    <a href="withdrawals.html"><i class="fa-solid fa-money-bill-transfer"></i><span>Withdrawals</span></a>
+    <a href="transactions.html"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Transactions</span></a>
+    <a href="pastes.html"><i class="fa-solid fa-file-lines"></i><span>Pastes</span></a>
+    <a href="bots.html"><i class="fa-solid fa-robot"></i><span>Bots</span></a>
+    <a href="logs.html"><i class="fa-solid fa-list-check"></i><span>Logs</span></a>
+    <a href="security.html"><i class="fa-solid fa-shield-halved"></i><span>Security</span></a>
+  </nav>
+</aside>
 
-<script src="js/index.js"></script>
+<div class="admin-content">
+<header class="admin-hero">
+  <div><span class="badge"><i class="fa-solid fa-sliders"></i> Admin Control Center</span><h1>Platform Overview</h1><p>Kelola fitur utama PasTele dari satu panel dengan kontrol yang aman.</p></div>
+  <button class="btn admin-refresh" id="refreshAll"><i class="fa-solid fa-rotate"></i><span>Refresh</span></button>
+</header>
+
+<div id="alertBox" class="admin-alert hidden"></div>
+<div id="statsGrid" class="admin-stats-grid">
+  <div class="admin-stat skeleton"></div><div class="admin-stat skeleton"></div><div class="admin-stat skeleton"></div><div class="admin-stat skeleton"></div>
+</div>
+
+<section class="admin-section-head"><div><h2><i class="fa-solid fa-power-off"></i> Platform Controls</h2><p>Perubahan di sini berlaku di server dan tidak hanya menyembunyikan tombol frontend.</p></div></section>
+<div class="control-grid">
+
+<article class="control-card" data-section="forum_chat">
+  <div class="control-icon"><i class="fa-solid fa-comments"></i></div>
+  <div class="control-copy"><span class="control-kicker">COMMUNITY</span><h3>Forum Group Chat</h3><p id="forumStatusText">Memuat status...</p></div>
+  <div class="control-status" id="forumBadge">—</div>
+  <div class="control-actions"><button class="btn control-toggle" data-control="forum_chat" id="forumToggle">Memuat...</button></div>
+  <div class="reason-wrap hidden" id="forumReasonWrap"><label>Alasan penutupan</label><textarea id="forumReason" maxlength="500" placeholder="Contoh: Forum ditutup sementara untuk maintenance."></textarea></div>
+</article>
+
+<article class="control-card" data-section="withdrawal_instant">
+  <div class="control-icon"><i class="fa-solid fa-bolt"></i></div>
+  <div class="control-copy"><span class="control-kicker">WITHDRAWAL</span><h3>WD Instan</h3><p id="instantStatusText">Memuat status...</p></div>
+  <div class="control-status" id="instantBadge">—</div>
+  <div class="control-actions"><button class="btn control-toggle" data-control="withdrawal_instant" id="instantToggle">Memuat...</button></div>
+  <div class="reason-wrap hidden" id="instantReasonWrap"><label>Alasan penutupan</label><textarea id="instantReason" maxlength="500" placeholder="Contoh: Provider instan sedang maintenance."></textarea></div>
+</article>
+
+<article class="control-card" data-section="withdrawal_manual">
+  <div class="control-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+  <div class="control-copy"><span class="control-kicker">WITHDRAWAL</span><h3>WD Manual</h3><p id="manualStatusText">Memuat status...</p></div>
+  <div class="control-status" id="manualBadge">—</div>
+  <div class="control-actions"><button class="btn control-toggle" data-control="withdrawal_manual" id="manualToggle">Memuat...</button></div>
+  <div class="reason-wrap hidden" id="manualReasonWrap"><label>Alasan penutupan</label><textarea id="manualReason" maxlength="500" placeholder="Contoh: Tim finance sedang memproses batch withdrawal."></textarea></div>
+</article>
+
+</div>
+
+<section class="admin-section-head"><div><h2><i class="fa-solid fa-compass"></i> Quick Management</h2><p>Akses cepat ke modul yang sudah tersedia di project.</p></div></section>
+<div class="quick-grid">
+<a href="users.html" class="quick-card"><i class="fa-solid fa-users"></i><div><strong>Users</strong><small>Kelola akun & status user</small></div><i class="fa-solid fa-chevron-right"></i></a>
+<a href="content.html" class="quick-card"><i class="fa-solid fa-layer-group"></i><div><strong>Content</strong><small>Moderasi seluruh content</small></div><i class="fa-solid fa-chevron-right"></i></a>
+<a href="orders.html" class="quick-card"><i class="fa-solid fa-receipt"></i><div><strong>Orders</strong><small>Pantau transaksi marketplace</small></div><i class="fa-solid fa-chevron-right"></i></a>
+<a href="withdrawals.html" class="quick-card"><i class="fa-solid fa-money-bill-transfer"></i><div><strong>Withdrawals</strong><small>Proses permintaan WD</small></div><i class="fa-solid fa-chevron-right"></i></a>
+<a href="payments.html" class="quick-card"><i class="fa-solid fa-credit-card"></i><div><strong>Payments</strong><small>Pantau pembayaran</small></div><i class="fa-solid fa-chevron-right"></i></a>
+<a href="security.html" class="quick-card"><i class="fa-solid fa-shield-halved"></i><div><strong>Security</strong><small>Kontrol keamanan admin</small></div><i class="fa-solid fa-chevron-right"></i></a>
+</div>
+</div></div>
+</section>
+</main>
+<div id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+  const CONFIG = {
+    SUPABASE_URL: 'https://jxrndamvelqwhbcromye.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
+  };
+  const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const $ = s => document.querySelector(s);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const money = v => 'Rp ' + Number(v || 0).toLocaleString('id-ID');
+  let controls = {};
+
+  function toast(msg, type='ok'){
+    const el=$('#toast'); if(!el)return;
+    el.textContent=msg; el.className='admin-toast '+type; clearTimeout(window.__toast);
+    window.__toast=setTimeout(()=>el.className='admin-toast',3200);
+  }
+  function showError(msg){ const e=$('#alertBox'); e.className='admin-alert error'; e.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i><span>'+esc(msg)+'</span>'; }
+  function clearError(){ $('#alertBox').className='admin-alert hidden'; }
+
+  async function guard(){
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user){ location.href='../login.html?redirect='+encodeURIComponent('/admin/index.html'); return false; }
+    const {data,error}=await sb.rpc('is_current_user_admin');
+    if(error || data !== true){ document.body.innerHTML='<main class="admin-denied"><i class="fa-solid fa-lock"></i><h1>Akses ditolak</h1><p>Halaman ini hanya untuk administrator.</p><a href="../index.html" class="btn primary">Kembali</a></main>'; return false; }
+    return true;
+  }
+
+  async function loadControls(){
+    const {data,error}=await sb.rpc('get_public_site_settings');
+    if(error) throw error;
+    const s=data||{};
+    controls={
+      forum_chat: {...{enabled:true,reason:''},...(s.forum_chat||{})},
+      withdrawal_instant: {...{enabled:true,reason:''},...(s.withdrawal_instant||{})},
+      withdrawal_manual: {...{enabled:true,reason:''},...(s.withdrawal_manual||{})}
+    };
+    renderControls();
+  }
+  function renderControls(){
+    const map={
+      forum_chat:['forum','Forum Chat'],
+      withdrawal_instant:['instant','WD Instan'],
+      withdrawal_manual:['manual','WD Manual']
+    };
+    Object.entries(map).forEach(([key,[id,label]])=>{
+      const c=controls[key]||{enabled:true,reason:''};
+      const badge=$('#'+id+'Badge'), btn=$('#'+id+'Toggle'), text=$('#'+id+'StatusText'), wrap=$('#'+id+'ReasonWrap'), reason=$('#'+id+'Reason');
+      badge.textContent=c.enabled?'AKTIF':'DITUTUP'; badge.className='control-status '+(c.enabled?'on':'off');
+      btn.textContent=c.enabled?'Tutup '+label:'Buka '+label;
+      btn.className='btn control-toggle '+(c.enabled?'danger':'success');
+      text.textContent=c.enabled?'Fitur sedang tersedia untuk pengguna.':(c.reason||'Fitur sedang ditutup oleh admin.');
+      if(reason) reason.value=c.reason||'';
+      if(wrap) wrap.classList.toggle('hidden',c.enabled);
+    });
+  }
+  async function toggle(section){
+    const c=controls[section]||{enabled:true,reason:''};
+    let reason='';
+    if(c.enabled){
+      const id=section==='forum_chat'?'forumReason':section==='withdrawal_instant'?'instantReason':'manualReason';
+      reason=String($('#'+id)?.value||'').trim();
+      if(!reason){
+        toast('Masukkan alasan sebelum menutup fitur.','error');
+        $('#'+id)?.focus(); return;
+      }
+    } else {
+      if(!confirm('Buka kembali '+(section==='forum_chat'?'Forum Group Chat':section==='withdrawal_instant'?'WD Instan':'WD Manual')+'?')) return;
+    }
+    const btn=$('[data-control="'+section+'"]');
+    const old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+    clearError();
+    try{
+      const {data,error}=await sb.rpc('admin_set_platform_control',{p_section:section,p_enabled:!c.enabled,p_reason:reason});
+      if(error) throw error;
+      controls[section]={enabled:Boolean(data?.enabled),reason:String(data?.reason||'')};
+      renderControls(); toast(c.enabled?'Fitur berhasil ditutup.':'Fitur berhasil dibuka.');
+    }catch(e){ showError(e?.message||'Gagal menyimpan pengaturan.'); toast('Perubahan gagal disimpan.','error'); btn.disabled=false; btn.innerHTML=old; }
+  }
+  async function stats(){
+    const {data,error}=await sb.rpc('admin_stats');
+    if(error) throw error;
+    const x=Array.isArray(data)?(data[0]||{}):(data||{});
+    const cards=[
+      ['fa-users','Users',x.total_users,''],
+      ['fa-box','Products',x.total_products,''],
+      ['fa-receipt','Paid Orders',x.paid_orders,''],
+      ['fa-money-bill-transfer','Pending WD',x.pending_withdrawals,''],
+      ['fa-eye','Views',x.views,''],
+      ['fa-coins','Gross Sales',money(x.gross_sales)]
+    ];
+    $('#statsGrid').innerHTML=cards.map(c=>'<div class="admin-stat"><span class="stat-icon"><i class="fa-solid '+c[0]+'"></i></span><div><small>'+c[1]+'</small><strong>'+esc(c[2]??0)+'</strong></div></div>').join('');
+  }
+  async function load(){
+    clearError();
+    try{ await Promise.all([loadControls(),stats()]); }
+    catch(e){ showError(e?.message||'Gagal memuat data admin.'); }
+  }
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-control]'); if(b) toggle(b.dataset.control);
+  });
+  $('#refreshAll')?.addEventListener('click',load);
+  (async()=>{ if(await guard()) await load(); })();
+})();
+</script>
 </body></html>
