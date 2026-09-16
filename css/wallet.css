@@ -1318,3 +1318,89 @@ button{cursor:pointer}
     transition:none!important;
   }
 }
+
+
+/* =========================================================
+   WALLET — RECENT ACTIVITY EMPTY STATE
+   Keep the empty state fully wrapped inside the activity card.
+   ========================================================= */
+
+.wallet-activity-list{
+  min-height:80px;
+}
+
+.wallet-activity-empty{
+  width:calc(100% - 28px);
+  min-height:150px;
+  margin:14px;
+  padding:28px 20px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  text-align:center;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--surface2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}
+
+.wallet-activity-empty-icon{
+  width:50px;
+  height:50px;
+  flex:0 0 50px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(34,158,217,.16);
+  border-radius:15px;
+  background:linear-gradient(135deg,rgba(34,158,217,.12),rgba(99,91,255,.10));
+  color:var(--primary);
+  font-size:19px;
+}
+
+.wallet-activity-empty > div{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+}
+
+.wallet-activity-empty strong{
+  display:block;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.4;
+  font-weight:900;
+}
+
+.wallet-activity-empty > div > span{
+  display:block;
+  max-width:300px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.6;
+}
+
+@media (max-width:520px){
+  .wallet-activity-empty{
+    width:calc(100% - 20px);
+    min-height:140px;
+    margin:10px;
+    padding:24px 16px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .wallet-activity-empty,
+  .wallet-activity-empty-icon{
+    transition:none !important;
+  }
+}
+
+/* Dark mode refinement */
+[data-theme="dark"] .wallet-activity-empty{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
