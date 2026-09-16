@@ -3032,9 +3032,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(el.done) el.done.textContent=String(withdrawals.filter(w=>['completed','success','successful'].includes(String(w.status||'').toLowerCase())).length);
   }
 
+
+  /* =========================================================
+     WITHDRAW FEE POLICY
+     Free      : Rp15.000
+     Subscription 1 month: Rp13.000
+     Premium   : Rp10.000
+     ========================================================= */
+  const WITHDRAW_FEES = Object.freeze({
+    free: 15000,
+    subscription: 13000,
+    premium: 10000
+  });
+
+  function activePremiumProfile(){
+    return Boolean(
+      profile?.is_premium &&
+      (
+        !profile?.subscription_until ||
+        new Date(profile.subscription_until) > new Date()
+      )
+    );
+  }
+
+  function currentWithdrawTier(){
+    const rpcTier = String(limits?.tier || '').trim().toLowerCase();
+    if (rpcTier === 'premium') return 'premium';
+    if (rpcTier === 'subscription' || rpcTier === 'subscription_1_month' || rpcTier === 'monthly') {
+      return 'subscription';
+    }
+
+    /*
+     * Fallback only when get_withdrawal_limits() does not expose tier.
+     * The database/RPC remains the authority for the actual deduction.
+     */
+    if (activePremiumProfile()) return 'premium';
+    return 'free';
+  }
+
+  function withdrawFee(mode){
+    return WITHDRAW_FEES[currentWithdrawTier()];
+  }
+
+  function withdrawTierLabel(){
+    const tier=currentWithdrawTier();
+    if(tier==='premium') return 'Premium';
+    if(tier==='subscription') return 'Langganan 1 Bulan';
+    return 'Free';
+  }
+
+  function normalizeWithdrawAmount(amount){
+    return Number(amount || 0);
+  }
+
   function renderRules(){
     const m=limits.manual||{}, i=limits.instant||{};
-    if(el.fee) el.fee.textContent=money(m.fee);
+    if(el.fee) el.fee.textContent='';
     if(el.dailyText) el.dailyText.textContent=`${money(i.used_amount)} / ${money(i.daily_limit)}`;
     const pct=Math.min(100,Math.round((Number(i.used_amount||0)/Math.max(1,Number(i.daily_limit||1)))*100));
     if(el.dailyPercent) el.dailyPercent.textContent=pct+'%'; if(el.dailyBar) el.dailyBar.style.width=pct+'%';
@@ -3068,7 +3121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const info=[...document.querySelectorAll('#manualBox .rule-info span')]; info.forEach(x=>{if(/09:00|09\.00/.test(x.textContent||''))x.textContent='Senin-Jumat 09:00-17:00 WIB';});
   }
 
-  function renderPreview(){const a=Number(el.amount?.value||0);const f=Number(limits?.manual?.fee||0);if(el.fee)el.fee.textContent=money(f);if(el.net)el.net.textContent=money(Math.max(0,a-f));}
+  function renderPreview(){ if(el.fee) el.fee.textContent=''; if(el.net) el.net.textContent=''; }
 
   function renderMethods(rows){if(!el.saved)return;if(!rows.length){el.saved.classList.add('hidden');return;}el.saved.classList.remove('hidden');el.saved.innerHTML=rows.slice(0,3).map(x=>`<button type="button" class="saved-method" data-name="${esc(x.account_name)}" data-number="${esc(x.account_number)}" data-method="${esc(x.method_type)}"><strong>${esc(x.account_name)}</strong><small>${esc(x.method_type)} · ${esc(x.account_number)}</small></button>`).join('');el.saved.querySelectorAll('.saved-method').forEach(b=>b.addEventListener('click',()=>{el.name.value=b.dataset.name||'';el.number.value=b.dataset.number||'';el.method.value=b.dataset.method||'ewallet';renderPreview();}));}
 
@@ -3079,17 +3132,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(String(el.historySort?.value||'newest')==='oldest') rows.reverse();
     if(el.historyCount)el.historyCount.textContent=`${rows.length} transaksi`;
     if(!el.history)return;
-    if(!rows.length){el.history.innerHTML='<div class="history-empty">Belum ada riwayat withdraw.</div>';return;}
-    el.history.innerHTML=rows.slice(0,30).map(w=>`<article class="withdraw-history-item"><div><strong>${money(w.amount)}</strong><small>${esc(w.mode||'-')} · ${esc(w.method||'-')} · ${new Date(w.created_at).toLocaleString('id-ID')}</small></div><div class="history-right"><b>${money(w.net_amount)}</b><span class="status-${esc(String(w.status||'pending').toLowerCase())}">${esc(w.status||'pending')}</span></div></article>`).join('');
+    if(!rows.length){
+      el.history.innerHTML='<div class="history-empty"><i class="fa-solid fa-clock-rotate-left"></i><strong>Belum ada riwayat penarikan</strong><span>Riwayat WD kamu akan muncul di sini setelah ada pengajuan.</span></div>';
+      return;
+    }
+    el.history.innerHTML=rows.slice(0,30).map(w=>{
+      const status=String(w.status||'pending').toLowerCase();
+      const mode=String(w.mode||'-').toLowerCase();
+      const statusLabel=status==='completed'||status==='success'||status==='successful'?'Berhasil':
+        status==='rejected'?'Ditolak':
+        status==='failed'?'Gagal':
+        status==='cancelled'||status==='canceled'?'Dibatalkan':'Menunggu';
+      const icon=mode==='instant'?'fa-bolt':'fa-building-columns';
+      const amount=Number(w.amount||0);
+      const net=Number(w.net_amount ?? Math.max(0,amount-Number(w.fee||withdrawFee(mode))));
+      return `<article class="withdraw-history-item">
+        <div class="history-item-icon ${mode==='instant'?'instant':'manual'}"><i class="fa-solid ${icon}"></i></div>
+        <div class="history-item-main">
+          <strong>${money(amount)}</strong>
+          <small>${esc(mode==='instant'?'WD Instant':'WD Manual')} · ${esc(w.method||'-')} · ${esc(w.account_name||'-')}</small>
+          <small>${new Date(w.created_at).toLocaleString('id-ID')}</small>
+        </div>
+        <div class="history-right">
+          <b>${money(net)}</b>
+          <span class="status-${esc(status)}">${esc(statusLabel)}</span>
+        </div>
+      </article>`;
+    }).join('');
   }
 
   function openConfirm(amount,mode){
-    const fee=mode==='instant'?Number(limits.instant?.fee||0):Number(limits.manual?.fee||0); const net=Math.max(0,amount-fee);
-    pending={amount,mode,fee,net};
-    el.cAmount.textContent=money(amount);el.cFee.textContent=money(fee);el.cNet.textContent=money(net);el.cMethod.textContent=mode==='instant'?'Instant · '+(el.method?.value||'ewallet'):(el.method?.value||'ewallet');el.cName.textContent=el.name?.value||'-';el.cAccount.textContent=el.number?.value||'-';
-    if(el.modal){el.modal.classList.remove('hidden');el.modal.setAttribute('aria-hidden','false');}else return execute(amount,mode);
+    const safeAmount=normalizeWithdrawAmount(amount);
+    const fee=withdrawFee(mode);
+    const net=Math.max(0,safeAmount-fee);
+    const method=el.method?.value||'ewallet';
+    const accountName=el.name?.value?.trim()||'-';
+    const accountNumber=el.number?.value?.trim()||'-';
+
+    pending={
+      amount:safeAmount,
+      mode,
+      fee,
+      net,
+      tier:currentWithdrawTier(),
+      tierLabel:withdrawTierLabel()
+    };
+
+    if(el.cAmount) el.cAmount.textContent=money(safeAmount);
+    if(el.cFee) el.cFee.textContent=money(fee);
+    if(el.cNet) el.cNet.textContent=money(net);
+    if(el.cMethod) el.cMethod.textContent=(mode==='instant'?'WD Instant · ':'WD Manual · ')+method;
+    if(el.cName) el.cName.textContent=accountName;
+    if(el.cAccount) el.cAccount.textContent=accountNumber;
+
+    const title=document.getElementById('withdrawConfirmTitle');
+    if(title) title.textContent=mode==='instant'
+      ? 'Konfirmasi WD Instant'
+      : 'Konfirmasi WD Manual';
+
+    const badge=document.querySelector('.withdraw-modal-badge');
+    if(badge) badge.textContent=`KONFIRMASI ${mode==='instant'?'WD INSTANT':'WD MANUAL'} · ${withdrawTierLabel().toUpperCase()}`;
+
+    if(el.modal){
+      el.modal.classList.remove('hidden');
+      el.modal.removeAttribute('hidden');
+      el.modal.setAttribute('aria-hidden','false');
+    }else{
+      return execute(safeAmount,mode);
+    }
   }
-  function closeConfirm(){if(el.modal){el.modal.classList.add('hidden');el.modal.setAttribute('aria-hidden','true');}pending=null;}
+  function closeConfirm(){if(el.modal){el.modal.classList.add('hidden');el.modal.setAttribute('hidden','');el.modal.setAttribute('aria-hidden','true');}pending=null;}
 
   async function execute(amount,mode){
     if(mode==='manual'){
@@ -3102,9 +3214,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   el.amount?.addEventListener('input',renderPreview);el.method?.addEventListener('change',renderPreview);
-  el.form?.addEventListener('submit',async e=>{e.preventDefault();const a=Number(el.amount.value||0);if(a<100000){showValidation($('withdrawValidation'),'Minimum WD Manual Rp100.000');return;}try{openConfirm(a,'manual');}catch(err){showValidation($('withdrawValidation'),err.message||String(err));}});
-  el.instantSubmit?.addEventListener('click',()=>{try{openConfirm(selectedInstant,'instant');}catch(e){showValidation(el.instantValidation,e.message||String(e));}});
-  el.confirm?.addEventListener('click',async()=>{if(!pending)return;el.confirm.disabled=true;try{await execute(pending.amount,pending.mode);toast('Pengajuan withdraw berhasil dibuat.','success');closeConfirm();await load();}catch(e){toast(String(e?.message||e).replace(/^.*?:/,'').trim(),'error');}finally{el.confirm.disabled=false;}});
+  el.form?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const a=Number(el.amount.value||0);
+    const fee=withdrawFee('manual');
+    const balance=Number(profile?.balance||0);
+    if(a<100000){showValidation($('withdrawValidation'),'Minimum WD Manual Rp100.000');return;}
+    if(a<=fee){showValidation($('withdrawValidation'),`Nominal withdraw harus lebih besar dari fee ${money(fee)}.`);return;}
+    if(a>balance){showValidation($('withdrawValidation'),'Saldo tersedia tidak mencukupi.');return;}
+    try{openConfirm(a,'manual');}catch(err){showValidation($('withdrawValidation'),err.message||String(err));}
+  });
+  el.instantSubmit?.addEventListener('click',()=>{
+    try{
+      const a=Number(selectedInstant||0);
+      const fee=withdrawFee('instant');
+      const balance=Number(profile?.balance||0);
+      if(a<=0) throw new Error('Pilih nominal WD Instant terlebih dahulu.');
+      if(a<=fee) throw new Error(`Nominal withdraw harus lebih besar dari fee ${money(fee)}.`);
+      if(a>balance) throw new Error('Saldo tersedia tidak mencukupi.');
+      openConfirm(a,'instant');
+    }catch(e){
+      showValidation(el.instantValidation,e.message||String(e));
+    }
+  });
+  el.confirm?.addEventListener('click',async()=>{if(!pending)return;el.confirm.disabled=true;try{await execute(pending.amount,pending.mode);toast(`Pengajuan ${pending?.mode==='instant'?'WD Instant':'WD Manual'} berhasil dibuat. Menunggu proses admin.`,'success');closeConfirm();await load();}catch(e){toast(String(e?.message||e).replace(/^.*?:/,'').trim(),'error');}finally{el.confirm.disabled=false;}});
   el.close?.addEventListener('click',closeConfirm);el.cancel?.addEventListener('click',closeConfirm);el.refresh?.addEventListener('click',()=>load().catch(e=>toast(e.message||String(e),'error')));
   el.historySearch?.addEventListener('input',renderHistory);el.historyStatus?.addEventListener('change',renderHistory);el.historySort?.addEventListener('change',renderHistory);el.clearHistorySearch?.addEventListener('click',()=>{el.historySearch.value='';renderHistory();});
 
