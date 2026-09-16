@@ -2934,14 +2934,6 @@ window.PASTELE_CONFIG = Object.freeze({
    - telegram_channels owner = owner_id.
    - pastelinks owner = user_id.
    ========================================================= */
-/* =========================================================
-   PasTele — My Products / database(9) contract
-   products       -> creator_id OR seller_id
-   pastelinks     -> user_id; visibility; NO price/access_type
-   pastes         -> owner_id; visibility
-   telegram_products -> owner_id; access_type/price/status
-   telegram_channels -> owner_id; access_type/price/status
-   ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
     "use strict";
     /* =====================================================
@@ -3604,6 +3596,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 "slug",
                                 "title",
                                 "description",
+                                "content_html",
                                 "access_type",
                                 "price",
                                 "visibility",
@@ -4164,318 +4157,144 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* =====================================================
        RENDER GROUP
        ===================================================== */
-    function renderGroup(
-        group
-    ) {
+    function renderGroup(group) {
         return `
             <section class="my-section">
                 <div class="my-section-header">
                     <div class="my-section-title">
-                        <span
-                            class="my-section-title-icon"
-                            aria-hidden="true"
-                        >
-                            <i
-                                class="fa-solid ${group.icon}"
-                            ></i>
+                        <span class="my-section-title-icon" aria-hidden="true">
+                            <i class="fa-solid ${group.icon}"></i>
                         </span>
                         <div>
-                            <h2>
-                                ${esc(
-                                    group.title
-                                )}
-                            </h2>
+                            <h2>${esc(group.title)}</h2>
+                            <span class="my-section-subtitle">Kelola konten ${esc(group.title)}</span>
                         </div>
                     </div>
-                    <span
-                        class="my-section-count"
-                    >
-                        ${group.items.length}
-                    </span>
+                    <span class="my-section-count">${group.items.length}</span>
                 </div>
+
                 <div class="my-list">
-                    ${group.items
-                        .map(
-                            (item) => {
-                                const title =
-                                    titleOf(
-                                        item
-                                    );
-                                const status =
-                                    statusOf(
-                                        item
-                                    );
-                                const price =
-                                    formatPrice(
-                                        item?.price
-                                    );
-                                const slug =
-                                    String(
-                                        item?.slug ||
-                                        ""
-                                    ).trim();
-                                const description =
-                                    descriptionOf(
-                                        item
-                                    );
-                                const href =
-                                    hrefFor(
-                                        item,
-                                        group.key
-                                    );
-                                return `
-                                    <article
-                                        class="my-row"
-                                        data-product-type="${esc(
-                                            group.key
-                                        )}"
-                                    >
-                                        <div
-                                            class="my-row-head"
-                                        >
-                                            <span
-                                                class="my-icon"
-                                                aria-hidden="true"
-                                            >
-                                                <i
-                                                    class="fa-solid ${iconFor(
-                                                        group.key
-                                                    )}"
-                                                ></i>
+                    ${group.items.map(item => {
+                        const title = titleOf(item);
+                        const status = statusOf(item);
+                        const price = formatPrice(item?.price);
+                        const slug = String(item?.slug || "").trim();
+                        const description = descriptionOf(item);
+                        const href = hrefFor(item, group.key);
+                        const safeHref = href && href !== "#" ? href : "";
+                        const typeLabel = labelFor(group.key);
+                        const views = Number(item?.views ?? 0);
+                        const sales = Number(item?.sales_count ?? 0);
+
+                        let secondary = "";
+                        if (group.key === "code") {
+                            secondary = `
+                                <div class="my-row-detail-grid">
+                                    <div class="detail-chip">
+                                        <i class="fa-solid fa-robot"></i>
+                                        <span>Bot</span>
+                                        <strong>${esc(item?.bot_username ? "@" + String(item.bot_username).replace(/^@/, "") : "Belum diatur")}</strong>
+                                    </div>
+                                    <div class="detail-chip">
+                                        <i class="fa-solid fa-key"></i>
+                                        <span>Code</span>
+                                        <strong>${esc(slug || "Belum ada")}</strong>
+                                    </div>
+                                </div>`;
+                        } else if (group.key === "pastelink") {
+                            const expired = item?.expires_at
+                                ? new Date(item.expires_at)
+                                : null;
+                            const expiredLabel = expired && !Number.isNaN(expired.getTime())
+                                ? expired.toLocaleString("id-ID", {dateStyle:"medium", timeStyle:"short"})
+                                : "Tidak expired";
+                            secondary = `
+                                <div class="my-row-detail-grid">
+                                    <div class="detail-chip wide">
+                                        <i class="fa-solid fa-file-code"></i>
+                                        <span>Konten</span>
+                                        <strong>${item?.content_html ? "Tersedia" : "Kosong"}</strong>
+                                    </div>
+                                    <div class="detail-chip">
+                                        <i class="fa-solid fa-clock"></i>
+                                        <span>Expired</span>
+                                        <strong>${esc(expiredLabel)}</strong>
+                                    </div>
+                                </div>`;
+                        } else if (group.key === "channel") {
+                            secondary = `
+                                <div class="my-row-detail-grid">
+                                    <div class="detail-chip wide">
+                                        <i class="fa-solid fa-link"></i>
+                                        <span>Link Channel / Group</span>
+                                        <strong>${esc(item?.invite_url || item?.username ? (item?.invite_url || "@" + String(item.username).replace(/^@/, "")) : "Belum diatur")}</strong>
+                                    </div>
+                                </div>`;
+                        }
+
+                        return `
+                            <article class="my-row" data-product-type="${esc(group.key)}">
+                                <div class="my-row-head">
+                                    <span class="my-icon" aria-hidden="true">
+                                        <i class="fa-solid ${iconFor(group.key)}"></i>
+                                    </span>
+
+                                    <div class="my-row-main">
+                                        <div class="my-row-title-wrap">
+                                            <h3 class="my-row-title" title="${esc(title)}">${esc(title)}</h3>
+                                            <span class="status-badge status-${esc(status.value)}">
+                                                <i class="fa-solid ${status.icon}" aria-hidden="true"></i>
+                                                ${esc(status.label)}
                                             </span>
-                                            <div
-                                                class="my-row-main"
-                                            >
-                                                <div
-                                                    class="my-row-title-wrap"
-                                                >
-                                                    <span
-                                                        class="my-row-title"
-                                                        title="${esc(
-                                                            title
-                                                        )}"
-                                                    >
-                                                        ${esc(
-                                                            title
-                                                        )}
-                                                    </span>
-                                                    <span
-                                                        class="status-badge status-${esc(
-                                                            status.value
-                                                        )}"
-                                                    >
-                                                        <i
-                                                            class="fa-solid ${status.icon}"
-                                                            aria-hidden="true"
-                                                        ></i>
-                                                        ${esc(
-                                                            status.label
-                                                        )}
-                                                    </span>
-                                                </div>
-                                                <div
-                                                    class="my-row-meta"
-                                                >
-                                                    <span>
-                                                        ${esc(
-                                                            labelFor(
-                                                                group.key
-                                                            )
-                                                        )}
-                                                    </span>
-                                                    <span
-                                                        class="meta-dot"
-                                                        aria-hidden="true"
-                                                    >
-                                                        •
-                                                    </span>
-                                                    <span>
-                                                        ${esc(
-                                                            dateOf(
-                                                                item
-                                                            )
-                                                        )}
-                                                    </span>
-                                                    ${
-                                                        price
-                                                            ? `
-                                                                <span
-                                                                    class="meta-dot"
-                                                                    aria-hidden="true"
-                                                                >
-                                                                    •
-                                                                </span>
-                                                                <span
-                                                                    class="meta-price"
-                                                                >
-                                                                    ${esc(
-                                                                        price
-                                                                    )}
-                                                                </span>
-                                                            `
-                                                            : ""
-                                                    }
-                                                    ${
-                                                        slug
-                                                            ? `
-                                                                <span
-                                                                    class="meta-dot"
-                                                                    aria-hidden="true"
-                                                                >
-                                                                    •
-                                                                </span>
-                                                                <span
-                                                                    class="meta-slug"
-                                                                    title="/${esc(
-                                                                        slug
-                                                                    )}"
-                                                                >
-                                                                    /${esc(
-                                                                        slug
-                                                                    )}
-                                                                </span>
-                                                            `
-                                                            : ""
-                                                    }
-                                                </div>
-                                                ${
-                                                    description
-                                                        ? `
-                                                            <div
-                                                                class="my-row-description"
-                                                                title="${esc(
-                                                                    description
-                                                                )}"
-                                                            >
-                                                                ${esc(
-                                                                    description
-                                                                )}
-                                                            </div>
-                                                        `
-                                                        : ""
-                                                }
-                                            </div>
                                         </div>
-                                        <div
-                                            class="my-row-footer"
-                                        >
-                                            <div
-                                                class="my-row-type"
-                                            >
-                                                <i
-                                                    class="fa-solid ${iconFor(
-                                                        group.key
-                                                    )}"
-                                                    aria-hidden="true"
-                                                ></i>
-                                                ${esc(
-                                                    labelFor(
-                                                        group.key
-                                                    )
-                                                )}
-                                            </div>
-                                            <div class="my-row-stats" aria-label="Statistik produk">
-                                                <span><i class="fa-solid fa-eye"></i> ${esc(String(item?.views ?? 0))}</span>
-                                                <span><i class="fa-solid fa-bag-shopping"></i> ${esc(String(item?.sales_count ?? 0))}</span>
-                                            </div>
-                                            <div
-                                                class="my-row-actions"
-                                            >
-                                                <button
-                                                    class="btn"
-                                                    type="button"
-                                                    data-action="open"
-                                                    data-id="${esc(
-                                                        item.id ??
-                                                        ""
-                                                    )}"
-                                                    data-type="${esc(
-                                                        group.key
-                                                    )}"
-                                                    title="Buka"
-                                                    aria-label="Buka"
-                                                >
-                                                    <i
-                                                        class="fa-solid fa-arrow-up-right-from-square"
-                                                        aria-hidden="true"
-                                                    ></i>
-                                                    <span>
-                                                        Buka
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    class="btn"
-                                                    type="button"
-                                                    data-action="copy"
-                                                    data-id="${esc(
-                                                        item.id ??
-                                                        ""
-                                                    )}"
-                                                    data-type="${esc(
-                                                        group.key
-                                                    )}"
-                                                    title="Salin link"
-                                                    aria-label="Salin link"
-                                                >
-                                                    <i
-                                                        class="fa-solid fa-copy"
-                                                        aria-hidden="true"
-                                                    ></i>
-                                                    <span>
-                                                        Salin
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    class="btn"
-                                                    type="button"
-                                                    data-action="edit"
-                                                    data-id="${esc(
-                                                        item.id ??
-                                                        ""
-                                                    )}"
-                                                    data-type="${esc(
-                                                        group.key
-                                                    )}"
-                                                    title="Edit"
-                                                    aria-label="Edit"
-                                                >
-                                                    <i
-                                                        class="fa-solid fa-pen"
-                                                        aria-hidden="true"
-                                                    ></i>
-                                                    <span>
-                                                        Edit
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    class="btn danger"
-                                                    type="button"
-                                                    data-action="delete"
-                                                    data-id="${esc(
-                                                        item.id ??
-                                                        ""
-                                                    )}"
-                                                    data-type="${esc(
-                                                        group.key
-                                                    )}"
-                                                    title="Hapus"
-                                                    aria-label="Hapus"
-                                                >
-                                                    <i
-                                                        class="fa-solid fa-trash"
-                                                        aria-hidden="true"
-                                                    ></i>
-                                                    <span>
-                                                        Hapus
-                                                    </span>
-                                                </button>
-                                            </div>
+
+                                        <div class="my-row-meta">
+                                            <span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(typeLabel)}</span>
+                                            <span class="meta-dot">•</span>
+                                            <span>${esc(dateOf(item))}</span>
+                                            ${price ? `<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>` : ""}
                                         </div>
-                                    </article>
-                                `;
-                            }
-                        )
-                        .join("")}
+
+                                        ${description ? `<div class="my-row-description">${esc(description)}</div>` : ""}
+                                        ${secondary}
+
+                                        ${safeHref ? `
+                                            <div class="my-row-url-box">
+                                                <div class="my-row-url-label">
+                                                    <i class="fa-solid fa-globe"></i>
+                                                    <span>Link lengkap</span>
+                                                </div>
+                                                <a class="my-row-url" href="${esc(safeHref)}" target="_blank" rel="noopener noreferrer" title="${esc(safeHref)}">
+                                                    ${esc(safeHref)}
+                                                </a>
+                                            </div>` : ""}
+                                    </div>
+                                </div>
+
+                                <div class="my-row-footer">
+                                    <div class="my-row-stats">
+                                        <span><i class="fa-solid fa-eye"></i> ${esc(String(views))} dilihat</span>
+                                        <span><i class="fa-solid fa-bag-shopping"></i> ${esc(String(sales))} terjual</span>
+                                    </div>
+
+                                    <div class="my-row-actions">
+                                        <button class="btn" type="button" data-action="open" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span>
+                                        </button>
+                                        <button class="btn" type="button" data-action="copy" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                            <i class="fa-solid fa-copy"></i><span>Salin</span>
+                                        </button>
+                                        <button class="btn primary" type="button" data-action="edit" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                            <i class="fa-solid fa-pen"></i><span>Edit</span>
+                                        </button>
+                                        <button class="btn danger" type="button" data-action="delete" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                            <i class="fa-solid fa-trash"></i><span>Hapus</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
+                        `;
+                    }).join("")}
                 </div>
             </section>
         `;
@@ -4697,323 +4516,304 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* =====================================================
        EDIT
        ===================================================== */
-    async function editItem(
-        item,
-        type
-    ) {
-        const currentTitle =
-            titleOf(
-                item
-            );
-        const title =
-            prompt(
-                "Judul",
-                currentTitle
-            );
-        if (
-            title ===
-            null
-        ) {
-            return;
-        }
-        const cleanTitle =
-            title.trim();
-        if (
-            !cleanTitle
-        ) {
-            showToast(
-                "Judul wajib diisi.",
-                "error"
-            );
-            return;
-        }
-        let response;
-        try {
-            /* =============================================
-               PASTELINK
-               ============================================= */
-            if (type === "pastelink") {
-                const description = prompt(
-                    "Deskripsi",
-                    item.description || ""
-                );
-                if (description === null) return;
+    /* =====================================================
+       EDIT MODAL — FULL FORM PER CONTENT TYPE
+       ===================================================== */
+    function removeEditModal() {
+        document.getElementById("ptEditModal")?.remove();
+        document.body.classList.remove("modal-open");
+    }
 
-                response = await supabase
-                    .from("pastelinks")
-                    .update({
-                        title: cleanTitle,
-                        description: description.trim()
-                    })
-                    .eq("id", item.id)
-                    .eq("user_id", profile.id);
+    function toLocalDateTimeValue(value) {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return "";
+        const pad = n => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function localDateTimeToISO(value) {
+        if (!value) return null;
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return null;
+        return d.toISOString();
+    }
+
+    function editModalTemplate(item, type) {
+        const title = titleOf(item);
+        const heading = type === "code" ? "Edit Code Telegram"
+            : type === "pastelink" ? "Edit PasteLink"
+            : type === "channel" ? `Edit ${normalize(item?.type) === "group" ? "Group" : "Channel"}`
+            : type === "paste" ? "Edit Paste"
+            : "Edit Produk";
+
+        let fields = "";
+
+        if (type === "code") {
+            fields = `
+                <div class="edit-field">
+                    <label for="editTitle"><i class="fa-solid fa-heading"></i> Judul</label>
+                    <input id="editTitle" class="edit-input" maxlength="180" value="${esc(title)}" autocomplete="off">
+                </div>
+                <div class="edit-field">
+                    <label for="editBot"><i class="fa-solid fa-robot"></i> Bot Telegram</label>
+                    <input id="editBot" class="edit-input" maxlength="120" value="${esc(item?.bot_username ? "@" + String(item.bot_username).replace(/^@/, "") : "")}" placeholder="@NamaBot" autocomplete="off">
+                </div>
+                <div class="edit-field">
+                    <label for="editCode"><i class="fa-solid fa-key"></i> Code</label>
+                    <input id="editCode" class="edit-input" maxlength="180" value="${esc(item?.slug || "")}" placeholder="Code Telegram" autocomplete="off">
+                    <small class="edit-help">Code adalah slug publik. Karena kolom slug bersifat UNIQUE, code yang sudah dipakai tidak dapat digunakan.</small>
+                </div>`;
+        } else if (type === "pastelink") {
+            fields = `
+                <div class="edit-field">
+                    <label for="editTitle"><i class="fa-solid fa-heading"></i> Judul</label>
+                    <input id="editTitle" class="edit-input" maxlength="180" value="${esc(title)}" autocomplete="off">
+                </div>
+                <div class="edit-field">
+                    <label for="editContent"><i class="fa-solid fa-file-code"></i> Konten</label>
+                    <textarea id="editContent" class="edit-textarea edit-content" rows="14" placeholder="Masukkan konten PasteLink...">${esc(item?.content_html || "")}</textarea>
+                    <small class="edit-help">Konten disimpan sebagai HTML sesuai field <code>content_html</code> di database.</small>
+                </div>
+                <div class="edit-field">
+                    <label for="editExpires"><i class="fa-solid fa-clock"></i> Expired</label>
+                    <div class="edit-expire-row">
+                        <input id="editExpires" class="edit-input" type="datetime-local" value="${esc(toLocalDateTimeValue(item?.expires_at))}">
+                        <label class="edit-check">
+                            <input id="editNever" type="checkbox" ${item?.expires_at ? "" : "checked"}>
+                            <span>Tidak expired</span>
+                        </label>
+                    </div>
+                    <small class="edit-help">Kosongkan / pilih “Tidak expired” untuk membuat PasteLink tanpa batas waktu.</small>
+                </div>`;
+        } else if (type === "channel") {
+            const currentLink = String(item?.invite_url || "").trim();
+            fields = `
+                <div class="edit-field">
+                    <label for="editTitle"><i class="fa-solid fa-heading"></i> Judul</label>
+                    <input id="editTitle" class="edit-input" maxlength="180" value="${esc(title)}" autocomplete="off">
+                </div>
+                <div class="edit-field">
+                    <label for="editLink"><i class="fa-solid fa-link"></i> Link Channel / Group</label>
+                    <input id="editLink" class="edit-input" maxlength="1000" value="${esc(currentLink)}" placeholder="https://t.me/..." autocomplete="off">
+                    <small class="edit-help">Masukkan link Telegram lengkap, misalnya https://t.me/nama_channel atau link invite.</small>
+                </div>`;
+        } else if (type === "paste") {
+            fields = `
+                <div class="edit-field">
+                    <label for="editTitle"><i class="fa-solid fa-heading"></i> Judul</label>
+                    <input id="editTitle" class="edit-input" maxlength="180" value="${esc(title)}" autocomplete="off">
+                </div>
+                <div class="edit-field">
+                    <label for="editContent"><i class="fa-solid fa-file-lines"></i> Konten</label>
+                    <textarea id="editContent" class="edit-textarea" rows="14">${esc(item?.content || "")}</textarea>
+                </div>`;
+        } else {
+            fields = `
+                <div class="edit-field">
+                    <label for="editTitle"><i class="fa-solid fa-heading"></i> Judul</label>
+                    <input id="editTitle" class="edit-input" maxlength="180" value="${esc(title)}" autocomplete="off">
+                </div>
+                <div class="edit-field">
+                    <label for="editDescription"><i class="fa-solid fa-align-left"></i> Deskripsi</label>
+                    <textarea id="editDescription" class="edit-textarea" rows="8">${esc(item?.description || "")}</textarea>
+                </div>
+                <div class="edit-field">
+                    <label for="editPrice"><i class="fa-solid fa-tag"></i> Harga (IDR)</label>
+                    <input id="editPrice" class="edit-input" inputmode="numeric" value="${esc(String(item?.price || 0))}">
+                </div>`;
+        }
+
+        return `
+            <div class="pt-edit-backdrop" id="ptEditBackdrop"></div>
+            <section class="pt-edit-modal" id="ptEditModal" role="dialog" aria-modal="true" aria-labelledby="ptEditTitle">
+                <header class="pt-edit-head">
+                    <div class="pt-edit-heading">
+                        <span class="pt-edit-icon"><i class="fa-solid ${iconFor(type)}"></i></span>
+                        <div>
+                            <span class="pt-edit-eyebrow">${esc(labelFor(type))}</span>
+                            <h2 id="ptEditTitle">${esc(heading)}</h2>
+                        </div>
+                    </div>
+                    <button type="button" class="pt-edit-close" id="ptEditClose" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+                </header>
+                <form id="ptEditForm" class="pt-edit-form">
+                    ${fields}
+                    <div id="ptEditError" class="edit-error" hidden></div>
+                    <footer class="pt-edit-actions">
+                        <button type="button" class="btn" id="ptEditCancel"><i class="fa-solid fa-xmark"></i> Batal</button>
+                        <button type="submit" class="btn primary" id="ptEditSave"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+                    </footer>
+                </form>
+            </section>`;
+    }
+
+    async function editItem(item, type) {
+        if (!item || !profile?.id) {
+            showToast("Data produk tidak tersedia.", "error");
+            return;
+        }
+
+        removeEditModal();
+        document.body.insertAdjacentHTML("beforeend", editModalTemplate(item, type));
+        document.body.classList.add("modal-open");
+
+        const modal = document.getElementById("ptEditModal");
+        const form = document.getElementById("ptEditForm");
+        const errorBox = document.getElementById("ptEditError");
+        const saveBtn = document.getElementById("ptEditSave");
+
+        const close = () => removeEditModal();
+        document.getElementById("ptEditClose")?.addEventListener("click", close);
+        document.getElementById("ptEditCancel")?.addEventListener("click", close);
+        document.getElementById("ptEditBackdrop")?.addEventListener("click", close);
+        document.addEventListener("keydown", function escEdit(e) {
+            if (e.key === "Escape") {
+                close();
+                document.removeEventListener("keydown", escEdit);
             }
-            /* =============================================
-               PLAIN PASTE
-               ============================================= */
-            else if (type === "paste") {
-                const contentValue = prompt("Isi paste", item.content || "");
-                if (contentValue === null) return;
-                response = await supabase.from("pastes").update({title:cleanTitle,content:contentValue.trim()}).eq("id",item.id).eq("owner_id",profile.id);
-            }
-            /* =============================================
-               TELEGRAM PRODUCT
-               ============================================= */
-            else if (
-                type ===
-                "code"
-            ) {
-                const description =
-                    prompt(
-                        "Deskripsi",
-                        item.description ||
-                        ""
-                    );
-                if (
-                    description ===
-                    null
-                ) {
-                    return;
+        });
+
+        if (type === "pastelink") {
+            const never = document.getElementById("editNever");
+            const expires = document.getElementById("editExpires");
+            never?.addEventListener("change", () => {
+                if (never.checked) {
+                    expires.value = "";
+                    expires.disabled = true;
+                } else {
+                    expires.disabled = false;
                 }
-                let price =
-                    Number(
-                        item.price ||
-                        0
-                    );
-                const currentAccess =
-                    normalize(
-                        item.access_type
-                    );
-                let accessType =
-                    currentAccess ===
-                    "paid"
-                        ? "paid"
-                        : (
-                            price > 0
-                                ? "paid"
-                                : "free"
-                        );
-                if (
-                    accessType ===
-                    "paid" ||
-                    price > 0
-                ) {
-                    const enteredPrice =
-                        prompt(
-                            "Harga IDR",
-                            String(
-                                price
-                            )
-                        );
-                    if (
-                        enteredPrice ===
-                        null
-                    ) {
-                        return;
-                    }
-                    price =
-                        Number(
-                            String(
-                                enteredPrice
-                            )
-                                .replace(
-                                    /[^\d]/g,
-                                    ""
-                                )
-                        );
-                    if (
-                        !Number.isFinite(
-                            price
-                        ) ||
-                        price < 0
-                    ) {
-                        showToast(
-                            "Harga tidak valid.",
-                            "error"
-                        );
-                        return;
-                    }
-                    accessType =
-                        price > 0
-                            ? "paid"
-                            : "free";
-                }
-                response =
-                    await supabase
-                        .from(
-                            "telegram_products"
-                        )
-                        .update({
-                            title:
-                                cleanTitle,
-                            description:
-                                description.trim(),
-                            price:
-                                price,
-                            access_type:
-                                accessType
-                        })
-                        .eq(
-                            "id",
-                            item.id
-                        )
-                        .eq(
-                            "owner_id",
-                            profile.id
-                        );
-            }
-            /* =============================================
-               TELEGRAM CHANNEL
-               ============================================= */
-            else if (
-                type ===
-                "channel"
-            ) {
-                const description =
-                    prompt(
-                        "Deskripsi",
-                        item.description ||
-                        ""
-                    );
-                if (
-                    description ===
-                    null
-                ) {
-                    return;
-                }
-                let price =
-                    Number(
-                        item.price ||
-                        0
-                    );
-                const accessType =
-                    price > 0
-                        ? "paid"
-                        : "free";
-                const fields = {
-                    name:
-                        cleanTitle,
-                    description:
-                        description.trim(),
-                    price:
-                        Number.isFinite(
-                            price
-                        ) &&
-                        price >= 0
-                            ? price
-                            : 0,
-                    access_type:
-                        accessType
-                };
-                response =
-                    await supabase
-                        .from(
-                            "telegram_channels"
-                        )
-                        .update(
-                            fields
-                        )
-                        .eq(
-                            "id",
-                            item.id
-                        )
-                        .eq(
-                            "owner_id",
-                            profile.id
-                        );
-            }
-            /* =============================================
-               MARKETPLACE PRODUCT
-               ============================================= */
-            else if (
-                type ===
-                "product"
-            ) {
-                const description =
-                    prompt(
-                        "Deskripsi",
-                        item.description ||
-                        ""
-                    );
-                if (
-                    description ===
-                    null
-                ) {
-                    return;
-                }
-                let price =
-                    Number(
-                        item.price ||
-                        0
-                    );
-                if (
-                    !Number.isFinite(
-                        price
-                    ) ||
-                    price < 0
-                ) {
-                    price = 0;
-                }
-                /*
-                 * Product owner bisa creator_id
-                 * atau seller_id.
-                 *
-                 * Gunakan OR agar sesuai
-                 * dengan query loadData().
-                 */
-                response =
-                    await supabase
-                        .from(
-                            "products"
-                        )
-                        .update({
-                            title:
-                                cleanTitle,
-                            description:
-                                description.trim(),
-                            price:
-                                price,
-                            access_type:
-                                price > 0
-                                    ? "paid"
-                                    : "free"
-                        })
-                        .eq(
-                            "id",
-                            item.id
-                        )
-                        .or(
-                            `creator_id.eq.${profile.id},seller_id.eq.${profile.id}`
-                        );
-            }
-            else {
-                showToast(
-                    "Tipe produk tidak dikenal.",
-                    "error"
-                );
+            });
+            if (never?.checked && expires) expires.disabled = true;
+        }
+
+        form?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (saveBtn?.disabled) return;
+
+            const title = String(document.getElementById("editTitle")?.value || "").trim();
+            if (!title) {
+                errorBox.textContent = "Judul wajib diisi.";
+                errorBox.hidden = false;
                 return;
             }
-            if (
-                response?.error
-            ) {
-                throw response.error;
+
+            saveBtn.disabled = true;
+            saveBtn.classList.add("is-loading");
+            errorBox.hidden = true;
+
+            try {
+                let response;
+
+                if (type === "code") {
+                    const bot = String(document.getElementById("editBot")?.value || "").trim().replace(/^@+/, "");
+                    const code = String(document.getElementById("editCode")?.value || "").trim();
+
+                    if (!code) throw new Error("Code wajib diisi.");
+                    if (!/^[A-Za-z0-9._-]{3,180}$/.test(code)) {
+                        throw new Error("Code hanya boleh berisi huruf, angka, titik, underscore, atau tanda minus.");
+                    }
+
+                    response = await supabase.from("telegram_products")
+                        .update({
+                            title,
+                            bot_username: bot || null,
+                            slug: code
+                        })
+                        .eq("id", item.id)
+                        .eq("owner_id", profile.id);
+
+                } else if (type === "pastelink") {
+                    const contentValue = String(document.getElementById("editContent")?.value || "");
+                    const never = !!document.getElementById("editNever")?.checked;
+                    const expiresValue = String(document.getElementById("editExpires")?.value || "").trim();
+
+                    if (!contentValue.trim()) throw new Error("Konten PasteLink wajib diisi.");
+
+                    let expiresAt = null;
+                    if (!never && expiresValue) {
+                        expiresAt = localDateTimeToISO(expiresValue);
+                        if (!expiresAt) throw new Error("Tanggal expired tidak valid.");
+                        if (new Date(expiresAt).getTime() <= Date.now()) {
+                            throw new Error("Tanggal expired harus berada di masa depan.");
+                        }
+                    }
+
+                    response = await supabase.from("pastelinks")
+                        .update({
+                            title,
+                            content_html: contentValue,
+                            expires_at: expiresAt
+                        })
+                        .eq("id", item.id)
+                        .eq("user_id", profile.id);
+
+                } else if (type === "channel") {
+                    const link = String(document.getElementById("editLink")?.value || "").trim();
+                    if (!link) throw new Error("Link Channel / Group wajib diisi.");
+
+                    let normalizedLink = link;
+                    if (!/^https?:\/\//i.test(normalizedLink) && /^t\.me\//i.test(normalizedLink)) {
+                        normalizedLink = "https://" + normalizedLink;
+                    }
+
+                    response = await supabase.from("telegram_channels")
+                        .update({
+                            name: title,
+                            invite_url: normalizedLink
+                        })
+                        .eq("id", item.id)
+                        .eq("owner_id", profile.id);
+
+                } else if (type === "paste") {
+                    const contentValue = String(document.getElementById("editContent")?.value || "").trim();
+                    if (!contentValue) throw new Error("Konten wajib diisi.");
+
+                    response = await supabase.from("pastes")
+                        .update({
+                            title,
+                            content: contentValue
+                        })
+                        .eq("id", item.id)
+                        .eq("owner_id", profile.id);
+
+                } else if (type === "product") {
+                    const description = String(document.getElementById("editDescription")?.value || "").trim();
+                    let price = Number(String(document.getElementById("editPrice")?.value || "0").replace(/[^\d]/g, ""));
+                    if (!Number.isFinite(price) || price < 0) price = 0;
+
+                    response = await supabase.from("products")
+                        .update({
+                            title,
+                            description,
+                            price,
+                            access_type: price > 0 ? "paid" : "free"
+                        })
+                        .eq("id", item.id)
+                        .or(`creator_id.eq.${profile.id},seller_id.eq.${profile.id}`);
+
+                } else {
+                    throw new Error("Tipe produk tidak dikenal.");
+                }
+
+                if (response?.error) throw response.error;
+
+                close();
+                showToast("Perubahan berhasil disimpan.", "success");
+                await loadData();
+
+            } catch (error) {
+                console.error("[My Products] Edit error:", error);
+                errorBox.textContent = error?.message || "Gagal menyimpan perubahan.";
+                errorBox.hidden = false;
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.classList.remove("is-loading");
+                }
             }
-            showToast(
-                "Produk berhasil diperbarui.",
-                "success"
-            );
-            await loadData();
-        } catch (error) {
-            console.error(
-                "[My Products] Edit error:",
-                error
-            );
-            showToast(
-                error?.message ||
-                "Gagal memperbarui produk.",
-                "error"
-            );
-        }
+        });
     }
     /* =====================================================
        DELETE
