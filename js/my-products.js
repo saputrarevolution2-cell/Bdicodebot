@@ -1587,7 +1587,7 @@ window.PASTELE_CONFIG = Object.freeze({
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : (isGuest ? 'marketplace.html' : 'dashboard.html')}"
+            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
