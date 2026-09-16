@@ -5319,3 +5319,47 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
   .pt-link-icon{width:32px;height:32px;flex-basis:32px}
   .pt-forum-trigger{margin-left:10px;margin-right:10px;width:calc(100% - 20px)}
   .pt-drawer-bottom{padding:9px 10px 12px}
+
+
+/* =========================================================
+   DASHBOARD NAVBAR — EXACT MARKETPLACE SKIN
+   ========================================================= */
+#navbar{--nav-bg:#fff;--nav-soft:#f8fafc;--nav-text:#101828;--nav-muted:#667085;--nav-line:#e4e7ec;--nav-primary:#229ed9;--nav-primary-soft:rgba(34,158,217,.09);--nav-danger:#ef4444}
+html[data-theme="dark"] #navbar,html.theme-dark #navbar,body.theme-dark #navbar{--nav-bg:#121a25;--nav-soft:#172231;--nav-text:#f8fafc;--nav-muted:#98a6b8;--nav-line:rgba(255,255,255,.1);--nav-primary:#229ed9;--nav-primary-soft:rgba(34,158,217,.12)}
+#navbar .pt-nav{background:color-mix(in srgb,var(--nav-bg) 90%,transparent);border-bottom:1px solid var(--nav-line);box-shadow:none}
+html[data-theme="dark"] #navbar .pt-nav,html.theme-dark #navbar .pt-nav,body.theme-dark #navbar .pt-nav{background:color-mix(in srgb,var(--nav-bg) 90%,transparent);box-shadow:none}
+#navbar .pt-menu-btn{background:var(--nav-soft);color:var(--nav-text);border-color:var(--nav-line);border-radius:13px}
+#navbar .pt-menu-btn:hover{border-color:rgba(34,158,217,.35);color:#229ed9;background:rgba(34,158,217,.09)}
+#navbar .pt-brand{color:var(--nav-text)!important;gap:10px;font-size:19px;font-weight:900}
+#navbar .pt-brand-mark{border-radius:13px;background:linear-gradient(135deg,#229ed9,#06b6d4);box-shadow:0 8px 22px rgba(34,158,217,.2)}
+#navbar .pt-brand-name{color:var(--nav-text);letter-spacing:-.03em}
+#navbar .pt-user-btn{background:var(--nav-bg);color:var(--nav-text);border-color:var(--nav-line);border-radius:14px}
+#navbar .pt-user-btn:hover{border-color:rgba(34,158,217,.35)}
+#navbar .pt-avatar{background:linear-gradient(135deg,#229ed9,#635bff)}
+#navbar .pt-check{color:#229ed9}
+#navbar .pt-chevron,#navbar .pt-link-arrow{color:var(--nav-muted)}
+#navbar .pt-dropdown{background:var(--nav-bg);border-color:var(--nav-line);box-shadow:0 18px 45px rgba(16,24,40,.12)}
+#navbar .pt-account-item{background:var(--nav-soft);border-color:var(--nav-line);color:var(--nav-text)}
+#navbar .pt-account-item i{color:#229ed9}
+#navbar .pt-profile-link,#navbar .pt-link{color:var(--nav-text)}
+#navbar .pt-profile-link:hover,#navbar .pt-link:hover{background:var(--nav-soft)}
+#navbar .pt-drawer{background:var(--nav-bg);border-right-color:var(--nav-line)}
+#navbar .pt-drawer-head,#navbar .pt-drawer-bottom{background:var(--nav-bg);border-color:var(--nav-line)}
+#navbar .pt-drawer-title span{color:#229ed9}
+#navbar .pt-drawer-title strong{color:var(--nav-text)}
+#navbar .pt-close-btn{background:var(--nav-soft);color:var(--nav-text);border-color:var(--nav-line)}
+#navbar .pt-close-btn:hover{background:rgba(34,158,217,.1);border-color:rgba(34,158,217,.3);color:#229ed9}
+#navbar .pt-group h3{color:var(--nav-muted)}
+#navbar .pt-link{background:transparent;border-color:transparent}
+#navbar .pt-link:hover{background:var(--nav-soft);border-color:var(--nav-line);color:var(--nav-text)}
+#navbar .pt-link.active{background:rgba(34,158,217,.1);border-color:rgba(34,158,217,.22);color:#229ed9}
+#navbar .pt-link.active::before{background:#229ed9}
+#navbar .pt-link-icon{background:var(--nav-soft);color:var(--nav-muted)}
+#navbar .pt-link:hover .pt-link-icon{color:#229ed9;background:rgba(34,158,217,.1)}
+#navbar .pt-link.active .pt-link-icon{color:#229ed9;background:rgba(34,158,217,.13)}
+#navbar .pt-forum-trigger{background:var(--nav-soft);border-color:var(--nav-line)}
+#navbar .pt-forum-trigger:hover{background:rgba(34,158,217,.08);border-color:rgba(34,158,217,.22)}
+#navbar .pt-drawer-socials a,#navbar .pt-socials a{background:var(--nav-soft);border-color:var(--nav-line);color:var(--nav-muted)}
+#navbar .pt-drawer-socials a:hover,#navbar .pt-socials a:hover{color:#229ed9;border-color:rgba(34,158,217,.25)}
+#navbar .pt-drawer-bottom .pt-link.logout{color:#ef4444}
+#navbar .pt-drawer-bottom .pt-link.logout .pt-link-icon{color:#ef4444;background:rgba(239,68,68,.08)}
