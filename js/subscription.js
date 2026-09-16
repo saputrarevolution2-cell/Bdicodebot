@@ -2972,7 +2972,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
   const status = document.getElementById("planStatus");
-  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[c]));
 
   const profile = await window.TC?.profile?.().catch(() => null);
   if (!profile) {
@@ -2981,49 +2983,190 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  const name = profile.display_name || profile.username || profile.auth_email?.split("@")[0] || "User";
+  const name = profile.display_name || profile.username ||
+    profile.auth_email?.split("@")[0] || "User";
+
   const nameEl = document.getElementById("planName");
   const userEl = document.getElementById("planUsername");
   const avatarEl = document.getElementById("planAvatar");
-  if (nameEl) nameEl.innerHTML = `${esc(name)} <span class="verify-badge green"><i class="fa-solid fa-check"></i></span>`;
+
+  if (nameEl) {
+    nameEl.innerHTML =
+      `${esc(name)} <span class="verify-badge green"><i class="fa-solid fa-check"></i></span>`;
+  }
   if (userEl) userEl.textContent = `@${profile.username || "user"}`;
   if (avatarEl) avatarEl.textContent = name.trim().slice(0, 1).toUpperCase();
 
-  if (profile.subscription_until) {
+  /*
+   * Database is the source of truth.
+   * The catalog contains:
+   * subscription_1  = 15.000 / 1 day / code 2 / pastelink 3
+   * subscription_3  = 30.000 / 3 days / code 3 / pastelink 5
+   * subscription_7  = 50.000 / 7 days / code 5 / pastelink 7
+   * subscription_30 = 150.000 / 30 days / code 10 / pastelink 20
+   * premium         = 250.000 / full access
+   */
+  const PLAN_FALLBACK = Object.freeze({
+    subscription_1:  { days:1,  amount:15000,  code:2,  paste:3,  title:"Langganan 1 Hari" },
+    subscription_3:  { days:3,  amount:30000,  code:3,  paste:5,  title:"Langganan 3 Hari" },
+    subscription_7:  { days:7,  amount:50000,  code:5,  paste:7,  title:"Langganan 7 Hari" },
+    subscription_30: { days:30, amount:150000, code:10, paste:20, title:"Langganan 1 Bulan" }
+  });
+
+  const money = (n) => new Intl.NumberFormat("id-ID", {
+    style:"currency", currency:"IDR", maximumFractionDigits:0
+  }).format(Number(n || 0));
+
+  const errorText = (error) => {
+    const raw = String(error?.message || error || "").trim();
+    const code = String(error?.code || "").toUpperCase();
+    const details = `${code} ${raw}`.toUpperCase();
+
+    if (details.includes("LOGIN_REQUIRED")) return "Silakan login terlebih dahulu.";
+    if (details.includes("INVALID_PLAN_AMOUNT")) return "Harga paket tidak sesuai database.";
+    if (details.includes("INVALID_PLAN_DURATION")) return "Durasi paket tidak sesuai database.";
+    if (details.includes("INVALID_PLAN")) return "Paket tidak tersedia atau sudah dinonaktifkan.";
+    if (details.includes("INSUFFICIENT")) return "Saldo tidak mencukupi untuk pembayaran.";
+    if (details.includes("ACCESS_INCLUDED")) return "Akses paket ini sudah termasuk dalam paket aktif kamu.";
+    return raw || "Checkout gagal dibuat. Silakan coba lagi.";
+  };
+
+  async function loadCatalog() {
+    const result = await window.sb
+      .from("account_plan_catalog")
+      .select("plan_code,plan_name,price,duration_days,paid_code_daily_limit,paid_pastelink_daily_limit,full_access,payment_provider,payment_method,is_active")
+      .in("plan_code", ["subscription_1","subscription_3","subscription_7","subscription_30"])
+      .eq("is_active", true);
+
+    if (result.error) {
+      console.warn("[PasTele] account_plan_catalog:", result.error);
+      return PLAN_FALLBACK;
+    }
+
+    const catalog = { ...PLAN_FALLBACK };
+    for (const row of (result.data || [])) {
+      if (!row?.plan_code) continue;
+      catalog[row.plan_code] = {
+        days: Number(row.duration_days),
+        amount: Number(row.price),
+        code: Number(row.paid_code_daily_limit || 0),
+        paste: Number(row.paid_pastelink_daily_limit || 0),
+        title: row.plan_name || PLAN_FALLBACK[row.plan_code]?.title || row.plan_code,
+        provider: row.payment_provider || "bayargg",
+        method: row.payment_method || "qris"
+      };
+    }
+    return catalog;
+  }
+
+  function syncButtons(catalog) {
+    document.querySelectorAll(".plan-buy").forEach((btn) => {
+      const plan = String(btn.dataset.plan || "");
+      const item = catalog[plan];
+      if (!item) {
+        btn.disabled = true;
+        btn.title = "Paket tidak tersedia di database.";
+        return;
+      }
+
+      btn.dataset.days = String(item.days);
+      btn.dataset.amount = String(item.amount);
+
+      const card = btn.closest(".plan-card");
+      if (!card) return;
+
+      const priceEl = card.querySelector(":scope > strong");
+      const durationEl = card.querySelector(".plan-duration");
+      if (priceEl) priceEl.textContent = money(item.amount);
+      if (durationEl) durationEl.textContent =
+        item.days === 30 ? "30 HARI" : `${item.days} HARI`;
+    });
+  }
+
+  const catalog = await loadCatalog();
+  syncButtons(catalog);
+
+  /*
+   * Active subscription status.
+   * Premium is intentionally handled separately because premium is
+   * full-access, while this page is the subscription catalog.
+   */
+  if (profile.is_premium === true) {
+    if (status) {
+      status.innerHTML = `
+        <div class="active-plan premium">
+          <i class="fa-solid fa-crown"></i>
+          <div>
+            <b>Premium Full Access Aktif</b>
+            <span>Akses Code Paid, PasteLink, Channel & Group Paid tanpa kuota paket.</span>
+          </div>
+        </div>`;
+    }
+  } else if (profile.subscription_until) {
     const until = new Date(profile.subscription_until);
-    if (until > new Date() && status) {
-      status.innerHTML = `<div class="active-plan"><i class="fa-solid fa-circle-check"></i><div><b>Langganan Aktif</b><span>Berlaku sampai ${until.toLocaleString("id-ID", {dateStyle:"medium", timeStyle:"short"})}</span></div></div>`;
+    if (!Number.isNaN(until.getTime()) && until > new Date() && status) {
+      const planCode = String(profile.subscription_plan || "");
+      const plan = catalog[planCode];
+      const label = plan?.title || "Langganan Aktif";
+      status.innerHTML = `
+        <div class="active-plan">
+          <i class="fa-solid fa-circle-check"></i>
+          <div>
+            <b>${esc(label)}</b>
+            <span>Aktif sampai ${until.toLocaleString("id-ID", {
+              dateStyle:"medium", timeStyle:"short"
+            })}</span>
+          </div>
+        </div>`;
     }
   }
 
-  for (const btn of document.querySelectorAll(".plan-buy")) {
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
-      const original = btn.innerHTML;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan checkout...`;
-      try {
-        const plan = btn.dataset.plan;
-        const days = Number(btn.dataset.days);
-        const amount = Number(btn.dataset.amount);
-        const result = await window.sb.rpc("create_account_plan_order", {
-          p_plan: plan,
-          p_days: days,
-          p_amount: amount
-        });
-        if (result.error) throw result.error;
-        const order = Array.isArray(result.data) ? result.data[0] : result.data;
-        if (!order?.order_id) throw new Error("Order pembayaran tidak berhasil dibuat.");
-        window.location.href = `payment.html?order_id=${encodeURIComponent(order.order_id)}`;
-      } catch (error) {
-        window.TC?.toast?.(error?.message || "Checkout gagal dibuat.", "error");
-        btn.disabled = false;
-        btn.innerHTML = original;
+  async function checkout(btn) {
+    if (!window.sb) throw new Error("Supabase belum siap.");
+
+    const planCode = String(btn.dataset.plan || "").trim().toLowerCase();
+    const plan = catalog[planCode];
+    if (!plan) throw new Error("INVALID_PLAN");
+
+    /*
+     * Always take amount/duration from the catalog we just loaded.
+     * The RPC validates these again server-side.
+     */
+    const days = Number(plan.days);
+    const amount = Number(plan.amount);
+
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan checkout...`;
+
+    try {
+      const result = await window.sb.rpc("create_account_plan_order", {
+        p_plan: planCode,
+        p_days: days,
+        p_amount: amount
+      });
+
+      if (result.error) throw result.error;
+
+      const order = Array.isArray(result.data) ? result.data[0] : result.data;
+      if (!order?.order_id) {
+        throw new Error("Order pembayaran tidak berhasil dibuat.");
       }
-    });
+
+      window.location.href =
+        `payment.html?order_id=${encodeURIComponent(order.order_id)}`;
+    } catch (error) {
+      console.error("[PasTele] create_account_plan_order:", error);
+      window.TC?.toast?.(errorText(error), "error");
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
   }
+
+  document.querySelectorAll(".plan-buy").forEach((btn) => {
+    btn.addEventListener("click", () => checkout(btn));
+  });
 });
-
-
 
 
 /* Page-ready marker */
