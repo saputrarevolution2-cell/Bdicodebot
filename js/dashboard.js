@@ -1095,6 +1095,10 @@ window.PASTELE_CONFIG = Object.freeze({
     const currentPath = location.pathname.replace(/\/+$/, '');
     const currentFile =
       (currentPath.split('/').pop() || 'dashboard.html').toLowerCase();
+    // Marketplace is a public route, including clean URLs /marketplace and /marketplace/.
+    // Keep this local to the navbar scope so guest rendering never throws a ReferenceError.
+    const isMarketplacePath =
+      !isAdmin && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
     /*
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
@@ -1158,10 +1162,12 @@ window.PASTELE_CONFIG = Object.freeze({
       user = null;
     }
     /*
-     * If no authenticated user, allow another initialization
-     * attempt later.
+     * Marketplace is public. Guests must still get the same navbar
+     * shell without being forced to authenticate. Other pages keep
+     * the original authenticated-only navbar behavior.
      */
-    if (!user) {
+    const isGuest = !user;
+    if (isGuest && !isMarketplacePath) {
       host.dataset.ready = '';
       return;
     }
@@ -1204,7 +1210,7 @@ window.PASTELE_CONFIG = Object.freeze({
       user?.user_metadata?.username ||
       user?.user_metadata?.full_name ||
       user?.email?.split('@')[0] ||
-      'Account';
+      (isGuest ? 'Masuk' : 'Account');
     /* ========================================================
        PREMIUM STATUS
        ======================================================== */
@@ -1346,7 +1352,24 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        NAVIGATION GROUPS
        ======================================================== */
-    const groups = isAdmin
+    const groups = isGuest
+      ? [
+          [
+            'Menu',
+            [
+              ['marketplace.html', 'fa-store', 'Marketplace'],
+              ['about.html', 'fa-circle-info', 'Tentang']
+            ]
+          ],
+          [
+            'Akun',
+            [
+              ['login.html', 'fa-right-to-bracket', 'Login'],
+              ['register.html', 'fa-user-plus', 'Daftar']
+            ]
+          ]
+        ]
+      : isAdmin
       ? [
           [
             'Admin',
@@ -1572,7 +1595,7 @@ window.PASTELE_CONFIG = Object.freeze({
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
+            href="${base}${isAdmin ? 'index.html' : (isGuest ? 'marketplace.html' : 'dashboard.html')}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
@@ -1686,7 +1709,7 @@ window.PASTELE_CONFIG = Object.freeze({
                     Tema
                   </span>
                   <strong id="ptThemeText">
-                    Auto
+                    Terang
                   </strong>
                 </button>
               </div>
@@ -1828,12 +1851,48 @@ window.PASTELE_CONFIG = Object.freeze({
       document.getElementById('ptTheme');
     const logoutButton =
       document.getElementById('ptLogout');
+    if (isGuest && logoutButton) {
+      logoutButton.classList.remove('logout');
+      logoutButton.innerHTML = `
+        <span class="pt-link-icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
+        <span class="pt-link-label">Login / Daftar</span>
+        <i class="fa-solid fa-arrow-right pt-link-arrow" aria-hidden="true"></i>
+      `;
+    }
     const balanceElement =
       document.getElementById('ptBalance');
     const notificationElement =
       document.getElementById('ptNotif');
     const themeText =
       document.getElementById('ptThemeText');
+
+    /* Guest marketplace: keep the profile control useful but never
+       expose private account actions or a fake logout/session state. */
+    if (isGuest && dropdown) {
+      dropdown.innerHTML = `
+        <div class="pt-profile">
+          <span class="pt-avatar pt-avatar-lg">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+          </span>
+          <div class="pt-profile-text">
+            <strong>Pengunjung</strong>
+            <small>Marketplace publik</small>
+          </div>
+        </div>
+        <div class="pt-guest-actions">
+          <a class="pt-profile-link" href="${base}login.html">
+            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+            <span>Login</span>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+          <a class="pt-profile-link" href="${base}register.html">
+            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+            <span>Buat akun</span>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      `;
+    }
     /* ========================================================
        DRAWER STATE
        ======================================================== */
@@ -2097,82 +2156,17 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        THEME LABEL
        ======================================================== */
-    const getThemeMode = () => {
-      const stored =
-        localStorage.getItem(
-          'pastele-theme'
-        );
-      if (
-        stored === 'light' ||
-        stored === 'dark' ||
-        stored === 'auto'
-      ) {
-        return stored;
-      }
-      return 'auto';
-    };
+    const getThemeMode = () => localStorage.getItem('pastele-theme') === 'dark' ? 'dark' : 'light';
     const updateThemeLabel = () => {
       if (!themeText) return;
-      const mode =
-        getThemeMode();
-      const labels = { light: 'Terang', dark: 'Gelap' };
-      themeText.textContent = labels[mode] || 'Terang';
+      themeText.textContent = getThemeMode() === 'dark' ? 'Gelap' : 'Terang';
     };
     updateThemeLabel();
-    /* ========================================================
-       THEME BUTTON
-       ======================================================== */
-    themeButton?.addEventListener(
-      'click',
-      async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        try {
-          if (
-            window.PasTeleTheme?.cycle
-          ) {
-            await window.PasTeleTheme.cycle();
-            /*
-             * Allow theme.js to update
-             * localStorage before reading it.
-             */
-            setTimeout(
-              updateThemeLabel,
-              0
-            );
-          } else {
-            const current = getThemeMode();
-            const next = current === 'dark' ? 'light' : 'dark';
-            localStorage.setItem(
-              'pastele-theme',
-              next
-            );
-            /*
-             * Apply class/data attribute
-             * immediately where possible.
-             */
-            if (next === 'dark') {
-              document.documentElement
-                .setAttribute(
-                  'data-theme',
-                  'dark'
-                );
-            } else if (next === 'light') {
-              document.documentElement
-                .setAttribute(
-                  'data-theme',
-                  'light'
-                );
-            } else {
-              document.documentElement.setAttribute('data-theme', 'light');
-            }
-            updateThemeLabel();
-          }
-        } catch (_) {
-          updateThemeLabel();
-        }
-      }
-    );
+    themeButton?.addEventListener('click', (event) => {
+      event.preventDefault(); event.stopPropagation();
+      try { window.PasTeleTheme?.cycle(); } catch (_) {}
+      updateThemeLabel();
+    });
     /* ========================================================
        LOGOUT
        ======================================================== */
@@ -2201,6 +2195,10 @@ window.PASTELE_CONFIG = Object.freeze({
         }
         closeDrawer();
         closeDropdown();
+        if (isGuest) {
+          location.href = `${base}login.html`;
+          return;
+        }
         try {
           if (
             window.TC?.logout
