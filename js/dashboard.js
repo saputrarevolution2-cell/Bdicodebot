@@ -1008,13 +1008,18 @@ window.PASTELE_CONFIG = Object.freeze({
   'use strict';
   const root = document.documentElement;
   const KEY = 'pastele-theme';
-  const MODES = ['light', 'dark'];
+  const MODES = ['auto', 'light', 'dark', 'system'];
 
   const resolve = (mode) => {
-    return mode === 'dark' ? 'dark' : 'light';
+    if (mode === 'light' || mode === 'dark') return mode;
+    if (mode === 'system') {
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    const hour = new Date().getHours();
+    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
   };
 
-  const apply = (mode = localStorage.getItem(KEY) || 'light') => {
+  const apply = (mode = localStorage.getItem(KEY) || 'auto') => {
     if (!MODES.includes(mode)) mode = 'light';
     const theme = resolve(mode);
     root.dataset.theme = theme;
@@ -1043,7 +1048,8 @@ window.PASTELE_CONFIG = Object.freeze({
 
   const cycle = () => {
     const current = localStorage.getItem(KEY) || 'light';
-    return set(current === 'dark' ? 'light' : 'dark');
+    const index = Math.max(0, MODES.indexOf(current));
+    return set(['light', 'dark'][(index + 1) % 2]);
   };
 
   window.PasTeleTheme = Object.freeze({
@@ -1095,10 +1101,6 @@ window.PASTELE_CONFIG = Object.freeze({
     const currentPath = location.pathname.replace(/\/+$/, '');
     const currentFile =
       (currentPath.split('/').pop() || 'dashboard.html').toLowerCase();
-    // Marketplace is a public route, including clean URLs /marketplace and /marketplace/.
-    // Keep this local to the navbar scope so guest rendering never throws a ReferenceError.
-    const isMarketplacePath =
-      !isAdmin && /(^|\/)marketplace(?:\.html)?(?:\/)?$/i.test(location.pathname);
     /*
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
@@ -1162,12 +1164,10 @@ window.PASTELE_CONFIG = Object.freeze({
       user = null;
     }
     /*
-     * Marketplace is public. Guests must still get the same navbar
-     * shell without being forced to authenticate. Other pages keep
-     * the original authenticated-only navbar behavior.
+     * If no authenticated user, allow another initialization
+     * attempt later.
      */
-    const isGuest = !user;
-    if (isGuest && !isMarketplacePath) {
+    if (!user) {
       host.dataset.ready = '';
       return;
     }
@@ -1210,7 +1210,7 @@ window.PASTELE_CONFIG = Object.freeze({
       user?.user_metadata?.username ||
       user?.user_metadata?.full_name ||
       user?.email?.split('@')[0] ||
-      (isGuest ? 'Masuk' : 'Account');
+      'Account';
     /* ========================================================
        PREMIUM STATUS
        ======================================================== */
@@ -1352,24 +1352,7 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        NAVIGATION GROUPS
        ======================================================== */
-    const groups = isGuest
-      ? [
-          [
-            'Menu',
-            [
-              ['marketplace.html', 'fa-store', 'Marketplace'],
-              ['about.html', 'fa-circle-info', 'Tentang']
-            ]
-          ],
-          [
-            'Akun',
-            [
-              ['login.html', 'fa-right-to-bracket', 'Login'],
-              ['register.html', 'fa-user-plus', 'Daftar']
-            ]
-          ]
-        ]
-      : isAdmin
+    const groups = isAdmin
       ? [
           [
             'Admin',
@@ -1595,7 +1578,7 @@ window.PASTELE_CONFIG = Object.freeze({
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : (isGuest ? 'marketplace.html' : 'dashboard.html')}"
+            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
@@ -1709,7 +1692,7 @@ window.PASTELE_CONFIG = Object.freeze({
                     Tema
                   </span>
                   <strong id="ptThemeText">
-                    Terang
+                    Auto
                   </strong>
                 </button>
               </div>
@@ -1851,48 +1834,12 @@ window.PASTELE_CONFIG = Object.freeze({
       document.getElementById('ptTheme');
     const logoutButton =
       document.getElementById('ptLogout');
-    if (isGuest && logoutButton) {
-      logoutButton.classList.remove('logout');
-      logoutButton.innerHTML = `
-        <span class="pt-link-icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
-        <span class="pt-link-label">Login / Daftar</span>
-        <i class="fa-solid fa-arrow-right pt-link-arrow" aria-hidden="true"></i>
-      `;
-    }
     const balanceElement =
       document.getElementById('ptBalance');
     const notificationElement =
       document.getElementById('ptNotif');
     const themeText =
       document.getElementById('ptThemeText');
-
-    /* Guest marketplace: keep the profile control useful but never
-       expose private account actions or a fake logout/session state. */
-    if (isGuest && dropdown) {
-      dropdown.innerHTML = `
-        <div class="pt-profile">
-          <span class="pt-avatar pt-avatar-lg">
-            <i class="fa-solid fa-user" aria-hidden="true"></i>
-          </span>
-          <div class="pt-profile-text">
-            <strong>Pengunjung</strong>
-            <small>Marketplace publik</small>
-          </div>
-        </div>
-        <div class="pt-guest-actions">
-          <a class="pt-profile-link" href="${base}login.html">
-            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-            <span>Login</span>
-            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-          </a>
-          <a class="pt-profile-link" href="${base}register.html">
-            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
-            <span>Buat akun</span>
-            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-          </a>
-        </div>
-      `;
-    }
     /* ========================================================
        DRAWER STATE
        ======================================================== */
@@ -2156,17 +2103,102 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        THEME LABEL
        ======================================================== */
-    const getThemeMode = () => localStorage.getItem('pastele-theme') === 'dark' ? 'dark' : 'light';
+    const getThemeMode = () => {
+      const stored =
+        localStorage.getItem(
+          'pastele-theme'
+        );
+      if (
+        stored === 'light' ||
+        stored === 'dark' ||
+        stored === 'auto'
+      ) {
+        return stored;
+      }
+      return 'auto';
+    };
     const updateThemeLabel = () => {
       if (!themeText) return;
-      themeText.textContent = getThemeMode() === 'dark' ? 'Gelap' : 'Terang';
+      const mode =
+        getThemeMode();
+      const labels = {
+        auto: 'Auto',
+        light: 'Terang',
+        dark: 'Gelap'
+      };
+      themeText.textContent =
+        labels[mode] || 'Auto';
     };
     updateThemeLabel();
-    themeButton?.addEventListener('click', (event) => {
-      event.preventDefault(); event.stopPropagation();
-      try { window.PasTeleTheme?.cycle(); } catch (_) {}
-      updateThemeLabel();
-    });
+    /* ========================================================
+       THEME BUTTON
+       ======================================================== */
+    themeButton?.addEventListener(
+      'click',
+      async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+          if (
+            window.PasTeleTheme?.cycle
+          ) {
+            await window.PasTeleTheme.cycle();
+            /*
+             * Allow theme.js to update
+             * localStorage before reading it.
+             */
+            setTimeout(
+              updateThemeLabel,
+              0
+            );
+          } else {
+            const modes = [
+              'auto',
+              'light',
+              'dark'
+            ];
+            const current =
+              getThemeMode();
+            const index =
+              modes.indexOf(current);
+            const next =
+              modes[
+                (index + 1) %
+                modes.length
+              ];
+            localStorage.setItem(
+              'pastele-theme',
+              next
+            );
+            /*
+             * Apply class/data attribute
+             * immediately where possible.
+             */
+            if (next === 'dark') {
+              document.documentElement
+                .setAttribute(
+                  'data-theme',
+                  'dark'
+                );
+            } else if (next === 'light') {
+              document.documentElement
+                .setAttribute(
+                  'data-theme',
+                  'light'
+                );
+            } else {
+              document.documentElement
+                .removeAttribute(
+                  'data-theme'
+                );
+            }
+            updateThemeLabel();
+          }
+        } catch (_) {
+          updateThemeLabel();
+        }
+      }
+    );
     /* ========================================================
        LOGOUT
        ======================================================== */
@@ -2195,10 +2227,6 @@ window.PASTELE_CONFIG = Object.freeze({
         }
         closeDrawer();
         closeDropdown();
-        if (isGuest) {
-          location.href = `${base}login.html`;
-          return;
-        }
         try {
           if (
             window.TC?.logout
@@ -2685,12 +2713,15 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 
   function autoTheme() {
+    // Automatic day/night theme:
+    // 06:00–17:59 = light, 18:00–05:59 = dark.
     try {
+      const hour = new Date().getHours();
+      const dark = hour >= 18 || hour < 6;
       const root = document.documentElement;
-      const mode = localStorage.getItem('pastele-theme') === 'dark' ? 'dark' : 'light';
-      root.dataset.theme = mode;
-      root.dataset.themeMode = mode;
-      root.style.colorScheme = mode;
+      root.dataset.theme = dark ? "dark" : "light";
+      root.dataset.themeMode = "auto";
+      root.style.colorScheme = dark ? "dark" : "light";
     } catch (_) {}
   }
 
