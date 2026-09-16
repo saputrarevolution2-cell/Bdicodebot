@@ -18,3 +18,70 @@ html[data-theme="dark"]{--bg:#0b111a;--surface:#121a25;--surface2:#172231;--surf
 @media(max-width:780px){.pt-nav,.pt-nav-inner{height:64px}.pt-nav-inner{width:calc(100% - 20px)}.pt-name{display:none}.pt-user-btn{padding-right:6px}.marketplace-page{padding-top:28px}.market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.market-rank-grid{grid-template-columns:1fr}.footer-container{grid-template-columns:1fr 1fr}.footer-bottom{flex-direction:column}.market-heading h1{font-size:31px}}
 @media(max-width:520px){.marketplace-page>.container{width:calc(100% - 20px)}.market-grid{grid-template-columns:1fr;gap:14px}.product-thumb{height:190px}.market-tabs{padding-bottom:4px}.market-tab{height:38px;padding:0 11px}.market-resultbar{margin-top:7px}.product-body{padding:14px}.product-title{font-size:14px}.market-card-stats{gap:7px 10px}.footer-container{grid-template-columns:1fr}.footer-column{margin-top:6px}.footer-bottom{width:calc(100% - 20px)}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* =========================================================
+   PasTele Marketplace — Navbar Menu Polish
+   Drawer menu only. Keep marketplace content untouched.
+   ========================================================= */
+.pt-nav-inner{gap:12px}
+.pt-menu-btn{flex:0 0 42px;transition:all .18s ease}
+.pt-brand{min-width:0;gap:9px}
+.pt-brand-name{white-space:nowrap}
+.pt-drawer{padding:0;display:flex;flex-direction:column;overflow:hidden}
+.pt-drawer-head{flex:0 0 auto;margin:0;padding:18px 18px 15px;border-bottom:1px solid var(--line);background:var(--surface)}
+.pt-drawer-title{min-width:0;display:flex;flex-direction:column;gap:2px}
+.pt-drawer-title span{font-size:9px;font-weight:900;letter-spacing:.14em;color:var(--primary);text-transform:uppercase}
+.pt-drawer-title strong{font-size:17px;line-height:1.25;letter-spacing:-.02em;color:var(--text)}
+.pt-close-btn{width:40px;height:40px;display:grid;place-items:center;flex:0 0 40px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);transition:all .18s ease}
+.pt-close-btn:hover{background:rgba(34,158,217,.1);border-color:rgba(34,158,217,.3);color:var(--primary);transform:rotate(3deg)}
+.pt-menu-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px 8px;scrollbar-width:thin}
+.pt-menu-scroll::-webkit-scrollbar{width:5px}
+.pt-menu-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.pt-group{margin:0 0 18px}
+.pt-group:last-child{margin-bottom:10px}
+.pt-group h3{margin:0 7px 7px;color:var(--muted);font-size:9px;line-height:1.2;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.pt-link{position:relative;width:100%;min-height:48px;display:flex;align-items:center;gap:11px;padding:8px 11px;border:1px solid transparent;border-radius:13px;background:transparent;color:var(--text);font-size:13px;font-weight:700;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+.pt-group .pt-link + .pt-link{margin-top:4px}
+.pt-link:hover{background:var(--surface2);border-color:var(--line);color:var(--text);transform:translateX(2px)}
+.pt-link.active{background:rgba(34,158,217,.1);border-color:rgba(34,158,217,.22);color:var(--primary)}
+.pt-link.active::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:3px;border-radius:0 4px 4px 0;background:var(--primary)}
+.pt-link-icon{width:34px;height:34px;display:grid;place-items:center;flex:0 0 34px;border-radius:10px;background:var(--surface2);color:var(--muted);font-size:13px;transition:all .16s ease}
+.pt-link:hover .pt-link-icon{color:var(--primary);background:rgba(34,158,217,.1)}
+.pt-link.active .pt-link-icon{color:var(--primary);background:rgba(34,158,217,.13)}
+.pt-link-label{min-width:0;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-link-arrow{margin-left:auto;flex:0 0 auto;color:var(--muted);font-size:9px;transition:transform .16s ease,color .16s ease}
+.pt-link:hover .pt-link-arrow{color:var(--primary);transform:translateX(2px)}
+.pt-forum-trigger{margin:0 14px 8px;width:calc(100% - 28px);background:var(--surface2);border-color:var(--line)}
+.pt-forum-trigger:hover{background:rgba(34,158,217,.08);border-color:rgba(34,158,217,.22)}
+.pt-drawer-bottom{flex:0 0 auto;padding:10px 14px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.pt-drawer-socials{display:flex;gap:7px;margin-bottom:9px;padding:0 2px}
+.pt-drawer-socials a{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--muted);transition:all .16s ease}
+.pt-drawer-socials a:hover{color:var(--primary);border-color:rgba(34,158,217,.25);transform:translateY(-1px)}
+.pt-drawer-bottom .pt-link{min-height:46px}
+.pt-drawer-bottom .pt-link.logout{color:var(--red)}
+.pt-drawer-bottom .pt-link.logout .pt-link-icon{color:var(--red);background:rgba(239,68,68,.08)}
+.pt-drawer-bottom .pt-link.logout:hover{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.18)}
+.pt-socials{display:flex;gap:7px;flex-wrap:wrap;padding:2px 6px 10px}
+.pt-socials a{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--muted)}
+.pt-socials a:hover{color:var(--primary);border-color:rgba(34,158,217,.25)}
+.pt-social-empty{font-size:10px;color:var(--muted);padding:5px 0}
+.pt-profile-link{border:1px solid transparent;transition:all .16s ease}
+.pt-profile-link:hover{border-color:var(--line)}
+.pt-guest-actions{gap:5px}
+.pt-guest-actions .pt-profile-link{background:var(--surface2);border-color:var(--line)}
+.pt-account-item{display:flex;align-items:center;gap:7px;min-width:0;color:var(--text);font-size:11px}
+.pt-account-item span{min-width:0;flex:1}
+.pt-account-item strong{margin-left:auto;font-size:11px;text-align:right}
+button.pt-account-item{width:100%;text-align:left;cursor:pointer}
+
+@media(max-width:520px){
+  .pt-drawer{width:min(320px,88vw)}
+  .pt-drawer-head{padding:15px 14px 13px}
+  .pt-menu-scroll{padding:12px 10px 7px}
+  .pt-group{margin-bottom:15px}
+  .pt-group h3{margin-left:7px}
+  .pt-link{min-height:46px;padding:7px 10px}
+  .pt-link-icon{width:32px;height:32px;flex-basis:32px}
+  .pt-forum-trigger{margin-left:10px;margin-right:10px;width:calc(100% - 20px)}
+  .pt-drawer-bottom{padding:9px 10px 12px}
+}
