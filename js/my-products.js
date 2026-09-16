@@ -2916,58 +2916,6 @@ window.PASTELE_CONFIG = Object.freeze({
   boot();
 })();
 
-/* PasTele — Global UI interaction safety layer */
-(function () {
-  'use strict';
-
-  function isModifiedClick(event) {
-    return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-  }
-
-  function getDestination(el) {
-    return el?.dataset?.href || el?.dataset?.url || el?.getAttribute?.('data-link') || null;
-  }
-
-  document.addEventListener('click', function (event) {
-    if (isModifiedClick(event)) return;
-
-    const trigger = event.target.closest('[data-href],[data-url],[data-link]');
-    if (!trigger || trigger.disabled || trigger.getAttribute('aria-disabled') === 'true') return;
-
-    const destination = getDestination(trigger);
-    if (!destination) return;
-
-    if (trigger.matches('a[href]')) return;
-
-    event.preventDefault();
-    window.location.href = destination;
-  }, false);
-
-  document.addEventListener('keydown', function (event) {
-    const el = event.target.closest?.('[data-href],[data-url],[data-link][role="button"]');
-    if (!el) return;
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-
-    const destination = getDestination(el);
-    if (!destination) return;
-
-    event.preventDefault();
-    window.location.href = destination;
-  }, false);
-
-  // Make explicitly marked cards keyboard accessible without guessing routes.
-  document.querySelectorAll('[data-href],[data-url],[data-link]').forEach(function (el) {
-    if (!el.hasAttribute('tabindex') && !el.matches('a,button,input,select,textarea')) {
-      el.setAttribute('tabindex', '0');
-    }
-    if (!el.hasAttribute('role') && !el.matches('a,button,input,select,textarea')) {
-      el.setAttribute('role', 'button');
-    }
-  });
-})();
-
-
-
 /* =========================================================
    PasTele — My Products
    FINAL SQL SYNC
@@ -2985,6 +2933,14 @@ window.PASTELE_CONFIG = Object.freeze({
    - telegram_products owner = owner_id.
    - telegram_channels owner = owner_id.
    - pastelinks owner = user_id.
+   ========================================================= */
+/* =========================================================
+   PasTele — My Products / database(9) contract
+   products       -> creator_id OR seller_id
+   pastelinks     -> user_id; visibility; NO price/access_type
+   pastes         -> owner_id; visibility
+   telegram_products -> owner_id; access_type/price/status
+   telegram_channels -> owner_id; access_type/price/status
    ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
     "use strict";
@@ -3797,7 +3753,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     })
                 );
             const pasteLinkItems =
-                (pasteResponse.data || []).map(item => ({...item,__type:"pastelink",price:Number(item.price||0),access_type:item.access_type||"free",status:item.visibility === "public" ? "published" : item.visibility}));
+                (pasteResponse.data || []).map(item => ({...item,__type:"pastelink",price:0,access_type:"free",status:item.visibility === "public" ? "published" : item.visibility}));
             const pasteItems =
                 (plainPasteResponse.data || []).map(item => ({...item,__type:"paste",price:0,access_type:"free",status:item.visibility === "public" ? "published" : item.visibility}));
             const codeItems =
@@ -4777,22 +4733,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                PASTELINK
                ============================================= */
             if (type === "pastelink") {
-                const currentAccess = normalize(item.access_type) === "paid" ? "paid" : "free";
-                const enteredAccess = prompt("Akses (free/paid)", currentAccess);
-                if (enteredAccess === null) return;
-                const nextAccess = normalize(enteredAccess) === "paid" ? "paid" : "free";
-                let nextPrice = nextAccess === "paid" ? Number(prompt("Harga IDR (5000-150000)", item.price || 5000)) : 0;
-                if (nextAccess === "paid" && (!Number.isFinite(nextPrice) || nextPrice < 5000 || nextPrice > 150000 || nextPrice % 1000 !== 0)) { showToast("Harga Paid harus Rp5.000-Rp150.000 dan kelipatan Rp1.000.","error"); return; }
-                response = await supabase.from("pastelinks")
-                        .update({ title: cleanTitle, access_type: nextAccess, price: nextPrice })
-                        .eq(
-                            "id",
-                            item.id
-                        )
-                        .eq(
-                            "user_id",
-                            profile.id
-                        );
+                const description = prompt(
+                    "Deskripsi",
+                    item.description || ""
+                );
+                if (description === null) return;
+
+                response = await supabase
+                    .from("pastelinks")
+                    .update({
+                        title: cleanTitle,
+                        description: description.trim()
+                    })
+                    .eq("id", item.id)
+                    .eq("user_id", profile.id);
             }
             /* =============================================
                PLAIN PASTE
