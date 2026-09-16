@@ -25,6 +25,7 @@
       <a href="marketplace.html"><i class="fa-solid fa-store"></i><span>Marketplace</span></a>
       <a href="#features"><i class="fa-solid fa-layer-group"></i><span>Fitur</span></a>
       <a href="#how"><i class="fa-solid fa-circle-question"></i><span>Cara Kerja</span></a>
+      <a href="#platform"><i class="fa-solid fa-compass"></i><span>Platform</span></a>
     </nav>
     <div class="ix-nav-actions">
       <button id="themeBtn" class="ix-icon-btn" type="button" title="Tema"><i class="fa-solid fa-moon"></i></button>
@@ -39,6 +40,7 @@
   <a href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a>
   <a href="#features"><i class="fa-solid fa-layer-group"></i> Fitur</a>
   <a href="#how"><i class="fa-solid fa-circle-question"></i> Cara Kerja</a>
+  <a href="#platform"><i class="fa-solid fa-compass"></i> Platform</a>
   <a href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
   <a href="register.html"><i class="fa-solid fa-user-plus"></i> Register</a>
 </div>
@@ -83,9 +85,113 @@
   <div class="ix-filter" id="marketFilter">
    <button class="active" data-filter="all"><i class="fa-solid fa-border-all"></i> Semua</button><button data-filter="pastelink"><i class="fa-solid fa-link"></i> PasteLink</button><button data-filter="code"><i class="fa-solid fa-key"></i> Code</button><button data-filter="channel"><i class="fa-solid fa-tower-broadcast"></i> Channel</button><button data-filter="group"><i class="fa-solid fa-users"></i> Group</button><button data-filter="product"><i class="fa-solid fa-box-open"></i> Produk</button>
   </div>
-  <div id="marketGrid" class="ix-market-grid"><div class="ix-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat marketplace...</span></div></div>
-  <div id="marketEmpty" class="ix-empty hidden"><i class="fa-solid fa-box-open"></i><b>Belum ada konten</b><span>Creator belum menerbitkan konten yang sesuai.</span><a href="marketplace.html" class="ix-btn ix-btn-soft">Buka Marketplace</a></div>
+  <div id="marketGrid" class="ix-market-grid">
+      <div class="ix-loading">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span>Memuat marketplace...</span>
+      </div>
+    </div>
+    <div id="marketEmpty" class="ix-empty hidden"><i class="fa-solid fa-box-open"></i><b>Belum ada konten</b><span>Creator belum menerbitkan konten yang sesuai.</span><a href="marketplace.html" class="ix-btn ix-btn-soft">Buka Marketplace</a></div>
  </div>
+</section>
+
+
+<section id="platform" class="ix-section ix-platform-section">
+  <div class="ix-container">
+    <div class="ix-section-head center">
+      <div>
+        <span class="ix-kicker"><i class="fa-solid fa-compass"></i> PANDUAN PLATFORM</span>
+        <h2>Semua yang bisa kamu lakukan di PasTele.</h2>
+        <p>PasTele menghubungkan creator dan pembeli dalam satu marketplace. Setiap jenis konten memiliki fungsi, alur akses, dan cara penggunaan yang berbeda.</p>
+      </div>
+    </div>
+
+    <div class="ix-platform-grid">
+      <article class="ix-platform-card">
+        <div class="ix-platform-icon"><i class="fa-solid fa-link"></i></div>
+        <div>
+          <span class="ix-platform-label">PASTELINK</span>
+          <h3>Halaman teks & link yang mudah dibagikan</h3>
+          <p>Cocok untuk membuat landing page sederhana, kumpulan tautan, informasi, panduan, atau materi yang ingin dibagikan melalui satu URL.</p>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Isi dapat ditampilkan lengkap di halaman detail</li>
+            <li><i class="fa-solid fa-check"></i> Bisa dipublikasikan Free atau Paid</li>
+            <li><i class="fa-solid fa-check"></i> Memiliki views dan engagement</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="ix-platform-card">
+        <div class="ix-platform-icon"><i class="fa-solid fa-key"></i></div>
+        <div>
+          <span class="ix-platform-label">TELEGRAM CODE</span>
+          <h3>Distribusikan code atau akses digital</h3>
+          <p>Gunakan Code untuk mendistribusikan file, resource, atau akses yang berkaitan dengan ekosistem Telegram sesuai ketentuan platform.</p>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Free atau Paid</li>
+            <li><i class="fa-solid fa-check"></i> Statistik views dan pembelian</li>
+            <li><i class="fa-solid fa-check"></i> Detail tersedia sebelum akses diberikan</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="ix-platform-card">
+        <div class="ix-platform-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+        <div>
+          <span class="ix-platform-label">CHANNEL</span>
+          <h3>Promosikan channel Telegram</h3>
+          <p>Tempat untuk menampilkan informasi channel secara lebih terstruktur agar pengunjung dapat memahami isi dan kegunaannya sebelum membuka detail.</p>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Informasi channel ditampilkan di detail</li>
+            <li><i class="fa-solid fa-check"></i> Username creator tetap diprivasi</li>
+            <li><i class="fa-solid fa-check"></i> Bisa Free atau Paid</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="ix-platform-card">
+        <div class="ix-platform-icon"><i class="fa-solid fa-users"></i></div>
+        <div>
+          <span class="ix-platform-label">GROUP</span>
+          <h3>Temukan komunitas yang relevan</h3>
+          <p>Gunakan listing Group untuk memperkenalkan komunitas, menjelaskan topik, dan memberikan informasi akses secara jelas.</p>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Detail group dapat dilihat lengkap</li>
+            <li><i class="fa-solid fa-check"></i> Creator username ditampilkan dalam bentuk mask</li>
+            <li><i class="fa-solid fa-check"></i> Statistik engagement tersedia</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="ix-platform-card">
+        <div class="ix-platform-icon"><i class="fa-solid fa-box-open"></i></div>
+        <div>
+          <span class="ix-platform-label">PRODUK DIGITAL</span>
+          <h3>Jual konten digital melalui marketplace</h3>
+          <p>Creator dapat mempublikasikan produk digital dengan deskripsi, harga, kategori, dan statistik agar pembeli dapat mengevaluasi produk sebelum membeli.</p>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Harga dan status Free/Paid jelas</li>
+            <li><i class="fa-solid fa-check"></i> Views, buy, like, dan komentar</li>
+            <li><i class="fa-solid fa-check"></i> Akses Paid diberikan setelah transaksi terverifikasi</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="ix-platform-card ix-platform-card-highlight">
+        <div class="ix-platform-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div>
+          <span class="ix-platform-label">AMAN & TERSTRUKTUR</span>
+          <h3>Informasi publik dan akses berbayar dipisahkan</h3>
+          <p>Marketplace menampilkan informasi publik yang diperlukan untuk membantu pengguna memilih konten. Data atau akses berbayar tidak seharusnya dibuka sebelum transaksi dinyatakan berhasil oleh sistem.</p>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Marketplace dapat dijelajahi tanpa login</li>
+            <li><i class="fa-solid fa-check"></i> Data sensitif tidak ditampilkan sebagai informasi creator</li>
+            <li><i class="fa-solid fa-check"></i> Status transaksi menjadi dasar pemberian akses</li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </div>
 </section>
 
 <section id="features" class="ix-section ix-soft-section">
@@ -119,7 +225,7 @@
 <section class="ix-section ix-creator-section">
  <div class="ix-container ix-creator-card">
   <div><span class="ix-kicker"><i class="fa-solid fa-rocket"></i> CREATOR ECONOMY</span><h2>Bangun konten. Bangun audiens. Dapatkan penghasilan.</h2><p>PasTele memberi creator ruang untuk mempublikasikan konten dan menjual akses secara terstruktur. Revenue settlement dilakukan di sisi server.</p><div class="ix-creator-points"><span><i class="fa-solid fa-circle-check"></i> Creator </span><span><i class="fa-solid fa-circle-check"></i> Platform </span><span><i class="fa-solid fa-circle-check"></i> Settlement terverifikasi</span></div><a href="register.html" class="ix-btn ix-btn-primary"><i class="fa-solid fa-user-plus"></i> Daftar sebagai Creator</a></div>
-  <div class="ix-money"><i class="fa-solid fa-wallet"></i><strong>100%</strong><span>Creator share</span><small>Revenue dari penjualan Paid</small></div>
+  <div class="ix-money"><i class="fa-solid fa-wallet"></i><strong>70%</strong><span>Creator share</span><small>Revenue dari penjualan Paid</small></div>
  </div>
 </section>
 
