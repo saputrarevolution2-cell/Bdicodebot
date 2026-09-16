@@ -3024,6 +3024,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!type) {
       return "link";
     }
+    if (type === "account-plan" || type === "account_plan") {
+      return "account_plan";
+    }
     return type;
   };
   const typeLabel = (type) => {
@@ -3036,6 +3039,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         return "Group";
       case "paste":
         return "Paste Link";
+      case "account_plan":
+        return "Plan Akun";
+      case "subscription":
+        return "Subscription";
+      case "premium":
+        return "Premium";
       case "link":
       default:
         return "Link";
@@ -3051,6 +3060,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         return "fa-users";
       case "paste":
         return "fa-file-lines";
+      case "account_plan":
+      case "subscription":
+        return "fa-crown";
+      case "premium":
+        return "fa-gem";
       case "link":
       default:
         return "fa-link";
@@ -3238,24 +3252,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         purchaseResult,
         orderResult
       ] = await Promise.all([
-        sb
+        window.sb
           .from("transactions")
           .select("*")
           .eq("user_id", profile.id)
           .order("created_at", { ascending: false }),
-        sb
+        window.sb
           .from("purchases")
           .select(
-            "id,item_type,amount,status,created_at"
+            "id,product_id,order_id,item_type,item_id,item_title,amount,status,created_at"
           )
           .eq("buyer_id", profile.id)
           .order("created_at", { ascending: false }),
-        sb
+        window.sb
           .from("orders")
           .select(
             "id,product_id,item_type,item_id,item_title,amount,status,created_at"
           )
           .eq("seller_id", profile.id)
+          .not("item_type", "eq", "account_plan")
           .order("created_at", { ascending: false })
       ]);
       if (txResult.error) {
