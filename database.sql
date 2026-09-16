@@ -5820,3 +5820,288 @@ $$;
 GRANT EXECUTE ON FUNCTION public.request_withdrawal_v2(numeric,text,text,text,text) TO authenticated;
 
 COMMIT;
+
+
+-- ============================================================
+-- PasTele SOCIAL + QUEST + COMMUNITY CHAT FINAL PATCH
+-- Version: 2026-09-16
+-- ============================================================
+BEGIN;
+
+-- ------------------------------------------------------------
+-- Social counters / follows
+-- ------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_creator_followers_creator ON public.creator_followers(creator_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_creator_followers_follower ON public.creator_followers(follower_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_content_likes_target ON public.content_likes(target_id, target_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_content_comments_target ON public.content_comments(target_id, target_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_target_event ON public.analytics_events(target_id, target_type, event_type, created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.toggle_creator_follow(p_creator_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid := auth.uid(); exists_follow boolean; follower_count bigint;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF p_creator_id IS NULL OR p_creator_id=uid THEN RAISE EXCEPTION 'INVALID_FOLLOW_TARGET'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id=p_creator_id AND is_banned=false) THEN RAISE EXCEPTION 'PROFILE_NOT_FOUND'; END IF;
+  SELECT EXISTS(SELECT 1 FROM public.creator_followers WHERE creator_id=p_creator_id AND follower_id=uid) INTO exists_follow;
+  IF exists_follow THEN
+    DELETE FROM public.creator_followers WHERE creator_id=p_creator_id AND follower_id=uid;
+  ELSE
+    INSERT INTO public.creator_followers(creator_id,follower_id) VALUES(p_creator_id,uid) ON CONFLICT DO NOTHING;
+  END IF;
+  SELECT count(*) INTO follower_count FROM public.creator_followers WHERE creator_id=p_creator_id;
+  RETURN jsonb_build_object('following',NOT exists_follow,'followers',follower_count);
+END $$;
+GRANT EXECUTE ON FUNCTION public.toggle_creator_follow(uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_profile_social_stats(p_profile_id uuid)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+  SELECT jsonb_build_object(
+    'followers',(SELECT count(*) FROM public.creator_followers WHERE creator_id=p_profile_id),
+    'following',(SELECT count(*) FROM public.creator_followers WHERE follower_id=p_profile_id),
+    'likes',(SELECT count(*) FROM public.content_likes WHERE content_owner_id=p_profile_id),
+    'content',(SELECT count(*) FROM public.marketplace_public WHERE owner_id=p_profile_id)
+  );
+$$;
+GRANT EXECUTE ON FUNCTION public.get_profile_social_stats(uuid) TO anon,authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_follow_state(p_creator_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+  SELECT EXISTS(SELECT 1 FROM public.creator_followers WHERE creator_id=p_creator_id AND follower_id=auth.uid());
+$$;
+GRANT EXECUTE ON FUNCTION public.get_follow_state(uuid) TO authenticated;
+
+-- ------------------------------------------------------------
+-- Quest system: social actions become durable progress records.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.quests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  code text NOT NULL UNIQUE,
+  title text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  event_type text NOT NULL,
+  target_count integer NOT NULL DEFAULT 1 CHECK(target_count>0),
+  reward numeric(18,2) NOT NULL DEFAULT 0 CHECK(reward>=0),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.quest_progress (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  quest_id uuid NOT NULL REFERENCES public.quests(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  progress integer NOT NULL DEFAULT 0 CHECK(progress>=0),
+  completed_at timestamptz,
+  rewarded_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(quest_id,user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_quest_progress_user ON public.quest_progress(user_id,updated_at DESC);
+
+INSERT INTO public.quests(code,title,description,event_type,target_count,reward)
+VALUES
+ ('like_content','Like Content','Berikan like pada konten.','like',5,0),
+ ('comment_content','Comment Content','Tulis komentar pada konten.','comment',3,0),
+ ('share_content','Share Content','Bagikan konten PasTele.','share',3,0),
+ ('follow_creator','Follow Creator','Ikuti creator di PasTele.','follow',2,0),
+ ('visit_content','Explore Content','Buka konten marketplace.','view',10,0)
+ON CONFLICT(code) DO UPDATE SET title=excluded.title,description=excluded.description,event_type=excluded.event_type,target_count=excluded.target_count;
+
+ALTER TABLE public.quests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.quest_progress ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS quests_public_read ON public.quests;
+CREATE POLICY quests_public_read ON public.quests FOR SELECT TO anon,authenticated USING(is_active=true OR public.is_current_user_admin());
+DROP POLICY IF EXISTS quests_admin_write ON public.quests;
+CREATE POLICY quests_admin_write ON public.quests FOR ALL TO authenticated USING(public.is_current_user_admin()) WITH CHECK(public.is_current_user_admin());
+DROP POLICY IF EXISTS quest_progress_owner_read ON public.quest_progress;
+CREATE POLICY quest_progress_owner_read ON public.quest_progress FOR SELECT TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE OR REPLACE FUNCTION public.record_quest_event(p_event_type text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); q record; p record; new_progress integer;
+BEGIN
+  IF uid IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','LOGIN_REQUIRED'); END IF;
+  FOR q IN SELECT * FROM public.quests WHERE is_active=true AND event_type=lower(btrim(p_event_type)) LOOP
+    INSERT INTO public.quest_progress(quest_id,user_id,progress)
+    VALUES(q.id,uid,0) ON CONFLICT(quest_id,user_id) DO NOTHING;
+    SELECT * INTO p FROM public.quest_progress WHERE quest_id=q.id AND user_id=uid FOR UPDATE;
+    IF p.completed_at IS NULL THEN
+      new_progress:=LEAST(q.target_count,p.progress+1);
+      UPDATE public.quest_progress SET progress=new_progress,completed_at=CASE WHEN new_progress>=q.target_count THEN coalesce(completed_at,now()) ELSE completed_at END,updated_at=now() WHERE id=p.id;
+    END IF;
+  END LOOP;
+  RETURN jsonb_build_object('ok',true);
+END $$;
+GRANT EXECUTE ON FUNCTION public.record_quest_event(text) TO authenticated;
+
+-- ------------------------------------------------------------
+-- Telegram-like public community group chat
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.chat_groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  description text NOT NULL DEFAULT '',
+  avatar_url text,
+  is_public boolean NOT NULL DEFAULT true,
+  created_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.chat_members (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL REFERENCES public.chat_groups(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  role text NOT NULL DEFAULT 'member' CHECK(role IN ('owner','admin','moderator','member')),
+  joined_at timestamptz NOT NULL DEFAULT now(),
+  last_read_at timestamptz,
+  UNIQUE(group_id,user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.chat_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL REFERENCES public.chat_groups(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  body text NOT NULL CHECK(length(btrim(body)) BETWEEN 1 AND 4000),
+  reply_to_id uuid REFERENCES public.chat_messages(id) ON DELETE SET NULL,
+  pinned_at timestamptz,
+  pinned_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  edited_at timestamptz,
+  deleted_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.chat_reactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id uuid NOT NULL REFERENCES public.chat_messages(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reaction text NOT NULL DEFAULT '👍',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(message_id,user_id,reaction)
+);
+
+CREATE TABLE IF NOT EXISTS public.chat_message_reads (
+  message_id uuid NOT NULL REFERENCES public.chat_messages(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  read_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(message_id,user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.chat_presence (
+  group_id uuid NOT NULL REFERENCES public.chat_groups(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  is_online boolean NOT NULL DEFAULT false,
+  last_seen_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(group_id,user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_group_created ON public.chat_messages(group_id,created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_members_group ON public.chat_members(group_id,joined_at);
+CREATE INDEX IF NOT EXISTS idx_chat_reactions_message ON public.chat_reactions(message_id,created_at);
+
+INSERT INTO public.chat_groups(name,slug,description,is_public)
+VALUES('PasTele Community','pastele-community','Forum & group chat resmi komunitas PasTele.',true)
+ON CONFLICT(slug) DO UPDATE SET name=excluded.name,description=excluded.description,is_public=excluded.is_public;
+
+ALTER TABLE public.chat_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_reactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_message_reads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_presence ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS chat_groups_public_read ON public.chat_groups;
+CREATE POLICY chat_groups_public_read ON public.chat_groups FOR SELECT TO anon,authenticated USING(is_public=true OR created_by=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_members_read ON public.chat_members;
+CREATE POLICY chat_members_read ON public.chat_members FOR SELECT TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_members_join ON public.chat_members;
+CREATE POLICY chat_members_join ON public.chat_members FOR INSERT TO authenticated WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_members_leave ON public.chat_members;
+CREATE POLICY chat_members_leave ON public.chat_members FOR DELETE TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_messages_public_read ON public.chat_messages;
+CREATE POLICY chat_messages_public_read ON public.chat_messages FOR SELECT TO anon,authenticated USING(EXISTS(SELECT 1 FROM public.chat_groups g WHERE g.id=group_id AND g.is_public=true) OR EXISTS(SELECT 1 FROM public.chat_members m WHERE m.group_id=group_id AND m.user_id=auth.uid()) OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_messages_owner_update ON public.chat_messages;
+CREATE POLICY chat_messages_owner_update ON public.chat_messages FOR UPDATE TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin()) WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_reactions_read ON public.chat_reactions;
+CREATE POLICY chat_reactions_read ON public.chat_reactions FOR SELECT TO anon,authenticated USING(true);
+DROP POLICY IF EXISTS chat_reactions_write ON public.chat_reactions;
+CREATE POLICY chat_reactions_write ON public.chat_reactions FOR ALL TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin()) WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_reads_owner ON public.chat_message_reads;
+CREATE POLICY chat_reads_owner ON public.chat_message_reads FOR ALL TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin()) WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS chat_presence_read ON public.chat_presence;
+CREATE POLICY chat_presence_read ON public.chat_presence FOR SELECT TO anon,authenticated USING(true);
+DROP POLICY IF EXISTS chat_presence_write ON public.chat_presence;
+CREATE POLICY chat_presence_write ON public.chat_presence FOR ALL TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin()) WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE OR REPLACE FUNCTION public.join_public_chat(p_group_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); g public.chat_groups%ROWTYPE;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  SELECT * INTO g FROM public.chat_groups WHERE id=p_group_id AND is_public=true;
+  IF g.id IS NULL THEN RAISE EXCEPTION 'CHAT_NOT_FOUND'; END IF;
+  INSERT INTO public.chat_members(group_id,user_id) VALUES(p_group_id,uid) ON CONFLICT(group_id,user_id) DO NOTHING;
+  RETURN jsonb_build_object('ok',true,'group_id',p_group_id);
+END $$;
+GRANT EXECUTE ON FUNCTION public.join_public_chat(uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.send_chat_message(p_group_id uuid,p_body text,p_reply_to uuid DEFAULT NULL)
+RETURNS public.chat_messages LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); r public.chat_messages;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF length(btrim(coalesce(p_body,'')))<1 OR length(p_body)>4000 THEN RAISE EXCEPTION 'INVALID_MESSAGE'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.chat_groups WHERE id=p_group_id AND is_public=true) AND NOT EXISTS(SELECT 1 FROM public.chat_members WHERE group_id=p_group_id AND user_id=uid) THEN RAISE EXCEPTION 'NOT_A_MEMBER'; END IF;
+  INSERT INTO public.chat_members(group_id,user_id) VALUES(p_group_id,uid) ON CONFLICT DO NOTHING;
+  INSERT INTO public.chat_messages(group_id,user_id,body,reply_to_id) VALUES(p_group_id,uid,btrim(p_body),p_reply_to) RETURNING * INTO r;
+  RETURN r;
+END $$;
+GRANT EXECUTE ON FUNCTION public.send_chat_message(uuid,text,uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.toggle_chat_reaction(p_message_id uuid,p_reaction text DEFAULT '👍')
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); exists_reaction boolean;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  SELECT EXISTS(SELECT 1 FROM public.chat_reactions WHERE message_id=p_message_id AND user_id=uid AND reaction=p_reaction) INTO exists_reaction;
+  IF exists_reaction THEN DELETE FROM public.chat_reactions WHERE message_id=p_message_id AND user_id=uid AND reaction=p_reaction;
+  ELSE INSERT INTO public.chat_reactions(message_id,user_id,reaction) VALUES(p_message_id,uid,p_reaction) ON CONFLICT DO NOTHING; END IF;
+  RETURN jsonb_build_object('active',NOT exists_reaction);
+END $$;
+GRANT EXECUTE ON FUNCTION public.toggle_chat_reaction(uuid,text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.mark_chat_read(p_group_id uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RETURN false; END IF;
+  INSERT INTO public.chat_members(group_id,user_id,last_read_at) VALUES(p_group_id,auth.uid(),now())
+  ON CONFLICT(group_id,user_id) DO UPDATE SET last_read_at=now();
+  RETURN true;
+END $$;
+GRANT EXECUTE ON FUNCTION public.mark_chat_read(uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.set_chat_presence(p_group_id uuid,p_online boolean)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RETURN false; END IF;
+  INSERT INTO public.chat_presence(group_id,user_id,is_online,last_seen_at) VALUES(p_group_id,auth.uid(),coalesce(p_online,false),now())
+  ON CONFLICT(group_id,user_id) DO UPDATE SET is_online=excluded.is_online,last_seen_at=now();
+  RETURN true;
+END $$;
+GRANT EXECUTE ON FUNCTION public.set_chat_presence(uuid,boolean) TO authenticated;
+
+GRANT SELECT ON public.chat_groups,public.chat_messages,public.chat_reactions,public.chat_presence TO anon,authenticated;
+GRANT SELECT,INSERT,DELETE ON public.chat_members TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON public.chat_message_reads TO authenticated;
+
+DO $$ BEGIN
+  BEGIN EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages'; EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL; END;
+  BEGIN EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_reactions'; EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL; END;
+  BEGIN EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_presence'; EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL; END;
+END $$;
+
+COMMIT;
