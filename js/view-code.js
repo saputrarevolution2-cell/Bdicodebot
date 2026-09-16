@@ -1098,7 +1098,9 @@ window.PASTELE_CONFIG = Object.freeze({
   'use strict';
   const NAVBAR_ID = 'navbar';
   const initNavbar = async () => {
-    const host = document.getElementById(NAVBAR_ID);
+    const host =
+      document.getElementById(NAVBAR_ID) ||
+      document.getElementById('publicNavbar');
     if (!host) return;
     /* Prevent duplicate initialization */
     if (host.dataset.ready === '1') return;
@@ -2980,6 +2982,12 @@ function guestToken(){let k="pastele-guest-checkout-token",v=localStorage.getIte
 async function user(){try{return await window.TC?.user?.()||null}catch{return null}}
 function targetType(kind){return kind==="code"?"telegram_product":kind==="channel"||kind==="group"?"channel":kind}
 function telegramUrl(item){let x=String(item?.invite_url||item?.username||item?.bot_username||item?.telegram_channel_id||"").trim();if(/^https?:\/\//i.test(x))return x;if(/^@/.test(x))return "https://t.me/"+x.slice(1);if(/^[A-Za-z0-9_]{5,32}$/.test(x))return "https://t.me/"+x;return ""}
+function unwrapRpc(data){
+ if(Array.isArray(data)) return data[0] || null;
+ if(data && Array.isArray(data.rows)) return data.rows[0] || null;
+ if(data && data.data && Array.isArray(data.data)) return data.data[0] || null;
+ return data || null;
+}
 async function resolve(kind){
  const client=window.sb;if(!client)throw Error("Supabase belum siap.");
  if(!slug)throw Error("Link konten tidak lengkap.");
@@ -2988,7 +2996,7 @@ async function resolve(kind){
  else if(kind==="code")({data,error}=await client.rpc("get_code_by_slug",{p_slug:slug}));
  else ({data,error}=await client.rpc("get_telegram_content_by_slug",{p_slug:slug,p_type:kind}));
  if(error)throw error;
- return Array.isArray(data)?data[0]:data;
+ return unwrapRpc(data);
 }
 async function detailById(kind,id){
  const client=window.sb; const type=targetType(kind);
@@ -3006,8 +3014,8 @@ async function accessState(kind,item){
  const u=await user();
  if(u?.id && (String(item.owner_id||item.creator_id||item.seller_id)===String(u.id) || item.can_access===true || item.is_premium===true))return {ok:true,reason:item.is_premium?"premium":"owner"};
  if(u?.id){
-   const q=await window.sb.from("purchases").select("id").eq("buyer_id",u.id).eq("product_id",item.id).in("status",["completed","paid","success"]).limit(1);
-   if(!q.error&&q.data?.length)return {ok:true,reason:"purchase"};
+   const q=await window.sb.from("purchases").select("id,product_id,item_id").eq("buyer_id",u.id).in("status",["completed","paid","success"]).limit(50);
+   if(!q.error && (q.data||[]).some(row=>String(row.product_id||row.item_id||"")===String(item.id)))return {ok:true,reason:"purchase"};
  }
  const tok=localStorage.getItem("pastele-guest-checkout-token");
  if(tok){
@@ -3041,13 +3049,15 @@ async function loadSocial(kind,item){
  const lc=$("likeCount"),cc=$("commentCount"),sc=$("shareCount");
  if(lc)lc.textContent=String(likes.error?0:(likes.data||[]).length); if($("likeCountMeta"))$("likeCountMeta").textContent=lc?.textContent||"0";
  if(cc)cc.textContent=String(comments.error?0:(comments.data||[]).length); if($("commentCountMeta"))$("commentCountMeta").textContent=cc?.textContent||"0";
- if(sc)sc.textContent=String(shares.error?0:(shares.count||0)); if($("shareCountMeta"))$("shareCountMeta").textContent=sc?.textContent||"0";
+ if(sc)sc.textContent=String(shares.error?0:Number(shares.count||0)); if($("shareCountMeta"))$("shareCountMeta").textContent=sc?.textContent||"0";
  const mine=!!u?.id && !likes.error && (likes.data||[]).some(x=>String(x.actor_id)===String(u.id));
  $("likeBtn")?.setAttribute("aria-pressed",mine?"true":"false");
  $("likeIcon")?.classList.toggle("fa-solid",mine); $("likeIcon")?.classList.toggle("fa-regular",!mine);
  $("likeLabel")&&( $("likeLabel").textContent=mine?"Disukai":"Suka");
  const list=$("commentList");
  if(list)list.innerHTML=comments.error?"":(comments.data?.length?comments.data.map(c=>`<article class="comment"><div class="avatar"><i class="fa-solid fa-user"></i></div><div><strong>${esc(c.display_name||(c.user_id?"User":"Guest"))}</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>');
+ $("likeBtn")?.replaceWith($("likeBtn")?.cloneNode(true));
+ $("shareBtn")?.replaceWith($("shareBtn")?.cloneNode(true));
  $("likeBtn")?.addEventListener("click",async()=>{
    const p=await user();let q;
    if(p?.id)q=await client.rpc("toggle_content_like",{p_target_id:tid,p_target_type:tt,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
@@ -3055,9 +3065,19 @@ async function loadSocial(kind,item){
    if(q.error)return toast(q.error.message||"Gagal menyukai.","error"); await loadSocial(kind,item); try{await client.rpc("record_quest_event",{p_event_type:"like"})}catch{}
  });
  $("shareBtn")?.addEventListener("click",async()=>{
-   const url=location.href;try{if(navigator.share)await navigator.share({title:item.title||"PasTele",url});else await navigator.clipboard.writeText(url)}catch(e){if(e?.name==="AbortError")return}
+   const url=location.href;
+   try{
+     if(navigator.share) await navigator.share({title:item.title||"PasTele",url});
+     else await navigator.clipboard.writeText(url);
+   }catch(e){
+     if(e?.name==="AbortError") return;
+     toast("Gagal membagikan link.","error"); return;
+   }
    try{await client.rpc("track_analytics",{p_event_type:"share",p_target_type:tt,p_target_id:tid,p_owner:item.owner_id||item.creator_id||item.seller_id||null})}catch{}
-   try{await client.rpc("record_quest_event",{p_event_type:"share"})}catch{}; const n=Number($("shareCount")?.textContent||0)+1;if($("shareCount"))$("shareCount").textContent=String(n);
+   try{await client.rpc("record_quest_event",{p_event_type:"share"})}catch{}
+   const n=Number($("shareCount")?.textContent||0)+1;
+   if($("shareCount"))$("shareCount").textContent=String(n);
+   if($("shareCountMeta"))$("shareCountMeta").textContent=String(n);
  });
  const form=$("commentForm"),text=$("commentText"),submit=$("commentSubmit");
  if(form)form.onsubmit=async e=>{
@@ -3082,7 +3102,20 @@ async function trackView(kind,item){
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
 
-document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i> Bot tujuan: <strong>@${V.esc(bot||"Telegram")}</strong></div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async()=>{await navigator.clipboard.writeText(String(item.content||""));V.toast("Code berhasil disalin.","success")});V.$("sendBot")?.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(String(item.content||""));const u=V.telegramUrl({bot_username:item.bot_username});if(u)location.href=u;else V.toast("Bot tujuan belum tersedia.","error")}catch{V.toast("Gagal menyalin code.","error")}});await V.trackView("code",item);await V.loadSocial("code",item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat Code.")}</div>`}});
+document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i> Bot tujuan: <strong>@${V.esc(bot||"Telegram")}</strong></div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async(e)=>{
+ const b=e.currentTarget;b.disabled=true;
+ try{await navigator.clipboard.writeText(String(item.content||""));V.toast("Code berhasil disalin.","success")}
+ catch{V.toast("Gagal menyalin code.","error")}
+ finally{b.disabled=false}
+});V.$("sendBot")?.addEventListener("click",async(e)=>{
+ const b=e.currentTarget;b.disabled=true;
+ try{
+   await navigator.clipboard.writeText(String(item.content||""));
+   const u=V.telegramUrl({bot_username:item.bot_username});
+   if(u)location.href=u;else V.toast("Bot tujuan belum tersedia.","error");
+ }catch{V.toast("Gagal menyalin code.","error")}
+ finally{b.disabled=false}
+});await V.trackView("code",item);await V.loadSocial("code",item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat Code.")}</div>`}});
 
 
 /* Page-ready marker */
