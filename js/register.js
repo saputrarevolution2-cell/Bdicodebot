@@ -8,15 +8,55 @@ window.PASTELE_CONFIG = Object.freeze({
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
 
+
+/* =========================================================
+   PasTele — REGISTER THEME
+   Manual Light / Dark only
+   ========================================================= */
+(() => {
+  'use strict';
+  const KEY = 'pastele-theme';
+  const root = document.documentElement;
+  const button = () => document.getElementById('themeButton');
+
+  function apply(mode) {
+    mode = mode === 'dark' ? 'dark' : 'light';
+    localStorage.setItem(KEY, mode);
+    root.dataset.theme = mode;
+    root.dataset.themeMode = mode;
+    root.classList.toggle('theme-dark', mode === 'dark');
+    root.classList.toggle('theme-light', mode === 'light');
+    root.style.colorScheme = mode;
+    const b = button();
+    if (b) {
+      b.innerHTML = mode === 'dark'
+        ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>'
+        : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
+      b.setAttribute('aria-label', mode === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap');
+      b.title = mode === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap';
+    }
+    window.dispatchEvent(new CustomEvent('pastele-theme-change', {detail:{mode,theme:mode}}));
+  }
+
+  const initial = localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
+  apply(initial);
+
+  const init = () => {
+    button()?.addEventListener('click', () => {
+      apply((localStorage.getItem(KEY) || 'light') === 'dark' ? 'light' : 'dark');
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
+})();
+
 /* PasTele — zero-flash theme preload. Must run in <head>. */
 (() => {
   try {
     const key = 'pastele-theme';
-    const mode = localStorage.getItem(key) || 'auto';
+    const mode = localStorage.getItem(key) || 'light';
     const hour = new Date().getHours();
-    const dark = mode === 'dark' ||
-      (mode === 'auto' && (hour >= 18 || hour < 6)) ||
-      (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const dark = mode === 'dark';
     const root = document.documentElement;
     root.dataset.theme = dark ? 'dark' : 'light';
     root.dataset.themeMode = mode;
@@ -1010,19 +1050,12 @@ window.PASTELE_CONFIG = Object.freeze({
   'use strict';
   const root = document.documentElement;
   const KEY = 'pastele-theme';
-  const MODES = ['auto', 'light', 'dark', 'system'];
+  const MODES = ['light', 'dark'];
 
-  const resolve = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    if (mode === 'system') {
-      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    const hour = new Date().getHours();
-    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
-  };
+  const resolve = (mode) => mode === 'dark' ? 'dark' : 'light';
 
-  const apply = (mode = localStorage.getItem(KEY) || 'auto') => {
-    if (!MODES.includes(mode)) mode = 'auto';
+  const apply = (mode = localStorage.getItem(KEY) || 'light') => {
+    if (!MODES.includes(mode)) mode = 'light';
     const theme = resolve(mode);
     root.dataset.theme = theme;
     root.dataset.themeMode = mode;
@@ -1043,33 +1076,26 @@ window.PASTELE_CONFIG = Object.freeze({
   };
 
   const set = (mode) => {
-    if (!MODES.includes(mode)) mode = 'auto';
+    if (!MODES.includes(mode)) mode = 'light';
     localStorage.setItem(KEY, mode);
     return apply(mode);
   };
 
   const cycle = () => {
-    const current = localStorage.getItem(KEY) || 'auto';
+    const current = localStorage.getItem(KEY) || 'light';
     const index = Math.max(0, MODES.indexOf(current));
-    return set(['auto', 'light', 'dark', 'system'][(index + 1) % 4]);
+    return set(['light', 'dark'][(index + 1) % 2]);
   };
 
   window.PasTeleTheme = Object.freeze({
-    get: () => localStorage.getItem(KEY) || 'auto',
-    resolved: () => resolve(localStorage.getItem(KEY) || 'auto'),
+    get: () => localStorage.getItem(KEY) || 'light',
+    resolved: () => resolve(localStorage.getItem(KEY) || 'light'),
     set,
     cycle,
     apply
   });
 
   apply();
-  window.setInterval(() => {
-    if ((localStorage.getItem(KEY) || 'auto') === 'auto') apply('auto');
-  }, 60 * 1000);
-
-  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change', () => {
-    if ((localStorage.getItem(KEY) || 'auto') === 'system') apply('system');
-  });
 })();
 
 /* ============================================================
@@ -2701,9 +2727,9 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
   async function bootData(){
     const client=sb(); if(!client){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Supabase belum siap.</div>';return}
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
-    const q=await client.from('chat_groups').select('id,name,slug,description').eq('slug','pastele-community').maybeSingle();
+    const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.description||'Forum & Group Chat';
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
     if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
