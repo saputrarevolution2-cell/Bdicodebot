@@ -17,9 +17,11 @@
   const password=$("password"), toggle=$("toggle"), loginSubmit=$("loginSubmit");
   const loginSubmitText=document.querySelector(".login-submit-text");
   const google=$("google"), changeAccount=$("changeAccount"), securityStatus=$("loginSecurityStatus");
+  const accountDisplayName=$("accountDisplayName"), accountAvatar=$("accountAvatar"), turnstileBox=$("loginTurnstile");
   const toast=$("toast"), themeButton=$("themeButton"), footerYear=$("footerYear");
 
   let sb=null, foundAccount=null, lookupTimer=null, lookupSequence=0, toastTimer=null, loginBusy=false;
+  let turnstileWidgetId=null, turnstileToken="";
 
   const clean=v=>String(v??"").trim();
   const lower=v=>clean(v).toLowerCase();
@@ -96,11 +98,23 @@
     return !!row && typeof row==="object" && !!clean(row.username) && row.is_banned!==true;
   }
 
+  function accountName(row){
+    return clean(row?.display_name || row?.full_name || row?.name || row?.username || "Pengguna");
+  }
+
+  function initials(name){
+    const parts=clean(name).split(/\\s+/).filter(Boolean);
+    return (parts.slice(0,2).map(x=>x[0]).join("") || "U").toUpperCase();
+  }
+
   function openPassword(row){
     foundAccount=row;
     const uname=clean(row.username)||clean(identifier.value);
-    verifiedUsername.innerHTML=`<strong>@${esc(uname)}</strong> terdaftar`;
-    accountUsername.textContent=`@${uname}`;
+    const display=accountName(row);
+    if(accountDisplayName) accountDisplayName.textContent=display;
+    if(accountUsername) accountUsername.textContent=`@${uname}`;
+    if(accountAvatar) accountAvatar.textContent=initials(display);
+    verifiedUsername.innerHTML=`<strong>${esc(display)}</strong> · @${esc(uname)} terdaftar`;
     state("valid");
     verifiedState?.classList.remove("hidden");
     continueLogin?.classList.add("hidden");
@@ -108,7 +122,41 @@
     step2?.classList.remove("hidden");
     securityStatus.textContent="";
     securityStatus.className="login-security-status";
+    renderTurnstile();
     requestAnimationFrame(()=>password?.focus());
+  }
+
+  function resetTurnstile(){
+    turnstileToken="";
+    if(window.turnstile && turnstileWidgetId!==null){
+      try{window.turnstile.reset(turnstileWidgetId);}catch(_){}
+    }
+  }
+
+  function renderTurnstile(){
+    if(!turnstileBox)return;
+    turnstileBox.classList.remove("hidden");
+    const sitekey=clean(turnstileBox.dataset.sitekey);
+    if(!sitekey){ security("Verifikasi Cloudflare belum dikonfigurasi.","error"); return; }
+    const render=()=>{
+      if(!window.turnstile)return;
+      if(turnstileWidgetId!==null){
+        try{window.turnstile.reset(turnstileWidgetId);}catch(_){}
+        return;
+      }
+      try{
+        turnstileWidgetId=window.turnstile.render(turnstileBox,{
+          sitekey,
+          theme:turnstileBox.dataset.theme||"light",
+          language:turnstileBox.dataset.language||"id",
+          action:turnstileBox.dataset.action||"login",
+          callback:(token)=>{turnstileToken=token; security("Verifikasi Cloudflare berhasil.","success");},
+          "expired-callback":()=>{turnstileToken=""; security("Verifikasi Cloudflare kedaluwarsa. Silakan ulangi.","error");},
+          "error-callback":()=>{turnstileToken=""; security("Verifikasi Cloudflare gagal. Silakan coba lagi.","error");}
+        });
+      }catch(e){ console.error("[PasTele Login] Turnstile:",e); }
+    };
+    if(window.turnstile) render(); else window.addEventListener("load",render,{once:true});
   }
 
   function resetVisual(){
@@ -125,6 +173,8 @@
     loginSubmit.disabled=false; loginSubmit.classList.remove("loading");
     loginSubmitText.textContent="Masuk";
     securityStatus.textContent=""; securityStatus.className="login-security-status";
+    resetTurnstile();
+    turnstileBox?.classList.add("hidden");
     resetVisual();
     requestAnimationFrame(()=>identifier?.focus());
   }
@@ -197,6 +247,11 @@
     if(!foundAccount){back();return;}
     const pass=String(password.value||"");
     if(!pass){security("Kata sandi wajib diisi.","error");toastShow("Kata sandi wajib diisi.","error");return;}
+    if(!turnstileToken){
+      security("Selesaikan verifikasi Cloudflare terlebih dahulu.","error");
+      toastShow("Selesaikan verifikasi Cloudflare terlebih dahulu.","error");
+      return;
+    }
     loading(true);
     securityStatus.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i><span>Memverifikasi akun...</span>';
     try{
@@ -245,7 +300,7 @@
   });
 
   themeButton?.addEventListener("click",()=>{
-    const current=localStorage.getItem("pastele-theme")||"auto";
+    const current=localStorage.getItem("pastele-theme")||"light";
     const next=current==="dark"?"light":"dark";
     localStorage.setItem("pastele-theme",next);
     document.documentElement.dataset.theme=next;
@@ -255,8 +310,8 @@
   function init(){
     if(footerYear)footerYear.textContent=new Date().getFullYear();
     try{
-      const mode=localStorage.getItem("pastele-theme")||"auto";
-      const dark=mode==="dark"||(mode==="auto"&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+      const mode=localStorage.getItem("pastele-theme")||"light";
+      const dark=mode==="dark";
       document.documentElement.dataset.theme=dark?"dark":"light";
       if(themeButton)themeButton.innerHTML=dark?'<i class="fa-solid fa-sun"></i>':'<i class="fa-solid fa-moon"></i>';
     }catch(_){}
