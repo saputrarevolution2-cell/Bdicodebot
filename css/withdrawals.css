@@ -915,3 +915,221 @@ button:disabled{cursor:not-allowed}
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+
+
+/* =========================================================
+   FINAL WITHDRAW POLISH
+   ========================================================= */
+
+/* Fee is intentionally shown only in the confirmation modal. */
+.withdraw-fee-preview{display:none!important}
+
+/* Confirmation modal */
+.withdraw-modal[hidden]{display:none!important}
+.withdraw-modal{
+  position:fixed;inset:0;z-index:5000;
+  display:grid;place-items:center;padding:18px;
+}
+.withdraw-modal-backdrop{
+  position:absolute;inset:0;
+  background:rgba(2,6,23,.58);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+}
+.withdraw-modal-dialog{
+  position:relative;
+  width:min(520px,100%);
+  max-height:min(88vh,760px);
+  overflow:auto;
+  padding:22px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:0 28px 80px rgba(2,6,23,.28);
+}
+.withdraw-modal-close{
+  position:absolute;right:14px;top:14px;
+  width:36px;height:36px;display:grid;place-items:center;
+  border:1px solid var(--line);border-radius:10px;
+  background:var(--surface2);color:var(--muted);
+}
+.withdraw-modal-close:hover{color:var(--red);border-color:rgba(239,68,68,.25)}
+.withdraw-modal-icon{
+  width:48px;height:48px;display:grid;place-items:center;
+  margin-bottom:12px;border-radius:15px;
+  background:linear-gradient(135deg,rgba(34,158,217,.13),rgba(99,91,255,.11));
+  color:var(--primary);font-size:18px;
+}
+.withdraw-modal-badge{
+  display:inline-flex;align-items:center;
+  padding:6px 9px;border-radius:999px;
+  background:rgba(34,158,217,.09);
+  color:var(--primary);font-size:9px;font-weight:900;letter-spacing:.08em;
+}
+.withdraw-modal-dialog h2{
+  margin:10px 42px 5px 0;font-size:18px;line-height:1.25;letter-spacing:-.025em;
+}
+.withdraw-modal-dialog>p{
+  margin:0 0 15px;color:var(--muted);font-size:10px;line-height:1.6;
+}
+.withdraw-confirm-summary{
+  overflow:hidden;margin:0 0 12px;
+  border:1px solid var(--line);border-radius:15px;background:var(--surface2);
+}
+.withdraw-confirm-summary>div{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:15px;padding:11px 13px;
+}
+.withdraw-confirm-summary>div+div{border-top:1px solid var(--line)}
+.withdraw-confirm-summary span{color:var(--muted);font-size:10px}
+.withdraw-confirm-summary strong{
+  max-width:60%;color:var(--text);font-size:11px;text-align:right;overflow-wrap:anywhere;
+}
+.withdraw-confirm-summary>div:nth-child(2) strong{color:var(--red)}
+.withdraw-confirm-summary>div:nth-child(3){background:rgba(16,185,129,.055)}
+.withdraw-confirm-summary>div:nth-child(3) strong{color:var(--green);font-size:12px}
+.withdraw-modal-warning{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:11px 12px;margin-bottom:14px;
+  border:1px solid rgba(239,68,68,.20);border-radius:13px;
+  background:rgba(239,68,68,.065);color:var(--red);
+  font-size:9px;line-height:1.55;
+}
+.withdraw-modal-warning i{margin-top:2px;flex:0 0 auto}
+.withdraw-modal-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px}
+.withdraw-modal-secondary,.withdraw-modal-primary{
+  min-height:44px;border-radius:11px;font-size:10px;font-weight:900;
+}
+.withdraw-modal-secondary{
+  border:1px solid var(--line);background:var(--surface2);color:var(--text);
+}
+.withdraw-modal-primary{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));
+  color:#fff;box-shadow:0 9px 22px rgba(34,158,217,.18);
+}
+.withdraw-modal-primary:disabled{opacity:.55;box-shadow:none}
+
+/* Security block — intentionally red */
+.withdraw-security{
+  display:flex!important;align-items:flex-start;gap:12px;
+  margin-top:18px!important;
+  padding:15px 16px!important;
+  border:1px solid rgba(239,68,68,.24)!important;
+  border-radius:16px!important;
+  background:rgba(239,68,68,.065)!important;
+  color:var(--red)!important;
+  box-shadow:none!important;
+}
+.withdraw-security-icon{
+  width:42px;height:42px;flex:0 0 42px;
+  display:grid;place-items:center;
+  border-radius:13px;
+  background:rgba(239,68,68,.11)!important;
+  color:var(--red)!important;
+}
+.withdraw-security strong{
+  display:block;color:var(--red)!important;font-size:12px;
+}
+.withdraw-security p{
+  margin:3px 0 0;color:var(--red)!important;
+  font-size:9px;line-height:1.6;opacity:.9;
+}
+
+/* History list — polished cards inside the history panel */
+.history-list{
+  padding:8px;
+  background:var(--surface);
+}
+.withdraw-history-item{
+  display:flex!important;align-items:center;gap:11px;
+  min-width:0;
+  margin:0;
+  padding:12px 10px!important;
+  border:0!important;
+  border-bottom:1px solid var(--line)!important;
+  border-radius:0!important;
+  background:var(--surface)!important;
+  transition:background .15s ease;
+}
+.withdraw-history-item:last-child{border-bottom:0!important}
+.withdraw-history-item:hover{background:var(--surface2)!important}
+.withdraw-history-item .history-item-icon{
+  width:40px;height:40px;flex:0 0 40px;
+  display:grid;place-items:center;
+  border-radius:12px;
+  background:rgba(34,158,217,.10);
+  color:var(--primary);
+}
+.withdraw-history-item .history-item-icon.instant{
+  background:rgba(245,158,11,.11);color:var(--orange);
+}
+.withdraw-history-item .history-item-icon.manual{
+  background:rgba(34,158,217,.10);color:var(--primary);
+}
+.withdraw-history-item .history-item-main{
+  min-width:0;flex:1;
+}
+.withdraw-history-item .history-item-main strong{
+  display:block;color:var(--text);font-size:12px;font-weight:900;
+}
+.withdraw-history-item .history-item-main small{
+  display:block;color:var(--muted);font-size:9px;line-height:1.45;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.withdraw-history-item .history-right{
+  flex:0 0 auto;display:flex;align-items:flex-end;flex-direction:column;gap:4px;
+  text-align:right;
+}
+.withdraw-history-item .history-right b{
+  color:var(--green);font-size:11px;font-weight:900;white-space:nowrap;
+}
+.withdraw-history-item .history-right span{
+  display:inline-flex;align-items:center;
+  min-height:20px;padding:3px 7px;border-radius:999px;
+  background:var(--surface2);color:var(--muted);
+  font-size:8px;font-weight:900;white-space:nowrap;
+}
+.withdraw-history-item .history-right .status-completed,
+.withdraw-history-item .history-right .status-success,
+.withdraw-history-item .history-right .status-successful{
+  background:rgba(16,185,129,.10);color:#07824f;
+}
+.withdraw-history-item .history-right .status-pending,
+.withdraw-history-item .history-right .status-processing{
+  background:rgba(245,158,11,.11);color:#b54708;
+}
+.withdraw-history-item .history-right .status-rejected,
+.withdraw-history-item .history-right .status-failed,
+.withdraw-history-item .history-right .status-cancelled,
+.withdraw-history-item .history-right .status-canceled{
+  background:rgba(239,68,68,.09);color:#b42318;
+}
+.history-empty{
+  min-height:160px;
+  margin:4px;
+  border:1px dashed var(--line);
+  border-radius:14px;
+  background:var(--surface2);
+}
+.history-empty i{font-size:24px;color:var(--primary)}
+.history-empty strong{font-size:12px;color:var(--text)}
+.history-empty span{font-size:10px;color:var(--muted)}
+
+html[data-theme="dark"] .withdraw-modal-backdrop{background:rgba(0,0,0,.68)}
+html[data-theme="dark"] .withdraw-modal-dialog{box-shadow:0 30px 90px rgba(0,0,0,.5)}
+html[data-theme="dark"] .withdraw-security{
+  background:rgba(239,68,68,.08)!important;
+  border-color:rgba(239,68,68,.25)!important;
+}
+
+@media(max-width:520px){
+  .withdraw-modal{padding:10px}
+  .withdraw-modal-dialog{padding:18px;border-radius:18px}
+  .withdraw-confirm-summary strong{max-width:55%}
+  .withdraw-modal-actions{grid-template-columns:1fr}
+  .withdraw-security{padding:13px!important}
+  .withdraw-history-item{align-items:flex-start!important}
+  .withdraw-history-item .history-right{margin-left:auto}
+}
