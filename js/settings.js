@@ -3530,3 +3530,26 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
+
+
+/* Final navbar scroll safety:
+   keep body lock state synchronized with common drawer open/close states. */
+(function initNavbarScrollSafety(){
+  if (window.__PASTELE_NAV_SCROLL_SAFETY__) return;
+  window.__PASTELE_NAV_SCROLL_SAFETY__ = true;
+
+  const sync = () => {
+    const nav = document.getElementById('navbar');
+    if (!nav) return;
+    const drawer = nav.querySelector(
+      '.pt-drawer.open, .pt-nav-drawer.open, .nav-drawer.open, .mobile-nav.open, .mobile-menu.open, ' +
+      '[data-drawer].open, [aria-expanded="true"]'
+    );
+    document.body.classList.toggle('nav-open', !!drawer);
+  };
+
+  document.addEventListener('click', () => setTimeout(sync, 0), {passive:true});
+  window.addEventListener('resize', sync, {passive:true});
+  window.addEventListener('orientationchange', sync, {passive:true});
+  setTimeout(sync, 50);
+})();
