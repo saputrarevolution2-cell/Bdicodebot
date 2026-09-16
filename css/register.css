@@ -64,3 +64,78 @@ html[data-theme="dark"] .auth-card{box-shadow:0 24px 70px rgba(0,0,0,.35)}
 }
 @media(min-width:900px){.auth-card{padding:34px}.auth-shell{padding:40px 20px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* =========================================================
+   REGISTER FOOTER — CLEAN / RESPONSIVE REPAIR
+   ========================================================= */
+.register-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.register-page .auth-shell {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.register-page #pasteleFooter,
+.register-page .pastele-footer {
+  width: 100%;
+  margin-top: 28px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+.register-page #pasteleFooter .container,
+.register-page .pastele-footer .container {
+  width: min(100% - 32px, 1180px);
+  margin-inline: auto;
+}
+
+.register-page #pasteleFooter .footer-bottom,
+.register-page .pastele-footer .footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.register-page #pasteleFooter a,
+.register-page .pastele-footer a {
+  text-decoration: none;
+}
+
+.register-page #pasteleFooter .footer-meta,
+.register-page .pastele-footer .footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 680px) {
+  .register-page #pasteleFooter,
+  .register-page .pastele-footer {
+    margin-top: 20px;
+  }
+
+  .register-page #pasteleFooter .container,
+  .register-page .pastele-footer .container {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .register-page #pasteleFooter .footer-bottom,
+  .register-page .pastele-footer .footer-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .register-page #pasteleFooter .footer-meta,
+  .register-page .pastele-footer .footer-meta {
+    width: 100%;
+    gap: 9px 12px;
+  }
+}
