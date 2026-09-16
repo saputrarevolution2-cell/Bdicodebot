@@ -6105,3 +6105,232 @@ DO $$ BEGIN
 END $$;
 
 COMMIT;
+
+
+-- ============================================================
+-- ADMIN PLATFORM CONTROLS — FORUM CHAT + WITHDRAWAL MODES
+-- ============================================================
+-- Settings are stored in site_settings.settings so no extra table is required.
+-- Only admins can change these values. Public clients read them through
+-- get_public_site_settings(). Withdrawal RPCs enforce the switches server-side.
+
+UPDATE public.site_settings
+SET settings = jsonb_set(
+  jsonb_set(
+    jsonb_set(
+      coalesce(settings,'{}'::jsonb),
+      '{forum_chat}',
+      coalesce(settings->'forum_chat','{"enabled":true,"reason":""}'::jsonb),
+      true
+    ),
+    '{withdrawal_instant}',
+    coalesce(settings->'withdrawal_instant','{"enabled":true,"reason":""}'::jsonb),
+    true
+  ),
+  '{withdrawal_manual}',
+  coalesce(settings->'withdrawal_manual','{"enabled":true,"reason":""}'::jsonb),
+  true
+),
+updated_at=now()
+WHERE id=1;
+
+CREATE OR REPLACE FUNCTION public.admin_set_platform_control(
+  p_section text,
+  p_enabled boolean,
+  p_reason text DEFAULT ''
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  section_name text := lower(btrim(coalesce(p_section,'')));
+  clean_reason text := left(btrim(coalesce(p_reason,'')),500);
+  current_settings jsonb;
+  new_settings jsonb;
+BEGIN
+  IF NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'ADMIN_REQUIRED';
+  END IF;
+
+  IF section_name NOT IN ('forum_chat','withdrawal_instant','withdrawal_manual') THEN
+    RAISE EXCEPTION 'INVALID_CONTROL_SECTION';
+  END IF;
+
+  SELECT coalesce(settings,'{}'::jsonb)
+    INTO current_settings
+  FROM public.site_settings
+  WHERE id=1
+  FOR UPDATE;
+
+  new_settings := jsonb_set(
+    current_settings,
+    ARRAY[section_name],
+    jsonb_build_object(
+      'enabled',coalesce(p_enabled,false),
+      'reason',CASE WHEN coalesce(p_enabled,false) THEN '' ELSE clean_reason END,
+      'updated_at',now()
+    ),
+    true
+  );
+
+  UPDATE public.site_settings
+  SET settings=new_settings,updated_at=now()
+  WHERE id=1;
+
+  IF section_name='forum_chat' THEN
+    UPDATE public.chat_groups
+    SET is_public=coalesce(p_enabled,false),updated_at=now()
+    WHERE slug='pastele-community';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'section',section_name,
+    'enabled',coalesce(p_enabled,false),
+    'reason',CASE WHEN coalesce(p_enabled,false) THEN '' ELSE clean_reason END
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.admin_set_platform_control(text,boolean,text) TO authenticated;
+
+-- Final withdrawal security gate with admin-controlled instant/manual switches.
+CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
+ p_amount numeric,p_mode text,p_method text,p_account_name text,p_account_number text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+ uid uuid:=auth.uid();
+ wid uuid;
+ available numeric:=0;
+ fee numeric:=0;
+ net_amount numeric:=0;
+ total_debit numeric:=0;
+ mode_normalized text:=lower(btrim(coalesce(p_mode,'')));
+ sched jsonb;
+ settings jsonb;
+ mode_cfg jsonb;
+ mode_enabled boolean;
+ mode_reason text;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+ IF p_amount IS NULL OR p_amount<=0 THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_AMOUNT'; END IF;
+
+ SELECT coalesce(s.settings,'{}'::jsonb) INTO settings
+ FROM public.site_settings s WHERE s.id=1;
+
+ IF mode_normalized='manual' THEN
+   mode_cfg:=coalesce(settings->'withdrawal_manual','{"enabled":true,"reason":""}'::jsonb);
+   mode_enabled:=coalesce((mode_cfg->>'enabled')::boolean,true);
+   mode_reason:=coalesce(mode_cfg->>'reason','WD Manual sedang ditutup');
+   IF NOT mode_enabled THEN
+     RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%',mode_reason;
+   END IF;
+
+   sched:=public.withdrawal_schedule_status(now());
+   IF coalesce((sched->>'open')::boolean,false)=false THEN
+     RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%',coalesce(sched->>'reason','WD Manual sedang ditutup');
+   END IF;
+   IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_10000'; END IF;
+   fee:=0;
+
+ ELSIF mode_normalized='instant' THEN
+   mode_cfg:=coalesce(settings->'withdrawal_instant','{"enabled":true,"reason":""}'::jsonb);
+   mode_enabled:=coalesce((mode_cfg->>'enabled')::boolean,true);
+   mode_reason:=coalesce(mode_cfg->>'reason','WD Instan sedang ditutup');
+   IF NOT mode_enabled THEN
+     RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%',mode_reason;
+   END IF;
+
+   IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
+   IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
+   fee:=0;
+
+ ELSE
+   RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
+ END IF;
+
+ net_amount:=greatest(0,p_amount-fee);
+ total_debit:=p_amount+fee;
+
+ SELECT available_balance INTO available
+ FROM public.wallets WHERE user_id=uid FOR UPDATE;
+
+ IF coalesce(available,0)<total_debit THEN
+   RAISE EXCEPTION 'INSUFFICIENT_BALANCE';
+ END IF;
+
+ UPDATE public.wallets
+ SET available_balance=available_balance-total_debit,
+     balance=balance-total_debit,
+     updated_at=now()
+ WHERE user_id=uid;
+
+ UPDATE public.profiles
+ SET balance=greatest(0,balance-total_debit),updated_at=now()
+ WHERE id=uid;
+
+ INSERT INTO public.withdrawals(
+   user_id,amount,fee,net_amount,mode,method,account_name,account_number,status
+ ) VALUES(
+   uid,p_amount,fee,net_amount,mode_normalized,
+   btrim(coalesce(p_method,'')),btrim(coalesce(p_account_name,'')),
+   btrim(coalesce(p_account_number,'')),'pending'
+ ) RETURNING id INTO wid;
+
+ INSERT INTO public.transactions(
+   user_id,amount,fee,net_amount,type,status,reference,description
+ ) VALUES(
+   uid,fee,fee,fee,'withdrawal_fee','completed',
+   'withdrawal-fee:'||wid::text,
+   CASE WHEN mode_normalized='instant' THEN 'WD Instant fee Rp15.000'
+        ELSE 'WD Manual fee Rp7.000' END
+ );
+
+ RETURN jsonb_build_object(
+   'id',wid,'status','pending','amount',p_amount,'fee',fee,
+   'net_amount',net_amount,'total_debit',total_debit,'mode',mode_normalized
+ );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.request_withdrawal_v2(numeric,text,text,text,text) TO authenticated;
+
+
+
+-- Closed forum is a hard server-side lock: existing members cannot bypass it.
+CREATE OR REPLACE FUNCTION public.send_chat_message(
+ p_group_id uuid,p_body text,p_reply_to uuid DEFAULT NULL
+)
+RETURNS public.chat_messages
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
+AS $$
+DECLARE uid uuid:=auth.uid(); r public.chat_messages;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+ IF length(btrim(coalesce(p_body,'')))<1 OR length(p_body)>4000 THEN RAISE EXCEPTION 'INVALID_MESSAGE'; END IF;
+
+ IF NOT EXISTS(
+   SELECT 1 FROM public.chat_groups
+   WHERE id=p_group_id AND is_public=true
+ ) AND NOT public.is_current_user_admin() THEN
+   RAISE EXCEPTION 'CHAT_CLOSED';
+ END IF;
+
+ INSERT INTO public.chat_members(group_id,user_id)
+ VALUES(p_group_id,uid) ON CONFLICT DO NOTHING;
+
+ INSERT INTO public.chat_messages(group_id,user_id,body,reply_to_id)
+ VALUES(p_group_id,uid,btrim(p_body),p_reply_to)
+ RETURNING * INTO r;
+ RETURN r;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.send_chat_message(uuid,text,uuid) TO authenticated;
+
