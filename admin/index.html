@@ -6,7 +6,7 @@
 <title>PasTele Admin — Control Center</title>
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<link rel="stylesheet" href="css/index.css?v=20260916-admin-control">
+<link rel="stylesheet" href="css/index.css?v=20260916-admin-control-full">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="app-page admin-page">
@@ -72,14 +72,30 @@
 
 </div>
 
-<section class="admin-section-head"><div><h2><i class="fa-solid fa-compass"></i> Quick Management</h2><p>Akses cepat ke modul yang sudah tersedia di project.</p></div></section>
-<div class="quick-grid">
-<a href="users.html" class="quick-card"><i class="fa-solid fa-users"></i><div><strong>Users</strong><small>Kelola akun & status user</small></div><i class="fa-solid fa-chevron-right"></i></a>
-<a href="content.html" class="quick-card"><i class="fa-solid fa-layer-group"></i><div><strong>Content</strong><small>Moderasi seluruh content</small></div><i class="fa-solid fa-chevron-right"></i></a>
-<a href="orders.html" class="quick-card"><i class="fa-solid fa-receipt"></i><div><strong>Orders</strong><small>Pantau transaksi marketplace</small></div><i class="fa-solid fa-chevron-right"></i></a>
-<a href="withdrawals.html" class="quick-card"><i class="fa-solid fa-money-bill-transfer"></i><div><strong>Withdrawals</strong><small>Proses permintaan WD</small></div><i class="fa-solid fa-chevron-right"></i></a>
-<a href="payments.html" class="quick-card"><i class="fa-solid fa-credit-card"></i><div><strong>Payments</strong><small>Pantau pembayaran</small></div><i class="fa-solid fa-chevron-right"></i></a>
-<a href="security.html" class="quick-card"><i class="fa-solid fa-shield-halved"></i><div><strong>Security</strong><small>Kontrol keamanan admin</small></div><i class="fa-solid fa-chevron-right"></i></a>
+<section class="admin-section-head"><div><h2><i class="fa-solid fa-compass"></i> Semua Fitur</h2><p>Satu tempat untuk memantau dan membuka pengelolaan seluruh modul yang sudah tersedia di PasTele.</p></div></section>
+<div class="module-grid">
+<a href="users.html" class="module-card"><i class="fa-solid fa-users"></i><div><strong>Users</strong><small>Akun, ban, admin, saldo</small></div><span>Kelola</span></a>
+<a href="content.html" class="module-card"><i class="fa-solid fa-layer-group"></i><div><strong>Content</strong><small>Moderasi semua jenis content</small></div><span>Kelola</span></a>
+<a href="products.html" class="module-card"><i class="fa-solid fa-box"></i><div><strong>Products</strong><small>Produk marketplace & harga</small></div><span>Kelola</span></a>
+<a href="pastes.html" class="module-card"><i class="fa-solid fa-file-lines"></i><div><strong>Pastes</strong><small>Paste & PasteLink</small></div><span>Kelola</span></a>
+<a href="orders.html" class="module-card"><i class="fa-solid fa-receipt"></i><div><strong>Orders</strong><small>Order & status transaksi</small></div><span>Kelola</span></a>
+<a href="payments.html" class="module-card"><i class="fa-solid fa-credit-card"></i><div><strong>Payments</strong><small>Pembayaran & provider</small></div><span>Kelola</span></a>
+<a href="withdrawals.html" class="module-card"><i class="fa-solid fa-money-bill-transfer"></i><div><strong>Withdrawals</strong><small>Proses WD user</small></div><span>Kelola</span></a>
+<a href="transactions.html" class="module-card"><i class="fa-solid fa-arrow-right-arrow-left"></i><div><strong>Transactions</strong><small>Riwayat saldo & transaksi</small></div><span>Lihat</span></a>
+<a href="bots.html" class="module-card"><i class="fa-solid fa-robot"></i><div><strong>Bots</strong><small>Bot yang terdaftar</small></div><span>Kelola</span></a>
+<a href="logs.html" class="module-card"><i class="fa-solid fa-list-check"></i><div><strong>Logs</strong><small>Audit aktivitas sistem</small></div><span>Lihat</span></a>
+<a href="security.html" class="module-card"><i class="fa-solid fa-shield-halved"></i><div><strong>Security</strong><small>Kontrol keamanan & admin</small></div><span>Kelola</span></a>
+<a href="../profile.html" class="module-card"><i class="fa-solid fa-user-circle"></i><div><strong>Profile / Social</strong><small>Profile, follow & engagement</small></div><span>Buka</span></a>
+</div>
+
+<section class="admin-section-head compact"><div><h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2><p>Aksi yang sering dipakai tanpa harus mencari menu.</p></div></section>
+<div class="quick-action-grid">
+<button type="button" class="quick-action" data-action="refresh"><i class="fa-solid fa-rotate"></i><span>Refresh Semua</span></button>
+<a href="users.html" class="quick-action"><i class="fa-solid fa-user-plus"></i><span>Kelola User</span></a>
+<a href="content.html" class="quick-action"><i class="fa-solid fa-shield-heart"></i><span>Moderasi Content</span></a>
+<a href="withdrawals.html" class="quick-action"><i class="fa-solid fa-hand-holding-dollar"></i><span>Proses WD</span></a>
+<a href="orders.html" class="quick-action"><i class="fa-solid fa-cart-shopping"></i><span>Cek Order</span></a>
+<a href="payments.html" class="quick-action"><i class="fa-solid fa-qrcode"></i><span>Cek Payment</span></a>
 </div>
 </div></div>
 </section>
