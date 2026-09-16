@@ -68,7 +68,7 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
 </head>
-<body class="public-no-navbar app-page">
+<body class="public-no-navbar app-page register-page">
 
   
   <!-- =====================================================
@@ -76,18 +76,9 @@
        ===================================================== -->
   <main class="auth-shell">
     <div class="card auth-card">
-      <div class="auth-top">
-        <a class="auth-brand" href="index.html" aria-label="PasTele">
-          <span class="auth-logo"><i class="fa-brands fa-telegram" aria-hidden="true"></i></span>
-          <span>PasTele</span>
-        </a>
-        <button class="theme-button" id="themeButton" type="button" aria-label="Ganti tema" title="Ganti tema">
-          <i class="fa-solid fa-moon" aria-hidden="true"></i>
-        </button>
-      </div>
       <!-- LOGO -->
       <div
-        class="auth-logo auth-logo-main"
+        class="auth-logo"
         aria-hidden="true"
       >
         <i class="fa-solid fa-user-plus"></i>
@@ -236,7 +227,7 @@
           <div
             id="registerTurnstile"
             data-sitekey="0x4AAAAAAErjLed781i5lbu8"
-            data-theme="light"
+            data-theme="auto"
             data-language="id"
             data-action="register"
             aria-label="Verifikasi keamanan pendaftaran"
@@ -281,38 +272,6 @@
           Daftar dengan Google
         </span>
       </button>
-      <!-- FOOTER -->
-      <div class="auth-footer">
-        <p class="muted page-style-2">
-          <span>
-            Sudah punya akun?
-          </span>
-          <a
-            class="page-style-3"
-            href="login.html"
-          >
-            <span>
-              Login
-            </span>
-            <i
-              class="fa-solid fa-arrow-right"
-              aria-hidden="true"
-            ></i>
-          </a>
-        </p>
-        <a
-          class="page-style-4"
-          href="index.html"
-        >
-          <i
-            class="fa-solid fa-arrow-left"
-            aria-hidden="true"
-          ></i>
-          <span>
-            Kembali
-          </span>
-        </a>
-      </div>
     </div>
   </main>
   <!-- =====================================================
