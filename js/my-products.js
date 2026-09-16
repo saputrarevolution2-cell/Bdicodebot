@@ -4087,6 +4087,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (sections) {
             content.innerHTML =
                 sections;
+            bindExpanders();
             bindActions();
             return;
         }
@@ -4202,9 +4203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     </div>
                                 </div>`;
                         } else if (group.key === "pastelink") {
-                            const expired = item?.expires_at
-                                ? new Date(item.expires_at)
-                                : null;
+                            const expired = item?.expires_at ? new Date(item.expires_at) : null;
                             const expiredLabel = expired && !Number.isNaN(expired.getTime())
                                 ? expired.toLocaleString("id-ID", {dateStyle:"medium", timeStyle:"short"})
                                 : "Tidak expired";
@@ -4233,63 +4232,76 @@ document.addEventListener("DOMContentLoaded", async () => {
                         }
 
                         return `
-                            <article class="my-row" data-product-type="${esc(group.key)}">
-                                <div class="my-row-head">
-                                    <span class="my-icon" aria-hidden="true">
-                                        <i class="fa-solid ${iconFor(group.key)}"></i>
+                            <article class="my-row is-collapsed" data-product-type="${esc(group.key)}">
+                                <button class="my-row-toggle" type="button" aria-expanded="false">
+                                    <span class="my-row-toggle-title" title="${esc(title)}">${esc(title)}</span>
+                                    <span class="my-row-toggle-status status-badge status-${esc(status.value)}">
+                                        <i class="fa-solid ${status.icon}" aria-hidden="true"></i>
+                                        ${esc(status.label)}
                                     </span>
+                                    <span class="my-row-toggle-chevron" aria-hidden="true">
+                                        <i class="fa-solid fa-chevron-down"></i>
+                                    </span>
+                                </button>
 
-                                    <div class="my-row-main">
-                                        <div class="my-row-title-wrap">
-                                            <h3 class="my-row-title" title="${esc(title)}">${esc(title)}</h3>
-                                            <span class="status-badge status-${esc(status.value)}">
-                                                <i class="fa-solid ${status.icon}" aria-hidden="true"></i>
-                                                ${esc(status.label)}
-                                            </span>
+                                <div class="my-row-details" hidden>
+                                    <div class="my-row-head">
+                                        <span class="my-icon" aria-hidden="true">
+                                            <i class="fa-solid ${iconFor(group.key)}"></i>
+                                        </span>
+
+                                        <div class="my-row-main">
+                                            <div class="my-row-title-wrap">
+                                                <h3 class="my-row-title" title="${esc(title)}">${esc(title)}</h3>
+                                                <span class="status-badge status-${esc(status.value)}">
+                                                    <i class="fa-solid ${status.icon}" aria-hidden="true"></i>
+                                                    ${esc(status.label)}
+                                                </span>
+                                            </div>
+
+                                            <div class="my-row-meta">
+                                                <span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(typeLabel)}</span>
+                                                <span class="meta-dot">•</span>
+                                                <span>${esc(dateOf(item))}</span>
+                                                ${price ? `<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>` : ""}
+                                            </div>
+
+                                            ${description ? `<div class="my-row-description">${esc(description)}</div>` : ""}
+                                            ${secondary}
+
+                                            ${safeHref ? `
+                                                <div class="my-row-url-box">
+                                                    <div class="my-row-url-label">
+                                                        <i class="fa-solid fa-globe"></i>
+                                                        <span>Link lengkap</span>
+                                                    </div>
+                                                    <a class="my-row-url" href="${esc(safeHref)}" target="_blank" rel="noopener noreferrer" title="${esc(safeHref)}">
+                                                        ${esc(safeHref)}
+                                                    </a>
+                                                </div>` : ""}
+                                        </div>
+                                    </div>
+
+                                    <div class="my-row-footer">
+                                        <div class="my-row-stats">
+                                            <span><i class="fa-solid fa-eye"></i> ${esc(String(views))} dilihat</span>
+                                            <span><i class="fa-solid fa-bag-shopping"></i> ${esc(String(sales))} terjual</span>
                                         </div>
 
-                                        <div class="my-row-meta">
-                                            <span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(typeLabel)}</span>
-                                            <span class="meta-dot">•</span>
-                                            <span>${esc(dateOf(item))}</span>
-                                            ${price ? `<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>` : ""}
+                                        <div class="my-row-actions">
+                                            <button class="btn" type="button" data-action="open" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                                <i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span>
+                                            </button>
+                                            <button class="btn" type="button" data-action="copy" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                                <i class="fa-solid fa-copy"></i><span>Salin</span>
+                                            </button>
+                                            <button class="btn primary" type="button" data-action="edit" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                                <i class="fa-solid fa-pen"></i><span>Edit</span>
+                                            </button>
+                                            <button class="btn danger" type="button" data-action="delete" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
+                                                <i class="fa-solid fa-trash"></i><span>Hapus</span>
+                                            </button>
                                         </div>
-
-                                        ${description ? `<div class="my-row-description">${esc(description)}</div>` : ""}
-                                        ${secondary}
-
-                                        ${safeHref ? `
-                                            <div class="my-row-url-box">
-                                                <div class="my-row-url-label">
-                                                    <i class="fa-solid fa-globe"></i>
-                                                    <span>Link lengkap</span>
-                                                </div>
-                                                <a class="my-row-url" href="${esc(safeHref)}" target="_blank" rel="noopener noreferrer" title="${esc(safeHref)}">
-                                                    ${esc(safeHref)}
-                                                </a>
-                                            </div>` : ""}
-                                    </div>
-                                </div>
-
-                                <div class="my-row-footer">
-                                    <div class="my-row-stats">
-                                        <span><i class="fa-solid fa-eye"></i> ${esc(String(views))} dilihat</span>
-                                        <span><i class="fa-solid fa-bag-shopping"></i> ${esc(String(sales))} terjual</span>
-                                    </div>
-
-                                    <div class="my-row-actions">
-                                        <button class="btn" type="button" data-action="open" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span>
-                                        </button>
-                                        <button class="btn" type="button" data-action="copy" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
-                                            <i class="fa-solid fa-copy"></i><span>Salin</span>
-                                        </button>
-                                        <button class="btn primary" type="button" data-action="edit" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
-                                            <i class="fa-solid fa-pen"></i><span>Edit</span>
-                                        </button>
-                                        <button class="btn danger" type="button" data-action="delete" data-id="${esc(item.id ?? "")}" data-type="${esc(group.key)}">
-                                            <i class="fa-solid fa-trash"></i><span>Hapus</span>
-                                        </button>
                                     </div>
                                 </div>
                             </article>
@@ -4298,6 +4310,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             </section>
         `;
+    }
+
+    function bindExpanders() {
+        content.querySelectorAll(".my-row-toggle").forEach((toggle) => {
+            toggle.addEventListener("click", () => {
+                const row = toggle.closest(".my-row");
+                const details = row?.querySelector(".my-row-details");
+                if (!row || !details) return;
+
+                const willOpen = row.classList.contains("is-collapsed");
+                row.classList.toggle("is-collapsed", !willOpen);
+                row.classList.toggle("is-expanded", willOpen);
+                toggle.setAttribute("aria-expanded", String(willOpen));
+                details.hidden = !willOpen;
+            });
+        });
     }
     /* =====================================================
        ACTION BINDING
