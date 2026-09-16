@@ -1,10 +1,58 @@
 <!DOCTYPE html>
-<html lang="id"><head>
-  <meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><title>Notifications</title><!-- PasTele canonical UI stack -->
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#229ed9">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="stylesheet" href="css/notifications.css">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <title>Notifikasi — PasTele</title>
+</head>
+<body class="app-page notifications-page">
+  <div id="navbar"></div>
 
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="assets/favicon.svg">
-</head><body class="app-page notifications-page"><div id="navbar"></div><main><section class="section"><div class="container"><span class="badge"><i class="fa-solid fa-bell"></i> Notifications</span><h1>Notifications</h1><p class="muted">Notifikasi akun dan status pengajuan.</p><div class="card" id="content"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div></div></div></section></main><div id="toast"></div><script src="js/notifications.js"></script>
-</body></html>
+  <main class="notifications-main">
+    <section class="notifications-hero">
+      <div class="container">
+        <div class="notice-hero-card">
+          <div class="notice-hero-icon"><i class="fa-solid fa-bell"></i></div>
+          <div class="notice-hero-copy">
+            <span class="notice-kicker">Pusat notifikasi</span>
+            <h1>Notifikasi</h1>
+            <p>Semua informasi akun, transaksi, dan pengumuman terbaru ada di sini.</p>
+          </div>
+          <div class="notice-summary" id="noticeSummary" aria-label="Ringkasan notifikasi">
+            <div><strong id="noticeTotal">—</strong><span>Total</span></div>
+            <div><strong id="noticeUnread">—</strong><span>Belum dibaca</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="notifications-feed">
+      <div class="container">
+        <div class="feed-heading">
+          <div>
+            <span class="section-label"><i class="fa-solid fa-layer-group"></i> Inbox</span>
+            <h2>Aktivitas terbaru</h2>
+          </div>
+          <span class="feed-hint"><i class="fa-regular fa-clock"></i> Terbaru di atas</span>
+        </div>
+        <div id="content">
+          <div class="empty">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Memuat notifikasi...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast"></div>
+  <script src="js/notifications.js"></script>
+</body>
+</html>
