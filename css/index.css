@@ -19,13 +19,13 @@ a{color:inherit;text-decoration:none}
 button,input{font:inherit}
 .ix-container{width:min(calc(100% - 32px),var(--ix-container));margin-inline:auto}
 .ix-nav{position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--ix-surface) 90%,transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--ix-border)}
-.ix-nav-inner{min-height:70px;display:flex;align-items:center;gap:24px}
-.ix-brand{display:inline-flex;align-items:center;gap:9px;font-weight:900;letter-spacing:-.03em;font-size:18px}
+.ix-nav-inner{min-height:70px;display:flex;align-items:center;gap:18px}
+.ix-brand{display:inline-flex;align-items:center;gap:9px;font-weight:900;letter-spacing:-.03em;font-size:18px;flex:0 0 auto}
 .ix-brand-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,var(--ix-primary),#5bc5ef);color:#fff;box-shadow:0 8px 20px rgba(34,158,217,.22)}
-.ix-nav-links{display:flex;align-items:center;gap:4px;flex:1}
+.ix-nav-links{display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:0}
 .ix-nav-links a{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:10px;color:var(--ix-muted);font-size:12px;font-weight:700}
 .ix-nav-links a:hover,.ix-nav-links a.active{color:var(--ix-primary);background:var(--ix-surface-2)}
-.ix-nav-actions{display:flex;align-items:center;gap:8px}
+.ix-nav-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto;margin-left:auto}
 .ix-icon-btn,.ix-menu-btn{border:1px solid var(--ix-border);background:var(--ix-surface);color:var(--ix-text);cursor:pointer}
 .ix-icon-btn{width:40px;height:40px;border-radius:11px}
 .ix-menu-btn{display:none;width:40px;height:40px;border-radius:11px}
@@ -81,3 +81,15 @@ button,input{font:inherit}
 @media(max-width:850px){.ix-stats{grid-template-columns:repeat(2,1fr)}.ix-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ix-platform-grid{grid-template-columns:1fr}.ix-steps{grid-template-columns:repeat(2,1fr)}.ix-creator-card{grid-template-columns:1fr}.ix-money{min-height:160px}}
 @media(max-width:620px){.ix-container{width:min(calc(100% - 22px),var(--ix-container))}.ix-nav-inner{min-height:62px}.ix-mobile-menu{top:62px;left:11px;right:11px}.ix-nav-actions .ix-btn{display:none}.ix-hero{padding-top:42px}.ix-hero h1{font-size:39px}.ix-hero-copy>p{font-size:13px}.ix-hero-actions{display:grid}.ix-btn-lg{width:100%}.ix-stats{grid-template-columns:repeat(2,1fr);gap:8px}.ix-stat{padding:11px}.ix-market-grid,.ix-feature-grid,.ix-steps{grid-template-columns:1fr}.ix-card{border-radius:16px}.ix-thumb{height:178px}.ix-card-stats{grid-template-columns:repeat(4,1fr)}.ix-platform-card{grid-template-columns:40px 1fr;padding:15px}.ix-platform-icon{width:40px;height:40px;border-radius:12px;font-size:15px}.ix-footer-grid{grid-template-columns:repeat(2,1fr);gap:22px}.ix-footer-grid>div:first-child{grid-column:1/-1}.ix-footer-bottom{flex-direction:column}}
 @media(max-width:380px){.ix-card-stats{grid-template-columns:repeat(2,1fr);row-gap:7px}.ix-hero h1{font-size:35px}}
+
+/* Navbar alignment fix: actions always stay on the right edge. */
+@media(min-width:1051px){
+  .ix-nav-inner{grid-template-columns:auto minmax(0,1fr) auto;}
+  .ix-nav-inner{display:grid;gap:18px;}
+  .ix-nav-links{width:100%;}
+  .ix-nav-actions{justify-self:end;}
+}
+@media(max-width:1050px){
+  .ix-nav-inner{display:flex;}
+  .ix-nav-actions{margin-left:auto;}
+}
