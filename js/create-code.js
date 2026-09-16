@@ -3107,9 +3107,8 @@ document.addEventListener("DOMContentLoaded", () => {
     select.innerHTML = '<option value="">Memuat bot...</option>';
     if (status) status.hidden = true;
 
-    const normalizeBot = (row) => {
+    const normalizeBotRow = (row) => {
       if (!row || typeof row !== "object") return null;
-
       const id = row.id ?? row.approved_bot_id ?? null;
       const username = normalizeBotUsername(
         row.bot_username ?? row.username ?? row.botUsername ?? ""
@@ -3117,40 +3116,42 @@ document.addEventListener("DOMContentLoaded", () => {
       const name = String(
         row.bot_name ?? row.name ?? row.botName ?? ""
       ).trim();
-      const telegramBotId = row.bot_id ?? row.telegram_bot_id ?? null;
-
+      const botId = row.bot_id ?? row.telegram_bot_id ?? null;
       const active =
-        row.is_active === true ||
-        String(row.is_active ?? "").toLowerCase() === "true";
+        row.is_active === undefined || row.is_active === null
+          ? true
+          : row.is_active === true || String(row.is_active).toLowerCase() === "true";
 
-      if (!id || !username || !active) return null;
-
+      if (!id || !username) return null;
       return {
-        id: String(id),
+        id,
         bot_username: username,
         bot_name: name,
-        bot_id: telegramBotId,
-        is_active: true
+        bot_id: botId,
+        is_active: active
       };
     };
 
-    const normalizeRows = (data) => {
+    const normalizeRpcData = (data) => {
       if (Array.isArray(data)) return data;
-      if (Array.isArray(data?.data)) return data.data;
-      if (Array.isArray(data?.rows)) return data.rows;
-      if (data && typeof data === "object" && (data.id || data.approved_bot_id)) {
-        return [data];
+      if (data && Array.isArray(data.data)) return data.data;
+      if (data && Array.isArray(data.rows)) return data.rows;
+      if (data && typeof data === "object") {
+        /* Some PostgREST/RPC responses may contain a single JSON object. */
+        if (data.id || data.approved_bot_id) return [data];
       }
       return [];
     };
 
     const renderBots = (rows) => {
       const unique = new Map();
-
-      normalizeRows(rows)
-        .map(normalizeBot)
+      rows
+        .map(normalizeBotRow)
         .filter(Boolean)
-        .forEach((bot) => unique.set(bot.id, bot));
+        .filter((row) => row.is_active === true)
+        .forEach((row) => {
+          unique.set(String(row.id), row);
+        });
 
       bots = [...unique.values()].sort((a, b) => {
         const aa = (a.bot_name || a.bot_username).toLowerCase();
@@ -3163,6 +3164,7 @@ document.addEventListener("DOMContentLoaded", () => {
         select.innerHTML = '<option value="">Belum ada bot aktif</option>';
         if (status) {
           status.hidden = false;
+          status.className = "inline-status is-empty";
           status.innerHTML =
             '<i class="fa-solid fa-circle-info"></i>' +
             '<span>Belum ada bot aktif yang disetujui admin.</span>';
@@ -3172,19 +3174,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       select.disabled = false;
       select.innerHTML =
-        '<option value="">Pilih bot...</option>' +
+        '<option value="">Silakan pilih bot aktif...</option>' +
         bots.map((bot) => {
           const username = normalizeBotUsername(bot.bot_username);
           const name = String(bot.bot_name || "").trim();
-          const suffix =
+          const label =
             name && name.toLowerCase() !== username.toLowerCase()
               ? ` — ${esc(name)}`
               : "";
-
-          return `<option value="${esc(bot.id)}">🤖 @${esc(username)}${suffix}</option>`;
+          return `<option value="${esc(bot.id)}">🤖 @${esc(username)}${label}</option>`;
         }).join("");
 
-      if (status) status.hidden = true;
+      if (status) {
+        status.hidden = false;
+        status.className = "inline-status is-ready";
+        status.innerHTML =
+          '<i class="fa-solid fa-circle-check"></i>' +
+          '<span>Silakan pilih bot aktif yang disetujui admin.</span>';
+      }
       return true;
     };
 
@@ -3192,26 +3199,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const client = requireClient();
 
       /*
-       * Canonical DB:
-       * public.approved_bots
-       *   id uuid
-       *   bot_username text
-       *   bot_name text
-       *   bot_id bigint
-       *   is_active boolean
-       *
-       * The SECURITY DEFINER RPC is preferred because it is the
-       * public-safe read path defined by the database.
+       * Primary source: SECURITY DEFINER RPC from the canonical database.
+       * It is intentionally public-readable and returns only active bots.
        */
       const rpc = await client.rpc("get_active_approved_bots");
-
-      if (!rpc.error && renderBots(rpc.data)) {
-        return;
+      if (!rpc.error) {
+        const rpcRows = normalizeRpcData(rpc.data);
+        if (renderBots(rpcRows)) return;
+      } else {
+        console.warn("[PasTele][CreateCode] RPC bot list failed:", rpc.error);
       }
 
       /*
-       * Direct table fallback. This is intentionally limited to the
-       * public columns and active rows used by the canonical schema.
+       * Fallback: read the public approved_bots policy directly.
+       * This handles deployments where the RPC exists but is stale,
+       * has a different return shape, or was not exposed correctly.
        */
       const direct = await client
         .from("approved_bots")
@@ -3219,30 +3221,24 @@ document.addEventListener("DOMContentLoaded", () => {
         .eq("is_active", true)
         .order("bot_name", { ascending: true });
 
-      if (!direct.error && renderBots(direct.data)) {
-        return;
+      if (!direct.error && renderBots(direct.data || [])) return;
+      if (direct.error) {
+        console.warn("[PasTele][CreateCode] approved_bots fallback failed:", direct.error);
       }
 
-      console.error(
-        "[PasTele][CreateCode] approved_bots load failed:",
-        rpc.error || direct.error
-      );
+      throw direct.error || rpc.error || new Error("BOT_LIST_EMPTY");
 
-      throw rpc.error || direct.error || new Error("BOT_LIST_EMPTY");
     } catch (error) {
-      console.error("[PasTele][CreateCode] loadBots:", error);
-
+      console.error("[PasTele][CreateCode] loadBots failed:", error);
       bots = [];
       select.disabled = true;
       select.innerHTML = '<option value="">Bot gagal dimuat</option>';
-
       if (status) {
         status.hidden = false;
         status.innerHTML =
           '<i class="fa-solid fa-triangle-exclamation"></i>' +
           '<span>Daftar bot tidak dapat dimuat. Coba refresh halaman.</span>';
       }
-
       toast("Daftar bot gagal dimuat. Coba refresh halaman.", "error");
     }
   }
@@ -3322,6 +3318,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const selected = bots.find((bot) => String(bot.id) === String($("botId").value));
     $("botUsernamePreview").textContent =
       selected ? `@${normalizeBotUsername(selected.bot_username)}` : "";
+
+    const status = $("botStatus");
+    if (status && bots.length) {
+      status.hidden = false;
+      status.className = selected ? "inline-status is-selected" : "inline-status is-ready";
+      status.innerHTML = selected
+        ? '<i class="fa-solid fa-circle-check"></i><span>Bot dipilih. Pastikan Code bot yang kamu masukkan memang untuk <strong>@' +
+          esc(normalizeBotUsername(selected.bot_username)) +
+          '</strong>.</span>'
+        : '<i class="fa-solid fa-circle-check"></i><span>Silakan pilih bot aktif yang disetujui admin.</span>';
+    }
   });
 
   $("createForm")?.addEventListener("submit", async (event) => {
@@ -3371,16 +3378,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (error) throw error;
 
-      const result = Array.isArray(data) ? data[0] : data;
-
-      if (!result?.ok || !result?.slug) {
+      if (!data?.ok || !data?.slug) {
         throw new Error("Database tidak mengonfirmasi pembuatan Code.");
       }
 
       renderResult({
         title: values.title,
-        access: result.access_type || values.access,
-        slug: result.slug,
+        access: data.access_type || values.access,
+        slug: data.slug,
         botUsername: bot.bot_username
       });
 
