@@ -3909,6 +3909,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* =====================================================
        DATABASE
        ===================================================== */
+    /* Release any creator earnings whose H+2 settlement has matured.
+       The RPC is safe to call from the authenticated dashboard; failures
+       must not prevent the rest of the dashboard from loading. */
+    try {
+      await supabase.rpc('release_matured_wallet');
+    } catch (error) {
+      console.warn('[PasTele][Wallet] Matured settlement release skipped:', error);
+    }
+
     const [
       products,
       pastes,
@@ -3919,7 +3928,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       transactions,
       analyticsEvents,
       likesResult,
-      followsResult
+      followsResult,
+      walletResult
     ] =
       await Promise.all([
         /*
@@ -4273,7 +4283,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           .eq(
             'creator_id',
             user.id
-          )
+          ),
+        /* WALLET LEDGER — canonical fields from the final SQL. */
+        supabase
+          .from('wallets')
+          .select('balance,available_balance,pending_balance,updated_at')
+          .eq('user_id', user.id)
+          .maybeSingle()
       ]);
     /* =====================================================
        ERROR CHECK
@@ -5037,6 +5053,46 @@ document.addEventListener('DOMContentLoaded', async () => {
           totalRevenue
         );
     }
+
+    /* =====================================================
+       WALLET + PERIOD REVENUE
+       ===================================================== */
+    const wallet = walletResult?.error ? null : (walletResult?.data || null);
+    const profileBalance = Number(profile?.balance || 0);
+    const availableBalance = Number(
+      wallet?.available_balance ?? profileBalance
+    );
+    const pendingBalance = Number(
+      wallet?.pending_balance ?? Math.max(0, Number(wallet?.balance || profileBalance) - availableBalance)
+    );
+
+    const localDayKey = (value) => {
+      const date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+    const now = new Date();
+    const todayKey = localDayKey(now);
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const todayRevenue = saleRows.reduce((sum, sale) => {
+      return localDayKey(sale.date) === todayKey ? sum + Number(sale.revenue || 0) : sum;
+    }, 0);
+    const monthRevenue = saleRows.reduce((sum, sale) => {
+      const date = new Date(sale.date);
+      if (Number.isNaN(date.getTime())) return sum;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return key === monthKey ? sum + Number(sale.revenue || 0) : sum;
+    }, 0);
+
+    if ($('pendingBalance')) $('pendingBalance').textContent = money(pendingBalance);
+    if ($('availableBalance')) $('availableBalance').textContent = money(availableBalance);
+    if ($('todayRevenue')) $('todayRevenue').textContent = money(todayRevenue);
+    if ($('monthRevenue')) $('monthRevenue').textContent = money(monthRevenue);
+
     /* =====================================================
        INTERACTIONS
        ===================================================== */
