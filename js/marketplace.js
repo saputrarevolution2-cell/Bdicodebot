@@ -1006,71 +1006,47 @@ window.PASTELE_CONFIG = Object.freeze({
   );
 })();
 
-/* PasTele — Canonical global theme manager. */
+/* PasTele — Canonical global theme manager.
+   Synced with Login/Register: manual Light/Dark only. */
 (() => {
   'use strict';
   const root = document.documentElement;
   const KEY = 'pastele-theme';
-  const MODES = ['auto', 'light', 'dark', 'system'];
+  const normalize = mode => mode === 'dark' ? 'dark' : 'light';
 
-  const resolve = (mode) => {
-    if (mode === 'light' || mode === 'dark') return mode;
-    if (mode === 'system') {
-      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    const hour = new Date().getHours();
-    return (hour >= 18 || hour < 6) ? 'dark' : 'light';
-  };
-
-  const apply = (mode = localStorage.getItem(KEY) || 'auto') => {
-    if (!MODES.includes(mode)) mode = 'auto';
-    const theme = resolve(mode);
-    root.dataset.theme = theme;
-    root.dataset.themeMode = mode;
-    root.classList.toggle('theme-dark', theme === 'dark');
-    root.classList.toggle('theme-light', theme === 'light');
-    root.style.colorScheme = theme;
+  const apply = (mode = localStorage.getItem(KEY) || 'light') => {
+    const selected = normalize(mode);
+    localStorage.setItem(KEY, selected);
+    root.dataset.theme = selected;
+    root.dataset.themeMode = selected;
+    root.classList.toggle('theme-dark', selected === 'dark');
+    root.classList.toggle('theme-light', selected === 'light');
+    root.style.colorScheme = selected;
     if (document.body) {
-      document.body.classList.toggle('theme-dark', theme === 'dark');
-      document.body.classList.toggle('theme-light', theme === 'light');
+      document.body.classList.toggle('theme-dark', selected === 'dark');
+      document.body.classList.toggle('theme-light', selected === 'light');
     }
-    document.querySelectorAll('[data-theme-option]').forEach((button) => {
-      const active = button.dataset.themeOption === mode;
+    document.querySelectorAll('[data-theme-option]').forEach(button => {
+      const active = button.dataset.themeOption === selected;
       button.classList.toggle('active', active);
       button.setAttribute('aria-pressed', String(active));
     });
-    window.dispatchEvent(new CustomEvent('pastele-theme-change', { detail: { mode, theme } }));
-    return theme;
+    window.dispatchEvent(new CustomEvent('pastele-theme-change', {
+      detail: { mode: selected, theme: selected }
+    }));
+    return selected;
   };
 
-  const set = (mode) => {
-    if (!MODES.includes(mode)) mode = 'auto';
-    localStorage.setItem(KEY, mode);
-    return apply(mode);
-  };
-
-  const cycle = () => {
-    const current = localStorage.getItem(KEY) || 'auto';
-    const index = Math.max(0, MODES.indexOf(current));
-    return set(['auto', 'light', 'dark', 'system'][(index + 1) % 4]);
-  };
+  const set = mode => apply(normalize(mode));
+  const cycle = () => set((localStorage.getItem(KEY) || 'light') === 'dark' ? 'light' : 'dark');
 
   window.PasTeleTheme = Object.freeze({
-    get: () => localStorage.getItem(KEY) || 'auto',
-    resolved: () => resolve(localStorage.getItem(KEY) || 'auto'),
-    set,
-    cycle,
-    apply
+    get: () => normalize(localStorage.getItem(KEY) || 'light'),
+    resolved: () => normalize(localStorage.getItem(KEY) || 'light'),
+    set, cycle, apply
   });
 
   apply();
-  window.setInterval(() => {
-    if ((localStorage.getItem(KEY) || 'auto') === 'auto') apply('auto');
-  }, 60 * 1000);
-
-  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change', () => {
-    if ((localStorage.getItem(KEY) || 'auto') === 'system') apply('system');
-  });
 })();
 
 /* ============================================================
@@ -2177,26 +2153,17 @@ window.PASTELE_CONFIG = Object.freeze({
         localStorage.getItem(
           'pastele-theme'
         );
-      if (
-        stored === 'light' ||
-        stored === 'dark' ||
-        stored === 'auto'
-      ) {
-        return stored;
-      }
-      return 'auto';
+      return stored === 'dark' ? 'dark' : 'light';
     };
     const updateThemeLabel = () => {
       if (!themeText) return;
       const mode =
         getThemeMode();
       const labels = {
-        auto: 'Auto',
         light: 'Terang',
         dark: 'Gelap'
       };
-      themeText.textContent =
-        labels[mode] || 'Auto';
+      themeText.textContent = labels[mode] || 'Terang';
     };
     updateThemeLabel();
     /* ========================================================
@@ -2221,20 +2188,8 @@ window.PASTELE_CONFIG = Object.freeze({
               0
             );
           } else {
-            const modes = [
-              'auto',
-              'light',
-              'dark'
-            ];
-            const current =
-              getThemeMode();
-            const index =
-              modes.indexOf(current);
-            const next =
-              modes[
-                (index + 1) %
-                modes.length
-              ];
+            const current = getThemeMode();
+            const next = current === 'dark' ? 'light' : 'dark';
             localStorage.setItem(
               'pastele-theme',
               next
@@ -2256,10 +2211,7 @@ window.PASTELE_CONFIG = Object.freeze({
                   'light'
                 );
             } else {
-              document.documentElement
-                .removeAttribute(
-                  'data-theme'
-                );
+              document.documentElement.setAttribute('data-theme', 'light');
             }
             updateThemeLabel();
           }
@@ -4620,9 +4572,9 @@ document.documentElement.classList.add("pastele-ready");
   async function bootData(){
     const client=sb(); if(!client){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Supabase belum siap.</div>';return}
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
-    const q=await client.from('chat_groups').select('id,name,slug,description').eq('slug','pastele-community').maybeSingle();
+    const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.description||'Forum & Group Chat';
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
     if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
