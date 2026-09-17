@@ -34,16 +34,55 @@
   async function isAdmin(){
     const s=await waitForSession();
     if(!s?.user) return {ok:false,reason:'login'};
+
     let rpcError=null;
+
+    // Primary admin check through the database RPC.
     try{
       const r=await sb.rpc('is_current_user_admin');
-      if(!r.error && (r.data===true || r.data?.is_admin===true || String(r.data?.is_admin).toLowerCase()==='true')) return {ok:true,user:s.user};
-      rpcError=r.error;
-    }catch(e){rpcError=e}
+      if(
+        !r.error &&
+        (
+          r.data===true ||
+          r.data?.is_admin===true ||
+          String(r.data?.is_admin).toLowerCase()==='true'
+        )
+      ){
+        return {ok:true,user:s.user};
+      }
+      rpcError=r.error||null;
+    }catch(e){
+      rpcError=e;
+    }
+
+    // Fallback: use only columns that exist in public.profiles.
     try{
-      const q=await sb.from('profiles').select('id,is_admin,role,status,is_banned').eq('id',s.user.id).maybeSingle();
-      if(!q.error && q.data && !q.data.is_banned && !['blocked','disabled','suspended'].includes(String(q.data.status||'').toLowerCase()) && (q.data.is_admin===true || String(q.data.role||'').toLowerCase()==='admin')) return {ok:true,user:s.user,profile:q.data};
-    }catch(e){rpcError=rpcError||e}
+      const q=await sb
+        .from('profiles')
+        .select('id,is_admin,role,is_banned')
+        .eq('id',s.user.id)
+        .maybeSingle();
+
+      if(q.error) throw q.error;
+
+      const profile=q.data;
+
+      if(
+        profile &&
+        profile.is_banned!==true &&
+        (
+          profile.is_admin===true ||
+          ['admin','owner'].includes(
+            String(profile.role||'').toLowerCase()
+          )
+        )
+      ){
+        return {ok:true,user:s.user,profile};
+      }
+    }catch(e){
+      rpcError=rpcError||e;
+    }
+
     return {ok:false,reason:rpcError?'rpc':'not_admin',error:rpcError};
   }
   async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
