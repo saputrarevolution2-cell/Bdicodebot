@@ -3062,6 +3062,15 @@ document.addEventListener(
         const cancel =
             $("cancelPayment");
 
+        const prePaymentGate =
+            $("prePaymentGate");
+
+        const buyNowPayment =
+            $("buyNowPayment");
+
+        const closePaymentBeforeStart =
+            $("closePaymentBeforeStart");
+
         const orderIdEl =
             $("orderId");
 
@@ -3108,6 +3117,9 @@ document.addEventListener(
         let creating = false;
 
         let paymentCreated = false;
+
+        // Cashi must not be created until the buyer explicitly presses Buy Now.
+        let paymentStarted = false;
 
         let currentOrder = null;
 
@@ -4255,6 +4267,10 @@ document.addEventListener(
 
         const poll =
             async () => {
+                if (!paymentStarted) {
+                    return;
+                }
+
                 if (
                     redirecting
                 ) {
@@ -4527,7 +4543,9 @@ document.addEventListener(
 
                     const confirmed =
                         window.confirm(
-                            "Batalkan halaman pembayaran ini? Order tetap tersimpan dan belum dianggap dibatalkan."
+                            paymentStarted
+                                ? "Kamu sudah masuk ke pembayaran Cashi. Jika sudah membayar, jangan menutup halaman ini karena order tetap menunggu verifikasi. Tutup hanya jika belum membayar. Lanjutkan?"
+                                : "Tutup halaman pembayaran ini? Belum ada transaksi Cashi yang dibuat."
                         );
 
                     if (!confirmed) {
@@ -4643,127 +4661,172 @@ document.addEventListener(
                 initialStatus ===
                     "failed"
             ) {
+                if (prePaymentGate) {
+                    prePaymentGate.hidden = true;
+                    prePaymentGate.setAttribute("hidden", "");
+                }
                 return;
             }
 
-            /* ===============================================
-               CREATE / REUSE CASHI PAYMENT
-               =============================================== */
-
             /*
-             * IMPORTANT:
+             * IMPORTANT — CASHI CREATE-ORDER IS DELAYED.
              *
-             * Whether payment_reference exists or not,
-             * call create-cashi-payment.
-             *
-             * Backend handles invoice reuse.
-             *
-             * This solves the previous problem where
-             * QR disappeared after page reload.
+             * At this stage we only show the product title and
+             * exact order amount. No Cashi invoice, QR, or
+             * gateway polling is started.
              */
+            paymentStarted = false;
 
-            try {
-                await createPayment(
-                    currentOrder
-                );
-            } catch (
-                paymentError
-            ) {
-                console.error(
-                    "[Payment] Create/reuse:",
-                    paymentError
-                );
-
-                /*
-                 * Do not immediately destroy the whole
-                 * payment page if gateway check can still
-                 * recover an existing invoice.
-                 */
-
-                if (
-                    currentOrder
-                        .payment_reference
-                ) {
-                    try {
-                        const gateway =
-                            await checkGatewayStatus();
-
-                        const payment =
-                            extractPayment(
-                                {
-                                    data:
-                                        gateway
-                                }
-                            );
-
-                        if (
-                            payment.qris ||
-                            payment.paymentUrl
-                        ) {
-                            await renderPayment(
-                                {
-                                    qris:
-                                        payment.qris,
-                                    paymentUrl:
-                                        payment.paymentUrl
-                                }
-                            );
-                        }
-                    } catch (
-                        recoveryError
-                    ) {
-                        console.warn(
-                            "[Payment] Existing payment recovery:",
-                            recoveryError
-                        );
-                    }
-                }
-
-                /*
-                 * If QR is still unavailable,
-                 * show a useful message inside QR area,
-                 * while keeping order information visible.
-                 */
-
-                if (
-                    qr &&
-                    !qr.innerHTML.trim()
-                ) {
-                    qr.innerHTML = `
-                        <div class="qr-loading">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            <span>
-                                Pembayaran belum dapat dimuat.
-                                Tekan "Cek Pembayaran" untuk mencoba lagi.
-                            </span>
-                        </div>
-                    `;
-                }
+            if (content) {
+                content.classList.add("prepay-mode");
             }
 
-            /* ===============================================
-               START POLLING
-               =============================================== */
+            if (prePaymentGate) {
+                prePaymentGate.hidden = false;
+                prePaymentGate.removeAttribute("hidden");
+            }
 
-            if (
-                !timer
-            ) {
-                timer =
-                    setInterval(
-                        () => {
-                            poll().catch(
-                                (
-                                    error
-                                ) => {
+            const startPayment = async () => {
+                if (
+                    paymentStarted ||
+                    creating ||
+                    redirecting
+                ) {
+                    return;
+                }
+
+                if (!currentOrder) {
+                    return;
+                }
+
+                if (
+                    isSuccess(currentOrder.status) ||
+                    isFailed(currentOrder.status)
+                ) {
+                    return;
+                }
+
+                const confirmed = window.confirm(
+                    "Pastikan judul dan nominal sudah benar. Setelah Buy Now ditekan, satu transaksi Cashi akan dibuat. Jika kamu sudah membayar, jangan tekan Batal/Close dan jangan membuat pembayaran baru. Lanjutkan?"
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                paymentStarted = true;
+
+                if (buyNowPayment) {
+                    buyNowPayment.disabled = true;
+                    buyNowPayment.innerHTML = `
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span>Menyiapkan pembayaran...</span>
+                    `;
+                }
+
+                if (prePaymentGate) {
+                    prePaymentGate.hidden = true;
+                    prePaymentGate.setAttribute("hidden", "");
+                }
+
+                if (content) {
+                    content.classList.remove("prepay-mode");
+                }
+
+                try {
+                    await createPayment(currentOrder);
+
+                    /*
+                     * Start polling ONLY after Cashi order creation
+                     * succeeds. This avoids unnecessary gateway calls.
+                     */
+                    if (!timer) {
+                        timer = setInterval(
+                            () => {
+                                poll().catch((error) => {
                                     console.warn(
                                         "[Payment] Poll error:",
                                         error
                                     );
-                                }
-                            );
-                        },
-                        5000
+                                });
+                            },
+                            5000
+                        );
+                    }
+
+                    if (check) {
+                        check.disabled = false;
+                    }
+
+                    if (cancel) {
+                        cancel.disabled = false;
+                    }
+                } catch (paymentError) {
+                    console.error(
+                        "[Payment] Create/reuse:",
+                        paymentError
                     );
+
+                    /*
+                     * Do not create another invoice automatically.
+                     * The buyer can retry only by explicitly pressing
+                     * Buy Now again.
+                     */
+                    paymentStarted = false;
+
+                    if (content) {
+                        content.classList.add("prepay-mode");
+                    }
+
+                    if (prePaymentGate) {
+                        prePaymentGate.hidden = false;
+                        prePaymentGate.removeAttribute("hidden");
+                    }
+
+                    if (buyNowPayment) {
+                        buyNowPayment.disabled = false;
+                        buyNowPayment.innerHTML = `
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>Coba Lagi</span>
+                        `;
+                    }
+
+                    if (qr) {
+                        qr.innerHTML = "";
+                    }
+
+                    toast(
+                        paymentError?.message ||
+                        "Gagal menyiapkan pembayaran Cashi. Tidak ada transaksi baru yang dibuat otomatis.",
+                        "error"
+                    );
+                }
+            };
+
+            if (buyNowPayment) {
+                buyNowPayment.onclick = (event) => {
+                    event.preventDefault();
+                    startPayment();
+                };
+            }
+
+            if (closePaymentBeforeStart) {
+                closePaymentBeforeStart.onclick = (event) => {
+                    event.preventDefault();
+
+                    if (paymentStarted) {
+                        return;
+                    }
+
+                    if (
+                        document.referrer &&
+                        document.referrer.startsWith(window.location.origin)
+                    ) {
+                        window.history.back();
+                    } else {
+                        window.location.href = "marketplace.html";
+                    }
+                };
             }
 
             /* ===============================================
@@ -4958,7 +5021,8 @@ document.addEventListener(
                     }
 
                     if (
-                        !currentOrder
+                        !currentOrder ||
+                        !paymentStarted
                     ) {
                         return;
                     }
@@ -5094,26 +5158,11 @@ document.documentElement.classList.add("pastele-ready");
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
 
-
-/* Clean QR UI bridge */
-(function(){
-  const _fetch = window.fetch;
-  window.fetch = async function(){
-    const res = await _fetch.apply(this, arguments);
-    try {
-      const url = String(arguments[0] || "");
-      if (/cashi-create-order|cashi-check-status/.test(url)) {
-        const clone = res.clone();
-        const data = await clone.json();
-        if (data && data.success) {
-          window.dispatchEvent(new CustomEvent("cashi:payment", {detail:{
-            amount:data.amount,
-            qrUrl:data.qrUrl,
-            checkout_url:data.checkout_url
-          }}));
-        }
-      }
-    } catch(e) {}
-    return res;
-  };
-})();
+/* PasTele clean QR presentation hooks */
+document.addEventListener("DOMContentLoaded", () => {
+  const cashUrl = document.getElementById("cashUrl");
+  if (cashUrl) {
+    cashUrl.querySelector("span")?.replaceChildren(document.createTextNode("Buka Pembayaran Cashi"));
+    cashUrl.setAttribute("aria-label", "Buka Pembayaran Cashi");
+  }
+});
