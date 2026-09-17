@@ -2602,7 +2602,26 @@ const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",ma
 const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
 
 const qs=new URLSearchParams(location.search);
-const slug=decodeURIComponent((qs.get("slug")||"").trim());
+
+/* Resolve PasteLink slug from both query-string and public route.
+ * Supported: /pp/ky9m, /pf/ky9m, /p/ky9m (legacy), and ?slug=ky9m
+ */
+function resolvePublicSlug(){
+  const querySlug=String(qs.get("slug")||"").trim();
+  if(querySlug){
+    try{return decodeURIComponent(querySlug).trim()}catch{return querySlug}
+  }
+  const parts=String(location.pathname||"").split("/").filter(Boolean);
+  if(parts.length>=2){
+    const root=String(parts[0]||"").toLowerCase();
+    if(root==="pp" || root==="pf" || root==="p"){
+      try{return decodeURIComponent(parts.slice(1).join("/")).trim()}
+      catch{return parts.slice(1).join("/").trim()}
+    }
+  }
+  return "";
+}
+const slug=resolvePublicSlug();
 function guestToken(){
   const k="pastele-guest-checkout-token";
   let v=null;
