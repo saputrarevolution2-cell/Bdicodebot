@@ -3113,9 +3113,9 @@ document.addEventListener(
                     "Pembayaran belum berstatus berhasil. Silakan kembali ke halaman pembayaran untuk melanjutkan atau menunggu verifikasi."
                 );
                 setAccessUrl(
-                    `payment.html?order_id=${encodeURIComponent(
+                    `/payment.html?order_id=${encodeURIComponent(
                         order.id
-                    )}`
+                    )}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}`
                 );
                 return;
             }
@@ -3155,23 +3155,67 @@ document.addEventListener(
             const canonicalView = async (type, id) => {
                 const t = normalizePurchaseType(type);
                 if (!id) return "";
+
+                const token = String(guestToken || "").trim();
+                const appendGuest = (url) => token
+                    ? `${url}${url.includes("?") ? "&" : "?"}guest_token=${encodeURIComponent(token)}`
+                    : url;
+
+                // First use the same server-side detail RPC used by view-code.js.
+                // This avoids Guest RLS blocking a direct SELECT after payment.
                 try {
-                    if (t === "pastelink") {
-                        const { data } = await client.from("pastelinks").select("slug,access_type,price").eq("id",id).maybeSingle();
-                        return data?.slug ? `${location.origin}/p${(String(data.access_type||"free").toLowerCase()==="paid"||Number(data.price||0)>0)?"p":"f"}/${encodeURIComponent(data.slug)}${guestToken ? `?guest_token=${encodeURIComponent(guestToken)}` : ""}` : "";
-                    }
-                    if (t === "code") {
-                        const { data } = await client.from("telegram_products").select("slug,access_type,price").eq("id",id).maybeSingle();
-                        return data?.slug ? `${location.origin}/c/${(String(data.access_type||"free").toLowerCase()==="paid"||Number(data.price||0)>0)?"p":"f"}/${encodeURIComponent(data.slug)}${guestToken ? `?guest_token=${encodeURIComponent(guestToken)}` : ""}` : "";
-                    }
-                    if (t === "channel" || t === "group") {
-                        const { data } = await client.from("telegram_channels").select("slug,type,access_type,price").eq("id",id).maybeSingle();
-                        if (!data?.slug) return "";
-                        const actual = String(data.type || t).toLowerCase() === "group" ? "group" : "channel";
-                        const paid=(String(data.access_type||"free").toLowerCase()==="paid"||Number(data.price||0)>0); const prefix=actual==="group"?(paid?"gp":"gf"):(paid?"ch/p":"ch/f"); return `${location.origin}/${prefix}/${encodeURIComponent(data.slug)}${guestToken ? `?guest_token=${encodeURIComponent(guestToken)}` : ""}`;
+                    const rpcType = t === "code" ? "telegram_product" : t;
+                    const rpc = token
+                        ? await client.rpc("get_market_item_detail_guest", {
+                            p_type: rpcType, p_id: id, p_guest_token: token
+                        })
+                        : await client.rpc("get_market_item_detail", {
+                            p_type: rpcType, p_id: id
+                        });
+                    if (!rpc.error) {
+                        const row = Array.isArray(rpc.data) ? (rpc.data[0] || null) : rpc.data;
+                        if (row?.slug) {
+                            const paid = String(row.access_type || "free").toLowerCase() === "paid" || Number(row.price || 0) > 0;
+                            if (t === "code") return appendGuest(`${location.origin}/c/${paid ? "p" : "f"}/${encodeURIComponent(row.slug)}`);
+                            if (t === "pastelink") return appendGuest(`${location.origin}/p/${paid ? "p" : "f"}/${encodeURIComponent(row.slug)}`);
+                            if (t === "channel" || t === "group") {
+                                const actual = String(row.type || t).toLowerCase() === "group" ? "group" : "channel";
+                                const prefix = actual === "group" ? (paid ? "gp" : "gf") : (paid ? "ch/p" : "ch/f");
+                                return appendGuest(`${location.origin}/${prefix}/${encodeURIComponent(row.slug)}`);
+                            }
+                        }
                     }
                 } catch (e) {
-                    console.warn("[PaymentSuccess] canonical view resolve failed:", e);
+                    console.warn("[PaymentSuccess] detail RPC resolve failed:", e);
+                }
+
+                // Fallback for schemas/RPC versions where the detail RPC is unavailable.
+                try {
+                    if (t === "pastelink") {
+                        const { data } = await client.from("pastelinks").select("slug,access_type,price").eq("id", id).maybeSingle();
+                        if (data?.slug) {
+                            const paid = String(data.access_type || "free").toLowerCase() === "paid" || Number(data.price || 0) > 0;
+                            return appendGuest(`${location.origin}/p/${paid ? "p" : "f"}/${encodeURIComponent(data.slug)}`);
+                        }
+                    }
+                    if (t === "code") {
+                        const { data } = await client.from("telegram_products").select("slug,access_type,price").eq("id", id).maybeSingle();
+                        if (data?.slug) {
+                            const paid = String(data.access_type || "free").toLowerCase() === "paid" || Number(data.price || 0) > 0;
+                            return appendGuest(`${location.origin}/c/${paid ? "p" : "f"}/${encodeURIComponent(data.slug)}`);
+                        }
+                    }
+                    if (t === "channel" || t === "group") {
+                        const { data } = await client.from("telegram_channels").select("slug,type,access_type,price").eq("id", id).maybeSingle();
+                        if (data?.slug) {
+                            const actual = String(data.type || t).toLowerCase() === "group" ? "group" : "channel";
+                            const paid = String(data.access_type || "free").toLowerCase() === "paid" || Number(data.price || 0) > 0;
+                            const prefix = actual === "group" ? (paid ? "gp" : "gf") : (paid ? "ch/p" : "ch/f");
+                            return appendGuest(`${location.origin}/${prefix}/${encodeURIComponent(data.slug)}`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn("[PaymentSuccess] direct resolve fallback failed:", e);
                 }
                 return "";
             };
