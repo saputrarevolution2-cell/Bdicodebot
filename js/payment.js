@@ -2315,6 +2315,8 @@ window.PASTELE_CONFIG = Object.freeze({
     `${base}${file}`;
 
 
+  const mountFooter = () => {
+    if (
       document.getElementById(
         'pasteleFooter'
       )
@@ -2327,6 +2329,7 @@ window.PASTELE_CONFIG = Object.freeze({
       return;
     }
 
+    const footer =
       document.createElement('footer');
 
     footer.id =
@@ -2585,8 +2588,10 @@ window.PASTELE_CONFIG = Object.freeze({
   ]);
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const normalizedPath = location.pathname.replace(/\/+$/, "").toLowerCase();
   const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
-  const isPublic = !isAdminPath && PUBLIC.has(file);
+  const isPaymentPage = /(?:^|\/)payment(?:\.html)?$/.test(normalizedPath);
+  const isPublic = !isAdminPath && (isPaymentPage || PUBLIC.has(file));
   let locked = false;
   let initialized = false;
   let timer = null;
@@ -3483,6 +3488,14 @@ document.addEventListener(
            Uses ONLY canonical columns from SQL.
            =================================================== */
 
+        const withTimeout = (promise, ms, label) =>
+            Promise.race([
+                promise,
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(label || "Permintaan terlalu lama.")), ms)
+                )
+            ]);
+
         const loadOrder = async () => {
             const { data, error } = await client.rpc("get_order_for_payment", {
                 p_order_id: orderId,
@@ -4151,14 +4164,19 @@ document.addEventListener(
                      */
 
                     const session = await client.auth.getSession();
-                    const response = await fetch(window.PASTELE_CONFIG.CASHI_CREATE_ORDER_URL, {
+                    const response = await withTimeout(
+                        fetch(window.PASTELE_CONFIG.CASHI_CREATE_ORDER_URL, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            ...(session?.data?.session?.access_token ? { Authorization: `Bearer ${session.data.session.access_token}` } : {})
+                            "apikey": window.PASTELE_CONFIG.SUPABASE_ANON_KEY,
+                            "Authorization": `Bearer ${session?.data?.session?.access_token || window.PASTELE_CONFIG.SUPABASE_ANON_KEY}`
                         },
                         body: JSON.stringify({ order_id: order.id, guest_token: guestToken || null })
-                    });
+                        }),
+                        20000,
+                        "Server Cashi terlalu lama merespons. Silakan tekan Coba Lagi."
+                    );
                     const responseData = await response.json().catch(() => ({}));
                     const responseError = !response.ok ? new Error(responseData?.error || `Cashi HTTP ${response.status}`) : null;
                     const responseEnvelope = { data: responseData, error: responseError };
@@ -4243,14 +4261,19 @@ document.addEventListener(
         const checkGatewayStatus =
             async () => {
                 const session = await client.auth.getSession();
-                const response = await fetch(window.PASTELE_CONFIG.CASHI_CHECK_STATUS_URL, {
+                const response = await withTimeout(
+                    fetch(window.PASTELE_CONFIG.CASHI_CHECK_STATUS_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        ...(session?.data?.session?.access_token ? { Authorization: `Bearer ${session.data.session.access_token}` } : {})
+                        "apikey": window.PASTELE_CONFIG.SUPABASE_ANON_KEY,
+                        "Authorization": `Bearer ${session?.data?.session?.access_token || window.PASTELE_CONFIG.SUPABASE_ANON_KEY}`
                     },
                     body: JSON.stringify({ order_id: orderId, guest_token: guestToken || null })
-                });
+                    }),
+                    15000,
+                    "Server Cashi terlalu lama merespons."
+                );
                 const rawResponse = await response.json().catch(() => ({}));
                 if (!response.ok) throw new Error(rawResponse?.error || `Cashi HTTP ${response.status}`);
                 return rawResponse;
@@ -4688,6 +4711,25 @@ document.addEventListener(
             if (prePaymentGate) {
                 prePaymentGate.hidden = false;
                 prePaymentGate.removeAttribute("hidden");
+            }
+
+            if (prePaymentGate) {
+                prePaymentGate.hidden = false;
+                prePaymentGate.removeAttribute("hidden");
+                prePaymentGate.style.display = "";
+                prePaymentGate.style.visibility = "visible";
+            }
+
+            if (buyNowPayment) {
+                buyNowPayment.hidden = false;
+                buyNowPayment.removeAttribute("hidden");
+                buyNowPayment.disabled = false;
+                buyNowPayment.style.display = "";
+                buyNowPayment.style.visibility = "visible";
+                buyNowPayment.innerHTML = `
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Buy Now</span>
+                `;
             }
 
             const startPayment = async () => {
