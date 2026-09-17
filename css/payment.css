@@ -214,3 +214,35 @@ body.payment-page > .pastele-footer{
   .tutorial-number{width:28px;height:28px}
   .pastele-footer .footer-container,.pastele-footer .footer-bottom{width:calc(100% - 20px)}
 }
+
+
+/* CASHI QR — stable, crisp, responsive */
+.payment-qr-card{
+  display:flex;align-items:center;justify-content:center;
+  min-height:320px;
+  overflow:hidden;
+}
+.payment-qr-card .qr-title{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:12px;color:var(--text);font-size:13px;font-weight:850;
+}
+.payment-qr-card .cashi-qr{
+  width:260px;min-height:260px;padding:10px;
+  display:grid;place-items:center;
+  border-radius:16px;background:#fff;border:1px solid #e5e7eb;
+  box-shadow:0 12px 32px rgba(16,24,40,.10);
+}
+.payment-qr-card .cashi-qr img,.payment-qr-card .cashi-qr canvas{
+  display:block;width:240px!important;height:240px!important;max-width:100%;object-fit:contain;
+}
+.payment-qr-card .cashi-qr-image{
+  border-radius:6px;background:#fff;
+}
+.payment-qr-card .qr-hint{
+  display:block;margin-top:11px;color:var(--muted);font-size:10px;text-align:center;
+}
+@media(max-width:620px){
+  .payment-qr-card{min-height:300px}
+  .payment-qr-card .cashi-qr{width:250px;min-height:250px}
+  .payment-qr-card .cashi-qr img,.payment-qr-card .cashi-qr canvas{width:230px!important;height:230px!important}
+}
