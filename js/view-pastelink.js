@@ -2603,9 +2603,10 @@ const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
 
 const qs=new URLSearchParams(location.search);
 
-/* Resolve PasteLink slug from both query-string and public route.
- * Supported: /pp/ky9m, /pf/ky9m, /p/ky9m (legacy), and ?slug=ky9m
- */
+// Resolve the public PasteLink slug from either the rewrite query string
+// or the original public pathname. This makes /pp/:slug, /pf/:slug and
+// legacy /p/:slug work even when the hosting layer does not preserve the
+// rewritten query parameter.
 function resolvePublicSlug(){
   const querySlug=String(qs.get("slug")||"").trim();
   if(querySlug){
