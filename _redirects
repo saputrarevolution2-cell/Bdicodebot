@@ -1,8 +1,8 @@
 # PasTele canonical public routes
 # PasteLink
-/pf/*    /view-pastelink.html?slug=:splat  200
-/pp/*    /view-pastelink.html?slug=:splat  200
-/p/*     /view-pastelink.html?slug=:splat  200
+/pf/*    /view-pastelink.html  200
+/pp/*    /view-pastelink.html  200
+/p/*     /view-pastelink.html  200
 
 # Code — unique namespace
 /c/f/*  /view-code.html?slug=:splat         200
