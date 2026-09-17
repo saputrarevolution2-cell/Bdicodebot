@@ -3440,10 +3440,18 @@ document.addEventListener("DOMContentLoaded", async () => {
               ${priceText(item)}
             </strong>
           </div>
-          <span class="product-cta ${access === "free" ? "free" : ""}">
-            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-            ${ctaLabel}
-          </span>
+          <button
+            type="button"
+            class="product-cta ${access === "free" ? "free" : ""}"
+            data-market-buy
+            data-product-id="${esc(item?.id || "")}"
+            data-product-type="${esc(type)}"
+            data-access-type="${esc(access)}"
+            aria-label="${esc(ctaLabel)} ${esc(title)}"
+          >
+            <i class="fa-solid ${access === "paid" ? "fa-cart-shopping" : "fa-unlock"}" aria-hidden="true"></i>
+            <span>${ctaLabel}</span>
+          </button>
         </div>
       </a>
     `;
@@ -3818,6 +3826,114 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      MAIN RENDER
      ======================================================= */
+  /* =======================================================
+     MARKETPLACE BUY / CHECKOUT
+     Paid -> create order -> payment.html
+     Free -> open product normally
+     ======================================================= */
+  function marketplaceGuestToken() {
+    const key = "pastele-guest-checkout-token";
+    let token = localStorage.getItem(key);
+    if (!token) {
+      token = crypto?.randomUUID?.() || (
+        "guest_" + Date.now().toString(36) + "_" +
+        Math.random().toString(36).slice(2) +
+        Math.random().toString(36).slice(2)
+      );
+      localStorage.setItem(key, token);
+    }
+    return token;
+  }
+
+  function checkoutTypeFromMarketType(type) {
+    const t = String(type || "").trim().toLowerCase();
+    if (t === "code") return "telegram_product";
+    if (t === "channel" || t === "group") return "channel";
+    if (t === "pastelink" || t === "paste") return "pastelink";
+    return "product";
+  }
+
+  function unwrapCheckoutOrder(data) {
+    let value = data;
+    if (Array.isArray(value)) value = value[0];
+    if (value?.data && !value?.order_id && !value?.id) value = value.data;
+    if (Array.isArray(value)) value = value[0];
+    return value || null;
+  }
+
+  function bindMarketplaceBuyButtons() {
+    if (window.__PASTELE_MARKET_BUY_BOUND__) return;
+    window.__PASTELE_MARKET_BUY_BOUND__ = true;
+
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-market-buy]");
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const access = String(button.dataset.accessType || "").trim().toLowerCase();
+      const productId = String(button.dataset.productId || "").trim();
+      const productType = String(button.dataset.productType || "").trim();
+
+      if (!productId) {
+        toast("Produk tidak valid.", "error");
+        return;
+      }
+
+      if (access === "free") {
+        const card = button.closest(".product-card");
+        const link = card?.querySelector(".product-card-link");
+        if (link?.href) window.location.href = link.href;
+        return;
+      }
+
+      if (button.disabled) return;
+
+      const originalHtml = button.innerHTML;
+      button.disabled = true;
+      button.classList.add("is-loading");
+      button.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+        <span>Menyiapkan pembayaran...</span>
+      `;
+
+      try {
+        const client = window.sb || window.supabaseClient;
+        if (!client?.rpc) throw new Error("Koneksi database belum tersedia.");
+
+        const guestToken = marketplaceGuestToken();
+        const checkoutType = checkoutTypeFromMarketType(productType);
+
+        const result = await client.rpc("buy_market_item_guest", {
+          p_type: checkoutType,
+          p_id: productId,
+          p_guest_token: guestToken
+        });
+
+        if (result?.error) throw result.error;
+
+        const order = unwrapCheckoutOrder(result?.data);
+        const orderId = String(order?.order_id || order?.id || "").trim();
+        if (!orderId) throw new Error("Order ID tidak ditemukan dari database.");
+
+        const paymentUrl =
+          `payment.html?order_id=${encodeURIComponent(orderId)}` +
+          `&guest_token=${encodeURIComponent(guestToken)}`;
+
+        window.location.assign(paymentUrl);
+      } catch (error) {
+        console.error("[Marketplace Checkout]", error);
+        toast(error?.message || "Checkout gagal. Silakan coba lagi.", "error");
+        button.disabled = false;
+        button.classList.remove("is-loading");
+        button.innerHTML = originalHtml;
+      }
+    }, true);
+  }
+
+  bindMarketplaceBuyButtons();
+
   /* =======================================================
      QUEST / ACTIVITY TRACKING
      Uses the existing analytics_events table so marketplace
