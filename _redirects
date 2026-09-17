@@ -1,16 +1,22 @@
 # PasTele canonical public routes
-# New compact public routes: /pf /pp /gf /gp /cf /cp + 4-char random key
-/pf/*    /short-resolver.html?prefix=pf&code=:splat  200
-/pp/*    /short-resolver.html?prefix=pp&code=:splat  200
-/gf/*    /short-resolver.html?prefix=gf&code=:splat  200
-/gp/*    /short-resolver.html?prefix=gp&code=:splat  200
-/cf/*    /short-resolver.html?prefix=cf&code=:splat  200
-/cp/*    /short-resolver.html?prefix=cp&code=:splat  200
+# PasteLink
+/pf/*    /view-pastelink.html?slug=:splat  200
+/pp/*    /view-pastelink.html?slug=:splat  200
+/p/*     /view-pastelink.html?slug=:splat  200
 
-/p/*    /view-pastelink.html?slug=:splat    200
+# Code — unique namespace
 /c/f/*  /view-code.html?slug=:splat         200
 /c/p/*  /view-code.html?slug=:splat         200
-/ch/f/* /view-telegram.html?slug=:splat    200
-/ch/p/* /view-telegram.html?slug=:splat     200
-/g/f/*  /view-telegram.html?slug=:splat     200
-/g/p/*  /view-telegram.html?slug=:splat     200
+
+# Telegram Group — compact namespace
+/gf/*   /view-telegram.html?type=group&slug=:splat  200
+/gp/*   /view-telegram.html?type=group&slug=:splat  200
+
+# Telegram Channel — unique namespace
+/ch/f/* /view-telegram.html?type=channel&slug=:splat  200
+/ch/p/* /view-telegram.html?type=channel&slug=:splat  200
+
+# Legacy compact routes. These still go through the resolver so existing links
+# can be resolved from the database without breaking old URLs.
+/cf/*   /short-resolver.html?prefix=cf&code=:splat  200
+/cp/*   /short-resolver.html?prefix=cp&code=:splat  200
