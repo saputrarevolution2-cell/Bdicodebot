@@ -1116,7 +1116,7 @@ window.PASTELE_CONFIG = Object.freeze({
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
      */
-    const base = isAdmin ? '../' : '';
+    const base = isAdmin ? '../' : '/';
     /* ========================================================
        HELPERS
        ======================================================== */
@@ -2720,17 +2720,27 @@ async function accessState(kind,item){
 }
 async function startBuy(kind,item){
  const paid=isPaid(item); if(!paid)return;
- const u=await user(); let tok=null;
- if(!u){
-   tok=guestToken();
-   const ok=confirm("Pembelian sebagai Guest.\n\nGuest bisa membeli, tetapi akses tidak dijamin permanen jika identitas Guest hilang. Login/daftar terlebih dahulu disarankan agar pembelian tersimpan permanen di akun.\n\nLanjut sebagai Guest?");
-   if(!ok)return;
- }
+ const u=await user();
  const type=targetType(kind);
- const q=await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
+ let tok=null;
+ let q;
+
+ /* Logged-in checkout: bind the order to the authenticated account so the
+    paid purchase remains attached to the account permanently. */
+ if(u?.id){
+   q=await window.sb.rpc("buy_market_item",{p_type:type,p_id:item.id});
+ }else{
+   tok=guestToken();
+   const ok=confirm("Pembelian sebagai Guest.\n\nGuest tetap bisa membeli. Namun agar pembelian Paid tersimpan permanen di akun dan bisa dipulihkan dari perangkat lain, Login atau Daftar terlebih dahulu.\n\nLanjut membeli sebagai Guest?");
+   if(!ok)return;
+   q=await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
+ }
+
  if(q.error)throw q.error;
- const oid=q.data?.order_id;if(!oid)throw Error("Order ID tidak ditemukan.");
- location.href=`payment.html?order_id=${encodeURIComponent(oid)}${tok?"&guest_token="+encodeURIComponent(tok):""}`;
+ const row=Array.isArray(q.data)?q.data[0]:q.data;
+ const oid=row?.order_id||row?.id;
+ if(!oid)throw Error("Order ID tidak ditemukan.");
+ location.href=`/payment.html?order_id=${encodeURIComponent(oid)}${tok?"&guest_token="+encodeURIComponent(tok):""}`;
 }
 async function loadSocial(kind,item){
  const client=window.sb, tid=item.id, tt=targetType(kind);
@@ -2796,7 +2806,7 @@ async function trackView(kind,item){
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
 
-document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");const botUrl=V.telegramUrl({bot_username:bot});body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i><span>Bot tujuan:</span>${botUrl?`<a class="bot-link" href="${V.esc(botUrl)}" target="_blank" rel="noopener noreferrer">@${V.esc(bot||"Telegram")}</a>`:`<strong>@${V.esc(bot||"Telegram")}</strong>`}</div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async(e)=>{
+document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><div class="notice-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="notice-copy"><strong>Simpan pembelian Paid secara permanen</strong><span>Login atau daftar terlebih dahulu agar pembelian tersimpan di akun dan dapat dipulihkan kembali. Guest tetap bisa membeli tanpa login.</span></div><a class="notice-login" href="/login.html"><i class="fa-solid fa-right-to-bracket"></i><span>Login / Daftar</span></a></div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");const botUrl=V.telegramUrl({bot_username:bot});body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i><span>Bot tujuan:</span>${botUrl?`<a class="bot-link" href="${V.esc(botUrl)}" target="_blank" rel="noopener noreferrer">@${V.esc(bot||"Telegram")}</a>`:`<strong>@${V.esc(bot||"Telegram")}</strong>`}</div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async(e)=>{
  const b=e.currentTarget;b.disabled=true;
  try{await navigator.clipboard.writeText(String(item.content||""));V.toast("Code berhasil disalin.","success")}
  catch{V.toast("Gagal menyalin code.","error")}
