@@ -1,24 +1,6 @@
-(() => {
-'use strict';
-const A=window.PasTeleAdmin;
-const $=A.$;
-async function load(){
- const box=$('#adminContent'); A.setLoading(box);
- try{
-  const g=await A.isAdmin(); if(!g.ok){A.denied(g.reason);return;}
-  let data=[];
-  try{data=await A.rpc('admin_users')}catch(e){
-    // Read fallback keeps the panel useful when an admin RPC is temporarily unavailable.
-    const table='profiles';
-    const q=await A.sb.from(table).select('*').limit(200);
-    if(q.error) throw e; data=A.rows(q.data);
-  }
-  const toolbar=`<div class="admin-toolbar"><div class="toolbar-title"><i class="fa-solid fa-users"></i><div><strong>Users</strong><span>${data.length} data</span></div></div><button class="btn" id="reload"><i class="fa-solid fa-rotate"></i> Refresh</button></div>`;
-  box.innerHTML=toolbar+'<div id="adminTable"></div>';
-  const cols=[{label:'Id',key:'id'},{label:'Username',key:'username'},{label:'Auth Email',key:'auth_email'},{label:'Role',key:'role'},{label:'Is Admin',render:r=>`<span class="status ${ok}">${r.is_admin?'Aktif':'Tidak'}</span>`},{label:'Is Banned',render:r=>`<span class="status ${ok}">${r.is_banned?'Aktif':'Tidak'}</span>`},{label:'Balance',render:r=>money(r.balance)},{label:'Created',render:r=>new Date(r.created_at).toLocaleString('id-ID')}];
-  A.table($('#adminTable'),data,cols);
-  $('#reload')?.addEventListener('click',load);
- }catch(e){console.error(e);box.innerHTML=`<div class="empty error-state"><i class="fa-solid fa-triangle-exclamation"></i><strong>Gagal memuat data</strong><span>${A.esc(e.message||'Database error')}</span><button class="btn" id="retry">Coba lagi</button></div>`;$('#retry')?.addEventListener('click',load);}
-}
-document.addEventListener('DOMContentLoaded',load);
+(() => {'use strict';const A=window.PasTeleAdmin,$=A.$;let data=[];
+async function load(){const box=$('#adminContent');A.setLoading(box);try{if(!await A.requireAdmin())return;data=await A.rpc('admin_users',{p_limit:200,p_offset:0});render();}catch(e){box.innerHTML=`<div class="empty error-state"><i class="fa-solid fa-triangle-exclamation"></i><strong>Gagal memuat Users</strong><span>${A.esc(A.errText(e))}</span><button class="btn" id="retry">Coba lagi</button></div>`;$('#retry')?.addEventListener('click',load)}}
+function render(){const box=$('#adminContent');box.innerHTML=`<div class="admin-toolbar"><div class="toolbar-title"><i class="fa-solid fa-users"></i><div><strong>Users</strong><span id="count">${data.length} data</span></div></div><div class="toolbar-tools"><input id="search" class="admin-input" placeholder="Cari username / email..."/><button class="btn" id="reload"><i class="fa-solid fa-rotate"></i> Refresh</button></div></div><div id="adminTable"></div>`;paint(data);$('#search').addEventListener('input',()=>{const q=$('#search').value.toLowerCase();paint(data.filter(r=>`${r.username||''} ${r.auth_email||''} ${r.email||''}`.toLowerCase().includes(q)))});$('#reload').onclick=load;}
+function paint(rows){$('#count').textContent=`${rows.length} data`;A.table($('#adminTable'),rows,[{label:'User',render:r=>`<strong>${A.esc(r.username||r.display_name||'-')}</strong><small>${A.esc(r.auth_email||r.email||r.id)}</small>`},{label:'Role',render:r=>`<span class="status ${String(r.role).toLowerCase()==='admin'?'info':''}">${A.esc(r.role||'user')}</span>`},{label:'Saldo',render:r=>A.money(r.balance)},{label:'Status',render:r=>`<span class="status ${r.is_banned?'danger':''}">${r.is_banned?'Banned':'Aktif'}</span>`},{label:'Admin',render:r=>r.is_admin?'Ya':'Tidak'},{label:'Created',render:r=>r.created_at?new Date(r.created_at).toLocaleString('id-ID'):'-'}],r=>`<button class="btn small" data-user="${A.esc(r.id)}" data-op="ban">${r.is_banned?'Unban':'Ban'}</button> <button class="btn small" data-user="${A.esc(r.id)}" data-op="admin">${r.is_admin?'Cabut Admin':'Jadikan Admin'}</button> <button class="btn small" data-user="${A.esc(r.id)}" data-op="balance">Saldo</button>`);}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-op]');if(!b)return;const u=data.find(x=>String(x.id)===String(b.dataset.user));if(!u)return;try{b.disabled=true;if(b.dataset.op==='ban')await A.call('admin_set_user',{p_user:u.id,p_banned:!u.is_banned,p_admin:!!u.is_admin});else if(b.dataset.op==='admin')await A.call('admin_set_user',{p_user:u.id,p_banned:!!u.is_banned,p_admin:!u.is_admin});else{const raw=prompt('Nominal penyesuaian saldo. Gunakan - untuk mengurangi:','0');if(raw===null)return;const amount=Number(raw);if(!Number.isFinite(amount)||amount===0)throw Error('Nominal tidak valid.');const reason=prompt('Alasan:','Penyesuaian oleh admin')||'Penyesuaian oleh admin';await A.call('admin_adjust_balance',{p_user:u.id,p_amount:amount,p_reason:reason});}A.toast('Perubahan berhasil.');await load();}catch(x){A.toast(A.errText(x),'error')}finally{b.disabled=false}});document.addEventListener('DOMContentLoaded',load);
 })();

@@ -1,25 +1,6 @@
-(() => {
-'use strict';
-const A=window.PasTeleAdmin,$=A.$;
-async function boot(){
- const g=await A.isAdmin(); if(!g.ok){A.denied(g.reason);return}
- const box=$('#contentList')||$('#adminContent');
- try{
-  let data=[];
-  try{data=await A.rpc('admin_content')}catch(e){
-   const q=await A.sb.from('telegram_products').select('*').limit(300); if(q.error)throw e; data=A.rows(q.data);
-  }
-  render(data); bind();
- }catch(e){if(box)box.innerHTML=`<div class="empty error-state"><i class="fa-solid fa-triangle-exclamation"></i><strong>Gagal memuat content</strong><span>${A.esc(e.message)}</span></div>`}
-}
-function render(data){
- const box=$('#contentList')||$('#contentResult'); if(!box)return;
- if(!data.length){box.innerHTML='<div class="empty"><i class="fa-solid fa-inbox"></i><strong>Content kosong</strong></div>';return}
- box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Title</th><th>Type</th><th>Price</th><th>Status</th><th>Owner</th><th>Created</th><th>Aksi</th></tr></thead><tbody>${data.map(r=>`<tr><td><strong>${A.esc(r.title||r.name||'-')}</strong><small>${A.esc(r.slug||r.id||'')}</small></td><td>${A.esc(r.type||r.source_type||'code')}</td><td>${A.money(r.price)}</td><td><span class="status">${A.esc(r.status||'active')}</span></td><td>${A.esc(r.owner_id||r.creator_id||'-')}</td><td>${r.created_at?new Date(r.created_at).toLocaleString('id-ID'):'-'}</td><td><button class="btn small" data-edit="${A.esc(r.id)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join('')}</tbody></table></div>`;
-}
-function bind(){
- $('#refreshContent')?.addEventListener('click',boot);
- $('#resetContentFilters')?.addEventListener('click',()=>location.reload());
-}
-document.addEventListener('DOMContentLoaded',boot);
-})();
+(() => {'use strict';const A=window.PasTeleAdmin,$=A.$;let data=[];
+async function load(){const box=$('#contentList')||$('#adminContent');A.setLoading(box);try{if(!await A.requireAdmin())return;data=await A.rpc('admin_content',{p_limit:500,p_offset:0});render();bind()}catch(e){box.innerHTML=`<div class="empty error-state"><strong>Gagal memuat content</strong><span>${A.esc(A.errText(e))}</span></div>`}}
+function render(){const box=$('#contentList')||$('#contentResult')||$('#adminContent');const q=($('#contentSearch')?.value||'').toLowerCase();const type=$('#contentType')?.value||'';const status=$('#contentStatus')?.value||'';let rows=data.filter(r=>(!q||`${r.title||''} ${r.slug||''} ${r.id||''}`.toLowerCase().includes(q))&&(!type||String(r.type||'')===type)&&(!status||String(r.status||'')===status));if($('#contentKpis'))$('#contentKpis').innerHTML=`<div class="kpi"><strong>${data.length}</strong><span>Total Content</span></div><div class="kpi"><strong>${data.filter(x=>['published','active','public'].includes(String(x.status))).length}</strong><span>Published</span></div><div class="kpi"><strong>${data.reduce((n,x)=>n+Number(x.views||0),0).toLocaleString('id-ID')}</strong><span>Views</span></div>`;const target=box;A.table(target,rows,[{label:'Content',render:r=>`<strong>${A.esc(r.title||'-')}</strong><small>${A.esc(r.source||r.type||'')} · ${A.esc(r.slug||r.id)}</small>`},{label:'Type',key:'type'},{label:'Price',render:r=>A.money(r.price)},{label:'Status',render:r=>`<span class="status">${A.esc(r.status||'-')}</span>`},{label:'Owner',key:'owner_id'},{label:'Views / Sales',render:r=>`${Number(r.views||0).toLocaleString('id-ID')} / ${Number(r.sales_count||0).toLocaleString('id-ID')}`}],r=>`<button class="btn small" data-edit="${A.esc(r.id)}" data-source="${A.esc(r.source||'products')}">Edit</button> <button class="btn small danger" data-delete="${A.esc(r.id)}" data-source="${A.esc(r.source||'products')}">Hapus</button>`)}
+function bind(){$('#refreshContent')?.addEventListener('click',load);$('#clearContentSearch')?.addEventListener('click',()=>{$('#contentSearch').value='';render()});['contentSearch','contentType','contentStatus','contentSort'].forEach(id=>$('#'+id)?.addEventListener('input',render));}
+function edit(r){const title=prompt('Judul:',r.title||'');if(title===null)return;const desc=prompt('Deskripsi:',r.description||'');if(desc===null)return;const price=prompt('Harga:',String(r.price||0));if(price===null)return;const status=prompt('Status:',r.status||'published');if(status===null)return;return {title,desc,price:Number(price),status}}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-edit],[data-delete]');if(!b)return;const r=data.find(x=>String(x.id)===b.dataset.edit||String(x.id)===b.dataset.delete);if(!r)return;try{if(b.dataset.delete){if(!confirm('Hapus content ini?'))return;await A.call('admin_delete_content',{p_id:r.id,p_source:r.source||'products'});A.toast('Content dihapus.')}else{const v=edit(r);if(!v||!Number.isFinite(v.price)||v.price<0)throw Error('Harga tidak valid.');await A.call('admin_update_content',{p_id:r.id,p_status:v.status,p_title:v.title,p_description:v.desc,p_source:r.source||'products',p_price:v.price});A.toast('Content diperbarui.')}await load()}catch(x){A.toast(A.errText(x),'error')}});document.addEventListener('DOMContentLoaded',load)})();
