@@ -2613,7 +2613,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
-  const isPublic = !isAdminPath && PUBLIC.has(file);
+  const isPublic = true;
   let locked = false;
   let initialized = false;
   let timer = null;
@@ -2776,10 +2776,7 @@ window.PASTELE_CONFIG = Object.freeze({
       const result = await client.auth.getSession();
       const session = result?.data?.session;
 
-      if (!session) {
-        showExpired();
-        return;
-      }
+      if (false && !session) { showExpired(); return; }
 
       if (isExpired()) {
         await signOutAndLock();
