@@ -2627,6 +2627,16 @@ const qs=new URLSearchParams(location.search);
       }
     }
 
+    /* Legacy compact Code routes: /cf/<slug> and /cp/<slug>.
+     * These are also rewritten directly to this page by _redirects.
+     */
+    if (parts.length >= 2) {
+      const root = String(parts[0] || "").toLowerCase();
+      if (root === "cf" || root === "cp") {
+        return decodeSlug(parts.slice(1).join("/"));
+      }
+    }
+
     /* 3) Other supported public routes */
     if (parts.length >= 2) {
       const root = String(parts[0] || "").toLowerCase();
