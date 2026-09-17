@@ -9,23 +9,23 @@
 
 
   
-  <link rel="stylesheet" href="/css/create-code.css">
+  <link rel="stylesheet" href="css/create-code.css">
 
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/assets/favicon.svg">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/favicon.svg">
 </head>
 <body class="app-page create-detail-page">
 <div id="navbar"></div>
 <main class="create-detail">
-<section class="create-detail-head"><a class="back-create" href="/create-product.html"><i class="fa-solid fa-arrow-left"></i><span>Semua tipe</span></a><div class="detail-title"><div class="detail-icon"><i class="fa-solid fa-code"></i></div><div><span class="eyebrow">CODE BOT</span><h1>Buat Code</h1><p>Publikasikan source code bot Telegram dengan akses gratis atau berbayar.</p></div></div></section>
+<section class="create-detail-head"><a class="back-create" href="create-product.html"><i class="fa-solid fa-arrow-left"></i><span>Semua tipe</span></a><div class="detail-title"><div class="detail-icon"><i class="fa-solid fa-code"></i></div><div><span class="eyebrow">CODE BOT</span><h1>Buat Code</h1><p>Publikasikan source code bot Telegram dengan akses gratis atau berbayar.</p></div></div></section>
 <form id="createForm" class="create-card" novalidate autocomplete="off">
 <div class="field"><label for="title">Judul Code <em>*</em></label><input id="title" name="title" type="text" maxlength="120" required placeholder="Bot Downloader Premium"><small>Judul produk yang tampil di marketplace.</small></div>
 <div class="field"><label for="botId">Username Bot <em>*</em></label><select id="botId" name="botId" required><option value="">Memuat bot...</option></select><div id="botStatus" class="inline-status" hidden><i class="fa-solid fa-circle-info"></i><span>Belum ada bot aktif dari admin.</span></div><small>Bot diambil otomatis dari daftar bot aktif yang disetujui admin.</small><div class="selected-bot">Bot terpilih: <b id="botUsernamePreview"></b></div><div id="botNotice" class="bot-notice" role="alert"><i class="fa-solid fa-triangle-exclamation"></i><div><strong>Peringatan</strong><span>Silakan pilih bot aktif yang sesuai dengan Code bot yang kamu masukkan. Jika Code bot tidak sesuai dengan bot yang dipilih, admin berhak menghapus konten tersebut.</span></div></div></div>
 <div class="field"><label>Jenis Akses</label><div class="access-grid"><label class="access-option"><input type="radio" name="access" value="free" checked><span><b><i class="fa-solid fa-unlock"></i> Gratis</b><small>Semua pengguna dapat mengakses</small></span></label><label class="access-option"><input type="radio" name="access" value="paid"><span><b><i class="fa-solid fa-lock"></i> Berbayar</b><small>Pembeli harus membayar</small></span></label></div></div>
-<div id="priceBox" class="field price-box" hidden><label for="price">Nominal Harga <em>*</em></label><div class="money-input"><span>Rp</span><input id="price" name="price" type="number" min="2000" max="100000" step="1000" value="2000" inputmode="numeric" placeholder="2000"></div><small>Rp2.000–Rp100.000 dan kelipatan Rp1.000.</small></div>
+<div id="priceBox" class="field price-box" hidden><label for="price">Nominal Harga <em>*</em></label><div class="money-input"><span>Rp</span><input id="price" name="price" type="number" min="2000" max="100000" step="1000" value="2000" inputmode="numeric" placeholder="5000"></div><small>Rp2.000–Rp100.000 dan kelipatan Rp1.000.</small></div>
 <div class="field"><label for="content">Code / Delivery <em>*</em></label><textarea id="content" name="content" rows="16" maxlength="1000000" required spellcheck="false" placeholder="Tempel source code bot, link file, atau delivery produk di sini..."></textarea><small>Isi delivery akan dibuka sesuai hak akses pengguna.</small></div>
 <div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" name="description" rows="4" maxlength="3000" placeholder="Jelaskan fungsi bot, fitur, kebutuhan, dan informasi lainnya..."></textarea><small><span id="counter">0</span>/3000</small></div>
-<div class="create-actions"><a href="/my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-cloud-arrow-up"></i>Publikasikan Code</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
+<div class="create-actions"><a href="my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-cloud-arrow-up"></i>Publikasikan Code</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
 </form><section id="result" class="create-result" hidden aria-live="polite"></section>
-</main><div id="toast"></div><script src="/js/create-code.js?v=20260917-guest-free-paid-login-fix"></script>
+</main><div id="toast"></div><script src="js/create-code.js?v=20260918-free-guest-paid-login-final"></script>
 </body></html>
