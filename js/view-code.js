@@ -2605,32 +2605,37 @@ const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
 
 const qs=new URLSearchParams(location.search);
   /* Public pretty-route resolver: query slug first, then pathname. */
-  function resolvePublicSlug() {
-    const querySlug = String(qs.get("slug") || "").trim();
-    if (querySlug) {
-      try { return decodeURIComponent(querySlug).trim(); }
-      catch (_) { return querySlug; }
-    }
-
-    const parts = String(location.pathname || "").split("/").filter(Boolean);
-    if (parts.length < 2) return "";
-
-    const root = String(parts[0] || "").toLowerCase();
-    let start = -1;
-
-    if (["pp", "pf", "p", "gf", "gp"].includes(root)) {
-      start = 1;
-    } else if ((root === "c" || root === "ch") &&
-               parts.length >= 3 &&
-               ["f", "p"].includes(String(parts[1] || "").toLowerCase())) {
-      start = 2;
-    }
-
-    if (start < 0 || !parts[start]) return "";
-
-    const raw = parts.slice(start).join("/");
+  function decodeSlug(value) {
+    const raw = String(value || "").trim().replace(/^\/+|\/+$/g, "");
+    if (!raw) return "";
     try { return decodeURIComponent(raw).trim(); }
-    catch (_) { return raw.trim(); }
+    catch (_) { return raw; }
+  }
+
+  function resolvePublicSlug() {
+    /* 1) Netlify rewrite may provide ?slug=... */
+    const querySlug = decodeSlug(qs.get("slug"));
+    if (querySlug) return querySlug;
+
+    /* 2) Canonical pretty URLs: /c/f/<slug> and /c/p/<slug> */
+    const parts = String(location.pathname || "").split("/").filter(Boolean);
+    if (parts.length >= 3) {
+      const root = String(parts[0] || "").toLowerCase();
+      const mode = String(parts[1] || "").toLowerCase();
+      if ((root === "c" || root === "ch") && (mode === "f" || mode === "p")) {
+        return decodeSlug(parts.slice(2).join("/"));
+      }
+    }
+
+    /* 3) Other supported public routes */
+    if (parts.length >= 2) {
+      const root = String(parts[0] || "").toLowerCase();
+      if (["pp", "pf", "p", "gf", "gp"].includes(root)) {
+        return decodeSlug(parts.slice(1).join("/"));
+      }
+    }
+
+    return "";
   }
 
 const slug = resolvePublicSlug();
