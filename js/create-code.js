@@ -3078,8 +3078,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (access === "paid" &&
-        (!Number.isInteger(price) || price < 5000 || price > 150000 || price % 1000 !== 0)) {
-      toast("Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.", "error");
+        (!Number.isInteger(price) || price < 2000 || price > 100000 || price % 1000 !== 0)) {
+      toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.", "error");
       $("price")?.focus();
       return null;
     }
@@ -3252,7 +3252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (/TITLE_AND_CONTENT_REQUIRED/i.test(raw)) return "Judul dan Code / Delivery wajib diisi.";
     if (/INVALID_ACCESS_TYPE/i.test(raw)) return "Jenis akses tidak valid.";
     if (/LOGIN_REQUIRED_FOR_PAID/i.test(raw)) return "Code Paid hanya dapat dibuat setelah login.";
-    if (/INVALID_PAID_PRICE/i.test(raw)) return "Harga Paid harus Rp5.000–Rp150.000 dan kelipatan Rp1.000.";
+    if (/INVALID_PAID_PRICE/i.test(raw)) return "Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.";
     if (/APPROVED_BOT_REQUIRED/i.test(raw)) return "Bot yang disetujui admin wajib dipilih.";
     if (/BOT_NOT_FOUND_OR_INACTIVE/i.test(raw)) return "Bot tersebut sudah tidak aktif. Pilih bot lain.";
     if (/duplicate key|23505|already exists/i.test(raw)) return "Slug Code sudah digunakan. Silakan gunakan judul lain.";
