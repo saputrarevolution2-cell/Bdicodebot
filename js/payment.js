@@ -5,6 +5,8 @@
  */
 window.PASTELE_CONFIG = Object.freeze({
   SUPABASE_URL: 'https://jxrndamvelqwhbcromye.supabase.co',
+  CASHI_CREATE_ORDER_URL: 'https://jxrndamvelqwhbcromye.supabase.co/functions/v1/cashi-create-order',
+  CASHI_CHECK_STATUS_URL: 'https://jxrndamvelqwhbcromye.supabase.co/functions/v1/cashi-check-status',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
 
@@ -3967,10 +3969,28 @@ document.addEventListener(
                         );
                     }
 
-                    if (/^data:image\/png;base64,/i.test(qris) || /^https?:\/\//i.test(qris)) {
-                        qrTarget.innerHTML = `<img src="${qris.replace(/"/g, '&quot;')}" alt="QRIS Cashi" width="240" height="240" loading="eager" decoding="async">`;
+                    const isImageQr = /^data:image\//i.test(qris) || /^https?:\/\//i.test(qris);
+
+                    if (isImageQr) {
+                        const img = document.createElement("img");
+                        img.src = qris;
+                        img.alt = "QRIS Cashi";
+                        img.width = 240;
+                        img.height = 240;
+                        img.loading = "eager";
+                        img.decoding = "async";
+                        img.referrerPolicy = "no-referrer";
+                        img.className = "cashi-qr-image";
+                        qrTarget.appendChild(img);
                     } else {
-                        new QRCode(qrTarget,{text:qris,width:240,height:240,colorDark:"#111827",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+                        new QRCode(qrTarget, {
+                            text: qris,
+                            width: 240,
+                            height: 240,
+                            colorDark: "#111827",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
                     }
                 }
 
@@ -4124,7 +4144,7 @@ document.addEventListener(
                      */
 
                     const session = await client.auth.getSession();
-                    const response = await fetch("/api/cashi/create-order", {
+                    const response = await fetch(window.PASTELE_CONFIG.CASHI_CREATE_ORDER_URL, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -4142,7 +4162,7 @@ document.addEventListener(
                         const message =
                             await getFunctionError(
                                 responseEnvelope,
-                                "Gagal menghubungi Edge Function pembayaran."
+                                "Gagal menghubungi server pembayaran Cashi."
                             );
 
                         throw new Error(
@@ -4216,7 +4236,7 @@ document.addEventListener(
         const checkGatewayStatus =
             async () => {
                 const session = await client.auth.getSession();
-                const response = await fetch("/api/cashi/check-status", {
+                const response = await fetch(window.PASTELE_CONFIG.CASHI_CHECK_STATUS_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
