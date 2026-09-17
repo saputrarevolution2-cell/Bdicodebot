@@ -4032,6 +4032,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 'slug',
                 'title',
                 'views',
+                'sales_count',
                 'created_at'
               ].join(',')
             )

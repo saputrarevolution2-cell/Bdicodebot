@@ -2974,13 +2974,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const hrefFor = (item, type) => {
     const t = normalize(type);
-    if (t === "pastelink") return item?.slug ? `${location.origin}/p/${encodeURIComponent(item.slug)}` : "#";
+    if (t === "pastelink") return item?.slug ? `${location.origin}/p${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}` : "#";
     if (t === "paste") return item?.slug ? `${location.origin}/paste/${encodeURIComponent(item.slug)}` : "#";
-    if (t === "code") return item?.slug ? `${location.origin}/c/${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}` : "#";
+    if (t === "code") return item?.slug ? `${location.origin}/c${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}` : "#";
     if (t === "channel") {
       if (!item?.slug) return "#";
-      const prefix = normalize(item?.type) === "group" ? "g" : "ch";
-      return `${location.origin}/${prefix}/${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}`;
+      const paid = Number(item?.price||0)>0;
+      const isGroup = normalize(item?.type) === "group";
+      const prefix = isGroup ? (paid ? "gp" : "gf") : (paid ? "cp" : "cf");
+      return `${location.origin}/${prefix}/${encodeURIComponent(item.slug)}`;
     }
     return item?.id ? `${location.origin}/product.html?id=${encodeURIComponent(item.id)}&type=${encodeURIComponent(item.type || item.product_type || t)}` : "#";
   };

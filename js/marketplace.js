@@ -3188,22 +3188,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const slug = String(item?.slug || "").trim();
     const type = typeOf(item);
     const access = accessType(item);
+    const paid = access === "paid" || Number(item?.price || 0) > 0;
+    const key = encodeURIComponent(slug);
 
-    // Paid products NEVER point directly to the public content resolver.
-    // They must go through product.html so the user can checkout first.
-    if (access === "paid") {
-      return id
-        ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`
-        : "product.html";
-    }
-
-    // Free products may open directly.
     if (slug) {
-      if (type === "pastelink") return `/p/${encodeURIComponent(slug)}`;
-      if (type === "code") return `/c/f/${encodeURIComponent(slug)}`;
-      if (type === "channel") return `/ch/f/${encodeURIComponent(slug)}`;
-      if (type === "group") return `/g/f/${encodeURIComponent(slug)}`;
-      if (type === "paste") return `/paste/${encodeURIComponent(slug)}`;
+      if (type === "pastelink") return `/p${paid ? "p" : "f"}/${key}`;
+      if (type === "code") return `/c${paid ? "p" : "f"}/${key}`;
+      if (type === "channel") return `/c${paid ? "p" : "f"}/${key}`;
+      if (type === "group") return `/g${paid ? "p" : "f"}/${key}`;
+      if (type === "paste") return `/paste/${key}`;
     }
     return id ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}` : "product.html";
   };
@@ -4032,28 +4025,9 @@ bindMarketplaceBuyButtons();
      inventing a new database table.
      ======================================================= */
   function bindQuestActivity(){
-    if(window.__PASTELE_MARKET_QUEST_BOUND__) return;
-    window.__PASTELE_MARKET_QUEST_BOUND__=true;
-    document.addEventListener("click", async e=>{
-      const link=e.target.closest(".product-card-link");
-      if(!link) return;
-      const cardEl=link.closest("[data-share-id]");
-      if(!cardEl) return;
-      const id=cardEl.dataset.shareId;
-      const rawType=cardEl.dataset.shareType;
-      const type=canonicalTargetType(rawType);
-      const owner=cardEl.dataset.shareOwner||null;
-      if(!id || !window.sb?.rpc) return;
-      try{
-        await window.sb.rpc("record_content_view",{
-          p_target_id:id,
-          p_target_type:type,
-          p_owner:owner
-        });
-      }catch(err){
-        console.warn("[Marketplace] quest/view tracking unavailable",err);
-      }
-    });
+    /* Views are recorded by the final public content page.
+       Recording here would count one opening twice. */
+    return;
   }
 
   function bindShareButtons(){

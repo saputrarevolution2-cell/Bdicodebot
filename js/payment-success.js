@@ -3151,18 +3151,18 @@ document.addEventListener(
                 if (!id) return "";
                 try {
                     if (t === "pastelink") {
-                        const { data } = await client.from("pastelinks").select("slug").eq("id",id).maybeSingle();
-                        return data?.slug ? `view-pastelink.html?slug=${encodeURIComponent(data.slug)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}` : "";
+                        const { data } = await client.from("pastelinks").select("slug,access_type,price").eq("id",id).maybeSingle();
+                        return data?.slug ? `${location.origin}/p${(String(data.access_type||"free").toLowerCase()==="paid"||Number(data.price||0)>0)?"p":"f"}/${encodeURIComponent(data.slug)}` : "";
                     }
                     if (t === "code") {
-                        const { data } = await client.from("telegram_products").select("slug").eq("id",id).maybeSingle();
-                        return data?.slug ? `view-code.html?slug=${encodeURIComponent(data.slug)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}` : "";
+                        const { data } = await client.from("telegram_products").select("slug,access_type,price").eq("id",id).maybeSingle();
+                        return data?.slug ? `${location.origin}/c${(String(data.access_type||"free").toLowerCase()==="paid"||Number(data.price||0)>0)?"p":"f"}/${encodeURIComponent(data.slug)}` : "";
                     }
                     if (t === "channel" || t === "group") {
-                        const { data } = await client.from("telegram_channels").select("slug,type").eq("id",id).maybeSingle();
+                        const { data } = await client.from("telegram_channels").select("slug,type,access_type,price").eq("id",id).maybeSingle();
                         if (!data?.slug) return "";
                         const actual = String(data.type || t).toLowerCase() === "group" ? "group" : "channel";
-                        return `view-telegram.html?type=${actual}&slug=${encodeURIComponent(data.slug)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}`;
+                        const paid=(String(data.access_type||"free").toLowerCase()==="paid"||Number(data.price||0)>0); const prefix=actual==="group"?(paid?"gp":"gf"):(paid?"cp":"cf"); return `${location.origin}/${prefix}/${encodeURIComponent(data.slug)}`;
                     }
                 } catch (e) {
                     console.warn("[PaymentSuccess] canonical view resolve failed:", e);

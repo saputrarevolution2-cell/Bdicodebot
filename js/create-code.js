@@ -2999,6 +2999,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const normalizeBotUsername = (value) =>
     String(value || "").trim().replace(/^@+/, "");
 
+
+  const SHORT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  function randomShortCode(){
+    const bytes=new Uint32Array(4); crypto.getRandomValues(bytes);
+    return Array.from(bytes, n => SHORT_ALPHABET[n % SHORT_ALPHABET.length]).join("");
+  }
+  async function createUniqueShortCode(client){
+    for(let attempt=0;attempt<24;attempt++){
+      const key=randomShortCode();
+      const checks=await Promise.all([
+        client.rpc("get_code_by_slug",{p_slug:key}),
+        client.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"channel"}),
+        client.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"group"}),
+        client.rpc("get_pastelink_by_slug",{p_slug:key})
+      ]);
+      if(checks.every(q=>!q?.error && !((Array.isArray(q.data)?q.data[0]:q.data)?.found))) return key;
+    }
+    throw new Error("Gagal membuat kode publik unik. Silakan coba lagi.");
+  }
+
   const slugify = (value) =>
     String(value || "")
       .normalize("NFKD")
@@ -3265,7 +3285,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const slug = String(payload.slug || "").trim();
     const access = payload.access === "paid" ? "p" : "f";
-    const url = `${location.origin}/c/${access}/${encodeURIComponent(slug)}`;
+    const url = `${location.origin}/c${access}/${encodeURIComponent(slug)}`;
     const botUsername = normalizeBotUsername(payload.botUsername);
 
     result.hidden = false;
@@ -3380,8 +3400,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("BOT_NOT_FOUND_OR_INACTIVE");
       }
 
-      const slugBase = slugify(values.title) || "code";
-      const slug = `${slugBase}-${crypto.randomUUID().slice(0, 8)}`;
+      const slug = await createUniqueShortCode(client);
 
       const { data, error } = await client.rpc("create_code_content", {
         p_title: values.title,
