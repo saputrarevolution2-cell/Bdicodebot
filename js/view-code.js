@@ -1179,7 +1179,33 @@ window.PASTELE_CONFIG = Object.freeze({
      * attempt later.
      */
     if (!user) {
-      host.dataset.ready = '';
+      /* Guest navbar: public pages tetap punya navigasi Login/Daftar. */
+      host.innerHTML = `
+        <header class="pt-nav pt-nav-guest">
+          <div class="pt-nav-inner">
+            <button class="pt-menu-btn" id="ptMenuGuest" type="button"
+              aria-label="Buka menu" aria-expanded="false" aria-controls="ptDrawerGuest">
+              <i class="fa-solid fa-bars" aria-hidden="true"></i>
+            </button>
+            <a class="pt-brand" href="${base}index.html" aria-label="PasTele">
+              <span class="pt-brand-mark"><i class="fa-brands fa-telegram" aria-hidden="true"></i></span>
+              <span class="pt-brand-name">PasTele</span>
+            </a>
+            <span class="pt-spacer"></span>
+            <nav class="pt-guest-actions" aria-label="Akun">
+              <a class="pt-guest-login" href="${base}login.html">
+                <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+                <span>Login</span>
+              </a>
+              <a class="pt-guest-register" href="${base}register.html">
+                <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+                <span>Daftar</span>
+              </a>
+            </nav>
+          </div>
+        </header>
+      `;
+      host.dataset.ready = '1';
       return;
     }
     /* ========================================================
@@ -2770,7 +2796,7 @@ async function trackView(kind,item){
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
 
-document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i> Bot tujuan: <strong>@${V.esc(bot||"Telegram")}</strong></div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async(e)=>{
+document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");const botUrl=V.telegramUrl({bot_username:bot});body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i><span>Bot tujuan:</span>${botUrl?`<a class="bot-link" href="${V.esc(botUrl)}" target="_blank" rel="noopener noreferrer">@${V.esc(bot||"Telegram")}</a>`:`<strong>@${V.esc(bot||"Telegram")}</strong>`}</div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async(e)=>{
  const b=e.currentTarget;b.disabled=true;
  try{await navigator.clipboard.writeText(String(item.content||""));V.toast("Code berhasil disalin.","success")}
  catch{V.toast("Gagal menyalin code.","error")}
