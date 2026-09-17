@@ -45,7 +45,7 @@ body.my-products-page{
   -webkit-font-smoothing:antialiased;
 }
 body.my-products-page.modal-open{overflow:hidden}
-a{color:inherit}
+a{color:inherit;text-decoration:none}
 button,input,textarea,select{font:inherit}
 button{cursor:pointer}
 .hidden{display:none!important}
@@ -247,7 +247,7 @@ main{width:100%}
   display:block;width:100%;font-size:12px;line-height:1.55;font-weight:700;
   color:var(--text);overflow-wrap:anywhere;word-break:break-word;text-decoration:none;
 }
-.my-row-url:hover{text-decoration:underline;color:var(--primary)}
+.my-row-url:hover{text-decoration:none;color:var(--primary)}
 
 .my-row-footer{
   min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -791,3 +791,7 @@ body.modal-open .pastele-footer{
 .pt-chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:12px;line-height:1.6;padding:30px}.pt-chat-row{display:flex;gap:8px;align-items:flex-start}.pt-chat-row.mine{flex-direction:row-reverse}.pt-chat-user-avatar{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border-radius:10px;background:var(--surface3);color:var(--primary);font-size:11px;font-weight:800}.pt-chat-bubble{max-width:min(82%,560px);padding:9px 11px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:0 2px 8px rgba(16,24,40,.04)}.pt-chat-row.mine .pt-chat-bubble{border-color:rgba(34,158,217,.20);background:rgba(34,158,217,.06)}.pt-chat-author{font-size:10px;font-weight:800;margin-bottom:4px}.pt-chat-body{font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}.pt-chat-time{margin-top:5px;font-size:9px;color:var(--muted)}.pt-chat-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.pt-chat-actions button{border:0;background:transparent;color:var(--muted);padding:2px 4px;font-size:9px}.pt-chat-actions button:hover{color:var(--primary)}
 .pt-chat-compose{padding:10px 12px;border-top:1px solid var(--line);background:var(--surface)}.pt-chat-reply{display:none;align-items:center;gap:8px;margin-bottom:8px;padding:7px 9px;border-radius:10px;background:var(--surface2);color:var(--muted);font-size:10px}.pt-chat-reply.is-open{display:flex}.pt-chat-reply span{flex:1}.pt-chat-reply button{border:0;background:transparent;color:var(--muted)}.pt-chat-compose-row{display:flex;gap:8px}.pt-chat-input{flex:1;min-width:0;max-height:120px;resize:none;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);padding:10px 11px;outline:none;line-height:1.5;font-size:12px}.pt-chat-input:focus{border-color:rgba(34,158,217,.5);box-shadow:0 0 0 4px rgba(34,158,217,.08)}.pt-chat-send{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;display:grid;place-items:center}.pt-chat-send:disabled{opacity:.55}.pt-chat-login{padding:8px 10px;margin-bottom:8px;border-radius:10px;background:rgba(245,158,11,.08);color:var(--muted);font-size:10px}.pt-chat-login a{color:var(--primary);font-weight:800}
 @media(max-width:700px){.section{padding-left:12px!important;padding-right:12px!important}.pt-chat-modal{width:calc(100vw - 12px);height:calc(100vh - 16px);border-radius:17px}.pt-chat-bubble{max-width:82%}.my-row-actions{width:100%}.my-row-footer{align-items:stretch}.my-row-stats{width:100%}}
+
+
+/* Marketplace consistency: no browser-style link underline */
+body.my-products-page a,body.my-products-page a:hover,body.my-products-page a:focus,body.my-products-page a:active{ text-decoration:none; }
