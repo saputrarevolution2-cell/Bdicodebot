@@ -239,6 +239,46 @@
                                     order kamu.
                                 </small>
                             </div>
+                            <!-- PRE-PAYMENT GATE
+                                 Cashi order is NOT created until Buy Now is pressed. -->
+                            <section class="prepayment-gate" id="prePaymentGate" aria-live="polite">
+                                <div class="prepayment-warning">
+                                    <div class="prepayment-warning-icon">
+                                        <i class="fa-solid fa-shield-heart"></i>
+                                    </div>
+                                    <div class="prepayment-warning-copy">
+                                        <strong>Periksa dulu sebelum bayar</strong>
+                                        <span>
+                                            Pastikan judul dan nominal di atas sudah benar.
+                                            QRIS Cashi baru akan dibuat setelah kamu menekan
+                                            <b>Buy Now</b>.
+                                        </span>
+                                        <small>
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
+                                            Setelah pembayaran dilakukan, jangan tekan Batal/Close
+                                            dan jangan membuat pembayaran baru. Tunggu verifikasi
+                                            sampai status berubah atau hubungi admin jika ada kendala.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="prepayment-actions">
+                                    <button type="button" class="prepayment-buy-btn" id="buyNowPayment">
+                                        <i class="fa-solid fa-bolt"></i>
+                                        <span>Buy Now</span>
+                                    </button>
+                                    <button type="button" class="prepayment-close-btn" id="closePaymentBeforeStart">
+                                        <i class="fa-solid fa-xmark"></i>
+                                        <span>Batal / Close</span>
+                                    </button>
+                                </div>
+
+                                <p class="prepayment-note">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    Menekan Buy Now akan membuat satu transaksi pembayaran Cashi.
+                                </p>
+                            </section>
+
                             <!-- QR -->
                             <div
                                 class="payment-qr-card"
@@ -257,19 +297,69 @@
                                     </span>
                                 </div>
                             </div>
-                            <!-- PAYMENT URL -->
-                            <a
-                                id="cashUrl"
-                                class="payment-open-btn"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                hidden
-                            >
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                <span>
-                                    Buka Pembayaran Pastele
-                                </span>
-                            </a>
+
+                            <!-- PAYMENT ACTIONS -->
+                            <div class="payment-actions qr-actions">
+                                <button
+                                    type="button"
+                                    class="payment-check-btn"
+                                    id="checkPayment"
+                                >
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Cek Pembayaran</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="payment-cancel-btn"
+                                    id="cancelPayment"
+                                >
+                                    <i class="fa-solid fa-xmark"></i>
+                                    <span>Batal</span>
+                                </button>
+                            </div>
+
+                            <!-- QR FALLBACK -->
+                            <div class="cash-fallback" id="cashFallback">
+                                <div class="cash-fallback-icon">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </div>
+                                <div class="cash-fallback-copy">
+                                    <strong>QR tidak muncul atau tidak bisa dipindai?</strong>
+                                    <span>Gunakan halaman pembayaran Cashi sebagai alternatif.</span>
+                                </div>
+                                <a
+                                    id="cashUrl"
+                                    class="payment-open-btn"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    hidden
+                                >
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Buka Pembayaran Cashi</span>
+                                </a>
+                            </div>
+
+                            <!-- SUPPORT -->
+                            <div class="payment-support payment-support-clean">
+                                <div class="support-icon">
+                                    <i class="fa-solid fa-headset"></i>
+                                </div>
+                                <div class="support-copy">
+                                    <strong>Pembayaran error atau belum terproses?</strong>
+                                    <span>Jika saldo sudah terpotong tetapi status masih pending, jangan bayar lagi. Hubungi admin dan sertakan Order ID serta bukti pembayaran.</span>
+                                </div>
+                                <a
+                                    class="support-link"
+                                    href="https://t.me/telecodadmin"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <i class="fa-brands fa-telegram"></i>
+                                    Hubungi Admin
+                                </a>
+                            </div>
+
+                            <!-- PAYMENT URL / legacy anchor removed -->
                             <!-- PAYMENT METHODS -->
                             <section class="payment-methods">
                                 <div class="section-heading">
@@ -578,7 +668,7 @@
                                 <div>
                                     <i class="fa-solid fa-shield-halved"></i>
                                     <span>
-                                        Pembayaran diproses melalui Bayar.gg
+                                        Pembayaran diproses melalui Cashi
                                     </span>
                                 </div>
                                 <div>
@@ -687,40 +777,7 @@
                                 </div>
                             </div>
                             <!-- ACTION -->
-                            <div class="payment-actions">
-                                <button
-                                    type="button"
-                                    class="payment-check-btn"
-                                    id="checkPayment"
-                                >
-                                    <i class="fa-solid fa-rotate"></i>
-                                    <span>
-                                        Cek Pembayaran
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="payment-cancel-btn"
-                                    id="cancelPayment"
-                                >
-                                    <i class="fa-solid fa-arrow-left"></i>
-                                    <span>
-                                        Batal & Kembali
-                                    </span>
-                                </button>
-                            </div>
                             <!-- SUPPORT -->
-                            <div class="payment-support">
-                                <i class="fa-solid fa-headset"></i>
-                                <div>
-                                    <strong>
-                                        Butuh bantuan?
-                                    </strong>
-                                    <span>
-                                        Simpan Order ID kamu
-                                        sebelum menghubungi admin.
-                                    </span>
-                                </div>
                             </div>
                         </aside>
                     </div>
@@ -728,6 +785,25 @@
             </div>
         </section>
     </main>
+
+    <footer class="site-footer-clean">
+        <div class="site-footer-inner">
+            <div class="footer-brand">
+                <div class="footer-logo">TC</div>
+                <div>
+                    <strong>TeleCod</strong>
+                    <span>Pembayaran aman & praktis melalui Cashi.</span>
+                </div>
+            </div>
+            <div class="footer-meta">
+                <span><i class="fa-solid fa-shield-halved"></i> Secure Checkout</span>
+                <span><i class="fa-solid fa-qrcode"></i> QRIS</span>
+                <span><i class="fa-solid fa-headset"></i> Support Admin</span>
+            </div>
+            <div class="footer-copy">© TeleCod · Jangan bagikan data akun atau kode pembayaran kepada siapa pun.</div>
+        </div>
+    </footer>
+
     <!-- =====================================================
          TOAST
          ===================================================== -->
@@ -738,75 +814,6 @@
     <!-- CANCEL BUTTON -->
     <script src="js/payment.js?v=20260917-clean-cashi-final"></script>
 
-<script>
-(function(){
-  function rupiah(n){
-    try { return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0)); }
-    catch(e){ return 'Rp'+Number(n||0).toLocaleString('id-ID'); }
-  }
-  const frame=document.getElementById('cleanQrFrame');
-  const amount=document.getElementById('cleanAmount');
-  const plan=document.getElementById('cleanPlanTitle');
-  const open=document.getElementById('cleanOpenCashi');
-  const check=document.getElementById('cleanCheckPayment');
-  const cancel=document.getElementById('cleanCancelPayment');
-
-  window.PasTelePaymentCleanUI = {
-    setAmount(v){ if(amount) amount.textContent=rupiah(v); },
-    setPlan(v){ if(plan && v) plan.textContent=v; },
-    setQr(src){
-      if(!frame) return;
-      frame.innerHTML='';
-      if(!src){ frame.innerHTML='<span style="color:#667085;font-size:13px">QR belum tersedia.</span>'; return; }
-      const img=document.createElement('img');
-      img.alt='QRIS Cashi';
-      img.src=src;
-      img.onload=function(){};
-      img.onerror=function(){ frame.innerHTML='<span style="color:#b42318;font-size:13px">QR gagal dimuat. Gunakan tombol Buka Pembayaran Cashi.</span>'; };
-      frame.appendChild(img);
-    },
-    setCheckout(url){
-      if(open) open.href=url||'#';
-      if(open && !url) open.setAttribute('aria-disabled','true');
-    }
-  };
-
-  // Try to bridge common global/state names without assuming a particular app schema.
-  function sync(){
-    const g=window;
-    const candidates=[
-      g.paymentData,g.currentPayment,g.currentOrder,g.order,g.paymentOrder,
-      g.__PAYMENT__,g.__PAYMENT_STATE__
-    ].filter(Boolean);
-    const obj=candidates[0]||{};
-    if(obj.amount!=null) window.PasTelePaymentCleanUI.setAmount(obj.amount);
-    if(obj.plan||obj.plan_name||obj.name) window.PasTelePaymentCleanUI.setPlan(obj.plan||obj.plan_name||obj.name);
-    const qr=obj.qrUrl||obj.qr_url;
-    const co=obj.checkout_url||obj.payment_url;
-    if(qr) window.PasTelePaymentCleanUI.setQr(qr);
-    if(co) window.PasTelePaymentCleanUI.setCheckout(co);
-  }
-  sync();
-  window.addEventListener('cashi:payment', function(e){
-    const d=e.detail||{};
-    if(d.amount!=null) window.PasTelePaymentCleanUI.setAmount(d.amount);
-    if(d.qrUrl) window.PasTelePaymentCleanUI.setQr(d.qrUrl);
-    if(d.checkout_url) window.PasTelePaymentCleanUI.setCheckout(d.checkout_url);
-  });
-
-  if(check) check.addEventListener('click', function(){
-    // Let existing payment implementation handle the real check if available.
-    if(typeof window.checkPayment === 'function') return window.checkPayment();
-    if(typeof window.checkCashiPayment === 'function') return window.checkCashiPayment();
-    window.dispatchEvent(new CustomEvent('cashi:check'));
-  });
-  if(cancel) cancel.addEventListener('click', function(){
-    if(typeof window.cancelPayment === 'function') return window.cancelPayment();
-    if(typeof window.cancelOrder === 'function') return window.cancelOrder();
-    window.history.back();
-  });
-})();
-</script>
 
 </body>
 </html>
