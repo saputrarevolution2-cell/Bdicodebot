@@ -1,3 +1,4 @@
+@import url("admin-base.css?v=20260917-admin-ui");
 /* PasTele Admin — page-local premium SaaS theme */
 :root{--bg:#f6f8fc;--surface:#fff;--surface2:#f8fafc;--text:#101828;--muted:#667085;--line:#e4e7ec;--primary:#635bff;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--orange:#f59e0b;--radius:18px;--shadow:0 10px 30px rgba(16,24,40,.07);--shadow2:0 20px 55px rgba(16,24,40,.12);color-scheme:light}
 html[data-theme=dark],html.theme-dark,body.theme-dark{--bg:#0b111a;--surface:#121a25;--surface2:#172231;--text:#f8fafc;--muted:#98a6b8;--line:rgba(255,255,255,.1);--shadow:0 12px 35px rgba(0,0,0,.24);--shadow2:0 22px 60px rgba(0,0,0,.36);color-scheme:dark}
