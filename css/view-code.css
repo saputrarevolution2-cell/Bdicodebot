@@ -314,3 +314,37 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+
+
+/* =========================================================
+   PasTele Canonical UI — responsive polish
+   Matches marketplace/settings visual language.
+   ========================================================= */
+:root{--pt-control-h:44px;--pt-card-radius:18px}
+body.app-page{overflow-x:hidden}
+.public-view-page,.create-detail-page{background:var(--bg)}
+.view-wrap,.create-detail{width:min(900px,calc(100% - 32px));margin-inline:auto}
+.view-card,.create-card{border-color:var(--line)!important;border-radius:var(--pt-card-radius)!important;box-shadow:var(--shadow)!important}
+.view-ticker{border-color:rgba(34,158,217,.18)!important;background:rgba(34,158,217,.06)!important}
+.btn,.create-actions button,.access-choice,.type-switch a{min-height:var(--pt-control-h);border-radius:11px}
+input,textarea,select{border-color:var(--line)!important;background:var(--surface)!important;color:var(--text)!important}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 4px rgba(34,158,217,.09)!important;outline:none}
+@media(max-width:780px){
+  .view-wrap,.create-detail{width:calc(100% - 20px)}
+  .view-head{padding:20px 18px 17px}
+  .view-meta{padding:11px 18px}
+  .view-body{padding:18px}
+  .engage{padding:0 18px 18px}
+  .create-detail{padding-top:28px!important}
+}
+@media(max-width:520px){
+  .view-wrap,.create-detail{width:calc(100% - 20px)}
+  .view-head{gap:11px}
+  .view-icon{width:46px;height:46px;flex-basis:46px;border-radius:14px}
+  .view-head h1{font-size:23px}
+  .view-body{padding:15px}
+  .engage{padding:0 15px 15px}
+  .comment-form{flex-direction:column;align-items:stretch}
+  .comment-form .btn{width:100%}
+}
+
