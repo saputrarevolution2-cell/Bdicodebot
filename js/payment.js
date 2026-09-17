@@ -3944,7 +3944,12 @@ document.addEventListener(
                     return;
                 }
 
-                qr.innerHTML = "";
+                /* Hard guarantee: this payment page owns exactly ONE QR
+                 * renderer. Clear the container before every render so
+                 * polling/re-rendering can never stack another QR. */
+                qr.replaceChildren();
+                qr.hidden = false;
+                qr.setAttribute("aria-live", "polite");
 
                 /* =========================================
                    QRIS
@@ -4130,6 +4135,8 @@ document.addEventListener(
 
                 try {
                     if (qr) {
+                        qr.replaceChildren();
+                        qr.hidden = false;
                         qr.innerHTML = `
                             <div class="qr-loading">
                                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -4677,6 +4684,15 @@ document.addEventListener(
              */
             paymentStarted = false;
 
+            /* Never show any QR placeholder before Buy Now. */
+            if (qr) {
+                qr.replaceChildren();
+                qr.hidden = true;
+            }
+            if (check) {
+                check.disabled = true;
+            }
+
             if (content) {
                 content.classList.add("prepay-mode");
             }
@@ -4792,7 +4808,8 @@ document.addEventListener(
                     }
 
                     if (qr) {
-                        qr.innerHTML = "";
+                        qr.replaceChildren();
+                        qr.hidden = true;
                     }
 
                     toast(
