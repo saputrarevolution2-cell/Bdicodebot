@@ -3042,6 +3042,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const accessType = row => String(row?.access_type || "free").toLowerCase() === "paid" ? "paid" : "free";
   const priceOf = row => Number(row?.price || 0);
 
+  function isOwner(item, profile) {
+    if (!item || !profile?.id) return false;
+    const me = String(profile.id);
+    return [item.owner_id, item.creator_id, item.seller_id, item.user_id]
+      .filter(Boolean).map(String).includes(me);
+  }
+
   async function currentProfile(){
     try { return typeof window.TC?.profile === "function" ? await window.TC.profile() : null; } catch { return null; }
   }
@@ -3139,27 +3146,68 @@ document.addEventListener("DOMContentLoaded", async () => {
     return String(item.owner_id || item.creator_id || item.seller_id || item.owner_id) === String(profile.id);
   }
 
-  async function canAccess(){
-    if (accessType(item) === "free" || priceOf(item) <= 0) return {ok:true,reason:"free",profile:await currentProfile()};
-    const profile = await currentProfile();
-    if (!profile?.id) return {ok:false,reason:"login",profile:null};
-    if (profile.is_premium === true || isOwner(profile)) return {ok:true,reason:"premium",profile};
-    if (item.can_access === true) return {ok:true,reason:"purchase",profile};
-    const purchase = await client.from("purchases").select("id,status").eq("buyer_id",profile.id).eq("product_id",item.id).in("status",["completed","paid","success"]).limit(1);
-    if (!purchase.error && purchase.data?.length) return {ok:true,reason:"purchase",profile};
-    return {ok:false,reason:"purchase",profile};
-  }
-
-  function telegramTarget(row){
-    const raw = String(row?.username || row?.bot_username || row?.telegram_channel_id || "").trim();
-    if (!raw) return "";
-    if (/^https?:\/\/(?:t\.me|telegram\.me)\//i.test(raw)) return raw;
-    if (/^@/.test(raw)) return `https://t.me/${raw.slice(1)}`;
-    if (/^[A-Za-z0-9_]{5,32}$/.test(raw)) return `https://t.me/${raw}`;
+  function canonicalViewUrl(item, resolvedType, token = "") {
+    const slug = String(item?.slug || "").trim();
+    if (!slug) return "";
+    const guest = token ? `&guest_token=${encodeURIComponent(token)}` : "";
+    if (resolvedType === "code") return `view-code.html?slug=${encodeURIComponent(slug)}${token ? guest : ""}`;
+    if (resolvedType === "pastelink") return `view-pastelink.html?slug=${encodeURIComponent(slug)}${token ? guest : ""}`;
+    if (resolvedType === "channel" || resolvedType === "group")
+      return `view-telegram.html?type=${encodeURIComponent(resolvedType)}&slug=${encodeURIComponent(slug)}${token ? guest : ""}`;
+    if (resolvedType === "paste")
+      return `paste-view.html?slug=${encodeURIComponent(slug)}${token ? guest : ""}`;
     return "";
   }
 
-  function guestCheckoutToken(){let k='pastele-guest-checkout-token';let v=localStorage.getItem(k);if(!v){v=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)));localStorage.setItem(k,v)}return v}
+  async function canAccess(){
+    const profile = await currentProfile();
+
+    // Owner/admin can inspect their own content.
+    if (profile?.id && (isOwner(item, profile) || profile.is_admin === true || profile.role === "admin")) {
+      return {ok:true,reason:"owner",profile};
+    }
+
+    // IMPORTANT: FREE is still a claim/purchase flow. Do not expose content
+    // merely because price is zero or access_type is free.
+    // Check a completed purchase for authenticated users.
+    if (profile?.id) {
+      try {
+        const r = await client.from("purchases")
+          .select("id,status,item_type,item_id,product_id")
+          .eq("buyer_id", profile.id)
+          .in("status", ["completed","paid","success"])
+          .or(`product_id.eq.${item.id},item_id.eq.${item.id}`)
+          .limit(1);
+        if (!r.error && Array.isArray(r.data) && r.data.length) {
+          return {ok:true,reason:"purchase",profile};
+        }
+      } catch (_) {}
+    }
+
+    // Guest access is determined server-side by the guest token and completed
+    // order/purchase. Never infer access from login state.
+    const token = String(guestToken || "").trim();
+    if (token) {
+      try {
+        const rpcType =
+          resolvedType === "code" ? "telegram_product" :
+          (resolvedType === "channel" || resolvedType === "group") ? "channel" :
+          (resolvedType === "pastelink" || resolvedType === "paste") ? "pastelink" :
+          "product";
+        const d = await client.rpc("get_market_item_detail_guest", {
+          p_type: rpcType,
+          p_id: item.id,
+          p_guest_token: token
+        });
+        if (!d.error) {
+          const row = Array.isArray(d.data) ? d.data[0] : d.data;
+          if (row?.can_access === true) return {ok:true,reason:"purchase",profile};
+        }
+      } catch (_) {}
+    }
+
+    return {ok:false,reason:"purchase_required",profile,token};
+  }
 
   function renderLocked(access){
     const paid = priceOf(item);
@@ -3176,7 +3224,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
         <div class="product-buy-area">
           <strong class="product-price">${money(paid)}</strong>
-          <button class="btn primary" id="productBuyBtn" type="button"><i class="fa-solid fa-qrcode"></i> Beli Akses</button>
+          <button class="btn primary" id="productBuyBtn" type="button"><i class="fa-solid fa-bag-shopping"></i> ${priceOf(item) <= 0 ? "Dapatkan Konten" : "Beli Akses"}</button>
           <a class="btn" href="premium.html"><i class="fa-solid fa-gem"></i> Lihat Premium</a>
         </div>
       </div>`;
@@ -3330,7 +3378,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const title=item.title || item.name || "Product";
     setHeader(title,item.description||"Detail produk dan akses.",({link:"fa-link",paste:"fa-file-lines",code:"fa-code",channel:"fa-tower-broadcast",group:"fa-users"}[resolvedType]||"fa-box"));
     const access=await canAccess();
-    if(access.ok) renderOpen(access); else renderLocked(access);
+    if(access.ok){
+      const target = canonicalViewUrl(item, resolvedType, guestToken);
+      if(target){
+        window.location.replace(target);
+        return;
+      }
+      renderOpen(access);
+    } else {
+      renderLocked(access);
+    }
 
     /* Record every opening; the SQL trigger creates the owner's notification. */
     try {

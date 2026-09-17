@@ -3136,40 +3136,51 @@ document.addEventListener(
              * by the logged-in buyer + completed purchase.
              */
             let accessUrl = "dashboard.html";
-            try {
-                let purchase=null; let purchaseError=null;
-                if (order.buyer_id && user?.id) {
-                    ({ data: purchase, error: purchaseError } = await client.from("purchases").select("id,item_type,item_id,item_title,status,access_url").eq("order_id",order.id).eq("buyer_id",user.id).in("status",["completed","paid","success"]).maybeSingle());
-                }
-                if (purchaseError) throw purchaseError;
+            const normalizePurchaseType = (value) => {
+                const t = String(value || "").trim().toLowerCase();
+                if (["telegram_product","telegram-code","telegram_code","code"].includes(t)) return "code";
+                if (["pastelink","paste-link","paste_link","paste"].includes(t)) return "pastelink";
+                if (["channel","telegram_channel","telegram-channel"].includes(t)) return "channel";
+                if (["group","telegram_group","telegram-group"].includes(t)) return "group";
+                if (["product","link"].includes(t)) return "link";
+                return t;
+            };
 
-                if (purchase?.access_url) {
-                    accessUrl = purchase.access_url;
-                } else if (!order.buyer_id && guestToken) {
-                    const type=String(order.item_type||"").toLowerCase(); const id=order.item_id||order.product_id;
-                    if(id){ const d=await client.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:guestToken}); const item=d.data; const slug=item?.slug; if(slug){ if(type==='pastelink') accessUrl=`view-pastelink.html?slug=${encodeURIComponent(slug)}&guest_token=${encodeURIComponent(guestToken)}`; else if(type==='telegram_product') accessUrl=`view-code.html?slug=${encodeURIComponent(slug)}`; else if(type==='channel') accessUrl=`view-telegram.html?type=channel&slug=${encodeURIComponent(slug)}`; else accessUrl=`product.html?type=product&id=${encodeURIComponent(id)}`; } }
-                } else {
-                    const type = String(order.item_type || "").toLowerCase();
-                    const id = order.item_id || order.product_id;
-                    if (id && type === "pastelink") {
+            const canonicalView = async (type, id) => {
+                const t = normalizePurchaseType(type);
+                if (!id) return "";
+                try {
+                    if (t === "pastelink") {
                         const { data } = await client.from("pastelinks").select("slug").eq("id",id).maybeSingle();
-                        if (data?.slug) accessUrl = `paste-view.html?slug=${encodeURIComponent(data.slug)}`;
-                    } else if (id && type === "telegram_product") {
-                        const { data } = await client.from("telegram_products").select("slug").eq("id",id).maybeSingle();
-                        if (data?.slug) accessUrl = `view-code.html?slug=${encodeURIComponent(data.slug)}`;
-                    } else if (id && ["channel","telegram_channel","group","telegram_group"].includes(type)) {
-                        const { data } = await client.from("telegram_channels").select("slug,type").eq("id",id).maybeSingle();
-                        if (data?.slug) {
-                            const prefix = String(data.type || type).toLowerCase() === "group" ? "g" : "ch";
-                            accessUrl = `view-telegram.html?type=${prefix === "g" ? "group" : "channel"}&slug=${encodeURIComponent(data.slug)}`;
-                        }
-                    } else if (id && ["product","link"].includes(type)) {
-                        const { data } = await client.from("products").select("slug").eq("id",id).maybeSingle();
-                        if (data?.slug) accessUrl = `product.html?type=link&slug=${encodeURIComponent(data.slug)}`;
+                        return data?.slug ? `view-pastelink.html?slug=${encodeURIComponent(data.slug)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}` : "";
                     }
+                    if (t === "code") {
+                        const { data } = await client.from("telegram_products").select("slug").eq("id",id).maybeSingle();
+                        return data?.slug ? `view-code.html?slug=${encodeURIComponent(data.slug)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}` : "";
+                    }
+                    if (t === "channel" || t === "group") {
+                        const { data } = await client.from("telegram_channels").select("slug,type").eq("id",id).maybeSingle();
+                        if (!data?.slug) return "";
+                        const actual = String(data.type || t).toLowerCase() === "group" ? "group" : "channel";
+                        return `view-telegram.html?type=${actual}&slug=${encodeURIComponent(data.slug)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}`;
+                    }
+                } catch (e) {
+                    console.warn("[PaymentSuccess] canonical view resolve failed:", e);
                 }
-            } catch (accessError) {
-                console.warn("[Payment Success] Access resolve:", accessError);
+                return "";
+            };
+
+            const purchasedType = normalizePurchaseType(order.item_type || purchase?.item_type);
+            const purchasedId = order.item_id || order.product_id || purchase?.item_id;
+
+            // For the four marketplace content types, always use the canonical
+            // view page. This prevents stale/incorrect access_url values from
+            // sending the buyer back to product.html or paste-view.html.
+            if (["code","pastelink","channel","group"].includes(purchasedType)) {
+                const canonical = await canonicalView(purchasedType, purchasedId);
+                if (canonical) accessUrl = canonical;
+            } else if (purchase?.access_url) {
+                accessUrl = String(purchase.access_url);
             }
 
             setAccessUrl(accessUrl);
