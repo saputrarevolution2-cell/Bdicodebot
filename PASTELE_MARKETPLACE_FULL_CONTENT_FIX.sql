@@ -6,7 +6,8 @@ BEGIN;
 
 -- Keep public profile metadata safe and available to both roles.
 DROP VIEW IF EXISTS public.profile_public CASCADE;
-CREATE VIEW public.profile_public AS
+CREATE VIEW public.profile_public
+WITH (security_invoker = true) AS
 SELECT id, username, display_name, avatar_url, country
 FROM public.profiles
 WHERE is_banned = false;
@@ -14,7 +15,8 @@ GRANT SELECT ON public.profile_public TO anon, authenticated;
 
 -- Canonical public listing view. This view contains metadata only.
 DROP VIEW IF EXISTS public.marketplace_public CASCADE;
-CREATE VIEW public.marketplace_public AS
+CREATE VIEW public.marketplace_public
+WITH (security_invoker = true) AS
 SELECT p.id, p.slug, p.title, coalesce(p.type,'link') AS type,
        coalesce(p.access_type, CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END) AS access_type,
        coalesce(p.price,0) AS price, p.thumbnail_url, p.description,
@@ -65,7 +67,7 @@ WHERE p.visibility='public'
 
 GRANT SELECT ON public.marketplace_public TO anon, authenticated;
 
--- SECURITY DEFINER RPC is the canonical frontend listing endpoint.
+-- This RPC is a separate SECURITY DEFINER function, not a SECURITY DEFINER view.
 -- It returns only marketplace metadata and never content/content_html.
 DROP FUNCTION IF EXISTS public.get_public_marketplace_items();
 CREATE FUNCTION public.get_public_marketplace_items()
