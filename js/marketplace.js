@@ -3877,35 +3877,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (window.__PASTELE_MARKET_BUY_BOUND__) return;
     window.__PASTELE_MARKET_BUY_BOUND__ = true;
 
-    document.addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-market-buy]");
-      if (!button) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const access = String(button.dataset.accessType || "").trim().toLowerCase();
-      const productId = String(button.dataset.productId || "").trim();
-      const productType = String(button.dataset.productType || "").trim();
+    async function startCheckout(trigger) {
+      const access = String(trigger.dataset.accessType || "").trim().toLowerCase();
+      const productId = String(trigger.dataset.productId || "").trim();
+      const productType = String(trigger.dataset.productType || "").trim();
 
       if (!productId) {
         toast("Produk tidak valid.", "error");
         return;
       }
 
+      // FREE: everyone can enter directly, including guest users.
       if (access === "free") {
-        const card = button.closest(".product-card");
+        const card = trigger.closest(".product-card");
         const link = card?.querySelector(".product-card-link");
-        if (link?.href) window.location.href = link.href;
+        if (link?.href) window.location.assign(link.href);
         return;
       }
 
-      // Sellers cannot create a purchase for their own product.
-      // Open the product detail instead of exposing the raw DB error.
+      // PAID: seller must not create an order for their own product.
       try {
-        const currentUser = await (window.TC?.user?.() || window.sb?.auth?.getUser?.().then(r => r?.data?.user || null));
-        const card = button.closest(".product-card");
+        const currentUser = await (
+          window.TC?.user?.() ||
+          window.sb?.auth?.getUser?.().then(r => r?.data?.user || null)
+        );
+        const card = trigger.closest(".product-card");
         const ownerId = String(card?.dataset?.shareOwner || "").trim();
+
         if (currentUser?.id && ownerId && String(currentUser.id) === ownerId) {
           const link = card?.querySelector(".product-card-link");
           if (link?.href) window.location.assign(link.href);
@@ -3913,12 +3911,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       } catch (_) {}
 
-      if (button.disabled) return;
+      if (trigger.disabled) return;
 
-      const originalHtml = button.innerHTML;
-      button.disabled = true;
-      button.classList.add("is-loading");
-      button.innerHTML = `
+      const originalHtml = trigger.innerHTML;
+      trigger.disabled = true;
+      trigger.classList.add("is-loading");
+      trigger.innerHTML = `
         <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
         <span>Menyiapkan pembayaran...</span>
       `;
@@ -3927,6 +3925,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const client = window.sb || window.supabaseClient;
         if (!client?.rpc) throw new Error("Koneksi database belum tersedia.");
 
+        // No login is required. A stable browser guest token is enough.
         const guestToken = marketplaceGuestToken();
         const checkoutType = checkoutTypeFromMarketType(productType);
 
@@ -3942,22 +3941,89 @@ document.addEventListener("DOMContentLoaded", async () => {
         const orderId = String(order?.order_id || order?.id || "").trim();
         if (!orderId) throw new Error("Order ID tidak ditemukan dari database.");
 
-        const paymentUrl =
-          `payment.html?order_id=${encodeURIComponent(orderId)}` +
-          `&guest_token=${encodeURIComponent(guestToken)}`;
-
-        window.location.assign(paymentUrl);
+        window.location.assign(
+          `payment.html?order_id=${encodeURIComponent(orderId)}&guest_token=${encodeURIComponent(guestToken)}`
+        );
       } catch (error) {
         console.error("[Marketplace Checkout]", error);
         toast(error?.message || "Checkout gagal. Silakan coba lagi.", "error");
-        button.disabled = false;
-        button.classList.remove("is-loading");
-        button.innerHTML = originalHtml;
+        trigger.disabled = false;
+        trigger.classList.remove("is-loading");
+        trigger.innerHTML = originalHtml;
+      }
+    }
+
+    document.addEventListener("click", async (event) => {
+      // Buy/Take button.
+      const button = event.target.closest("[data-market-buy]");
+      if (button) {
+        event.preventDefault();
+        event.stopPropagation();
+        await startCheckout(button);
+        return;
+      }
+
+      // Main product card link.
+      // Free => direct content.
+      // Paid => create/reuse checkout order first.
+      const link = event.target.closest(".product-card-link");
+      if (!link) return;
+
+      const card = link.closest(".product-card");
+      if (!card) return;
+
+      const access = String(
+        card.querySelector(".product-access")?.classList.contains("paid") ? "paid" : "free"
+      ).toLowerCase();
+
+      if (access !== "paid") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const productId = String(card.dataset.shareId || "").trim();
+      const productType = String(card.dataset.shareType || "").trim();
+      if (!productId) {
+        toast("Produk tidak valid.", "error");
+        return;
+      }
+
+      // Use a temporary invisible checkout trigger so the same paid flow
+      // is used whether the user clicks the card or the CTA button.
+      const temp = document.createElement("button");
+      temp.type = "button";
+      temp.hidden = true;
+      temp.dataset.marketBuy = "";
+      temp.dataset.productId = productId;
+      temp.dataset.productType = productType;
+      temp.dataset.accessType = "paid";
+      card.appendChild(temp);
+
+      try {
+        await startCheckout(temp);
+      } finally {
+        temp.remove();
       }
     }, true);
-  }
 
-  bindMarketplaceBuyButtons();
+    // Paid items in the Top/Ranking lists must also never bypass checkout.
+    document.addEventListener("click", async (event) => {
+      const link = event.target.closest(".market-list-item");
+      if (!link) return;
+
+      const href = String(link.getAttribute("href") || "");
+      const m = href.match(/(?:[?&])id=([^&]+)/);
+      if (!m) return;
+
+      // Ranking links are generated from the same productUrl() function.
+      // A paid product uses product.html; resolve the access from the URL's
+      // type/id only when the link is known to be a paid detail URL is not
+      // available here. Leave product.html navigation intact.
+      // Main cards are the authoritative checkout entry.
+    }, true);
+  }
+  
+bindMarketplaceBuyButtons();
 
   /* =======================================================
      QUEST / ACTIVITY TRACKING
