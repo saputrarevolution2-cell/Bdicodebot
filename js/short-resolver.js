@@ -15,8 +15,14 @@ window.PASTELE_CONFIG=Object.freeze({
 const cfg=window.PASTELE_CONFIG||{};
 const client=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const qs=new URLSearchParams(location.search);
-const prefix=String(qs.get('prefix')||'').toLowerCase();
-const code=String(qs.get('code')||'').trim();
+// Cloudflare Pages rewrites /pp/ky9m internally to short-resolver.html.
+// The browser keeps the public pathname, so query parameters may be absent.
+// Fall back to the real pathname to recover prefix + code.
+const pathParts=String(location.pathname||'').split('/').filter(Boolean);
+const pathPrefix=String(pathParts[0]||'').toLowerCase();
+const pathCode=decodeURIComponent(pathParts.slice(1).join('/')).trim();
+const prefix=String(qs.get('prefix')||pathPrefix||'').toLowerCase();
+const code=String(qs.get('code')||pathCode||'').trim();
 const $=id=>document.getElementById(id);
 function say(a,b){$('status').textContent=a;if(b)$('detail').textContent=b}
 function found(x){const v=Array.isArray(x?.data)?x.data[0]:x?.data;return v?.found===true?v:null}
