@@ -281,7 +281,11 @@
       if(foundAccount.is_banned===true)throw new Error("Akun kamu telah diblokir.");
       security("Login berhasil. Mengalihkan ke dashboard...","success");
       toastShow("Login berhasil. Selamat datang kembali!","success");
-      setTimeout(()=>window.location.replace("/dashboard.html"),650);
+      setTimeout(()=>{
+        const requested=new URLSearchParams(window.location.search).get("redirect");
+        const target=requested && requested.startsWith("/") ? requested : "/dashboard.html";
+        window.location.replace(target);
+      },650);
     }catch(e){
       console.error("[PasTele Login] sign in:",e);
       const msg=/invalid login credentials/i.test(String(e?.message||""))?"Username/Gmail atau kata sandi salah.":(e?.message||"Login gagal. Coba lagi.");
