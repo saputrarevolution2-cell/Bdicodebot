@@ -326,3 +326,333 @@ body{margin:0;background:var(--pay-bg);color:var(--pay-text);font-family:Inter,u
   .marquee.left .marquee-track,.marquee.right .marquee-track{animation:none}
   .pay-btn{transition:none}
 }
+
+
+/* =========================================================
+   PasTele Payment — SINGLE CLEAN PAYMENT UI
+   ========================================================= */
+.payment-page,
+body{overflow-x:hidden}
+.payment-section{padding:28px 0 52px}
+.payment-container{max-width:980px!important}
+.payment-layout{grid-template-columns:minmax(0,1fr) 300px!important;gap:20px!important;align-items:start}
+.payment-main-card,.payment-status-card{border-radius:22px!important}
+.payment-main-card{overflow:hidden}
+.payment-header{margin-bottom:20px!important}
+.payment-order-head{padding-bottom:16px!important}
+.payment-total-box{margin:18px 0!important;text-align:center!important;padding:22px!important;border-radius:18px!important}
+.payment-total-label{justify-content:center!important}
+.payment-total-box strong{font-size:40px!important}
+
+.payment-qr-card{
+  width:100%!important;
+  min-height:0!important;
+  padding:24px 18px!important;
+  border-radius:20px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-direction:column!important;
+  text-align:center!important;
+  background:#f8fafc!important;
+  border:1px solid #e5e7eb!important;
+  box-shadow:none!important;
+}
+.payment-qr-card img,
+.payment-qr-card canvas{
+  display:block!important;
+  width:min(72vw,290px)!important;
+  height:min(72vw,290px)!important;
+  max-width:290px!important;
+  max-height:290px!important;
+  object-fit:contain!important;
+  background:#fff!important;
+  padding:10px!important;
+  border-radius:18px!important;
+  border:1px solid #e5e7eb!important;
+  box-shadow:0 10px 28px rgba(16,24,40,.10)!important;
+  margin:4px auto 14px!important;
+}
+.payment-qr-card::after{
+  content:"Scan menggunakan aplikasi bank atau e-wallet yang mendukung QRIS";
+  display:block;
+  max-width:520px;
+  color:#667085;
+  font-size:13px;
+  line-height:1.55;
+  margin:4px auto 0;
+}
+.qr-loading{padding:18px!important}
+
+.qr-actions{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  margin:12px 0!important;
+}
+.qr-actions button{
+  min-height:50px!important;
+  border-radius:14px!important;
+  font-weight:800!important;
+}
+.payment-check-btn{background:#219bd1!important;color:#fff!important}
+.payment-cancel-btn{background:#fff!important;color:#344054!important;border:1px solid #dfe4ea!important}
+
+.cash-fallback{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:12px;
+  align-items:center;
+  margin-top:10px;
+  padding:15px;
+  border:1px solid #d9edf7;
+  background:#f4fbfe;
+  border-radius:16px;
+}
+.cash-fallback-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:#e5f5fb;color:#1889bb;
+}
+.cash-fallback-copy{min-width:0;display:grid;gap:3px}
+.cash-fallback-copy strong{font-size:13px;color:#172033}
+.cash-fallback-copy span{font-size:12px;color:#667085;line-height:1.45}
+.cash-fallback .payment-open-btn{
+  grid-column:1/-1;
+  width:100%;
+  min-height:48px!important;
+  margin:2px 0 0!important;
+  border-radius:13px!important;
+  background:#219bd1!important;
+  color:#fff!important;
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
+  font-weight:800;
+}
+
+.payment-support-clean{
+  margin-top:12px!important;
+  display:grid!important;
+  grid-template-columns:auto 1fr auto!important;
+  gap:12px!important;
+  align-items:center!important;
+  padding:15px!important;
+  border-radius:16px!important;
+  background:#fff8f7!important;
+  border:1px solid #f3d1cc!important;
+}
+.support-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:#fdecea;color:#c4322a;
+}
+.support-copy{display:grid;gap:3px;min-width:0}
+.support-copy strong{font-size:13px;color:#34110e}
+.support-copy span{font-size:12px;color:#7a5b58;line-height:1.45}
+.support-link{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:40px;padding:9px 13px;border-radius:11px;
+  background:#fff;color:#b42318;border:1px solid #f0c4be;
+  text-decoration:none;font-weight:800;font-size:12px;white-space:nowrap;
+}
+
+.payment-methods,.payment-tutorial{margin-top:16px!important}
+.payment-methods{overflow:hidden!important}
+.payment-marquee{overflow:hidden!important}
+.payment-marquee-track{display:flex!important;width:max-content!important;gap:10px!important}
+.payment-marquee:not(.payment-marquee-wallet) .payment-marquee-track{
+  animation:bank-right 28s linear infinite!important;
+}
+.payment-marquee-wallet .payment-marquee-track{
+  animation:wallet-left 28s linear infinite!important;
+}
+@keyframes bank-right{
+  from{transform:translateX(-25%)}
+  to{transform:translateX(0)}
+}
+@keyframes wallet-left{
+  from{transform:translateX(0)}
+  to{transform:translateX(-25%)}
+}
+
+.site-footer-clean{
+  margin-top:18px;
+  border-top:1px solid #e5e7eb;
+  background:#fff;
+}
+.site-footer-inner{
+  max-width:980px;margin:0 auto;padding:22px 18px 26px;
+  display:grid;gap:14px;
+}
+.footer-brand{display:flex;align-items:center;gap:11px}
+.footer-logo{
+  width:38px;height:38px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:#219bd1;color:#fff;font-weight:900;font-size:13px;
+}
+.footer-brand strong{display:block;font-size:14px;color:#172033}
+.footer-brand span{display:block;color:#98a2b3;font-size:11px;margin-top:2px}
+.footer-meta{display:flex;flex-wrap:wrap;gap:8px}
+.footer-meta span{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 10px;border:1px solid #e5e7eb;border-radius:999px;
+  color:#667085;background:#fafbfc;font-size:11px;font-weight:700;
+}
+.footer-copy{font-size:11px;color:#98a2b3;line-height:1.5}
+
+@media(max-width:820px){
+  .payment-layout{grid-template-columns:1fr!important}
+  .payment-status-card{order:2}
+  .payment-main-card{order:1}
+}
+@media(max-width:600px){
+  .payment-section{padding:14px 0 34px}
+  .payment-container{padding-left:12px!important;padding-right:12px!important}
+  .payment-header h1{font-size:25px!important}
+  .payment-header p{font-size:13px!important}
+  .payment-total-box strong{font-size:34px!important}
+  .payment-qr-card{padding:20px 12px!important}
+  .payment-qr-card img,.payment-qr-card canvas{
+    width:min(76vw,270px)!important;height:min(76vw,270px)!important;
+    max-width:270px!important;max-height:270px!important;
+  }
+  .qr-actions{grid-template-columns:1fr 1fr!important}
+  .payment-support-clean{grid-template-columns:auto 1fr!important}
+  .support-link{grid-column:1/-1;width:100%}
+  .cash-fallback{grid-template-columns:auto 1fr}
+  .footer-meta{gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .payment-marquee:not(.payment-marquee-wallet) .payment-marquee-track,
+  .payment-marquee-wallet .payment-marquee-track{animation:none!important}
+}
+
+
+/* =========================================================
+   PasTele — CASHI PRE-PAYMENT GATE
+   Cashi order/QR stays hidden until the buyer explicitly
+   presses Buy Now. This prevents abandoned gateway orders.
+   ========================================================= */
+.payment-content.prepay-mode .payment-order-head{
+  display:none!important;
+}
+.payment-content.prepay-mode .payment-qr-card,
+.payment-content.prepay-mode .qr-actions,
+.payment-content.prepay-mode .cash-fallback,
+.payment-content.prepay-mode .payment-support,
+.payment-content.prepay-mode .payment-methods,
+.payment-content.prepay-mode .payment-tutorial,
+.payment-content.prepay-mode .payment-status-card{
+  display:none!important;
+}
+.payment-content.prepay-mode .payment-layout{
+  grid-template-columns:1fr!important;
+  max-width:760px;
+  margin:0 auto;
+}
+.payment-content.prepay-mode .payment-main-card{
+  width:100%;
+}
+.prepayment-gate{
+  margin-top:16px;
+  padding:18px;
+  border:1px solid #d9e7ef;
+  border-radius:18px;
+  background:linear-gradient(180deg,#f8fcfe 0%,#fff 100%);
+}
+.prepayment-warning{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:13px;
+  align-items:start;
+  padding:15px;
+  border:1px solid #f1dfad;
+  border-radius:15px;
+  background:#fffaf0;
+}
+.prepayment-warning-icon{
+  width:42px;height:42px;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  background:#fff0c7;color:#9a6700;font-size:18px;
+}
+.prepayment-warning-copy{
+  display:grid;
+  gap:5px;
+  min-width:0;
+}
+.prepayment-warning-copy strong{
+  color:#172033;
+  font-size:14px;
+  font-weight:900;
+}
+.prepayment-warning-copy span{
+  color:#667085;
+  font-size:12px;
+  line-height:1.55;
+}
+.prepayment-warning-copy small{
+  display:block;
+  margin-top:4px;
+  color:#8a5b00;
+  font-size:11.5px;
+  line-height:1.55;
+  font-weight:700;
+}
+.prepayment-warning-copy small i{margin-right:4px}
+.prepayment-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+.prepayment-actions button{
+  min-height:52px;
+  border-radius:14px;
+  border:0;
+  font:inherit;
+  font-weight:900;
+  cursor:pointer;
+  transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease;
+}
+.prepayment-actions button:hover{
+  transform:translateY(-1px);
+}
+.prepayment-actions button:disabled{
+  opacity:.65;
+  cursor:wait;
+  transform:none;
+}
+.prepayment-buy-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:#219bd1;
+  color:#fff;
+  box-shadow:0 8px 20px rgba(33,155,209,.18);
+}
+.prepayment-close-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:#fff;
+  color:#344054;
+  border:1px solid #dfe4ea!important;
+}
+.prepayment-note{
+  margin:11px 2px 0;
+  color:#98a2b3;
+  font-size:11px;
+  line-height:1.5;
+  text-align:center;
+}
+.prepayment-note i{margin-right:4px}
+@media(max-width:600px){
+  .prepayment-gate{padding:13px}
+  .prepayment-warning{padding:13px;grid-template-columns:auto 1fr}
+  .prepayment-actions{grid-template-columns:1fr}
+}
