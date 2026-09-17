@@ -2581,7 +2581,7 @@ window.PASTELE_CONFIG = Object.freeze({
     "index.html", "login.html", "register.html",
     "forgot-password.html", "reset-password.html",
     "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
-    "about.html", "terms.html", "privacy.html"
+    "about.html", "terms.html", "privacy.html", "payment.html"
   ]);
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
@@ -3006,7 +3006,23 @@ document.addEventListener(
                 qs.get("order_id") || ""
             ).trim();
 
-        const guestToken = String(qs.get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+        let guestToken = String(qs.get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+
+        // Guest checkout: payment page must be usable without Supabase login.
+        // Reuse the token from the checkout URL/localStorage when available.
+        // If a guest arrives without one, create a stable browser token so
+        // the checkout flow can continue without forcing authentication.
+        if (!guestToken) {
+            try {
+                const bytes = new Uint8Array(16);
+                crypto.getRandomValues(bytes);
+                guestToken = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+                localStorage.setItem("pastele-guest-checkout-token", guestToken);
+            } catch (_) {
+                guestToken = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+                try { localStorage.setItem("pastele-guest-checkout-token", guestToken); } catch (_) {}
+            }
+        }
 
         /* ===================================================
            HTML ELEMENTS
@@ -3443,10 +3459,10 @@ document.addEventListener(
          * Authenticated orders continue to use the Supabase session.
          * Never force a guest buyer to login just to open payment.
          */
-        if (!user?.id && !guestToken) {
-            window.location.href =
-                `login.html?redirect=${encodeURIComponent(window.location.href)}`;
-            return;
+        // Guests are allowed. Authentication is optional on the payment page.
+        // The order RPC receives guestToken so it can authorize the guest order.
+        if (!user?.id) {
+            console.info("[Payment] Guest checkout mode.");
         }
 
         /* ===================================================
