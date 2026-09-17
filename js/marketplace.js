@@ -3193,8 +3193,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (slug) {
       if (type === "pastelink") return `/p${paid ? "p" : "f"}/${key}`;
-      if (type === "code") return `/c${paid ? "p" : "f"}/${key}`;
-      if (type === "channel") return `/c${paid ? "p" : "f"}/${key}`;
+      if (type === "code") return `/c/${paid ? "p" : "f"}/${key}`;
+      if (type === "channel") return `/ch/${paid ? "p" : "f"}/${key}`;
       if (type === "group") return `/g${paid ? "p" : "f"}/${key}`;
       if (type === "paste") return `/paste/${key}`;
     }

@@ -3285,7 +3285,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const slug = String(payload.slug || "").trim();
     const access = payload.access === "paid" ? "p" : "f";
-    const url = `${location.origin}/c${access}/${encodeURIComponent(slug)}`;
+    const url = `${location.origin}/c/${access}/${encodeURIComponent(slug)}`;
     const botUsername = normalizeBotUsername(payload.botUsername);
 
     result.hidden = false;
