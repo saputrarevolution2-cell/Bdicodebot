@@ -2607,6 +2607,7 @@ window.PASTELE_CONFIG = Object.freeze({
     "index.html", "login.html", "register.html",
     "forgot-password.html", "reset-password.html",
     "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "create-code.html",
     "about.html", "terms.html", "privacy.html"
   ]);
 
@@ -3247,7 +3248,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const raw = String(error?.message || error?.details || error || "").trim();
     const code = String(error?.code || "").trim();
 
-    if (code === "42501") return "Akses ditolak oleh database. Silakan login dan coba lagi.";
+    if (code === "42501") return "Akses pembuatan Code ditolak oleh database. Pastikan RPC create_code_content mengizinkan pembuatan Code Free untuk guest.";
     if (/TITLE_AND_CONTENT_REQUIRED/i.test(raw)) return "Judul dan Code / Delivery wajib diisi.";
     if (/INVALID_ACCESS_TYPE/i.test(raw)) return "Jenis akses tidak valid.";
     if (/LOGIN_REQUIRED_FOR_PAID/i.test(raw)) return "Code Paid hanya dapat dibuat setelah login.";
@@ -3354,8 +3355,24 @@ document.addEventListener("DOMContentLoaded", () => {
        */
       const user = await getCurrentUser();
 
+      /*
+       * FREE:
+       * - Guest / belum login BOLEH membuat Code Free.
+       *
+       * PAID:
+       * - Wajib memiliki session Supabase.
+       * - Jangan kirim RPC jika belum login.
+       * - Arahkan ke login dan kembalikan user ke halaman Create Code.
+       */
       if (values.access === "paid" && !user?.id) {
-        throw new Error("LOGIN_REQUIRED_FOR_PAID");
+        toast("Code Paid hanya bisa dibuat setelah login atau daftar akun.", "error");
+        const next = `${location.pathname}${location.search}${location.hash}`;
+        const loginUrl = `login.html?next=${encodeURIComponent(next)}&reason=paid-create`;
+        setLoading(false);
+        window.setTimeout(() => {
+          window.location.assign(loginUrl);
+        }, 450);
+        return;
       }
 
       const bot = bots.find((item) => String(item.id) === String(values.botId));
@@ -3378,14 +3395,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (error) throw error;
 
-      if (!data?.ok || !data?.slug) {
+      const resultData = Array.isArray(data) ? (data[0] || {}) : (data || {});
+      if (!resultData?.ok || !resultData?.slug) {
         throw new Error("Database tidak mengonfirmasi pembuatan Code.");
       }
 
       renderResult({
         title: values.title,
-        access: data.access_type || values.access,
-        slug: data.slug,
+        access: resultData.access_type || values.access,
+        slug: resultData.slug,
         botUsername: bot.bot_username
       });
 
