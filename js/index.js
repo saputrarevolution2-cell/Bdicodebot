@@ -354,6 +354,32 @@
     });
   }
 
+
+  function initFaq() {
+    document.querySelectorAll(".ix-faq-grid details").forEach((item) => {
+      item.addEventListener("toggle", () => {
+        if (!item.open) return;
+        document.querySelectorAll(".ix-faq-grid details[open]").forEach((other) => {
+          if (other !== item) other.open = false;
+        });
+      });
+    });
+  }
+
+  function initHashLinks() {
+    document.querySelectorAll('a[href^="#"]').forEach((a) => {
+      a.addEventListener("click", () => {
+        const menu = $("#mobileMenu");
+        const button = $("#menuBtn");
+        if (menu) menu.classList.remove("open");
+        if (button) {
+          button.innerHTML = '<i class="fa-solid fa-bars"></i>';
+          button.setAttribute("aria-expanded", "false");
+        }
+      });
+    });
+  }
+
   function initYear() {
     const year = $("#year");
     if (year) year.textContent = new Date().getFullYear();
@@ -364,6 +390,8 @@
     initTheme();
     initMenu();
     initFilters();
+    initFaq();
+    initHashLinks();
     await Promise.allSettled([updateAuth(), loadMarketplace()]);
   });
 
