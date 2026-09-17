@@ -656,3 +656,44 @@ body{overflow-x:hidden}
   .prepayment-warning{padding:13px;grid-template-columns:auto 1fr}
   .prepayment-actions{grid-template-columns:1fr}
 }
+
+
+/* =========================================================
+   CASHI BUY NOW — NO DOUBLE QR / PRE-PAYMENT STATE
+   ========================================================= */
+
+/* Before Buy Now: only order summary + warning + actions. */
+.payment-content.prepay-mode .payment-order-head{
+  display:flex!important;
+}
+.payment-content.prepay-mode .payment-total-box{
+  display:block!important;
+}
+.payment-content.prepay-mode #qrWrap,
+.payment-content.prepay-mode .qr-actions,
+.payment-content.prepay-mode .cash-fallback,
+.payment-content.prepay-mode .payment-support,
+.payment-content.prepay-mode .payment-methods,
+.payment-content.prepay-mode .payment-tutorial,
+.payment-content.prepay-mode .payment-status-card{
+  display:none!important;
+}
+
+/* QR is completely absent until Cashi returns payment data. */
+#qrWrap[hidden]{
+  display:none!important;
+}
+
+/* The QR container itself is the single rendering surface. */
+#qrWrap{
+  position:relative;
+}
+#qrWrap .cashi-qr{
+  display:grid!important;
+  place-items:center!important;
+}
+#qrWrap .cashi-qr img,
+#qrWrap .cashi-qr canvas{
+  display:block!important;
+  margin:0 auto!important;
+}
