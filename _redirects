@@ -8,8 +8,8 @@
 # Route through the compact resolver so FREE/PAID Code links use the same
 # database resolution path as legacy links and remain independent of the
 # static-host rewrite behavior.
-/c/f/*   /short-resolver.html?prefix=cf&code=:splat  200
-/c/p/*   /short-resolver.html?prefix=cp&code=:splat  200
+/c/f/*   /view-code.html?slug=:splat  200
+/c/p/*   /view-code.html?slug=:splat  200
 
 # Telegram Group — compact namespace
 /gf/*    /view-telegram.html?type=group&slug=:splat  200
@@ -21,5 +21,5 @@
 
 # Legacy compact routes. These still go through the resolver so existing links
 # can be resolved from the database without breaking old URLs.
-/cf/*    /short-resolver.html?prefix=cf&code=:splat  200
-/cp/*    /short-resolver.html?prefix=cp&code=:splat  200
+/cf/*    /view-code.html?slug=:splat  200
+/cp/*    /view-code.html?slug=:splat  200
