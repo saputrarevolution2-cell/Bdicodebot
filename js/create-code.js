@@ -2607,6 +2607,7 @@ window.PASTELE_CONFIG = Object.freeze({
     "index.html", "login.html", "register.html",
     "forgot-password.html", "reset-password.html",
     "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "create-product.html", "create-code.html", "create-pastelink.html", "create-telegram.html",
     "create-code.html",
     "about.html", "terms.html", "privacy.html"
   ]);
