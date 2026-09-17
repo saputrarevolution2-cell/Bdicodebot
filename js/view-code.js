@@ -2604,7 +2604,36 @@ const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",ma
 const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
 
 const qs=new URLSearchParams(location.search);
-const slug=decodeURIComponent((qs.get("slug")||"").trim());
+  /* Public pretty-route resolver: query slug first, then pathname. */
+  function resolvePublicSlug() {
+    const querySlug = String(qs.get("slug") || "").trim();
+    if (querySlug) {
+      try { return decodeURIComponent(querySlug).trim(); }
+      catch (_) { return querySlug; }
+    }
+
+    const parts = String(location.pathname || "").split("/").filter(Boolean);
+    if (parts.length < 2) return "";
+
+    const root = String(parts[0] || "").toLowerCase();
+    let start = -1;
+
+    if (["pp", "pf", "p", "gf", "gp"].includes(root)) {
+      start = 1;
+    } else if ((root === "c" || root === "ch") &&
+               parts.length >= 3 &&
+               ["f", "p"].includes(String(parts[1] || "").toLowerCase())) {
+      start = 2;
+    }
+
+    if (start < 0 || !parts[start]) return "";
+
+    const raw = parts.slice(start).join("/");
+    try { return decodeURIComponent(raw).trim(); }
+    catch (_) { return raw.trim(); }
+  }
+
+const slug = resolvePublicSlug();
 function guestToken(){
   const k="pastele-guest-checkout-token";
   let v=null;
