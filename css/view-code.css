@@ -316,27 +316,6 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
 }
 
 
-/* =========================================================
-   PasTele Canonical UI — responsive polish
-   Matches marketplace/settings visual language.
-   ========================================================= */
-:root{--pt-control-h:44px;--pt-card-radius:18px}
-body.app-page{overflow-x:hidden}
-.public-view-page,.create-detail-page{background:var(--bg)}
-.view-wrap,.create-detail{width:min(900px,calc(100% - 32px));margin-inline:auto}
-.view-card,.create-card{border-color:var(--line)!important;border-radius:var(--pt-card-radius)!important;box-shadow:var(--shadow)!important}
-.view-ticker{border-color:rgba(34,158,217,.18)!important;background:rgba(34,158,217,.06)!important}
-.btn,.create-actions button,.access-choice,.type-switch a{min-height:var(--pt-control-h);border-radius:11px}
-input,textarea,select{border-color:var(--line)!important;background:var(--surface)!important;color:var(--text)!important}
-input:focus,textarea:focus,select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 4px rgba(34,158,217,.09)!important;outline:none}
-@media(max-width:780px){
-  .view-wrap,.create-detail{width:calc(100% - 20px)}
-  .view-head{padding:20px 18px 17px}
-  .view-meta{padding:11px 18px}
-  .view-body{padding:18px}
-  .engage{padding:0 18px 18px}
-  .create-detail{padding-top:28px!important}
-}
 @media(max-width:520px){
   .view-wrap,.create-detail{width:calc(100% - 20px)}
   .view-head{gap:11px}
@@ -379,3 +358,267 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
 .btn{transition:transform .16s ease,box-shadow .16s ease}.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 @media(max-width:780px){.view-wrap{width:calc(100% - 20px);padding-top:16px}.view-head{padding:20px 18px}.view-meta{padding:11px 18px}.view-body{padding:18px}.engage{padding:0 18px 18px}}
 @media(max-width:520px){.view-wrap{width:calc(100% - 12px);padding-top:10px}.view-ticker a{min-height:40px;padding:8px 11px;font-size:11px}.view-head{gap:11px;padding:18px 15px}.view-icon{width:46px;height:46px;flex-basis:46px;border-radius:14px;font-size:18px}.view-head h1{font-size:22px}.view-meta{gap:6px;padding:10px 15px}.meta{font-size:10px;padding:5px 7px}.view-body{padding:15px}.engage{padding:0 15px 15px}.content-box.rich{padding:16px}.tg-card{align-items:stretch;flex-direction:column;gap:12px}.tg-card .btn{width:100%}.comment-form{flex-direction:column;align-items:stretch}.comment-form .btn{width:100%}.actions{flex-direction:column}.actions .btn{width:100%}}
+
+/* =========================================================
+   VIEW CODE — FINAL RESPONSIVE POLISH
+   Keeps the existing PasTele UI; layout fixes only.
+   ========================================================= */
+body.app-page,
+.public-view-page{
+  width:100%;
+  overflow-x:hidden;
+}
+
+.view-wrap{
+  width:min(900px, calc(100% - 32px));
+  max-width:100%;
+  margin-inline:auto;
+  padding:28px 0 55px;
+}
+
+.view-card{
+  width:100%;
+  min-width:0;
+}
+
+.view-ticker{
+  width:100%;
+  overflow:hidden;
+}
+
+.view-ticker a{
+  min-width:0;
+}
+
+.view-ticker a span{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+.view-head,
+.view-meta,
+.view-body,
+.engage{
+  min-width:0;
+}
+
+.view-head h1,
+.view-desc,
+.bot-line strong,
+.content-box,
+.code-block,
+.code-block pre{
+  min-width:0;
+  max-width:100%;
+}
+
+.code-block pre{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.actions,
+.social{
+  min-width:0;
+}
+
+.actions .btn,
+.social button{
+  white-space:nowrap;
+}
+
+.comment-form{
+  min-width:0;
+}
+
+.comment-form textarea{
+  width:100%;
+  min-width:0;
+}
+
+#commentList,
+.comment{
+  min-width:0;
+  max-width:100%;
+}
+
+.comment p{
+  word-break:break-word;
+}
+
+@media (max-width:700px){
+  .view-wrap{
+    width:calc(100% - 20px);
+    padding:18px 0 38px;
+  }
+
+  .view-ticker{
+    margin-bottom:12px;
+    border-radius:12px;
+  }
+
+  .view-ticker a{
+    min-height:42px;
+    padding:9px 11px;
+    gap:7px;
+    font-size:10px;
+  }
+
+  .view-card{
+    border-radius:18px;
+  }
+
+  .view-head{
+    padding:17px 15px 15px;
+  }
+
+  .view-meta{
+    padding:10px 15px;
+  }
+
+  .view-body{
+    padding:16px 15px;
+  }
+
+  .engage{
+    padding:0 15px 17px;
+  }
+
+  .actions{
+    gap:7px;
+  }
+
+  .actions .btn{
+    flex:1 1 145px;
+    min-width:0;
+  }
+
+  .social{
+    gap:7px;
+  }
+
+  .social button{
+    flex:1 1 90px;
+    min-width:90px;
+  }
+}
+
+@media (max-width:480px){
+  .view-wrap{
+    width:calc(100% - 14px);
+    padding-top:12px;
+  }
+
+  .view-ticker a{
+    align-items:flex-start;
+  }
+
+  .view-ticker a i:first-child{
+    margin-top:2px;
+    flex:0 0 auto;
+  }
+
+  .view-head{
+    gap:10px;
+  }
+
+  .view-icon{
+    width:42px;
+    height:42px;
+    flex-basis:42px;
+    border-radius:12px;
+    font-size:17px;
+  }
+
+  .view-head h1{
+    font-size:20px;
+  }
+
+  .view-desc{
+    font-size:11px;
+  }
+
+  .view-meta{
+    gap:6px 10px;
+  }
+
+  .view-meta .meta{
+    font-size:9px;
+  }
+
+  .view-body{
+    padding:14px 12px;
+  }
+
+  .bot-line{
+    padding:10px 11px;
+  }
+
+  .code-block pre{
+    padding:45px 12px 14px;
+    min-height:150px;
+    font-size:11px;
+  }
+
+  .copy-btn{
+    right:7px;
+    top:7px;
+  }
+
+  .actions .btn{
+    flex:1 1 100%;
+    width:100%;
+  }
+
+  .social button{
+    flex:1 1 calc(50% - 7px);
+    min-width:0;
+  }
+
+  .comment-form .btn{
+    width:100%;
+  }
+
+  #toast{
+    right:8px;
+    left:8px;
+    bottom:10px;
+  }
+
+  .toast{
+    max-width:none;
+    width:100%;
+  }
+}
+
+@media (max-width:360px){
+  .view-wrap{
+    width:calc(100% - 10px);
+  }
+
+  .view-head{
+    padding:15px 12px;
+  }
+
+  .view-head h1{
+    font-size:18px;
+  }
+
+  .view-meta{
+    padding:9px 12px;
+  }
+
+  .view-body{
+    padding:12px 10px;
+  }
+
+  .engage{
+    padding:0 10px 14px;
+  }
+
+  .social button{
+    font-size:9px;
+  }
+}
