@@ -3187,12 +3187,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     const id = item?.id;
     const slug = String(item?.slug || "").trim();
     const type = typeOf(item);
-    const access = accessType(item) === "paid" ? "p" : "f";
+    const access = accessType(item);
+
+    // Paid products NEVER point directly to the public content resolver.
+    // They must go through product.html so the user can checkout first.
+    if (access === "paid") {
+      return id
+        ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`
+        : "product.html";
+    }
+
+    // Free products may open directly.
     if (slug) {
       if (type === "pastelink") return `/p/${encodeURIComponent(slug)}`;
-      if (type === "code") return `/c/${access}/${encodeURIComponent(slug)}`;
-      if (type === "channel") return `/ch/${access}/${encodeURIComponent(slug)}`;
-      if (type === "group") return `/g/${access}/${encodeURIComponent(slug)}`;
+      if (type === "code") return `/c/f/${encodeURIComponent(slug)}`;
+      if (type === "channel") return `/ch/f/${encodeURIComponent(slug)}`;
+      if (type === "group") return `/g/f/${encodeURIComponent(slug)}`;
       if (type === "paste") return `/paste/${encodeURIComponent(slug)}`;
     }
     return id ? `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}` : "product.html";
@@ -3440,6 +3450,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               ${priceText(item)}
             </strong>
           </div>
+        </div>
+      </a>
+      <div class="product-cta-wrap">
           <button
             type="button"
             class="product-cta ${access === "free" ? "free" : ""}"
@@ -3452,8 +3465,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid ${access === "paid" ? "fa-cart-shopping" : "fa-unlock"}" aria-hidden="true"></i>
             <span>${ctaLabel}</span>
           </button>
-        </div>
-      </a>
+      </div>
     `;
   }
   /* =======================================================
@@ -3887,6 +3899,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (link?.href) window.location.href = link.href;
         return;
       }
+
+      // Sellers cannot create a purchase for their own product.
+      // Open the product detail instead of exposing the raw DB error.
+      try {
+        const currentUser = await (window.TC?.user?.() || window.sb?.auth?.getUser?.().then(r => r?.data?.user || null));
+        const card = button.closest(".product-card");
+        const ownerId = String(card?.dataset?.shareOwner || "").trim();
+        if (currentUser?.id && ownerId && String(currentUser.id) === ownerId) {
+          const link = card?.querySelector(".product-card-link");
+          if (link?.href) window.location.assign(link.href);
+          return;
+        }
+      } catch (_) {}
 
       if (button.disabled) return;
 
