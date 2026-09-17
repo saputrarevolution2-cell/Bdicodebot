@@ -24,12 +24,94 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
   
-  <link rel="stylesheet" href="css/payment.css?v=20260917">
+  <link rel="stylesheet" href="css/payment.css?v=20260917-clean-cashi-final">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
 </head>
 <body class="public-no-navbar app-page payment-page">
+<div id="legacyPaymentRoot" style="display:none!important"></div>
+
+<section class="pay-page" aria-label="Pembayaran">
+  <div class="pay-card">
+    <div class="pay-section">
+      <div class="pay-label">Account Plan</div>
+      <h1 class="pay-title" id="cleanPlanTitle">Pembayaran</h1>
+      <div class="pay-amount">
+        <span>Total pembayaran</span>
+        <strong id="cleanAmount">Rp0</strong>
+        <span>Nominal pembayaran sesuai order kamu.</span>
+      </div>
+
+      <div class="qr-panel">
+        <h2 class="qr-heading">Scan QRIS untuk membayar</h2>
+        <div class="qr-wrap">
+          <div class="qr-frame" id="cleanQrFrame" aria-live="polite">
+            <span id="cleanQrLoading">Menyiapkan QR…</span>
+          </div>
+        </div>
+        <p class="qr-help">Scan menggunakan aplikasi bank atau e-wallet yang mendukung QRIS. Pastikan nominal yang dibayar sesuai dengan tagihan.</p>
+
+        <div class="pay-actions">
+          <button type="button" class="pay-btn pay-btn-primary" id="cleanCheckPayment">✓ Cek Pembayaran</button>
+          <button type="button" class="pay-btn pay-btn-secondary pay-btn-danger" id="cleanCancelPayment">Batal</button>
+        </div>
+
+        <div class="pay-fallback">
+          <strong>QR tidak muncul?</strong>
+          <p>Jika QR tidak tampil atau gagal dipindai, lanjutkan pembayaran langsung melalui halaman Cashi.</p>
+          <a id="cleanOpenCashi" class="pay-btn pay-btn-primary" href="#" target="_blank" rel="noopener">↗ Buka Pembayaran Cashi</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="pay-divider"></div>
+
+    <div class="howto">
+      <h2>📋 Cara melakukan pembayaran</h2>
+      <ol class="steps">
+        <li><span class="step-num">1</span><span>Buka aplikasi bank atau e-wallet yang mendukung QRIS.</span></li>
+        <li><span class="step-num">2</span><span>Pilih menu <strong>Scan QRIS</strong>, lalu arahkan kamera ke QR di atas.</span></li>
+        <li><span class="step-num">3</span><span>Periksa nominal pembayaran sebelum mengonfirmasi.</span></li>
+        <li><span class="step-num">4</span><span>Setelah pembayaran berhasil, tekan <strong>Cek Pembayaran</strong>.</span></li>
+      </ol>
+    </div>
+
+    <div class="pay-divider"></div>
+
+    <div class="support">
+      <h2>⚠️ Pembayaran bermasalah?</h2>
+      <p>Jika pembayaran error, QR tidak bisa digunakan, atau pembayaran sudah berhasil tetapi belum terproses, hubungi admin dan sertakan ID order serta bukti pembayaran.</p>
+      <a class="pay-btn pay-btn-secondary" href="https://t.me/telecodadmin" target="_blank" rel="noopener">💬 Hubungi Admin</a>
+    </div>
+
+    <div class="pay-divider"></div>
+
+    <div class="methods">
+      <h2>💳 Didukung berbagai metode pembayaran</h2>
+      <div class="method-block">
+        <div class="method-title">🏦 Bank — berjalan ke kanan</div>
+        <div class="marquee right"><div class="marquee-track">
+          <span class="method-pill">BCA</span><span class="method-pill">BRI</span><span class="method-pill">BNI</span><span class="method-pill">Mandiri</span><span class="method-pill">BSI</span><span class="method-pill">CIMB Niaga</span><span class="method-pill">Permata</span><span class="method-pill">Danamon</span><span class="method-pill">BTN</span><span class="method-pill">Bank Jago</span>
+          <span class="method-pill">BCA</span><span class="method-pill">BRI</span><span class="method-pill">BNI</span><span class="method-pill">Mandiri</span><span class="method-pill">BSI</span><span class="method-pill">CIMB Niaga</span><span class="method-pill">Permata</span><span class="method-pill">Danamon</span><span class="method-pill">BTN</span><span class="method-pill">Bank Jago</span>
+        </div></div>
+      </div>
+      <div class="method-block">
+        <div class="method-title">📱 E-Wallet — berjalan ke kiri</div>
+        <div class="marquee left"><div class="marquee-track">
+          <span class="method-pill">DANA</span><span class="method-pill">OVO</span><span class="method-pill">GoPay</span><span class="method-pill">ShopeePay</span><span class="method-pill">LinkAja</span><span class="method-pill">i.Saku</span><span class="method-pill">AstraPay</span>
+          <span class="method-pill">DANA</span><span class="method-pill">OVO</span><span class="method-pill">GoPay</span><span class="method-pill">ShopeePay</span><span class="method-pill">LinkAja</span><span class="method-pill">i.Saku</span><span class="method-pill">AstraPay</span>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="pay-footer">
+    <strong>TeleCod</strong> · Pembayaran aman melalui Cashi<br>
+    Jangan bagikan data pembayaran atau kredensial akun kepada siapa pun.
+  </footer>
+</section>
+
     <!-- =====================================================
          NAVBAR
          ===================================================== -->
@@ -654,6 +736,77 @@
          SCRIPTS
          ===================================================== -->
     <!-- CANCEL BUTTON -->
-    <script src="js/payment.js?v=20260917"></script>
+    <script src="js/payment.js?v=20260917-clean-cashi-final"></script>
+
+<script>
+(function(){
+  function rupiah(n){
+    try { return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0)); }
+    catch(e){ return 'Rp'+Number(n||0).toLocaleString('id-ID'); }
+  }
+  const frame=document.getElementById('cleanQrFrame');
+  const amount=document.getElementById('cleanAmount');
+  const plan=document.getElementById('cleanPlanTitle');
+  const open=document.getElementById('cleanOpenCashi');
+  const check=document.getElementById('cleanCheckPayment');
+  const cancel=document.getElementById('cleanCancelPayment');
+
+  window.PasTelePaymentCleanUI = {
+    setAmount(v){ if(amount) amount.textContent=rupiah(v); },
+    setPlan(v){ if(plan && v) plan.textContent=v; },
+    setQr(src){
+      if(!frame) return;
+      frame.innerHTML='';
+      if(!src){ frame.innerHTML='<span style="color:#667085;font-size:13px">QR belum tersedia.</span>'; return; }
+      const img=document.createElement('img');
+      img.alt='QRIS Cashi';
+      img.src=src;
+      img.onload=function(){};
+      img.onerror=function(){ frame.innerHTML='<span style="color:#b42318;font-size:13px">QR gagal dimuat. Gunakan tombol Buka Pembayaran Cashi.</span>'; };
+      frame.appendChild(img);
+    },
+    setCheckout(url){
+      if(open) open.href=url||'#';
+      if(open && !url) open.setAttribute('aria-disabled','true');
+    }
+  };
+
+  // Try to bridge common global/state names without assuming a particular app schema.
+  function sync(){
+    const g=window;
+    const candidates=[
+      g.paymentData,g.currentPayment,g.currentOrder,g.order,g.paymentOrder,
+      g.__PAYMENT__,g.__PAYMENT_STATE__
+    ].filter(Boolean);
+    const obj=candidates[0]||{};
+    if(obj.amount!=null) window.PasTelePaymentCleanUI.setAmount(obj.amount);
+    if(obj.plan||obj.plan_name||obj.name) window.PasTelePaymentCleanUI.setPlan(obj.plan||obj.plan_name||obj.name);
+    const qr=obj.qrUrl||obj.qr_url;
+    const co=obj.checkout_url||obj.payment_url;
+    if(qr) window.PasTelePaymentCleanUI.setQr(qr);
+    if(co) window.PasTelePaymentCleanUI.setCheckout(co);
+  }
+  sync();
+  window.addEventListener('cashi:payment', function(e){
+    const d=e.detail||{};
+    if(d.amount!=null) window.PasTelePaymentCleanUI.setAmount(d.amount);
+    if(d.qrUrl) window.PasTelePaymentCleanUI.setQr(d.qrUrl);
+    if(d.checkout_url) window.PasTelePaymentCleanUI.setCheckout(d.checkout_url);
+  });
+
+  if(check) check.addEventListener('click', function(){
+    // Let existing payment implementation handle the real check if available.
+    if(typeof window.checkPayment === 'function') return window.checkPayment();
+    if(typeof window.checkCashiPayment === 'function') return window.checkCashiPayment();
+    window.dispatchEvent(new CustomEvent('cashi:check'));
+  });
+  if(cancel) cancel.addEventListener('click', function(){
+    if(typeof window.cancelPayment === 'function') return window.cancelPayment();
+    if(typeof window.cancelOrder === 'function') return window.cancelOrder();
+    window.history.back();
+  });
+})();
+</script>
+
 </body>
 </html>
