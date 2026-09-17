@@ -890,3 +890,136 @@ body.theme-dark .guest-payment-note{
   .guest-promo-text{padding-left:0;animation:none}
   .guest-note-login{transition:none}
 }
+
+
+/* =========================================================
+   PasTele Payment — FINAL VISUAL REFINEMENT
+   Page-scoped only. Existing HTML/JS behavior preserved.
+   ========================================================= */
+.payment-page{
+  --pay-radius:16px;
+}
+.payment-page .payment-section{padding:104px 0 48px}
+.payment-page .payment-container{width:min(1120px,calc(100% - 32px))}
+.payment-page .payment-header{max-width:760px;margin:0 auto 22px}
+.payment-page .payment-header h1{font-size:clamp(28px,3.5vw,38px);margin:10px 0 7px}
+.payment-page .payment-header p{max-width:620px;font-size:12px;line-height:1.7}
+.payment-page .payment-security-row{margin-top:12px;gap:6px}
+.payment-page .payment-security-row span{padding:5px 9px;font-size:9px}
+
+.payment-page .payment-layout{
+  grid-template-columns:minmax(0,1.45fr) minmax(290px,.55fr);
+  gap:16px;
+}
+.payment-page .payment-main-card,
+.payment-page .payment-status-card,
+.payment-page .payment-help,
+.payment-page .payment-support,
+.payment-page .payment-tutorial{border-radius:16px}
+.payment-page .payment-main-card{padding:18px}
+.payment-page .payment-order-head{padding-bottom:13px}
+.payment-page .payment-product{padding:15px 0 12px}
+.payment-page .payment-product-icon{width:44px;height:44px;flex-basis:44px;border-radius:12px}
+.payment-page .payment-product-info h2{font-size:16px}
+
+.payment-page .payment-total-box{
+  margin:2px 0 15px;
+  padding:15px;
+  border-radius:14px;
+}
+.payment-page .payment-total-box strong{font-size:28px}
+.payment-page .payment-total-box small{font-size:9px}
+
+.payment-page .prepayment-gate{margin:0 0 15px;padding:13px;border-radius:14px}
+.payment-page .prepayment-warning{gap:10px}
+.payment-page .prepayment-warning-icon{width:36px;height:36px;flex-basis:36px;border-radius:10px}
+.payment-page .prepayment-warning-copy strong{font-size:11px}
+.payment-page .prepayment-warning-copy span,
+.payment-page .prepayment-warning-copy small{font-size:9px;line-height:1.55}
+.payment-page .prepayment-actions{gap:8px;margin-top:11px}
+.payment-page .prepayment-buy-btn,
+.payment-page .prepayment-close-btn{min-height:42px;border-radius:11px;font-size:11px}
+
+.payment-page .payment-qr-card{
+  min-height:330px;
+  padding:16px;
+  border-radius:15px;
+}
+.payment-page .payment-qr-card img,
+.payment-page .payment-qr-card canvas{
+  width:min(270px,72vw);
+  padding:9px;
+  border-radius:12px;
+}
+
+.payment-page .payment-actions{gap:8px;margin-top:11px}
+.payment-page .payment-check-btn,
+.payment-page .payment-cancel-btn{min-height:42px;border-radius:11px}
+
+.payment-page .payment-status-card{
+  padding:16px;
+  position:sticky;
+  top:88px;
+}
+.payment-page .status-card-top{padding-bottom:12px}
+.payment-page .status-description{padding:12px 0;font-size:10px}
+.payment-page .status-progress{padding:10px;border-radius:11px}
+
+.payment-page .payment-methods{margin-top:17px;padding-top:16px}
+.payment-page .section-heading{gap:9px}
+.payment-page .section-heading-icon{width:34px;height:34px;flex-basis:34px;border-radius:10px}
+.payment-page .section-heading h3{font-size:12px}
+.payment-page .section-heading p{font-size:9px;line-height:1.5}
+.payment-page .payment-marquee{margin-top:10px;border-radius:12px}
+.payment-page .payment-marquee-track{gap:6px;padding:8px}
+.payment-page .payment-method-chip{min-height:30px;padding:5px 9px;border-radius:8px;font-size:9px}
+
+.payment-page .payment-tutorial{margin-top:13px;padding:15px}
+.payment-page .tutorial-list{gap:6px;margin-top:12px}
+.payment-page .tutorial-step{
+  display:grid;
+  grid-template-columns:24px 28px minmax(0,1fr);
+  gap:8px;
+  align-items:start;
+  padding:8px 0;
+}
+.payment-page .tutorial-number,
+.payment-page .tutorial-icon{width:24px;height:24px;flex-basis:24px;border-radius:7px}
+.payment-page .tutorial-content h4,
+.payment-page .tutorial-content strong{margin:1px 0 2px;font-size:10px}
+.payment-page .tutorial-content p,
+.payment-page .tutorial-content span{margin:0;font-size:9px;line-height:1.5}
+.payment-page .tutorial-warning{margin-top:8px;border-radius:9px;padding:9px;font-size:9px;line-height:1.5}
+
+.payment-page .payment-info-strip{margin-top:12px;padding:10px 11px;border-radius:11px}
+.payment-page .payment-support{margin-top:12px;padding:12px 13px;border-radius:13px}
+.payment-page .payment-support .support-copy{min-width:0}
+.payment-page .payment-support .support-link{flex:0 0 auto;white-space:nowrap}
+
+.payment-page .payment-state{padding:25px 20px;border-radius:16px}
+.payment-page .payment-error{border-radius:12px;font-size:11px}
+
+@media(max-width:900px){
+  .payment-page .payment-layout{grid-template-columns:1fr}
+  .payment-page .payment-status-card{position:static;order:2}
+}
+@media(max-width:620px){
+  .payment-page .payment-section{padding:84px 0 28px}
+  .payment-page .payment-container{width:calc(100% - 18px)}
+  .payment-page .payment-header h1{font-size:27px}
+  .payment-page .payment-header p{font-size:10px}
+  .payment-page .payment-main-card{padding:13px}
+  .payment-page .payment-total-box strong{font-size:25px}
+  .payment-page .payment-qr-card{min-height:280px;padding:10px}
+  .payment-page .payment-qr-card img,
+  .payment-page .payment-qr-card canvas{width:min(245px,78vw)}
+  .payment-page .prepayment-actions{grid-template-columns:1fr}
+  .payment-page .payment-support{align-items:flex-start;flex-wrap:wrap}
+  .payment-page .payment-support .support-link{width:100%;justify-content:center}
+}
+@media(max-width:400px){
+  .payment-page .payment-container{width:calc(100% - 14px)}
+  .payment-page .payment-header h1{font-size:25px}
+  .payment-page .payment-security-row span{font-size:8px;padding:4px 6px}
+  .payment-page .payment-total-box strong{font-size:23px}
+}
