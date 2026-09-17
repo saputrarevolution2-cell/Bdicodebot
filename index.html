@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="css/index.css">
+<link rel="stylesheet" href="css/index.css?v=20260918-full-community">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -23,6 +23,7 @@
     <nav class="ix-nav-links" aria-label="Navigasi utama">
       <a class="active" href="#home"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
       <a href="marketplace.html"><i class="fa-solid fa-store"></i><span>Marketplace</span></a>
+      <a href="forum.html"><i class="fa-solid fa-comments"></i><span>Forum</span></a>
       <a href="#features"><i class="fa-solid fa-layer-group"></i><span>Fitur</span></a>
       <a href="#how"><i class="fa-solid fa-circle-question"></i><span>Cara Kerja</span></a>
       <a href="#platform"><i class="fa-solid fa-compass"></i><span>Platform</span></a>
@@ -38,6 +39,7 @@
 <div id="mobileMenu" class="ix-mobile-menu">
   <a href="#home"><i class="fa-solid fa-house"></i> Beranda</a>
   <a href="marketplace.html"><i class="fa-solid fa-store"></i> Marketplace</a>
+  <a href="forum.html"><i class="fa-solid fa-comments"></i> Forum Community</a>
   <a href="#features"><i class="fa-solid fa-layer-group"></i> Fitur</a>
   <a href="#how"><i class="fa-solid fa-circle-question"></i> Cara Kerja</a>
   <a href="#platform"><i class="fa-solid fa-compass"></i> Platform</a>
@@ -222,11 +224,95 @@
  </div>
 </section>
 
+
+<section class="ix-section ix-community-section" id="community">
+  <div class="ix-container">
+    <div class="ix-community-card">
+      <div class="ix-community-copy">
+        <span class="ix-kicker"><i class="fa-solid fa-comments"></i> PASTELE COMMUNITY</span>
+        <h2>Jangan cuma melihat. <span>Gabung dan ikut membangun komunitas.</span></h2>
+        <p>
+          Temukan creator lain, diskusikan ide, berbagi pengalaman, dan ikuti perkembangan PasTele
+          bersama komunitas. Forum tersedia untuk semua pengunjung—kamu bisa masuk dan membaca
+          percakapan tanpa harus membuat akun.
+        </p>
+        <div class="ix-community-points">
+          <span><i class="fa-solid fa-circle-check"></i> Terbuka untuk semua pengunjung</span>
+          <span><i class="fa-solid fa-circle-check"></i> Diskusi seputar creator & digital content</span>
+          <span><i class="fa-solid fa-circle-check"></i> Login diperlukan untuk mengirim pesan</span>
+        </div>
+        <div class="ix-community-actions">
+          <a href="forum.html" class="ix-btn ix-btn-primary ix-btn-lg">
+            <i class="fa-solid fa-comments"></i> Masuk ke Forum
+          </a>
+          <a href="register.html" class="ix-btn ix-btn-soft ix-btn-lg">
+            <i class="fa-solid fa-user-plus"></i> Gabung sebagai Member
+          </a>
+        </div>
+      </div>
+      <div class="ix-community-visual" aria-hidden="true">
+        <div class="ix-chat-window">
+          <div class="ix-chat-head">
+            <span class="ix-chat-avatar"><i class="fa-solid fa-paper-plane"></i></span>
+            <div><strong>PasTele Community</strong><small>Tempat creator & member bertemu</small></div>
+            <span class="ix-online-dot"></span>
+          </div>
+          <div class="ix-chat-bubbles">
+            <div class="ix-bubble"><b>Creator</b><span>Berbagi pengalaman dan ide baru di PasTele 🚀</span></div>
+            <div class="ix-bubble right"><b>Member</b><span>Aku baru menemukan konten yang menarik!</span></div>
+            <div class="ix-bubble"><b>PasTele</b><span>Yuk ikut diskusi dan kenalan dengan komunitas 👋</span></div>
+          </div>
+          <div class="ix-chat-foot"><i class="fa-solid fa-lock"></i><span>Komunitas yang aktif dimulai dari kamu.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="ix-section ix-creator-section">
  <div class="ix-container ix-creator-card">
   <div><span class="ix-kicker"><i class="fa-solid fa-rocket"></i> CREATOR ECONOMY</span><h2>Bangun konten. Bangun audiens. Dapatkan penghasilan.</h2><p>PasTele memberi creator ruang untuk mempublikasikan konten dan menjual akses secara terstruktur. Revenue settlement dilakukan di sisi server.</p><div class="ix-creator-points"><span><i class="fa-solid fa-circle-check"></i> Creator </span><span><i class="fa-solid fa-circle-check"></i> Platform </span><span><i class="fa-solid fa-circle-check"></i> Settlement terverifikasi</span></div><a href="register.html" class="ix-btn ix-btn-primary"><i class="fa-solid fa-user-plus"></i> Daftar sebagai Creator</a></div>
   <div class="ix-money"><i class="fa-solid fa-wallet"></i><strong>70%</strong><span>Creator share</span><small>Revenue dari penjualan Paid</small></div>
  </div>
+</section>
+
+
+<section class="ix-section ix-faq-section" id="faq">
+  <div class="ix-container">
+    <div class="ix-section-head center">
+      <div>
+        <span class="ix-kicker"><i class="fa-solid fa-circle-question"></i> FAQ</span>
+        <h2>Pertanyaan yang sering ditanyakan.</h2>
+        <p>Informasi singkat sebelum kamu mulai menjelajah atau membuat konten di PasTele.</p>
+      </div>
+    </div>
+    <div class="ix-faq-grid">
+      <details open>
+        <summary><span>Apakah Marketplace bisa dibuka tanpa login?</span><i class="fa-solid fa-chevron-down"></i></summary>
+        <p>Ya. Konten publik dapat dijelajahi tanpa login. Untuk fitur akun seperti pengelolaan konten, wallet, pembelian tertentu, atau akses creator, login diperlukan sesuai alur fitur.</p>
+      </details>
+      <details>
+        <summary><span>Apa perbedaan Free dan Paid?</span><i class="fa-solid fa-chevron-down"></i></summary>
+        <p>Konten Free dapat dibuka melalui alur publik. Konten Paid memiliki harga dan aksesnya diberikan setelah transaksi dinyatakan berhasil oleh sistem.</p>
+      </details>
+      <details>
+        <summary><span>Bagaimana cara menjadi creator?</span><i class="fa-solid fa-chevron-down"></i></summary>
+        <p>Buat akun, pilih jenis konten yang ingin dipublikasikan, isi informasi yang diperlukan, lalu terbitkan. Setelah itu kamu dapat mengelola konten dan memantau performanya dari area akun.</p>
+      </details>
+      <details>
+        <summary><span>Apakah Forum bisa dimasuki guest?</span><i class="fa-solid fa-chevron-down"></i></summary>
+        <p>Ya. Forum dapat dibuka untuk melihat percakapan komunitas. Pengiriman pesan mengikuti aturan autentikasi yang diterapkan database PasTele.</p>
+      </details>
+      <details>
+        <summary><span>Bagaimana pembayaran Paid diproses?</span><i class="fa-solid fa-chevron-down"></i></summary>
+        <p>Pembayaran mengikuti order yang dibuat sistem. Akses konten Paid seharusnya diberikan setelah status transaksi berhasil dan terverifikasi.</p>
+      </details>
+      <details>
+        <summary><span>Di perangkat apa PasTele bisa digunakan?</span><i class="fa-solid fa-chevron-down"></i></summary>
+        <p>Antarmuka dibuat responsif untuk browser mobile maupun desktop, sehingga alur utama dapat digunakan dari Android, iPhone, tablet, dan komputer.</p>
+      </details>
+    </div>
+  </div>
 </section>
 
 <section class="ix-section ix-final">
@@ -237,12 +323,12 @@
 <footer class="ix-footer">
  <div class="ix-container ix-footer-grid">
   <div><a class="ix-brand" href="index.html"><span class="ix-brand-icon"><i class="fa-solid fa-paper-plane"></i></span><span>PasTele</span></a><p>Platform creator dan marketplace digital untuk ekosistem Telegram dan content sharing.</p></div>
-  <div><b>Platform</b><a href="marketplace.html">Marketplace</a><a href="create-pastelink.html">PasteLink</a><a href="create-code.html">Telegram Code</a><a href="create-telegram.html">Channel / Group</a></div>
+  <div><b>Platform</b><a href="marketplace.html">Marketplace</a><a href="forum.html">Forum Community</a><a href="create-pastelink.html">PasteLink</a><a href="create-code.html">Telegram Code</a><a href="create-telegram.html">Channel / Group</a></div>
   <div><b>Akun</b><a href="login.html">Login</a><a href="register.html">Register</a><a href="dashboard.html">Dashboard</a><a href="wallet.html">Wallet</a></div>
-  <div><b>Informasi</b><a href="about.html">Tentang PasTele</a><a href="subscription.html">Subscription</a><a href="premium.html">Premium</a></div>
+  <div><b>Informasi</b><a href="#community">Community</a><a href="#faq">FAQ</a><a href="about.html">Tentang PasTele</a><a href="subscription.html">Subscription</a><a href="premium.html">Premium</a></div>
  </div>
  <div class="ix-container ix-footer-bottom"><span>© <span id="year"></span> PasTele. All rights reserved.</span><span><i class="fa-solid fa-shield-halved"></i> Secure digital platform</span></div>
 </footer>
-<script src="js/index.js"></script>
+<script src="js/index.js?v=20260918-full-community"></script>
 </body>
 </html>
