@@ -16,7 +16,7 @@
 
   const CONFIG = {
     SUPABASE_URL: 'https://jxrndamvelqwhbcromye.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6IkpXVCJ9'
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
   };
 
 
@@ -113,21 +113,30 @@
     }
 
     const { data, error } = await sb.rpc('is_current_user_admin');
+    let adminOK = !error && (normalizeBool(data) || data?.is_admin === true);
 
-    if (error) {
-      console.error('[PasTele Admin] is_current_user_admin:', error);
-      showError('Verifikasi admin gagal. Pastikan database.sql sudah dijalankan dan RPC is_current_user_admin() tersedia.');
-      toast('Verifikasi admin gagal.', 'error');
-      return false;
+    // Canonical profile fallback: admin is granted by profiles.is_admin=true
+    // or role='admin'. This also handles existing admin accounts whose role
+    // column was not migrated yet.
+    if (!adminOK) {
+      const q = await sb.from('profiles')
+        .select('id,is_admin,role,status,is_banned')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      adminOK = !q.error && q.data &&
+        !normalizeBool(q.data.is_banned) &&
+        !['blocked','disabled','suspended'].includes(String(q.data.status || '').toLowerCase()) &&
+        (normalizeBool(q.data.is_admin) || String(q.data.role || '').toLowerCase() === 'admin');
     }
 
-    if (!normalizeBool(data)) {
+    if (!adminOK) {
+      if (error) console.error('[PasTele Admin] is_current_user_admin:', error);
       document.body.innerHTML = `
         <main class="admin-denied">
-          <i class="fa-solid fa-lock"></i>
+          <div class="denied-icon"><i class="fa-solid fa-lock"></i></div>
           <h1>Akses ditolak</h1>
-          <p>Akun login tidak memiliki hak administrator.</p>
-          <a href="../index.html" class="btn primary">Kembali</a>
+          <p>Akun login belum memiliki hak administrator.</p>
+          <a href="../index.html" class="btn primary"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
         </main>`;
       return false;
     }
