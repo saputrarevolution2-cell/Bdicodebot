@@ -2362,6 +2362,7 @@ BEGIN;
 
 -- PasteLink participates in the same marketplace contract as
 -- Code / Channel / Group. Existing rows remain Free (Rp0).
+ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS sales_count bigint NOT NULL DEFAULT 0;
 ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS access_type text NOT NULL DEFAULT 'free';
 ALTER TABLE public.pastelinks ADD COLUMN IF NOT EXISTS price numeric(18,2) NOT NULL DEFAULT 0;
 ALTER TABLE public.pastelinks DROP CONSTRAINT IF EXISTS pastelinks_price_access_check;
@@ -5572,6 +5573,8 @@ BEGIN
       UPDATE public.telegram_products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
     ELSIF lower(coalesce(o.item_type,'')) IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
       UPDATE public.telegram_channels SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
+    ELSIF lower(coalesce(o.item_type,'')) IN ('pastelink','paste-link','paste_link') THEN
+      UPDATE public.pastelinks SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
     END IF;
 
     BEGIN
@@ -8238,7 +8241,7 @@ AS $$
     SELECT p.id,p.slug,p.title,'pastelink'::text,
            coalesce(p.access_type,CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END),
            coalesce(p.price,0),NULL::text,p.description,
-           p.views,0::bigint,'General'::text,p.created_at,
+           p.views,p.sales_count,'General'::text,p.created_at,
            pr.display_name,pr.username,p.user_id
     FROM public.pastelinks p
     LEFT JOIN public.profile_public pr ON pr.id=p.user_id
