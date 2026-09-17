@@ -5093,3 +5093,27 @@ document.documentElement.classList.add("pastele-ready");
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
+
+
+/* Clean QR UI bridge */
+(function(){
+  const _fetch = window.fetch;
+  window.fetch = async function(){
+    const res = await _fetch.apply(this, arguments);
+    try {
+      const url = String(arguments[0] || "");
+      if (/cashi-create-order|cashi-check-status/.test(url)) {
+        const clone = res.clone();
+        const data = await clone.json();
+        if (data && data.success) {
+          window.dispatchEvent(new CustomEvent("cashi:payment", {detail:{
+            amount:data.amount,
+            qrUrl:data.qrUrl,
+            checkout_url:data.checkout_url
+          }}));
+        }
+      }
+    } catch(e) {}
+    return res;
+  };
+})();
