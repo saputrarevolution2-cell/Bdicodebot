@@ -172,3 +172,103 @@ html[data-theme="dark"] .pt-nav,html.theme-dark .pt-nav,body.theme-dark .pt-nav{
   .payment-total-box strong{font-size:24px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+
+/* =========================================================
+   PasTele Payment — Canonical Footer
+   Footer is injected by payment.js (#pasteleFooter).
+   Scoped so it cannot inherit payment card/grid rules.
+   ========================================================= */
+.pastele-footer{
+  position:relative;
+  width:100%;
+  margin-top:34px;
+  padding:0;
+  border-top:1px solid var(--line);
+  background:var(--surface);
+  color:var(--text);
+  isolation:isolate;
+  overflow:hidden;
+}
+.pastele-footer *{box-sizing:border-box}
+.pastele-footer a{color:inherit;text-decoration:none}
+.pastele-footer .container{width:min(var(--max),calc(100% - 32px));margin:0 auto}
+.footer-container{
+  display:grid;
+  grid-template-columns:minmax(260px,1.7fr) repeat(3,minmax(130px,1fr));
+  gap:28px;
+  padding:38px 0 30px;
+}
+.footer-brand{min-width:0;padding-right:24px}
+.footer-brand-link{display:inline-flex;align-items:center;gap:10px}
+.footer-brand-mark{
+  width:42px;height:42px;display:grid;place-items:center;flex:0 0 42px;
+  border-radius:13px;color:#fff;font-size:18px;
+  background:linear-gradient(135deg,var(--primary2),var(--primary));
+  box-shadow:0 10px 24px rgba(99,91,255,.18);
+}
+.footer-brand-name{font-size:20px;font-weight:950;letter-spacing:-.04em}
+.footer-description{
+  max-width:360px;margin:14px 0 15px;color:var(--muted);
+  font-size:11px;line-height:1.7;
+}
+.footer-platform-status{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 10px;border:1px solid var(--line);border-radius:999px;
+  background:var(--surface2);color:var(--muted);font-size:9px;font-weight:800;
+}
+.footer-status-indicator{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,.10)}
+.footer-column{min-width:0}
+.footer-column h3{
+  margin:3px 0 12px;font-size:10px;font-weight:900;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--text);
+}
+.footer-column a{
+  display:flex;align-items:center;gap:9px;width:max-content;max-width:100%;
+  padding:6px 0;color:var(--muted);font-size:10px;line-height:1.35;
+  transition:color .18s ease,transform .18s ease;
+}
+.footer-column a i{width:16px;text-align:center;color:var(--primary);font-size:10px;flex:0 0 16px}
+.footer-column a span{min-width:0;overflow-wrap:anywhere}
+.footer-column a:hover{color:var(--text);transform:translateX(2px)}
+.footer-bottom{
+  min-height:58px;display:flex;align-items:center;justify-content:space-between;
+  gap:18px;padding:16px 0;border-top:1px solid var(--line);
+}
+.footer-copyright{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:9px;line-height:1.4}
+.footer-dot{opacity:.55}
+.footer-meta{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:8px;font-weight:750}
+.footer-meta span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.footer-meta i{color:var(--primary);font-size:9px}
+
+html[data-theme="dark"] .pastele-footer,
+html.theme-dark .pastele-footer,
+body.theme-dark .pastele-footer{background:var(--surface)}
+html[data-theme="dark"] .footer-brand-mark,
+html.theme-dark .footer-brand-mark,
+body.theme-dark .footer-brand-mark{box-shadow:0 12px 28px rgba(0,0,0,.28)}
+
+@media(max-width:900px){
+  .footer-container{grid-template-columns:1.5fr 1fr 1fr;gap:22px}
+  .footer-brand{grid-column:1/-1;padding-right:0}
+  .footer-description{max-width:600px}
+}
+@media(max-width:620px){
+  .pastele-footer{margin-top:26px}
+  .pastele-footer .container{width:calc(100% - 24px)}
+  .footer-container{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 18px;padding:28px 0 24px}
+  .footer-brand{grid-column:1/-1}
+  .footer-brand-link{gap:9px}
+  .footer-brand-mark{width:40px;height:40px;flex-basis:40px}
+  .footer-brand-name{font-size:18px}
+  .footer-description{font-size:10px;margin:12px 0 13px}
+  .footer-column h3{margin-bottom:8px}
+  .footer-column a{font-size:9px;padding:5px 0}
+  .footer-bottom{align-items:flex-start;flex-direction:column;padding:14px 0 18px;gap:10px}
+  .footer-meta{justify-content:flex-start;gap:8px 12px}
+}
+@media(max-width:380px){
+  .footer-container{grid-template-columns:1fr;gap:18px}
+  .footer-column a{width:100%}
+  .footer-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+}
