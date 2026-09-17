@@ -2607,12 +2607,13 @@ window.PASTELE_CONFIG = Object.freeze({
     "index.html", "login.html", "register.html",
     "forgot-password.html", "reset-password.html",
     "auth-callback.html", "marketplace.html", "product.html", "paste-view.html",
+    "view-code.html", "view-pastelink.html", "view-telegram.html",
     "about.html", "terms.html", "privacy.html"
   ]);
 
   const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   const isAdminPath = /\/admin(?:\/|$)/i.test(location.pathname);
-  const isPublic = !isAdminPath && PUBLIC.has(file);
+  const isPublic = !isAdminPath && (PUBLIC.has(file) || document.body?.classList.contains("public-view-page"));
   let locked = false;
   let initialized = false;
   let timer = null;
@@ -2976,7 +2977,16 @@ const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",ma
 const toast=(m,t="info")=>window.TC?.toast?window.TC.toast(m,t):alert(m);
 const qs=new URLSearchParams(location.search);
 const slug=decodeURIComponent((qs.get("slug")||"").trim());
-function guestToken(){let k="pastele-guest-checkout-token",v=localStorage.getItem(k);if(!v){v=crypto.randomUUID();localStorage.setItem(k,v)}return v}
+function guestToken(){
+  const k="pastele-guest-checkout-token";
+  let v=null;
+  try{v=localStorage.getItem(k)}catch{}
+  if(!v){
+    try{v=crypto.randomUUID()}catch{v="guest-"+Date.now()+"-"+Math.random().toString(36).slice(2)}
+    try{localStorage.setItem(k,v)}catch{}
+  }
+  return v;
+}
 async function user(){try{return await window.TC?.user?.()||null}catch{return null}}
 function targetType(kind){return kind==="code"?"telegram_product":kind==="channel"||kind==="group"?"channel":kind}
 function telegramUrl(item){let x=String(item?.invite_url||item?.username||item?.bot_username||item?.telegram_channel_id||"").trim();if(/^https?:\/\//i.test(x))return x;if(/^@/.test(x))return "https://t.me/"+x.slice(1);if(/^[A-Za-z0-9_]{5,32}$/.test(x))return "https://t.me/"+x;return ""}
