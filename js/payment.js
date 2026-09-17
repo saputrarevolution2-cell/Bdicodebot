@@ -2289,26 +2289,10 @@ window.PASTELE_CONFIG = Object.freeze({
   }
 })();
 
-/* =========================================================
-   PasTele — Universal Footer
-   PREMIUM / CLEAN / RESPONSIVE
-   Terms / Privacy / About / Support
-   Automatic Year
-   Loaded once on every page
-   ========================================================= */
 
 (() => {
   'use strict';
 
-  /* =======================================================
-     PREVENT DUPLICATE FOOTER
-     ======================================================= */
-
-  if (window.__PASTELE_FOOTER__) {
-    return;
-  }
-
-  window.__PASTELE_FOOTER__ = true;
 
   /* =======================================================
      HELPERS
@@ -2330,14 +2314,7 @@ window.PASTELE_CONFIG = Object.freeze({
   const safePath = (file) =>
     `${base}${file}`;
 
-  /* =======================================================
-     FOOTER MOUNT
-     ======================================================= */
 
-  const mountFooter = () => {
-
-    /* Jangan membuat footer kedua */
-    if (
       document.getElementById(
         'pasteleFooter'
       )
@@ -2350,11 +2327,6 @@ window.PASTELE_CONFIG = Object.freeze({
       return;
     }
 
-    /* =====================================================
-       FOOTER
-       ===================================================== */
-
-    const footer =
       document.createElement('footer');
 
     footer.id =
