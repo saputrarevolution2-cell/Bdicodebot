@@ -3304,3 +3304,51 @@ document.documentElement.classList.add("pastele-ready");
 })();
 
 
+
+
+/* =========================================================
+   PasTele Product — Guest Register Ticker Auth State
+   Logged-in users must not see the "Belum punya akun?" notice.
+   ========================================================= */
+(() => {
+  "use strict";
+
+  function updateProductRegisterTicker(session) {
+    const ticker = document.querySelector(".product-register-ticker");
+    if (!ticker) return;
+
+    const loggedIn = Boolean(session?.user);
+    ticker.classList.toggle("is-authenticated", loggedIn);
+    ticker.setAttribute("aria-hidden", loggedIn ? "true" : "false");
+  }
+
+  async function syncProductRegisterTicker() {
+    try {
+      const client =
+        window.sb ||
+        window.supabaseClient ||
+        window.supabase?.createClient && null;
+
+      if (!client?.auth) {
+        // Do not hide the ticker when auth is unavailable.
+        // Guests should still see the notice.
+        return;
+      }
+
+      const { data } = await client.auth.getSession();
+      updateProductRegisterTicker(data?.session || null);
+
+      client.auth.onAuthStateChange((_event, session) => {
+        updateProductRegisterTicker(session || null);
+      });
+    } catch (error) {
+      console.warn("[PasTele] Product ticker auth check:", error);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncProductRegisterTicker, { once: true });
+  } else {
+    syncProductRegisterTicker();
+  }
+})();
