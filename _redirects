@@ -1,25 +1,3 @@
-# PasTele canonical public routes
-# PasteLink
-/pf/*    /view-pastelink.html  200
-/pp/*    /view-pastelink.html  200
-/p/*     /view-pastelink.html  200
-
-# Code — canonical public routes
-# Route through the compact resolver so FREE/PAID Code links use the same
-# database resolution path as legacy links and remain independent of the
-# static-host rewrite behavior.
-/c/f/*   /view-code.html?slug=:splat  200
-/c/p/*   /view-code.html?slug=:splat  200
-
-# Telegram Group — compact namespace
-/gf/*    /view-telegram.html?type=group&slug=:splat  200
-/gp/*    /view-telegram.html?type=group&slug=:splat  200
-
-# Telegram Channel — unique namespace
-/ch/f/*  /view-telegram.html?type=channel&slug=:splat  200
-/ch/p/*  /view-telegram.html?type=channel&slug=:splat  200
-
-# Legacy compact routes. These still go through the resolver so existing links
-# can be resolved from the database without breaking old URLs.
-/cf/*    /view-code.html?slug=:splat  200
-/cp/*    /view-code.html?slug=:splat  200
+# PasTele legacy redirects that are not handled by Pages Functions.
+# Public pretty routes (/c/*, /pf/*, /pp/*, /p/*, /gf/*, /gp/*, /ch/*)
+# are handled by /functions so the original pathname/slug is preserved.
