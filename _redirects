@@ -5,8 +5,8 @@
 /p/*     /view-pastelink.html  200
 
 # Code — unique namespace
-/c/f/*  /view-code.html?slug=:splat         200
-/c/p/*  /view-code.html?slug=:splat         200
+/c/f/*  /view-code.html  200!
+/c/p/*  /view-code.html  200!
 
 # Telegram Group — compact namespace
 /gf/*   /view-telegram.html?type=group&slug=:splat  200
