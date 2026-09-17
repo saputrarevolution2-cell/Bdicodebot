@@ -2734,16 +2734,28 @@ async function startBuy(kind,item){
 }
 async function loadSocial(kind,item){
  const client=window.sb, tid=item.id, tt=targetType(kind);
- const [likes,comments,shares,u]=await Promise.all([
+ const [counts,likes,comments,u]=await Promise.all([
+   client.rpc("get_content_engagement_counts",{p_target_id:tid,p_target_type:tt}),
    client.from("content_likes").select("id,actor_id,guest_token").eq("target_id",tid).eq("target_type",tt),
    client.from("content_comments").select("id,user_id,guest_token,body,display_name,created_at").eq("target_id",tid).eq("target_type",tt).order("created_at",{ascending:false}).limit(100),
-   client.from("analytics_events").select("id",{count:"exact",head:true}).eq("target_id",tid).eq("target_type",tt).eq("event_type","share"),
    user()
  ]);
+ const stats = counts.error ? {} : (Array.isArray(counts.data) ? (counts.data[0] || {}) : (counts.data || {}));
+ const viewCount = Number(stats.views ?? item.views ?? 0);
+ const salesCount = Number(stats.sales_count ?? item.sales_count ?? 0);
+ const likeCount = Number(stats.likes ?? (likes.error ? 0 : (likes.data||[]).length));
+ const commentCount = Number(stats.comments ?? (comments.error ? 0 : (comments.data||[]).length));
+ const shareCount = Number(stats.shares ?? 0);
+
+ const viewMeta=document.querySelector(".view-meta .meta:nth-child(1) strong");
+ const salesMeta=document.querySelector(".view-meta .meta:nth-child(2) strong");
+ if(viewMeta)viewMeta.textContent=viewCount.toLocaleString("id-ID");
+ if(salesMeta)salesMeta.textContent=salesCount.toLocaleString("id-ID");
+
  const lc=$("likeCount"),cc=$("commentCount"),sc=$("shareCount");
- if(lc)lc.textContent=String(likes.error?0:(likes.data||[]).length); if($("likeCountMeta"))$("likeCountMeta").textContent=lc?.textContent||"0";
- if(cc)cc.textContent=String(comments.error?0:(comments.data||[]).length); if($("commentCountMeta"))$("commentCountMeta").textContent=cc?.textContent||"0";
- if(sc)sc.textContent=String(shares.error?0:Number(shares.count||0)); if($("shareCountMeta"))$("shareCountMeta").textContent=sc?.textContent||"0";
+ if(lc)lc.textContent=String(likeCount); if($("likeCountMeta"))$("likeCountMeta").textContent=String(likeCount);
+ if(cc)cc.textContent=String(commentCount); if($("commentCountMeta"))$("commentCountMeta").textContent=String(commentCount);
+ if(sc)sc.textContent=String(shareCount); if($("shareCountMeta"))$("shareCountMeta").textContent=String(shareCount);
  const mine=!!u?.id && !likes.error && (likes.data||[]).some(x=>String(x.actor_id)===String(u.id));
  $("likeBtn")?.setAttribute("aria-pressed",mine?"true":"false");
  $("likeIcon")?.classList.toggle("fa-solid",mine); $("likeIcon")?.classList.toggle("fa-regular",!mine);
@@ -2769,9 +2781,7 @@ async function loadSocial(kind,item){
    }
    try{await client.rpc("track_analytics",{p_event_type:"share",p_target_type:tt,p_target_id:tid,p_owner:item.owner_id||item.creator_id||item.seller_id||null})}catch{}
    try{await client.rpc("record_quest_event",{p_event_type:"share"})}catch{}
-   const n=Number($("shareCount")?.textContent||0)+1;
-   if($("shareCount"))$("shareCount").textContent=String(n);
-   if($("shareCountMeta"))$("shareCountMeta").textContent=String(n);
+   await loadSocial(kind,item);
  });
  const form=$("commentForm"),text=$("commentText"),submit=$("commentSubmit");
  if(form)form.onsubmit=async e=>{
