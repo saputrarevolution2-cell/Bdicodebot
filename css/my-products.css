@@ -514,6 +514,16 @@ html[data-theme="dark"] .pt-nav{
   background:rgba(2,6,23,.42) !important;
   backdrop-filter:blur(2px) !important;
   -webkit-backdrop-filter:blur(2px) !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+  transition:opacity .18s ease,visibility .18s ease !important;
+}
+
+.pt-backdrop.open{
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
 }
 .pt-drawer{
   position:fixed !important;top:0 !important;left:0 !important;bottom:0 !important;
@@ -522,6 +532,16 @@ html[data-theme="dark"] .pt-nav{
   border-right:1px solid var(--line) !important;
   box-shadow:24px 0 60px rgba(16,24,40,.16) !important;
   display:flex !important;flex-direction:column !important;
+  transform:translateX(-105%) !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+  transition:transform .2s ease,visibility .2s ease !important;
+}
+
+.pt-drawer.open{
+  transform:translateX(0) !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
 }
 .pt-drawer-head{
   min-height:72px !important;padding:0 16px 0 18px !important;
