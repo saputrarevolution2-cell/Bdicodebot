@@ -249,3 +249,9 @@ html[data-theme="dark"] .product-social-bar{box-shadow:var(--shadow)}
 @media(prefers-reduced-motion:reduce){
   .product-comment-field input,.product-comment-field textarea{transition:none}
 }
+
+
+/* Logged-in users: registration notice is completely hidden. */
+.product-register-ticker.is-authenticated{
+  display:none!important;
+}
