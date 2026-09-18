@@ -439,63 +439,17 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
   }
 }
 
-/* ===== PasteLink rich editor + password ===== */
-.pt-editor{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface2)}
-.pt-editor-toolbar{display:flex;gap:4px;flex-wrap:wrap;padding:8px;border-bottom:1px solid var(--line);background:var(--surface3)}
-.pt-tool{width:36px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--text);display:grid;place-items:center}
-.pt-tool:hover{background:rgba(34,158,217,.1);color:var(--primary)}
-.pt-editor-content{min-height:330px;max-height:620px;overflow:auto;padding:14px 16px;outline:0;line-height:1.65;white-space:pre-wrap;word-break:break-word}
-.pt-editor-content:empty:before{content:attr(data-placeholder);color:var(--muted)}
-.pt-editor-content:focus{background:var(--surface);box-shadow:inset 0 0 0 2px rgba(34,158,217,.1)}
-.pt-editor-content a{color:var(--primary);text-decoration:underline}
-.pt-editor-content blockquote{margin:10px 0;padding:8px 12px;border-left:3px solid var(--primary);background:rgba(34,158,217,.07);border-radius:7px}
-.pt-editor-content .spoiler{background:#334155;color:transparent;border-radius:5px;padding:0 3px;cursor:pointer}
-.pt-editor-content .spoiler:hover{color:var(--text);background:var(--surface3)}
-.password-input{display:flex;align-items:center;height:48px;border:1px solid var(--line);border-radius:13px;background:var(--surface2);overflow:hidden}
-.password-input>i{margin-left:14px;color:var(--primary)}
-.password-input input{flex:1;min-width:0;height:100%;padding:0 12px;border:0!important;outline:0!important;background:transparent!important;color:var(--text)}
-.password-toggle{width:44px;height:100%;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted)}
-.password-toggle:hover{color:var(--primary)}
-
-
-/* =========================================================
-   Guest Free / Paid Login helper
-   ========================================================= */
-.create-access-note{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  margin:-8px 0 14px;
-  padding:12px 14px;
-  border:1px solid color-mix(in srgb,var(--primary,#229ed9) 18%,var(--line,#e5e7eb));
-  border-radius:14px;
-  background:color-mix(in srgb,var(--primary,#229ed9) 5%,var(--surface,#fff));
-  color:var(--muted,#718293);
-  font-size:12px;
-  line-height:1.55;
-}
-.create-access-note i{color:var(--primary,#229ed9);margin-top:2px}
-.create-access-note b{color:var(--text,#14212b)}
-html[data-theme="dark"] .create-access-note{
-  background:rgba(34,158,217,.08);
-  border-color:rgba(34,158,217,.22);
-}
-
-/* Rich editor formatting — visible while composing */
-.pt-editor-content strong,.pt-editor-content b{font-weight:800!important}
-.pt-editor-content em,.pt-editor-content i{font-style:italic!important}
-.pt-editor-content u{text-decoration:underline!important;text-decoration-thickness:1px}
-.pt-editor-content a{color:var(--primary)!important;text-decoration:underline!important;cursor:pointer}
-.pt-editor-content blockquote{display:block;margin:10px 0;padding:9px 12px;border-left:3px solid var(--primary);background:rgba(34,158,217,.07);border-radius:7px}
-.pt-editor-content .spoiler{display:inline-block;background:#334155;color:#fff;border-radius:5px;padding:0 5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-.pt-editor-content .spoiler::before{content:"SPOILER";font-size:9px;letter-spacing:.05em;opacity:.7;margin-right:5px}
-
-/* PasteLink editor FINAL visual rules */
-.pt-editor-content strong,.pt-editor-content b{font-weight:800!important}
-.pt-editor-content em,.pt-editor-content i{font-style:italic!important}
-.pt-editor-content u{text-decoration:underline!important}
-.pt-editor-content a{color:var(--primary)!important;text-decoration:underline!important;cursor:pointer}
-.pt-editor-content blockquote{display:inline-block!important;width:fit-content!important;max-width:100%!important;margin:8px 0!important;padding:7px 12px!important;border-left:3px solid var(--primary)!important;background:rgba(34,158,217,.07)!important;border-radius:7px!important;white-space:normal!important;vertical-align:top!important}
-.pt-editor-content .spoiler{display:inline!important;background:#334155!important;color:transparent!important;border-radius:5px!important;padding:1px 5px!important;cursor:pointer!important;box-shadow:none!important}
-.pt-editor-content .spoiler:hover{color:inherit!important;background:var(--surface3)!important}
-.pt-editor-content .spoiler::before,.pt-editor-content .spoiler::after{content:none!important;display:none!important}
+/* ===== PasteLink Rich Editor — FINAL ===== */
+.pt-editor{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+.pt-editor-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:9px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.pt-tool{width:38px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);display:grid;place-items:center;cursor:pointer;touch-action:manipulation}
+.pt-tool:active,.pt-tool:hover{border-color:var(--primary);color:var(--primary)}
+.pt-editor-content{min-height:240px;padding:14px 15px;outline:none;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
+.pt-editor-content:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
+.pt-editor-content .pt-bold{font-weight:800!important}
+.pt-editor-content .pt-italic{font-style:italic!important}
+.pt-editor-content .pt-underline{text-decoration:underline!important;text-decoration-thickness:1px!important}
+.pt-editor-content .pt-quote{display:inline;background:var(--surface2);border-left:3px solid var(--primary);padding:2px 7px;margin:0;border-radius:5px;font-style:normal}
+.pt-editor-content .pt-spoiler{background:#334155!important;color:transparent!important;border-radius:5px;padding:1px 4px;cursor:pointer;text-shadow:none!important}
+.pt-editor-content .pt-spoiler:hover,.pt-editor-content .pt-spoiler:focus{color:var(--text)!important}
+.pt-editor-content a{color:var(--primary)!important;text-decoration:underline!important}
