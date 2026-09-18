@@ -2775,208 +2775,79 @@ function initPasteLinkEditor(){
  if(!ed||ed.dataset.ready)return;
  ed.dataset.ready="1";
  let savedRange=null;
-
- const inside=r=>{
-   if(!r) return false;
-   const n=r.commonAncestorContainer;
-   return n===ed || ed.contains(n);
- };
- const currentRange=()=>{
-   const s=window.getSelection();
-   if(!s || !s.rangeCount) return null;
-   const r=s.getRangeAt(0);
-   return inside(r) ? r.cloneRange() : null;
- };
- const saveRange=()=>{
-   const r=currentRange();
-   if(r) savedRange=r;
-   return r;
- };
- const restoreRange=()=>{
-   if(!savedRange || !inside(savedRange)) return false;
-   const s=window.getSelection();
-   s.removeAllRanges();
-   s.addRange(savedRange);
-   return true;
- };
- const syncHTML=()=>{
-   const hidden=document.getElementById("contentHtml");
-   if(hidden) hidden.value=sanitizeContentHTML(ed.innerHTML);
- };
- const selectedText=()=>savedRange ? savedRange.toString() : "";
-
- const wrapSelection=(tag,attrs={})=>{
-   if(!restoreRange()) return false;
-   const s=window.getSelection();
-   if(!s || !s.rangeCount) return false;
-   const r=s.getRangeAt(0);
-   if(r.collapsed) return false;
-
+ const inside=r=>!!r&&(r.commonAncestorContainer===ed||ed.contains(r.commonAncestorContainer));
+ const current=()=>{const s=getSelection();if(!s||!s.rangeCount)return null;const r=s.getRangeAt(0);return inside(r)?r.cloneRange():null};
+ const save=()=>{const r=current();if(r&&!r.collapsed)savedRange=r;return savedRange};
+ const restore=()=>{if(!savedRange||!inside(savedRange))return false;const s=getSelection();s.removeAllRanges();s.addRange(savedRange);return true};
+ const sync=()=>{const h=document.getElementById("contentHtml");if(h)h.value=sanitizeContentHTML(ed.innerHTML)};
+ const unwrap=el=>{if(!el||!ed.contains(el))return false;const p=el.parentNode,f=document.createDocumentFragment();while(el.firstChild)f.appendChild(el.firstChild);p.replaceChild(f,el);return true};
+ const wrap=(tag,attrs={})=>{
+   if(!restore())return false;
+   const s=getSelection(),r=s.getRangeAt(0);if(r.collapsed)return false;
    const el=document.createElement(tag);
-   for(const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
-   el.appendChild(r.extractContents());
-   r.insertNode(el);
-
-   const nr=document.createRange();
-   nr.selectNodeContents(el);
-   s.removeAllRanges();
-   s.addRange(nr);
-   savedRange=nr.cloneRange();
-   return true;
+   Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+   el.appendChild(r.extractContents());r.insertNode(el);
+   const nr=document.createRange();nr.selectNodeContents(el);s.removeAllRanges();s.addRange(nr);savedRange=nr.cloneRange();return true;
  };
-
- const unwrapTag=tag=>{
-   if(!restoreRange()) return false;
-   const r=window.getSelection().getRangeAt(0);
-   let node=r.commonAncestorContainer;
-   if(node.nodeType===3) node=node.parentElement;
-   const el=node?.closest?.(tag);
-   if(!el || !ed.contains(el)) return false;
-   const frag=document.createDocumentFragment();
-   while(el.firstChild) frag.appendChild(el.firstChild);
-   el.replaceWith(frag);
-   return true;
+ const ancestor=tags=>{
+   if(!savedRange)return null;
+   let n=savedRange.commonAncestorContainer;if(n.nodeType===3)n=n.parentElement;
+   return n?.closest?.(tags)||null;
  };
-
- const linkify=()=>{
-   const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),nodes=[];
-   let n;
-   while(n=w.nextNode()){
-     if(n.parentElement?.closest("a,.spoiler,script,style")) continue;
-     nodes.push(n);
-   }
-   for(const node of nodes){
-     const text=node.nodeValue||"";
-     const re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;
-     let m,last=0,hit=false;
-     const frag=document.createDocumentFragment();
-     while((m=re.exec(text))){
-       hit=true;
-       frag.appendChild(document.createTextNode(text.slice(last,m.index)));
-       let raw=m[0],trail="";
-       while(/[),.!?;:'\]]$/.test(raw)){
-         trail=raw.slice(-1)+trail; raw=raw.slice(0,-1);
-       }
-       const a=document.createElement("a");
-       a.href=/^www\./i.test(raw)?"https://"+raw:raw;
-       a.textContent=raw;
-       a.target="_blank";
-       a.rel="noopener noreferrer nofollow";
-       frag.appendChild(a);
-       if(trail) frag.appendChild(document.createTextNode(trail));
-       last=m.index+m[0].length;
-     }
-     if(hit){
-       frag.appendChild(document.createTextNode(text.slice(last)));
-       node.replaceWith(frag);
-     }
-   }
- };
-
  const apply=cmd=>{
-   /* Use the latest selection. On iOS the toolbar can steal focus,
-      so savedRange is deliberately restored before every operation. */
-   if(!savedRange) saveRange();
-   if(!savedRange || savedRange.collapsed){
-     toast("Pilih teks terlebih dahulu.","info");
-     return false;
-   }
-
+   if(!savedRange)save();
+   if(!savedRange||savedRange.collapsed){toast("Pilih teks terlebih dahulu.","info");return}
    let ok=false;
-   if(cmd==="bold"){
-     const el=savedRange.commonAncestorContainer.nodeType===3
-       ? savedRange.commonAncestorContainer.parentElement
-       : savedRange.commonAncestorContainer;
-     ok=el?.closest?.("strong,b") ? unwrapTag("strong") || unwrapTag("b") : wrapSelection("strong");
-   }else if(cmd==="italic"){
-     const el=savedRange.commonAncestorContainer.nodeType===3
-       ? savedRange.commonAncestorContainer.parentElement
-       : savedRange.commonAncestorContainer;
-     ok=el?.closest?.("em,i") ? unwrapTag("em") || unwrapTag("i") : wrapSelection("em");
-   }else if(cmd==="underline"){
-     ok=wrapSelection("u");
-   }else if(cmd==="spoiler"){
-     ok=wrapSelection("span",{class:"spoiler"});
-   }else if(cmd==="blockquote"){
-     ok=wrapSelection("blockquote");
-   }else if(cmd==="link"){
-     const selected=selectedText().trim();
-     let u=window.prompt("Masukkan URL:",/^https?:\/\//i.test(selected)?selected:"https://");
-     if(!u) return false;
-     u=u.trim();
-     if(/^www\./i.test(u)) u="https://"+u;
-     if(!/^https?:\/\//i.test(u)){
-       toast("URL harus http:// atau https://.","error");
-       return false;
+   if(cmd==="bold"){const x=ancestor("strong,b");ok=x?unwrap(x):wrap("strong")}
+   else if(cmd==="italic"){const x=ancestor("em,i");ok=x?unwrap(x):wrap("em")}
+   else if(cmd==="underline"){const x=ancestor("u");ok=x?unwrap(x):wrap("u")}
+   else if(cmd==="spoiler"){const x=ancestor(".spoiler");ok=x?unwrap(x):wrap("span",{class:"spoiler"})}
+   else if(cmd==="blockquote"){const x=ancestor("blockquote");ok=x?unwrap(x):wrap("blockquote")}
+   else if(cmd==="link"){
+     const x=ancestor("a");
+     if(x){
+       let u=prompt("Ubah URL tautan:",x.getAttribute("href")||"");
+       if(u===null)return;u=u.trim();if(/^www\./i.test(u))u="https://"+u;
+       if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
+       x.setAttribute("href",u);x.setAttribute("target","_blank");x.setAttribute("rel","noopener noreferrer nofollow");ok=true;
+     }else{
+       let u=prompt("Masukkan URL:","https://");
+       if(u===null)return;u=u.trim();if(/^www\./i.test(u))u="https://"+u;
+       if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
+       ok=wrap("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"});
      }
-     ok=wrapSelection("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"});
    }
-
-   if(!ok){
-     toast("Format gagal diterapkan. Pilih teks di dalam editor terlebih dahulu.","error");
-     return false;
-   }
-   syncHTML();
-   ed.focus();
-   return true;
+   if(!ok){toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");return}
+   sync();ed.focus();
  };
 
- ed.addEventListener("input",syncHTML);
- ed.addEventListener("paste",()=>setTimeout(()=>{linkify();syncHTML()},0));
-
- /* Save selection BEFORE toolbar interaction, including iOS/Safari. */
  ["selectionchange","mouseup","keyup","touchend","pointerup"].forEach(ev=>{
    const target=ev==="selectionchange"?document:ed;
-   target.addEventListener(ev,()=>{
-     const r=currentRange();
-     if(r) savedRange=r;
-   });
+   target.addEventListener(ev,()=>save());
  });
+ ed.addEventListener("input",sync);
+ ed.addEventListener("paste",()=>setTimeout(sync,0));
 
- /* Apply on pointer/touch down. This prevents Safari from clearing
-    the selection before the formatter runs. The click handler is only
-    a fallback for non-pointer environments. */
  document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
-   let handled=false;
-   const run=e=>{
-     e.preventDefault();
-     e.stopPropagation();
-     if(!savedRange) saveRange();
-     handled=apply(btn.dataset.cmd);
+   let ran=false;
+   const handler=e=>{
+     e.preventDefault();e.stopPropagation();
+     ran=true;apply(btn.dataset.cmd);
    };
-   btn.addEventListener("pointerdown",run,{passive:false});
-   btn.addEventListener("touchstart",run,{passive:false});
-   btn.addEventListener("mousedown",e=>{
-     if("PointerEvent" in window) return;
-     run(e);
-   });
-   btn.addEventListener("click",e=>{
-     e.preventDefault();
-     e.stopPropagation();
-     if(!handled) apply(btn.dataset.cmd);
-     handled=false;
-   });
+   btn.addEventListener("pointerdown",handler,{passive:false});
+   btn.addEventListener("touchstart",handler,{passive:false});
+   btn.addEventListener("mousedown",e=>{if(!window.PointerEvent)handler(e)});
+   btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(!ran)apply(btn.dataset.cmd);ran=false});
  });
 
  ed.addEventListener("keydown",e=>{
-   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
-     e.preventDefault();
-     saveRange();
-     apply("link");
-   }
+   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();save();apply("link")}
  });
 
- const cb=document.getElementById("hasPassword");
- const box=document.getElementById("passwordBox");
- const pw=document.getElementById("contentPassword");
- cb?.addEventListener("change",()=>{
-   box.hidden=!cb.checked;
-   if(!cb.checked) pw.value="";
- });
- document.getElementById("togglePassword")?.addEventListener("click",()=>{
-   pw.type=pw.type==="password"?"text":"password";
- });
- syncHTML();
+ const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
+ cb?.addEventListener("change",()=>{box.hidden=!cb.checked;if(!cb.checked)pw.value=""});
+ document.getElementById("togglePassword")?.addEventListener("click",()=>{pw.type=pw.type==="password"?"text":"password"});
+ sync();
 }
 initPasteLinkEditor();
 
