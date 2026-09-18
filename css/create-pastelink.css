@@ -489,3 +489,13 @@ html[data-theme="dark"] .create-access-note{
 .pt-editor-content blockquote{display:block;margin:10px 0;padding:9px 12px;border-left:3px solid var(--primary);background:rgba(34,158,217,.07);border-radius:7px}
 .pt-editor-content .spoiler{display:inline-block;background:#334155;color:#fff;border-radius:5px;padding:0 5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .pt-editor-content .spoiler::before{content:"SPOILER";font-size:9px;letter-spacing:.05em;opacity:.7;margin-right:5px}
+
+/* PasteLink editor FINAL visual rules */
+.pt-editor-content strong,.pt-editor-content b{font-weight:800!important}
+.pt-editor-content em,.pt-editor-content i{font-style:italic!important}
+.pt-editor-content u{text-decoration:underline!important}
+.pt-editor-content a{color:var(--primary)!important;text-decoration:underline!important;cursor:pointer}
+.pt-editor-content blockquote{display:inline-block!important;width:fit-content!important;max-width:100%!important;margin:8px 0!important;padding:7px 12px!important;border-left:3px solid var(--primary)!important;background:rgba(34,158,217,.07)!important;border-radius:7px!important;white-space:normal!important;vertical-align:top!important}
+.pt-editor-content .spoiler{display:inline!important;background:#334155!important;color:transparent!important;border-radius:5px!important;padding:1px 5px!important;cursor:pointer!important;box-shadow:none!important}
+.pt-editor-content .spoiler:hover{color:inherit!important;background:var(--surface3)!important}
+.pt-editor-content .spoiler::before,.pt-editor-content .spoiler::after{content:none!important;display:none!important}
