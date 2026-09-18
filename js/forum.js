@@ -1,6 +1,73 @@
 (()=>{"use strict";
 
 const $=s=>document.querySelector(s);
+
+/* ---------------------------------------------------------
+   PasTele shared shell
+   Navbar + footer are rendered from JS so forum.html stays clean.
+--------------------------------------------------------- */
+function renderPasTeleShell(){
+  if(document.querySelector(".pt-nav")) return;
+
+  const nav=document.createElement("header");
+  nav.className="pt-nav";
+  nav.innerHTML=`
+    <div class="pt-container pt-nav-inner">
+      <a class="pt-brand" href="index.html" aria-label="PasTele">
+        <span class="pt-brand-icon"><i class="fa-solid fa-paper-plane"></i></span>
+        <span>PasTele</span>
+      </a>
+      <nav class="pt-nav-links" aria-label="Navigasi utama">
+        <a href="index.html"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
+        <a href="marketplace.html"><i class="fa-solid fa-store"></i><span>Marketplace</span></a>
+        <a class="active" href="forum.html" aria-current="page"><i class="fa-solid fa-comments"></i><span>Forum</span></a>
+      </nav>
+      <div class="pt-nav-actions">
+        <button id="themeBtn" class="pt-icon-btn" type="button" aria-label="Ganti tema" title="Ganti tema">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <a id="accountLink" class="pt-account-btn" href="login.html">
+          <i class="fa-solid fa-right-to-bracket"></i><span>Login</span>
+        </a>
+        <button id="menuBtn" class="pt-menu-btn" type="button" aria-label="Buka menu" aria-expanded="false">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>`;
+
+  const mobile=document.createElement("div");
+  mobile.id="mobileMenu";
+  mobile.className="pt-mobile-menu";
+  mobile.hidden=true;
+  mobile.innerHTML=`
+    <a href="index.html"><i class="fa-solid fa-house"></i>Beranda</a>
+    <a href="marketplace.html"><i class="fa-solid fa-store"></i>Marketplace</a>
+    <a class="active" href="forum.html"><i class="fa-solid fa-comments"></i>Forum Community</a>
+    <a id="mobileAccountLink" href="login.html"><i class="fa-solid fa-right-to-bracket"></i>Login</a>`;
+
+  const main=document.querySelector("main");
+  document.body.insertBefore(nav,document.body.firstChild);
+  document.body.insertBefore(mobile,main);
+
+  const footer=document.createElement("footer");
+  footer.className="pt-footer";
+  footer.innerHTML=`
+    <div class="pt-container pt-footer-grid">
+      <div class="pt-footer-brand">
+        <a class="pt-brand" href="index.html">
+          <span class="pt-brand-icon"><i class="fa-solid fa-paper-plane"></i></span><span>PasTele</span>
+        </a>
+        <p>Platform creator dan marketplace digital untuk membuat, menerbitkan, menemukan, dan memonetisasi konten.</p>
+      </div>
+      <div class="pt-footer-col"><strong>Platform</strong><a href="marketplace.html">Marketplace</a><a href="forum.html">Forum</a><a href="index.html#features">Fitur</a></div>
+      <div class="pt-footer-col"><strong>Akun</strong><a href="login.html">Login</a><a href="register.html">Register</a><a href="profile.html">Profile</a></div>
+      <div class="pt-footer-col"><strong>PasTele</strong><a href="index.html#how">Cara Kerja</a><a href="index.html#platform">Platform</a></div>
+    </div>
+    <div class="pt-container pt-footer-bottom"><span>© 2026 PasTele. All rights reserved.</span><span>Made for creators.</span></div>`;
+  document.body.appendChild(footer);
+}
+
+renderPasTeleShell();
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const toast=m=>{
   const x=$("#toast"); if(!x)return;
