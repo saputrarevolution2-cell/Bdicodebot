@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.sb;
+    const client = window.sb || window.supabaseClient;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,7 +439,8 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await window.PasTeleDB.rpc("resolve_username_login",
+            await client.rpc(
+              "resolve_username_login",
               {
                 p_username: username
               }
@@ -646,7 +647,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await window.PasTeleDB.rpc("check_email_available", {
+        await client.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -691,7 +692,8 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await window.PasTeleDB.rpc("resolve_username_login",
+          await client.rpc(
+            "resolve_username_login",
             {
               p_username: value
             }
@@ -743,7 +745,8 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await window.PasTeleDB.rpc("check_username_available",
+        await client.rpc(
+          "check_username_available",
           {
             p_username: value
           }
@@ -971,8 +974,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.sb) &&
-        (window.sb?.auth || window.sb?.auth)
+        (window.sb || window.supabaseClient) &&
+        (window.sb?.auth || window.supabaseClient?.auth)
       );
     }
   };
@@ -1312,7 +1315,8 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.PasTeleDB.rpc("get_public_site_settings"
+          await window.sb.rpc(
+            'get_public_site_settings'
           );
         if (
           !result?.error &&
@@ -2932,7 +2936,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const draftCount = $("draftCount");
   const resultInfo = $("resultInfo");
   const TC = window.TC || {};
-  const supabase = window.sb || window.sb || null;
+  const supabase = window.sb || window.supabaseClient || null;
 
   let profile = null;
   let groups = [];
@@ -2951,6 +2955,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const money = value => new Intl.NumberFormat("id-ID", {style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(value)||0);
   const titleOf = item => String(item?.title || item?.name || item?.slug || "Untitled").trim();
   const descriptionOf = item => String(item?.description || "").trim();
+  const plainTextOf = value => {
+    const raw = String(value ?? "");
+    if (!raw) return "";
+    try {
+      const box = document.createElement("div");
+      box.innerHTML = raw;
+      return String(box.textContent || box.innerText || "").replace(/\s+/g, " ").trim();
+    } catch (_) {
+      return raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    }
+  };
   const dateOf = item => {
     const d = new Date(item?.created_at || "");
     return Number.isNaN(d.getTime()) ? "Tanggal tidak tersedia" : d.toLocaleDateString("id-ID", {day:"2-digit",month:"short",year:"numeric"});
@@ -2968,19 +2983,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   const formatPrice = price => Number(price) > 0 ? money(price) : null;
 
+  /*
+   * Public/display URL rules:
+   * - PasteLink and Code use the real PasTele public URL format.
+   * - Channel / Group uses invite_url exactly as stored in DB.
+   *   Do NOT rewrite, normalize, shorten, or rebuild Telegram links.
+   */
   const hrefFor = (item, type) => {
     const t = normalize(type);
-    if (t === "pastelink") return item?.slug ? `${location.origin}/p${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}` : "#";
-    if (t === "paste") return item?.slug ? `${location.origin}/paste/${encodeURIComponent(item.slug)}` : "#";
-    if (t === "code") return item?.slug ? `${location.origin}/c/${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}` : "#";
-    if (t === "channel") {
-      if (!item?.slug) return "#";
-      const paid = Number(item?.price||0)>0;
-      const isGroup = normalize(item?.type) === "group";
-      const prefix = isGroup ? (paid ? "gp" : "gf") : (paid ? "ch/p" : "ch/f");
-      return `${location.origin}/${prefix}/${encodeURIComponent(item.slug)}`;
+    if (t === "pastelink") {
+      return item?.slug
+        ? `${location.origin}/p${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}`
+        : "#";
     }
-    return item?.id ? `${location.origin}/product.html?id=${encodeURIComponent(item.id)}&type=${encodeURIComponent(item.type || item.product_type || t)}` : "#";
+    if (t === "paste") {
+      return item?.slug
+        ? `${location.origin}/paste/${encodeURIComponent(item.slug)}`
+        : "#";
+    }
+    if (t === "code") {
+      return item?.slug
+        ? `${location.origin}/c/${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}`
+        : "#";
+    }
+    if (t === "channel") {
+      const original = String(item?.invite_url || "").trim();
+      return original || "#";
+    }
+    return item?.id
+      ? `${location.origin}/product.html?id=${encodeURIComponent(item.id)}&type=${encodeURIComponent(item.type || item.product_type || t)}`
+      : "#";
   };
   const findItem = (id,type) => allItems.find(x => String(x?.id)===String(id) && normalize(x?.__type)===normalize(type));
 
@@ -3072,11 +3104,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `<section class="my-section"><div class="my-section-header"><div class="my-section-title"><span class="my-section-title-icon"><i class="fa-solid ${group.icon}"></i></span><div><h2>${esc(group.title)}</h2><span class="my-section-subtitle">Kelola konten ${esc(group.title)}</span></div></div><span class="my-section-count">${group.items.length}</span></div><div class="my-list">${group.items.map(item=>{
       const title=titleOf(item), st=statusOf(item), price=formatPrice(item?.price), slug=String(item?.slug||"").trim(), href=hrefFor(item,group.key), views=Number(item?.views||0), sales=Number(item?.sales_count||0);
       let secondary="";
-      if(group.key==="code") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-robot"></i><span>Bot</span><strong>${esc(item?.bot_username?'@'+String(item.bot_username).replace(/^@/,""):"Belum diatur")}</strong></div><div class="detail-chip"><i class="fa-solid fa-key"></i><span>Code / Slug</span><strong>${esc(slug||"Belum ada")}</strong></div></div>`;
-      else if(group.key==="pastelink") { const exp=item?.expires_at?new Date(item.expires_at):null; const expLabel=exp&&!Number.isNaN(exp.getTime())?exp.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"Tidak expired"; secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-file-code"></i><span>Konten</span><strong>${item?.content_html?'Tersedia':'Kosong'}</strong></div><div class="detail-chip"><i class="fa-solid fa-clock"></i><span>Expired</span><strong>${esc(expLabel)}</strong></div></div>`; }
-      else if(group.key==="channel") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-at"></i><span>Username</span><strong>${esc(item?.username?'@'+String(item.username).replace(/^@/,""):"Belum diatur")}</strong></div><div class="detail-chip"><i class="fa-solid fa-link"></i><span>Link</span><strong>${esc(item?.invite_url||"Belum diatur")}</strong></div></div>`;
+      let displayLabel=labelFor(group.key);
+      if(group.key==="code") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-robot"></i><span>Bot</span><strong>${esc(item?.bot_username?'@'+String(item.bot_username).replace(/^@/,""):"Belum diatur")}</strong></div><div class="detail-chip"><i class="fa-solid fa-key"></i><span>Code</span><strong>${esc(slug||"Belum ada")}</strong></div></div>`;
+      else if(group.key==="pastelink") {
+        const exp=item?.expires_at?new Date(item.expires_at):null;
+        const expLabel=exp&&!Number.isNaN(exp.getTime())?exp.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"Tidak expired";
+        const contentPreview=plainTextOf(item?.content_html||"") || "Konten kosong";
+        secondary=`<div class="my-row-detail-grid"><div class="detail-chip detail-content-chip"><i class="fa-solid fa-file-code"></i><span>Konten</span><strong class="detail-content">${esc(contentPreview)}</strong></div><div class="detail-chip"><i class="fa-solid fa-clock"></i><span>Expired</span><strong>${esc(expLabel)}</strong></div></div>`;
+      }
+      else if(group.key==="channel") {
+        const isGroup=normalize(item?.type)==="group" || normalize(item?.product_type)==="group";
+        displayLabel=isGroup ? "Group" : "Channel";
+        secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-at"></i><span>Username</span><strong>${esc(item?.username?'@'+String(item.username).replace(/^@/,""):"Belum diatur")}</strong></div><div class="detail-chip"><i class="fa-solid fa-tower-broadcast"></i><span>Jenis</span><strong>${isGroup?'Group':'Channel'}</strong></div></div>`;
+      }
       else if(group.key==="product") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-link"></i><span>Slug</span><strong>${esc(slug||"Belum ada")}</strong></div><div class="detail-chip"><i class="fa-solid fa-layer-group"></i><span>Kategori</span><strong>${esc(item?.category||"General")}</strong></div></div>`;
-      return `<article class="my-row is-collapsed" data-product-type="${esc(group.key)}"><button class="my-row-toggle" type="button" aria-expanded="false"><span class="my-row-toggle-title" title="${esc(title)}">${esc(title)}</span><span class="my-row-toggle-status status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span><span class="my-row-toggle-chevron"><i class="fa-solid fa-chevron-down"></i></span></button><div class="my-row-details" hidden><div class="my-row-head"><span class="my-icon"><i class="fa-solid ${iconFor(group.key)}"></i></span><div class="my-row-main"><div class="my-row-title-wrap"><h3 class="my-row-title">${esc(title)}</h3><span class="status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span></div><div class="my-row-meta"><span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(labelFor(group.key))}</span><span class="meta-dot">•</span><span>${esc(dateOf(item))}</span>${price?`<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>`:""}</div>${descriptionOf(item)?`<div class="my-row-description">${esc(descriptionOf(item))}</div>`:""}${secondary}${href!=="#"?`<div class="my-row-url-box"><div class="my-row-url-label"><i class="fa-solid fa-globe"></i><span>Link lengkap</span></div><a class="my-row-url" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a></div>`:""}</div></div><div class="my-row-footer"><div class="my-row-stats"><span><i class="fa-solid fa-eye"></i>${views} dilihat</span><span><i class="fa-solid fa-bag-shopping"></i>${sales} terjual</span></div><div class="my-row-actions"><button class="btn" data-action="open" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span></button><button class="btn" data-action="copy" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-copy"></i><span>Salin</span></button><button class="btn primary" data-action="edit" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-pen"></i><span>Edit</span></button><button class="btn danger" data-action="delete" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-trash"></i><span>Hapus</span></button></div></div></div></article>`;
+      return `<article class="my-row is-collapsed" data-product-type="${esc(group.key)}"><button class="my-row-toggle" type="button" aria-expanded="false"><span class="my-row-toggle-title" title="${esc(title)}">${esc(title)}</span><span class="my-row-toggle-status status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span><span class="my-row-toggle-chevron"><i class="fa-solid fa-chevron-down"></i></span></button><div class="my-row-details" hidden><div class="my-row-head"><span class="my-icon"><i class="fa-solid ${iconFor(group.key)}"></i></span><div class="my-row-main"><div class="my-row-title-wrap"><h3 class="my-row-title">${esc(title)}</h3><span class="status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span></div><div class="my-row-meta"><span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(displayLabel)}</span><span class="meta-dot">•</span><span>${esc(dateOf(item))}</span>${price?`<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>`:""}</div>${descriptionOf(item)?`<div class="my-row-description">${esc(descriptionOf(item))}</div>`:""}${secondary}${href!=="#"?`<div class="my-row-url-box"><div class="my-row-url-label"><i class="fa-solid ${group.key==="channel"?'fa-paper-plane':'fa-globe'}"></i><span>Link lengkap</span></div><a class="my-row-url" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a></div>`:""}</div></div><div class="my-row-footer"><div class="my-row-stats"><span><i class="fa-solid fa-eye"></i>${views} dilihat</span><span><i class="fa-solid fa-bag-shopping"></i>${sales} terjual</span></div><div class="my-row-actions"><button class="btn" data-action="open" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span></button><button class="btn" data-action="copy" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-copy"></i><span>Salin</span></button><button class="btn primary" data-action="edit" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-pen"></i><span>Edit</span></button><button class="btn danger" data-action="delete" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-trash"></i><span>Hapus</span></button></div></div></div></article>`;
     }).join("")}</div></section>`;
   }
 
@@ -3148,7 +3190,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.sb || null;
+  const sb = () => window.sb || window.supabaseClient || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -3179,8 +3221,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
