@@ -225,3 +225,15 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
   .market-list-type{font-size:8px}
   .market-list-price{font-size:9px}
 }
+
+
+/* =========================================================
+   PasTele Marketplace — HARD GRID OVERRIDE
+   Main content: 2 columns on Android/mobile, 4 on desktop.
+   This is intentionally !important so older responsive rules cannot
+   collapse the cards into a single vertical column.
+   ========================================================= */
+.market-grid{display:grid!important;grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:16px!important;align-items:stretch}
+.market-grid>.market-loading,.market-grid>.market-empty,.market-grid>.market-error{grid-column:1/-1!important}
+@media(max-width:1050px){.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}}
+@media(max-width:520px){.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.market-grid>*{min-width:0}}
