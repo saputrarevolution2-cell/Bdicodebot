@@ -2911,11 +2911,33 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
 
 })();
 
+async function updateGuestLoginTicker(){
+  const ticker=document.getElementById("guestLoginTicker");
+  if(!ticker) return;
+  try{
+    const sb=window.sb || window.supabaseClient;
+    if(!sb?.auth){
+      ticker.hidden=false;
+      ticker.style.display="";
+      return;
+    }
+    const {data,error}=await sb.auth.getSession();
+    if(error) throw error;
+    const loggedIn=Boolean(data?.session?.user);
+    ticker.hidden=loggedIn;
+    ticker.style.display=loggedIn?"none":"";
+  }catch(_){
+    // If auth cannot be determined, keep the guest notice visible.
+    ticker.hidden=false;
+    ticker.style.display="";
+  }
+}
+
 document.addEventListener("DOMContentLoaded",async()=>{
   const V=window.PasTeleView;
   const R=window.PasTelePasteView;
   const root=V.$("viewRoot");
-
+  await updateGuestLoginTicker();
   try{
     let item=await V.resolve("pastelink");
     if(!item?.found) throw Error("PasteLink tidak ditemukan atau sudah tidak tersedia.");
@@ -2963,12 +2985,34 @@ document.addEventListener("DOMContentLoaded",async()=>{
       catch(e){ V.toast?.(e.message||"Checkout gagal","error"); }
     });
 
-    await V.trackView("pastelink",item);
+    // View count: do NOT count the content owner's own views.
+    // Only visitors whose authenticated user id differs from the owner
+    // are tracked. Guests are counted because they are not the owner.
+    try{
+      const sb=window.sb || window.supabaseClient;
+      const ownerId=String(item.owner_id || item.user_id || item.creator_id || "").trim();
+      let viewerId="";
+      if(sb?.auth){
+        const {data}=await sb.auth.getUser();
+        viewerId=String(data?.user?.id || "").trim();
+      }
+      const isOwner=Boolean(ownerId && viewerId && ownerId===viewerId);
+      if(!isOwner) await V.trackView("pastelink",item);
+    }catch(e){
+      console.warn("[PasTele] View tracking skipped:",e);
+    }
     await V.loadSocial("pastelink",item);
   }catch(e){
     root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat PasteLink.")}</div>`;
   }
+  }
 });
+
+try{
+  const sb=window.sb || window.supabaseClient;
+  sb?.auth?.onAuthStateChange?.(()=>{ updateGuestLoginTicker(); });
+}catch(_){}
+
 
 
 /* Page-ready marker */
