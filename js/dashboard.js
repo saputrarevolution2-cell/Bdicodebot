@@ -5791,6 +5791,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                   data-date="${esc(
                     key
                   )}"
+                  data-label="${esc(
+                    new Date(`${key}T00:00:00`).toLocaleDateString('id-ID', {day:'2-digit', month:'short'})
+                  )}"
                   tabindex="0"
                   role="button"
                   title="${esc(
