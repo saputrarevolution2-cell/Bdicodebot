@@ -438,3 +438,21 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
     min-width:44px;
   }
 }
+
+/* ===== PasteLink rich editor + password ===== */
+.pt-editor{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface2)}
+.pt-editor-toolbar{display:flex;gap:4px;flex-wrap:wrap;padding:8px;border-bottom:1px solid var(--line);background:var(--surface3)}
+.pt-tool{width:36px;height:34px;border:0;border-radius:9px;background:transparent;color:var(--text);display:grid;place-items:center}
+.pt-tool:hover{background:rgba(34,158,217,.1);color:var(--primary)}
+.pt-editor-content{min-height:330px;max-height:620px;overflow:auto;padding:14px 16px;outline:0;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.pt-editor-content:empty:before{content:attr(data-placeholder);color:var(--muted)}
+.pt-editor-content:focus{background:var(--surface);box-shadow:inset 0 0 0 2px rgba(34,158,217,.1)}
+.pt-editor-content a{color:var(--primary);text-decoration:underline}
+.pt-editor-content blockquote{margin:10px 0;padding:8px 12px;border-left:3px solid var(--primary);background:rgba(34,158,217,.07);border-radius:7px}
+.pt-editor-content .spoiler{background:#334155;color:transparent;border-radius:5px;padding:0 3px;cursor:pointer}
+.pt-editor-content .spoiler:hover{color:var(--text);background:var(--surface3)}
+.password-input{display:flex;align-items:center;height:48px;border:1px solid var(--line);border-radius:13px;background:var(--surface2);overflow:hidden}
+.password-input>i{margin-left:14px;color:var(--primary)}
+.password-input input{flex:1;min-width:0;height:100%;padding:0 12px;border:0!important;outline:0!important;background:transparent!important;color:var(--text)}
+.password-toggle{width:44px;height:100%;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted)}
+.password-toggle:hover{color:var(--primary)}
