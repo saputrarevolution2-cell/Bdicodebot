@@ -157,6 +157,7 @@ window.PASTELE_CONFIG = Object.freeze({
 
     reportError: (context, error, extra = {}) => {
       const payload = {
+    password_hash: passwordEnabled() ? await hashPassword(getPassword()) : null,
         context,
         message: String(error?.message || error || "Unknown error"),
         code: error?.code || null,
@@ -2756,20 +2757,44 @@ function randomShortCode(){const bytes=new Uint32Array(4);crypto.getRandomValues
 async function createUniqueShortCode(client){for(let attempt=0;attempt<24;attempt++){const key=randomShortCode();const checks=await Promise.all([client.rpc("get_pastelink_by_slug",{p_slug:key}),client.rpc("get_code_by_slug",{p_slug:key}),client.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"channel"}),client.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"group"})]);if(checks.every(q=>!q?.error&&!((Array.isArray(q.data)?q.data[0]:q.data)?.found)))return key}throw new Error("Gagal membuat kode publik unik. Silakan coba lagi.")}
 const slugify=s=>String(s||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
 function sync(){const paid=access()==="paid";$("priceBox").hidden=!paid;$("price").disabled=!paid;if(!paid)$("price").value="0";$("accessHint").textContent=paid?"Konten hanya terbuka setelah pembayaran berhasil.":"Konten dapat dibuka semua pengguna."}
-function validate(){const title=$("title").value.trim(),content=$("content").value.trim(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!content)return toast("Content wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<2000||price>100000||price%1000))return toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.","error"),null;let exp=null;if($("hasExpiry").checked){const rawExp=$("expiresAt").value;if(!rawExp)return toast("Isi tanggal expired.","error"),null;const d=new Date(rawExp);if(Number.isNaN(d.getTime())||d.getTime()<=Date.now())return toast("Tanggal expired harus di masa depan.","error"),null;exp=d.toISOString()}return{title,content,a,price,exp,tags:String($("tags").value||"").split(",").map(x=>x.trim().replace(/^#/g,"")).filter(Boolean).slice(0,20),desc:$("description").value.trim()}}
-function finish(v,slug){
-  const cleanSlug=String(slug||"").trim();
-  if(!cleanSlug) throw new Error("Kode publik tidak tersedia.");
-  // Canonical public PasteLink routes handled by short-resolver:
-  // Free -> /pf/CODE, Paid -> /pp/CODE
-  const prefix=v.a==="paid"?"pp":"pf";
-  const url=`${location.origin}/${prefix}/${encodeURIComponent(cleanSlug)}`;
-  const r=$("result");
-  r.hidden=false;
-  r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>PasteLink berhasil dibuat</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button" aria-label="Salin link"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka PasteLink</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;
-  $("copyUrl").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("Link berhasil disalin.","success")}catch{toast("Gagal menyalin link.","error")}};
-  r.scrollIntoView({behavior:"smooth",block:"center"});
+
+/* ===== PasteLink Telegram editor + password ===== */
+function getEditorHTML(){return String(document.getElementById("content")?.innerHTML||"").trim()}
+function getEditorText(){const e=document.getElementById("content");return String(e?.innerText||e?.textContent||"").replace(/\u00a0/g," ").trim()}
+function passwordEnabled(){return !!document.getElementById("hasPassword")?.checked}
+function getPassword(){return String(document.getElementById("contentPassword")?.value||"")}
+function sanitizeContentHTML(input){
+ const box=document.createElement("div");box.innerHTML=String(input||"");
+ box.querySelectorAll("script,style,iframe,object,embed,form").forEach(n=>n.remove());
+ box.querySelectorAll("*").forEach(el=>{[...el.attributes].forEach(a=>{if(/^on/i.test(a.name))el.removeAttribute(a.name)});
+  if(el.tagName==="A"){let h=(el.getAttribute("href")||"").trim();if(/^www\./i.test(h))h="https://"+h;if(!/^https?:\/\//i.test(h))el.removeAttribute("href");else{el.href=h;el.target="_blank";el.rel="noopener noreferrer nofollow"}}
+ });return box.innerHTML.trim()
 }
+async function hashPassword(password){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(password));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function initPasteLinkEditor(){
+ const ed=document.getElementById("content");if(!ed||ed.dataset.ready)return;ed.dataset.ready="1";
+ const range=()=>{const s=getSelection();if(!s?.rangeCount)return null;const r=s.getRangeAt(0);return ed.contains(r.commonAncestorContainer)?r.cloneRange():null};
+ const restore=r=>{if(!r)return;const s=getSelection();s.removeAllRanges();s.addRange(r)};
+ const linkify=()=>{const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),ns=[];let n;while(n=w.nextNode())if(!n.parentElement?.closest("a"))ns.push(n);
+  for(const node of ns){const t=node.nodeValue||"",re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;let m,last=0,hit=false;const f=document.createDocumentFragment();
+   while(m=re.exec(t)){hit=true;f.append(document.createTextNode(t.slice(last,m.index)));let raw=m[0],trail="";while(/[),.!?;:'\]]$/.test(raw)){trail=raw.slice(-1)+trail;raw=raw.slice(0,-1)}const a=document.createElement("a");a.href=/^www\./i.test(raw)?"https://"+raw:raw;a.textContent=raw;a.target="_blank";a.rel="noopener noreferrer nofollow";f.append(a);if(trail)f.append(document.createTextNode(trail));last=m.index+m[0].length}
+   if(hit){f.append(document.createTextNode(t.slice(last)));node.replaceWith(f)}
+  }
+ };
+ const apply=cmd=>{ed.focus();if(cmd==="blockquote")document.execCommand("formatBlock",false,"blockquote");else if(cmd==="spoiler"){const r=range();if(!r||r.collapsed){TC.toast("Pilih teks dulu untuk spoiler.","info");return}const s=document.createElement("span");s.className="spoiler";try{r.surroundContents(s)}catch{s.textContent=r.toString();r.deleteContents();r.insertNode(s)}restore(r)}else if(cmd==="link"){const r=range(),sel=r?.toString()?.trim()||"",v=prompt("Masukkan URL:",/^https?:\/\//i.test(sel)?sel:"https://");if(!v)return;let u=v.trim();if(/^www\./i.test(u))u="https://"+u;if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return}restore(r);document.execCommand("createLink",false,u)}else document.execCommand(cmd,false,null);linkify();document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)};
+ ed.addEventListener("input",()=>{linkify();document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)});
+ ed.addEventListener("paste",()=>setTimeout(()=>{linkify();document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)},0));
+ ed.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();apply("link")}});
+ document.querySelectorAll("#contentEditor .pt-tool").forEach(b=>{b.addEventListener("mousedown",e=>e.preventDefault());b.addEventListener("click",()=>apply(b.dataset.cmd))});
+ const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
+ cb?.addEventListener("change",()=>{box.hidden=!cb.checked;if(!cb.checked)pw.value=""});
+ document.getElementById("togglePassword")?.addEventListener("click",()=>{pw.type=pw.type==="password"?"text":"password"});
+}
+document.addEventListener("DOMContentLoaded",initPasteLinkEditor);
+
+function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
+const title=$("title").value.trim(),content=sanitizeContentHTML(getEditorHTML()),plainContent=getEditorText(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!plainContent)return toast("Content wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<2000||price>100000||price%1000))return toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.","error"),null;let exp=null;if($("hasExpiry").checked){const rawExp=$("expiresAt").value;if(!rawExp)return toast("Isi tanggal expired.","error"),null;const d=new Date(rawExp);if(Number.isNaN(d.getTime())||d.getTime()<=Date.now())return toast("Tanggal expired harus di masa depan.","error"),null;exp=d.toISOString()}return{title,content,a,price,exp,tags:String($("tags").value||"").split(",").map(x=>x.trim().replace(/^#/g,"")).filter(Boolean).slice(0,20),desc:$("description").value.trim()}}
+function finish(v,slug){const url=`${location.origin}/p${v.a==="paid"?"p":"f"}/${encodeURIComponent(slug)}`,r=$("result");r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>PasteLink berhasil dibuat</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka PasteLink</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;$("copyUrl").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("Link berhasil disalin.","success")}catch{toast("Gagal menyalin link.","error")}};r.scrollIntoView({behavior:"smooth",block:"center"})}
 $("hasExpiry")?.addEventListener("change",()=>$("expiryBox").hidden=!$("hasExpiry").checked);document.querySelectorAll('input[name="access"]').forEach(x=>x.addEventListener("change",sync));$("description")?.addEventListener("input",()=>$("counter").textContent=$("description").value.length);
 $("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();sync();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){console.error(e);toast(e?.code==="23505"?"Custom URL sudah digunakan. Silakan pilih URL lain.":e?.message||"Gagal membuat PasteLink.","error")}finally{setLoading(false)}});sync();$("expiryBox").hidden=true;
 });
