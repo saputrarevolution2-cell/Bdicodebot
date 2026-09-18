@@ -2846,19 +2846,29 @@ function initPasteLinkEditor(){
     }catch(_){return false}
   }
   function formatInline(cmd,className){
+    if(!restoreSelection())return false;
+    const sel=window.getSelection();
+    if(!sel||!sel.rangeCount)return false;
+    const r=sel.getRangeAt(0);
+    if(r.collapsed||!inside(r))return false;
+
+    // If the whole selection is already inside this format, unwrap only that
+    // format. Otherwise wrap the exact selected fragment so the text visibly
+    // changes without replacing or losing surrounding formatting.
     const existing=closestFormat("."+className);
-    if(existing){unwrap(existing);sync();return true}
-    // Native inline formatting is more reliable for arbitrary text selections,
-    // including selections crossing text nodes. Normalize its output afterwards.
-    if(restoreSelection()){
-      try{
-        document.execCommand(cmd,false,null);
-        saveSelection();
-        sync();
-        return true;
-      }catch(_){/* fall through */}
+    if(existing && r.toString().trim()===existing.textContent.trim()){
+      unwrap(existing); sync(); return true;
     }
-    return wrapSelection(className);
+
+    const el=document.createElement("span");
+    el.className=className;
+    const frag=r.extractContents();
+    if(!frag.textContent?.trim()){r.insertNode(frag);return false}
+    el.appendChild(frag);
+    r.insertNode(el);
+    selectNodeContents(el);
+    sync();
+    return true;
   }
   function toggleSpoiler(){
     const existing=closestFormat(".pt-spoiler");
@@ -2959,8 +2969,24 @@ function initPasteLinkEditor(){
     btn.addEventListener("mousedown",e=>{if(!window.PointerEvent)run(e)},{passive:false});
   });
   const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
-  cb?.addEventListener("change",()=>{if(box)box.hidden=!cb.checked;if(!cb.checked&&pw)pw.value=""});
-  document.getElementById("togglePassword")?.addEventListener("click",()=>{if(pw)pw.type=pw.type==="password"?"text":"password"});
+  const syncPasswordBox=()=>{
+    if(!cb||!box)return;
+    const enabled=cb.checked===true;
+    box.hidden=!enabled;
+    box.setAttribute("aria-hidden",String(!enabled));
+    if(pw){
+      pw.disabled=!enabled;
+      pw.required=enabled;
+      if(!enabled){pw.value="";pw.type="password";}
+    }
+    if(enabled) setTimeout(()=>pw?.focus({preventScroll:true}),0);
+  };
+  cb?.addEventListener("change",syncPasswordBox);
+  document.getElementById("togglePassword")?.addEventListener("click",e=>{
+    e.preventDefault();
+    if(pw)pw.type=pw.type==="password"?"text":"password";
+  });
+  syncPasswordBox();
   sync();
 }
 
