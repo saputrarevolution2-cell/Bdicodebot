@@ -1,4 +1,3 @@
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 :root{--bg:#f6f8fc;--surface:#fff;--surface2:#f8fafc;--surface3:#eef3f8;--text:#101828;--muted:#667085;--line:#e4e7ec;--primary:#229ed9;--primary2:#635bff;--cyan:#06b6d4;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--radius:18px;--shadow:0 8px 28px rgba(16,24,40,.07);--shadow2:0 18px 45px rgba(16,24,40,.12);--max:1180px;color-scheme:light}
 html[data-theme="dark"]{--bg:#0b111a;--surface:#121a25;--surface2:#172231;--surface3:#1e2a3a;--text:#f8fafc;--muted:#98a6b8;--line:rgba(255,255,255,.1);--shadow:0 10px 30px rgba(0,0,0,.24);--shadow2:0 20px 55px rgba(0,0,0,.35);color-scheme:dark}
@@ -15,9 +14,9 @@ html[data-theme="dark"]{--bg:#0b111a;--surface:#121a25;--surface2:#172231;--surf
 .product-body{padding:15px}.product-type{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.06em}.product-title{margin:7px 0 5px;font-size:15px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.product-description{margin:0 0 10px;color:var(--muted);font-size:11px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.product-creator{display:flex;align-items:center;gap:7px;min-width:0;color:var(--muted);font-size:11px;margin:9px 0}.product-creator i{color:var(--primary);flex:0 0 auto}.product-creator span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.market-card-stats{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:10px 0 11px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--muted);font-size:10px}.market-card-stats span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.market-card-stats i{color:var(--primary)}.market-card-stats .sold i{color:var(--orange)}.market-card-stats .like i{color:#ef4444}.market-card-stats .share i{color:var(--cyan)}.market-card-stats .comment i{color:var(--primary2)}.product-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px}.product-price{font-size:14px;font-weight:900;color:var(--primary)}.product-price.free{color:#079455}.product-cta{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-size:10px;font-weight:850}.product-cta.free{background:rgba(16,185,129,.1);color:#07824f}
 .market-pagination{display:flex;justify-content:center;align-items:center;gap:7px;padding:24px 0}.market-pagination button{min-width:36px;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font-weight:750}.market-pagination button.active{background:var(--primary);border-color:var(--primary);color:#fff}.market-pagination button:disabled{opacity:.45;cursor:not-allowed}.market-rank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:10px}.market-panel{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow)}.market-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--line)}.market-panel-head>div{display:flex;align-items:center;gap:10px;min-width:0}.market-panel-icon{width:40px;height:40px;display:grid;place-items:center;flex:0 0 40px;border-radius:12px;background:rgba(34,158,217,.1);color:var(--primary)}.market-panel-head h2{margin:0;font-size:14px}.market-panel-head small{display:block;color:var(--muted);font-size:10px}.top-label{padding:5px 8px;border-radius:999px;background:var(--surface2);color:var(--muted);font-size:9px;font-weight:850;white-space:nowrap}.market-ranking{min-height:80px}.market-list-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}.market-list-item:last-child{border-bottom:0}.market-list-item:hover{background:var(--surface2)}.market-rank-number{width:27px;height:27px;display:grid;place-items:center;flex:0 0 27px;border-radius:9px;background:var(--surface2);font-size:10px;font-weight:900;color:var(--muted)}.market-list-main{min-width:0;flex:1}.market-list-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:800}.market-list-meta{display:flex;gap:8px;color:var(--muted);font-size:9px}.market-list-meta span{display:inline-flex;gap:4px;align-items:center}.market-list-price{font-size:10px;font-weight:850;color:var(--primary);white-space:nowrap}.market-list-price.free{color:#079455}.market-list-loading{height:58px;margin:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--surface2),var(--surface3),var(--surface2));background-size:200% 100%;animation:skeleton 1.3s infinite}.market-loading{grid-column:1/-1;min-height:180px;display:grid;place-items:center;text-align:center;padding:30px;border:1px dashed var(--line);border-radius:18px;color:var(--muted)}.market-loading i{font-size:24px;color:var(--primary);animation:spin 1s linear infinite}.market-loading strong,.market-loading small{display:block}.market-loading strong{margin-top:8px;color:var(--text)}.market-loading small{font-size:11px}.market-empty,.market-error{grid-column:1/-1;text-align:center;padding:55px 20px;border:1px dashed var(--line);border-radius:18px;background:var(--surface)}.market-empty strong,.market-empty span,.market-error strong,.market-error span{display:block}.market-empty>span,.market-error>span{color:var(--muted);font-size:12px}.market-empty i,.market-error i{font-size:30px;color:var(--primary);margin-bottom:10px}.market-error button{margin-top:14px}.market-empty .btn,.market-error .btn{display:inline-flex;margin-top:15px}.market-list-loading+*{margin-top:0}@keyframes spin{to{transform:rotate(360deg)}}@keyframes skeleton{to{background-position:-200% 0}}
 #toast{position:fixed;right:18px;bottom:18px;z-index:9999}.toast{max-width:min(420px,calc(100vw - 36px));padding:13px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--text);box-shadow:var(--shadow2)}
-@media(max-width:1050px){.market-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.market-toolbar{flex-direction:column;align-items:stretch}.market-tabs{width:100%}}
+@media(max-width:1050px){.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.market-toolbar{flex-direction:column;align-items:stretch}.market-tabs{width:100%}}
 @media(max-width:780px){.pt-nav,.pt-nav-inner{height:64px}.pt-nav-inner{width:calc(100% - 20px)}.pt-name{display:none}.pt-user-btn{padding-right:6px}.marketplace-page{padding-top:28px}.market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.market-rank-grid{grid-template-columns:1fr}.footer-container{grid-template-columns:1fr 1fr}.footer-bottom{flex-direction:column}.market-heading h1{font-size:31px}}
-@media(max-width:520px){.marketplace-page>.container{width:calc(100% - 20px)}.market-grid{grid-template-columns:1fr;gap:14px}.product-thumb{height:190px}.market-tabs{padding-bottom:4px}.market-tab{height:38px;padding:0 11px}.market-resultbar{margin-top:7px}.product-body{padding:14px}.product-title{font-size:14px}.market-card-stats{gap:7px 10px}.footer-container{grid-template-columns:1fr}.footer-column{margin-top:6px}.footer-bottom{width:calc(100% - 20px)}}
+@media(max-width:520px){.marketplace-page>.container{width:calc(100% - 20px)}.market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.product-thumb{height:190px}.market-tabs{padding-bottom:4px}.market-tab{height:38px;padding:0 11px}.market-resultbar{margin-top:7px}.product-body{padding:14px}.product-title{font-size:14px}.market-card-stats{gap:7px 10px}.footer-container{grid-template-columns:1fr}.footer-column{margin-top:6px}.footer-bottom{width:calc(100% - 20px)}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 /* =========================================================
@@ -85,4 +84,144 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
   .pt-link-icon{width:32px;height:32px;flex-basis:32px}
   .pt-forum-trigger{margin-left:10px;margin-right:10px;width:calc(100% - 20px)}
   .pt-drawer-bottom{padding:9px 10px 12px}
+}
+
+/* =========================================================
+   PasTele Marketplace — FINAL GRID + RANKING POLISH
+   ========================================================= */
+.market-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+}
+.product-card{min-width:0}
+.market-list-item{
+  align-items:flex-start;
+  min-height:78px;
+  padding:12px 14px;
+  gap:10px;
+}
+.market-rank-number,
+.rank-award{
+  width:32px;
+  height:32px;
+  min-width:32px;
+  flex:0 0 32px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+}
+.market-rank-number{
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:10px;
+  font-weight:900;
+}
+.rank-award{
+  position:relative;
+  font-size:15px;
+  background:var(--surface2);
+}
+.rank-award-1{color:#d99b00;background:rgba(245,158,11,.12)}
+.rank-award-2{color:#64748b;background:rgba(100,116,139,.12)}
+.rank-award-3{color:#a16207;background:rgba(161,98,7,.10)}
+.rank-award-4,.rank-award-5{color:var(--primary);background:rgba(34,158,217,.10)}
+.rank-award b{
+  position:absolute;
+  right:3px;
+  bottom:1px;
+  font-size:8px;
+  line-height:1;
+  font-weight:900;
+}
+.market-list-main{min-width:0}
+.market-list-title{
+  margin-bottom:5px;
+  line-height:1.35;
+}
+.market-list-price-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+}
+.market-list-price{
+  font-size:10px;
+}
+.market-list-type{
+  color:var(--muted);
+  font-size:9px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.market-list-type i{color:var(--primary);margin-right:4px}
+.market-list-stats{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px 9px;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:9px;
+}
+.market-list-stats span{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  white-space:nowrap;
+}
+.market-list-stats i{color:var(--primary)}
+.market-list-stats span:nth-child(2) i{color:#ef4444}
+.market-list-stats span:nth-child(3) i{color:var(--cyan)}
+.market-list-stats span:nth-child(4) i{color:var(--primary2)}
+.market-ranking-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:10px 12px 12px;
+  border-top:1px solid var(--line);
+}
+.market-ranking-pagination:empty{display:none}
+.market-ranking-pagination button{
+  min-width:30px;
+  height:30px;
+  padding:0 8px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:10px;
+  font-weight:800;
+}
+.market-ranking-pagination button.active{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+}
+.market-ranking-pagination button:disabled{opacity:.4;cursor:not-allowed}
+.ranking-page-dots{
+  color:var(--muted);
+  font-size:10px;
+  padding:0 2px;
+}
+@media(max-width:1050px){
+  .market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+}
+@media(max-width:520px){
+  .market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .product-thumb{height:150px}
+  .product-body{padding:11px}
+  .product-title{font-size:13px}
+  .market-card-stats{gap:5px 7px;font-size:9px}
+  .product-bottom{padding-top:9px}
+  .product-cta-wrap{padding:0 11px 11px}
+  .product-cta{width:100%}
+  .market-list-item{padding:10px 11px;gap:8px}
+  .market-rank-number,.rank-award{width:28px;height:28px;min-width:28px;flex-basis:28px;border-radius:9px;font-size:12px}
+  .market-list-title{font-size:10px}
+  .market-list-stats{gap:4px 7px;font-size:8px}
+  .market-list-type{font-size:8px}
+  .market-list-price{font-size:9px}
 }
