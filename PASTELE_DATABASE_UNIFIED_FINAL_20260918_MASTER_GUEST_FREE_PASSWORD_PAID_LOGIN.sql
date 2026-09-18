@@ -560,51 +560,7 @@ ON CONFLICT(id) DO NOTHING;
 -- ============================================================
 -- AUTH PROFILE + WALLET AUTOMATION
 -- ============================================================
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  base_username text;
-  candidate text;
-  n integer := 0;
-BEGIN
-  base_username := lower(regexp_replace(
-    coalesce(new.raw_user_meta_data->>'username',''),
-    '[^a-zA-Z0-9_]', '', 'g'
-  ));
-  IF base_username = '' THEN
-    base_username := lower(split_part(coalesce(new.email,'user'),'@',1));
-    base_username := regexp_replace(base_username,'[^a-zA-Z0-9_]','','g');
-  END IF;
-  IF base_username = '' THEN base_username := 'user'; END IF;
-  base_username := left(base_username, 24);
-  candidate := base_username;
-  WHILE EXISTS (SELECT 1 FROM public.profiles WHERE username=candidate) LOOP
-    n := n + 1;
-    candidate := left(base_username, greatest(1, 32-length(n::text)-1)) || '_' || n::text;
-  END LOOP;
 
-  INSERT INTO public.profiles(id,username,auth_email,display_name)
-  VALUES(
-    new.id,
-    candidate,
-    lower(coalesce(new.email,'')),
-    coalesce(nullif(new.raw_user_meta_data->>'display_name',''), candidate)
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    auth_email=excluded.auth_email,
-    display_name=coalesce(public.profiles.display_name,excluded.display_name),
-    updated_at=now();
-
-  INSERT INTO public.wallets(user_id,balance,available_balance,pending_balance)
-  VALUES(new.id,0,0,0)
-  ON CONFLICT(user_id) DO NOTHING;
-  RETURN new;
-END;
-$$;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -716,87 +672,15 @@ BEGIN
   END IF;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.resolve_username_login(p_username text)
-RETURNS TABLE(username text,auth_email text,is_banned boolean)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
-AS $$
-  SELECT p.username,p.auth_email,COALESCE(p.is_banned,false)
-  FROM public.profiles p
-  WHERE lower(btrim(p.username))=lower(btrim(coalesce(p_username,'')))
-  LIMIT 1;
-$$;
 
-CREATE OR REPLACE FUNCTION public.check_username_available(p_username text)
-RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
-AS $$
-  SELECT NOT EXISTS(
-    SELECT 1 FROM public.profiles
-    WHERE lower(username)=lower(btrim(p_username))
-  );
-$$;
+
+
 
 -- ============================================================
 -- CHECKOUT
 -- ============================================================
 
-CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
-RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
-  uid uuid:=auth.uid();
-  seller uuid;
-  title text;
-  price numeric;
-  oid uuid;
-  normalized text:=lower(btrim(coalesce(p_type,'')));
-  pid uuid;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
-  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
 
-  BEGIN
-    pid := p_id::uuid;
-  EXCEPTION WHEN invalid_text_representation THEN
-    RAISE EXCEPTION 'INVALID_PRODUCT_ID';
-  END;
-
-  IF normalized IN ('product','code') THEN
-    SELECT p.seller_id,p.title,p.price INTO seller,title,price
-    FROM public.products p WHERE p.id=pid;
-  ELSIF normalized IN ('telegram_product','telegram-product') THEN
-    SELECT p.owner_id,p.title,p.price INTO seller,title,price
-    FROM public.telegram_products p WHERE p.id=pid;
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel') THEN
-    SELECT p.owner_id,p.name,p.price INTO seller,title,price
-    FROM public.telegram_channels p WHERE p.id=pid;
-  ELSIF normalized IN ('link','paste','pastelink','paste-link','paste_link') THEN
-    SELECT p.user_id,p.title,0::numeric INTO seller,title,price
-    FROM public.pastelinks p WHERE p.id=pid;
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
-
-  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
-  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
-  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
-
-  SELECT o.id INTO oid
-  FROM public.orders o
-  WHERE o.buyer_id=uid AND o.product_id=pid
-    AND lower(coalesce(o.item_type,''))=normalized
-    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
-  ORDER BY o.created_at DESC LIMIT 1;
-
-  IF oid IS NULL THEN
-    INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title)
-    VALUES(uid,seller,pid,price,'pending',normalized,p_id,title)
-    RETURNING id INTO oid;
-  END IF;
-
-  RETURN QUERY SELECT oid,price,title,normalized;
-END $$;
 
 CREATE OR REPLACE FUNCTION public.create_account_plan_order(
   p_plan text,p_days integer,p_amount numeric
@@ -945,72 +829,7 @@ BEGIN
  RETURN result;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
-  r record;
-  normalized text:=lower(btrim(coalesce(p_type,'')));
-BEGIN
-  IF normalized IN ('product','code') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           coalesce(p.creator_id,p.seller_id) AS owner_id
-    INTO r
-    FROM public.products p
-    LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
-    WHERE p.id=p_id;
 
-  ELSIF normalized IN ('telegram_product','telegram-product') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name
-    INTO r
-    FROM public.telegram_products p
-    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-    WHERE p.id=p_id;
-
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.owner_id AS seller_id,
-           p.name AS title
-    INTO r
-    FROM public.telegram_channels p
-    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-    WHERE p.id=p_id;
-
-  ELSIF normalized IN ('link','paste','pastelink','paste-link','paste_link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.user_id AS owner_id,
-           0::numeric AS price,
-           'link'::text AS item_type
-    INTO r
-    FROM public.pastelinks p
-    LEFT JOIN public.profiles pr ON pr.id=p.user_id
-    WHERE p.id=p_id;
-
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
-
-  IF r IS NULL THEN
-    RETURN jsonb_build_object('found',false);
-  END IF;
-
-  RETURN to_jsonb(r)||jsonb_build_object(
-    'found',true,
-    'can_access',
-      CASE
-        WHEN auth.uid() IS NULL THEN false
-        WHEN EXISTS(
-          SELECT 1 FROM public.purchases pu
-          WHERE pu.buyer_id=auth.uid()
-            AND pu.product_id=p_id
-            AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')
-        ) THEN true
-        WHEN public.is_current_user_admin() THEN true
-        ELSE false
-      END
-  );
-END $$;
 
 -- ============================================================
 -- WALLET / WITHDRAWAL
@@ -1031,145 +850,11 @@ AS $$
  ORDER BY wt.available_at ASC,wt.created_at DESC;
 $$;
 
-CREATE OR REPLACE FUNCTION public.release_matured_wallet()
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE moved numeric:=0; uid uuid:=auth.uid();
-BEGIN
- IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
 
- SELECT coalesce(sum(amount),0) INTO moved
- FROM public.wallet_transactions
- WHERE user_id=uid AND status='pending'
-   AND available_at IS NOT NULL AND available_at<=now();
 
- UPDATE public.wallet_transactions
- SET status='completed'
- WHERE user_id=uid AND status='pending'
-   AND available_at IS NOT NULL AND available_at<=now();
 
- IF moved>0 THEN
-   UPDATE public.wallets
-   SET pending_balance=greatest(0,pending_balance-moved),
-       available_balance=available_balance+moved,updated_at=now()
-   WHERE user_id=uid;
 
-   UPDATE public.transactions t
-   SET status='completed'
-   WHERE t.user_id=uid AND t.type='sale_earning' AND t.status='pending'
-     AND EXISTS (
-       SELECT 1 FROM public.wallet_transactions wt
-       WHERE wt.user_id=uid AND wt.reference=t.reference
-         AND wt.status='completed' AND wt.available_at<=now()
-     );
- END IF;
 
- RETURN jsonb_build_object('released',moved);
-END $$;
-
-CREATE OR REPLACE FUNCTION public.release_all_matured_wallets()
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
- r record; moved_total numeric:=0; moved_users integer:=0;
-BEGIN
- FOR r IN
-   SELECT wt.user_id,coalesce(sum(wt.amount),0) AS amount
-   FROM public.wallet_transactions wt
-   WHERE wt.status='pending'
-     AND wt.available_at IS NOT NULL
-     AND wt.available_at<=now()
-     AND wt.user_id IS NOT NULL
-   GROUP BY wt.user_id
- LOOP
-   UPDATE public.wallet_transactions
-   SET status='completed'
-   WHERE user_id=r.user_id AND status='pending'
-     AND available_at IS NOT NULL AND available_at<=now();
-
-   UPDATE public.wallets
-   SET pending_balance=greatest(0,pending_balance-r.amount),
-       available_balance=available_balance+r.amount,updated_at=now()
-   WHERE user_id=r.user_id;
-
-   UPDATE public.transactions t
-   SET status='completed'
-   WHERE t.user_id=r.user_id AND t.type='sale_earning' AND t.status='pending'
-     AND EXISTS (
-       SELECT 1 FROM public.wallet_transactions wt
-       WHERE wt.user_id=r.user_id AND wt.reference=t.reference
-         AND wt.status='completed' AND wt.available_at<=now()
-     );
-
-   moved_total:=moved_total+r.amount;
-   moved_users:=moved_users+1;
- END LOOP;
-
- RETURN jsonb_build_object('released',moved_total,'users',moved_users);
-END $$;
-
-CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
- p_amount numeric,p_mode text,p_method text,p_account_name text,p_account_number text
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
- uid uuid:=auth.uid(); wid uuid; available numeric:=0;
- fee numeric:=0; net_amount numeric:=0; total_debit numeric:=0;
- mode_normalized text:=lower(btrim(coalesce(p_mode,'')));
-BEGIN
- IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
- IF p_amount IS NULL OR p_amount<=0 THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_AMOUNT'; END IF;
-
- -- Manual WD: fee Rp7.000. Instant WD: fee Rp15.000.
- IF mode_normalized='instant' THEN
-   IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
-   IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
-   fee:=0;
- ELSIF mode_normalized='manual' THEN
-   IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_10000'; END IF;
-   fee:=0;
- ELSE
-   RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
- END IF;
-
- net_amount:=greatest(0,p_amount-fee);
- total_debit:=p_amount+fee;
-
- SELECT available_balance INTO available
- FROM public.wallets WHERE user_id=uid FOR UPDATE;
- IF coalesce(available,0)<total_debit THEN RAISE EXCEPTION 'INSUFFICIENT_BALANCE'; END IF;
-
- UPDATE public.wallets
- SET available_balance=available_balance-total_debit,
-     balance=balance-total_debit,
-     updated_at=now()
- WHERE user_id=uid;
-
- UPDATE public.profiles
- SET balance=balance-total_debit,updated_at=now()
- WHERE id=uid;
-
- INSERT INTO public.withdrawals(
-   user_id,amount,fee,net_amount,mode,method,account_name,account_number,status
- ) VALUES(uid,p_amount,fee,net_amount,mode_normalized,p_method,p_account_name,p_account_number,'pending')
- RETURNING id INTO wid;
-
- INSERT INTO public.transactions(
-   user_id,amount,fee,net_amount,type,status,reference,description
- ) VALUES(
-   uid,fee,fee,fee,'withdrawal_fee','completed',
-   'withdrawal-fee:'||wid::text,
-   CASE WHEN mode_normalized='instant' THEN 'WD Instant fee Rp15.000' ELSE 'WD Manual fee Rp7.000' END
- );
-
- RETURN jsonb_build_object(
-   'id',wid,'status','pending','amount',p_amount,'fee',fee,
-   'net_amount',net_amount,'total_debit',total_debit,'mode',mode_normalized
- );
-END $$;
 
 -- ============================================================
 -- ANALYTICS
@@ -1450,16 +1135,7 @@ BEGIN
         'admin-adjustment:'||gen_random_uuid()::text,coalesce(p_reason,'Admin balance adjustment'));
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_update_product(p_id uuid,p_status text,p_price numeric)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r public.products;
-BEGIN
- IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
- UPDATE public.products SET status=p_status,price=p_price,updated_at=now()
- WHERE id=p_id RETURNING * INTO r;
- IF r.id IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
- RETURN to_jsonb(r);
-END $$;
+
 
 CREATE OR REPLACE FUNCTION public.admin_delete_product(p_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
@@ -1475,12 +1151,7 @@ BEGIN
  DELETE FROM public.pastes WHERE id=p_id;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_delete_bot(p_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-BEGIN
- IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
- DELETE FROM public.approved_bots WHERE id=p_id;
-END $$;
+
 
 CREATE OR REPLACE FUNCTION public.admin_set_bot_active(p_bot_id uuid,p_active boolean)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
@@ -1492,39 +1163,9 @@ BEGIN
  RETURN to_jsonb(r);
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_upsert_bot(
- p_username text,p_bot_id bigint,p_display_name text
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r public.approved_bots;
-BEGIN
- IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
- INSERT INTO public.approved_bots(bot_username,bot_id,bot_name,is_active)
- VALUES(lower(btrim(p_username)),p_bot_id,p_display_name,true)
- ON CONFLICT(bot_username) DO UPDATE SET
-   bot_id=excluded.bot_id,
-   bot_name=excluded.bot_name,
-   is_active=true,
-   updated_at=now()
- RETURNING * INTO r;
- RETURN to_jsonb(r);
-END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_mark_order_paid(
- p_order_id uuid,p_payment_reference text
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE o public.orders;
-BEGIN
- IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
- UPDATE public.orders
- SET status='paid',paid_at=coalesce(paid_at,now()),
-     payment_reference=coalesce(p_payment_reference,payment_reference)
- WHERE id=p_order_id RETURNING * INTO o;
 
- IF o.id IS NULL THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
- RETURN to_jsonb(o);
-END $$;
+
 
 CREATE OR REPLACE FUNCTION public.admin_cancel_order(p_order_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
@@ -1598,38 +1239,7 @@ BEGIN
  RETURN public.get_public_site_settings();
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_update_content(
- p_id uuid,p_status text DEFAULT NULL,p_title text DEFAULT NULL,p_description text DEFAULT NULL,
- p_source text DEFAULT 'products',p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r jsonb;
-BEGIN
- IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
- CASE lower(coalesce(p_source,'products'))
-  WHEN 'products' THEN
-   UPDATE public.products SET status=coalesce(p_status,status),title=coalesce(p_title,title),
-     slug=coalesce(nullif(p_slug,''),slug),price=coalesce(p_price,price),
-     description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(products.*) INTO r;
-  WHEN 'pastelinks' THEN
-   UPDATE public.pastelinks SET visibility=CASE WHEN p_status='published' THEN 'public'
-     WHEN p_status IS NULL THEN visibility ELSE p_status END,
-     title=coalesce(p_title,title),description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(pastelinks.*) INTO r;
-  WHEN 'telegram_products' THEN
-   UPDATE public.telegram_products SET status=coalesce(p_status,status),title=coalesce(p_title,title),
-     price=coalesce(p_price,price),description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(telegram_products.*) INTO r;
-  WHEN 'telegram_channels' THEN
-   UPDATE public.telegram_channels SET status=coalesce(p_status,status),name=coalesce(p_title,name),
-     price=coalesce(p_price,price),description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(telegram_channels.*) INTO r;
-  ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
- END CASE;
- IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
- RETURN r;
-END $$;
+
 
 CREATE OR REPLACE FUNCTION public.admin_delete_content(p_id uuid,p_source text DEFAULT 'products')
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
@@ -2072,28 +1682,7 @@ END $$;
 -- /c/f/<slug> and /c/p/<slug> -> telegram_products by slug.
 -- Uses the same access-control logic as get_market_item_detail.
 -- ============================================================
-CREATE OR REPLACE FUNCTION public.get_code_by_slug(p_slug text)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  pid uuid;
-BEGIN
-  SELECT id INTO pid
-  FROM public.telegram_products
-  WHERE slug = btrim(coalesce(p_slug,''))
-    AND lower(coalesce(status,'')) = 'published'
-  LIMIT 1;
 
-  IF pid IS NULL THEN
-    RETURN jsonb_build_object('found',false);
-  END IF;
-
-  RETURN public.get_market_item_detail('telegram_product', pid);
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.get_code_by_slug(text) TO anon,authenticated;
 
@@ -2118,123 +1707,10 @@ ALTER TABLE public.telegram_channels ADD CONSTRAINT telegram_channels_price_acce
 CHECK ((access_type='free' AND price=0) OR (access_type='paid' AND price BETWEEN 2000 AND 100000)) NOT VALID;
 
 -- Code belongs to telegram_products, not products.
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
-  r record;
-  normalized text:=lower(btrim(coalesce(p_type,'')));
-BEGIN
-  IF normalized IN ('product','link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           coalesce(p.creator_id,p.seller_id) AS owner_id
-    INTO r
-    FROM public.products p
-    LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
-    WHERE p.id=p_id;
 
-  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.owner_id AS seller_id
-    INTO r
-    FROM public.telegram_products p
-    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-    WHERE p.id=p_id;
-
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.owner_id AS seller_id,
-           p.name AS title
-    INTO r
-    FROM public.telegram_channels p
-    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-    WHERE p.id=p_id;
-
-  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.user_id AS owner_id,
-           0::numeric AS price,
-           'free'::text AS access_type,
-           'pastelink'::text AS item_type
-    INTO r
-    FROM public.pastelinks p
-    LEFT JOIN public.profiles pr ON pr.id=p.user_id
-    WHERE p.id=p_id;
-
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
-
-  IF r IS NULL THEN
-    RETURN jsonb_build_object('found',false);
-  END IF;
-
-  RETURN to_jsonb(r)||jsonb_build_object(
-    'found',true,
-    'can_access',
-      CASE
-        WHEN auth.uid() IS NULL THEN false
-        WHEN EXISTS(
-          SELECT 1 FROM public.purchases pu
-          WHERE pu.buyer_id=auth.uid()
-            AND pu.product_id=p_id
-            AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')
-        ) THEN true
-        WHEN public.is_current_user_admin() THEN true
-        ELSE false
-      END
-  );
-END $$;
 
 -- Checkout routing: Code -> telegram_products; Group -> telegram_channels.
-CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
-RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
-  uid uuid:=auth.uid(); seller uuid; title text; price numeric; oid uuid;
-  normalized text:=lower(btrim(coalesce(p_type,''))); pid uuid;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
-  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
-  BEGIN pid:=p_id::uuid; EXCEPTION WHEN invalid_text_representation THEN RAISE EXCEPTION 'INVALID_PRODUCT_ID'; END;
 
-  IF normalized IN ('product','link') THEN
-    SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price INTO seller,title,price
-    FROM public.products p WHERE p.id=pid;
-    normalized:='product';
-  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-    SELECT p.owner_id,p.title,p.price INTO seller,title,price
-    FROM public.telegram_products p WHERE p.id=pid;
-    normalized:='telegram_product';
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-    SELECT p.owner_id,p.name,p.price INTO seller,title,price
-    FROM public.telegram_channels p WHERE p.id=pid;
-    normalized:='channel';
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
-
-  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
-  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
-  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
-
-  SELECT o.id INTO oid
-  FROM public.orders o
-  WHERE o.buyer_id=uid AND o.product_id=pid
-    AND lower(coalesce(o.item_type,''))=normalized
-    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
-  ORDER BY o.created_at DESC LIMIT 1;
-
-  IF oid IS NULL THEN
-    INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title)
-    VALUES(uid,seller,pid,price,'pending',normalized,p_id,title)
-    RETURNING id INTO oid;
-  END IF;
-
-  RETURN QUERY SELECT oid,price,title,normalized;
-END $$;
 
 -- Admin manual payment now performs the same settlement as Cashi,
 -- including purchases, seller 70% pending balance, and H1/H2 maturity.
@@ -2287,47 +1763,7 @@ BEGIN
  RETURN to_jsonb(r);
 END $$;
 
-CREATE OR REPLACE FUNCTION public.admin_update_content(
- p_id uuid,p_status text DEFAULT NULL,p_title text DEFAULT NULL,p_description text DEFAULT NULL,
- p_source text DEFAULT 'products',p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r jsonb;
-BEGIN
- IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
- CASE lower(coalesce(p_source,'products'))
-  WHEN 'products' THEN
-   IF p_price IS NOT NULL AND p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
-   UPDATE public.products SET status=coalesce(p_status,status),title=coalesce(p_title,title),
-     slug=coalesce(nullif(p_slug,''),slug),price=coalesce(p_price,price),
-     access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,
-     description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(products.*) INTO r;
-  WHEN 'pastelinks' THEN
-   UPDATE public.pastelinks SET visibility=CASE WHEN p_status='published' THEN 'public'
-     WHEN p_status IS NULL THEN visibility ELSE p_status END,
-     title=coalesce(p_title,title),description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(pastelinks.*) INTO r;
-  WHEN 'pastes' THEN
-   UPDATE public.pastes SET title=coalesce(p_title,title),slug=coalesce(nullif(p_slug,''),slug),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(pastes.*) INTO r;
-  WHEN 'telegram_products' THEN
-   IF p_price IS NOT NULL AND p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
-   UPDATE public.telegram_products SET status=coalesce(p_status,status),title=coalesce(p_title,title),
-     price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,
-     description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(telegram_products.*) INTO r;
-  WHEN 'telegram_channels' THEN
-   IF p_price IS NOT NULL AND p_price < 0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
-   UPDATE public.telegram_channels SET status=coalesce(p_status,status),name=coalesce(p_title,name),
-     price=coalesce(p_price,price),access_type=CASE WHEN coalesce(p_price,price)=0 THEN 'free' ELSE 'paid' END,
-     description=coalesce(p_description,description),updated_at=now()
-   WHERE id=p_id RETURNING to_jsonb(telegram_channels.*) INTO r;
-  ELSE RAISE EXCEPTION 'UNSUPPORTED_CONTENT_SOURCE';
- END CASE;
- IF r IS NULL THEN RAISE EXCEPTION 'CONTENT_NOT_FOUND'; END IF;
- RETURN r;
-END $$;
+
 
 COMMIT;
 
@@ -2350,90 +1786,11 @@ CREATE INDEX IF NOT EXISTS idx_pastelinks_user ON public.pastelinks(user_id,crea
 CREATE INDEX IF NOT EXISTS idx_pastelinks_access ON public.pastelinks(access_type,price);
 
 -- Checkout now supports Paid PasteLink.
-CREATE OR REPLACE FUNCTION public.create_checkout_order(p_type text,p_id text)
-RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE
-  uid uuid:=auth.uid(); seller uuid; title text; price numeric; oid uuid;
-  normalized text:=lower(btrim(coalesce(p_type,''))); pid uuid;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
-  IF btrim(coalesce(p_id,''))='' THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
-  BEGIN pid:=p_id::uuid; EXCEPTION WHEN invalid_text_representation THEN RAISE EXCEPTION 'INVALID_PRODUCT_ID'; END;
 
-  IF normalized IN ('product','link') THEN
-    SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price INTO seller,title,price FROM public.products p WHERE p.id=pid;
-    normalized:='product';
-  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-    SELECT p.owner_id,p.title,p.price INTO seller,title,price FROM public.telegram_products p WHERE p.id=pid;
-    normalized:='telegram_product';
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-    SELECT p.owner_id,p.name,p.price INTO seller,title,price FROM public.telegram_channels p WHERE p.id=pid;
-    normalized:='channel';
-  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-    SELECT p.user_id,p.title,p.price INTO seller,title,price FROM public.pastelinks p WHERE p.id=pid;
-    normalized:='pastelink';
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
-
-  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
-  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
-  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
-
-  SELECT o.id INTO oid FROM public.orders o
-  WHERE o.buyer_id=uid AND o.product_id=pid
-    AND lower(coalesce(o.item_type,''))=normalized
-    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
-  ORDER BY o.created_at DESC LIMIT 1;
-
-  IF oid IS NULL THEN
-    INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title)
-    VALUES(uid,seller,pid,price,'pending',normalized,p_id,title) RETURNING id INTO oid;
-  END IF;
-  RETURN QUERY SELECT oid,price,title,normalized;
-END $$;
 
 -- Detail RPC supports PasteLink paid/free and does not leak paid content
 -- before the buyer/owner/admin has access.
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE
-  r record; result jsonb; normalized text:=lower(btrim(coalesce(p_type,'')));
-  can_access boolean:=false;
-BEGIN
-  IF normalized IN ('product','link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id
-    INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
-  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id
-    INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,p.name title
-    INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
-  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type
-    INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
 
-  IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
-
-  can_access := auth.uid() IS NOT NULL AND (
-    auth.uid()=r.owner_id OR
-    public.is_current_user_admin() OR
-    coalesce(r.access_type,'free')='free' OR
-    EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=auth.uid() AND pu.product_id=p_id
-      AND lower(coalesce(pu.status,'')) IN ('completed','paid','success'))
-  );
-
-  result:=to_jsonb(r)||jsonb_build_object('found',true,'can_access',can_access);
-  IF NOT can_access AND coalesce(r.access_type,'free')='paid' THEN
-    result:=result-'content'-'content_html';
-  END IF;
-  RETURN result;
-END $$;
 
 -- Normalize notification creation for publication, views, purchases and withdrawals.
 CREATE OR REPLACE FUNCTION public.notify_user_once(p_user_id uuid,p_title text,p_body text)
@@ -2444,20 +1801,7 @@ BEGIN
   VALUES(p_user_id,left(coalesce(p_title,'Notifikasi'),180),left(coalesce(p_body,''),1000));
 END $$;
 
-CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE owner uuid; label text;
-BEGIN
-  owner:=coalesce(
-    nullif(to_jsonb(NEW)->>'user_id','')::uuid,
-    nullif(to_jsonb(NEW)->>'owner_id','')::uuid,
-    nullif(to_jsonb(NEW)->>'creator_id','')::uuid,
-    nullif(to_jsonb(NEW)->>'seller_id','')::uuid
-  );
-  label:=coalesce(to_jsonb(NEW)->>'title',to_jsonb(NEW)->>'name','Konten');
-  PERFORM public.notify_user_once(owner,'Publikasi berhasil', 'Konten "'||label||'" sudah dipublikasikan ke Marketplace.');
-  RETURN NEW;
-END $$;
+
 
 DROP TRIGGER IF EXISTS trg_notify_pastelink_publish ON public.pastelinks;
 CREATE TRIGGER trg_notify_pastelink_publish AFTER INSERT ON public.pastelinks FOR EACH ROW
@@ -2472,26 +1816,11 @@ DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_ch
 CREATE TRIGGER trg_notify_telegram_channel_publish AFTER INSERT ON public.telegram_channels FOR EACH ROW
 WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
 
-CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE seller uuid;
-BEGIN
-  SELECT seller_id INTO seller FROM public.orders WHERE id=NEW.order_id;
-  PERFORM public.notify_user_once(NEW.buyer_id,'Pembelian berhasil','Akses untuk "'||coalesce(NEW.item_title,'Produk')||'" sudah tersedia.');
-  PERFORM public.notify_user_once(seller,'Produk terjual','"'||coalesce(NEW.item_title,'Produk')||'" dibeli oleh user. Penghasilan seller diproses sesuai settlement.');
-  RETURN NEW;
-END $$;
+
 DROP TRIGGER IF EXISTS trg_notify_purchase ON public.purchases;
 CREATE TRIGGER trg_notify_purchase AFTER INSERT ON public.purchases FOR EACH ROW EXECUTE FUNCTION public.trg_notify_purchase();
 
-CREATE OR REPLACE FUNCTION public.trg_notify_view()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-BEGIN
-  IF NEW.owner_id IS NOT NULL AND NEW.actor_id IS DISTINCT FROM NEW.owner_id THEN
-    PERFORM public.notify_user_once(NEW.owner_id,'Konten dibuka','Konten kamu baru saja dibuka di PasTele.');
-  END IF;
-  RETURN NEW;
-END $$;
+
 DROP TRIGGER IF EXISTS trg_notify_content_view ON public.analytics_events;
 CREATE TRIGGER trg_notify_content_view AFTER INSERT ON public.analytics_events FOR EACH ROW
 WHEN (NEW.event_type='view') EXECUTE FUNCTION public.trg_notify_view();
@@ -2606,54 +1935,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  owner uuid;
-  label text;
-  kind text;
-BEGIN
-  IF TG_OP='UPDATE' THEN
-    IF TG_TABLE_NAME='products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
-    IF TG_TABLE_NAME='telegram_products' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
-    IF TG_TABLE_NAME='telegram_channels' AND OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
-    IF TG_TABLE_NAME='pastelinks' AND OLD.visibility IS NOT DISTINCT FROM NEW.visibility THEN RETURN NEW; END IF;
-  END IF;
 
-  owner := coalesce(
-    nullif(to_jsonb(NEW)->>'user_id','')::uuid,
-    nullif(to_jsonb(NEW)->>'owner_id','')::uuid,
-    nullif(to_jsonb(NEW)->>'creator_id','')::uuid,
-    nullif(to_jsonb(NEW)->>'seller_id','')::uuid
-  );
-
-  label := coalesce(
-    nullif(to_jsonb(NEW)->>'title',''),
-    nullif(to_jsonb(NEW)->>'name',''),
-    'Konten'
-  );
-
-  kind := CASE
-    WHEN TG_TABLE_NAME = 'pastelinks' THEN 'PasteLink'
-    WHEN TG_TABLE_NAME = 'telegram_products' THEN 'Code'
-    WHEN TG_TABLE_NAME = 'telegram_channels' AND lower(coalesce(to_jsonb(NEW)->>'type','')) = 'group' THEN 'Group'
-    WHEN TG_TABLE_NAME = 'telegram_channels' THEN 'Channel'
-    ELSE 'Produk'
-  END;
-
-  PERFORM public.notify_all_users(
-    'Konten baru di Marketplace',
-    kind || ' "' || label || '" baru saja dipublikasikan di Marketplace.',
-    NULL
-  );
-
-  RETURN NEW;
-END;
-$$;
 
 CREATE OR REPLACE FUNCTION public.trg_notify_content_like()
 RETURNS trigger
@@ -2733,28 +2015,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  seller uuid;
-BEGIN
-  SELECT seller_id INTO seller
-  FROM public.orders
-  WHERE id=NEW.order_id;
 
-  PERFORM public.notify_all_users(
-    'Pembelian Marketplace',
-    'Pembelian "' || coalesce(NEW.item_title,'Produk') || '" berhasil diproses.',
-    NULL
-  );
-
-  RETURN NEW;
-END;
-$$;
 
 -- Realtime for the navbar bell/toast. Safe if already enabled.
 DO $$
@@ -2969,160 +2230,13 @@ VALUES
 ON CONFLICT (holiday_date) DO UPDATE
 SET name=excluded.name, kind=excluded.kind, is_active=true;
 
-CREATE OR REPLACE FUNCTION public.withdrawal_schedule_status(
-  p_at timestamptz DEFAULT now()
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-STABLE SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  local_ts timestamp;
-  d date;
-  dow int;
-  mins int;
-  close_mins int;
-  holiday_name text;
-  is_holiday boolean;
-  is_open boolean := false;
-  reason text := '';
-  next_open timestamp;
-BEGIN
-  local_ts := timezone('Asia/Jakarta', coalesce(p_at,now()));
-  d := local_ts::date;
-  dow := extract(isodow from local_ts)::int; -- Mon=1 ... Sun=7
-  mins := extract(hour from local_ts)::int*60 + extract(minute from local_ts)::int;
 
-  SELECT h.name INTO holiday_name
-  FROM public.withdrawal_holidays h
-  WHERE h.holiday_date=d AND h.is_active=true
-  LIMIT 1;
-
-  is_holiday := holiday_name IS NOT NULL;
-
-  IF is_holiday THEN
-    reason := 'Tanggal merah: '||holiday_name;
-  ELSIF dow IN (6,7) THEN
-    reason := CASE WHEN dow=6 THEN 'Hari Sabtu' ELSE 'Hari Minggu' END;
-  ELSE
-    close_mins := CASE WHEN dow=4 THEN 23*60 ELSE 21*60 END; -- Thu = malam Jumat
-    IF mins >= 9*60 AND mins < close_mins THEN
-      is_open := true;
-      reason := CASE WHEN dow=4 THEN 'Kamis 09:00-23:00 WIB (malam Jumat)'
-                     ELSE 'Senin-Jumat 09:00-21:00 WIB' END;
-    ELSE
-      reason := CASE WHEN dow=4 THEN 'Di luar jam WD Manual Kamis (09:00-23:00 WIB)'
-                     ELSE 'Di luar jam WD Manual (09:00-21:00 WIB)' END;
-    END IF;
-  END IF;
-
-  IF NOT is_open THEN
-    -- Find the next weekday/non-holiday opening at 09:00 WIB.
-    FOR i IN 1..370 LOOP
-      IF extract(isodow from (d+i)::date)::int BETWEEN 1 AND 5
-         AND NOT EXISTS (
-           SELECT 1 FROM public.withdrawal_holidays h
-           WHERE h.holiday_date=(d+i)::date AND h.is_active=true
-         ) THEN
-        next_open := ((d+i)::date + time '09:00');
-        EXIT;
-      END IF;
-    END LOOP;
-    -- If today is an open weekday but before 09:00, today is the next opening.
-    IF NOT is_holiday AND dow BETWEEN 1 AND 5 AND mins < 9*60 THEN
-      next_open := d + time '09:00';
-    END IF;
-  ELSE
-    next_open := local_ts;
-  END IF;
-
-  RETURN jsonb_build_object(
-    'open',is_open,
-    'weekday',dow,
-    'date',d,
-    'time',to_char(local_ts,'HH24:MI'),
-    'reason',reason,
-    'holiday',is_holiday,
-    'holiday_name',holiday_name,
-    'open_time','09:00',
-    'close_time',CASE WHEN dow=4 THEN '23:00' ELSE '21:00' END,
-    'timezone','Asia/Jakarta',
-    'next_open',CASE WHEN next_open IS NULL THEN NULL
-                     ELSE to_char(next_open,'YYYY-MM-DD HH24:MI:SS') END
-  );
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.withdrawal_schedule_status(timestamptz) TO anon,authenticated;
 
 -- Server-side enforcement. Frontend can disable the button, but this
 -- function is the final security gate so closed hours cannot be bypassed.
-CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
- p_amount numeric,p_mode text,p_method text,p_account_name text,p_account_number text
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
- uid uuid:=auth.uid(); wid uuid; available numeric:=0;
- fee numeric:=0; net_amount numeric:=0; total_debit numeric:=0;
- mode_normalized text:=lower(btrim(coalesce(p_mode,'')));
- sched jsonb;
-BEGIN
- IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
- IF p_amount IS NULL OR p_amount<=0 THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_AMOUNT'; END IF;
 
- -- Manual WD is schedule-controlled. Instant remains unchanged.
- IF mode_normalized='manual' THEN
-   sched:=public.withdrawal_schedule_status(now());
-   IF coalesce((sched->>'open')::boolean,false)=false THEN
-     RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%', coalesce(sched->>'reason','WD Manual sedang ditutup');
-   END IF;
-   IF p_amount<10000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_10000'; END IF;
-   fee:=0;
- ELSIF mode_normalized='instant' THEN
-   IF p_amount<50000 THEN RAISE EXCEPTION 'MINIMUM_INSTANT_WITHDRAWAL_50000'; END IF;
-   IF p_amount>250000 THEN RAISE EXCEPTION 'MAXIMUM_INSTANT_WITHDRAWAL_250000'; END IF;
-   fee:=0;
- ELSE
-   RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
- END IF;
-
- net_amount:=greatest(0,p_amount-fee);
- total_debit:=p_amount+fee;
-
- SELECT available_balance INTO available
- FROM public.wallets WHERE user_id=uid FOR UPDATE;
- IF coalesce(available,0)<total_debit THEN RAISE EXCEPTION 'INSUFFICIENT_BALANCE'; END IF;
-
- UPDATE public.wallets
- SET available_balance=available_balance-total_debit,
-     balance=balance-total_debit,
-     updated_at=now()
- WHERE user_id=uid;
-
- UPDATE public.profiles
- SET balance=balance-total_debit,updated_at=now()
- WHERE id=uid;
-
- INSERT INTO public.withdrawals(
-   user_id,amount,fee,net_amount,mode,method,account_name,account_number,status
- ) VALUES(uid,p_amount,fee,net_amount,mode_normalized,p_method,p_account_name,p_account_number,'pending')
- RETURNING id INTO wid;
-
- INSERT INTO public.transactions(
-   user_id,amount,fee,net_amount,type,status,reference,description
- ) VALUES(
-   uid,fee,fee,fee,'withdrawal_fee','completed',
-   'withdrawal-fee:'||wid::text,
-   CASE WHEN mode_normalized='instant' THEN 'WD Instant fee Rp15.000' ELSE 'WD Manual fee Rp7.000' END
- );
-
- RETURN jsonb_build_object(
-   'id',wid,'status','pending','amount',p_amount,'fee',fee,
-   'net_amount',net_amount,'total_debit',total_debit,'mode',mode_normalized
- );
-END $$;
 
 GRANT EXECUTE ON FUNCTION public.request_withdrawal_v2(numeric,text,text,text,text) TO authenticated;
 
@@ -3592,80 +2706,7 @@ BEGIN;
 
 -- Final Code detail: expose current master-bot data so the UI can
 -- always show the latest admin-edited username/name.
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE
-  r record;
-  result jsonb;
-  normalized text:=lower(btrim(coalesce(p_type,'')));
-  can_access boolean:=false;
-BEGIN
-  IF normalized IN ('product','link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           coalesce(p.creator_id,p.seller_id) owner_id
-    INTO r FROM public.products p
-    LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
-    WHERE p.id=p_id;
-  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.owner_id seller_id,p.owner_id owner_id,
-           ab.bot_username master_bot_username,
-           ab.bot_name master_bot_name,
-           ab.bot_id master_bot_id,
-           coalesce(ab.is_active,false) bot_active
-    INTO r FROM public.telegram_products p
-    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-    LEFT JOIN public.approved_bots ab ON ab.id=p.approved_bot_id
-    WHERE p.id=p_id;
-  ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.owner_id seller_id,p.owner_id owner_id,p.name title
-    INTO r FROM public.telegram_channels p
-    LEFT JOIN public.profiles pr ON pr.id=p.owner_id
-    WHERE p.id=p_id;
-  ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-    SELECT p.*,pr.username creator_username,pr.display_name creator_name,
-           p.user_id owner_id,'pastelink'::text item_type
-    INTO r FROM public.pastelinks p
-    LEFT JOIN public.profiles pr ON pr.id=p.user_id
-    WHERE p.id=p_id;
-  ELSE
-    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
-  END IF;
 
-  IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
-
-  can_access:=auth.uid() IS NOT NULL AND (
-    auth.uid()=r.owner_id OR
-    public.is_current_user_admin() OR
-    coalesce(r.access_type,'free')='free' OR
-    EXISTS(
-      SELECT 1 FROM public.purchases pu
-      WHERE pu.buyer_id=auth.uid()
-        AND pu.product_id=p_id
-        AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')
-    )
-  );
-
-  result:=to_jsonb(r)||jsonb_build_object('found',true,'can_access',can_access);
-
-  IF normalized IN ('code','telegram_product','telegram-product') THEN
-    result:=result||jsonb_build_object(
-      'bot_username',coalesce(r.master_bot_username,r.bot_username),
-      'bot_name',r.master_bot_name,
-      'bot_id',r.master_bot_id,
-      'bot_active',coalesce(r.bot_active,false)
-    );
-  END IF;
-
-  IF NOT can_access AND coalesce(r.access_type,'free')='paid' THEN
-    result:=result-'content'-'content_html';
-  END IF;
-
-  RETURN result;
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
 
@@ -3700,25 +2741,7 @@ USING (
   OR (visibility='public' AND coalesce(access_type,'free')='free')
 );
 
-CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public
-AS $$
-DECLARE
-  pid uuid;
-BEGIN
-  SELECT id INTO pid
-  FROM public.pastelinks
-  WHERE slug=btrim(coalesce(p_slug,''))
-  LIMIT 1;
 
-  IF pid IS NULL THEN
-    RETURN jsonb_build_object('found',false);
-  END IF;
-
-  RETURN public.get_market_item_detail('pastelink',pid);
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon,authenticated;
 
@@ -3784,23 +2807,7 @@ USING (
 );
 
 -- Guest/authenticated creation RPCs. These are the ONLY public write paths.
-CREATE OR REPLACE FUNCTION public.create_pastelink_content(
-  p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',
-  p_price numeric DEFAULT 0,p_description text DEFAULT '',p_tags text[] DEFAULT '{}',
-  p_expires_at timestamptz DEFAULT NULL
-)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); r public.pastelinks;
-BEGIN
- IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
- IF a NOT IN ('free','paid') THEN RAISE EXCEPTION 'INVALID_ACCESS_TYPE'; END IF;
- IF a='paid' AND uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED_FOR_PAID'; END IF;
- IF a='free' THEN pr:=0; ELSE IF pr<2000 OR pr>100000 OR mod(pr,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PAID_PRICE'; END IF; END IF;
- INSERT INTO public.pastelinks(user_id,slug,title,content_html,visibility,password_hash,expires_at,description,tags,allow_comments,allow_download,show_raw,anonymous,views,access_type,price)
- VALUES(uid,btrim(p_slug),btrim(p_title),p_content,'public',NULL,p_expires_at,coalesce(p_description,''),coalesce(p_tags,'{}'),true,true,true,uid IS NULL,0,a,pr)
- RETURNING * INTO r;
- RETURN jsonb_build_object('ok',true,'id',r.id,'slug',r.slug,'access_type',r.access_type,'price',r.price);
-END $$;
+
 
 CREATE OR REPLACE FUNCTION public.create_code_content(
   p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,
@@ -3845,45 +2852,11 @@ GRANT EXECUTE ON FUNCTION public.create_code_content(text,text,text,text,numeric
 GRANT EXECUTE ON FUNCTION public.create_telegram_content(text,text,text,text,numeric,text,text,text,text) TO anon,authenticated;
 
 -- Definitive secure detail RPC: FREE is visible to guests; PAID requires owner/admin/purchase.
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r record; result jsonb; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; uid uuid:=auth.uid(); paid boolean:=false;
-BEGIN
- IF normalized IN ('product','link','code') THEN
-   IF normalized='code' THEN
-     SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,
-            ab.bot_username master_bot_username,ab.bot_name master_bot_name,ab.bot_id master_bot_id,coalesce(ab.is_active,false) bot_active
-     INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id LEFT JOIN public.approved_bots ab ON ab.id=p.approved_bot_id WHERE p.id=p_id;
-   ELSE
-     SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id
-     INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
-   END IF;
- ELSIF normalized IN ('telegram_product','telegram-product') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,
-          ab.bot_username master_bot_username,ab.bot_name master_bot_name,ab.bot_id master_bot_id,coalesce(ab.is_active,false) bot_active
-   INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id LEFT JOIN public.approved_bots ab ON ab.id=p.approved_bot_id WHERE p.id=p_id;
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id seller_id,p.owner_id owner_id,p.name title
-   INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type
-   INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
- paid:=coalesce(r.access_type,'free')='paid' OR coalesce(r.price,0)>0;
- can_access:=NOT paid OR public.is_current_user_admin() OR (uid IS NOT NULL AND uid=r.owner_id) OR
-   (uid IS NOT NULL AND EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=uid AND pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')));
- result:=to_jsonb(r)||jsonb_build_object('found',true,'can_access',can_access,'is_paid',paid);
- IF NOT can_access AND paid THEN result:=result-'content'-'content_html'; END IF;
- RETURN result;
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
 
 -- Keep PasteLink slug access on the same secure contract.
-CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE pid uuid;
-BEGIN SELECT id INTO pid FROM public.pastelinks WHERE slug=btrim(coalesce(p_slug,'')) LIMIT 1; IF pid IS NULL THEN RETURN jsonb_build_object('found',false); END IF; RETURN public.get_market_item_detail('pastelink',pid); END $$;
+
 GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon,authenticated;
 
 -- Withdrawal schedule remains authoritative from SQL RPC; frontend must fail closed.
@@ -3967,23 +2940,7 @@ BEGIN
  RETURN jsonb_build_object('ok',true,'id',r.id,'slug',r.slug,'access_type',r.access_type,'price',r.price,'type',r.type);
 END $$;
 
-CREATE OR REPLACE FUNCTION public.buy_market_item_guest(p_type text,p_id uuid,p_guest_token text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); tok text:=btrim(coalesce(p_guest_token,'')); seller uuid; title text; price numeric; oid uuid;
-BEGIN
- IF auth.uid() IS NOT NULL THEN RETURN public.buy_market_item(p_type,p_id); END IF;
- IF length(tok)<32 THEN RAISE EXCEPTION 'GUEST_TOKEN_REQUIRED'; END IF;
- IF normalized IN ('product','link') THEN SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price INTO seller,title,price FROM public.products p WHERE p.id=p_id; normalized:='product';
- ELSIF normalized IN ('code','telegram_product','telegram-product') THEN SELECT p.owner_id,p.title,p.price INTO seller,title,price FROM public.telegram_products p WHERE p.id=p_id; normalized:='telegram_product';
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN SELECT p.owner_id,p.name,p.price INTO seller,title,price FROM public.telegram_channels p WHERE p.id=p_id; normalized:='channel';
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN SELECT p.user_id,p.title,p.price INTO seller,title,price FROM public.pastelinks p WHERE p.id=p_id; normalized:='pastelink';
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
- IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
- IF price<2000 OR price>100000 OR mod(price,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
- SELECT o.id INTO oid FROM public.orders o WHERE o.guest_access_token=tok AND o.product_id=p_id AND lower(coalesce(o.item_type,''))=normalized AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid') ORDER BY o.created_at DESC LIMIT 1;
- IF oid IS NULL THEN INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title,guest_access_token) VALUES(NULL,seller,p_id,price,'pending',normalized,p_id::text,title,tok) RETURNING id INTO oid; END IF;
- RETURN jsonb_build_object('order_id',oid,'amount',price,'item_title',title,'item_type',normalized,'guest_token',tok);
-END $$;
+
 
 CREATE OR REPLACE FUNCTION public.get_order_for_payment(p_order_id uuid,p_guest_token text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE o public.orders; uid uuid:=auth.uid(); tok text:=btrim(coalesce(p_guest_token,''));
@@ -3995,19 +2952,7 @@ BEGIN
  RAISE EXCEPTION 'ORDER_ACCESS_DENIED';
 END $$;
 
-CREATE OR REPLACE FUNCTION public.get_market_item_detail_guest(p_type text,p_id uuid,p_guest_token text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; tok text:=btrim(coalesce(p_guest_token,''));
-BEGIN
- IF normalized IN ('product','link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
- ELSIF normalized IN ('code','telegram_product','telegram-product') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id,p.name title INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
- can_access:=coalesce(r.access_type,'free')='free' OR EXISTS(SELECT 1 FROM public.purchases pu JOIN public.orders o ON o.id=pu.order_id WHERE pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success') AND o.guest_access_token=tok AND o.buyer_id IS NULL);
- IF NOT can_access AND coalesce(r.access_type,'free')='paid' THEN RETURN (to_jsonb(r)-'content'-'content_html')||jsonb_build_object('found',true,'can_access',false); END IF;
- RETURN to_jsonb(r)||jsonb_build_object('found',true,'can_access',true);
-END $$;
+
 
 GRANT EXECUTE ON FUNCTION public.buy_market_item_guest(text,uuid,text) TO anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.get_order_for_payment(uuid,text) TO anon,authenticated;
@@ -4015,19 +2960,7 @@ GRANT EXECUTE ON FUNCTION public.get_market_item_detail_guest(text,uuid,text) TO
 
 -- Definitive secure detail for authenticated + guest-free access.
 DROP FUNCTION IF EXISTS public.get_market_item_detail(text,uuid);
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; uid uuid:=auth.uid();
-BEGIN
- IF normalized IN ('product','link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
- ELSIF normalized IN ('code','telegram_product','telegram-product') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id,p.name title INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
- can_access:=coalesce(r.access_type,'free')='free' OR (uid IS NOT NULL AND (uid=r.owner_id OR public.is_current_user_admin() OR EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=uid AND pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success'))));
- IF NOT can_access AND coalesce(r.access_type,'free')='paid' THEN RETURN (to_jsonb(r)-'content'-'content_html')||jsonb_build_object('found',true,'can_access',false); END IF;
- RETURN to_jsonb(r)||jsonb_build_object('found',true,'can_access',true);
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
 
 COMMIT;
@@ -4272,30 +3205,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_telegram_content_by_slug(text,text) TO anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  pid uuid;
-BEGIN
-  SELECT p.id INTO pid
-  FROM public.pastelinks p
-  WHERE lower(btrim(coalesce(p.slug,''))) = lower(btrim(coalesce(p_slug,'')))
-    AND lower(coalesce(p.visibility,'public')) = 'public'
-    AND (p.expires_at IS NULL OR p.expires_at > now())
-  ORDER BY p.created_at DESC NULLS LAST
-  LIMIT 1;
 
-  IF pid IS NULL THEN
-    RETURN jsonb_build_object('found',false,'error','PASTELINK_NOT_FOUND');
-  END IF;
-
-  RETURN public.get_market_item_detail('pastelink',pid);
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.get_pastelink_by_slug(text) TO anon, authenticated;
 
@@ -4591,39 +3501,11 @@ GRANT EXECUTE ON FUNCTION public.toggle_content_like_guest(uuid,text,text) TO an
 
 -- Profile visit notification. Only an authenticated visitor can create one,
 -- and self-visits are ignored.
-CREATE OR REPLACE FUNCTION public.notify_profile_visit(p_profile_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE uid uuid:=auth.uid(); visitor text;
-BEGIN
-  IF uid IS NULL OR p_profile_id IS NULL OR uid=p_profile_id THEN RETURN; END IF;
-  IF NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=p_profile_id AND is_banned=false) THEN RETURN; END IF;
-  SELECT coalesce(display_name,username,'User') INTO visitor FROM public.profiles WHERE id=uid;
-  INSERT INTO public.notifications(user_id,title,body,notification_type,target_type,target_id)
-  VALUES(p_profile_id,'Profil dikunjungi',visitor||' mengunjungi profil anda.','profile_visit','profile',uid);
-END;
-$$;
+
 GRANT EXECUTE ON FUNCTION public.notify_profile_visit(uuid) TO authenticated;
 
 -- Follow notification. SECURITY DEFINER avoids cross-user notification RLS issues.
-CREATE OR REPLACE FUNCTION public.notify_follow_event()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE follower_name text;
-BEGIN
-  SELECT coalesce(display_name,username,'User') INTO follower_name
-  FROM public.profiles WHERE id=NEW.follower_id;
-  INSERT INTO public.notifications(user_id,title,body,notification_type,target_type,target_id)
-  VALUES(NEW.creator_id,'Pengikut baru',follower_name||' mulai mengikuti anda.','follow','profile',NEW.follower_id);
-  RETURN NEW;
-END;
-$$;
+
 DROP TRIGGER IF EXISTS trg_notify_follow_event ON public.creator_followers;
 CREATE TRIGGER trg_notify_follow_event
 AFTER INSERT ON public.creator_followers
@@ -4648,80 +3530,15 @@ WHERE buyer_id IS NOT NULL AND product_id IS NOT NULL
   AND lower(coalesce(status,'')) IN ('completed','paid','success');
 
 -- Active subscription is an entitlement; expired subscription is not.
-CREATE OR REPLACE FUNCTION public.get_market_item_detail(p_type text,p_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; uid uuid:=auth.uid(); paid boolean:=false; sub_active boolean:=false;
-BEGIN
- IF normalized IN ('product','link') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id
-   INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id;
- ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id
-   INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id,p.name title
-   INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id;
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-   SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type
-   INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id;
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
- paid:=coalesce(r.access_type,'free')='paid' OR coalesce(r.price,0)>0;
- IF uid IS NOT NULL THEN
-   SELECT coalesce(is_premium,false) OR coalesce(subscription_until,now()-interval '1 second')>now()
-     INTO sub_active FROM public.profiles WHERE id=uid;
- END IF;
- can_access:=NOT paid OR public.is_current_user_admin() OR (uid IS NOT NULL AND uid=r.owner_id) OR sub_active OR
-   (uid IS NOT NULL AND EXISTS(SELECT 1 FROM public.purchases pu WHERE pu.buyer_id=uid AND pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')));
- IF NOT can_access AND paid THEN RETURN (to_jsonb(r)-'content'-'content_html')||jsonb_build_object('found',true,'can_access',false,'is_paid',true); END IF;
- RETURN to_jsonb(r)||jsonb_build_object('found',true,'can_access',true,'is_paid',paid);
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.get_market_item_detail(text,uuid) TO anon,authenticated;
 
 -- Guest paid checkout: public, but only for published/active content and never for free content.
-CREATE OR REPLACE FUNCTION public.buy_market_item_guest(p_type text,p_id uuid,p_guest_token text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE normalized text:=lower(btrim(coalesce(p_type,''))); tok text:=btrim(coalesce(p_guest_token,'')); seller uuid; title text; price numeric; oid uuid;
-BEGIN
- IF auth.uid() IS NOT NULL THEN RETURN public.buy_market_item(p_type,p_id); END IF;
- IF length(tok)<32 THEN RAISE EXCEPTION 'GUEST_TOKEN_REQUIRED'; END IF;
- IF normalized IN ('product','link') THEN
-   SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price INTO seller,title,price FROM public.products p WHERE p.id=p_id AND p.status IN ('published','active'); normalized:='product';
- ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
-   SELECT p.owner_id,p.title,p.price INTO seller,title,price FROM public.telegram_products p WHERE p.id=p_id AND p.status IN ('published','active'); normalized:='telegram_product';
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-   SELECT p.owner_id,p.name,p.price INTO seller,title,price FROM public.telegram_channels p WHERE p.id=p_id AND p.status IN ('published','active'); normalized:='channel';
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN
-   SELECT p.user_id,p.title,p.price INTO seller,title,price FROM public.pastelinks p WHERE p.id=p_id AND p.visibility='public' AND (p.expires_at IS NULL OR p.expires_at>now()); normalized:='pastelink';
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
- IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
- IF price<2000 OR price>100000 OR mod(price,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PRICE'; END IF;
- SELECT o.id INTO oid FROM public.orders o WHERE o.guest_access_token=tok AND o.product_id=p_id AND lower(coalesce(o.item_type,''))=normalized AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid') ORDER BY o.created_at DESC LIMIT 1;
- IF oid IS NULL THEN
-   INSERT INTO public.orders(buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title,guest_access_token)
-   VALUES(NULL,seller,p_id,price,'pending',normalized,p_id::text,title,tok) RETURNING id INTO oid;
- END IF;
- RETURN jsonb_build_object('order_id',oid,'amount',price,'item_title',title,'item_type',normalized,'guest_token',tok);
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.buy_market_item_guest(text,uuid,text) TO anon,authenticated;
 
 -- Guest detail: free is public; paid content remains hidden until the matching guest purchase is paid.
-CREATE OR REPLACE FUNCTION public.get_market_item_detail_guest(p_type text,p_id uuid,p_guest_token text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; tok text:=btrim(coalesce(p_guest_token,'')); paid boolean:=false;
-BEGIN
- IF normalized IN ('product','link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id AND p.status IN ('published','active');
- ELSIF normalized IN ('code','telegram_product','telegram-product') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id INTO r FROM public.telegram_products p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id AND p.status IN ('published','active');
- ELSIF normalized IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.owner_id owner_id,p.name title INTO r FROM public.telegram_channels p LEFT JOIN public.profiles pr ON pr.id=p.owner_id WHERE p.id=p_id AND p.status IN ('published','active');
- ELSIF normalized IN ('pastelink','paste-link','paste_link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,p.user_id owner_id,'pastelink'::text item_type INTO r FROM public.pastelinks p LEFT JOIN public.profiles pr ON pr.id=p.user_id WHERE p.id=p_id AND p.visibility='public' AND (p.expires_at IS NULL OR p.expires_at>now());
- ELSE RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE'; END IF;
- IF r IS NULL THEN RETURN jsonb_build_object('found',false); END IF;
- paid:=coalesce(r.access_type,'free')='paid' OR coalesce(r.price,0)>0;
- can_access:=NOT paid OR (length(tok)>=32 AND EXISTS(SELECT 1 FROM public.purchases pu JOIN public.orders o ON o.id=pu.order_id WHERE pu.product_id=p_id AND lower(coalesce(pu.status,'')) IN ('completed','paid','success') AND o.guest_access_token=tok AND o.buyer_id IS NULL));
- IF NOT can_access AND paid THEN RETURN (to_jsonb(r)-'content'-'content_html')||jsonb_build_object('found',true,'can_access',false,'is_paid',true); END IF;
- RETURN to_jsonb(r)||jsonb_build_object('found',true,'can_access',true,'is_paid',paid);
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.get_market_item_detail_guest(text,uuid,text) TO anon,authenticated;
 
 -- Public anonymous comments and guest likes are intentional. Limit content length at DB level.
@@ -4736,94 +3553,17 @@ DROP POLICY IF EXISTS comments_anon_insert ON public.content_comments;
 CREATE POLICY comments_anon_insert ON public.content_comments FOR INSERT TO anon WITH CHECK (user_id IS NULL AND length(btrim(coalesce(body,''))) BETWEEN 1 AND 2000);
 
 -- Notifications for successful purchases: buyer account only, seller/creator account only.
-CREATE OR REPLACE FUNCTION public.notify_purchase_success(p_order_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE o public.orders%ROWTYPE; seller_name text;
-BEGIN
- SELECT * INTO o FROM public.orders WHERE id=p_order_id;
- IF NOT FOUND THEN RETURN; END IF;
- SELECT coalesce(display_name,username,'Creator') INTO seller_name FROM public.profiles WHERE id=o.seller_id;
- IF o.buyer_id IS NOT NULL THEN
-   INSERT INTO public.notifications(user_id,title,body,notification_type,target_type,target_id,link_url)
-   VALUES(o.buyer_id,'Pembelian berhasil','Pembayaran untuk '||coalesce(o.item_title,'konten')||' berhasil. Akses sudah dibuka.','purchase_success',o.item_type,o.product_id,NULL)
-   ON CONFLICT DO NOTHING;
- END IF;
- IF o.seller_id IS NOT NULL THEN
-   INSERT INTO public.notifications(user_id,title,body,notification_type,target_type,target_id,link_url)
-   VALUES(o.seller_id,'Konten terjual','Konten '||coalesce(o.item_title,'konten')||' berhasil dibeli. Pendapatan creator 70% masuk ke saldo tertunda.','sale_success',o.item_type,o.product_id,NULL)
-   ON CONFLICT DO NOTHING;
- END IF;
-END $$;
+
 
 -- Replace settlement so account/guest access, 70/30 ledger and counters are all finalized once.
-CREATE OR REPLACE FUNCTION public.settle_cashi_order(
- p_order_id uuid,p_invoice_id text,p_gateway_status text,p_final_amount numeric,p_gateway_payload jsonb DEFAULT '{}'::jsonb
-) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE o public.orders%ROWTYPE; seller_share numeric; platform_fee numeric; local_paid_at timestamp; v_available_at timestamptz; v_settlement_code text; v_balance_before numeric:=0; v_purchase_id uuid;
-BEGIN
- SELECT * INTO o FROM public.orders WHERE id=p_order_id FOR UPDATE;
- IF NOT FOUND THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
- IF lower(coalesce(o.status,'')) IN ('paid','success','completed','settled') THEN RETURN true; END IF;
- IF lower(coalesce(p_gateway_status,'')) NOT IN ('paid','settled','success','completed') THEN RETURN false; END IF;
- IF round(coalesce(p_final_amount,0),0)<>round(coalesce(o.amount,0),0) THEN RAISE EXCEPTION 'AMOUNT_MISMATCH'; END IF;
 
- UPDATE public.orders SET status='paid',paid_at=coalesce(paid_at,now()),payment_reference=coalesce(p_invoice_id,payment_reference),gateway_payload=coalesce(p_gateway_payload,'{}'::jsonb) WHERE id=o.id;
-
- IF o.item_type='account_plan' THEN
-   IF o.item_id='premium' THEN UPDATE public.profiles SET is_premium=true,updated_at=now() WHERE id=o.buyer_id;
-   ELSIF o.item_id IN ('subscription_1','subscription_3','subscription_7') THEN UPDATE public.profiles SET subscription_until=greatest(coalesce(subscription_until,now()),now())+CASE o.item_id WHEN 'subscription_1' THEN interval '1 day' WHEN 'subscription_3' THEN interval '3 days' WHEN 'subscription_7' THEN interval '7 days' END,updated_at=now() WHERE id=o.buyer_id; END IF;
-   INSERT INTO public.purchases(buyer_id,product_id,order_id,item_type,item_id,item_title,amount,status) SELECT o.buyer_id,NULL,o.id,o.item_type,o.item_id,o.item_title,o.amount,'completed' WHERE NOT EXISTS(SELECT 1 FROM public.purchases WHERE order_id=o.id);
-   RETURN true;
- END IF;
-
- seller_share:=round(coalesce(o.amount,0)*0.70,2); platform_fee:=round(coalesce(o.amount,0)-seller_share,2);
- local_paid_at:=timezone('Asia/Jakarta',now());
- IF local_paid_at::time < time '21:00:00' THEN v_available_at:=timezone('Asia/Jakarta',date_trunc('day',local_paid_at)+interval '1 day');v_settlement_code:='H1'; ELSE v_available_at:=timezone('Asia/Jakarta',date_trunc('day',local_paid_at)+interval '2 days');v_settlement_code:='H2'; END IF;
-
- IF NOT EXISTS(SELECT 1 FROM public.purchases WHERE order_id=o.id) THEN
-   SELECT coalesce(balance,0) INTO v_balance_before FROM public.wallets WHERE user_id=o.seller_id FOR UPDATE;
-   INSERT INTO public.wallets(user_id,balance,available_balance,pending_balance) VALUES(o.seller_id,seller_share,0,seller_share)
-   ON CONFLICT(user_id) DO UPDATE SET balance=public.wallets.balance+excluded.balance,pending_balance=public.wallets.pending_balance+excluded.pending_balance,updated_at=now();
-   UPDATE public.profiles SET balance=balance+seller_share,updated_at=now() WHERE id=o.seller_id;
-   INSERT INTO public.wallet_transactions(user_id,type,amount,balance_before,balance_after,reference,status,available_at,settlement_code)
-   VALUES(o.seller_id,'sale_earning',seller_share,v_balance_before,v_balance_before+seller_share,'cashi-order:'||o.id::text,'pending',v_available_at,v_settlement_code)
-   ON CONFLICT DO NOTHING;
-   INSERT INTO public.transactions(user_id,amount,fee,net_amount,type,status,reference,description)
-   VALUES(o.seller_id,seller_share,platform_fee,seller_share,'sale_earning','pending','cashi-order:'||o.id::text,'Marketplace sale 70/30 - '||v_settlement_code)
-   ON CONFLICT(user_id,reference) DO NOTHING;
-
-   INSERT INTO public.purchases(buyer_id,product_id,order_id,item_type,item_id,item_title,amount,status)
-   VALUES(o.buyer_id,o.product_id,o.id,o.item_type,o.item_id,o.item_title,o.amount,'completed') RETURNING id INTO v_purchase_id;
-
-   INSERT INTO public.product_access(order_id,product_id,buyer_id,delivery_url)
-   VALUES(o.id,o.product_id,o.buyer_id,NULL) ON CONFLICT(order_id,product_id) DO NOTHING;
-
-   IF lower(coalesce(o.item_type,'')) IN ('product','code') THEN UPDATE public.products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
-   ELSIF lower(coalesce(o.item_type,''))='telegram_product' THEN UPDATE public.telegram_products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
-   ELSIF lower(coalesce(o.item_type,'')) IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN UPDATE public.telegram_channels SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
-   ELSIF lower(coalesce(o.item_type,''))='pastelink' THEN UPDATE public.pastelinks SET views=views WHERE id=o.product_id;
-   END IF;
-   PERFORM public.notify_purchase_success(o.id);
- END IF;
- RETURN true;
-END $$;
 GRANT EXECUTE ON FUNCTION public.settle_cashi_order(uuid,text,text,numeric,jsonb) TO service_role;
 
 COMMIT;
 
 
 -- PROFILE VISIT NOTIFICATION FINAL: do not spam the same owner more than once per hour per visitor.
-CREATE OR REPLACE FUNCTION public.notify_profile_visit(p_profile_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE uid uuid:=auth.uid(); visitor text;
-BEGIN
- IF uid IS NULL OR p_profile_id IS NULL OR uid=p_profile_id THEN RETURN; END IF;
- IF NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=p_profile_id AND is_banned=false) THEN RETURN; END IF;
- IF EXISTS(SELECT 1 FROM public.notifications WHERE user_id=p_profile_id AND notification_type='profile_visit' AND target_type='profile' AND target_id=uid AND created_at>now()-interval '1 hour') THEN RETURN; END IF;
- SELECT coalesce(display_name,username,'User') INTO visitor FROM public.profiles WHERE id=uid;
- INSERT INTO public.notifications(user_id,title,body,notification_type,target_type,target_id)
- VALUES(p_profile_id,'Profil dikunjungi',visitor||' mengunjungi profil anda.','profile_visit','profile',uid);
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.notify_profile_visit(uuid) TO authenticated;
 
 /* ================================================================
@@ -5317,44 +4057,7 @@ GRANT SELECT ON public.platform_earnings TO authenticated;
 /* ------------------------------------------------------------
    Withdrawal policy endpoint
    ------------------------------------------------------------ */
-CREATE OR REPLACE FUNCTION public.withdrawal_policy()
-RETURNS jsonb
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path=public
-AS $$
-  SELECT jsonb_build_object(
-    'timezone','Asia/Jakarta',
-    'manual',jsonb_build_object(
-      'open_time','09:00',
-      'close_time','17:00',
-      'days',jsonb_build_array(1,2,3,4,5),
-      'minimum',100000,
-      'fee_free',7000,
-      'fee_subscription',7000,
-      'fee_premium',2000,
-      'daily_count_free',1,
-      'daily_count_subscription',2,
-      'daily_count_premium',5
-    ),
-    'instant',jsonb_build_object(
-      'available_24_7',true,
-      'daily_limit_free',100000,
-      'daily_limit_subscription',300000,
-      'daily_limit_premium',500000,
-      'fee_free',15000,
-      'fee_subscription',13000,
-      'fee_premium',10000
-    ),
-    'settlement',jsonb_build_object(
-      'creator_percent',70,
-      'platform_percent',30,
-      'hold_hours',48,
-      'code','H2'
-    )
-  );
-$$;
+
 GRANT EXECUTE ON FUNCTION public.withdrawal_policy() TO anon,authenticated;
 
 /* ------------------------------------------------------------
@@ -5418,21 +4121,7 @@ GRANT EXECUTE ON FUNCTION public.withdrawal_schedule_status(timestamptz) TO anon
 /* ------------------------------------------------------------
    User tier helper
    ------------------------------------------------------------ */
-CREATE OR REPLACE FUNCTION public.current_account_tier(p_user_id uuid DEFAULT auth.uid())
-RETURNS text
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path=public
-AS $$
-  SELECT CASE
-    WHEN p.is_premium THEN 'premium'
-    WHEN p.subscription_until IS NOT NULL AND p.subscription_until > now() THEN 'subscription'
-    ELSE 'free'
-  END
-  FROM public.profiles p
-  WHERE p.id=p_user_id;
-$$;
+
 GRANT EXECUTE ON FUNCTION public.current_account_tier(uuid) TO authenticated;
 
 /* ------------------------------------------------------------
@@ -5441,206 +4130,14 @@ GRANT EXECUTE ON FUNCTION public.current_account_tier(uuid) TO authenticated;
    cannot bypass limits by creating several pending requests.
    Failed/cancelled/rejected requests do not consume a limit.
    ------------------------------------------------------------ */
-CREATE OR REPLACE FUNCTION public.get_withdrawal_limits()
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  uid uuid := auth.uid();
-  tier text;
-  manual_count integer := 0;
-  instant_amount numeric := 0;
-  manual_max_count integer;
-  instant_limit numeric;
-  manual_fee numeric;
-  instant_fee numeric;
-  sched jsonb;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
-  tier := public.current_account_tier(uid);
 
-  SELECT count(*)::integer INTO manual_count
-  FROM public.withdrawals w
-  WHERE w.user_id=uid
-    AND lower(coalesce(w.mode,''))='manual'
-    AND timezone('Asia/Jakarta',w.created_at)::date=timezone('Asia/Jakarta',now())::date
-    AND lower(coalesce(w.status,'')) NOT IN ('rejected','cancelled','canceled','failed');
-
-  SELECT coalesce(sum(w.amount),0) INTO instant_amount
-  FROM public.withdrawals w
-  WHERE w.user_id=uid
-    AND lower(coalesce(w.mode,''))='instant'
-    AND timezone('Asia/Jakarta',w.created_at)::date=timezone('Asia/Jakarta',now())::date
-    AND lower(coalesce(w.status,'')) NOT IN ('rejected','cancelled','canceled','failed');
-
-  IF tier='premium' THEN
-    manual_max_count:=5; instant_limit:=500000; manual_fee:=2000; instant_fee:=10000;
-  ELSIF tier='subscription' THEN
-    manual_max_count:=2; instant_limit:=300000; manual_fee:=7000; instant_fee:=13000;
-  ELSE
-    manual_max_count:=1; instant_limit:=100000; manual_fee:=7000; instant_fee:=15000;
-  END IF;
-
-  sched := public.withdrawal_schedule_status(now());
-
-  RETURN jsonb_build_object(
-    'tier',tier,
-    'manual',jsonb_build_object(
-      'minimum',100000,
-      'fee',manual_fee,
-      'daily_max_count',manual_max_count,
-      'used_count',manual_count,
-      'remaining_count',greatest(0,manual_max_count-manual_count),
-      'schedule',sched
-    ),
-    'instant',jsonb_build_object(
-      'fee',instant_fee,
-      'daily_limit',instant_limit,
-      'used_amount',instant_amount,
-      'remaining_amount',greatest(0,instant_limit-instant_amount)
-    )
-  );
-END;
-$$;
 GRANT EXECUTE ON FUNCTION public.get_withdrawal_limits() TO authenticated;
 
 /* ------------------------------------------------------------
    H+2 settlement. Exactly 48 hours after verified payment.
    The old H1/H2 time-of-day split is deliberately removed.
    ------------------------------------------------------------ */
-CREATE OR REPLACE FUNCTION public.settle_cashi_order(
-  p_order_id uuid,
-  p_invoice_id text,
-  p_gateway_status text,
-  p_final_amount numeric,
-  p_gateway_payload jsonb DEFAULT '{}'::jsonb
-)
-RETURNS boolean
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  o public.orders%ROWTYPE;
-  creator_amount numeric;
-  platform_amount numeric;
-  available_at timestamptz;
-  before_balance numeric := 0;
-BEGIN
-  SELECT * INTO o FROM public.orders WHERE id=p_order_id FOR UPDATE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF;
 
-  IF lower(coalesce(o.status,'')) IN ('paid','success','completed','settled') THEN
-    RETURN true;
-  END IF;
-
-  IF lower(coalesce(p_gateway_status,'')) NOT IN ('paid','settled','success','completed') THEN
-    RETURN false;
-  END IF;
-
-  IF round(coalesce(p_final_amount,0),0) <> round(coalesce(o.amount,0),0) THEN
-    RAISE EXCEPTION 'AMOUNT_MISMATCH';
-  END IF;
-
-  UPDATE public.orders
-  SET status='paid',
-      paid_at=coalesce(paid_at,now()),
-      payment_reference=coalesce(p_invoice_id,payment_reference),
-      gateway_payload=coalesce(p_gateway_payload,'{}'::jsonb)
-  WHERE id=o.id;
-
-  IF o.item_type='account_plan' THEN
-    IF o.item_id='premium' THEN
-      UPDATE public.profiles SET is_premium=true,updated_at=now() WHERE id=o.buyer_id;
-    ELSIF o.item_id IN ('subscription_1','subscription_3','subscription_7') THEN
-      UPDATE public.profiles
-      SET subscription_until=greatest(coalesce(subscription_until,now()),now())+
-        CASE o.item_id
-          WHEN 'subscription_1' THEN interval '1 day'
-          WHEN 'subscription_3' THEN interval '3 days'
-          WHEN 'subscription_7' THEN interval '7 days'
-        END,
-        updated_at=now()
-      WHERE id=o.buyer_id;
-    END IF;
-
-    INSERT INTO public.purchases(buyer_id,product_id,order_id,item_type,item_id,item_title,amount,status)
-    SELECT o.buyer_id,NULL,o.id,o.item_type,o.item_id,o.item_title,o.amount,'completed'
-    WHERE NOT EXISTS(SELECT 1 FROM public.purchases WHERE order_id=o.id);
-    RETURN true;
-  END IF;
-
-  creator_amount := round(coalesce(o.amount,0)*0.70,2);
-  platform_amount := round(coalesce(o.amount,0)-creator_amount,2);
-  available_at := coalesce(o.paid_at,now()) + interval '48 hours';
-
-  IF NOT EXISTS(SELECT 1 FROM public.purchases WHERE order_id=o.id) THEN
-    SELECT coalesce(w.balance,0) INTO before_balance
-    FROM public.wallets w WHERE w.user_id=o.seller_id FOR UPDATE;
-
-    INSERT INTO public.wallets(user_id,balance,available_balance,pending_balance)
-    VALUES(o.seller_id,creator_amount,0,creator_amount)
-    ON CONFLICT(user_id) DO UPDATE SET
-      balance=public.wallets.balance+excluded.balance,
-      pending_balance=public.wallets.pending_balance+excluded.pending_balance,
-      updated_at=now();
-
-    UPDATE public.profiles
-    SET balance=balance+creator_amount,updated_at=now()
-    WHERE id=o.seller_id;
-
-    INSERT INTO public.wallet_transactions(
-      user_id,type,amount,balance_before,balance_after,reference,status,available_at,settlement_code
-    ) VALUES(
-      o.seller_id,'sale_earning',creator_amount,before_balance,before_balance+creator_amount,
-      'cashi-order:'||o.id::text,'pending',available_at,'H2'
-    )
-    ON CONFLICT(user_id,reference) DO NOTHING;
-
-    INSERT INTO public.transactions(
-      user_id,amount,fee,net_amount,type,status,reference,description
-    ) VALUES(
-      o.seller_id,creator_amount,0,creator_amount,'sale_earning','pending',
-      'cashi-order:'||o.id::text,'Creator 70% — settlement H+2 (48 jam)'
-    )
-    ON CONFLICT(user_id,reference) DO NOTHING;
-
-    INSERT INTO public.platform_earnings(order_id,gross_amount,creator_amount,platform_amount,status)
-    VALUES(o.id,o.amount,creator_amount,platform_amount,'recognized')
-    ON CONFLICT(order_id) DO NOTHING;
-
-    INSERT INTO public.purchases(
-      buyer_id,product_id,order_id,item_type,item_id,item_title,amount,status
-    ) VALUES(
-      o.buyer_id,o.product_id,o.id,o.item_type,o.item_id,o.item_title,o.amount,'completed'
-    );
-
-    IF o.product_id IS NOT NULL THEN
-      INSERT INTO public.product_access(order_id,product_id,buyer_id,delivery_url)
-      VALUES(o.id,o.product_id,o.buyer_id,NULL)
-      ON CONFLICT(order_id,product_id) DO NOTHING;
-    END IF;
-
-    IF lower(coalesce(o.item_type,'')) IN ('product','code') THEN
-      UPDATE public.products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
-    ELSIF lower(coalesce(o.item_type,''))='telegram_product' THEN
-      UPDATE public.telegram_products SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
-    ELSIF lower(coalesce(o.item_type,'')) IN ('channel','telegram_channel','telegram-channel','group','telegram_group','telegram-group') THEN
-      UPDATE public.telegram_channels SET sales_count=sales_count+1,updated_at=now() WHERE id=o.product_id;
-    END IF;
-
-    BEGIN
-      PERFORM public.notify_purchase_success(o.id);
-    EXCEPTION WHEN undefined_function THEN
-      NULL;
-    END;
-  END IF;
-
-  RETURN true;
-END;
-$$;
 GRANT EXECUTE ON FUNCTION public.settle_cashi_order(uuid,text,text,numeric,jsonb) TO service_role;
 
 /* ------------------------------------------------------------
@@ -5739,131 +4236,7 @@ GRANT EXECUTE ON FUNCTION public.release_all_matured_wallets() TO service_role;
    net_amount = amount - fee.
    total wallet debit = amount (fee is included in the gross amount).
    ------------------------------------------------------------ */
-CREATE OR REPLACE FUNCTION public.request_withdrawal_v2(
-  p_amount numeric,
-  p_mode text,
-  p_method text,
-  p_account_name text,
-  p_account_number text
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  uid uuid:=auth.uid();
-  tier text;
-  mode_normalized text:=lower(btrim(coalesce(p_mode,'')));
-  amount numeric:=round(coalesce(p_amount,0),2);
-  fee numeric:=0;
-  net_amount numeric:=0;
-  available numeric:=0;
-  manual_count integer:=0;
-  instant_used numeric:=0;
-  manual_max_count integer;
-  instant_limit numeric;
-  sched jsonb;
-  wid uuid;
-  before_balance numeric:=0;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
-  IF amount<=0 THEN RAISE EXCEPTION 'INVALID_WITHDRAWAL_AMOUNT'; END IF;
-  IF length(btrim(coalesce(p_account_name,'')))<2 THEN RAISE EXCEPTION 'ACCOUNT_NAME_REQUIRED'; END IF;
-  IF length(btrim(coalesce(p_account_number,'')))<5 THEN RAISE EXCEPTION 'ACCOUNT_NUMBER_REQUIRED'; END IF;
 
-  tier:=public.current_account_tier(uid);
-
-  IF tier='premium' THEN
-    manual_max_count:=5; instant_limit:=500000; fee:=CASE WHEN mode_normalized='manual' THEN 2000 ELSE 10000 END;
-  ELSIF tier='subscription' THEN
-    manual_max_count:=2; instant_limit:=300000; fee:=CASE WHEN mode_normalized='manual' THEN 7000 ELSE 13000 END;
-  ELSE
-    manual_max_count:=1; instant_limit:=100000; fee:=CASE WHEN mode_normalized='manual' THEN 7000 ELSE 15000 END;
-  END IF;
-
-  IF mode_normalized='manual' THEN
-    sched:=public.withdrawal_schedule_status(now());
-    IF coalesce((sched->>'open')::boolean,false)=false THEN
-      RAISE EXCEPTION 'WITHDRAWAL_CLOSED:%',coalesce(sched->>'reason','WD Manual sedang ditutup.');
-    END IF;
-    IF amount<100000 THEN RAISE EXCEPTION 'MINIMUM_MANUAL_WITHDRAWAL_100000'; END IF;
-
-    SELECT count(*)::integer INTO manual_count
-    FROM public.withdrawals w
-    WHERE w.user_id=uid AND lower(coalesce(w.mode,''))='manual'
-      AND timezone('Asia/Jakarta',w.created_at)::date=timezone('Asia/Jakarta',now())::date
-      AND lower(coalesce(w.status,'')) NOT IN ('rejected','cancelled','canceled','failed');
-
-    IF manual_count>=manual_max_count THEN
-      RAISE EXCEPTION 'MANUAL_DAILY_COUNT_LIMIT';
-    END IF;
-
-  ELSIF mode_normalized='instant' THEN
-    SELECT coalesce(sum(w.amount),0) INTO instant_used
-    FROM public.withdrawals w
-    WHERE w.user_id=uid AND lower(coalesce(w.mode,''))='instant'
-      AND timezone('Asia/Jakarta',w.created_at)::date=timezone('Asia/Jakarta',now())::date
-      AND lower(coalesce(w.status,'')) NOT IN ('rejected','cancelled','canceled','failed');
-
-    IF instant_used+amount>instant_limit THEN
-      RAISE EXCEPTION 'INSTANT_DAILY_LIMIT:%',greatest(0,instant_limit-instant_used);
-    END IF;
-  ELSE
-    RAISE EXCEPTION 'INVALID_WITHDRAWAL_MODE';
-  END IF;
-
-  /* User receives amount minus fee; wallet loses exactly amount entered. */
-  net_amount:=greatest(0,amount-fee);
-
-  SELECT coalesce(w.balance,0),coalesce(w.available_balance,0)
-  INTO before_balance,available
-  FROM public.wallets w WHERE w.user_id=uid FOR UPDATE;
-
-  IF coalesce(available,0)<amount THEN RAISE EXCEPTION 'INSUFFICIENT_BALANCE'; END IF;
-
-  UPDATE public.wallets
-  SET available_balance=available_balance-amount,
-      balance=balance-amount,
-      updated_at=now()
-  WHERE user_id=uid;
-
-  UPDATE public.profiles
-  SET balance=greatest(0,balance-amount),updated_at=now()
-  WHERE id=uid;
-
-  INSERT INTO public.withdrawals(
-    user_id,amount,fee,net_amount,mode,method,account_name,account_number,status
-  ) VALUES(
-    uid,amount,fee,net_amount,mode_normalized,btrim(p_method),btrim(p_account_name),btrim(p_account_number),'pending'
-  ) RETURNING id INTO wid;
-
-  INSERT INTO public.wallet_transactions(
-    user_id,type,amount,balance_before,balance_after,reference,status,available_at,settlement_code
-  ) VALUES(
-    uid,'withdrawal',-amount,before_balance,before_balance-amount,'withdrawal:'||wid::text,'completed',now(),'WD'
-  ) ON CONFLICT(user_id,reference) DO NOTHING;
-
-  INSERT INTO public.transactions(
-    user_id,amount,fee,net_amount,type,status,reference,description
-  ) VALUES(
-    uid,-amount,fee,net_amount,'withdrawal','pending','withdrawal:'||wid::text,
-    CASE WHEN mode_normalized='instant' THEN 'WD Instant' ELSE 'WD Manual' END
-  ) ON CONFLICT(user_id,reference) DO NOTHING;
-
-  RETURN jsonb_build_object(
-    'id',wid,
-    'status','pending',
-    'tier',tier,
-    'amount',amount,
-    'fee',fee,
-    'net_amount',net_amount,
-    'mode',mode_normalized,
-    'manual_daily_max_count',manual_max_count,
-    'instant_daily_limit',instant_limit
-  );
-END;
-$$;
 GRANT EXECUTE ON FUNCTION public.request_withdrawal_v2(numeric,text,text,text,text) TO authenticated;
 
 COMMIT;
@@ -6096,17 +4469,7 @@ BEGIN
 END $$;
 GRANT EXECUTE ON FUNCTION public.join_public_chat(uuid) TO authenticated;
 
-CREATE OR REPLACE FUNCTION public.send_chat_message(p_group_id uuid,p_body text,p_reply_to uuid DEFAULT NULL)
-RETURNS public.chat_messages LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
-DECLARE uid uuid:=auth.uid(); r public.chat_messages;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
-  IF length(btrim(coalesce(p_body,'')))<1 OR length(p_body)>4000 THEN RAISE EXCEPTION 'INVALID_MESSAGE'; END IF;
-  IF NOT EXISTS(SELECT 1 FROM public.chat_groups WHERE id=p_group_id AND is_public=true) AND NOT EXISTS(SELECT 1 FROM public.chat_members WHERE group_id=p_group_id AND user_id=uid) THEN RAISE EXCEPTION 'NOT_A_MEMBER'; END IF;
-  INSERT INTO public.chat_members(group_id,user_id) VALUES(p_group_id,uid) ON CONFLICT DO NOTHING;
-  INSERT INTO public.chat_messages(group_id,user_id,body,reply_to_id) VALUES(p_group_id,uid,btrim(p_body),p_reply_to) RETURNING * INTO r;
-  RETURN r;
-END $$;
+
 GRANT EXECUTE ON FUNCTION public.send_chat_message(uuid,text,uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.toggle_chat_reaction(p_message_id uuid,p_reaction text DEFAULT '👍')
@@ -6573,23 +4936,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.current_subscription_plan(uuid) TO authenticated;
 
 -- Keep current_account_tier compatible with the new plan.
-CREATE OR REPLACE FUNCTION public.current_account_tier(
-  p_user_id uuid DEFAULT auth.uid()
-)
-RETURNS text
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path=public
-AS $$
-  SELECT CASE
-    WHEN p.is_premium=true THEN 'premium'
-    WHEN p.subscription_until IS NOT NULL AND p.subscription_until>now() THEN 'subscription'
-    ELSE 'free'
-  END
-  FROM public.profiles p
-  WHERE p.id=p_user_id;
-$$;
+
 
 GRANT EXECUTE ON FUNCTION public.current_account_tier(uuid) TO authenticated;
 
@@ -7048,68 +5395,7 @@ TO anon,authenticated;
 -- ------------------------------------------------------------
 -- 8. Plan order validation: add 1 month.
 -- ------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.create_account_plan_order(
-  p_plan text,
-  p_days integer,
-  p_amount numeric
-)
-RETURNS TABLE(order_id uuid,amount numeric,item_title text,item_type text)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  uid uuid:=auth.uid();
-  oid uuid;
-  expected numeric;
-  title text;
-  normalized text:=lower(btrim(coalesce(p_plan,'')));
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
 
-  SELECT c.price,c.plan_name
-  INTO expected,title
-  FROM public.account_plan_catalog c
-  WHERE c.plan_code=normalized AND c.is_active=true;
-
-  IF expected IS NULL THEN
-    RAISE EXCEPTION 'INVALID_PLAN';
-  END IF;
-
-  IF round(coalesce(p_amount,0),0)<>round(expected,0) THEN
-    RAISE EXCEPTION 'INVALID_PLAN_AMOUNT';
-  END IF;
-
-  IF normalized = 'subscription_1' THEN
-    IF p_days IS NULL OR p_days <> 1 THEN
-      RAISE EXCEPTION 'INVALID_PLAN_DURATION';
-    END IF;
-
-  ELSIF normalized = 'subscription_3' THEN
-    IF p_days IS NULL OR p_days <> 3 THEN
-      RAISE EXCEPTION 'INVALID_PLAN_DURATION';
-    END IF;
-
-  ELSIF normalized = 'subscription_7' THEN
-    IF p_days IS NULL OR p_days <> 7 THEN
-      RAISE EXCEPTION 'INVALID_PLAN_DURATION';
-    END IF;
-
-  ELSIF normalized = 'subscription_30' THEN
-    IF p_days IS NULL OR p_days <> 30 THEN
-      RAISE EXCEPTION 'INVALID_PLAN_DURATION';
-    END IF;
-  END IF;
-
-  INSERT INTO public.orders(
-    buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title
-  ) VALUES(
-    uid,uid,NULL,expected,'pending','account_plan',normalized,title
-  ) RETURNING id INTO oid;
-
-  RETURN QUERY SELECT oid,expected,title,'account_plan'::text;
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.create_account_plan_order(text,integer,numeric)
 TO authenticated;
@@ -7119,41 +5405,7 @@ TO authenticated;
 --    plan code. Existing settlement functions already activate
 --    subscription_until; this trigger adds the plan metadata.
 -- ------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.sync_account_plan_after_payment()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  duration_days integer;
-BEGIN
-  IF NEW.item_type='account_plan'
-     AND lower(coalesce(NEW.status,'')) IN ('paid','success','completed','settled')
-     AND NEW.buyer_id IS NOT NULL
-  THEN
-    IF NEW.item_id='premium' THEN
-      UPDATE public.profiles
-      SET is_premium=true,
-          updated_at=now()
-      WHERE id=NEW.buyer_id;
 
-    ELSIF NEW.item_id IN ('subscription_1','subscription_3','subscription_7','subscription_30') THEN
-      SELECT c.duration_days INTO duration_days
-      FROM public.account_plan_catalog c
-      WHERE c.plan_code=NEW.item_id;
-
-      UPDATE public.profiles
-      SET subscription_plan=NEW.item_id,
-          subscription_started_at=coalesce(subscription_started_at,coalesce(NEW.paid_at,now())),
-          updated_at=now()
-      WHERE id=NEW.buyer_id;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
 
 DROP TRIGGER IF EXISTS trg_sync_account_plan_after_payment ON public.orders;
 CREATE TRIGGER trg_sync_account_plan_after_payment
@@ -7202,82 +5454,7 @@ GRANT EXECUTE ON FUNCTION public.withdrawal_policy() TO anon,authenticated;
 --     Subscription: 2 manual/day, Rp300k instant/day.
 --     Free: 1 manual/day, Rp100k instant/day.
 -- ------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.get_withdrawal_limits()
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path=public
-AS $$
-DECLARE
-  uid uuid:=auth.uid();
-  tier text;
-  manual_count integer:=0;
-  instant_amount numeric:=0;
-  manual_max_count integer;
-  instant_limit numeric;
-  manual_fee numeric;
-  instant_fee numeric;
-  sched jsonb;
-BEGIN
-  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
 
-  tier:=public.current_account_tier(uid);
-
-  SELECT count(*)::integer INTO manual_count
-  FROM public.withdrawals w
-  WHERE w.user_id=uid
-    AND lower(coalesce(w.mode,''))='manual'
-    AND timezone('Asia/Jakarta',w.created_at)::date=timezone('Asia/Jakarta',now())::date
-    AND lower(coalesce(w.status,'')) NOT IN ('rejected','cancelled','canceled','failed');
-
-  SELECT coalesce(sum(w.amount),0) INTO instant_amount
-  FROM public.withdrawals w
-  WHERE w.user_id=uid
-    AND lower(coalesce(w.mode,''))='instant'
-    AND timezone('Asia/Jakarta',w.created_at)::date=timezone('Asia/Jakarta',now())::date
-    AND lower(coalesce(w.status,'')) NOT IN ('rejected','cancelled','canceled','failed');
-
-  IF tier='premium' THEN
-    manual_max_count:=5;
-    instant_limit:=500000;
-    manual_fee:=10000;
-    instant_fee:=10000;
-  ELSIF tier='subscription' THEN
-    manual_max_count:=2;
-    instant_limit:=300000;
-    manual_fee:=13000;
-    instant_fee:=13000;
-  ELSE
-    manual_max_count:=1;
-    instant_limit:=100000;
-    manual_fee:=15000;
-    instant_fee:=15000;
-  END IF;
-
-  sched:=public.withdrawal_schedule_status(now());
-
-  RETURN jsonb_build_object(
-    'tier',tier,
-    'plan',public.current_subscription_plan(uid),
-    'manual',jsonb_build_object(
-      'minimum',100000,
-      'fee',manual_fee,
-      'daily_max_count',manual_max_count,
-      'used_count',manual_count,
-      'remaining_count',greatest(0,manual_max_count-manual_count),
-      'schedule',sched
-    ),
-    'instant',jsonb_build_object(
-      'minimum',50000,
-      'maximum',250000,
-      'fee',instant_fee,
-      'daily_limit',instant_limit,
-      'used_amount',instant_amount,
-      'remaining_amount',greatest(0,instant_limit-instant_amount)
-    )
-  );
-END;
-$$;
 
 GRANT EXECUTE ON FUNCTION public.get_withdrawal_limits() TO authenticated;
 
@@ -8935,102 +7112,7 @@ DROP FUNCTION IF EXISTS public.create_pastelink_content(
   text,text,text,text,numeric,text,text[],timestamptz
 );
 
-CREATE OR REPLACE FUNCTION public.create_pastelink_content(
-  p_title text,
-  p_content text,
-  p_slug text,
-  p_access_type text DEFAULT 'free',
-  p_price numeric DEFAULT 0,
-  p_description text DEFAULT '',
-  p_tags text[] DEFAULT '{}',
-  p_expires_at timestamptz DEFAULT NULL,
-  p_password_hash text DEFAULT NULL
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  uid uuid := auth.uid();
-  a text := lower(btrim(coalesce(p_access_type,'free')));
-  pr numeric := coalesce(p_price,0);
-  ph text := nullif(btrim(coalesce(p_password_hash,'')),'');
-  r public.pastelinks;
-BEGIN
-  IF btrim(coalesce(p_title,'')) = ''
-     OR btrim(coalesce(p_content,'')) = '' THEN
-    RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED';
-  END IF;
 
-  IF a NOT IN ('free','paid') THEN
-    RAISE EXCEPTION 'INVALID_ACCESS_TYPE';
-  END IF;
-
-  IF a = 'paid' AND uid IS NULL THEN
-    RAISE EXCEPTION 'LOGIN_REQUIRED_FOR_PAID';
-  END IF;
-
-  IF a = 'free' THEN
-    pr := 0;
-  ELSE
-    IF pr < 2000 OR pr > 100000 OR mod(pr,1000) <> 0 THEN
-      RAISE EXCEPTION 'INVALID_PAID_PRICE';
-    END IF;
-  END IF;
-
-  IF ph IS NOT NULL AND ph !~ '^[0-9a-fA-F]{64}$' THEN
-    RAISE EXCEPTION 'INVALID_PASSWORD_HASH';
-  END IF;
-
-  INSERT INTO public.pastelinks(
-    user_id,
-    slug,
-    title,
-    content_html,
-    visibility,
-    password_hash,
-    expires_at,
-    description,
-    tags,
-    allow_comments,
-    allow_download,
-    show_raw,
-    anonymous,
-    views,
-    access_type,
-    price
-  )
-  VALUES(
-    uid,
-    btrim(p_slug),
-    btrim(p_title),
-    p_content,
-    'public',
-    ph,
-    p_expires_at,
-    coalesce(p_description,''),
-    coalesce(p_tags,'{}'),
-    true,
-    true,
-    true,
-    uid IS NULL,
-    0,
-    a,
-    pr
-  )
-  RETURNING * INTO r;
-
-  RETURN jsonb_build_object(
-    'ok', true,
-    'id', r.id,
-    'slug', r.slug,
-    'access_type', r.access_type,
-    'price', r.price,
-    'has_password', (r.password_hash IS NOT NULL)
-  );
-END
-$$;
 
 GRANT EXECUTE ON FUNCTION public.create_pastelink_content(
   text,text,text,text,numeric,text,text[],timestamptz,text
@@ -9062,7 +7144,7 @@ CREATE OR REPLACE FUNCTION public.create_pastelink_content(
   p_description text DEFAULT '',
   p_tags text[] DEFAULT '{}',
   p_expires_at timestamptz DEFAULT NULL,
-  p_password_hash text DEFAULT NULL
+  p_password text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -9073,7 +7155,10 @@ DECLARE
   uid uuid := auth.uid();
   a text := lower(btrim(coalesce(p_access_type,'free')));
   pr numeric := coalesce(p_price,0);
-  ph text := nullif(btrim(coalesce(p_password_hash,'')),'');
+  ph text := CASE
+    WHEN nullif(btrim(coalesce(p_password,'')),'') IS NULL THEN NULL
+    ELSE encode(digest(btrim(p_password), 'sha256'), 'hex')
+  END;
   r public.pastelinks;
 BEGIN
   IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN
@@ -9098,8 +7183,10 @@ BEGIN
   END IF;
 
   -- Password opsional untuk Free maupun Paid.
-  IF ph IS NOT NULL AND ph !~ '^[0-9a-fA-F]{64}$' THEN
-    RAISE EXCEPTION 'INVALID_PASSWORD_HASH';
+  -- Password diterima sebagai plaintext hanya di RPC HTTPS ini dan langsung
+  -- di-hash server-side; hash tidak lagi dikirim dari browser.
+  IF p_password IS NOT NULL AND length(btrim(p_password)) > 200 THEN
+    RAISE EXCEPTION 'PASSWORD_TOO_LONG';
   END IF;
 
   INSERT INTO public.pastelinks(
@@ -9144,3 +7231,322 @@ USING (
 -- ============================================================
 -- END PASTELINK GUEST/PASSWORD/PAID LOGIN FIX
 -- ============================================================
+
+
+/* =====================================================================
+   PasTele / Bdicodebot — FINAL CANONICAL COMPATIBILITY + SECURITY LAYER
+   2026-09-18
+   Purpose:
+   - Keep the existing source schema/RLS/business logic intact.
+   - Add missing frontend RPC contracts.
+   - Make password verification server-side.
+   - Normalize notification/engagement helpers.
+   - Keep Supabase Auth responsible for passwords.
+   - No plaintext passwords are stored in public.profiles.
+   ===================================================================== */
+
+begin;
+
+create extension if not exists pgcrypto;
+
+alter table if exists public.notifications
+  add column if not exists notification_type text not null default 'system',
+  add column if not exists link_url text,
+  add column if not exists target_type text,
+  add column if not exists target_id text;
+
+create index if not exists idx_notifications_user_created
+  on public.notifications(user_id, created_at desc);
+
+create index if not exists idx_notifications_user_unread
+  on public.notifications(user_id, is_read, created_at desc);
+
+create index if not exists idx_pastelinks_slug on public.pastelinks(slug);
+create index if not exists idx_pastelinks_user_created on public.pastelinks(user_id, created_at desc);
+create index if not exists idx_products_seller_created on public.products(seller_id, created_at desc);
+create index if not exists idx_telegram_products_owner_created on public.telegram_products(owner_id, created_at desc);
+create index if not exists idx_telegram_channels_owner_created on public.telegram_channels(owner_id, created_at desc);
+create index if not exists idx_orders_buyer_created on public.orders(buyer_id, created_at desc);
+create index if not exists idx_orders_seller_created on public.orders(seller_id, created_at desc);
+create index if not exists idx_purchases_buyer_created on public.purchases(buyer_id, created_at desc);
+create index if not exists idx_chat_messages_group_created on public.chat_messages(group_id, created_at desc);
+create index if not exists idx_followers_creator on public.creator_followers(creator_id, created_at desc);
+create index if not exists idx_likes_target on public.content_likes(target_type, target_id, created_at desc);
+create index if not exists idx_views_product_created on public.product_views(product_id, created_at desc);
+create index if not exists idx_analytics_owner_created on public.analytics_events(owner_id, created_at desc);
+
+-- Safe account resolver. Email is resolved through auth_email only.
+create or replace function public.resolve_login_identifier(p_identifier text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v text := lower(btrim(coalesce(p_identifier,'')));
+  r record;
+begin
+  if v = '' then
+    return jsonb_build_object('found',false);
+  end if;
+
+  select p.id, p.username, p.auth_email, p.display_name, p.avatar_url,
+         p.role, p.is_admin, p.is_banned, p.is_premium, p.subscription_until
+    into r
+  from public.profiles p
+  where lower(p.username)=v or lower(p.auth_email)=v
+  limit 1;
+
+  if not found then
+    return jsonb_build_object('found',false);
+  end if;
+
+  return jsonb_build_object(
+    'found',true,
+    'id',r.id,
+    'username',r.username,
+    'auth_email',r.auth_email,
+    'display_name',r.display_name,
+    'avatar_url',r.avatar_url,
+    'role',r.role,
+    'is_admin',coalesce(r.is_admin,false),
+    'is_banned',coalesce(r.is_banned,false),
+    'is_premium',coalesce(r.is_premium,false),
+    'subscription_until',r.subscription_until
+  );
+end;
+$$;
+
+grant execute on function public.resolve_login_identifier(text) to anon, authenticated;
+
+-- Server-side PasteLink password verification.
+-- The browser receives only has_password, never password_hash.
+create or replace function public.verify_pastelink_password(
+  p_pastelink_id uuid,
+  p_password text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_hash text;
+  v_input text;
+begin
+  if p_pastelink_id is null or p_password is null then
+    return false;
+  end if;
+
+  select password_hash into v_hash
+  from public.pastelinks
+  where id = p_pastelink_id
+  limit 1;
+
+  if v_hash is null or btrim(v_hash) = '' then
+    return true;
+  end if;
+
+  v_input := encode(digest(p_password, 'sha256'), 'hex');
+  return lower(v_input) = lower(v_hash);
+end;
+$$;
+
+grant execute on function public.verify_pastelink_password(uuid,text) to anon, authenticated;
+
+create or replace function public.get_my_account()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+  w record;
+begin
+  if auth.uid() is null then
+    return jsonb_build_object('ok',false,'error','AUTH_REQUIRED');
+  end if;
+
+  select * into r from public.profiles where id=auth.uid();
+  if not found then
+    return jsonb_build_object('ok',false,'error','PROFILE_NOT_FOUND');
+  end if;
+
+  select * into w from public.wallets where user_id=auth.uid();
+
+  return jsonb_build_object(
+    'ok',true,
+    'profile',jsonb_build_object(
+      'id',r.id,'username',r.username,'auth_email',r.auth_email,
+      'display_name',r.display_name,'avatar_url',r.avatar_url,
+      'role',r.role,'is_admin',r.is_admin,'is_banned',r.is_banned,
+      'balance',coalesce(r.balance,0),
+      'is_premium',r.is_premium,
+      'subscription_until',r.subscription_until
+    ),
+    'wallet',jsonb_build_object(
+      'balance',coalesce(w.balance,0),
+      'available_balance',coalesce(w.available_balance,0),
+      'pending_balance',coalesce(w.pending_balance,0)
+    )
+  );
+end;
+$$;
+
+grant execute on function public.get_my_account() to authenticated;
+
+create or replace function public.mark_notification_read(p_notification_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.notifications
+     set is_read=true
+   where id=p_notification_id and user_id=auth.uid();
+  return found;
+end;
+$$;
+
+grant execute on function public.mark_notification_read(uuid) to authenticated;
+
+create or replace function public.mark_all_notifications_read()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare n integer;
+begin
+  update public.notifications set is_read=true
+   where user_id=auth.uid() and is_read=false;
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+
+grant execute on function public.mark_all_notifications_read() to authenticated;
+
+create or replace function public.notify_user_once(
+  p_user_id uuid,
+  p_title text,
+  p_body text default '',
+  p_notification_type text default 'system',
+  p_link_url text default null,
+  p_target_type text default null,
+  p_target_id text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare v_id uuid;
+begin
+  if p_user_id is null then return null; end if;
+
+  select id into v_id
+    from public.notifications
+   where user_id=p_user_id
+     and title=coalesce(p_title,'')
+     and body=coalesce(p_body,'')
+     and created_at > now() - interval '30 seconds'
+   order by created_at desc
+   limit 1;
+
+  if v_id is not null then return v_id; end if;
+
+  insert into public.notifications(
+    user_id,title,body,notification_type,link_url,target_type,target_id
+  ) values (
+    p_user_id,coalesce(p_title,''),coalesce(p_body,''),
+    coalesce(p_notification_type,'system'),p_link_url,p_target_type,p_target_id
+  )
+  returning id into v_id;
+
+  return v_id;
+end;
+$$;
+
+grant execute on function public.notify_user_once(uuid,text,text,text,text,text,text)
+  to authenticated;
+
+-- Canonical account tier: premium > subscription > free.
+create or replace function public.current_account_tier(p_user_id uuid default auth.uid())
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when p.is_premium then 'premium'
+    when p.subscription_until is not null and p.subscription_until > now() then 'subscription'
+    else 'free'
+  end
+  from public.profiles p
+  where p.id = p_user_id;
+$$;
+
+grant execute on function public.current_account_tier(uuid) to anon, authenticated;
+
+-- Canonical withdrawal policy.
+create or replace function public.get_withdrawal_limits()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  tier text;
+begin
+  tier := coalesce(public.current_account_tier(auth.uid()),'free');
+
+  return jsonb_build_object(
+    'tier',tier,
+    'manual_min',100000,
+    'manual_fee',7000,
+    'instant_min',50000,
+    'instant_max',250000,
+    'instant_fee',15000,
+    'manual_daily_requests',
+      case tier when 'premium' then 5 when 'subscription' then 2 else 1 end,
+    'instant_daily_limit',
+      case tier when 'premium' then 500000 when 'subscription' then 300000 else 100000 end
+  );
+end;
+$$;
+
+grant execute on function public.get_withdrawal_limits() to authenticated;
+
+-- Seed core quests idempotently.
+insert into public.quests(code,title,description,event_type,target_count,reward,is_active)
+values
+ ('profile_visit_1','Lengkapi profil','Kunjungi dan lengkapi profil.', 'profile_visit',1,500,true),
+ ('like_3','Berikan 3 Like','Berikan like pada konten marketplace.', 'like',3,500,true),
+ ('view_5','Lihat 5 Konten','Lihat lima konten marketplace.', 'view',5,500,true),
+ ('share_2','Bagikan 2 Konten','Bagikan dua konten.', 'share',2,500,true),
+ ('follow_1','Follow Creator','Ikuti satu creator.', 'follow',1,1000,true),
+ ('purchase_1','Pembelian Pertama','Selesaikan satu pembelian.', 'purchase',1,2000,true)
+on conflict(code) do update set
+ title=excluded.title,
+ description=excluded.description,
+ event_type=excluded.event_type,
+ target_count=excluded.target_count,
+ reward=excluded.reward,
+ is_active=excluded.is_active,
+ updated_at=now();
+
+-- Public forum seed.
+insert into public.chat_groups(name,slug,description,is_public)
+values
+ ('PasTele Community','pastele-community','Forum komunitas PasTele untuk diskusi dan bantuan.',true)
+on conflict(slug) do update set
+ name=excluded.name,
+ description=excluded.description,
+ is_public=true,
+ updated_at=now();
+
+commit;

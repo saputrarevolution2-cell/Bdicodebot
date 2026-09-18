@@ -1,13 +1,14 @@
 <!DOCTYPE html><html lang="id"><head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Pembayaran Berhasil — PasTele</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Pembayaran Berhasil — PasTele</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   
-  <link rel="stylesheet" href="css/payment-success.css">
+  <link rel="stylesheet" href="css/payment-success.css?v=20260918-unified">
     
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
+<script src="js/db-contract.js?v=20260918-db-contract"></script>
+<script src="js/rpc-contract.js?v=20260918-rpc-contract"></script>
 </head><body class="public-no-navbar app-page success-page"><main><section class="section success-section"><div class="container success-container"><div class="card success-card"><div class="success-icon"><i class="fa-solid fa-check"></i></div><span class="badge">PAYMENT SUCCESS</span><h1>Pembayaran Berhasil</h1><p class="muted" id="successText">Transaksi kamu sudah berhasil diverifikasi.</p><div class="success-order"><span>Order ID</span><strong id="successOrder">—</strong></div><div class="success-actions"><a class="btn primary" id="openAccess" href="purchases.html"><i class="fa-solid fa-unlock"></i> Lihat Pembelian</a><a class="btn secondary" href="marketplace.html"><i class="fa-solid fa-store"></i> Kembali ke Marketplace</a></div></div></div></section></main><div id="toast"></div><script src="js/payment-success.js"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
-<script src="js/global-notifications.js"></script>
 <script src="js/pastele-data-contract.js"></script>
 </body></html>
