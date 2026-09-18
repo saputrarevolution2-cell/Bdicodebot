@@ -314,3 +314,40 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
     max-width:calc((100% - 10px) / 2) !important;
   }
 }
+
+
+/* PasTele FINAL 2-COLUMN MARKETPLACE — 2026-09-19 */
+#market.market-grid.marketplace-content-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  width: 100% !important;
+  gap: 12px !important;
+  align-items: stretch !important;
+  align-content: start !important;
+}
+#market.market-grid.marketplace-content-grid > .product-card {
+  display: block !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  grid-column: auto !important;
+}
+#market.market-grid.marketplace-content-grid > .market-loading,
+#market.market-grid.marketplace-content-grid > .market-empty,
+#market.market-grid.marketplace-content-grid > .market-error {
+  grid-column: 1 / -1 !important;
+}
+@media (min-width: 1051px) {
+  #market.market-grid.marketplace-content-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+@media (max-width: 520px) {
+  #market.market-grid.marketplace-content-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
