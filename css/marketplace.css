@@ -237,3 +237,41 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
 .market-grid>.market-loading,.market-grid>.market-empty,.market-grid>.market-error{grid-column:1/-1!important}
 @media(max-width:1050px){.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}}
 @media(max-width:520px){.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.market-grid>*{min-width:0}}
+
+/* =========================================================
+   PasTele FINAL OVERRIDE — marketplace cards
+   Force 2 columns on phones/tablets and 4 on desktop.
+   This selector intentionally wins over older page CSS.
+   ========================================================= */
+.marketplace-page #market.market-grid.marketplace-content-grid{
+  display:grid !important;
+  width:100% !important;
+  grid-auto-flow:row !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:16px !important;
+  align-items:stretch !important;
+  box-sizing:border-box !important;
+}
+.marketplace-page #market.market-grid.marketplace-content-grid > .product-card{
+  width:auto !important;
+  max-width:none !important;
+  min-width:0 !important;
+  margin:0 !important;
+}
+@media (max-width:1050px){
+  .marketplace-page #market.market-grid.marketplace-content-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+}
+@media (max-width:520px){
+  .marketplace-page #market.market-grid.marketplace-content-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+  }
+  .marketplace-page #market.market-grid.marketplace-content-grid > .product-card{
+    min-width:0 !important;
+  }
+}
+/* Ranking stays a single vertical list intentionally; only the main
+   marketplace content cards use the 2/4-column grid. */
