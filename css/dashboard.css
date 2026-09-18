@@ -1306,3 +1306,113 @@ html[data-theme="dark"] .dashboard-page .pastele-footer{
   .dashboard-page .count-card>i{width:27px !important;height:27px !important;flex-basis:27px !important}
   .dashboard-page .count-card b{font-size:13px !important}
 }
+
+
+/* =========================================================
+   PasTele Dashboard — final compact/premium layout
+   Keep 2 cards per row on phone/tablet/desktop.
+   ========================================================= */
+.dashboard-page .finance-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  align-items:stretch;
+}
+.dashboard-page .finance-card{
+  min-height:94px;
+  padding:14px !important;
+  border-radius:18px !important;
+  overflow:hidden;
+}
+.dashboard-page .finance-copy{
+  min-width:0;
+}
+.dashboard-page .finance-copy small{
+  display:block;
+  line-height:1.25;
+  margin-bottom:5px;
+}
+.dashboard-page .finance-copy strong{
+  display:block;
+  line-height:1.1;
+  letter-spacing:-.025em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.dashboard-page .finance-copy em{
+  display:none !important;
+}
+.dashboard-page .detail-stats-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+.dashboard-page .detail-stat-card{
+  min-width:0;
+  border-radius:17px !important;
+}
+.dashboard-page .performance-summary{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:10px !important;
+}
+.dashboard-page .performance-stat{
+  min-width:0;
+  border-radius:16px !important;
+}
+.dashboard-page .revenue-trend-value{
+  padding:16px 16px 6px !important;
+}
+.dashboard-page .revenue-trend-value strong{
+  font-size:24px !important;
+}
+.dashboard-page .revenue-bars{
+  min-height:145px !important;
+  padding:10px 16px 20px !important;
+  gap:6px !important;
+}
+.dashboard-page .revenue-bar{
+  border-radius:8px 8px 3px 3px !important;
+  min-width:0;
+}
+.dashboard-page .dashboard-detail-panel,
+.dashboard-page .performance-panel,
+.dashboard-page .revenue-trend-card{
+  border-radius:20px !important;
+}
+.dashboard-page .section-head{
+  gap:10px;
+}
+.dashboard-page .section-head h2{
+  letter-spacing:-.02em;
+}
+@media(max-width:640px){
+  .dashboard-page .finance-grid,
+  .dashboard-page .detail-stats-grid,
+  .dashboard-page .performance-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  .dashboard-page .finance-card{
+    min-height:88px;
+    padding:12px !important;
+    border-radius:16px !important;
+  }
+  .dashboard-page .finance-copy small{font-size:10px}
+  .dashboard-page .finance-copy strong{font-size:16px}
+  .dashboard-page .finance-icon{
+    width:32px;
+    height:32px;
+    min-width:32px;
+    border-radius:10px;
+  }
+  .dashboard-page .detail-stat-card{padding:13px !important}
+}
+@media(max-width:360px){
+  .dashboard-page .finance-card{padding:10px !important}
+  .dashboard-page .finance-copy strong{font-size:14px}
+  .dashboard-page .finance-icon{
+    width:29px;
+    height:29px;
+    min-width:29px;
+  }
+}
