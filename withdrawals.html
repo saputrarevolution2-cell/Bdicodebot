@@ -179,50 +179,45 @@
                      ================================================= -->
                 <section
                     class="balance-panel"
-                    aria-label="Saldo tersedia"
+                    aria-label="Ringkasan saldo withdraw"
                 >
 
                     <div class="balance-main">
 
                         <span class="balance-label">
-
-                            <i
-                                class="fa-solid fa-wallet"
-                                aria-hidden="true"
-                            ></i>
-
+                            <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                             Saldo tersedia
-
                         </span>
 
-
-                        <strong id="bal">
-                            Rp0
-                        </strong>
-
+                        <strong id="bal">Rp0</strong>
 
                         <span class="balance-note">
-                            Saldo yang dapat ditarik
+                            Hanya saldo yang sudah settlement dan dapat ditarik
                         </span>
 
                     </div>
 
-
                     <div class="balance-action">
-
                         <a href="wallet.html">
-
-                            <i
-                                class="fa-solid fa-arrow-left"
-                                aria-hidden="true"
-                            ></i>
-
+                            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                             Wallet
-
                         </a>
-
                     </div>
 
+                </section>
+
+                <section class="settlement-panel" aria-label="Saldo menunggu settlement">
+                    <div class="settlement-icon" aria-hidden="true">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                    <div class="settlement-copy">
+                        <div class="settlement-title-row">
+                            <strong>Saldo menunggu settlement</strong>
+                            <span class="settlement-badge">H+2</span>
+                        </div>
+                        <span>Penghasilan penjualan belum bisa digunakan untuk withdraw sampai settlement selesai.</span>
+                    </div>
+                    <strong id="pendingSettlement" class="settlement-amount">Rp0</strong>
                 </section>
 
 
