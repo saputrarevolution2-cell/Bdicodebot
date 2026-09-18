@@ -8,7 +8,7 @@
   <title>Marketplace — PasTele</title>
   <!-- PasTele canonical UI stack -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/marketplace.css?v=20260919-2COL-FINAL-v3">
+  <link rel="stylesheet" href="css/marketplace.css?v=20260919-RANKING-MODE-v1">
     
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -136,19 +136,23 @@
             Reset
           </button>
         </div>
-        <!-- PRODUCTS -->
-        <div class="market-grid marketplace-content-grid" id="market">
-          <div class="market-loading">
-            <span>
-              <i class="fa-solid fa-circle-notch"></i>
-            </span>
+        <!-- ALL CONTENT — SAME LIST STYLE AS TOP RANKINGS -->
+        <section class="market-panel market-all-panel">
+          <div class="market-panel-head">
             <div>
-              <strong>Memuat marketplace</strong>
-              <small>Mengambil produk terbaru...</small>
+              <span class="market-panel-icon"><i class="fa-solid fa-store"></i></span>
+              <div>
+                <h2 id="allContentTitle">Semua konten</h2>
+                <small>Konten terbaru di marketplace</small>
+              </div>
             </div>
+            <span class="top-label">TOP 10 / PAGE</span>
           </div>
-        </div>
-        <div class="market-pagination" id="marketPagination" aria-label="Halaman marketplace"></div>
+          <div class="market-ranking market-all-ranking" id="market">
+            <div class="market-list-loading"></div>
+          </div>
+          <div class="market-pagination" id="marketPagination" aria-label="Halaman marketplace"></div>
+        </section>
         <!-- TOP LISTS -->
         <div class="market-rank-grid">
           <!-- LINK -->
@@ -245,11 +249,22 @@
               <div class="market-list-loading"></div>
             </div>
           </section>
+          <!-- CREATOR -->
+          <section class="market-panel">
+            <div class="market-panel-head">
+              <div>
+                <span class="market-panel-icon"><i class="fa-solid fa-user-tie"></i></span>
+                <div><h2>Kreator Top</h2><small>Banyak penjualan & rajin share</small></div>
+              </div>
+              <span class="top-label">TOP 10</span>
+            </div>
+            <div class="market-ranking" id="topCreator"><div class="market-list-loading"></div></div>
+          </section>
         </div>
       </div>
     </section>
   </main>
-  <div id="toast"></div><script src="js/marketplace.js?v=20260919-2COL-FINAL-v3"></script>
+  <div id="toast"></div><script src="js/marketplace.js?v=20260919-RANKING-MODE-v1"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
 <script src="js/pastele-data-contract.js"></script>
 </body>
