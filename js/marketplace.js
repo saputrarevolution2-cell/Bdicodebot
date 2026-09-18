@@ -4107,7 +4107,9 @@ bindMarketplaceBuyButtons();
     }
   }
   /* =======================================================
-     LOAD MARKETPLACE
+     LOAD MARKETPLACE — CANONICAL DATABASE VIEW
+     Source of truth: public.marketplace_public from
+     PASTELE_DATABASE_UNIFIED_FINAL_20260918(1).sql
      ======================================================= */
   async function load() {
     const client = getSupabase();
@@ -4115,132 +4117,140 @@ bindMarketplaceBuyButtons();
       setError("Database belum terkonfigurasi.");
       return;
     }
+
     setLoading();
+
     try {
-      /*
-       * IMPORTANT: Marketplace is public. Use the canonical public view
-       * as the single source of truth so Link, Code, Channel, Group,
-       * PasteLink and Paste all appear consistently for guests.
-       */
       const { data: publicRows, error: publicError } = await client
         .from("marketplace_public")
-        .select("id,slug,title,type,access_type,price,thumbnail_url,description,views,sales_count,category,created_at,creator_name,creator_username,owner_id")
+        .select(
+          "id,slug,title,type,access_type,price,thumbnail_url,description,views,sales_count,category,created_at,creator_name,creator_username,owner_id"
+        )
         .order("created_at", { ascending: false })
         .limit(1000);
 
       if (publicError) {
-        console.warn("[Marketplace] marketplace_public unavailable:", publicError);
+        console.error("[Marketplace] marketplace_public error:", publicError);
         throw publicError;
       }
 
-      let data = (publicRows || []).map(row => ({
-        ...row,
-        type: typeOf(row),
-        access_type: String(row.access_type || (Number(row.price || 0) > 0 ? "paid" : "free")).toLowerCase(),
-        owner_id: row.owner_id || null,
-        title: row.title || "Untitled",
-        description: String(row.description || "").trim(),
-        creator_name: row.creator_name || "",
-        creator_username: String(row.creator_username || "").replace(/^@/, "")
-      })).filter(row => row.id && row.title);
+      // The canonical view already unions:
+      // products, telegram_products (Code), telegram_channels (Group/Channel),
+      // pastelinks and public pastes. Do not call non-canonical RPCs or
+      // private tables as a prerequisite for guests.
+      let data = (publicRows || [])
+        .map(row => ({
+          ...row,
+          type: typeOf(row),
+          access_type: accessType(row),
+          owner_id: row.owner_id || null,
+          title: String(row.title || "Untitled").trim(),
+          description: String(row.description || "").trim(),
+          creator_name: String(row.creator_name || "").trim(),
+          creator_username: String(row.creator_username || "")
+            .replace(/^@/, "")
+            .trim()
+        }))
+        .filter(row => row.id && row.title);
 
-      /*
-       * PASTELINK SAFETY FALLBACK
-       * The canonical marketplace_public view should already contain
-       * PasteLink rows. If a stale view/cache/RLS situation returns no
-       * PasteLink rows, read only the public pastelinks rows directly.
-       * This does not expose private content: only public + unexpired
-       * listings are accepted.
-       */
-      if (!data.some(row => typeOf(row) === "pastelink")) {
-        try {
-          const fallback = await client
-            .from("pastelinks")
-            .select("id,slug,title,visibility,access_type,price,description,views,created_at,user_id,expires_at")
-            .eq("visibility", "public")
-            .order("created_at", { ascending: false })
-            .limit(1000);
+      // Optional Telegram metadata enrichment only. If RLS blocks these
+      // reads, the marketplace cards remain usable because the canonical
+      // view has already supplied the public listing data.
+      const codeIds = data
+        .filter(x => x.type === "code")
+        .map(x => x.id);
 
-          if (!fallback.error && Array.isArray(fallback.data)) {
-            const now = Date.now();
-            const pastelinkRows = fallback.data
-              .filter(row => !row.expires_at || new Date(row.expires_at).getTime() > now)
-              .map(row => ({
-                ...row,
-                type: "pastelink",
-                owner_id: row.user_id || null,
-                creator_name: "",
-                creator_username: ""
-              }))
-              .filter(row => row.id && row.title);
-
-            const existingIds = new Set(data.map(row => String(row.id)));
-            data.push(...pastelinkRows.filter(row => !existingIds.has(String(row.id))));
-          }
-        } catch (fallbackError) {
-          console.warn("[Marketplace] PasteLink fallback unavailable:", fallbackError);
-        }
-      }
-
-      // Final normalization after every source has been merged.
-      data = data.map(row => ({
-        ...row,
-        type: typeOf(row),
-        access_type: accessType(row),
-        title: String(row.title || "Untitled").trim()
-      })).filter(row => row.id && row.title);
-
-      /* Enrich Telegram-specific cards without making them required.
-         If RLS blocks these optional reads, the public cards remain visible. */
-      const codeIds = data.filter(x => x.type === "code").map(x => x.id);
-      const channelIds = data.filter(x => x.type === "channel" || x.type === "group").map(x => x.id);
+      const channelIds = data
+        .filter(x => x.type === "channel" || x.type === "group")
+        .map(x => x.id);
 
       if (codeIds.length) {
         try {
-          const r = await client.from("telegram_products")
+          const r = await client
+            .from("telegram_products")
             .select("id,bot_username,product_type")
             .in("id", codeIds);
+
           if (!r.error) {
-            const m = new Map((r.data || []).map(x => [String(x.id), x]));
+            const m = new Map(
+              (r.data || []).map(x => [String(x.id), x])
+            );
+
             data = data.map(x => {
               const extra = m.get(String(x.id));
-              return extra ? { ...x, bot_username: extra.bot_username || "", product_type: extra.product_type || "" } : x;
+              return extra
+                ? {
+                    ...x,
+                    bot_username: extra.bot_username || "",
+                    product_type: extra.product_type || ""
+                  }
+                : x;
             });
           }
-        } catch (_) {}
+        } catch (err) {
+          console.warn("[Marketplace] Code enrichment skipped:", err);
+        }
       }
 
       if (channelIds.length) {
         try {
-          const r = await client.from("telegram_channels")
+          const r = await client
+            .from("telegram_channels")
             .select("id,username,name,type,description")
             .in("id", channelIds);
+
           if (!r.error) {
-            const m = new Map((r.data || []).map(x => [String(x.id), x]));
+            const m = new Map(
+              (r.data || []).map(x => [String(x.id), x])
+            );
+
             data = data.map(x => {
               const extra = m.get(String(x.id));
               if (!extra) return x;
+
               return {
                 ...x,
-                type: lower(extra.type) === "group" ? "group" : x.type,
-                channel_username: String(extra.username || "").replace(/^@/, ""),
+                type:
+                  lower(extra.type) === "group"
+                    ? "group"
+                    : x.type,
+                channel_username: String(extra.username || "")
+                  .replace(/^@/, "")
+                  .trim(),
                 channel_name: extra.name || "",
-                description: x.description || extra.description || ""
+                description:
+                  x.description || extra.description || ""
               };
             });
           }
-        } catch (_) {}
+        } catch (err) {
+          console.warn("[Marketplace] Channel/group enrichment skipped:", err);
+        }
       }
 
-      /* Creator names are already exposed safely by marketplace_public.
-         Do not make a private profiles query a prerequisite for guests. */
-      data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      // Final normalization and stable newest-first ordering.
+      data = data
+        .map(row => ({
+          ...row,
+          type: typeOf(row),
+          access_type: accessType(row),
+          title: String(row.title || "Untitled").trim()
+        }))
+        .filter(row => row.id && row.title)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at || 0) -
+            new Date(a.created_at || 0)
+        );
+
       items = await loadEngagementCounts(data);
       page = 1;
       render();
     } catch (error) {
       console.error("[Marketplace] Load error:", error);
-      setError("Konten Marketplace belum dapat dimuat. Periksa akses public marketplace_public di Supabase.");
+      setError(
+        "Konten Marketplace belum dapat dimuat. Pastikan view public.marketplace_public pada SQL canonical sudah dijalankan dan dapat dibaca anon/authenticated."
+      );
     }
   }
 
