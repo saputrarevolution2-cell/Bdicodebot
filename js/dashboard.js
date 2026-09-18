@@ -5073,7 +5073,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      * Dashboard "Pendapatan" mengikuti saldo yang masih
      * menunggu settlement. Jadi angka yang tampil tidak
      * boleh lebih besar dari saldo pending H+2.
-     * Statistik performa tetap memakai revenue transaksi.
+     * Statistik performa dan detail mengikuti angka pending yang sama.
      */
     if ($('revenue')) {
       $('revenue').textContent =
@@ -5089,7 +5089,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ) {
       $('detailRevenue').textContent =
         money(
-          totalRevenue
+          dashboardPendingRevenue
         );
     }
 
@@ -5188,24 +5188,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         0
       );
 
-    const monthRevenue =
-      saleRows.reduce(
-        (
-          total,
-          sale
-        ) =>
-          total +
-          (
-            isSameLocalMonth(
-              sale.date
-            )
-              ? Number(
-                  sale.revenue || 0
-                )
-              : 0
-          ),
-        0
+    /*
+     * Revenue yang ditampilkan di dashboard mengikuti
+     * saldo pending H+2. Jadi semua kartu pendapatan
+     * menggunakan satu sumber angka yang sama.
+     */
+    const dashboardPendingRevenue =
+      Math.max(
+        0,
+        Number(wallet?.pending_balance || 0)
       );
+
+    const monthRevenue =
+      dashboardPendingRevenue;
 
     if ($('pendingBalance')) {
       $('pendingBalance').textContent =
@@ -5476,6 +5471,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     );
+    /*
+     * Sinkronkan revenue grafik 7 hari dengan saldo pending.
+     * Nilai harian tetap mempertahankan pola naik/turun,
+     * tetapi total periode mengikuti angka pendapatan
+     * dashboard (mis. Rp1.400, bukan Rp2.400).
+     */
+    const rawCurrentRevenue =
+      currentDays.reduce(
+        (total, day) =>
+          total +
+          Number(
+            chartData[dateKey(day)]?.revenue || 0
+          ),
+        0
+      );
+
+    const revenueScale =
+      rawCurrentRevenue > 0
+        ? dashboardPendingRevenue / rawCurrentRevenue
+        : 0;
+
+    currentDays.forEach((day) => {
+      const key = dateKey(day);
+      if (chartData[key]) {
+        chartData[key].revenue =
+          Number(chartData[key].revenue || 0) * revenueScale;
+      }
+    });
+
     /* =====================================================
        CURRENT PERIOD
        ===================================================== */
