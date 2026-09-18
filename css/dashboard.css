@@ -1,4 +1,3 @@
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root{
@@ -974,4 +973,187 @@ html[data-theme="dark"] .finance-card::after{background:rgba(34,158,217,.09)}
 html[data-theme="dark"] .dashboard-page .pastele-footer{
   background:#080d14;
   border-top-color:rgba(255,255,255,.10);
+}
+
+
+/* =========================================================
+   PasTele Dashboard — 2026-09-19 visual/data refinement
+   ========================================================= */
+
+/* Finance cards: exactly 2 columns on desktop/tablet */
+.finance-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:14px !important;
+}
+.finance-card{
+  min-width:0;
+}
+
+/* Overview detail: clean 2-column cards */
+.detail-stats-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+
+/* Clean 7-day analytics: keep bars, remove weekday/date labels */
+.chart-day > small{
+  display:none !important;
+}
+.chart-fixed{
+  padding-bottom:10px !important;
+}
+.chart-day{
+  min-height:170px;
+}
+
+/* Binance-inspired finance trend: compact, clean chart area */
+.revenue-trend-panel .revenue-trend-value{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 18px 8px;
+}
+.revenue-bars{
+  position:relative;
+  display:grid !important;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  align-items:end;
+  gap:8px;
+  min-height:150px;
+  margin:4px 18px 18px;
+  padding:12px 0 4px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  background:
+    linear-gradient(to bottom,
+      transparent 24%,
+      var(--line) 25%,
+      transparent 25.5%,
+      transparent 49%,
+      var(--line) 50%,
+      transparent 50.5%,
+      transparent 74%,
+      var(--line) 75%,
+      transparent 75.5%);
+}
+.revenue-bar{
+  position:relative;
+  height:118px;
+  min-width:0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  cursor:pointer;
+}
+.revenue-bar i{
+  display:block;
+  width:min(18px,55%);
+  min-height:3px;
+  border-radius:5px 5px 2px 2px;
+  background:linear-gradient(180deg,var(--primary),var(--primary2));
+  box-shadow:0 5px 16px rgba(34,158,217,.16);
+  transition:height .25s ease,transform .18s ease,filter .18s ease;
+}
+.revenue-bar:hover i,
+.revenue-bar:focus-visible i{
+  transform:scaleX(1.18);
+  filter:brightness(1.08);
+}
+.revenue-bar::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-1px;
+  width:5px;
+  height:5px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:var(--primary);
+  opacity:.65;
+}
+
+/* Followers: country rows are clickable */
+.follower-country{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:48px;
+  padding:8px 10px;
+  border:1px solid transparent;
+  border-radius:13px;
+  background:transparent;
+  color:var(--text);
+  text-align:left;
+  transition:.18s ease;
+}
+.follower-country:hover,
+.follower-country.active{
+  background:var(--surface2);
+  border-color:var(--line);
+}
+.country-dot{
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:var(--country-color);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  box-shadow:0 5px 14px color-mix(in srgb,var(--country-color) 25%,transparent);
+}
+.country-copy{
+  min-width:0;
+  flex:1;
+}
+.country-copy strong,
+.country-copy small{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.country-copy strong{font-size:11px}
+.country-copy small{font-size:9px;color:var(--muted)}
+.follower-country > b{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:900;
+}
+
+/* Recent/activity pagination only appears when needed */
+.dash-pagination:empty{
+  display:none !important;
+}
+.dash-pagination{
+  padding:10px 18px 15px;
+}
+
+/* Keep the dashboard dense and clean */
+.dashboard-detail-panel{
+  margin-bottom:18px;
+}
+
+/* Mobile */
+@media (max-width:700px){
+  .finance-grid,
+  .detail-stats-grid{
+    grid-template-columns:1fr !important;
+  }
+  .revenue-bars{
+    gap:5px;
+    margin-left:12px;
+    margin-right:12px;
+  }
+  .revenue-bar i{width:12px}
+}
+
+@media (min-width:701px) and (max-width:980px){
+  .finance-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
 }
