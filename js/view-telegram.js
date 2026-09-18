@@ -2590,7 +2590,7 @@ window.PASTELE_CONFIG = Object.freeze({
 /* PasTele public view: NO LOGIN SESSION GUARD. Guests and logged-in users may open this page. */
 window.PasTelePublicView = true;
 
-/* Guest-only login/register ticker: logged-in users should not see the guest warning. */
+/* Guest transaction warning: logged-in users should not see the guest warning. */
 (async () => {
   try {
     const ticker = document.getElementById("viewGuestTicker");
@@ -2663,11 +2663,23 @@ async function resolve(kind){
  if(error)throw error;
  return Array.isArray(data)?data[0]:data;
 }
-async function detailById(kind,id){
+async function detailById(kind,id,allowGuestReceipt=false){
  const client=window.sb; const type=targetType(kind);
- const u=await user(); const tok=u?null:localStorage.getItem("pastele-guest-checkout-token");
- const q=tok?await window.PasTeleDB.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:tok}):await window.PasTeleDB.rpc("get_market_item_detail",{p_type:type,p_id:id});
+ const u=await user();
+ const params=new URLSearchParams(location.search);
+ const tok=!u && allowGuestReceipt ? String(params.get("guest_token")||"").trim() : "";
+ const q=tok
+   ? await window.PasTeleDB.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:tok})
+   : await window.PasTeleDB.rpc("get_market_item_detail",{p_type:type,p_id:id});
  if(q.error)throw q.error; return Array.isArray(q.data)?q.data[0]:q.data;
+}
+async function refreshItem(kind,item){
+ if(!item?.id)return item;
+ try{
+   const params=new URLSearchParams(location.search);
+   const receipt=params.get("purchase_access")==="1" && !!String(params.get("guest_token")||"").trim();
+   return await detailById(kind,item.id,receipt);
+ }catch{return item}
 }
 function isPaid(item){return String(item?.access_type||"free").toLowerCase()==="paid"||Number(item?.price||0)>0}
 async function refreshItem(kind,item){
@@ -2677,28 +2689,101 @@ async function refreshItem(kind,item){
 async function accessState(kind,item){
  const paid=isPaid(item); if(!paid)return {ok:true,reason:"free"};
  const u=await user();
- if(u?.id && (String(item.owner_id||item.creator_id||item.seller_id)===String(u.id) || item.can_access===true || item.is_premium===true))return {ok:true,reason:item.is_premium?"premium":"owner"};
+ const ar=item?.access_result||{};
+ const ap=item?.access_policy||{};
+ const tier=String(ar.tier||ap.tier||"").toLowerCase();
+ const arReason=String(ar.reason||"").toUpperCase();
+ const isQuotaExhausted=arReason==="QUOTA_EXHAUSTED" || String(ar.message||"").toLowerCase().includes("quota");
+
+ // The database detail RPC is authoritative for account entitlements.
+ // Premium has unlimited included access. Active subscriptions use their
+ // per-day quota. A completed account purchase is permanent for the account.
  if(u?.id){
-   const q=await window.sb.from("purchases").select("id").eq("buyer_id",u.id).eq("product_id",item.id).in("status",["completed","paid","success"]).limit(1);
-   if(!q.error&&q.data?.length)return {ok:true,reason:"purchase"};
+   if(String(item.owner_id||item.creator_id||item.seller_id||"")===String(u.id))return {ok:true,reason:"owner",profile:u};
+   if(item.can_access===true){
+     if(item.is_premium===true || tier==="premium" || arReason==="PREMIUM_FULL_ACCESS")
+       return {ok:true,reason:"premium",profile:u};
+     if(arReason==="SUBSCRIPTION_QUOTA" || arReason==="ALREADY_OPENED_TODAY")
+       return {ok:true,reason:"subscription",profile:u,usage:ar};
+     return {ok:true,reason:"purchase",profile:u};
+   }
+
+   // Keep a direct completed-purchase check for compatibility with older
+   // detail RPC responses. This only applies to authenticated accounts.
+   try{
+     const q=await window.sb.from("purchases")
+       .select("id,product_id,item_id,item_type")
+       .eq("buyer_id",u.id)
+       .in("status",["completed","paid","success"])
+       .or(`product_id.eq.${item.id},item_id.eq.${item.id}`)
+       .limit(1);
+     if(!q.error&&q.data?.length)return {ok:true,reason:"purchase",profile:u};
+   }catch{}
+
+   if(tier==="subscription" && isQuotaExhausted){
+     return {ok:false,reason:"subscription_limit",profile:u,usage:ar,policy:ap};
+   }
  }
- const tok=String(new URLSearchParams(location.search).get("guest_token")||localStorage.getItem("pastele-guest-checkout-token")||"").trim();
- const purchaseAccess=String(new URLSearchParams(location.search).get("purchase_access")||"") === "1";
- // Guest purchases are intentionally NOT permanent on the normal public URL.
- // Only the payment-success redirect may open the just-paid content, and only
- // after verifying the successful order for this exact item.
- if(tok && purchaseAccess){
-   const q=await window.sb.from("orders").select("id").eq("guest_access_token",tok).eq("product_id",item.id).eq("buyer_id",null).in("status",["paid","completed","success"]).limit(1);
-   if(!q.error&&q.data?.length)return {ok:true,reason:"guest_purchase_session"};
+
+ // Guest purchase receipts are deliberately one-transaction access only.
+ // A normal public URL NEVER treats an earlier guest purchase as ownership,
+ // so the same guest can purchase the item again. Only payment-success.html
+ // may append purchase_access=1 after the paid order is verified.
+ const params=new URLSearchParams(location.search);
+ const tok=String(params.get("guest_token")||"").trim();
+ const purchaseAccess=params.get("purchase_access")==="1";
+ if(!u && tok && purchaseAccess){
+   try{
+     const d=await window.PasTeleDB.rpc("get_market_item_detail_guest",{
+       p_type:targetType(kind),p_id:item.id,p_guest_token:tok
+     });
+     if(!d.error){
+       const row=Array.isArray(d.data)?d.data[0]:d.data;
+       if(row?.can_access===true)return {ok:true,reason:"guest_purchase_receipt",profile:null,token:tok};
+     }
+   }catch{}
  }
- return {ok:false,reason:"purchase"};
+ return {ok:false,reason:"purchase",profile:u||null,token:null};
 }
+
 async function startBuy(kind,item){
  const paid=isPaid(item); if(!paid)return;
- const u=await user(); let tok=null;
+ const u=await user();
+
+ // Account entitlement is authoritative: once an authenticated buyer has
+ // completed a purchase, the page will never create another order for it.
+ if(u?.id){
+   if(item?.can_access===true){
+     toast("Konten ini sudah terbuka di akun kamu. Tidak perlu membeli lagi.","success");
+     return;
+   }
+   try{
+     const existing=await window.sb.from("purchases")
+       .select("id")
+       .eq("buyer_id",u.id)
+       .or(`product_id.eq.${item.id},item_id.eq.${item.id}`)
+       .in("status",["completed","paid","success"])
+       .limit(1);
+     if(!existing.error&&existing.data?.length){
+       toast("Kamu sudah pernah membeli konten ini. Tidak perlu membeli lagi.","success");
+       return;
+     }
+   }catch{}
+ }
+
+ // Subscription quota exhaustion is not a reason to create a paid order.
+ // The content detail RPC has already calculated today's usage.
+ const ar=item?.access_result||{};
+ const ap=item?.access_policy||{};
+ if(u?.id && String(ap.tier||ar.tier||"").toLowerCase()==="subscription" && String(ar.reason||"").toUpperCase()==="QUOTA_EXHAUSTED"){
+   toast("Batas akses langganan hari ini sudah tercapai. Silakan tunggu sampai besok atau upgrade Premium.","info");
+   return;
+ }
+
+ let tok=null;
  if(!u){
    tok=guestToken();
-   const ok=confirm("Pembelian sebagai Guest.\n\nGuest bisa membeli, tetapi akses tidak dijamin permanen jika identitas Guest hilang. Login/daftar terlebih dahulu disarankan agar pembelian tersimpan permanen di akun.\n\nLanjut sebagai Guest?");
+   const ok=confirm("Kamu belum login.\n\nJangan hapus/menutup halaman web ini selama transaksi berlangsung karena kamu belum login dan halaman ini membantu melanjutkan transaksi Guest.\n\nGuest tetap bisa membeli dan dapat membeli item yang sama lagi setelah transaksi selesai.\n\nLanjut sebagai Guest?");
    if(!ok)return;
  }
  const type=targetType(kind);
@@ -2708,13 +2793,14 @@ async function startBuy(kind,item){
  if(q.error)throw q.error;
  const result=q.data?.data && !q.data?.order_id ? q.data.data : q.data;
  if(result?.already_owned || result?.can_access || result?.membership_access){
-   if(result?.order_id) location.href=`payment.html?order_id=${encodeURIComponent(result.order_id)}`;
-   else location.reload();
+   if(result?.order_id) location.href=`/payment.html?order_id=${encodeURIComponent(result.order_id)}`;
+   else toast("Konten sudah dapat diakses. Tidak perlu membeli lagi.","success");
    return;
  }
  const oid=result?.order_id;if(!oid)throw Error("Order ID tidak ditemukan.");
- location.href=`payment.html?order_id=${encodeURIComponent(oid)}${tok?"&guest_token="+encodeURIComponent(tok):""}`;
+ location.href=`/payment.html?order_id=${encodeURIComponent(oid)}${tok?"&guest_token="+encodeURIComponent(tok):""}`;
 }
+
 async function loadSocial(kind,item){
  const client=window.sb, tid=item.id, tt=targetType(kind);
  const [likes,comments,shares,u]=await Promise.all([
@@ -2849,7 +2935,7 @@ document.documentElement.classList.add("pastele-ready");
   async function markRead(){if(me&&group)try{await sb().rpc('mark_chat_read',{p_group_id:group.id});toast('Chat ditandai sudah dibaca.','success')}catch{}}
   function subscribe(){if(!sb()?.channel||!group)return;if(channel)try{sb().removeChannel(channel)}catch{};channel=sb().channel('pastele-chat-'+group.id).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:`group_id=eq.${group.id}`},()=>loadMessages()).subscribe()}
   function bind(){
-    const attach=()=>{document.querySelectorAll('#ptForumTrigger').forEach(b=>{if(b.dataset.chatBound)return;b.dataset.chatBound='1';b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();location.href='forum.html'})})};
+    const attach=()=>{document.querySelectorAll('#ptForumTrigger').forEach(b=>{if(b.dataset.chatBound)return;b.dataset.chatBound='1';b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();open()})})};
     attach();new MutationObserver(attach).observe(document.body,{childList:true,subtree:true});
     document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
   }
