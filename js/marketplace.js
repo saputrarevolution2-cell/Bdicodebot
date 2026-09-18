@@ -208,7 +208,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.sb;
+    const client = window.sb || window.supabaseClient;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -426,7 +426,8 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await window.PasTeleDB.rpc("resolve_username_login",
+            await client.rpc(
+              "resolve_username_login",
               {
                 p_username: username
               }
@@ -633,7 +634,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await window.PasTeleDB.rpc("check_email_available", {
+        await client.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -678,7 +679,8 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await window.PasTeleDB.rpc("resolve_username_login",
+          await client.rpc(
+            "resolve_username_login",
             {
               p_username: value
             }
@@ -730,7 +732,8 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await window.PasTeleDB.rpc("check_username_available",
+        await client.rpc(
+          "check_username_available",
           {
             p_username: value
           }
@@ -958,8 +961,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.sb) &&
-        (window.sb?.auth || window.sb?.auth)
+        (window.sb || window.supabaseClient) &&
+        (window.sb?.auth || window.supabaseClient?.auth)
       );
     }
   };
@@ -1250,7 +1253,8 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.PasTeleDB.rpc("get_public_site_settings"
+          await window.sb.rpc(
+            'get_public_site_settings'
           );
         if (
           !result?.error &&
@@ -2783,7 +2787,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const getSupabase = () => {
     return (
       window.sb ||
-      window.sb ||
+      window.supabaseClient ||
       window.supabase ||
       null
     );
@@ -3244,107 +3248,112 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      TOP LIST
      ======================================================= */
-  function list(
-    id,
-    array
-  ) {
-    const element =
-      $(id);
-    if (!element) {
+  const rankingPages = Object.create(null);
+
+  function rankIcon(index) {
+    if (index === 0) {
+      return `<span class="rank-award rank-award-1" aria-label="Peringkat 1"><i class="fa-solid fa-trophy" aria-hidden="true"></i></span>`;
+    }
+    if (index === 1) {
+      return `<span class="rank-award rank-award-2" aria-label="Peringkat 2"><i class="fa-solid fa-medal" aria-hidden="true"></i><b>2</b></span>`;
+    }
+    if (index === 2) {
+      return `<span class="rank-award rank-award-3" aria-label="Peringkat 3"><i class="fa-solid fa-medal" aria-hidden="true"></i><b>3</b></span>`;
+    }
+    if (index === 3) {
+      return `<span class="rank-award rank-award-4" aria-label="Peringkat 4"><i class="fa-solid fa-medal" aria-hidden="true"></i><b>4</b></span>`;
+    }
+    if (index === 4) {
+      return `<span class="rank-award rank-award-5" aria-label="Peringkat 5"><i class="fa-solid fa-medal" aria-hidden="true"></i><b>5</b></span>`;
+    }
+    return `<span class="market-rank-number">#${index + 1}</span>`;
+  }
+
+  function rankingStats(item) {
+    return `
+      <span title="Dilihat"><i class="fa-solid fa-eye" aria-hidden="true"></i>${viewsText(item)}</span>
+      <span title="Like"><i class="fa-solid fa-heart" aria-hidden="true"></i>${likesText(item)}</span>
+      <span title="Share"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i>${sharesText(item)}</span>
+      <span title="Komentar"><i class="fa-solid fa-comment" aria-hidden="true"></i>${commentsText(item)}</span>
+    `;
+  }
+
+  function renderRankingPager(element, key, totalPages) {
+    const pager = element.querySelector(".market-ranking-pagination");
+    if (!pager) return;
+    if (totalPages <= 1) {
+      pager.innerHTML = "";
       return;
     }
-    const rows =
-      array
-        .slice(0, 10)
-        .map(
-          (
-            item,
-            index
-          ) => {
-            const type =
-              typeOf(item);
-            const href =
-              productUrl(item);
-            const access =
-              accessType(item);
-            const title =
-              item?.title ||
-              "Untitled";
-            return `
-              <a
-                class="market-list-item"
-                href="${esc(href)}"
-                aria-label="Buka ${esc(title)}"
-              >
-                <span
-                  class="market-rank-number ${
-                    index === 0
-                      ? "top-one"
-                      : ""
-                  }"
-                >
-                  #${index + 1}
-                </span>
-                <div class="market-list-main">
-                  <strong
-                    class="market-list-title"
-                  >
-                    ${esc(title)}
-                  </strong>
-                  <div class="market-list-meta">
-                    <span>
-                      <i
-                        class="fa-solid ${icon(type)}"
-                        aria-hidden="true"
-                      ></i>
-                      ${esc(
-                        typeLabel(type)
-                      )}
-                    </span>
-                    <span>
-                      <i
-                        class="fa-solid fa-eye"
-                        aria-hidden="true"
-                      ></i>
-                      ${viewsText(item)}
-                    </span>
-                  </div>
-                </div>
-                <strong
-                  class="market-list-price ${
-                    access === "free"
-                      ? "free"
-                      : ""
-                  }"
-                >
-                  ${priceText(item)}
-                </strong>
-              </a>
-            `;
-          }
-        )
-        .join("");
-    element.innerHTML =
-      rows ||
-      `
-        <div class="market-empty">
-          <span>
-            <i
-              class="fa-solid fa-box-open"
-              aria-hidden="true"
-            ></i>
-          </span>
-          <div>
-            <strong>
-              Belum ada data
-            </strong>
-            <small>
-              Belum ada konten pada kategori ini.
-            </small>
-          </div>
-        </div>
-      `;
+    const current = rankingPages[key] || 1;
+    const buttons = [];
+    buttons.push(`<button type="button" data-ranking-page="${current - 1}" ${current === 1 ? "disabled" : ""} aria-label="Halaman sebelumnya">‹</button>`);
+    for (let i = 1; i <= totalPages; i++) {
+      const show = totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - current) <= 1;
+      if (!show) {
+        if (i === 2 || i === totalPages - 1) buttons.push(`<span class="ranking-page-dots">…</span>`);
+        continue;
+      }
+      buttons.push(`<button type="button" class="${i === current ? "active" : ""}" data-ranking-page="${i}" ${i === current ? 'aria-current="page"' : ""}>${i}</button>`);
+    }
+    buttons.push(`<button type="button" data-ranking-page="${current + 1}" ${current === totalPages ? "disabled" : ""} aria-label="Halaman berikutnya">›</button>`);
+    pager.innerHTML = buttons.join("");
+    pager.querySelectorAll("button[data-ranking-page]").forEach(button => {
+      button.addEventListener("click", () => {
+        const next = Number(button.dataset.rankingPage);
+        if (!Number.isFinite(next) || next < 1 || next > totalPages || next === current) return;
+        rankingPages[key] = next;
+        list(key, element.__rankingRows || []);
+      });
+    });
   }
+
+  function list(id, array) {
+    const element = $(id);
+    if (!element) return;
+
+    element.__rankingRows = Array.isArray(array) ? array : [];
+    const totalPages = Math.max(1, Math.ceil(element.__rankingRows.length / 10));
+    const current = Math.min(rankingPages[id] || 1, totalPages);
+    rankingPages[id] = current;
+    const start = (current - 1) * 10;
+    const rows = element.__rankingRows.slice(start, start + 10);
+
+    const content = rows.map((item, index) => {
+      const globalIndex = start + index;
+      const type = typeOf(item);
+      const href = productUrl(item);
+      const access = accessType(item);
+      const title = item?.title || "Untitled";
+      return `
+        <a class="market-list-item" href="${esc(href)}" aria-label="Buka ${esc(title)}">
+          ${rankIcon(globalIndex)}
+          <div class="market-list-main">
+            <strong class="market-list-title">${esc(title)}</strong>
+            <div class="market-list-price-row">
+              <strong class="market-list-price ${access === "free" ? "free" : ""}">${priceText(item)}</strong>
+              <span class="market-list-type"><i class="fa-solid ${icon(type)}" aria-hidden="true"></i>${esc(typeLabel(type))}</span>
+            </div>
+            <div class="market-list-stats" aria-label="Statistik">
+              ${rankingStats(item)}
+            </div>
+          </div>
+        </a>
+      `;
+    }).join("");
+
+    element.innerHTML = `
+      ${content || `
+        <div class="market-empty">
+          <span><i class="fa-solid fa-box-open" aria-hidden="true"></i></span>
+          <div><strong>Belum ada data</strong><small>Belum ada konten pada kategori ini.</small></div>
+        </div>
+      `}
+      <div class="market-ranking-pagination" aria-label="Halaman ranking"></div>
+    `;
+    renderRankingPager(element, id, totalPages);
+  }
+
   /* =======================================================
      TOP LISTS
      ======================================================= */
@@ -3695,7 +3704,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
 
       try {
-        const client = window.sb || window.sb;
+        const client = window.sb || window.supabaseClient;
         if (!client?.rpc) throw new Error("Koneksi database belum tersedia.");
 
         const checkoutType = checkoutTypeFromMarketType(productType);
@@ -3706,8 +3715,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const guestToken = currentUser?.id ? null : marketplaceGuestToken();
         const result = currentUser?.id
-          ? await window.PasTeleDB.rpc("buy_market_item", {p_type: checkoutType, p_id: productId})
-          : await window.PasTeleDB.rpc("buy_market_item_guest", {p_type: checkoutType, p_id: productId, p_guest_token: guestToken});
+          ? await client.rpc("buy_market_item", {p_type: checkoutType, p_id: productId})
+          : await client.rpc("buy_market_item_guest", {p_type: checkoutType, p_id: productId, p_guest_token: guestToken});
 
         if (result?.error) throw result.error;
 
@@ -4405,7 +4414,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.sb || null;
+  const sb = () => window.sb || window.supabaseClient || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -4436,8 +4445,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
