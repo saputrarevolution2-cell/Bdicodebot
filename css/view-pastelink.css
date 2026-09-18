@@ -278,3 +278,6 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
   .content-box.rich .pt-quote,
   .content-box.rich blockquote{max-width:100%;padding:9px 11px}
 }
+
+/* Guest login banner: visible only for users without an active session. */
+#guestLoginTicker[hidden]{display:none!important}
