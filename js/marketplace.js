@@ -2796,8 +2796,22 @@ document.addEventListener("DOMContentLoaded", async () => {
      TYPE NORMALIZATION
      ======================================================= */
   const typeOf = (item) => {
+    // PasteLink must remain identifiable even if an older marketplace
+    // view/API returns a generic "link" type.
+    const rawSource = lower(item?.source || item?.source_table || item?.table_name || item?.item_type);
+    const slug = lower(item?.slug);
     const type =
       lower(item?.type);
+    if (
+      type === "pastelink" ||
+      type === "paste-link" ||
+      type === "paste_link" ||
+      rawSource === "pastelink" ||
+      rawSource === "pastelinks" ||
+      item?.content_html !== undefined
+    ) {
+      return "pastelink";
+    }
     if (
       type === "pastelink" ||
       type === "paste-link" ||
@@ -4127,12 +4141,7 @@ bindMarketplaceBuyButtons();
 
     try {
       const { data: publicRows, error: publicError } = await client
-        .from("marketplace_public")
-        .select(
-          "id,slug,title,type,access_type,price,thumbnail_url,description,views,sales_count,category,created_at,creator_name,creator_username,owner_id"
-        )
-        .order("created_at", { ascending: false })
-        .limit(1000);
+        .rpc("get_public_marketplace");
 
       if (publicError) {
         console.error("[Marketplace] marketplace_public error:", publicError);
@@ -4143,66 +4152,9 @@ bindMarketplaceBuyButtons();
       // versions expose PasteLink rows through marketplace_public with a generic
       // type such as "link"; that makes the PasteLink ranking disappear.
       // The explicit read normalizes those rows to type="pastelink".
-      let pastelinkRows = [];
-      try {
-        const pr = await client
-          .from("pastelinks")
-          .select("id,user_id,slug,title,description,content_html,access_type,price,visibility,expires_at,views,created_at,updated_at")
-          .eq("visibility", "public")
-          .order("created_at", { ascending: false })
-          .limit(1000);
-        if (!pr.error) pastelinkRows = pr.data || [];
-        else console.warn("[Marketplace] Public PasteLink read skipped:", pr.error.message || pr.error);
-      } catch (err) {
-        console.warn("[Marketplace] Public PasteLink read skipped:", err);
-      }
-
-      // The canonical view already unions:
-      // products, telegram_products (Code), telegram_channels (Group/Channel),
-      // pastelinks and public pastes. Do not call non-canonical RPCs or
-      // private tables as a prerequisite for guests.
-      let data = (publicRows || [])
-        .map(row => ({
-          ...row,
-          type: typeOf(row),
-          access_type: accessType(row),
-          owner_id: row.owner_id || null,
-          title: String(row.title || "Untitled").trim(),
-          description: String(row.description || "").trim(),
-          creator_name: String(row.creator_name || "").trim(),
-          creator_username: String(row.creator_username || "")
-            .replace(/^@/, "")
-            .trim()
-        }))
-        .filter(row => row.id && row.title);
-
-      if (pastelinkRows.length) {
-        const existing = new Map(data.map(row => [String(row.id), row]));
-        for (const row of pastelinkRows) {
-          if (!row?.id || !row?.slug || !row?.title) continue;
-          const prev = existing.get(String(row.id));
-          const normalized = {
-            ...(prev || {}),
-            id: row.id,
-            slug: row.slug,
-            title: String(row.title || "Untitled").trim(),
-            description: String(row.description || prev?.description || "").trim(),
-            type: "pastelink",
-            access_type: accessType(row),
-            price: number(row.price),
-            thumbnail_url: row.thumbnail_url || prev?.thumbnail_url || null,
-            views: number(row.views ?? prev?.views),
-            sales_count: number(prev?.sales_count),
-            category: prev?.category || "pastelink",
-            created_at: row.created_at || prev?.created_at,
-            owner_id: row.user_id || prev?.owner_id || null,
-            creator_name: prev?.creator_name || "",
-            creator_username: prev?.creator_username || ""
-          };
-          existing.set(String(row.id), normalized);
-        }
-        data = Array.from(existing.values()).filter(row => row.id && row.title);
-      }
+      // PasteLink rows are supplied by the metadata-only marketplace RPC.
+      // Never query public.pastelinks directly from the browser because that
+      // table contains protected fields such as content_html.
 
       // Optional Telegram metadata enrichment only. If RLS blocks these
       // reads, the marketplace cards remain usable because the canonical
