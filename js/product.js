@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.supabaseClient;
+    const client = window.sb || window.sb;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,8 +439,7 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await client.rpc(
-              "resolve_username_login",
+            await window.PasTeleDB.rpc("resolve_username_login",
               {
                 p_username: username
               }
@@ -647,7 +646,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await client.rpc("check_email_available", {
+        await window.PasTeleDB.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -692,8 +691,7 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await client.rpc(
-            "resolve_username_login",
+          await window.PasTeleDB.rpc("resolve_username_login",
             {
               p_username: value
             }
@@ -745,8 +743,7 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await client.rpc(
-          "check_username_available",
+        await window.PasTeleDB.rpc("check_username_available",
           {
             p_username: value
           }
@@ -974,8 +971,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.supabaseClient) &&
-        (window.sb?.auth || window.supabaseClient?.auth)
+        (window.sb || window.sb) &&
+        (window.sb?.auth || window.sb?.auth)
       );
     }
   };
@@ -1315,8 +1312,7 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.sb.rpc(
-            'get_public_site_settings'
+          await window.PasTeleDB.rpc("get_public_site_settings"
           );
         if (
           !result?.error &&
@@ -2766,7 +2762,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const toast = (m,t="error") => window.TC?.toast ? TC.toast(m,t) : console[t === "error" ? "error" : "log"](m);
   const esc = v => window.TC?.esc ? TC.esc(String(v ?? "")) : String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
   const money = v => window.TC?.money ? TC.money(v) : `Rp ${Number(v||0).toLocaleString("id-ID")}`;
-  const client = window.sb || window.supabaseClient || null;
+  const client = window.sb || window.sb || null;
   const params = new URLSearchParams(location.search);
   // Public Product: login is optional. Guest token is the anonymous checkout
   // identity expected by the canonical database RPCs.
@@ -2880,7 +2876,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Canonical public Code route. The database.sql ships get_code_by_slug(text),
       // but keep a guarded direct lookup for older deployments so the page can
       // fail gracefully instead of showing a misleading generic product error.
-      const detailBySlug = await client.rpc("get_code_by_slug", { p_slug: normalizedRequestedSlug });
+      const detailBySlug = await window.PasTeleDB.rpc("get_code_by_slug", { p_slug: normalizedRequestedSlug });
       if (!detailBySlug.error) {
         item = Array.isArray(detailBySlug.data) ? detailBySlug.data[0] : detailBySlug.data;
         if (!item || item.found === false) return false;
@@ -2897,7 +2893,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         .maybeSingle();
       if (legacy.error) throw detailBySlug.error;
       if (!legacy.data?.id) return false;
-      const detail = await client.rpc("get_market_item_detail", {
+      const detail = await window.PasTeleDB.rpc("get_market_item_detail", {
         p_type: "telegram_product",
         p_id: legacy.data.id
       });
@@ -2913,7 +2909,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // A direct table SELECT is still subject to RLS and can return no row for
     // guests on older deployments, which caused the generic "not found" page.
     if (["channel","group"].includes(requestedType) && !requestedId && requestedSlug) {
-      const resolved = await client.rpc("get_telegram_content_by_slug", { p_slug: normalizedRequestedSlug, p_type: requestedType });
+      const resolved = await window.PasTeleDB.rpc("get_telegram_content_by_slug", { p_slug: normalizedRequestedSlug, p_type: requestedType });
       if (resolved.error) throw resolved.error;
       item = Array.isArray(resolved.data) ? resolved.data[0] : resolved.data;
       if (!item || item.found === false) return false;
@@ -2932,7 +2928,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     else if (table === "telegram_products") rpcType = "telegram_product";
     else rpcType = "channel";
     const guestToken = PRODUCT_GUEST_TOKEN;
-    const detail = guestToken ? await client.rpc("get_market_item_detail_guest", {p_type:rpcType,p_id:id,p_guest_token:guestToken}) : await client.rpc("get_market_item_detail", {p_type:rpcType,p_id:id});
+    const detail = guestToken ? await window.PasTeleDB.rpc("get_market_item_detail_guest", {p_type:rpcType,p_id:id,p_guest_token:guestToken}) : await window.PasTeleDB.rpc("get_market_item_detail", {p_type:rpcType,p_id:id});
     if (detail.error) throw detail.error;
     item = Array.isArray(detail.data) ? detail.data[0] : detail.data;
     if (!item || item.found === false) return false;
@@ -2983,7 +2979,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           (resolvedType === "pastelink" || resolvedType === "paste") ? "pastelink" :
           "product";
 
-        const d = await client.rpc("get_market_item_detail_guest", {
+        const d = await window.PasTeleDB.rpc("get_market_item_detail_guest", {
           p_type: rpcType,
           p_id: item.id,
           p_guest_token: PRODUCT_GUEST_TOKEN
@@ -3044,8 +3040,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const profile = await currentProfile();
         const checkoutToken = guestCheckoutToken();
         const q = profile?.id
-          ? await client.rpc("buy_market_item",{p_type:typeForCheckout,p_id:item.id})
-          : await client.rpc("buy_market_item_guest",{p_type:typeForCheckout,p_id:item.id,p_guest_token:checkoutToken});
+          ? await window.PasTeleDB.rpc("buy_market_item",{p_type:typeForCheckout,p_id:item.id})
+          : await window.PasTeleDB.rpc("buy_market_item_guest",{p_type:typeForCheckout,p_id:item.id,p_guest_token:checkoutToken});
         if(q.error) throw q.error;
         const oid=q.data?.order_id;
         if(!oid) throw new Error("Order ID tidak ditemukan.");
@@ -3109,17 +3105,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (navigator.share) await navigator.share({title:item.title||"PasTele",text:item.description||"Lihat produk ini di PasTele",url});
         else await navigator.clipboard.writeText(url);
       } catch(e) { if(e?.name==='AbortError') return; try { await navigator.clipboard.writeText(url); } catch(_) {} }
-      try { await client.rpc("track_analytics",{p_event_type:"share",p_target_type:targetType,p_target_id:targetId,p_owner:item.owner_id||item.creator_id||item.seller_id||null}); } catch(e) { console.warn("[Product] Share tracking unavailable:",e); }
+      try { await window.PasTeleDB.rpc("track_analytics",{p_event_type:"share",p_target_type:targetType,p_target_id:targetId,p_owner:item.owner_id||item.creator_id||item.seller_id||null}); } catch(e) { console.warn("[Product] Share tracking unavailable:",e); }
       if(shareCount) shareCount.textContent=String(Number(shareCount.textContent||0)+1);
     };
     if (likeBtn) likeBtn.onclick=async()=>{
       const profile=await currentProfile();
       let q;
       if(profile?.id){
-        q=await client.rpc("toggle_content_like",{p_target_id:targetId,p_target_type:targetType,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
+        q=await window.PasTeleDB.rpc("toggle_content_like",{p_target_id:targetId,p_target_type:targetType,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
       } else {
         const guestToken=guestCheckoutToken();
-        q=await client.rpc("toggle_content_like_guest",{p_target_id:targetId,p_target_type:targetType,p_guest_token:guestToken});
+        q=await window.PasTeleDB.rpc("toggle_content_like_guest",{p_target_id:targetId,p_target_type:targetType,p_guest_token:guestToken});
       }
       if(q.error){toast(q.error.message||"Gagal menyukai.","error");return;}
       await loadEngagement();
@@ -3134,7 +3130,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         const renderFollow = async () => {
           try {
-            const q = await client.rpc("get_follow_state", { p_creator_id: ownerId });
+            const q = await window.PasTeleDB.rpc("get_follow_state", { p_creator_id: ownerId });
             if (q.error) return;
             const following = Boolean(q.data);
             followBtn.classList.toggle("active", following);
@@ -3147,10 +3143,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         followBtn.onclick = async () => {
           followBtn.disabled = true;
           try {
-            const q = await client.rpc("toggle_creator_follow", { p_creator_id: ownerId });
+            const q = await window.PasTeleDB.rpc("toggle_creator_follow", { p_creator_id: ownerId });
             if (q.error) throw q.error;
             await renderFollow();
-            try { await client.rpc("record_quest_event", { p_event_type: "follow" }); } catch (_) {}
+            try { await window.PasTeleDB.rpc("record_quest_event", { p_event_type: "follow" }); } catch (_) {}
           } catch (e) {
             toast(e.message || "Gagal mengikuti creator.", "error");
           } finally { followBtn.disabled = false; }
@@ -3201,7 +3197,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const owner = item.owner_id || item.creator_id || item.seller_id || null;
       const targetType = resolvedType === "code" ? "telegram_product" : (resolvedType === "channel" || resolvedType === "group" ? "channel" : resolvedType);
-      await client.rpc("record_content_view", { p_owner: owner, p_target_type: targetType, p_target_id: item.id });
+      await window.PasTeleDB.rpc("record_content_view", { p_owner: owner, p_target_type: targetType, p_target_id: item.id });
     } catch (viewError) {
       console.warn("[Product] View tracking unavailable:", viewError);
     }
@@ -3230,7 +3226,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.supabaseClient || null;
+  const sb = () => window.sb || window.sb || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -3261,8 +3257,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
@@ -3326,7 +3322,7 @@ document.documentElement.classList.add("pastele-ready");
     try {
       const client =
         window.sb ||
-        window.supabaseClient ||
+        window.sb ||
         window.supabase?.createClient && null;
 
       if (!client?.auth) {

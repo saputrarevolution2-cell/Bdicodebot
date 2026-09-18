@@ -64,7 +64,7 @@
       auth:{persistSession:true,autoRefreshToken:true,storageKey:"pastele-auth"}
     });
     window.sb=sb;
-    window.supabaseClient=sb;
+    window.sb=sb;
     return sb;
   }
 
@@ -78,20 +78,12 @@
     const v=lower(value);
     if(!v)return null;
 
-    if(isEmail(v)){
-      // Database(7): email is resolved through the public-safe profiles query.
-      const {data,error}=await client.from("profiles")
-        .select("id,username,display_name,auth_email,email,role,status,is_admin,is_banned")
-        .or(`auth_email.eq.${v},email.eq.${v}`)
-        .maybeSingle();
-      if(error) throw error;
-      return data||null;
-    }
-
-    // Database(7) canonical username resolver.
-    const {data,error}=await client.rpc("resolve_username_login",{p_username:v});
+    // Both username and email use one server-side resolver.
+    // Passwords remain exclusively in Supabase Auth.
+    const {data,error}=await window.PasTeleDB.rpc("resolve_login_identifier",{p_identifier:v});
     if(error) throw error;
-    return rpcRow(data);
+    const row=rpcRow(data);
+    return row?.found ? row : null;
   }
 
   function usable(row){
@@ -269,7 +261,7 @@
       // Username must first resolve to the real auth email.
       let email=clean(foundAccount.auth_email||foundAccount.email);
       if(!email && !isEmail(identifier.value)){
-        const {data,error}=await client.rpc("resolve_username_login",{p_username:lower(identifier.value)});
+        const {data,error}=await window.PasTeleDB.rpc("resolve_username_login",{p_username:lower(identifier.value)});
         if(error)throw error;
         const row=rpcRow(data);
         email=clean(row?.auth_email||row?.email);

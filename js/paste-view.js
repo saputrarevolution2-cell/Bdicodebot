@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.supabaseClient;
+    const client = window.sb || window.sb;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,8 +439,7 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await client.rpc(
-              "resolve_username_login",
+            await window.PasTeleDB.rpc("resolve_username_login",
               {
                 p_username: username
               }
@@ -647,7 +646,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await client.rpc("check_email_available", {
+        await window.PasTeleDB.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -692,8 +691,7 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await client.rpc(
-            "resolve_username_login",
+          await window.PasTeleDB.rpc("resolve_username_login",
             {
               p_username: value
             }
@@ -745,8 +743,7 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await client.rpc(
-          "check_username_available",
+        await window.PasTeleDB.rpc("check_username_available",
           {
             p_username: value
           }
@@ -974,8 +971,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.supabaseClient) &&
-        (window.sb?.auth || window.supabaseClient?.auth)
+        (window.sb || window.sb) &&
+        (window.sb?.auth || window.sb?.auth)
       );
     }
   };
@@ -1315,8 +1312,7 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.sb.rpc(
-            'get_public_site_settings'
+          await window.PasTeleDB.rpc("get_public_site_settings"
           );
         if (
           !result?.error &&
@@ -2980,7 +2976,7 @@ window.PASTELE_CONFIG = Object.freeze({
    - title
    - content_html
    - visibility
-   - password_hash
+   - has_password
    - expires_at
    - description
    - tags
@@ -3035,7 +3031,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
     const client =
         window.sb ||
-        window.supabaseClient ||
+        window.sb ||
         window.supabase;
     if (!client) {
         box.innerHTML = `
@@ -3248,7 +3244,7 @@ document.addEventListener("DOMContentLoaded", async () => {
        Jangan gunakan select('*').
        Ambil hanya kolom yang memang digunakan.
        ======================================================= */
-    const result = await client.rpc("get_pastelink_by_slug", {
+    const result = await window.PasTeleDB.rpc("get_pastelink_by_slug", {
         p_slug: slug
     });
     if (result.error) {
@@ -3282,8 +3278,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         const guestToken=String(new URLSearchParams(location.search).get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
         const detailResult = guestToken
-            ? await client.rpc("get_market_item_detail_guest", {p_type:"pastelink",p_id:paste.id,p_guest_token:guestToken})
-            : await client.rpc("get_market_item_detail", {p_type:"pastelink",p_id:paste.id});
+            ? await window.PasTeleDB.rpc("get_market_item_detail_guest", {p_type:"pastelink",p_id:paste.id,p_guest_token:guestToken})
+            : await window.PasTeleDB.rpc("get_market_item_detail", {p_type:"pastelink",p_id:paste.id});
         if (!detailResult.error) {
             detail = Array.isArray(detailResult.data) ? detailResult.data[0] : detailResult.data;
             if (detail && detail.found !== false) {
@@ -3339,8 +3335,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 const key='pastele-guest-checkout-token'; let guestToken=localStorage.getItem(key); if(!currentUser && !guestToken){guestToken=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));localStorage.setItem(key,guestToken);}
                 const buy = currentUser?.id
-                    ? await client.rpc("buy_market_item", { p_type: "pastelink", p_id: paste.id })
-                    : await client.rpc("buy_market_item_guest", { p_type: "pastelink", p_id: paste.id, p_guest_token: guestToken });
+                    ? await window.PasTeleDB.rpc("buy_market_item", { p_type: "pastelink", p_id: paste.id })
+                    : await window.PasTeleDB.rpc("buy_market_item_guest", { p_type: "pastelink", p_id: paste.id, p_guest_token: guestToken });
                 if (buy.error) throw buy.error;
                 const result = buy.data?.data && !buy.data?.order_id ? buy.data.data : buy.data;
                 if (result?.already_owned || result?.can_access || result?.membership_access) {
@@ -3457,8 +3453,7 @@ document.addEventListener("DOMContentLoaded", async () => {
        Jangan block UI kalau analytics gagal.
        ======================================================= */
     try {
-        const viewResult = await client.rpc(
-            "increment_paste_view",
+        const viewResult = await window.PasTeleDB.rpc("increment_paste_view",
             {
                 p_id: paste.id
             }
@@ -3476,8 +3471,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
     }
     try {
-        const analyticsResult = await client.rpc(
-            "record_content_view",
+        const analyticsResult = await window.PasTeleDB.rpc("record_content_view",
             {
                 p_owner: paste.user_id,
                 p_target_type: "pastelink",
@@ -3540,8 +3534,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             /* Track share */
             try {
                 const shareResult =
-                    await client.rpc(
-                        "track_analytics",
+                    await window.PasTeleDB.rpc("track_analytics",
                         {
                             p_owner: paste.user_id,
                             p_event_type: "share",
@@ -3598,8 +3591,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             likeButton.disabled = true;
             try {
                 const likeResult =
-                    await client.rpc(
-                        "toggle_content_like",
+                    await window.PasTeleDB.rpc("toggle_content_like",
                         {
                             p_owner: paste.user_id,
                             p_target_type: "pastelink",
@@ -3670,7 +3662,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.supabaseClient || null;
+  const sb = () => window.sb || window.sb || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -3701,8 +3693,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){

@@ -1,0 +1,1 @@
+(()=>{const el=document.querySelector("footer");if(el){const y=el.querySelector("[data-year],#footerYear");if(y)y.textContent=new Date().getFullYear();}})();

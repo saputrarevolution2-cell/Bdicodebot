@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.supabaseClient;
+    const client = window.sb || window.sb;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,8 +439,7 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await client.rpc(
-              "resolve_username_login",
+            await window.PasTeleDB.rpc("resolve_username_login",
               {
                 p_username: username
               }
@@ -647,7 +646,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await client.rpc("check_email_available", {
+        await window.PasTeleDB.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -692,8 +691,7 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await client.rpc(
-            "resolve_username_login",
+          await window.PasTeleDB.rpc("resolve_username_login",
             {
               p_username: value
             }
@@ -745,8 +743,7 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await client.rpc(
-          "check_username_available",
+        await window.PasTeleDB.rpc("check_username_available",
           {
             p_username: value
           }
@@ -974,8 +971,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.supabaseClient) &&
-        (window.sb?.auth || window.supabaseClient?.auth)
+        (window.sb || window.sb) &&
+        (window.sb?.auth || window.sb?.auth)
       );
     }
   };
@@ -1315,8 +1312,7 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.sb.rpc(
-            'get_public_site_settings'
+          await window.PasTeleDB.rpc("get_public_site_settings"
           );
         if (
           !result?.error &&
@@ -2981,7 +2977,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.supabaseClient || null;
+  const sb = () => window.sb || window.sb || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -3012,8 +3008,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){

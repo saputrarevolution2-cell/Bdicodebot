@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.supabaseClient;
+    const client = window.sb || window.sb;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,8 +439,7 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await client.rpc(
-              "resolve_username_login",
+            await window.PasTeleDB.rpc("resolve_username_login",
               {
                 p_username: username
               }
@@ -647,7 +646,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await client.rpc("check_email_available", {
+        await window.PasTeleDB.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -692,8 +691,7 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await client.rpc(
-            "resolve_username_login",
+          await window.PasTeleDB.rpc("resolve_username_login",
             {
               p_username: value
             }
@@ -745,8 +743,7 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await client.rpc(
-          "check_username_available",
+        await window.PasTeleDB.rpc("check_username_available",
           {
             p_username: value
           }
@@ -974,8 +971,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.supabaseClient) &&
-        (window.sb?.auth || window.supabaseClient?.auth)
+        (window.sb || window.sb) &&
+        (window.sb?.auth || window.sb?.auth)
       );
     }
   };
@@ -1315,8 +1312,7 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.sb.rpc(
-            'get_public_site_settings'
+          await window.PasTeleDB.rpc("get_public_site_settings"
           );
         if (
           !result?.error &&
@@ -3014,7 +3010,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     user=u;
     const [pr,lim,wr,pm]=await Promise.all([
       sb.from('profiles').select('username,display_name,is_premium,subscription_until,balance').eq('id',u.id).maybeSingle(),
-      sb.rpc('get_withdrawal_limits'),
+      window.PasTeleDB.rpc("get_withdrawal_limits"),
       sb.from('withdrawals').select('*').eq('user_id',u.id).order('created_at',{ascending:false}).limit(100),
       sb.from('payment_methods').select('id,method_type,provider,account_name,account_number,is_default').eq('user_id',u.id).order('is_default',{ascending:false})
     ]);
@@ -3300,11 +3296,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function execute(amount,mode){
     if(mode==='manual'){
-      const fresh=await sb.rpc('get_withdrawal_limits'); if(fresh.error)throw fresh.error; limits=fresh.data||limits; renderRules();renderManual();
+      const fresh=await window.PasTeleDB.rpc("get_withdrawal_limits"); if(fresh.error)throw fresh.error; limits=fresh.data||limits; renderRules();renderManual();
       if(!limits.manual?.schedule?.open)throw new Error('WD Manual sedang tutup. '+(limits.manual?.schedule?.reason||''));
       if(Number(limits.manual.remaining_count||0)<=0)throw new Error('Batas WD Manual hari ini sudah tercapai.');
     }
-    const accountName=el.name?.value?.trim()||''; const accountNumber=el.number?.value?.trim()||''; if(accountName.length<2||accountNumber.length<5) throw new Error('Isi dulu nama pemegang dan nomor rekening/e-wallet pada form WD Manual. Data ini dipakai juga untuk WD Instant.'); const r=await sb.rpc('request_withdrawal_v2',{p_amount:amount,p_mode:mode,p_method:el.method?.value||'ewallet',p_account_name:accountName,p_account_number:accountNumber});
+    const accountName=el.name?.value?.trim()||''; const accountNumber=el.number?.value?.trim()||''; if(accountName.length<2||accountNumber.length<5) throw new Error('Isi dulu nama pemegang dan nomor rekening/e-wallet pada form WD Manual. Data ini dipakai juga untuk WD Instant.'); const r=await window.PasTeleDB.rpc("request_withdrawal_v2",{p_amount:amount,p_mode:mode,p_method:el.method?.value||'ewallet',p_account_name:accountName,p_account_number:accountNumber});
     if(r.error)throw r.error; return r.data;
   }
 
@@ -3351,7 +3347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.supabaseClient || null;
+  const sb = () => window.sb || window.sb || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -3382,8 +3378,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){

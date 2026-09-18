@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.supabaseClient;
+    const client = window.sb || window.sb;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,8 +439,7 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await client.rpc(
-              "resolve_username_login",
+            await window.PasTeleDB.rpc("resolve_username_login",
               {
                 p_username: username
               }
@@ -647,7 +646,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await client.rpc("check_email_available", {
+        await window.PasTeleDB.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -692,8 +691,7 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await client.rpc(
-            "resolve_username_login",
+          await window.PasTeleDB.rpc("resolve_username_login",
             {
               p_username: value
             }
@@ -745,8 +743,7 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await client.rpc(
-          "check_username_available",
+        await window.PasTeleDB.rpc("check_username_available",
           {
             p_username: value
           }
@@ -974,8 +971,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.supabaseClient) &&
-        (window.sb?.auth || window.supabaseClient?.auth)
+        (window.sb || window.sb) &&
+        (window.sb?.auth || window.sb?.auth)
       );
     }
   };
@@ -1315,8 +1312,7 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.sb.rpc(
-            'get_public_site_settings'
+          await window.PasTeleDB.rpc("get_public_site_settings"
           );
         if (
           !result?.error &&
@@ -2753,7 +2749,7 @@ function setLoading(on){const b=$("submitBtn");if(!b)return;b.disabled=!!on;b.se
 function requireClient(){if(!sb())throw new Error("Supabase belum siap. Refresh halaman dan coba lagi.")}
 const SHORT_ALPHABET="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 function randomShortCode(){const bytes=new Uint32Array(4);crypto.getRandomValues(bytes);return Array.from(bytes,n=>SHORT_ALPHABET[n%SHORT_ALPHABET.length]).join("")}
-async function createUniqueShortCode(client){for(let attempt=0;attempt<24;attempt++){const key=randomShortCode();const checks=await Promise.all([client.rpc("get_pastelink_by_slug",{p_slug:key}),client.rpc("get_code_by_slug",{p_slug:key}),client.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"channel"}),client.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"group"})]);if(checks.every(q=>!q?.error&&!((Array.isArray(q.data)?q.data[0]:q.data)?.found)))return key}throw new Error("Gagal membuat kode publik unik. Silakan coba lagi.")}
+async function createUniqueShortCode(client){for(let attempt=0;attempt<24;attempt++){const key=randomShortCode();const checks=await Promise.all([window.PasTeleDB.rpc("get_pastelink_by_slug",{p_slug:key}),window.PasTeleDB.rpc("get_code_by_slug",{p_slug:key}),window.PasTeleDB.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"channel"}),window.PasTeleDB.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"group"})]);if(checks.every(q=>!q?.error&&!((Array.isArray(q.data)?q.data[0]:q.data)?.found)))return key}throw new Error("Gagal membuat kode publik unik. Silakan coba lagi.")}
 const slugify=s=>String(s||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
 function sync(){const paid=access()==="paid";$("priceBox").hidden=!paid;$("price").disabled=!paid;if(!paid)$("price").value="0";$("accessHint").textContent=paid?"Konten hanya terbuka setelah pembayaran berhasil.":"Konten dapat dibuka semua pengguna."}
 
@@ -2769,7 +2765,6 @@ function sanitizeContentHTML(input){
   if(el.tagName==="A"){let h=(el.getAttribute("href")||"").trim();if(/^www\./i.test(h))h="https://"+h;if(!/^https?:\/\//i.test(h))el.removeAttribute("href");else{el.href=h;el.target="_blank";el.rel="noopener noreferrer nofollow"}}
  });return box.innerHTML.trim()
 }
-async function hashPassword(password){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(password));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function initPasteLinkEditor(){
   const ed=document.getElementById("content");
   if(!ed||ed.dataset.ready)return;
@@ -2996,7 +2991,7 @@ function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast
 const title=$("title").value.trim(),content=sanitizeContentHTML(getEditorHTML()),plainContent=getEditorText(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!plainContent)return toast("Content wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<2000||price>100000||price%1000))return toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.","error"),null;let exp=null;if($("hasExpiry").checked){const rawExp=$("expiresAt").value;if(!rawExp)return toast("Isi tanggal expired.","error"),null;const d=new Date(rawExp);if(Number.isNaN(d.getTime())||d.getTime()<=Date.now())return toast("Tanggal expired harus di masa depan.","error"),null;exp=d.toISOString()}return{title,content,a,price,exp,tags:String($("tags").value||"").split(",").map(x=>x.trim().replace(/^#/g,"")).filter(Boolean).slice(0,20),desc:$("description").value.trim()}}
 function finish(v,slug){const url=`${location.origin}/p${v.a==="paid"?"p":"f"}/${encodeURIComponent(slug)}`,r=$("result");r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>PasteLink berhasil dibuat</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka PasteLink</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;$("copyUrl").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("Link berhasil disalin.","success")}catch{toast("Gagal menyalin link.","error")}};r.scrollIntoView({behavior:"smooth",block:"center"})}
 $("hasExpiry")?.addEventListener("change",()=>$("expiryBox").hidden=!$("hasExpiry").checked);document.querySelectorAll('input[name="access"]').forEach(x=>x.addEventListener("change",sync));$("description")?.addEventListener("input",()=>$("counter").textContent=$("description").value.length);
-$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp,p_password_hash:(passwordEnabled() ? await hashPassword(getPassword()) : null)});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();sync();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){console.error(e);toast(e?.code==="23505"?"Custom URL sudah digunakan. Silakan pilih URL lain.":e?.message||"Gagal membuat PasteLink.","error")}finally{setLoading(false)}});sync();$("expiryBox").hidden=true;
+$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp,p_password:(passwordEnabled() ? getPassword() : null)});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();sync();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){console.error(e);toast(e?.code==="23505"?"Custom URL sudah digunakan. Silakan pilih URL lain.":e?.message||"Gagal membuat PasteLink.","error")}finally{setLoading(false)}});sync();$("expiryBox").hidden=true;
 });
 
 /* Page-ready marker */
@@ -3013,7 +3008,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.supabaseClient || null;
+  const sb = () => window.sb || window.sb || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -3044,8 +3039,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){

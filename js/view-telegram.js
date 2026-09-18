@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.supabaseClient;
+    const client = window.sb || window.sb;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,8 +439,7 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await client.rpc(
-              "resolve_username_login",
+            await window.PasTeleDB.rpc("resolve_username_login",
               {
                 p_username: username
               }
@@ -647,7 +646,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await client.rpc("check_email_available", {
+        await window.PasTeleDB.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -692,8 +691,7 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await client.rpc(
-            "resolve_username_login",
+          await window.PasTeleDB.rpc("resolve_username_login",
             {
               p_username: value
             }
@@ -745,8 +743,7 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await client.rpc(
-          "check_username_available",
+        await window.PasTeleDB.rpc("check_username_available",
           {
             p_username: value
           }
@@ -974,8 +971,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.supabaseClient) &&
-        (window.sb?.auth || window.supabaseClient?.auth)
+        (window.sb || window.sb) &&
+        (window.sb?.auth || window.sb?.auth)
       );
     }
   };
@@ -1315,8 +1312,7 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.sb.rpc(
-            'get_public_site_settings'
+          await window.PasTeleDB.rpc("get_public_site_settings"
           );
         if (
           !result?.error &&
@@ -2661,16 +2657,16 @@ async function resolve(kind){
  const client=window.sb;if(!client)throw Error("Supabase belum siap.");
  if(!slug)throw Error("Link konten tidak lengkap.");
  let data,error;
- if(kind==="pastelink")({data,error}=await client.rpc("get_pastelink_by_slug",{p_slug:slug}));
- else if(kind==="code")({data,error}=await client.rpc("get_code_by_slug",{p_slug:slug}));
- else ({data,error}=await client.rpc("get_telegram_content_by_slug",{p_slug:slug,p_type:kind}));
+ if(kind==="pastelink")({data,error}=await window.PasTeleDB.rpc("get_pastelink_by_slug",{p_slug:slug}));
+ else if(kind==="code")({data,error}=await window.PasTeleDB.rpc("get_code_by_slug",{p_slug:slug}));
+ else ({data,error}=await window.PasTeleDB.rpc("get_telegram_content_by_slug",{p_slug:slug,p_type:kind}));
  if(error)throw error;
  return Array.isArray(data)?data[0]:data;
 }
 async function detailById(kind,id){
  const client=window.sb; const type=targetType(kind);
  const u=await user(); const tok=u?null:localStorage.getItem("pastele-guest-checkout-token");
- const q=tok?await client.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:tok}):await client.rpc("get_market_item_detail",{p_type:type,p_id:id});
+ const q=tok?await window.PasTeleDB.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:tok}):await window.PasTeleDB.rpc("get_market_item_detail",{p_type:type,p_id:id});
  if(q.error)throw q.error; return Array.isArray(q.data)?q.data[0]:q.data;
 }
 function isPaid(item){return String(item?.access_type||"free").toLowerCase()==="paid"||Number(item?.price||0)>0}
@@ -2707,8 +2703,8 @@ async function startBuy(kind,item){
  }
  const type=targetType(kind);
  const q=u?.id
-   ? await window.sb.rpc("buy_market_item",{p_type:type,p_id:item.id})
-   : await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
+   ? await window.PasTeleDB.rpc("buy_market_item",{p_type:type,p_id:item.id})
+   : await window.PasTeleDB.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
  if(q.error)throw q.error;
  const result=q.data?.data && !q.data?.order_id ? q.data.data : q.data;
  if(result?.already_owned || result?.can_access || result?.membership_access){
@@ -2723,7 +2719,7 @@ async function loadSocial(kind,item){
  const client=window.sb, tid=item.id, tt=targetType(kind);
  const [likes,comments,shares,u]=await Promise.all([
    client.from("content_likes").select("id,actor_id,guest_token").eq("target_id",tid).eq("target_type",tt),
-   client.rpc("get_content_comments",{p_target_id:tid,p_target_type:tt,p_limit:100}),
+   window.PasTeleDB.rpc("get_content_comments",{p_target_id:tid,p_target_type:tt,p_limit:100}),
    client.from("analytics_events").select("id",{count:"exact",head:true}).eq("target_id",tid).eq("target_type",tt).eq("event_type","share"),
    user()
  ]);
@@ -2739,21 +2735,21 @@ async function loadSocial(kind,item){
  if(list)list.innerHTML=comments.error?"":(comments.data?.length?comments.data.map(c=>`<article class="comment"><div class="avatar"><i class="fa-solid fa-user"></i></div><div><strong>${esc(c.display_name||(c.user_id?"User":"Guest"))}</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>');
  $("likeBtn")?.addEventListener("click",async()=>{
    const p=await user();let q;
-   if(p?.id)q=await client.rpc("toggle_content_like",{p_target_id:tid,p_target_type:tt,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
-   else q=await client.rpc("toggle_content_like_guest",{p_target_id:tid,p_target_type:tt,p_guest_token:guestToken()});
-   if(q.error)return toast(q.error.message||"Gagal menyukai.","error"); await loadSocial(kind,item); try{await client.rpc("record_quest_event",{p_event_type:"like"})}catch{}
+   if(p?.id)q=await window.PasTeleDB.rpc("toggle_content_like",{p_target_id:tid,p_target_type:tt,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
+   else q=await window.PasTeleDB.rpc("toggle_content_like_guest",{p_target_id:tid,p_target_type:tt,p_guest_token:guestToken()});
+   if(q.error)return toast(q.error.message||"Gagal menyukai.","error"); await loadSocial(kind,item); try{await window.PasTeleDB.rpc("record_quest_event",{p_event_type:"like"})}catch{}
  });
  $("shareBtn")?.addEventListener("click",async()=>{
    const url=location.href;try{if(navigator.share)await navigator.share({title:item.title||"PasTele",url});else await navigator.clipboard.writeText(url)}catch(e){if(e?.name==="AbortError")return}
-   try{await client.rpc("track_analytics",{p_event_type:"share",p_target_type:tt,p_target_id:tid,p_owner:item.owner_id||item.creator_id||item.seller_id||null})}catch{}
-   try{await client.rpc("record_quest_event",{p_event_type:"share"})}catch{}; const n=Number($("shareCount")?.textContent||0)+1;if($("shareCount"))$("shareCount").textContent=String(n);
+   try{await window.PasTeleDB.rpc("track_analytics",{p_event_type:"share",p_target_type:tt,p_target_id:tid,p_owner:item.owner_id||item.creator_id||item.seller_id||null})}catch{}
+   try{await window.PasTeleDB.rpc("record_quest_event",{p_event_type:"share"})}catch{}; const n=Number($("shareCount")?.textContent||0)+1;if($("shareCount"))$("shareCount").textContent=String(n);
  });
  const form=$("commentForm"),text=$("commentText"),submit=$("commentSubmit");
  if(form)form.onsubmit=async e=>{
    e.preventDefault();const body=String(text?.value||"").trim();if(!body||body.length>2000)return;
    submit.disabled=true;
    const p=await user();
-   const q=await client.rpc("add_content_comment",{p_target_id:tid,p_target_type:tt,p_body:body,p_guest_token:p?null:guestToken(),p_display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null});
+   const q=await window.PasTeleDB.rpc("add_content_comment",{p_target_id:tid,p_target_type:tt,p_body:body,p_guest_token:p?null:guestToken(),p_display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null});
    if(q.error)toast(q.error.message||"Komentar gagal dikirim.","error");else{text.value="";toast("Komentar berhasil dikirim.","success");await loadSocial(kind,item)}
    submit.disabled=false;
  };
@@ -2765,7 +2761,7 @@ function shell(kind,item,access,content){
  return `<header class="view-head"><div class="view-icon"><i class="fa-solid ${icons[kind]}"></i></div><div><span class="badge ${paid?"paid":"free"}"><i class="fa-solid ${paid?"fa-lock":"fa-unlock"}"></i>${paid?"Paid":"Free"}</span><h1>${esc(title)}</h1><p class="view-desc">${esc(item.description||"")}</p></div></header><div class="view-meta"><span class="meta"><i class="fa-solid fa-eye"></i><strong>${Number(item.views||0).toLocaleString("id-ID")}</strong> dilihat</span><span class="meta"><i class="fa-solid fa-cart-shopping"></i><strong>${Number(item.sales_count||0).toLocaleString("id-ID")}</strong> terbeli</span><span class="meta"><i class="fa-solid fa-heart"></i><strong id="likeCountMeta">0</strong> suka</span><span class="meta"><i class="fa-solid fa-share-nodes"></i><strong id="shareCountMeta">0</strong> share</span><span class="meta"><i class="fa-solid fa-comments"></i><strong id="commentCountMeta">0</strong> komentar</span></div><div class="view-body">${content}</div><div class="engage"><div class="social"><button id="viewFollowBtn" type="button"><i class="fa-solid fa-user-plus"></i> <span>Ikuti Creator</span></button><button id="likeBtn" aria-pressed="false"><i id="likeIcon" class="fa-regular fa-heart"></i> <span id="likeLabel">Suka</span> <span id="likeCount">0</span></button><button id="shareBtn"><i class="fa-solid fa-share-nodes"></i> Bagikan <span id="shareCount">0</span></button></div><div class="comments"><h3>Komentar</h3><form class="comment-form" id="commentForm"><textarea id="commentText" maxlength="2000" placeholder="Tulis komentar..."></textarea><button class="btn primary" id="commentSubmit"><i class="fa-solid fa-paper-plane"></i> Kirim</button></form><div id="commentList"></div></div></div>`;
 }
 async function trackView(kind,item){
- try{await window.sb.rpc("record_content_view",{p_owner:item.owner_id||item.creator_id||item.seller_id||null,p_target_type:targetType(kind),p_target_id:item.id})}catch{}
+ try{await window.PasTeleDB.rpc("record_content_view",{p_owner:item.owner_id||item.creator_id||item.seller_id||null,p_target_type:targetType(kind),p_target_id:item.id})}catch{}
 }
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
@@ -2787,7 +2783,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.supabaseClient || null;
+  const sb = () => window.sb || window.sb || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -2818,8 +2814,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
