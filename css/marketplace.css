@@ -351,3 +351,43 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
     gap: 10px !important;
   }
 }
+
+/* =========================================================
+   PasTele — RANKING MODE MARKETPLACE
+   Main marketplace now uses the same compact list design as
+   Code Trend / Top Link instead of large product cards.
+   ========================================================= */
+.market-all-panel{margin-top:0}
+.market-all-ranking{min-height:0}
+.market-main-list-item{align-items:center!important;padding:13px 14px!important;gap:10px!important}
+.market-main-list-item .market-list-link{color:inherit;text-decoration:none;min-width:0;flex:1;display:block}
+.market-main-list-item .market-list-title{margin:0 0 5px}
+.market-list-cta{
+  flex:0 0 auto;
+  min-height:32px;
+  padding:7px 10px;
+  border:0;
+  border-radius:9px;
+  background:var(--primary);
+  color:#fff;
+  font-size:9px;
+  font-weight:850;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.market-list-cta.free{background:#079455}
+.market-list-cta:hover{filter:brightness(.96)}
+.market-list-cta i{margin-right:4px}
+.creator-meta{margin-top:4px}
+.creator-meta i{color:var(--primary)}
+.creator-revenue{margin-top:5px;color:var(--muted);font-size:9px}
+.creator-revenue strong{color:var(--primary);font-weight:900;margin-left:3px}
+.market-all-panel .market-pagination{padding:12px;border-top:1px solid var(--line);margin:0}
+@media(max-width:520px){
+  .market-main-list-item{padding:11px 10px!important;gap:7px!important}
+  .market-main-list-item .market-list-title{font-size:10px}
+  .market-main-list-item .market-list-price-row{gap:5px}
+  .market-list-cta{font-size:8px;padding:7px 8px;min-height:30px}
+  .market-list-cta span{display:inline}
+  .creator-revenue{font-size:8px}
+}
