@@ -2771,92 +2771,67 @@ function sanitizeContentHTML(input){
 }
 async function hashPassword(password){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(password));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function initPasteLinkEditor(){
- const ed=document.getElementById("content");
- if(!ed||ed.dataset.ready)return;
- ed.dataset.ready="1";
- let savedRange=null;
- const inside=r=>!!r&&(r.commonAncestorContainer===ed||ed.contains(r.commonAncestorContainer));
- const current=()=>{const s=getSelection();if(!s||!s.rangeCount)return null;const r=s.getRangeAt(0);return inside(r)?r.cloneRange():null};
- const save=()=>{const r=current();if(r&&!r.collapsed)savedRange=r;return savedRange};
- const restore=()=>{if(!savedRange||!inside(savedRange))return false;const s=getSelection();s.removeAllRanges();s.addRange(savedRange);return true};
- const sync=()=>{const h=document.getElementById("contentHtml");if(h)h.value=sanitizeContentHTML(ed.innerHTML)};
- const unwrap=el=>{if(!el||!ed.contains(el))return false;const p=el.parentNode,f=document.createDocumentFragment();while(el.firstChild)f.appendChild(el.firstChild);p.replaceChild(f,el);return true};
- const wrap=(tag,attrs={})=>{
-   if(!restore())return false;
-   const s=getSelection(),r=s.getRangeAt(0);if(r.collapsed)return false;
-   const el=document.createElement(tag);
-   Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
-   el.appendChild(r.extractContents());r.insertNode(el);
-   const nr=document.createRange();nr.selectNodeContents(el);s.removeAllRanges();s.addRange(nr);savedRange=nr.cloneRange();return true;
- };
- const ancestor=tags=>{
-   if(!savedRange)return null;
-   let n=savedRange.commonAncestorContainer;if(n.nodeType===3)n=n.parentElement;
-   return n?.closest?.(tags)||null;
- };
- const apply=cmd=>{
-   if(!savedRange)save();
-   if(!savedRange||savedRange.collapsed){toast("Pilih teks terlebih dahulu.","info");return}
-   let ok=false;
-   if(cmd==="bold"){const x=ancestor("strong,b");ok=x?unwrap(x):wrap("strong")}
-   else if(cmd==="italic"){const x=ancestor("em,i");ok=x?unwrap(x):wrap("em")}
-   else if(cmd==="underline"){const x=ancestor("u");ok=x?unwrap(x):wrap("u")}
-   else if(cmd==="spoiler"){const x=ancestor(".spoiler");ok=x?unwrap(x):wrap("span",{class:"spoiler"})}
-   else if(cmd==="blockquote"){const x=ancestor("blockquote");ok=x?unwrap(x):wrap("blockquote")}
-   else if(cmd==="link"){
-     const x=ancestor("a");
-     if(x){
-       let u=prompt("Ubah URL tautan:",x.getAttribute("href")||"");
-       if(u===null)return;u=u.trim();if(/^www\./i.test(u))u="https://"+u;
-       if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
-       x.setAttribute("href",u);x.setAttribute("target","_blank");x.setAttribute("rel","noopener noreferrer nofollow");ok=true;
-     }else{
-       let u=prompt("Masukkan URL:","https://");
-       if(u===null)return;u=u.trim();if(/^www\./i.test(u))u="https://"+u;
-       if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
-       ok=wrap("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"});
-     }
-   }
-   if(!ok){toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");return}
-   sync();ed.focus();
- };
-
- ["selectionchange","mouseup","keyup","touchend","pointerup"].forEach(ev=>{
-   const target=ev==="selectionchange"?document:ed;
-   target.addEventListener(ev,()=>save());
- });
- ed.addEventListener("input",sync);
- ed.addEventListener("paste",()=>setTimeout(sync,0));
-
- document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
-   let ran=false;
-   const handler=e=>{
-     e.preventDefault();e.stopPropagation();
-     ran=true;apply(btn.dataset.cmd);
-   };
-   btn.addEventListener("pointerdown",handler,{passive:false});
-   btn.addEventListener("touchstart",handler,{passive:false});
-   btn.addEventListener("mousedown",e=>{if(!window.PointerEvent)handler(e)});
-   btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(!ran)apply(btn.dataset.cmd);ran=false});
- });
-
- ed.addEventListener("keydown",e=>{
-   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();save();apply("link")}
- });
-
- const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
- cb?.addEventListener("change",()=>{box.hidden=!cb.checked;if(!cb.checked)pw.value=""});
- document.getElementById("togglePassword")?.addEventListener("click",()=>{pw.type=pw.type==="password"?"text":"password"});
- sync();
+  const ed=document.getElementById("content");
+  if(!ed||ed.dataset.ready)return;
+  ed.dataset.ready="1";
+  let savedRange=null;
+  const inside=r=>!!r&&(r.commonAncestorContainer===ed||ed.contains(r.commonAncestorContainer));
+  const capture=()=>{const s=window.getSelection();if(!s||!s.rangeCount)return savedRange;const r=s.getRangeAt(0);if(inside(r)&&!r.collapsed)savedRange=r.cloneRange();return savedRange};
+  const restore=()=>{if(!savedRange||!inside(savedRange))return false;const s=window.getSelection();s.removeAllRanges();s.addRange(savedRange);return true};
+  const sync=()=>{const h=document.getElementById("contentHtml");if(h)h.value=sanitizeContentHTML(ed.innerHTML)};
+  const unwrap=el=>{if(!el||!ed.contains(el))return false;const p=el.parentNode;while(el.firstChild)p.insertBefore(el.firstChild,el);el.remove();return true};
+  const wrap=cls=>{if(!restore())return false;const s=window.getSelection(),r=s.getRangeAt(0);if(r.collapsed)return false;const el=document.createElement("span");el.className=cls;el.appendChild(r.extractContents());r.insertNode(el);const nr=document.createRange();nr.selectNodeContents(el);s.removeAllRanges();s.addRange(nr);savedRange=nr.cloneRange();return true};
+  const nearest=sel=>{if(!savedRange)return null;let n=savedRange.commonAncestorContainer;if(n.nodeType===3)n=n.parentElement;return n?.closest?.(sel)||null};
+  const apply=cmd=>{
+    if(!savedRange)capture();
+    if(!savedRange||savedRange.collapsed){TC.toast("Pilih teks terlebih dahulu.","info");return}
+    let ok=false;
+    if(cmd==="bold"){const x=nearest(".pt-bold,strong,b");ok=x?unwrap(x):wrap("pt-bold")}
+    else if(cmd==="italic"){const x=nearest(".pt-italic,em,i");ok=x?unwrap(x):wrap("pt-italic")}
+    else if(cmd==="underline"){const x=nearest(".pt-underline,u");ok=x?unwrap(x):wrap("pt-underline")}
+    else if(cmd==="spoiler"){const x=nearest(".pt-spoiler");ok=x?unwrap(x):wrap("pt-spoiler")}
+    else if(cmd==="blockquote"){const x=nearest(".pt-quote");ok=x?unwrap(x):wrap("pt-quote")}
+    else if(cmd==="link"){
+      const x=nearest("a");
+      if(x){
+        TC.toast("Teks ini sudah menjadi tautan. Tekan Tautan lagi hanya jika ingin mengganti URL.","info");return;
+      }
+      const current=savedRange.toString().trim();
+      let u=prompt("Masukkan URL tautan:",/^https?:\/\//i.test(current)?current:"https://");
+      if(u===null)return;
+      u=u.trim();if(/^www\./i.test(u))u="https://"+u;
+      if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return}
+      if(!restore())return;
+      const r=window.getSelection().getRangeAt(0),el=document.createElement("a");
+      el.href=u;el.target="_blank";el.rel="noopener noreferrer nofollow";el.appendChild(r.extractContents());r.insertNode(el);
+      const nr=document.createRange();nr.selectNodeContents(el);window.getSelection().removeAllRanges();window.getSelection().addRange(nr);savedRange=nr.cloneRange();ok=true;
+    }
+    if(!ok&&cmd!=="link")TC.toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");
+    sync();ed.focus();
+  };
+  document.addEventListener("selectionchange",capture);
+  ["mouseup","keyup","touchend","pointerup"].forEach(ev=>ed.addEventListener(ev,capture,{passive:true}));
+  ed.addEventListener("input",sync);
+  ed.addEventListener("paste",()=>setTimeout(sync,0));
+  ed.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();capture();apply("link")}});
+  document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
+    const run=e=>{e.preventDefault();e.stopPropagation();capture();apply(btn.dataset.cmd)};
+    if(window.PointerEvent) btn.addEventListener("pointerdown",run,{passive:false});
+    else if("ontouchstart" in window) btn.addEventListener("touchstart",run,{passive:false});
+    else btn.addEventListener("mousedown",run,{passive:false});
+  });
+  const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
+  cb?.addEventListener("change",()=>{if(box)box.hidden=!cb.checked;if(!cb.checked&&pw)pw.value=""});
+  document.getElementById("togglePassword")?.addEventListener("click",()=>{if(pw)pw.type=pw.type==="password"?"text":"password"});
+  sync();
 }
-initPasteLinkEditor();
+document.addEventListener("DOMContentLoaded",initPasteLinkEditor);
 
 function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
 const title=$("title").value.trim(),content=sanitizeContentHTML(getEditorHTML()),plainContent=getEditorText(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!plainContent)return toast("Content wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<2000||price>100000||price%1000))return toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.","error"),null;let exp=null;if($("hasExpiry").checked){const rawExp=$("expiresAt").value;if(!rawExp)return toast("Isi tanggal expired.","error"),null;const d=new Date(rawExp);if(Number.isNaN(d.getTime())||d.getTime()<=Date.now())return toast("Tanggal expired harus di masa depan.","error"),null;exp=d.toISOString()}return{title,content,a,price,exp,tags:String($("tags").value||"").split(",").map(x=>x.trim().replace(/^#/g,"")).filter(Boolean).slice(0,20),desc:$("description").value.trim()}}
 function finish(v,slug){const url=`${location.origin}/p${v.a==="paid"?"p":"f"}/${encodeURIComponent(slug)}`,r=$("result");r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>PasteLink berhasil dibuat</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka PasteLink</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;$("copyUrl").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("Link berhasil disalin.","success")}catch{toast("Gagal menyalin link.","error")}};r.scrollIntoView({behavior:"smooth",block:"center"})}
 $("hasExpiry")?.addEventListener("change",()=>$("expiryBox").hidden=!$("hasExpiry").checked);document.querySelectorAll('input[name="access"]').forEach(x=>x.addEventListener("change",sync));$("description")?.addEventListener("input",()=>$("counter").textContent=$("description").value.length);
-$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const passwordHash = passwordEnabled() ? await hashPassword(getPassword()) : null;
-const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp,p_password_hash:passwordHash});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();sync();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){console.error(e);toast(e?.code==="23505"?"Custom URL sudah digunakan. Silakan pilih URL lain.":e?.message||"Gagal membuat PasteLink.","error")}finally{setLoading(false)}});sync();$("expiryBox").hidden=true;
+$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp,p_password_hash:(passwordEnabled() ? await hashPassword(getPassword()) : null)});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();sync();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){console.error(e);toast(e?.code==="23505"?"Custom URL sudah digunakan. Silakan pilih URL lain.":e?.message||"Gagal membuat PasteLink.","error")}finally{setLoading(false)}});sync();$("expiryBox").hidden=true;
 });
 
 /* Page-ready marker */
