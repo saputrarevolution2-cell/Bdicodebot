@@ -4,3 +4,141 @@
 /* PasTele profile navigation */
 .forum-profile-link{color:inherit;text-decoration:none;font-weight:800;cursor:pointer;transition:opacity .18s ease}
 .forum-profile-link:hover{text-decoration:underline;opacity:.78}
+
+/* =========================================================
+   UNIVERSAL NAVBAR — same visual language as Marketplace
+   ========================================================= */
+#navbar{position:sticky;top:0;z-index:2000}
+.pt-nav{
+  height:72px;background:color-mix(in srgb,var(--surface) 90%,transparent);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+.pt-nav-inner{
+  width:min(var(--max),calc(100% - 32px));height:72px;margin:auto;
+  display:flex;align-items:center;gap:12px;
+}
+.pt-menu-btn{
+  width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;
+  border:1px solid var(--line);border-radius:13px;background:var(--surface2);
+  color:var(--text);transition:all .18s ease;
+}
+.pt-menu-btn:hover{border-color:color-mix(in srgb,var(--primary) 35%,var(--line));color:var(--primary)}
+.pt-brand{min-width:0;display:flex;align-items:center;gap:9px;font-size:19px;font-weight:900}
+.pt-brand-mark{
+  width:40px;height:40px;display:grid;place-items:center;border-radius:13px;
+  background:linear-gradient(135deg,var(--primary),#06b6d4);
+  box-shadow:0 8px 22px rgba(34,158,217,.2);
+}
+.pt-brand-mark i{color:#fff}
+.pt-brand-name{white-space:nowrap;letter-spacing:-.03em}
+.pt-spacer{flex:1}
+.pt-user-wrap{position:relative}
+.pt-user-btn{
+  min-height:44px;display:flex;align-items:center;gap:8px;padding:5px 9px 5px 5px;
+  border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);
+}
+.pt-user-btn:hover{border-color:color-mix(in srgb,var(--primary) 35%,var(--line))}
+.pt-avatar{
+  width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border-radius:11px;
+  background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-weight:800;
+}
+.pt-avatar img{width:100%;height:100%;object-fit:cover}
+.pt-avatar-lg{width:48px;height:48px;border-radius:14px}
+.pt-name{font-weight:750;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-check{color:var(--primary)}.pt-chevron{font-size:10px;color:var(--muted)}
+.pt-dropdown{
+  position:absolute;right:0;top:calc(100% + 10px);width:min(340px,calc(100vw - 24px));
+  padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);
+  box-shadow:var(--shadow2);
+}
+.pt-profile{display:flex;align-items:center;gap:11px;padding:6px}
+.pt-profile-text{min-width:0}.pt-profile-text strong,.pt-profile-text small{display:block}
+.pt-profile-text small{color:var(--muted);font-size:11px}
+.pt-account-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.pt-account-item{
+  padding:11px;border:1px solid var(--line);border-radius:13px;background:var(--surface2)
+}
+.pt-account-item i{color:var(--primary);margin-right:6px}
+.pt-account-item strong,.pt-account-item small{display:block}
+.pt-account-item small{font-size:10px;color:var(--muted)}
+.pt-profile-link,.pt-link{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:11px}
+.pt-profile-link:hover,.pt-link:hover{background:var(--surface2)}
+.pt-link-icon{width:30px;text-align:center}.pt-link-arrow{margin-left:auto;color:var(--muted);font-size:11px}
+.pt-guest-actions{display:grid;gap:5px;margin-top:8px}
+.pt-backdrop{
+  position:fixed;inset:0;background:rgba(2,6,23,.48);z-index:2090;opacity:0;
+  pointer-events:none;transition:.2s
+}
+.pt-backdrop.open{opacity:1;pointer-events:auto}
+.pt-drawer{
+  position:fixed;top:0;left:0;bottom:0;width:min(340px,88vw);z-index:2100;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-105%);transition:transform .25s ease;
+  box-shadow:20px 0 50px rgba(0,0,0,.15);padding:0;display:flex;flex-direction:column;overflow:hidden;
+}
+.pt-drawer.open{transform:none}.pt-nav-lock{overflow:hidden}
+.pt-drawer-head{
+  flex:0 0 auto;margin:0;padding:18px 18px 15px;border-bottom:1px solid var(--line);
+  background:var(--surface);display:flex;align-items:center;justify-content:space-between;
+}
+.pt-drawer-title{min-width:0;display:flex;flex-direction:column;gap:2px}
+.pt-drawer-title span{font-size:9px;font-weight:900;letter-spacing:.14em;color:var(--primary);text-transform:uppercase}
+.pt-drawer-title strong{font-size:17px;line-height:1.25;letter-spacing:-.02em}
+.pt-close-btn{
+  width:40px;height:40px;display:grid;place-items:center;flex:0 0 40px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface2);color:var(--text);transition:all .18s ease
+}
+.pt-close-btn:hover{background:rgba(34,158,217,.1);border-color:rgba(34,158,217,.3);color:var(--primary)}
+.pt-menu-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px;scrollbar-width:thin}
+.pt-menu-scroll::-webkit-scrollbar{width:5px}.pt-menu-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.pt-group{margin:0 0 18px}.pt-group:last-child{margin-bottom:10px}
+.pt-group h3{margin:0 7px 7px;color:var(--muted);font-size:9px;line-height:1.2;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.pt-link{
+  position:relative;width:100%;min-height:48px;display:flex;align-items:center;gap:11px;
+  padding:8px 11px;border:1px solid transparent;border-radius:13px;background:transparent;
+  color:var(--text);font-size:13px;font-weight:700;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease
+}
+.pt-group .pt-link + .pt-link{margin-top:4px}
+.pt-link:hover{background:var(--surface2);border-color:var(--line);color:var(--text);transform:translateX(2px)}
+.pt-link.active{background:rgba(34,158,217,.1);border-color:rgba(34,158,217,.22);color:var(--primary)}
+.pt-link.active::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:3px;border-radius:0 4px 4px 0;background:var(--primary)}
+.pt-link-icon{
+  width:34px;height:34px;display:grid;place-items:center;flex:0 0 34px;border-radius:10px;
+  background:var(--surface2);color:var(--muted);font-size:13px;transition:all .16s ease
+}
+.pt-link:hover .pt-link-icon{color:var(--primary);background:rgba(34,158,217,.1)}
+.pt-link.active .pt-link-icon{color:var(--primary);background:rgba(34,158,217,.13)}
+.pt-link-label{min-width:0;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-link-arrow{margin-left:auto;flex:0 0 auto;color:var(--muted);font-size:9px}
+.pt-forum-trigger{margin:0 14px 8px;width:calc(100% - 28px);background:var(--surface2);border-color:var(--line)}
+.pt-drawer-bottom{flex:0 0 auto;padding:10px 14px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.pt-drawer-socials{display:flex;gap:7px;margin-bottom:9px;padding:0 2px}
+.pt-drawer-socials a{
+  width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);
+  border-radius:10px;background:var(--surface2);color:var(--muted)
+}
+.pt-drawer-socials a:hover{color:var(--primary);border-color:rgba(34,158,217,.25)}
+.pt-drawer-bottom .pt-link{min-height:46px}.pt-drawer-bottom .pt-link.logout{color:var(--red)}
+.pt-drawer-bottom .pt-link.logout .pt-link-icon{color:var(--red);background:rgba(239,68,68,.08)}
+.pt-drawer-bottom .pt-link.logout:hover{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.18)}
+.pt-profile-link{border:1px solid transparent}.pt-guest-actions .pt-profile-link{background:var(--surface2);border-color:var(--line)}
+.pt-account-item{display:flex;align-items:center;gap:7px;min-width:0;color:var(--text);font-size:11px}
+.pt-account-item span{min-width:0;flex:1}.pt-account-item strong{margin-left:auto;font-size:11px;text-align:right}
+button.pt-account-item{width:100%;text-align:left;cursor:pointer}
+
+
+.pastele-footer{width:100%;margin:42px 0 0;padding:42px 0 0;background:#0b1220;color:#94a3b8;border-top:1px solid rgba(148,163,184,.14)}
+.footer-container{width:min(1180px,calc(100% - 32px));margin:auto;display:grid;grid-template-columns:minmax(260px,1.6fr) repeat(3,minmax(130px,1fr));gap:34px;align-items:start}
+.footer-brand-link{display:inline-flex;align-items:center;gap:10px;color:#fff!important;font-weight:900}
+.footer-brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#229ed9,#06b6d4);color:#fff;box-shadow:0 10px 26px rgba(34,158,217,.22)}
+.footer-brand-name{font-size:19px;font-weight:850;letter-spacing:-.03em}
+.footer-description{max-width:400px;margin:14px 0 15px;color:#94a3b8;font-size:12px;line-height:1.75}
+.footer-platform-status{display:inline-flex;align-items:center;gap:8px;color:#34d399;font-size:10px;font-weight:800}
+.footer-status-indicator{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 5px rgba(52,211,153,.1)}
+.footer-column{display:grid;gap:9px}.footer-column h3{margin:1px 0 6px;color:#f8fafc;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.1em}.footer-column a{display:flex;align-items:center;gap:8px;color:#94a3b8!important;font-size:11px;transition:.16s ease}.footer-column a:hover{color:#fff!important;transform:translateX(2px)}.footer-column a i{width:15px;text-align:center;color:#67c7ef}
+.footer-bottom{width:min(1180px,calc(100% - 32px));margin:32px auto 0;padding:17px 0 20px;border-top:1px solid rgba(148,163,184,.13);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:10px}.footer-copyright{display:flex;align-items:center;gap:8px;color:#64748b}.footer-dot{color:#334155}.footer-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.footer-meta span{display:flex;align-items:center;gap:5px}
+@media(max-width:780px){#navbar .pt-nav,#navbar .pt-nav-inner{height:64px}#navbar .pt-nav-inner{width:calc(100% - 20px)}#navbar .pt-brand-name{display:none}#navbar .pt-nav-links{display:none}#navbar .pt-menu{display:inline-flex}.footer-container{grid-template-columns:1fr 1fr;gap:24px}.footer-bottom{width:calc(100% - 20px);flex-direction:column;align-items:flex-start}}
+@media(max-width:560px){.footer-container{grid-template-columns:1fr}.pastele-footer{padding-top:32px}.footer-container{width:calc(100% - 20px)}}
+
+.forum-page{min-height:calc(100vh - 220px)}
