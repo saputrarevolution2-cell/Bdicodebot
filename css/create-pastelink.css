@@ -456,3 +456,27 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
 .password-input input{flex:1;min-width:0;height:100%;padding:0 12px;border:0!important;outline:0!important;background:transparent!important;color:var(--text)}
 .password-toggle{width:44px;height:100%;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted)}
 .password-toggle:hover{color:var(--primary)}
+
+
+/* =========================================================
+   Guest Free / Paid Login helper
+   ========================================================= */
+.create-access-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:-8px 0 14px;
+  padding:12px 14px;
+  border:1px solid color-mix(in srgb,var(--primary,#229ed9) 18%,var(--line,#e5e7eb));
+  border-radius:14px;
+  background:color-mix(in srgb,var(--primary,#229ed9) 5%,var(--surface,#fff));
+  color:var(--muted,#718293);
+  font-size:12px;
+  line-height:1.55;
+}
+.create-access-note i{color:var(--primary,#229ed9);margin-top:2px}
+.create-access-note b{color:var(--text,#14212b)}
+html[data-theme="dark"] .create-access-note{
+  background:rgba(34,158,217,.08);
+  border-color:rgba(34,158,217,.22);
+}
