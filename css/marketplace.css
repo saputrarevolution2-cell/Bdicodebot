@@ -275,3 +275,42 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
 }
 /* Ranking stays a single vertical list intentionally; only the main
    marketplace content cards use the 2/4-column grid. */
+
+/* FINAL CARD LAYOUT FALLBACK — guarantees side-by-side cards */
+#market.market-grid.marketplace-content-grid{
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:wrap !important;
+  align-items:stretch !important;
+  align-content:flex-start !important;
+  gap:16px !important;
+}
+#market.market-grid.marketplace-content-grid > .product-card{
+  flex:0 0 calc((100% - 48px) / 4) !important;
+  width:calc((100% - 48px) / 4) !important;
+  max-width:calc((100% - 48px) / 4) !important;
+  box-sizing:border-box !important;
+}
+#market.market-grid.marketplace-content-grid > .market-loading,
+#market.market-grid.marketplace-content-grid > .market-empty,
+#market.market-grid.marketplace-content-grid > .market-error{
+  flex:0 0 100% !important;
+  width:100% !important;
+  max-width:100% !important;
+}
+@media(max-width:1050px){
+  #market.market-grid.marketplace-content-grid{gap:12px !important}
+  #market.market-grid.marketplace-content-grid > .product-card{
+    flex-basis:calc((100% - 12px) / 2) !important;
+    width:calc((100% - 12px) / 2) !important;
+    max-width:calc((100% - 12px) / 2) !important;
+  }
+}
+@media(max-width:520px){
+  #market.market-grid.marketplace-content-grid{gap:10px !important}
+  #market.market-grid.marketplace-content-grid > .product-card{
+    flex-basis:calc((100% - 10px) / 2) !important;
+    width:calc((100% - 10px) / 2) !important;
+    max-width:calc((100% - 10px) / 2) !important;
+  }
+}
