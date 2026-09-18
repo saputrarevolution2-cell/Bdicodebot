@@ -1,3 +1,4 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 :root{--bg:#f6f8fc;--surface:#fff;--surface2:#f8fafc;--surface3:#eef3f8;--text:#101828;--muted:#667085;--line:#e4e7ec;--primary:#229ed9;--primary2:#635bff;--cyan:#06b6d4;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--radius:18px;--shadow:0 8px 28px rgba(16,24,40,.07);--shadow2:0 18px 45px rgba(16,24,40,.12);--max:1180px;color-scheme:light}
 html[data-theme="dark"]{--bg:#0b111a;--surface:#121a25;--surface2:#172231;--surface3:#1e2a3a;--text:#f8fafc;--muted:#98a6b8;--line:rgba(255,255,255,.1);--shadow:0 10px 30px rgba(0,0,0,.24);--shadow2:0 20px 55px rgba(0,0,0,.35);color-scheme:dark}
