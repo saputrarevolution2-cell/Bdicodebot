@@ -3005,7 +3005,6 @@ document.addEventListener("DOMContentLoaded",async()=>{
   }catch(e){
     root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat PasteLink.")}</div>`;
   }
-  }
 });
 
 try{
