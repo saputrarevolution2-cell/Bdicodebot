@@ -2777,194 +2777,193 @@ function initPasteLinkEditor(){
 
   let savedRange=null;
   let restoring=false;
-
   const inside=r=>!!r && (r.commonAncestorContainer===ed || ed.contains(r.commonAncestorContainer));
 
-  const saveSelection=()=>{
+  function saveSelection(){
     if(restoring)return savedRange;
     const sel=window.getSelection();
-    if(!sel || !sel.rangeCount)return savedRange;
+    if(!sel||!sel.rangeCount)return savedRange;
     const r=sel.getRangeAt(0);
-    if(inside(r) && !r.collapsed){
-      savedRange=r.cloneRange();
-    }
+    if(inside(r) && !r.collapsed) savedRange=r.cloneRange();
     return savedRange;
-  };
-
-  const restoreSelection=()=>{
-    if(!savedRange || !inside(savedRange))return false;
+  }
+  function restoreSelection(){
+    if(!savedRange||!inside(savedRange))return false;
     try{
+      restoring=true;
       const sel=window.getSelection();
       sel.removeAllRanges();
       sel.addRange(savedRange.cloneRange());
       return true;
-    }catch(_){return false;}
-  };
-
-  const sync=()=>{
+    }catch(_){return false}
+    finally{restoring=false}
+  }
+  function sync(){
     const h=document.getElementById("contentHtml");
     if(h)h.value=sanitizeContentHTML(ed.innerHTML);
-  };
-
-  const closestInEditor=(selector)=>{
+  }
+  function nodeFromRange(range){
+    let n=range?.commonAncestorContainer;
+    if(n?.nodeType===3)n=n.parentElement;
+    return n;
+  }
+  function closestFormat(selector){
     if(!savedRange)return null;
-    let n=savedRange.commonAncestorContainer;
-    if(n.nodeType===3)n=n.parentElement;
-    return n?.closest?.(selector) || null;
-  };
-
-  const unwrap=el=>{
-    if(!el || !ed.contains(el))return false;
+    const n=nodeFromRange(savedRange);
+    const el=n?.closest?.(selector);
+    return el&&ed.contains(el)?el:null;
+  }
+  function unwrap(el){
+    if(!el||!ed.contains(el))return false;
     const parent=el.parentNode;
     if(!parent)return false;
-    while(el.firstChild)parent.insertBefore(el.firstChild,el.firstChild?el.firstChild:null);
+    while(el.firstChild) parent.insertBefore(el.firstChild,el);
     el.remove();
     return true;
-  };
-
-  const wrapSelection=(className)=>{
+  }
+  function selectNodeContents(el){
+    const sel=window.getSelection();
+    const r=document.createRange();
+    r.selectNodeContents(el);
+    sel.removeAllRanges();sel.addRange(r);
+    savedRange=r.cloneRange();
+  }
+  function wrapSelection(className,tag="span"){
     if(!restoreSelection())return false;
     const sel=window.getSelection();
-    if(!sel || !sel.rangeCount)return false;
+    if(!sel||!sel.rangeCount)return false;
     const r=sel.getRangeAt(0);
-    if(r.collapsed || !inside(r))return false;
-
-    const span=document.createElement("span");
-    span.className=className;
+    if(r.collapsed||!inside(r))return false;
+    const el=document.createElement(tag);
+    el.className=className;
     try{
-      span.appendChild(r.extractContents());
-      r.insertNode(span);
-      const nr=document.createRange();
-      nr.selectNodeContents(span);
-      sel.removeAllRanges();
-      sel.addRange(nr);
-      savedRange=nr.cloneRange();
+      const frag=r.extractContents();
+      if(!frag.textContent?.trim())return false;
+      el.appendChild(frag);
+      r.insertNode(el);
+      selectNodeContents(el);
       return true;
-    }catch(_){return false;}
-  };
-
-  const editLink=()=>{
-    if(!restoreSelection()){
-      TC.toast("Pilih teks terlebih dahulu.","info");
-      return false;
+    }catch(_){return false}
+  }
+  function formatInline(cmd,className){
+    const existing=closestFormat("."+className);
+    if(existing){unwrap(existing);sync();return true}
+    // Native inline formatting is more reliable for arbitrary text selections,
+    // including selections crossing text nodes. Normalize its output afterwards.
+    if(restoreSelection()){
+      try{
+        document.execCommand(cmd,false,null);
+        saveSelection();
+        sync();
+        return true;
+      }catch(_){/* fall through */}
     }
-    const a=closestInEditor("a");
-    if(a){
-      const current=a.getAttribute("href")||"https://";
-      let u=prompt("Masukkan URL tautan:",current);
+    return wrapSelection(className);
+  }
+  function toggleSpoiler(){
+    const existing=closestFormat(".pt-spoiler");
+    if(existing){
+      existing.classList.toggle("revealed");
+      selectNodeContents(existing);sync();return true;
+    }
+    return wrapSelection("pt-spoiler");
+  }
+  function toggleQuote(){
+    const existing=closestFormat(".pt-quote");
+    if(existing){unwrap(existing);sync();return true}
+    return wrapSelection("pt-quote");
+  }
+  function normalizeFormatting(){
+    // Convert browser-generated inline tags to the stable PasTele classes.
+    ed.querySelectorAll("b,strong").forEach(el=>{
+      if(el.closest(".pt-bold"))return;
+      const s=document.createElement("span");s.className="pt-bold";
+      while(el.firstChild)s.appendChild(el.firstChild);
+      el.replaceWith(s);
+    });
+    ed.querySelectorAll("i,em").forEach(el=>{
+      if(el.closest(".pt-italic"))return;
+      const s=document.createElement("span");s.className="pt-italic";
+      while(el.firstChild)s.appendChild(el.firstChild);
+      el.replaceWith(s);
+    });
+    ed.querySelectorAll("u").forEach(el=>{
+      if(el.closest(".pt-underline"))return;
+      const s=document.createElement("span");s.className="pt-underline";
+      while(el.firstChild)s.appendChild(el.firstChild);
+      el.replaceWith(s);
+    });
+  }
+  function editLink(){
+    if(!restoreSelection()){TC.toast("Pilih teks terlebih dahulu.","info");return false}
+    const existing=closestFormat("a");
+    if(existing){
+      let u=prompt("Masukkan URL tautan:",existing.getAttribute("href")||"https://");
       if(u===null)return false;
-      u=u.trim();
-      if(/^www\./i.test(u))u="https://"+u;
-      if(!/^https?:\/\//i.test(u)){
-        TC.toast("URL harus http:// atau https://.","error");
-        return false;
-      }
-      a.setAttribute("href",u);
-      a.target="_blank";
-      a.rel="noopener noreferrer nofollow";
-      sync();
-      return true;
+      u=u.trim();if(/^www\./i.test(u))u="https://"+u;
+      if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return false}
+      existing.setAttribute("href",u);existing.target="_blank";existing.rel="noopener noreferrer nofollow";sync();return true;
     }
-
-    const text=savedRange.toString().trim();
-    let u=prompt("Masukkan URL tautan:",/^https?:\/\//i.test(text)?text:"https://");
+    const selected=savedRange.toString().trim();
+    let u=prompt("Masukkan URL tautan:",/^https?:\/\//i.test(selected)?selected:"https://");
     if(u===null)return false;
-    u=u.trim();
-    if(/^www\./i.test(u))u="https://"+u;
-    if(!/^https?:\/\//i.test(u)){
-      TC.toast("URL harus http:// atau https://.","error");
-      return false;
-    }
+    u=u.trim();if(/^www\./i.test(u))u="https://"+u;
+    if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return false}
     if(!restoreSelection())return false;
-    const sel=window.getSelection();
-    if(!sel || !sel.rangeCount)return false;
-    const r=sel.getRangeAt(0);
+    const sel=window.getSelection(),r=sel.getRangeAt(0);
     if(r.collapsed)return false;
-    const ael=document.createElement("a");
-    ael.href=u;
-    ael.target="_blank";
-    ael.rel="noopener noreferrer nofollow";
-    ael.appendChild(r.extractContents());
-    r.insertNode(ael);
-    const nr=document.createRange();
-    nr.selectNodeContents(ael);
-    sel.removeAllRanges();
-    sel.addRange(nr);
-    savedRange=nr.cloneRange();
-    sync();
-    return true;
-  };
-
-  const apply=cmd=>{
-    if(!savedRange || savedRange.collapsed){
-      TC.toast("Pilih teks terlebih dahulu.","info");
-      return;
+    const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener noreferrer nofollow";
+    a.appendChild(r.extractContents());r.insertNode(a);selectNodeContents(a);sync();return true;
+  }
+  function apply(cmd){
+    if(cmd!=="link"&&(!savedRange||savedRange.collapsed)){
+      TC.toast("Pilih teks terlebih dahulu.","info");return;
     }
     let ok=false;
-    if(cmd==="bold"){
-      const x=closestInEditor(".pt-bold");
-      ok=x?unwrap(x):wrapSelection("pt-bold");
-    }else if(cmd==="italic"){
-      const x=closestInEditor(".pt-italic");
-      ok=x?unwrap(x):wrapSelection("pt-italic");
-    }else if(cmd==="underline"){
-      const x=closestInEditor(".pt-underline");
-      ok=x?unwrap(x):wrapSelection("pt-underline");
-    }else if(cmd==="spoiler"){
-      const x=closestInEditor(".pt-spoiler");
-      ok=x?unwrap(x):wrapSelection("pt-spoiler");
-    }else if(cmd==="blockquote"){
-      const x=closestInEditor(".pt-quote");
-      ok=x?unwrap(x):wrapSelection("pt-quote");
-    }else if(cmd==="link"){
-      ok=editLink();
-    }
-    if(!ok && cmd!=="link")TC.toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");
-    sync();
-    try{ed.focus({preventScroll:true});}catch(_){ed.focus();}
-  };
+    if(cmd==="bold")ok=formatInline("bold","pt-bold");
+    else if(cmd==="italic")ok=formatInline("italic","pt-italic");
+    else if(cmd==="underline")ok=formatInline("underline","pt-underline");
+    else if(cmd==="spoiler")ok=toggleSpoiler();
+    else if(cmd==="blockquote")ok=toggleQuote();
+    else if(cmd==="link")ok=editLink();
+    normalizeFormatting();sync();
+    try{ed.focus({preventScroll:true})}catch(_){ed.focus()}
+    if(!ok&&cmd!=="link")TC.toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");
+  }
 
   document.addEventListener("selectionchange",()=>{
-    saveSelection();
+    const sel=window.getSelection();
+    if(sel&&sel.rangeCount&&inside(sel.getRangeAt(0))&&!sel.getRangeAt(0).collapsed)saveSelection();
   });
-  ["mouseup","keyup","touchend","pointerup","focusout"].forEach(ev=>{
-    ed.addEventListener(ev,()=>setTimeout(saveSelection,0),{passive:true});
+  ["mouseup","keyup","touchend","pointerup"].forEach(ev=>ed.addEventListener(ev,()=>setTimeout(saveSelection,0),{passive:true}));
+  ed.addEventListener("focusout",()=>setTimeout(saveSelection,0));
+  ed.addEventListener("input",()=>{saveSelection();normalizeFormatting();sync()});
+  ed.addEventListener("paste",()=>setTimeout(()=>{normalizeFormatting();sync()},0));
+  ed.addEventListener("click",e=>{
+    const sp=e.target.closest?.(".pt-spoiler");
+    if(sp&&ed.contains(sp))sp.classList.toggle("revealed");
   });
-  ed.addEventListener("input",()=>{saveSelection();sync();});
-  ed.addEventListener("paste",()=>setTimeout(sync,0));
-
   ed.addEventListener("keydown",e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
-      e.preventDefault();
-      saveSelection();
-      apply("link");
+      e.preventDefault();saveSelection();apply("link");
     }
   });
 
-  const buttons=document.querySelectorAll("#contentEditor .pt-tool");
-  buttons.forEach(btn=>{
+  document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
     const run=e=>{
-      e.preventDefault();
-      e.stopPropagation();
-      // IMPORTANT: never recapture here. Safari/iOS may replace the text selection
-      // with the toolbar selection. Always use the last range saved from the editor.
-      apply(btn.dataset.cmd);
-      return false;
+      e.preventDefault();e.stopPropagation();
+      apply(btn.dataset.cmd);return false;
     };
-    if(window.PointerEvent){
-      btn.addEventListener("pointerdown",run,{passive:false});
-    }else if("ontouchstart" in window){
-      btn.addEventListener("touchstart",run,{passive:false});
-    }else{
-      btn.addEventListener("mousedown",run,{passive:false});
-    }
+    // Prevent toolbar buttons from stealing the editor selection on iOS/Safari.
+    btn.addEventListener("pointerdown",run,{passive:false});
+    btn.addEventListener("mousedown",e=>{if(!window.PointerEvent)run(e)},{passive:false});
   });
-
   const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
   cb?.addEventListener("change",()=>{if(box)box.hidden=!cb.checked;if(!cb.checked&&pw)pw.value=""});
   document.getElementById("togglePassword")?.addEventListener("click",()=>{if(pw)pw.type=pw.type==="password"?"text":"password"});
   sync();
 }
+
 document.addEventListener("DOMContentLoaded",initPasteLinkEditor);
 
 function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
