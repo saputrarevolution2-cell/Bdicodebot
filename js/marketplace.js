@@ -2929,6 +2929,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     return name || "Creator";
   };
 
+  const creatorProfileUrl = (item) => {
+    const id = item?.owner_id || item?.creator_id || item?.seller_id || item?.user_id || null;
+    const username = String(item?.creator_username || "").trim().replace(/^@/, "");
+    if (id) return `profile.html?id=${encodeURIComponent(String(id))}`;
+    if (username) return `profile.html?username=${encodeURIComponent(username)}`;
+    return "";
+  };
+
   // Canonical target_type used by the database RPCs.
   const canonicalTargetType = (value) => {
     const t = typeOf(typeof value === "string" ? { type: value } : (value || {}));
@@ -3198,15 +3206,27 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
           <div class="product-creator">
             <i class="fa-solid ${type === "code" ? "fa-robot" : type === "channel" ? "fa-broadcast-tower" : type === "group" ? "fa-users" : type === "pastelink" ? "fa-link" : "fa-user"}" aria-hidden="true"></i>
-            <span>
-              ${esc(
-                type === "code" && item?.bot_username ? "Bot @" + String(item.bot_username).replace(/^@/, "") :
-                (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username) ?
-                  ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, ""))) :
-                type === "pastelink" ? "PasteLink • " + creator :
-                creator
-              )}
-            </span>
+            ${
+              creatorProfileUrl(item)
+                ? `<a class="product-creator-link" href="${esc(creatorProfileUrl(item))}" title="Kunjungi profil ${esc(creator)}" onclick="event.stopPropagation();">
+                    ${esc(
+                      type === "code" && item?.bot_username
+                        ? "Bot @" + String(item.bot_username).replace(/^@/, "") + " • " + creator
+                        : (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username)
+                          ? ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, "")) + " • " + creator)
+                          : type === "pastelink"
+                            ? "PasteLink • " + creator
+                            : creator
+                    )}
+                  </a>`
+                : `<span>${esc(
+                    type === "code" && item?.bot_username ? "Bot @" + String(item.bot_username).replace(/^@/, "") :
+                    (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username) ?
+                      ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, ""))) :
+                    type === "pastelink" ? "PasteLink • " + creator :
+                    creator
+                  )}</span>`
+            }
           </div>
           <!-- ENGAGEMENT -->
           <div class="market-card-stats" aria-label="Statistik konten">
