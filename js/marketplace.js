@@ -3901,10 +3901,24 @@ bindMarketplaceBuyButtons();
     if (
       pageItems.length
     ) {
-      market.innerHTML =
-        pageItems
-          .map(card)
-          .join("");
+      // Render every item in the current page as a direct child.
+      // Do not use a single-card fallback or width inherited from an
+      // individual product. The layout CSS below handles 2/4 columns.
+      const cardsHtml = pageItems.map((item) => card(item)).join("");
+      market.innerHTML = cardsHtml;
+      // Defensive runtime layout: this prevents any legacy global CSS from
+      // collapsing the marketplace into one vertical card.
+      market.style.display = "grid";
+      market.style.width = "100%";
+      market.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      market.style.gap = "12px";
+      market.style.alignItems = "stretch";
+      market.querySelectorAll(":scope > .product-card").forEach((el) => {
+        el.style.width = "auto";
+        el.style.maxWidth = "none";
+        el.style.minWidth = "0";
+        el.style.margin = "0";
+      });
     } else {
       const hasSearch =
         Boolean(
