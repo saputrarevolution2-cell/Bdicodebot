@@ -817,3 +817,164 @@ body.public-view-page .view-wrap{
 @media (prefers-reduced-motion: reduce) {
   .view-ticker-track { animation: none; }
 }
+
+
+/* =========================================================
+   VIEW CODE — DASHBOARD FOOTER MATCH
+   ========================================================= */
+.public-view-page .pastele-footer{
+  width:100%;
+  margin:0;
+  padding:42px 0 0;
+  background:#0b1220;
+  color:#94a3b8;
+  border-top:1px solid rgba(148,163,184,.14);
+}
+.public-view-page .pastele-footer .footer-container{
+  width:min(1180px,calc(100% - 32px));
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(260px,1.6fr) repeat(3,minmax(130px,1fr));
+  gap:34px;
+  align-items:start;
+  padding:0 0 0;
+}
+.public-view-page .pastele-footer .footer-brand-link{
+  display:inline-flex;align-items:center;gap:10px;
+  color:#fff!important;text-decoration:none!important;
+}
+.public-view-page .pastele-footer .footer-brand-mark{
+  width:42px;height:42px;display:grid;place-items:center;
+  border-radius:13px;
+  background:linear-gradient(135deg,#229ed9,#06b6d4);
+  color:#fff;
+  box-shadow:0 10px 26px rgba(34,158,217,.22);
+}
+.public-view-page .pastele-footer .footer-brand-mark i{color:#fff!important}
+.public-view-page .pastele-footer .footer-brand-name{
+  font-size:19px;font-weight:850;letter-spacing:-.03em;
+}
+.public-view-page .pastele-footer .footer-description{
+  max-width:400px;margin:14px 0 15px;
+  color:#94a3b8;font-size:12px;line-height:1.75;
+}
+.public-view-page .pastele-footer .footer-platform-status{
+  display:inline-flex;align-items:center;gap:8px;
+  color:#34d399;font-size:10px;font-weight:800;
+}
+.public-view-page .pastele-footer .footer-status-indicator{
+  width:7px;height:7px;border-radius:50%;
+  background:#34d399;box-shadow:0 0 0 5px rgba(52,211,153,.1);
+}
+.public-view-page .pastele-footer .footer-column{display:grid;gap:9px}
+.public-view-page .pastele-footer .footer-column h3{
+  margin:1px 0 6px;color:#f8fafc;font-size:11px;font-weight:850;
+  text-transform:uppercase;letter-spacing:.1em;
+}
+.public-view-page .pastele-footer .footer-column a{
+  display:flex;align-items:center;gap:8px;
+  color:#94a3b8!important;text-decoration:none!important;font-size:11px;
+  transition:.16s ease;
+}
+.public-view-page .pastele-footer .footer-column a:hover{
+  color:#fff!important;transform:translateX(2px);
+}
+.public-view-page .pastele-footer .footer-column a i{
+  width:15px;text-align:center;color:#67c7ef;
+}
+.public-view-page .pastele-footer .footer-bottom{
+  width:min(1180px,calc(100% - 32px));margin:32px auto 0;
+  padding:17px 0 20px;border-top:1px solid rgba(148,163,184,.13);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;font-size:10px;
+}
+.public-view-page .pastele-footer .footer-copyright{
+  display:flex;align-items:center;gap:8px;color:#64748b;
+}
+.public-view-page .pastele-footer .footer-dot{color:#334155}
+.public-view-page .pastele-footer .footer-meta{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.public-view-page .pastele-footer .footer-meta span{
+  display:inline-flex;align-items:center;gap:5px;color:#64748b;
+}
+.public-view-page .pastele-footer .footer-meta i{color:#67c7ef}
+
+/* Guest navbar — compact and consistent with Dashboard */
+.public-view-page .pt-nav-guest .pt-guest-actions{
+  display:flex;align-items:center;gap:7px;margin:0;
+}
+.public-view-page .pt-nav-guest .pt-guest-login,
+.public-view-page .pt-nav-guest .pt-guest-register{
+  min-height:40px;display:inline-flex;align-items:center;justify-content:center;
+  gap:6px;padding:0 11px;border:1px solid var(--line);border-radius:11px;
+  font-size:10px;font-weight:850;transition:.16s ease;
+}
+.public-view-page .pt-nav-guest .pt-guest-login{
+  background:var(--surface);color:var(--text);
+}
+.public-view-page .pt-nav-guest .pt-guest-register{
+  background:var(--primary);border-color:var(--primary);color:#fff;
+}
+.public-view-page .pt-nav-guest .pt-guest-login:hover{
+  color:var(--primary);border-color:rgba(34,158,217,.3);
+}
+.public-view-page .pt-nav-guest .pt-guest-register:hover{
+  transform:translateY(-1px);box-shadow:0 7px 18px rgba(34,158,217,.2);
+}
+.public-view-page .pt-nav-guest .pt-guest-actions i{font-size:10px}
+
+@media(max-width:760px){
+  .public-view-page .pastele-footer{padding-top:30px}
+  .public-view-page .pastele-footer .footer-container{
+    grid-template-columns:1fr 1fr;gap:24px 18px;width:calc(100% - 20px);
+  }
+  .public-view-page .pastele-footer .footer-brand{grid-column:1/-1}
+  .public-view-page .pastele-footer .footer-bottom{
+    width:calc(100% - 20px);align-items:flex-start;flex-direction:column;
+  }
+}
+@media(max-width:560px){
+  .public-view-page .pt-nav-inner{width:calc(100% - 20px)}
+  .public-view-page .pt-nav-guest .pt-guest-actions{gap:5px}
+  .public-view-page .pt-nav-guest .pt-guest-login,
+  .public-view-page .pt-nav-guest .pt-guest-register{
+    min-height:36px;padding:0 9px;font-size:9px;
+  }
+}
+@media(max-width:380px){
+  .public-view-page .pt-nav-guest .pt-guest-actions span{display:none}
+  .public-view-page .pt-nav-guest .pt-guest-login,
+  .public-view-page .pt-nav-guest .pt-guest-register{
+    width:36px;padding:0;
+  }
+}
+
+
+/* Final View Code layout safety */
+.public-view-page .view-wrap{
+  width:min(900px,calc(100% - 32px));
+  margin-inline:auto;
+  min-width:0;
+}
+.public-view-page .view-card{
+  width:100%;
+  min-width:0;
+}
+.public-view-page .view-head,
+.public-view-page .view-meta,
+.public-view-page .view-body,
+.public-view-page .engage{
+  min-width:0;
+}
+.public-view-page .view-head h1,
+.public-view-page .view-desc,
+.public-view-page .code-block pre{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.public-view-page i.fa-solid,
+.public-view-page i.fa-regular,
+.public-view-page i.fa-brands{
+  font-family:"Font Awesome 6 Free","Font Awesome 6 Brands"!important;
+}
