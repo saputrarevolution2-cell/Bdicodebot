@@ -2989,7 +2989,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     saved:$('savedMethods'),refresh:$('refreshWithdraw')
   };
 
-  let user=null, profile=null, limits=null, withdrawals=[];
+  let user=null, profile=null, wallet={available_balance:0,pending_balance:0,balance:0}, limits=null, withdrawals=[];
   let selectedInstant=50000, pending=null;
 
   const showValidation=(node,msg,type='error')=>{if(!node)return;node.hidden=!msg;node.textContent=msg||'';node.dataset.type=type;};
@@ -3008,24 +3008,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     const u=(await sb.auth.getUser()).data?.user;
     if(!u){ location.href='login.html?next=withdrawals.html'; return; }
     user=u;
-    const [pr,lim,wr,pm]=await Promise.all([
-      sb.from('profiles').select('username,display_name,is_premium,subscription_until,balance').eq('id',u.id).maybeSingle(),
+
+    // Matured earnings are released by the database before we read the wallet.
+    // Withdraw must NEVER use profiles.balance as an available-balance source.
+    try {
+      const release = await window.PasTeleDB.rpc('release_matured_wallet');
+      if (release?.error) console.warn('[PasTele Withdrawals] settlement release:', release.error);
+    } catch (e) {
+      console.warn('[PasTele Withdrawals] settlement refresh skipped:', e);
+    }
+
+    const [pr,wa,lim,wr,pm]=await Promise.all([
+      sb.from('profiles').select('username,display_name,is_premium,subscription_until').eq('id',u.id).maybeSingle(),
+      sb.from('wallets').select('balance,available_balance,pending_balance').eq('user_id',u.id).maybeSingle(),
       window.PasTeleDB.rpc("get_withdrawal_limits"),
       sb.from('withdrawals').select('*').eq('user_id',u.id).order('created_at',{ascending:false}).limit(100),
       sb.from('payment_methods').select('id,method_type,provider,account_name,account_number,is_default').eq('user_id',u.id).order('is_default',{ascending:false})
     ]);
-    if(pr.error) throw pr.error; if(lim.error) throw lim.error; if(wr.error) throw wr.error;
-    profile=pr.data||{}; limits=lim.data||{}; withdrawals=wr.data||[];
+    if(pr.error) throw pr.error;
+    if(wa.error) throw wa.error;
+    if(lim.error) throw lim.error;
+    if(wr.error) throw wr.error;
+
+    profile=pr.data||{};
+    wallet=wa.data||{available_balance:0,pending_balance:0,balance:0};
+    limits=lim.data||{};
+    withdrawals=wr.data||[];
     renderBalance(); renderRules(); renderInstant(); renderManual(); renderHistory();
     renderMethods(pm.data||[]);
     renderPreview();
   }
 
   function renderBalance(){
-    const available=Number(profile.balance||0);
+    const available=Math.max(0,Number(wallet?.available_balance ?? 0));
+    const pending=Math.max(0,Number(wallet?.pending_balance ?? 0));
+    const activeWithdrawals=withdrawals.filter(w=>['pending','processing','approved'].includes(String(w.status||'').toLowerCase()));
+    const completedWithdrawals=withdrawals.filter(w=>['completed','success','successful'].includes(String(w.status||'').toLowerCase()));
+    const requestedAmount=activeWithdrawals.reduce((sum,w)=>sum+Math.max(0,Number(w.amount||0)),0);
+    const completedAmount=completedWithdrawals.reduce((sum,w)=>sum+Math.max(0,Number(w.amount||0)),0);
+
     if(el.bal) el.bal.textContent=money(available);
-    if(el.req) el.req.textContent=String(withdrawals.filter(w=>['pending','processing','approved'].includes(String(w.status||'').toLowerCase())).length);
-    if(el.done) el.done.textContent=String(withdrawals.filter(w=>['completed','success','successful'].includes(String(w.status||'').toLowerCase())).length);
+    const pendingEl=$('pendingSettlement');
+    if(pendingEl) pendingEl.textContent=money(pending);
+    if(el.req) el.req.textContent=money(requestedAmount);
+    if(el.done) el.done.textContent=money(completedAmount);
   }
 
 
@@ -3309,7 +3335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     const a=Number(el.amount.value||0);
     const fee=withdrawFee('manual');
-    const balance=Number(profile?.balance||0);
+    const balance=Math.max(0,Number(wallet?.available_balance ?? 0));
     if(a<100000){showValidation($('withdrawValidation'),'Minimum WD Manual Rp100.000');return;}
     if(a<=fee){showValidation($('withdrawValidation'),`Nominal withdraw harus lebih besar dari fee ${money(fee)}.`);return;}
     if(a>balance){showValidation($('withdrawValidation'),'Saldo tersedia tidak mencukupi.');return;}
@@ -3319,7 +3345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try{
       const a=Number(selectedInstant||0);
       const fee=withdrawFee('instant');
-      const balance=Number(profile?.balance||0);
+      const balance=Math.max(0,Number(wallet?.available_balance ?? 0));
       if(a<=0) throw new Error('Pilih nominal WD Instant terlebih dahulu.');
       if(a<=fee) throw new Error(`Nominal withdraw harus lebih besar dari fee ${money(fee)}.`);
       if(a>balance) throw new Error('Saldo tersedia tidak mencukupi.');
