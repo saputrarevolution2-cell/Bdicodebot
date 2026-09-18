@@ -439,6 +439,11 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
   }
 }
 
+/* Password form visibility — explicit state */
+.password-box[hidden]{display:none!important}
+.password-box:not([hidden]){display:block!important}
+.password-box{margin-top:10px}
+
 /* ===== PasteLink Rich Editor — FINAL ===== */
 .pt-editor{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
 .pt-editor-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:9px;border-bottom:1px solid var(--line);background:var(--surface2)}
@@ -446,9 +451,9 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
 .pt-tool:active,.pt-tool:hover{border-color:var(--primary);color:var(--primary)}
 .pt-editor-content{min-height:240px;padding:14px 15px;outline:none;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
 .pt-editor-content:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
-.pt-editor-content .pt-bold{font-weight:800!important}
-.pt-editor-content .pt-italic{font-style:italic!important}
-.pt-editor-content .pt-underline{text-decoration:underline!important;text-decoration-thickness:1px!important}
+.pt-editor-content .pt-bold,.pt-editor-content strong,.pt-editor-content b{font-weight:800!important}
+.pt-editor-content .pt-italic,.pt-editor-content em,.pt-editor-content i{font-style:italic!important}
+.pt-editor-content .pt-underline,.pt-editor-content u{text-decoration:underline!important;text-decoration-thickness:1px!important}
 .pt-editor-content .pt-quote{display:inline;box-decoration-break:clone;-webkit-box-decoration-break:clone;background:var(--surface2);border-left:3px solid var(--primary);padding:2px 7px;margin:0;border-radius:5px;font-style:normal;line-height:inherit}
 .pt-editor-content .pt-spoiler{background:#334155!important;color:transparent!important;border-radius:5px;padding:1px 4px;cursor:pointer;text-shadow:none!important;user-select:none;-webkit-user-select:none}
 .pt-editor-content .pt-spoiler.revealed{color:var(--text)!important}
