@@ -39,7 +39,7 @@
 
     // Primary admin check through the database RPC.
     try{
-      const r=await sb.rpc('is_current_user_admin');
+      const r=await window.PasTeleDB.rpc("is_current_user_admin");
       if(
         !r.error &&
         (
