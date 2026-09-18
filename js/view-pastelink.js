@@ -1115,6 +1115,9 @@ window.PASTELE_CONFIG = Object.freeze({
      * User pages stay at root.
      */
     const base = isAdmin ? '../' : '';
+    /* Navbar internal routes are always rooted so deployment under
+       /pp/, /admin/, or another path cannot create broken URLs. */
+    const navBase = isAdmin ? '/admin/' : '/';
     /* ========================================================
        HELPERS
        ======================================================== */
@@ -1515,7 +1518,7 @@ window.PASTELE_CONFIG = Object.freeze({
           return `
             <a
               class="pt-link${active ? ' active' : ''}"
-              href="${base}${esc(href)}"
+              href="${navBase}${esc(href)}"
               ${active
                 ? 'aria-current="page"'
                 : ''}
@@ -1587,7 +1590,7 @@ window.PASTELE_CONFIG = Object.freeze({
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
+            href="${isAdmin ? '/admin/index.html' : '/dashboard.html'}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
@@ -1675,7 +1678,7 @@ window.PASTELE_CONFIG = Object.freeze({
                 </div>
                 <a
                   class="pt-account-item"
-                  href="${base}notifications.html"
+                  href="${isAdmin ? '/admin/notifications.html' : '/notifications.html'}"
                 >
                   <i
                     class="fa-solid fa-bell"
@@ -1715,7 +1718,7 @@ window.PASTELE_CONFIG = Object.freeze({
               <!-- PROFILE -->
               <a
                 class="pt-profile-link"
-                href="${base}${isAdmin ? 'index.html' : 'profile.html'}"
+                href="${isAdmin ? '/admin/index.html' : '/profile.html'}"
               >
                 <i
                   class="fa-solid fa-user-gear"
@@ -1943,6 +1946,16 @@ window.PASTELE_CONFIG = Object.freeze({
     /* ========================================================
        EVENT: DRAWER LINKS
        ======================================================== */
+    drawer?.querySelectorAll('a.pt-link').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const href = String(link.getAttribute('href') || '');
+        if (href.startsWith('/')) {
+          event.preventDefault();
+          closeDrawer();
+          window.location.assign(href);
+        }
+      });
+    });
     drawer
       ?.querySelectorAll('a')
       .forEach((link) => {
@@ -2255,7 +2268,7 @@ window.PASTELE_CONFIG = Object.freeze({
            * after successful logout.
            */
           location.href =
-            `${base}login.html`;
+            '/login.html';
         } catch (_) {
           button.disabled = false;
           if (label) {
