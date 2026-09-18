@@ -174,11 +174,11 @@ window.PASTELE_CONFIG = Object.freeze({
         result.errors.push("profiles: " + (e?.message || e));
       }
       try {
-        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        const q = await window.sb.rpc("get_public_marketplace");
         if (q.error) throw q.error;
         result.marketplace = true;
       } catch (e) {
-        result.errors.push("marketplace_public: " + (e?.message || e));
+        result.errors.push("get_public_marketplace: " + (e?.message || e));
       }
       return result;
     }
@@ -4144,8 +4144,17 @@ bindMarketplaceBuyButtons();
         .rpc("get_public_marketplace");
 
       if (publicError) {
-        console.error("[Marketplace] marketplace_public error:", publicError);
+        console.error("[Marketplace] get_public_marketplace error:", publicError);
         throw publicError;
+      }
+
+      // RPC returns the canonical public marketplace rows. Always normalize
+      // the RPC result before any enrichment/filtering; never reference an
+      // uninitialized `data` variable here.
+      let data = Array.isArray(publicRows) ? publicRows : [];
+
+      if (!data.length) {
+        console.info("[Marketplace] RPC returned 0 public rows.");
       }
 
       // PasteLink is read explicitly as a public source as well. Some database
@@ -4252,7 +4261,7 @@ bindMarketplaceBuyButtons();
     } catch (error) {
       console.error("[Marketplace] Load error:", error);
       setError(
-        "Konten Marketplace belum dapat dimuat. Pastikan view public.marketplace_public pada SQL canonical sudah dijalankan dan dapat dibaca anon/authenticated."
+        "Konten Marketplace belum dapat dimuat. Jalankan SQL marketplace final agar RPC get_public_marketplace tersedia untuk anon/authenticated."
       );
     }
   }
