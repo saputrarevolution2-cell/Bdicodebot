@@ -2775,71 +2775,209 @@ function initPasteLinkEditor(){
  if(!ed||ed.dataset.ready)return;
  ed.dataset.ready="1";
  let savedRange=null;
- const getRange=()=>{const sel=window.getSelection();if(!sel||!sel.rangeCount)return null;const r=sel.getRangeAt(0);return ed.contains(r.commonAncestorContainer)?r.cloneRange():null};
- const saveRange=()=>{const r=getRange();if(r)savedRange=r;return r};
- const restoreRange=()=>{if(!savedRange)return false;const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);ed.focus();return true};
- const syncHTML=()=>{document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)};
- const selectedText=()=>{if(!savedRange)return "";return savedRange.toString()};
- const wrapSelection=(tag,attrs={})=>{
-   if(!restoreRange())return false;
-   const sel=window.getSelection(),r=sel?.rangeCount?sel.getRangeAt(0):null;
-   if(!r||r.collapsed)return false;
-   const el=document.createElement(tag);
-   Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
-   el.appendChild(r.extractContents());r.insertNode(el);
-   const nr=document.createRange();nr.selectNodeContents(el);sel.removeAllRanges();sel.addRange(nr);savedRange=nr.cloneRange();
+
+ const inside=r=>{
+   if(!r) return false;
+   const n=r.commonAncestorContainer;
+   return n===ed || ed.contains(n);
+ };
+ const currentRange=()=>{
+   const s=window.getSelection();
+   if(!s || !s.rangeCount) return null;
+   const r=s.getRangeAt(0);
+   return inside(r) ? r.cloneRange() : null;
+ };
+ const saveRange=()=>{
+   const r=currentRange();
+   if(r) savedRange=r;
+   return r;
+ };
+ const restoreRange=()=>{
+   if(!savedRange || !inside(savedRange)) return false;
+   const s=window.getSelection();
+   s.removeAllRanges();
+   s.addRange(savedRange);
    return true;
  };
+ const syncHTML=()=>{
+   const hidden=document.getElementById("contentHtml");
+   if(hidden) hidden.value=sanitizeContentHTML(ed.innerHTML);
+ };
+ const selectedText=()=>savedRange ? savedRange.toString() : "";
+
+ const wrapSelection=(tag,attrs={})=>{
+   if(!restoreRange()) return false;
+   const s=window.getSelection();
+   if(!s || !s.rangeCount) return false;
+   const r=s.getRangeAt(0);
+   if(r.collapsed) return false;
+
+   const el=document.createElement(tag);
+   for(const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+   el.appendChild(r.extractContents());
+   r.insertNode(el);
+
+   const nr=document.createRange();
+   nr.selectNodeContents(el);
+   s.removeAllRanges();
+   s.addRange(nr);
+   savedRange=nr.cloneRange();
+   return true;
+ };
+
+ const unwrapTag=tag=>{
+   if(!restoreRange()) return false;
+   const r=window.getSelection().getRangeAt(0);
+   let node=r.commonAncestorContainer;
+   if(node.nodeType===3) node=node.parentElement;
+   const el=node?.closest?.(tag);
+   if(!el || !ed.contains(el)) return false;
+   const frag=document.createDocumentFragment();
+   while(el.firstChild) frag.appendChild(el.firstChild);
+   el.replaceWith(frag);
+   return true;
+ };
+
  const linkify=()=>{
-   const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),nodes=[];let n;
-   while(n=w.nextNode()){if(n.parentElement?.closest("a,.spoiler,script,style"))continue;nodes.push(n)}
-   for(const node of nodes){const text=node.nodeValue||"",re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;let m,last=0,hit=false;const frag=document.createDocumentFragment();
-    while((m=re.exec(text))){hit=true;frag.append(document.createTextNode(text.slice(last,m.index)));let raw=m[0],trail="";while(/[),.!?;:'\]]$/.test(raw)){trail=raw.slice(-1)+trail;raw=raw.slice(0,-1)}const a=document.createElement("a");a.href=/^www\./i.test(raw)?"https://"+raw:raw;a.textContent=raw;a.target="_blank";a.rel="noopener noreferrer nofollow";frag.append(a);if(trail)frag.append(document.createTextNode(trail));last=m.index+m[0].length}
-    if(hit){frag.append(document.createTextNode(text.slice(last)));node.replaceWith(frag)}
+   const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),nodes=[];
+   let n;
+   while(n=w.nextNode()){
+     if(n.parentElement?.closest("a,.spoiler,script,style")) continue;
+     nodes.push(n);
+   }
+   for(const node of nodes){
+     const text=node.nodeValue||"";
+     const re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+     let m,last=0,hit=false;
+     const frag=document.createDocumentFragment();
+     while((m=re.exec(text))){
+       hit=true;
+       frag.appendChild(document.createTextNode(text.slice(last,m.index)));
+       let raw=m[0],trail="";
+       while(/[),.!?;:'\]]$/.test(raw)){
+         trail=raw.slice(-1)+trail; raw=raw.slice(0,-1);
+       }
+       const a=document.createElement("a");
+       a.href=/^www\./i.test(raw)?"https://"+raw:raw;
+       a.textContent=raw;
+       a.target="_blank";
+       a.rel="noopener noreferrer nofollow";
+       frag.appendChild(a);
+       if(trail) frag.appendChild(document.createTextNode(trail));
+       last=m.index+m[0].length;
+     }
+     if(hit){
+       frag.appendChild(document.createTextNode(text.slice(last)));
+       node.replaceWith(frag);
+     }
    }
  };
+
  const apply=cmd=>{
-   saveRange();
-   if(!savedRange||savedRange.collapsed){toast("Pilih teks terlebih dahulu.","info");return}
+   /* Use the latest selection. On iOS the toolbar can steal focus,
+      so savedRange is deliberately restored before every operation. */
+   if(!savedRange) saveRange();
+   if(!savedRange || savedRange.collapsed){
+     toast("Pilih teks terlebih dahulu.","info");
+     return false;
+   }
+
    let ok=false;
-   if(cmd==="bold")ok=wrapSelection("strong");
-   else if(cmd==="italic")ok=wrapSelection("em");
-   else if(cmd==="underline")ok=wrapSelection("u");
-   else if(cmd==="spoiler")ok=wrapSelection("span",{class:"spoiler"});
-   else if(cmd==="blockquote"){
-     if(restoreRange()){
-       const sel=window.getSelection(),r=sel.getRangeAt(0),b=document.createElement("blockquote");
-       b.appendChild(r.extractContents());r.insertNode(b);const nr=document.createRange();nr.selectNodeContents(b);sel.removeAllRanges();sel.addRange(nr);savedRange=nr.cloneRange();ok=true;
-     }
-   } else if(cmd==="link"){
+   if(cmd==="bold"){
+     const el=savedRange.commonAncestorContainer.nodeType===3
+       ? savedRange.commonAncestorContainer.parentElement
+       : savedRange.commonAncestorContainer;
+     ok=el?.closest?.("strong,b") ? unwrapTag("strong") || unwrapTag("b") : wrapSelection("strong");
+   }else if(cmd==="italic"){
+     const el=savedRange.commonAncestorContainer.nodeType===3
+       ? savedRange.commonAncestorContainer.parentElement
+       : savedRange.commonAncestorContainer;
+     ok=el?.closest?.("em,i") ? unwrapTag("em") || unwrapTag("i") : wrapSelection("em");
+   }else if(cmd==="underline"){
+     ok=wrapSelection("u");
+   }else if(cmd==="spoiler"){
+     ok=wrapSelection("span",{class:"spoiler"});
+   }else if(cmd==="blockquote"){
+     ok=wrapSelection("blockquote");
+   }else if(cmd==="link"){
      const selected=selectedText().trim();
      let u=window.prompt("Masukkan URL:",/^https?:\/\//i.test(selected)?selected:"https://");
-     if(!u)return;
-     u=u.trim();if(/^www\./i.test(u))u="https://"+u;
-     if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
+     if(!u) return false;
+     u=u.trim();
+     if(/^www\./i.test(u)) u="https://"+u;
+     if(!/^https?:\/\//i.test(u)){
+       toast("URL harus http:// atau https://.","error");
+       return false;
+     }
      ok=wrapSelection("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"});
    }
-   if(!ok)toast("Format gagal diterapkan. Pastikan teks sudah dipilih.","error");
+
+   if(!ok){
+     toast("Format gagal diterapkan. Pilih teks di dalam editor terlebih dahulu.","error");
+     return false;
+   }
    syncHTML();
+   ed.focus();
+   return true;
  };
- ed.addEventListener("input",()=>{syncHTML()});
+
+ ed.addEventListener("input",syncHTML);
  ed.addEventListener("paste",()=>setTimeout(()=>{linkify();syncHTML()},0));
- ["mouseup","keyup","touchend"].forEach(ev=>ed.addEventListener(ev,saveRange));
- ed.addEventListener("blur",saveRange);
- ed.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();saveRange();apply("link")}});
- document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
-   const preserve=e=>{e.preventDefault();saveRange()};
-   btn.addEventListener("pointerdown",preserve);
-   btn.addEventListener("mousedown",preserve);
-   btn.addEventListener("touchstart",preserve,{passive:false});
-   btn.addEventListener("click",e=>{e.preventDefault();apply(btn.dataset.cmd)});
+
+ /* Save selection BEFORE toolbar interaction, including iOS/Safari. */
+ ["selectionchange","mouseup","keyup","touchend","pointerup"].forEach(ev=>{
+   const target=ev==="selectionchange"?document:ed;
+   target.addEventListener(ev,()=>{
+     const r=currentRange();
+     if(r) savedRange=r;
+   });
  });
- const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
- cb?.addEventListener("change",()=>{box.hidden=!cb.checked;if(!cb.checked)pw.value=""});
- document.getElementById("togglePassword")?.addEventListener("click",()=>{pw.type=pw.type==="password"?"text":"password"});
+
+ /* Apply on pointer/touch down. This prevents Safari from clearing
+    the selection before the formatter runs. The click handler is only
+    a fallback for non-pointer environments. */
+ document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
+   let handled=false;
+   const run=e=>{
+     e.preventDefault();
+     e.stopPropagation();
+     if(!savedRange) saveRange();
+     handled=apply(btn.dataset.cmd);
+   };
+   btn.addEventListener("pointerdown",run,{passive:false});
+   btn.addEventListener("touchstart",run,{passive:false});
+   btn.addEventListener("mousedown",e=>{
+     if("PointerEvent" in window) return;
+     run(e);
+   });
+   btn.addEventListener("click",e=>{
+     e.preventDefault();
+     e.stopPropagation();
+     if(!handled) apply(btn.dataset.cmd);
+     handled=false;
+   });
+ });
+
+ ed.addEventListener("keydown",e=>{
+   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
+     e.preventDefault();
+     saveRange();
+     apply("link");
+   }
+ });
+
+ const cb=document.getElementById("hasPassword");
+ const box=document.getElementById("passwordBox");
+ const pw=document.getElementById("contentPassword");
+ cb?.addEventListener("change",()=>{
+   box.hidden=!cb.checked;
+   if(!cb.checked) pw.value="";
+ });
+ document.getElementById("togglePassword")?.addEventListener("click",()=>{
+   pw.type=pw.type==="password"?"text":"password";
+ });
  syncHTML();
 }
-
 initPasteLinkEditor();
 
 function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
