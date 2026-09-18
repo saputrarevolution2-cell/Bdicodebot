@@ -3158,7 +3158,7 @@ document.addEventListener(
 
                 const token = String(guestToken || "").trim();
                 const appendGuest = (url) => token
-                    ? `${url}${url.includes("?") ? "&" : "?"}guest_token=${encodeURIComponent(token)}`
+                    ? `${url}${url.includes("?") ? "&" : "?"}guest_token=${encodeURIComponent(token)}&purchase_access=1`
                     : url;
 
                 // First use the same server-side detail RPC used by view-code.js.

@@ -3296,7 +3296,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const accessType = String(paste.access_type || "free").toLowerCase();
     const isPaid = accessType === "paid" && Number(paste.price || 0) > 0;
-    const canAccess = !isPaid || paste.can_access === true;
+    const currentUser = await (typeof window.TC?.user === "function" ? window.TC.user().catch(()=>null) : Promise.resolve(null));
+    const guestTokenForAccess = String(new URLSearchParams(location.search).get("guest_token") || localStorage.getItem("pastele-guest-checkout-token") || "").trim();
+    const purchaseAccess = String(new URLSearchParams(location.search).get("purchase_access") || "") === "1";
+    let guestJustPurchased = false;
+    if (isPaid && !currentUser?.id && purchaseAccess && guestTokenForAccess) {
+        try {
+            const paidOrder = await client.from("orders").select("id").eq("guest_access_token", guestTokenForAccess).eq("product_id", paste.id).eq("buyer_id", null).in("status", ["paid","completed","success"]).limit(1);
+            guestJustPurchased = !paidOrder.error && !!paidOrder.data?.length;
+        } catch (_) {}
+    }
+    const canAccess = !isPaid || !!currentUser?.id && paste.can_access === true || guestJustPurchased;
 
     if (isPaid && !canAccess) {
         const priceText = Number(paste.price || 0).toLocaleString("id-ID");

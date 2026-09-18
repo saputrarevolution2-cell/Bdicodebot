@@ -2663,10 +2663,14 @@ async function accessState(kind,item){
    const q=await window.sb.from("purchases").select("id").eq("buyer_id",u.id).eq("product_id",item.id).in("status",["completed","paid","success"]).limit(1);
    if(!q.error&&q.data?.length)return {ok:true,reason:"purchase"};
  }
- const tok=localStorage.getItem("pastele-guest-checkout-token");
- if(tok){
+ const tok=String(new URLSearchParams(location.search).get("guest_token")||localStorage.getItem("pastele-guest-checkout-token")||"").trim();
+ const purchaseAccess=String(new URLSearchParams(location.search).get("purchase_access")||"") === "1";
+ // Guest purchases are intentionally NOT permanent on the normal public URL.
+ // Only the payment-success redirect may open the just-paid content, and only
+ // after verifying the successful order for this exact item.
+ if(tok && purchaseAccess){
    const q=await window.sb.from("orders").select("id").eq("guest_access_token",tok).eq("product_id",item.id).eq("buyer_id",null).in("status",["paid","completed","success"]).limit(1);
-   if(!q.error&&q.data?.length)return {ok:true,reason:"guest_purchase"};
+   if(!q.error&&q.data?.length)return {ok:true,reason:"guest_purchase_session"};
  }
  return {ok:false,reason:"purchase"};
 }
