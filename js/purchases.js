@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.sb;
+    const client = window.sb || window.supabaseClient;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,7 +439,8 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await window.PasTeleDB.rpc("resolve_username_login",
+            await client.rpc(
+              "resolve_username_login",
               {
                 p_username: username
               }
@@ -646,7 +647,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await window.PasTeleDB.rpc("check_email_available", {
+        await client.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -691,7 +692,8 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await window.PasTeleDB.rpc("resolve_username_login",
+          await client.rpc(
+            "resolve_username_login",
             {
               p_username: value
             }
@@ -743,7 +745,8 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await window.PasTeleDB.rpc("check_username_available",
+        await client.rpc(
+          "check_username_available",
           {
             p_username: value
           }
@@ -971,8 +974,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.sb) &&
-        (window.sb?.auth || window.sb?.auth)
+        (window.sb || window.supabaseClient) &&
+        (window.sb?.auth || window.supabaseClient?.auth)
       );
     }
   };
@@ -1312,7 +1315,8 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.PasTeleDB.rpc("get_public_site_settings"
+          await window.sb.rpc(
+            'get_public_site_settings'
           );
         if (
           !result?.error &&
@@ -3040,7 +3044,7 @@ document.addEventListener("DOMContentLoaded", async () => {
      ======================================================= */
 
   const TC = window.TC || {};
-  const sb = window.sb || window.sb || null;
+  const sb = window.sb || window.supabaseClient || null;
 
 
   /* =======================================================
@@ -3263,10 +3267,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       return "Tanggal tidak tersedia";
     }
 
-    return parsed.toLocaleString("id-ID", {
-      dateStyle: "medium",
-      timeStyle: "short"
+    const datePart = parsed.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
     });
+    const timePart = parsed.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+    return `${datePart}, ${timePart}`;
   };
 
 
@@ -3299,16 +3310,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
 
+  /* Resolve the real public URL from the purchased source. */
   const getAccessUrl = (row) => {
-    const id = getProductId(row);
+    const source = row?._source || null;
+    const type = getProductType(row);
+    const access = String(
+      row?.access_type || source?.access_type ||
+      (Number(row?.amount || 0) > 0 ? "paid" : "free")
+    ).trim().toLowerCase() === "paid" ? "p" : "f";
+    const slug = String(
+      source?.slug || row?.item_slug || row?.slug || ""
+    ).trim();
 
-    if (!id) {
-      return null;
+    if (slug) {
+      if (type === "link") return `${location.origin}/pp/${encodeURIComponent(slug)}`;
+      if (type === "code") return `${location.origin}/c/${access}/${encodeURIComponent(slug)}`;
+      if (type === "channel") return `${location.origin}/ch/${access}/${encodeURIComponent(slug)}`;
+      if (type === "group") return `${location.origin}/g/${access}/${encodeURIComponent(slug)}`;
+      if (type === "paste") return `${location.origin}/paste/${encodeURIComponent(slug)}`;
     }
 
-    const type = getProductType(row);
-
-    return `product.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`;
+    /* Fallback only when the source cannot be resolved. */
+    return String(row?.access_url || row?.url || row?.link || "").trim() || null;
   };
 
 
@@ -3514,6 +3537,93 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   /* =======================================================
+     SOURCE DATA ENRICHMENT
+     =======================================================
+     purchases deliberately stores a compact snapshot. The live source
+     tables hold the original content, slug, views and sales_count.
+     We join them client-side using product_id/item_id without changing
+     the database schema.
+     ======================================================= */
+  const isUuid = (value) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || "").trim());
+
+  const enrichPurchaseRows = async (rows) => {
+    const buckets = {
+      link: { ids: [], slugs: [] },
+      code: { ids: [], slugs: [] },
+      channel: { ids: [], slugs: [] },
+      group: { ids: [], slugs: [] },
+      product: { ids: [], slugs: [] }
+    };
+
+    for (const row of rows || []) {
+      const type = getProductType(row);
+      const bucket = buckets[type] || buckets.product;
+      const id = row?.product_id || row?.item_id;
+      const value = String(id || "").trim();
+      if (isUuid(value)) bucket.ids.push(value);
+      else if (value) bucket.slugs.push(value);
+      const slug = String(row?.item_slug || row?.slug || "").trim();
+      if (slug) bucket.slugs.push(slug);
+    }
+
+    const unique = (a) => [...new Set(a.filter(Boolean).map(String))];
+    Object.values(buckets).forEach(b => {
+      b.ids = unique(b.ids);
+      b.slugs = unique(b.slugs);
+    });
+
+    const fetchTable = async (type, table, select) => {
+      const b = buckets[type];
+      if (!b.ids.length && !b.slugs.length) return [];
+      const queries = [];
+      if (b.ids.length) queries.push(sb.from(table).select(select).in("id", b.ids));
+      if (b.slugs.length) queries.push(sb.from(table).select(select).in("slug", b.slugs));
+      const results = await Promise.all(queries);
+      const bad = results.find(q => q.error);
+      if (bad?.error) throw bad.error;
+      return results.flatMap(q => q.data || []);
+    };
+
+    const [links, codes, channels, products] = await Promise.all([
+      fetchTable("link", "pastelinks", "id,slug,title,description,content_html,access_type,price,views,created_at,expires_at"),
+      fetchTable("code", "telegram_products", "id,slug,title,type,product_type,access_type,bot_username,price,description,content,views,sales_count,created_at"),
+      fetchTable("channel", "telegram_channels", "id,slug,username,name,type,access_type,description,invite_url,price,views,sales_count,created_at"),
+      fetchTable("product", "products", "id,slug,title,type,access_type,price,description,content,views,sales_count,created_at")
+    ]);
+
+    /* A group is stored in telegram_channels with type='group'. */
+    const allChannels = channels;
+    const byId = new Map();
+    const bySlug = new Map();
+    for (const source of [...links, ...codes, ...allChannels, ...products]) {
+      if (source?.id != null) byId.set(String(source.id), source);
+      if (source?.slug) bySlug.set(String(source.slug), source);
+    }
+
+    return (rows || []).map(row => {
+      const type = getProductType(row);
+      const id = String(row?.product_id || row?.item_id || "").trim();
+      let source = byId.get(id) || null;
+      if (!source) source = bySlug.get(id) || null;
+      if (source && type === "group" && String(source.type || "").toLowerCase() !== "group") source = null;
+      return {
+        ...row,
+        _source: source,
+        _type: type,
+        _status: normalizeStatus(row.status),
+        _title: row.item_title || source?.title || source?.name || "Produk",
+        _productId: getProductId(row),
+        _amount: Number(row.amount || source?.price || 0),
+        _views: Number(source?.views ?? row.views ?? row.view_count ?? 0),
+        _sold: Number(source?.sales_count ?? row.sales_count ?? 0),
+        _botUsername: source?.bot_username || row.bot_username || "",
+        _content: source?.content_html || source?.content || source?.description || ""
+      };
+    });
+  };
+
+  /* =======================================================
      LOAD
      ======================================================= */
 
@@ -3535,22 +3645,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const rows = await fetchPurchases();
 
-      state.rows = rows.map(row => ({
+      state.rows = await enrichPurchaseRows(rows);
+      state.rows = state.rows.map(row => ({
         ...row,
-
-        _type: getProductType(row),
-
-        _status: normalizeStatus(row.status),
-
-        _title: getProductTitle(row),
-
-        _productId: getProductId(row),
-
-        _amount: Number(row.amount || 0),
-
-        _timestamp: new Date(
-          row.created_at || 0
-        ).getTime()
+        _timestamp: new Date(row.created_at || 0).getTime()
       }));
 
       state.page = 1;
@@ -3864,23 +3962,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const canAccess = status === "paid" && Boolean(accessUrl);
 
     /* Extra fields are taken only from the current purchase row. */
+    const source = row._source || {};
     const botUsername = esc(
-      row.bot_username ||
-      row.username ||
-      row._botUsername ||
-      row.product_username ||
-      row.creator_username ||
-      ""
+      source.bot_username || row.bot_username || row.username || row._botUsername || ""
     );
-
-    const fullLink = esc(accessUrl || row.url || row.link || "");
-
-    const views = Number(
-      row.views ?? row.view_count ?? row._views ?? 0
-    );
-    const sold = Number(
-      row.sold ?? row.sales_count ?? row._sold ?? 0
-    );
+    const contentOriginal =
+      source.content_html || source.content || source.description || row.content || row.description || "";
+    const fullLink = esc(accessUrl || row.access_url || row.url || row.link || "");
+    const views = Number(source.views ?? row.views ?? row.view_count ?? row._views ?? 0);
+    const sold = Number(source.sales_count ?? row.sales_count ?? row._sold ?? 0);
+    const contentLabel = contentOriginal ? String(contentOriginal).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() : "Konten asli";
 
     return `
       <article
@@ -3968,27 +4059,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <strong>${amount}</strong>
               </div>
 
-              ${
-                botUsername
-                  ? `
-                    <div class="purchase-detail-field">
-                      <span>Bot</span>
-                      <strong>${botUsername}</strong>
-                    </div>
-                  `
-                  : ""
-              }
+              ${botUsername ? `
+                <div class="purchase-detail-field">
+                  <span>Bot</span>
+                  <strong>${botUsername}</strong>
+                </div>
+              ` : ""}
 
-              ${
-                productId
-                  ? `
-                    <div class="purchase-detail-field">
-                      <span>Code</span>
-                      <strong class="purchase-code-value">${productId}</strong>
-                    </div>
-                  `
-                  : ""
-              }
+              <div class="purchase-detail-field purchase-content-field">
+                <span>Code</span>
+                <strong class="purchase-original-content" title="${esc(contentLabel || "Konten asli")}">${esc(contentLabel || "Konten asli")}</strong>
+              </div>
 
               <div class="purchase-detail-field">
                 <span>Dilihat</span>
@@ -4585,7 +4666,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const {
         error
-      } = await window.PasTeleDB.rpc("delete_purchase",
+      } = await sb.rpc(
+        "delete_purchase",
         {
           p_id: purchaseId
         }
@@ -4851,7 +4933,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.sb || null;
+  const sb = () => window.sb || window.supabaseClient || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -4882,8 +4964,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
