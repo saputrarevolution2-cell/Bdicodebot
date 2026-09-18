@@ -8291,3 +8291,359 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION public.get_content_engagement_counts(uuid,text) TO anon,authenticated;
 COMMIT;
+
+/* ============================================================================
+   PASTELE NOTIFICATION EVENTS
+   BUY/SOLD -> creator + buyer
+   PUBLISH   -> creator
+   WITHDRAW  -> user
+   ============================================================================ */
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.pastele_create_notification(
+  p_user_id uuid,
+  p_type text,
+  p_title text,
+  p_message text,
+  p_data jsonb DEFAULT '{}'::jsonb
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  nid uuid;
+BEGIN
+  IF p_user_id IS NULL THEN RETURN NULL; END IF;
+
+  /* Adapt to the canonical notifications table used by this project.
+     The INSERT is dynamic because older unified schemas can differ in the
+     optional payload/read columns. */
+  IF to_regclass('public.notifications') IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  BEGIN
+    INSERT INTO public.notifications(user_id,type,title,message,data)
+    VALUES(p_user_id,p_type,p_title,p_message,coalesce(p_data,'{}'::jsonb))
+    RETURNING id INTO nid;
+    RETURN nid;
+  EXCEPTION WHEN undefined_column THEN
+    BEGIN
+      INSERT INTO public.notifications(user_id,type,title,message)
+      VALUES(p_user_id,p_type,p_title,p_message)
+      RETURNING id INTO nid;
+      RETURN nid;
+    EXCEPTION WHEN undefined_column THEN
+      BEGIN
+        INSERT INTO public.notifications(user_id,type,title,body)
+        VALUES(p_user_id,p_type,p_title,p_message)
+        RETURNING id INTO nid;
+        RETURN nid;
+      EXCEPTION WHEN undefined_column THEN
+        RETURN NULL;
+      END;
+    END;
+  END;
+END
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pastele_create_notification(uuid,text,text,text,jsonb)
+  TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.pastele_notify_publish(
+  p_owner_id uuid,
+  p_content_id uuid,
+  p_content_type text,
+  p_title text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+BEGIN
+  RETURN public.pastele_create_notification(
+    p_owner_id,
+    'publish',
+    'Konten berhasil dipublikasikan',
+    'Konten "'||coalesce(p_title,'Konten')||'" berhasil dipublikasikan di marketplace.',
+    jsonb_build_object(
+      'event','publish',
+      'content_id',p_content_id,
+      'content_type',p_content_type
+    )
+  );
+END
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pastele_notify_publish(uuid,uuid,text,text)
+  TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.pastele_notify_purchase(
+  p_creator_id uuid,
+  p_buyer_id uuid,
+  p_content_id uuid,
+  p_content_type text,
+  p_title text,
+  p_amount numeric
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  creator_nid uuid;
+  buyer_nid uuid;
+BEGIN
+  creator_nid := public.pastele_create_notification(
+    p_creator_id,
+    'sale',
+    'Konten terjual',
+    'Konten "'||coalesce(p_title,'Konten')||'" telah dibeli. Pendapatan creator 70%: Rp'||to_char(round(coalesce(p_amount,0)*0.70),'FM999G999G999G990'),
+    jsonb_build_object(
+      'event','purchase',
+      'content_id',p_content_id,
+      'content_type',p_content_type,
+      'amount',p_amount,
+      'creator_share',round(coalesce(p_amount,0)*0.70,2),
+      'platform_fee',round(coalesce(p_amount,0)*0.30,2)
+    )
+  );
+
+  IF p_buyer_id IS NOT NULL THEN
+    buyer_nid := public.pastele_create_notification(
+      p_buyer_id,
+      'purchase',
+      'Pembelian berhasil',
+      'Pembelian "'||coalesce(p_title,'Konten')||'" berhasil.',
+      jsonb_build_object(
+        'event','purchase',
+        'content_id',p_content_id,
+        'content_type',p_content_type,
+        'amount',p_amount
+      )
+    );
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok',true,
+    'creator_notification_id',creator_nid,
+    'buyer_notification_id',buyer_nid
+  );
+END
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pastele_notify_purchase(uuid,uuid,uuid,text,text,numeric)
+  TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.pastele_notify_withdraw(
+  p_user_id uuid,
+  p_withdrawal_id uuid,
+  p_status text,
+  p_amount numeric
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public
+AS $$
+DECLARE
+  label text;
+BEGIN
+  label := CASE lower(coalesce(p_status,'pending'))
+    WHEN 'approved' THEN 'Withdrawal disetujui'
+    WHEN 'paid' THEN 'Withdrawal berhasil dibayar'
+    WHEN 'rejected' THEN 'Withdrawal ditolak'
+    WHEN 'cancelled' THEN 'Withdrawal dibatalkan'
+    ELSE 'Withdrawal dibuat'
+  END;
+
+  RETURN public.pastele_create_notification(
+    p_user_id,
+    'withdraw',
+    label,
+    'Permintaan WD sebesar Rp'||to_char(round(coalesce(p_amount,0)),'FM999G999G999G990')||
+      ' berstatus '||lower(coalesce(p_status,'pending'))||'.',
+    jsonb_build_object(
+      'event','withdraw',
+      'withdrawal_id',p_withdrawal_id,
+      'status',lower(coalesce(p_status,'pending')),
+      'amount',p_amount
+    )
+  );
+END
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pastele_notify_withdraw(uuid,uuid,text,numeric)
+  TO authenticated;
+
+COMMIT;
+
+/* ============================================================================
+   PASTELE FULL-FIX EXTENSION: SOCIAL LINKS / GROUP CHAT / ADMIN SETTINGS
+   Existing core purchase/view/like RPCs remain untouched.
+============================================================================ */
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.platform_social_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  platform text NOT NULL UNIQUE,
+  url text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_social_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  platform text NOT NULL,
+  url text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(user_id,platform)
+);
+
+ALTER TABLE public.platform_social_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_social_links ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS platform_social_public_read ON public.platform_social_links;
+CREATE POLICY platform_social_public_read ON public.platform_social_links
+FOR SELECT TO anon,authenticated USING(is_active=true);
+
+DROP POLICY IF EXISTS user_social_public_read ON public.user_social_links;
+CREATE POLICY user_social_public_read ON public.user_social_links
+FOR SELECT TO anon,authenticated USING(is_active=true);
+
+DROP POLICY IF EXISTS user_social_owner_write ON public.user_social_links;
+CREATE POLICY user_social_owner_write ON public.user_social_links
+FOR ALL TO authenticated
+USING(user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
+
+/* Password-reset contact is a setting controlled by admin. */
+CREATE TABLE IF NOT EXISTS public.platform_settings (
+  key text PRIMARY KEY,
+  value text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS platform_settings_public_read ON public.platform_settings;
+CREATE POLICY platform_settings_public_read ON public.platform_settings
+FOR SELECT TO anon,authenticated
+USING(key IN ('telegram_admin_username','forgot_password_url'));
+
+DROP POLICY IF EXISTS platform_settings_admin_write ON public.platform_settings;
+CREATE POLICY platform_settings_admin_write ON public.platform_settings
+FOR ALL TO authenticated
+USING(public.is_current_user_admin())
+WITH CHECK(public.is_current_user_admin());
+
+/* Group chat: room + membership + messages. */
+CREATE TABLE IF NOT EXISTS public.pastele_chat_rooms (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  name text NOT NULL,
+  description text,
+  is_public boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.pastele_chat_room_members (
+  room_id uuid NOT NULL REFERENCES public.pastele_chat_rooms(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  role text NOT NULL DEFAULT 'member',
+  joined_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(room_id,user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.pastele_chat_room_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id uuid NOT NULL REFERENCES public.pastele_chat_rooms(id) ON DELETE CASCADE,
+  sender_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  body text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  edited_at timestamptz,
+  deleted_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS idx_pastele_room_messages
+ON public.pastele_chat_room_messages(room_id,created_at DESC);
+
+ALTER TABLE public.pastele_chat_rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pastele_chat_room_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pastele_chat_room_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS pastele_room_public_read ON public.pastele_chat_rooms;
+CREATE POLICY pastele_room_public_read ON public.pastele_chat_rooms
+FOR SELECT TO anon,authenticated USING(is_public=true OR owner_id=auth.uid() OR public.is_current_user_admin());
+
+DROP POLICY IF EXISTS pastele_room_member_read ON public.pastele_chat_room_members;
+CREATE POLICY pastele_room_member_read ON public.pastele_chat_room_members
+FOR SELECT TO authenticated USING(
+  user_id=auth.uid() OR EXISTS(
+    SELECT 1 FROM public.pastele_chat_rooms r
+    WHERE r.id=room_id AND (r.owner_id=auth.uid() OR public.is_current_user_admin())
+  )
+);
+
+DROP POLICY IF EXISTS pastele_room_member_insert ON public.pastele_chat_room_members;
+CREATE POLICY pastele_room_member_insert ON public.pastele_chat_room_members
+FOR INSERT TO authenticated WITH CHECK(user_id=auth.uid());
+
+DROP POLICY IF EXISTS pastele_room_message_read ON public.pastele_chat_room_messages;
+CREATE POLICY pastele_room_message_read ON public.pastele_chat_room_messages
+FOR SELECT TO authenticated USING(
+  EXISTS(
+    SELECT 1 FROM public.pastele_chat_room_members m
+    WHERE m.room_id=room_id AND m.user_id=auth.uid()
+  )
+);
+
+DROP POLICY IF EXISTS pastele_room_message_insert ON public.pastele_chat_room_messages;
+CREATE POLICY pastele_room_message_insert ON public.pastele_chat_room_messages
+FOR INSERT TO authenticated WITH CHECK(
+  sender_id=auth.uid() AND EXISTS(
+    SELECT 1 FROM public.pastele_chat_room_members m
+    WHERE m.room_id=room_id AND m.user_id=auth.uid()
+  )
+);
+
+CREATE OR REPLACE FUNCTION public.pastele_create_chat_room(
+  p_name text,p_description text DEFAULT NULL,p_is_public boolean DEFAULT false
+)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE uid uuid:=auth.uid(); rid uuid;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF btrim(coalesce(p_name,''))='' THEN RAISE EXCEPTION 'ROOM_NAME_REQUIRED'; END IF;
+  INSERT INTO public.pastele_chat_rooms(owner_id,name,description,is_public)
+  VALUES(uid,btrim(p_name),NULLIF(btrim(coalesce(p_description,'')),''),coalesce(p_is_public,false))
+  RETURNING id INTO rid;
+  INSERT INTO public.pastele_chat_room_members(room_id,user_id,role)
+  VALUES(rid,uid,'owner');
+  RETURN rid;
+END $$;
+
+GRANT EXECUTE ON FUNCTION public.pastele_create_chat_room(text,text,boolean) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.pastele_join_chat_room(p_room_id uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.pastele_chat_rooms WHERE id=p_room_id AND is_public=true)
+    AND NOT EXISTS(SELECT 1 FROM public.pastele_chat_room_members WHERE room_id=p_room_id AND user_id=auth.uid())
+    THEN RAISE EXCEPTION 'ROOM_NOT_PUBLIC'; END IF;
+  INSERT INTO public.pastele_chat_room_members(room_id,user_id)
+  VALUES(p_room_id,auth.uid()) ON CONFLICT DO NOTHING;
+  RETURN true;
+END $$;
+
+GRANT EXECUTE ON FUNCTION public.pastele_join_chat_room(uuid) TO authenticated;
+
+COMMIT;
