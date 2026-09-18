@@ -457,3 +457,67 @@ button:disabled{cursor:not-allowed;opacity:.55}
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+
+
+/* PasTele Transactions — compact 2-column summary on every device */
+.tx-summary{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+.tx-summary-item{
+  min-height:78px;
+  padding:14px !important;
+  border-radius:16px !important;
+}
+.tx-summary-icon{
+  width:40px !important;
+  height:40px !important;
+  flex-basis:40px !important;
+}
+.tx-summary-item strong{
+  font-size:18px !important;
+}
+.tx-summary-item small{
+  font-size:10px !important;
+}
+
+/* Cleaner transaction cards */
+.tx-list{gap:12px !important}
+.tx-section{
+  border-radius:16px !important;
+  box-shadow:var(--shadow) !important;
+}
+.tx-section-head{padding:10px 14px !important}
+.tx-row{
+  padding:12px 14px !important;
+}
+.tx-toolbar{
+  padding:10px !important;
+  border-radius:15px !important;
+}
+.tx-resultbar{margin:4px 0 10px !important}
+
+@media(max-width:520px){
+  .tx-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+  .tx-summary-item{
+    min-height:72px;
+    padding:11px !important;
+    gap:9px !important;
+  }
+  .tx-summary-icon{
+    width:36px !important;
+    height:36px !important;
+    flex-basis:36px !important;
+    border-radius:10px !important;
+    font-size:12px !important;
+  }
+  .tx-summary-item strong{
+    font-size:15px !important;
+  }
+  .tx-summary-item small{
+    font-size:9px !important;
+  }
+}
