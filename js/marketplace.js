@@ -3918,24 +3918,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         const client = window.sb || window.supabaseClient;
         if (!client?.rpc) throw new Error("Koneksi database belum tersedia.");
 
-        // No login is required. A stable browser guest token is enough.
-        const guestToken = marketplaceGuestToken();
         const checkoutType = checkoutTypeFromMarketType(productType);
+        let currentUser = null;
+        try {
+          currentUser = window.TC?.user ? await window.TC.user() : (await client.auth.getUser())?.data?.user || null;
+        } catch (_) {}
 
-        const result = await client.rpc("buy_market_item_guest", {
-          p_type: checkoutType,
-          p_id: productId,
-          p_guest_token: guestToken
-        });
+        const guestToken = currentUser?.id ? null : marketplaceGuestToken();
+        const result = currentUser?.id
+          ? await client.rpc("buy_market_item", {p_type: checkoutType, p_id: productId})
+          : await client.rpc("buy_market_item_guest", {p_type: checkoutType, p_id: productId, p_guest_token: guestToken});
 
         if (result?.error) throw result.error;
 
         const order = unwrapCheckoutOrder(result?.data);
+        const alreadyOwned = Boolean(order?.already_owned || order?.can_access || order?.membership_access);
+        if (alreadyOwned && !order?.order_id && !order?.id) {
+          const card = trigger.closest(".product-card");
+          const link = card?.querySelector(".product-card-link");
+          if (link?.href) { window.location.assign(link.href); return; }
+        }
+
         const orderId = String(order?.order_id || order?.id || "").trim();
         if (!orderId) throw new Error("Order ID tidak ditemukan dari database.");
 
         window.location.assign(
-          `payment.html?order_id=${encodeURIComponent(orderId)}&guest_token=${encodeURIComponent(guestToken)}`
+          `payment.html?order_id=${encodeURIComponent(orderId)}${guestToken ? `&guest_token=${encodeURIComponent(guestToken)}` : ""}`
         );
       } catch (error) {
         console.error("[Marketplace Checkout]", error);

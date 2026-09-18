@@ -3327,11 +3327,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             const button = document.getElementById("buyPasteLink");
             if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...'; }
             try {
-                const key='pastele-guest-checkout-token'; let guestToken=localStorage.getItem(key); if(!guestToken){guestToken=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));localStorage.setItem(key,guestToken);} const buy = await client.rpc("buy_market_item_guest", { p_type: "pastelink", p_id: paste.id, p_guest_token: guestToken });
+                const key='pastele-guest-checkout-token'; let guestToken=localStorage.getItem(key); if(!currentUser && !guestToken){guestToken=(crypto?.randomUUID?.()||('guest_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));localStorage.setItem(key,guestToken);}
+                const buy = currentUser?.id
+                    ? await client.rpc("buy_market_item", { p_type: "pastelink", p_id: paste.id })
+                    : await client.rpc("buy_market_item_guest", { p_type: "pastelink", p_id: paste.id, p_guest_token: guestToken });
                 if (buy.error) throw buy.error;
-                const orderId = buy.data?.order_id;
+                const result = buy.data?.data && !buy.data?.order_id ? buy.data.data : buy.data;
+                if (result?.already_owned || result?.can_access || result?.membership_access) {
+                    location.href = result?.order_id ? "payment.html?order_id=" + encodeURIComponent(result.order_id) : location.href;
+                    return;
+                }
+                const orderId = result?.order_id;
                 if (!orderId) throw new Error("Order tidak berhasil dibuat.");
-                location.href = "payment.html?order_id=" + encodeURIComponent(orderId) + "&guest_token=" + encodeURIComponent(guestToken);
+                location.href = "payment.html?order_id=" + encodeURIComponent(orderId) + (guestToken ? "&guest_token=" + encodeURIComponent(guestToken) : "");
             } catch (error) {
                 window.TC?.toast?.(error?.message || "Gagal membuat order.", "error");
                 if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Beli Akses'; }

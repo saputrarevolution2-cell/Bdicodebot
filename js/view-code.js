@@ -2727,9 +2727,18 @@ async function startBuy(kind,item){
    if(!ok)return;
  }
  const type=targetType(kind);
- const q=await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
+ const q=u?.id
+   ? await window.sb.rpc("buy_market_item",{p_type:type,p_id:item.id})
+   : await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
  if(q.error)throw q.error;
- const oid=q.data?.order_id;if(!oid)throw Error("Order ID tidak ditemukan.");
+ const result=q.data?.data && !q.data?.order_id ? q.data.data : q.data;
+ if(result?.already_owned || result?.can_access || result?.membership_access){
+   const url=location.href;
+   if(result?.order_id) location.href=`/payment.html?order_id=${encodeURIComponent(result.order_id)}`;
+   else location.href=url;
+   return;
+ }
+ const oid=result?.order_id;if(!oid)throw Error("Order ID tidak ditemukan.");
  location.href=`/payment.html?order_id=${encodeURIComponent(oid)}${tok?"&guest_token="+encodeURIComponent(tok):""}`;
 }
 async function loadSocial(kind,item){
@@ -2737,14 +2746,15 @@ async function loadSocial(kind,item){
  const [counts,likes,comments,u]=await Promise.all([
    client.rpc("get_content_engagement_counts",{p_target_id:tid,p_target_type:tt}),
    client.from("content_likes").select("id,actor_id,guest_token").eq("target_id",tid).eq("target_type",tt),
-   client.from("content_comments").select("id,user_id,guest_token,body,display_name,created_at").eq("target_id",tid).eq("target_type",tt).order("created_at",{ascending:false}).limit(100),
+   client.rpc("get_content_comments",{p_target_id:tid,p_target_type:tt,p_limit:100}),
    user()
  ]);
+ const commentRows = comments.error ? [] : (Array.isArray(comments.data) ? comments.data : (comments.data?.data || comments.data || []));
  const stats = counts.error ? {} : (Array.isArray(counts.data) ? (counts.data[0] || {}) : (counts.data || {}));
  const viewCount = Number(stats.views ?? item.views ?? 0);
  const salesCount = Number(stats.sales_count ?? item.sales_count ?? 0);
  const likeCount = Number(stats.likes ?? (likes.error ? 0 : (likes.data||[]).length));
- const commentCount = Number(stats.comments ?? (comments.error ? 0 : (comments.data||[]).length));
+ const commentCount = Number(stats.comments ?? (comments.error ? 0 : commentRows.length));
  const shareCount = Number(stats.shares ?? 0);
 
  const viewMeta=document.querySelector(".view-meta .meta:nth-child(1) strong");
@@ -2761,7 +2771,7 @@ async function loadSocial(kind,item){
  $("likeIcon")?.classList.toggle("fa-solid",mine); $("likeIcon")?.classList.toggle("fa-regular",!mine);
  $("likeLabel")&&( $("likeLabel").textContent=mine?"Disukai":"Suka");
  const list=$("commentList");
- if(list)list.innerHTML=comments.error?"":(comments.data?.length?comments.data.map(c=>`<article class="comment"><div class="avatar"><i class="fa-solid fa-user"></i></div><div><strong>${esc(c.display_name||(c.user_id?"User":"Guest"))}</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>');
+ if(list)list.innerHTML=comments.error?"":(commentRows.length?commentRows.map(c=>`<article class="comment"><div class="avatar"><i class="fa-solid fa-user"></i></div><div><strong>${esc(c.display_name||(c.user_id?"User":"Guest"))}</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>');
  $("likeBtn")?.replaceWith($("likeBtn")?.cloneNode(true));
  $("shareBtn")?.replaceWith($("shareBtn")?.cloneNode(true));
  $("likeBtn")?.addEventListener("click",async()=>{
@@ -2788,8 +2798,7 @@ async function loadSocial(kind,item){
    e.preventDefault();const body=String(text?.value||"").trim();if(!body||body.length>2000)return;
    submit.disabled=true;
    const p=await user();
-   const row={target_id:tid,target_type:tt,user_id:p?.id||null,body,display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null,guest_token:p?null:guestToken()};
-   const q=await client.from("content_comments").insert(row);
+   const q=await client.rpc("add_content_comment",{p_target_id:tid,p_target_type:tt,p_body:body,p_guest_token:p?null:guestToken(),p_display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null});
    if(q.error)toast(q.error.message||"Komentar gagal dikirim.","error");else{text.value="";toast("Komentar berhasil dikirim.","success");await loadSocial(kind,item)}
    submit.disabled=false;
  };

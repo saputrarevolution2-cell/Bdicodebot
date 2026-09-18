@@ -2679,16 +2679,24 @@ async function startBuy(kind,item){
    if(!ok)return;
  }
  const type=targetType(kind);
- const q=await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
+ const q=u?.id
+   ? await window.sb.rpc("buy_market_item",{p_type:type,p_id:item.id})
+   : await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
  if(q.error)throw q.error;
- const oid=q.data?.order_id;if(!oid)throw Error("Order ID tidak ditemukan.");
+ const result=q.data?.data && !q.data?.order_id ? q.data.data : q.data;
+ if(result?.already_owned || result?.can_access || result?.membership_access){
+   if(result?.order_id) location.href=`payment.html?order_id=${encodeURIComponent(result.order_id)}`;
+   else location.reload();
+   return;
+ }
+ const oid=result?.order_id;if(!oid)throw Error("Order ID tidak ditemukan.");
  location.href=`payment.html?order_id=${encodeURIComponent(oid)}${tok?"&guest_token="+encodeURIComponent(tok):""}`;
 }
 async function loadSocial(kind,item){
  const client=window.sb, tid=item.id, tt=targetType(kind);
  const [likes,comments,shares,u]=await Promise.all([
    client.from("content_likes").select("id,actor_id,guest_token").eq("target_id",tid).eq("target_type",tt),
-   client.from("content_comments").select("id,user_id,guest_token,body,display_name,created_at").eq("target_id",tid).eq("target_type",tt).order("created_at",{ascending:false}).limit(100),
+   client.rpc("get_content_comments",{p_target_id:tid,p_target_type:tt,p_limit:100}),
    client.from("analytics_events").select("id",{count:"exact",head:true}).eq("target_id",tid).eq("target_type",tt).eq("event_type","share"),
    user()
  ]);
@@ -2718,8 +2726,7 @@ async function loadSocial(kind,item){
    e.preventDefault();const body=String(text?.value||"").trim();if(!body||body.length>2000)return;
    submit.disabled=true;
    const p=await user();
-   const row={target_id:tid,target_type:tt,user_id:p?.id||null,body,display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null,guest_token:p?null:guestToken()};
-   const q=await client.from("content_comments").insert(row);
+   const q=await client.rpc("add_content_comment",{p_target_id:tid,p_target_type:tt,p_body:body,p_guest_token:p?null:guestToken(),p_display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null});
    if(q.error)toast(q.error.message||"Komentar gagal dikirim.","error");else{text.value="";toast("Komentar berhasil dikirim.","success");await loadSocial(kind,item)}
    submit.disabled=false;
  };
