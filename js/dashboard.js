@@ -219,7 +219,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.sb;
+    const client = window.sb || window.supabaseClient;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -437,7 +437,8 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await window.PasTeleDB.rpc("resolve_username_login",
+            await client.rpc(
+              "resolve_username_login",
               {
                 p_username: username
               }
@@ -644,7 +645,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await window.PasTeleDB.rpc("check_email_available", {
+        await client.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -689,7 +690,8 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await window.PasTeleDB.rpc("resolve_username_login",
+          await client.rpc(
+            "resolve_username_login",
             {
               p_username: value
             }
@@ -741,7 +743,8 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await window.PasTeleDB.rpc("check_username_available",
+        await client.rpc(
+          "check_username_available",
           {
             p_username: value
           }
@@ -969,8 +972,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.sb) &&
-        (window.sb?.auth || window.sb?.auth)
+        (window.sb || window.supabaseClient) &&
+        (window.sb?.auth || window.supabaseClient?.auth)
       );
     }
   };
@@ -1303,7 +1306,8 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.PasTeleDB.rpc("get_public_site_settings"
+          await window.sb.rpc(
+            'get_public_site_settings'
           );
         if (
           !result?.error &&
@@ -2987,7 +2991,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const core = window.TC || {};
   const supabase =
     window.sb ||
-    window.sb ||
+    window.supabaseClient ||
     window.supabase;
   if (!supabase) {
     console.error(
@@ -3921,7 +3925,7 @@ document.addEventListener('DOMContentLoaded', async () => {
        Failure here must never block the dashboard.
        ===================================================== */
     try {
-      await window.PasTeleDB.rpc("release_matured_wallet");
+      await supabase.rpc('release_matured_wallet');
     } catch (walletReleaseError) {
       console.warn(
         'Wallet settlement refresh skipped:',
@@ -3940,6 +3944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       analyticsEvents,
       likesResult,
       followsResult,
+      followerRowsResult,
       walletResult
     ] =
       await Promise.all([
@@ -4292,6 +4297,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 true
             }
           )
+          .eq(
+            'creator_id',
+            user.id
+          ),
+        supabase
+          .from(
+            'creator_followers'
+          )
+          .select('follower_id')
           .eq(
             'creator_id',
             user.id
@@ -5055,10 +5069,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           totalSales
         );
     }
+    /*
+     * Dashboard "Pendapatan" mengikuti saldo yang masih
+     * menunggu settlement. Jadi angka yang tampil tidak
+     * boleh lebih besar dari saldo pending H+2.
+     * Statistik performa tetap memakai revenue transaksi.
+     */
     if ($('revenue')) {
       $('revenue').textContent =
         money(
-          totalRevenue
+          Math.max(
+            0,
+            Number(walletResult?.data?.pending_balance || 0)
+          )
         );
     }
     if (
@@ -5777,12 +5800,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <i
                     style="height:${height}%"
                   ></i>
-                  <small>
-                    ${esc(
-                      formatDay(day)
-                        .split(' ')[0]
-                    )}
-                  </small>
                 </div>
               `;
             }
@@ -5850,49 +5867,148 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
     }
     /*
-     * SQL profiles memang punya country,
-     * tetapi creator_followers hanya menyimpan
-     * creator_id + follower_id.
-     *
-     * Tidak melakukan nested relation yang
-     * belum tentu tersedia.
+     * FOLLOWERS BY COUNTRY
+     * creator_followers menyimpan follower_id, sedangkan
+     * negara diambil dari profiles.country.
      */
-    if (
-      $('followerCountries')
-    ) {
-      if (
-        followerCount > 0
-      ) {
-        $('followerCountries').innerHTML = `
-          <div class="empty">
-            <i class="fa-solid fa-users"></i>
-            <span>
-              ${number(
-                followerCount
-              )}
-              pengikut tercatat.
-            </span>
-          </div>
-        `;
+    const followerRows =
+      Array.isArray(followerRowsResult?.data)
+        ? followerRowsResult.data
+        : [];
+    const followerIds =
+      followerRows
+        .map(row => row?.follower_id)
+        .filter(Boolean);
+    let followerProfiles = [];
+    if (followerIds.length) {
+      try {
+        const profileResult =
+          await supabase
+            .from('profiles')
+            .select('id,country')
+            .in('id', followerIds);
+        if (!profileResult.error) {
+          followerProfiles = profileResult.data || [];
+        }
+      } catch (_) {}
+    }
+
+    const countryMeta = {
+      indonesia: { label: 'Indonesia', code: 'ID', color: '#ef4444' },
+      malaysia: { label: 'Malaysia', code: 'MY', color: '#f59e0b' },
+      singapore: { label: 'Singapore', code: 'SG', color: '#ef4444' },
+      thailand: { label: 'Thailand', code: 'TH', color: '#8b5cf6' },
+      philippines: { label: 'Philippines', code: 'PH', color: '#3b82f6' },
+      vietnam: { label: 'Vietnam', code: 'VN', color: '#eab308' },
+      brunei: { label: 'Brunei', code: 'BN', color: '#06b6d4' },
+      china: { label: 'China', code: 'CN', color: '#dc2626' },
+      japan: { label: 'Japan', code: 'JP', color: '#f1f5f9' },
+      'south korea': { label: 'South Korea', code: 'KR', color: '#60a5fa' },
+      india: { label: 'India', code: 'IN', color: '#f97316' },
+      'united states': { label: 'United States', code: 'US', color: '#2563eb' },
+      usa: { label: 'United States', code: 'US', color: '#2563eb' },
+      'united kingdom': { label: 'United Kingdom', code: 'GB', color: '#6366f1' },
+      uk: { label: 'United Kingdom', code: 'GB', color: '#6366f1' }
+    };
+    const normalizeCountry = value =>
+      String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/_/g, ' ');
+    const countryCounts = {};
+    followerProfiles.forEach(profile => {
+      const key = normalizeCountry(profile.country) || 'unknown';
+      countryCounts[key] = (countryCounts[key] || 0) + 1;
+    });
+    const unknownCount =
+      Math.max(0, followerCount - followerProfiles.length);
+    if (unknownCount) countryCounts.unknown = unknownCount;
+
+    const countryItems =
+      Object.entries(countryCounts)
+        .sort((a,b) => b[1] - a[1])
+        .map(([key,count]) => {
+          const meta =
+            countryMeta[key] ||
+            { label: key === 'unknown' ? 'Negara tidak diketahui' : key.replace(/\b\w/g,m=>m.toUpperCase()),
+              code: '••',
+              color: '#94a3b8' };
+          return { key, count, ...meta };
+        });
+
+    const totalCountryFollowers =
+      countryItems.reduce((sum,item) => sum + item.count, 0) || followerCount;
+
+    if ($('followerCountries')) {
+      if (countryItems.length) {
+        $('followerCountries').innerHTML = countryItems.map(item => {
+          const pct =
+            totalCountryFollowers
+              ? (item.count / totalCountryFollowers) * 100
+              : 0;
+          return `
+            <button
+              type="button"
+              class="follower-country"
+              data-country-key="${esc(item.key)}"
+              title="${esc(item.label)} ${pct.toFixed(1)}%"
+            >
+              <span class="country-dot" style="--country-color:${esc(item.color)}">${esc(item.code)}</span>
+              <span class="country-copy">
+                <strong>${esc(item.label)}</strong>
+                <small>${number(item.count)} pengikut</small>
+              </span>
+              <b>${pct.toFixed(pct >= 10 ? 0 : 1)}%</b>
+            </button>
+          `;
+        }).join('');
       } else {
         $('followerCountries').innerHTML = `
           <div class="empty">
             <i class="fa-solid fa-user-plus"></i>
-            <span>
-              Belum ada pengikut.
-            </span>
+            <span>Belum ada pengikut.</span>
           </div>
         `;
       }
+      $('followerCountries')
+        .querySelectorAll('.follower-country')
+        .forEach(button => {
+          button.addEventListener('click', () => {
+            const key = button.dataset.countryKey;
+            const item = countryItems.find(x => x.key === key);
+            if (!item) return;
+            const pct =
+              totalCountryFollowers
+                ? (item.count / totalCountryFollowers) * 100
+                : 0;
+            toast(
+              `${item.label}: ${pct.toFixed(pct >= 10 ? 0 : 1)}% · ${number(item.count)} pengikut`,
+              'info'
+            );
+            document.querySelectorAll('.follower-country').forEach(el => el.classList.remove('active'));
+            button.classList.add('active');
+          });
+        });
     }
-    if (
-      $('followerDonut')
-    ) {
-      $('followerDonut').style.background =
-        followerCount > 0
-          ? 'conic-gradient(#229ed9 0 100%)'
-          : 'conic-gradient(#dfe7ec 0 100%)';
+
+    if ($('followerDonut')) {
+      if (countryItems.length) {
+        let cursor = 0;
+        const stops = countryItems.map(item => {
+          const pct = (item.count / totalCountryFollowers) * 100;
+          const from = cursor;
+          cursor += pct;
+          return `${item.color} ${from.toFixed(2)}% ${cursor.toFixed(2)}%`;
+        });
+        $('followerDonut').style.background =
+          `conic-gradient(${stops.join(',')})`;
+        $('followerDonut').title = 'Klik negara di samping untuk melihat persentase';
+      } else {
+        $('followerDonut').style.background =
+          'conic-gradient(#dfe7ec 0 100%)';
+      }
     }
+
     /* =====================================================
        RECENT CONTENT
        ===================================================== */
@@ -6074,7 +6190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
       }
     );
-    const recentPageSize = 10;
+    const recentPageSize = 5;
     let recentPage =
       1;
     const renderRecent =
@@ -6317,7 +6433,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ).toUpperCase();
       }
     };
-    const activityPageSize = 10;
+    const activityPageSize = 5;
     let activityPage =
       1;
     const renderActivity =
@@ -6582,7 +6698,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.sb || null;
+  const sb = () => window.sb || window.supabaseClient || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -6613,8 +6729,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
