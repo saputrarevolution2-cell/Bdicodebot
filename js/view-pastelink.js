@@ -2757,18 +2757,28 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
     try{const u=new URL(x);return /^https?:$/.test(u.protocol)?u.href:"";}catch{return "";}
   }
   function sanitize(input){
-    const box=document.createElement("div"); box.innerHTML=String(input??"");
-    const allowed=new Set(["B","STRONG","I","EM","U","S","DEL","MARK","BLOCKQUOTE","BR","P","DIV","SPAN","A","UL","OL","LI","PRE","CODE"]);
-    const w=document.createTreeWalker(box,NodeFilter.SHOW_ELEMENT), nodes=[];
-    while(w.nextNode()) nodes.push(w.currentNode);
+    const box=document.createElement("div");
+    box.innerHTML=String(input??"");
+    const allowed=new Set(["B","STRONG","I","EM","U","S","DEL","MARK","BLOCKQUOTE","BR","P","DIV","SPAN","A","UL","OL","LI","PRE","CODE","H1","H2","H3","H4","H5","H6"]);
+    const classes=new Set(["pt-bold","pt-italic","pt-underline","pt-spoiler","pt-quote","revealed"]);
+    const walker=document.createTreeWalker(box,NodeFilter.SHOW_ELEMENT),nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
     for(const el of nodes){
       if(!allowed.has(el.tagName)){el.replaceWith(document.createTextNode(el.textContent||""));continue;}
-      for(const a of [...el.attributes]) if(!(el.tagName==="A"&&a.name.toLowerCase()==="href")) el.removeAttribute(a.name);
+      for(const attr of [...el.attributes]){
+        const n=attr.name.toLowerCase();
+        if(el.tagName==="A"&&n==="href")continue;
+        if(n==="class"){
+          const kept=String(attr.value||"").split(/\s+/).filter(c=>classes.has(c));
+          kept.length?el.setAttribute("class",kept.join(" ")):el.removeAttribute("class");
+        }else el.removeAttribute(attr.name);
+      }
       if(el.tagName==="A"){
         const u=href(el.getAttribute("href"));
         if(!u){el.replaceWith(document.createTextNode(el.textContent||""));continue;}
         el.setAttribute("href",u);el.setAttribute("target","_blank");el.setAttribute("rel","noopener noreferrer nofollow");
       }
+      if(el.classList.contains("pt-spoiler")){el.setAttribute("role","button");el.setAttribute("tabindex","0");}
     }
     return box.innerHTML;
   }
@@ -2814,12 +2824,11 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
       ev.preventDefault(); if(!i.value)return;
       const b=f.querySelector("button[type=submit]");b.disabled=true;e.hidden=true;
       try{
-        const {data,error}=await window.PasTeleDB.rpc("verify_pastelink_password",{
+        const result=await window.PasTeleDB.rpc("verify_pastelink_password",{
           p_pastelink_id:item.id,
           p_password:i.value
         });
-        if(error) throw error;
-        const ok=data===true;
+        const ok=result===true || result?.data===true;
         if(!ok){e.textContent="Password salah. Silakan coba lagi.";e.hidden=false;i.select();return;}
         sessionStorage.setItem("pastele-unlocked-"+item.id,"1");open();
       }catch{e.textContent="Verifikasi password gagal. Coba lagi.";e.hidden=false;}
@@ -2829,7 +2838,39 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
   window.PasTelePasteView={renderContent:render,hasPassword:has,passwordForm:form,unlock};
 })();
 
-document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("pastelink");if(!item?.found)throw Error("PasteLink tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("pastelink",item);const access=await V.accessState("pastelink",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli konten Paid. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Konten</button></div>`}else{body=`<div class="content-box rich">${item.content_html||item.content||""}</div>`}root.innerHTML=V.shell("pastelink",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("pastelink",item)}catch(e){V.toast?.(e.message||"Checkout gagal","error")}});await V.trackView("pastelink",item);await V.loadSocial("pastelink",item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat PasteLink.")}</div>`}});
+document.addEventListener("DOMContentLoaded",async()=>{
+  const V=window.PasTeleView,root=V.$("viewRoot");
+  const renderRich=value=>{
+    try{return window.PasTelePasteView.renderContent(value)}
+    catch(e){console.error("[PasTele] rich render:",e);return V.esc(String(value??""))}
+  };
+  const bindSpoilers=()=>{
+    root.querySelectorAll(".content-box.rich .pt-spoiler").forEach(sp=>{
+      const toggle=()=>sp.classList.toggle("revealed");
+      sp.addEventListener("click",toggle);
+      sp.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
+    });
+  };
+  try{
+    let item=await V.resolve("pastelink");
+    if(!item?.found)throw Error("PasteLink tidak ditemukan atau sudah tidak tersedia.");
+    item=await V.refreshItem("pastelink",item);
+    const access=await V.accessState("pastelink",item);
+    let body;
+    if(!access.ok){
+      body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli konten Paid. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar &amp; Buka Konten</button></div>`;
+    }else{
+      body=`<div class="content-box rich">${renderRich(item.content_html??item.content??"")}</div>`;
+    }
+    root.innerHTML=V.shell("pastelink",item,access,body);
+    bindSpoilers();
+    V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("pastelink",item)}catch(e){V.toast?.(e.message||"Checkout gagal","error")}});
+    await V.trackView("pastelink",item);
+    await V.loadSocial("pastelink",item);
+  }catch(e){
+    root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat PasteLink.")}</div>`;
+  }
+});
 
 
 /* Page-ready marker */
