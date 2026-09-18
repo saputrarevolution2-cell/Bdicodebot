@@ -2594,20 +2594,6 @@ window.PASTELE_CONFIG = Object.freeze({
 /* PasTele public view: NO LOGIN SESSION GUARD. Guests and logged-in users may open this page. */
 window.PasTelePublicView = true;
 
-/* Guest-only login/register ticker: logged-in users should not see the guest warning. */
-(async () => {
-  try {
-    const ticker = document.getElementById("viewGuestTicker");
-    if (!ticker) return;
-    const loggedIn = !!(await window.TC?.user?.());
-    if (loggedIn) ticker.hidden = true;
-    else ticker.hidden = false;
-  } catch (_) {
-    // Keep the ticker visible when auth state cannot be determined.
-  }
-})();
-
-
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
@@ -2759,6 +2745,87 @@ async function trackView(kind,item){
  try{await window.sb.rpc("record_content_view",{p_owner:item.owner_id||item.creator_id||item.seller_id||null,p_target_type:targetType(kind),p_target_id:item.id})}catch{}
 }
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
+})();
+
+
+/* =========================================================
+   PasTele — PasteLink Rich Content + Password Gate
+   ========================================================= */
+(function(){
+  "use strict";
+  function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+  function href(raw){
+    let x=String(raw||"").trim();
+    if(/^www\./i.test(x)) x="https://"+x;
+    if(!/^https?:\/\//i.test(x)) return "";
+    try{const u=new URL(x);return /^https?:$/.test(u.protocol)?u.href:"";}catch{return "";}
+  }
+  function sanitize(input){
+    const box=document.createElement("div"); box.innerHTML=String(input??"");
+    const allowed=new Set(["B","STRONG","I","EM","U","S","DEL","MARK","BLOCKQUOTE","BR","P","DIV","SPAN","A","UL","OL","LI","PRE","CODE"]);
+    const w=document.createTreeWalker(box,NodeFilter.SHOW_ELEMENT), nodes=[];
+    while(w.nextNode()) nodes.push(w.currentNode);
+    for(const el of nodes){
+      if(!allowed.has(el.tagName)){el.replaceWith(document.createTextNode(el.textContent||""));continue;}
+      for(const a of [...el.attributes]) if(!(el.tagName==="A"&&a.name.toLowerCase()==="href")) el.removeAttribute(a.name);
+      if(el.tagName==="A"){
+        const u=href(el.getAttribute("href"));
+        if(!u){el.replaceWith(document.createTextNode(el.textContent||""));continue;}
+        el.setAttribute("href",u);el.setAttribute("target","_blank");el.setAttribute("rel","noopener noreferrer nofollow");
+      }
+    }
+    return box.innerHTML;
+  }
+  function autoLink(text){
+    const s=esc(text), re=/((?:https?:\/\/|www\.)[^\s<]+)/gi;
+    return s.replace(re,full=>{
+      let x=full,tail="";
+      while(/[),.!?;:'"\]]$/.test(x)){tail=x.slice(-1)+tail;x=x.slice(0,-1);}
+      const u=href(x); return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${x}</a>${tail}`:full;
+    }).replace(/\r?\n/g,"<br>");
+  }
+  function render(raw){
+    const s=String(raw??"");
+    return /<[a-z][\s\S]*>/i.test(s)?sanitize(s):autoLink(s);
+  }
+  async function sha(v){
+    const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(v??"")));
+    return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  function form(){return `<div class="password-gate" id="passwordGate">
+    <div class="password-gate-icon"><i class="fa-solid fa-lock"></i></div>
+    <span class="password-eyebrow">KONTEN TERKUNCI</span>
+    <h3>Masukkan Password</h3>
+    <p>PasteLink ini dilindungi kata sandi. Masukkan password untuk melihat isi konten.</p>
+    <form id="passwordForm" class="password-form" autocomplete="off">
+      <label for="pastePassword">Password</label>
+      <div class="password-input-wrap"><i class="fa-solid fa-key"></i>
+        <input id="pastePassword" type="password" maxlength="256" placeholder="Masukkan password..." required autocomplete="off">
+        <button type="button" id="togglePastePassword" class="password-toggle" aria-label="Tampilkan password"><i class="fa-solid fa-eye"></i></button>
+      </div>
+      <div id="passwordError" class="password-error" role="alert" hidden></div>
+      <button class="btn primary password-submit" type="submit"><i class="fa-solid fa-unlock"></i> Buka Konten</button>
+    </form>
+  </div>`;}
+  function has(item){return !!String(item?.password_hash||"").trim();}
+  async function unlock(item,root,open){
+    const f=root.querySelector("#passwordForm"),i=root.querySelector("#pastePassword"),e=root.querySelector("#passwordError");
+    root.querySelector("#togglePastePassword")?.addEventListener("click",()=>{
+      i.type=i.type==="password"?"text":"password";
+      root.querySelector("#togglePastePassword i").className=i.type==="password"?"fa-solid fa-eye":"fa-solid fa-eye-slash";
+    });
+    f?.addEventListener("submit",async ev=>{
+      ev.preventDefault(); if(!i.value)return;
+      const b=f.querySelector("button[type=submit]");b.disabled=true;e.hidden=true;
+      try{
+        const ok=(await sha(i.value)).toLowerCase()===String(item.password_hash).toLowerCase();
+        if(!ok){e.textContent="Password salah. Silakan coba lagi.";e.hidden=false;i.select();return;}
+        sessionStorage.setItem("pastele-unlocked-"+item.id,"1");open();
+      }catch{e.textContent="Verifikasi password gagal. Coba lagi.";e.hidden=false;}
+      finally{b.disabled=false;}
+    });
+  }
+  window.PasTelePasteView={renderContent:render,hasPassword:has,passwordForm:form,unlock};
 })();
 
 document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("pastelink");if(!item?.found)throw Error("PasteLink tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("pastelink",item);const access=await V.accessState("pastelink",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli konten Paid. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Konten</button></div>`}else{body=`<div class="content-box rich">${item.content_html||item.content||""}</div>`}root.innerHTML=V.shell("pastelink",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("pastelink",item)}catch(e){V.toast?.(e.message||"Checkout gagal","error")}});await V.trackView("pastelink",item);await V.loadSocial("pastelink",item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat PasteLink.")}</div>`}});
