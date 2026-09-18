@@ -18,7 +18,7 @@
 <form id="createForm" class="create-card" novalidate autocomplete="off">
 <div class="field"><label for="title">Judul <em>*</em></label><input id="title" maxlength="120" required placeholder="Contoh: Panduan Bot Downloader"><small>Judul PasteLink yang tampil di halaman publik.</small></div>
 <div class="field">
-<label for="content">Content <em>*</em></label>
+<label for="content">Isi Konten <em>*</em></label>
 <div class="pt-editor" id="contentEditor">
  <div class="pt-editor-toolbar">
   <button type="button" class="pt-tool" data-cmd="bold" title="Tebal"><i class="fa-solid fa-bold"></i></button>
@@ -31,10 +31,10 @@
  <div id="content" class="pt-editor-content" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Tulis isi PasteLink di sini..."></div>
  <input type="hidden" id="contentHtml">
 </div>
-<small>Editor seperti Telegram: tebal, miring, garis bawah, kutip, spoiler, dan tautan. URL https:// atau www. otomatis bisa diklik.</small>
+<small>Gunakan toolbar untuk mengubah teks menjadi tebal, miring, garis bawah, kutipan, spoiler, atau tautan. Perubahan akan langsung terlihat di editor.</small>
 </div>
 <div class="field">
- <label class="switch-row"><input id="hasPassword" type="checkbox"><span class="switch-ui"></span><span><b>Gunakan Password</b><small>Pengunjung wajib memasukkan password sebelum membaca.</small></span></label>
+ <label class="switch-row"><input id="hasPassword" type="checkbox"><span class="switch-ui"></span><span><b>Aktifkan Password</b><small>Jika diaktifkan, form password akan langsung muncul dan pengunjung wajib memasukkannya.</small></span></label>
 </div>
 <div id="passwordBox" class="field password-box" hidden>
  <label for="contentPassword">Password <em>*</em></label>
