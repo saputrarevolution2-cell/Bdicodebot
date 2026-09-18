@@ -2774,114 +2774,72 @@ function initPasteLinkEditor(){
  const ed=document.getElementById("content");
  if(!ed||ed.dataset.ready)return;
  ed.dataset.ready="1";
-
  let savedRange=null;
- const getRange=()=>{
-   const sel=window.getSelection();
-   if(!sel||!sel.rangeCount)return null;
-   const r=sel.getRangeAt(0);
-   return ed.contains(r.commonAncestorContainer)?r.cloneRange():null;
- };
- const saveRange=()=>{ const r=getRange(); if(r)savedRange=r; return r; };
- const restoreRange=()=>{
-   if(!savedRange)return false;
-   const sel=window.getSelection();
-   sel.removeAllRanges();sel.addRange(savedRange);
-   ed.focus();return true;
- };
+ const getRange=()=>{const sel=window.getSelection();if(!sel||!sel.rangeCount)return null;const r=sel.getRangeAt(0);return ed.contains(r.commonAncestorContainer)?r.cloneRange():null};
+ const saveRange=()=>{const r=getRange();if(r)savedRange=r;return r};
+ const restoreRange=()=>{if(!savedRange)return false;const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);ed.focus();return true};
  const syncHTML=()=>{document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)};
-
- const linkify=()=>{
-   const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),nodes=[];let n;
-   while(n=w.nextNode()){
-     if(n.parentElement?.closest("a,.spoiler"))continue;
-     if(n.parentElement?.closest("script,style"))continue;
-     nodes.push(n);
-   }
-   for(const node of nodes){
-     const text=node.nodeValue||"";
-     const re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;
-     let m,last=0,hit=false;
-     const frag=document.createDocumentFragment();
-     while((m=re.exec(text))){
-       hit=true;
-       frag.append(document.createTextNode(text.slice(last,m.index)));
-       let raw=m[0],trail="";
-       while(/[),.!?;:'\]]$/.test(raw)){trail=raw.slice(-1)+trail;raw=raw.slice(0,-1)}
-       const a=document.createElement("a");
-       a.href=/^www\./i.test(raw)?"https://"+raw:raw;
-       a.textContent=raw;a.target="_blank";a.rel="noopener noreferrer nofollow";
-       frag.append(a);
-       if(trail)frag.append(document.createTextNode(trail));
-       last=m.index+m[0].length;
-     }
-     if(hit){frag.append(document.createTextNode(text.slice(last)));node.replaceWith(frag)}
-   }
- };
-
+ const selectedText=()=>{if(!savedRange)return "";return savedRange.toString()};
  const wrapSelection=(tag,attrs={})=>{
    if(!restoreRange())return false;
-   const sel=window.getSelection();
-   if(!sel||!sel.rangeCount)return false;
-   const r=sel.getRangeAt(0);
-   if(r.collapsed)return false;
+   const sel=window.getSelection(),r=sel?.rangeCount?sel.getRangeAt(0):null;
+   if(!r||r.collapsed)return false;
    const el=document.createElement(tag);
    Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
-   try{
-     el.appendChild(r.extractContents());
-     r.insertNode(el);
-     const nr=document.createRange();nr.selectNodeContents(el);
-     sel.removeAllRanges();sel.addRange(nr);savedRange=nr.cloneRange();
-   }catch{
-     return false;
-   }
+   el.appendChild(r.extractContents());r.insertNode(el);
+   const nr=document.createRange();nr.selectNodeContents(el);sel.removeAllRanges();sel.addRange(nr);savedRange=nr.cloneRange();
    return true;
  };
-
+ const linkify=()=>{
+   const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),nodes=[];let n;
+   while(n=w.nextNode()){if(n.parentElement?.closest("a,.spoiler,script,style"))continue;nodes.push(n)}
+   for(const node of nodes){const text=node.nodeValue||"",re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;let m,last=0,hit=false;const frag=document.createDocumentFragment();
+    while((m=re.exec(text))){hit=true;frag.append(document.createTextNode(text.slice(last,m.index)));let raw=m[0],trail="";while(/[),.!?;:'\]]$/.test(raw)){trail=raw.slice(-1)+trail;raw=raw.slice(0,-1)}const a=document.createElement("a");a.href=/^www\./i.test(raw)?"https://"+raw:raw;a.textContent=raw;a.target="_blank";a.rel="noopener noreferrer nofollow";frag.append(a);if(trail)frag.append(document.createTextNode(trail));last=m.index+m[0].length}
+    if(hit){frag.append(document.createTextNode(text.slice(last)));node.replaceWith(frag)}
+   }
+ };
  const apply=cmd=>{
    saveRange();
-   if(cmd==="spoiler"){
-     if(!savedRange||savedRange.collapsed){toast("Pilih teks dulu untuk spoiler.","info");return}
-     wrapSelection("span",{class:"spoiler"});
-   }else if(cmd==="link"){
-     if(!savedRange||savedRange.collapsed){toast("Pilih teks yang ingin dijadikan tautan.","info");return}
-     const selected=savedRange.toString().trim();
+   if(!savedRange||savedRange.collapsed){toast("Pilih teks terlebih dahulu.","info");return}
+   let ok=false;
+   if(cmd==="bold")ok=wrapSelection("strong");
+   else if(cmd==="italic")ok=wrapSelection("em");
+   else if(cmd==="underline")ok=wrapSelection("u");
+   else if(cmd==="spoiler")ok=wrapSelection("span",{class:"spoiler"});
+   else if(cmd==="blockquote"){
+     if(restoreRange()){
+       const sel=window.getSelection(),r=sel.getRangeAt(0),b=document.createElement("blockquote");
+       b.appendChild(r.extractContents());r.insertNode(b);const nr=document.createRange();nr.selectNodeContents(b);sel.removeAllRanges();sel.addRange(nr);savedRange=nr.cloneRange();ok=true;
+     }
+   } else if(cmd==="link"){
+     const selected=selectedText().trim();
      let u=window.prompt("Masukkan URL:",/^https?:\/\//i.test(selected)?selected:"https://");
      if(!u)return;
      u=u.trim();if(/^www\./i.test(u))u="https://"+u;
      if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
-     if(!wrapSelection("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"}))toast("Tautan gagal dibuat.","error");
-   }else if(cmd==="blockquote"){
-     restoreRange();
-     try{document.execCommand("formatBlock",false,"blockquote")}catch{}
-   }else{
-     restoreRange();
-     try{document.execCommand(cmd,false,null)}catch{}
+     ok=wrapSelection("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"});
    }
+   if(!ok)toast("Format gagal diterapkan. Pastikan teks sudah dipilih.","error");
    syncHTML();
  };
-
- ed.addEventListener("input",()=>{linkify();syncHTML()});
+ ed.addEventListener("input",()=>{syncHTML()});
  ed.addEventListener("paste",()=>setTimeout(()=>{linkify();syncHTML()},0));
- ed.addEventListener("mouseup",saveRange);
- ed.addEventListener("keyup",saveRange);
+ ["mouseup","keyup","touchend"].forEach(ev=>ed.addEventListener(ev,saveRange));
  ed.addEventListener("blur",saveRange);
- ed.addEventListener("keydown",e=>{
-   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
-     e.preventDefault();saveRange();apply("link");
-   }
- });
+ ed.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();saveRange();apply("link")}});
  document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
-   btn.addEventListener("mousedown",e=>{e.preventDefault();saveRange()});
-   btn.addEventListener("touchstart",e=>{e.preventDefault();saveRange()},{passive:false});
+   const preserve=e=>{e.preventDefault();saveRange()};
+   btn.addEventListener("pointerdown",preserve);
+   btn.addEventListener("mousedown",preserve);
+   btn.addEventListener("touchstart",preserve,{passive:false});
    btn.addEventListener("click",e=>{e.preventDefault();apply(btn.dataset.cmd)});
  });
-
  const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
  cb?.addEventListener("change",()=>{box.hidden=!cb.checked;if(!cb.checked)pw.value=""});
  document.getElementById("togglePassword")?.addEventListener("click",()=>{pw.type=pw.type==="password"?"text":"password"});
  syncHTML();
 }
+
 initPasteLinkEditor();
 
 function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
