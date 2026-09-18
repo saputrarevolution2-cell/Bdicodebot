@@ -2594,6 +2594,20 @@ window.PASTELE_CONFIG = Object.freeze({
 /* PasTele public view: NO LOGIN SESSION GUARD. Guests and logged-in users may open this page. */
 window.PasTelePublicView = true;
 
+/* Guest-only login/register ticker: logged-in users should not see the guest warning. */
+(async () => {
+  try {
+    const ticker = document.getElementById("viewGuestTicker");
+    if (!ticker) return;
+    const loggedIn = !!(await window.TC?.user?.());
+    if (loggedIn) ticker.hidden = true;
+    else ticker.hidden = false;
+  } catch (_) {
+    // Keep the ticker visible when auth state cannot be determined.
+  }
+})();
+
+
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
