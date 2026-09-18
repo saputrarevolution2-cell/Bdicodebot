@@ -17,15 +17,39 @@
 <section class="create-detail-head"><a class="back-create" href="create-product.html"><i class="fa-solid fa-arrow-left"></i><span>Semua tipe</span></a><div class="detail-title"><div class="detail-icon"><i class="fa-solid fa-link"></i></div><div><span class="eyebrow">PASTELINK</span><h1>Buat PasteLink</h1><p>Buat halaman konten dengan link publik pendek 4 karakter, tag, akses, dan masa berlaku.</p></div></div></section>
 <form id="createForm" class="create-card" novalidate autocomplete="off">
 <div class="field"><label for="title">Judul <em>*</em></label><input id="title" maxlength="120" required placeholder="Contoh: Panduan Bot Downloader"><small>Judul PasteLink yang tampil di halaman publik.</small></div>
-<div class="field"><label for="content">Content <em>*</em></label><textarea id="content" rows="15" maxlength="1000000" required placeholder="Masukkan content PasteLink di sini..."></textarea><small>Content akan ditampilkan setelah akses pengguna memenuhi syarat.</small></div>
-<div class="field"><label for="tags">Tag <span>Opsional</span></label><input id="tags" maxlength="500" placeholder="bot, telegram, tutorial"><small>Pisahkan beberapa tag dengan koma.</small></div>
+<div class="field">
+<label for="content">Content <em>*</em></label>
+<div class="pt-editor" id="contentEditor">
+ <div class="pt-editor-toolbar">
+  <button type="button" class="pt-tool" data-cmd="bold" title="Tebal"><i class="fa-solid fa-bold"></i></button>
+  <button type="button" class="pt-tool" data-cmd="italic" title="Miring"><i class="fa-solid fa-italic"></i></button>
+  <button type="button" class="pt-tool" data-cmd="underline" title="Garis bawah"><i class="fa-solid fa-underline"></i></button>
+  <button type="button" class="pt-tool" data-cmd="blockquote" title="Kutip"><i class="fa-solid fa-quote-left"></i></button>
+  <button type="button" class="pt-tool" data-cmd="spoiler" title="Spoiler"><i class="fa-solid fa-eye-slash"></i></button>
+  <button type="button" class="pt-tool" data-cmd="link" title="Tautan"><i class="fa-solid fa-link"></i></button>
+ </div>
+ <div id="content" class="pt-editor-content" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Tulis isi PasteLink di sini..."></div>
+ <input type="hidden" id="contentHtml">
+</div>
+<small>Editor seperti Telegram: tebal, miring, garis bawah, kutip, spoiler, dan tautan. URL https:// atau www. otomatis bisa diklik.</small>
+</div>
+<div class="field">
+ <label class="switch-row"><input id="hasPassword" type="checkbox"><span class="switch-ui"></span><span><b>Gunakan Password</b><small>Pengunjung wajib memasukkan password sebelum membaca.</small></span></label>
+</div>
+<div id="passwordBox" class="field password-box" hidden>
+ <label for="contentPassword">Password <em>*</em></label>
+ <div class="password-input"><i class="fa-solid fa-key"></i><input id="contentPassword" type="password" minlength="4" maxlength="128" autocomplete="new-password" placeholder="Masukkan password"><button type="button" id="togglePassword" class="password-toggle"><i class="fa-solid fa-eye"></i></button></div>
+ <small>Minimal 4 karakter. Password disimpan sebagai hash dan tidak ditampilkan di Marketplace.</small>
+</div>
+<div class="field"><label for="tags">TagTag <span>Opsional</span></label><input id="tags" maxlength="500" placeholder="bot, telegram, tutorial"><small>Pisahkan beberapa tag dengan koma.</small></div>
 <div class="field"><label>Access</label><div class="access-grid"><label class="access-option"><input type="radio" name="access" value="free" checked><span><b><i class="fa-solid fa-unlock"></i> Gratis</b><small>Terbuka untuk semua</small></span></label><label class="access-option"><input type="radio" name="access" value="paid"><span><b><i class="fa-solid fa-lock"></i> Berbayar</b><small>Rp2.000–Rp100.000</small></span></label></div><small id="accessHint">Konten dapat dibuka semua pengguna.</small></div>
 <div id="priceBox" class="field price-box" hidden><label for="price">Nominal Harga <em>*</em></label><div class="money-input"><span>Rp</span><input id="price" type="number" min="2000" max="100000" step="1000" value="2000" inputmode="numeric"></div><small>Rp2.000–Rp100.000 dan kelipatan Rp1.000.</small></div>
 <div class="field expiry-toggle"><label class="switch-row"><input id="hasExpiry" type="checkbox"><span class="switch-ui"></span><span><b>Gunakan Expired</b><small>Batasi masa berlaku PasteLink.</small></span></label></div>
 <div id="expiryBox" class="field price-box" hidden><label for="expiresAt">Expired Pada <em>*</em></label><input id="expiresAt" type="datetime-local"><small>Setelah waktu ini, PasteLink dianggap expired.</small></div>
 <div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" maxlength="3000" rows="4" placeholder="Ringkasan singkat PasteLink..."></textarea><small><span id="counter">0</span>/3000</small></div>
 <div class="create-actions"><a href="my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-link"></i>Publikasikan PasteLink</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
-</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260918-public-no-session-lock"></script>
+</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260918-password-editor"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
+
 <script src="js/pastele-data-contract.js"></script>
 </body></html>
