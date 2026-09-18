@@ -221,7 +221,7 @@ window.PASTELE_CONFIG = Object.freeze({
      SUPABASE
   ======================================================= */
   function getSupabase() {
-    const client = window.sb || window.sb;
+    const client = window.sb || window.supabaseClient;
     if (!client) {
       throw new Error(
         "Supabase belum siap. Periksa js/config.js dan js/supabase.js."
@@ -439,7 +439,8 @@ window.PASTELE_CONFIG = Object.freeze({
           normalizeUsername(value);
         try {
           const { data, error } =
-            await window.PasTeleDB.rpc("resolve_username_login",
+            await client.rpc(
+              "resolve_username_login",
               {
                 p_username: username
               }
@@ -646,7 +647,7 @@ window.PASTELE_CONFIG = Object.freeze({
         throw new Error("Email tidak valid.");
       }
       const { data, error } =
-        await window.PasTeleDB.rpc("check_email_available", {
+        await client.rpc("check_email_available", {
           p_email: value
         });
       if (error) {
@@ -691,7 +692,8 @@ window.PASTELE_CONFIG = Object.freeze({
        */
       try {
         const { data, error } =
-          await window.PasTeleDB.rpc("resolve_username_login",
+          await client.rpc(
+            "resolve_username_login",
             {
               p_username: value
             }
@@ -743,7 +745,8 @@ window.PASTELE_CONFIG = Object.freeze({
        * Ini mencegah masalah RLS/column privilege.
        */
       const { data, error } =
-        await window.PasTeleDB.rpc("check_username_available",
+        await client.rpc(
+          "check_username_available",
           {
             p_username: value
           }
@@ -971,8 +974,8 @@ window.PASTELE_CONFIG = Object.freeze({
        ===================================================== */
     isReady() {
       return Boolean(
-        (window.sb || window.sb) &&
-        (window.sb?.auth || window.sb?.auth)
+        (window.sb || window.supabaseClient) &&
+        (window.sb?.auth || window.supabaseClient?.auth)
       );
     }
   };
@@ -1312,7 +1315,8 @@ window.PASTELE_CONFIG = Object.freeze({
     try {
       if (window.sb?.rpc) {
         const result =
-          await window.PasTeleDB.rpc("get_public_site_settings"
+          await window.sb.rpc(
+            'get_public_site_settings'
           );
         if (
           !result?.error &&
@@ -2634,16 +2638,16 @@ async function resolve(kind){
  const client=window.sb;if(!client)throw Error("Supabase belum siap.");
  if(!slug)throw Error("Link konten tidak lengkap.");
  let data,error;
- if(kind==="pastelink")({data,error}=await window.PasTeleDB.rpc("get_pastelink_by_slug",{p_slug:slug}));
- else if(kind==="code")({data,error}=await window.PasTeleDB.rpc("get_code_by_slug",{p_slug:slug}));
- else ({data,error}=await window.PasTeleDB.rpc("get_telegram_content_by_slug",{p_slug:slug,p_type:kind}));
+ if(kind==="pastelink")({data,error}=await client.rpc("get_pastelink_by_slug",{p_slug:slug}));
+ else if(kind==="code")({data,error}=await client.rpc("get_code_by_slug",{p_slug:slug}));
+ else ({data,error}=await client.rpc("get_telegram_content_by_slug",{p_slug:slug,p_type:kind}));
  if(error)throw error;
  return Array.isArray(data)?data[0]:data;
 }
 async function detailById(kind,id){
  const client=window.sb; const type=targetType(kind);
  const u=await user(); const tok=u?null:localStorage.getItem("pastele-guest-checkout-token");
- const q=tok?await window.PasTeleDB.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:tok}):await window.PasTeleDB.rpc("get_market_item_detail",{p_type:type,p_id:id});
+ const q=tok?await client.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:tok}):await client.rpc("get_market_item_detail",{p_type:type,p_id:id});
  if(q.error)throw q.error; return Array.isArray(q.data)?q.data[0]:q.data;
 }
 function isPaid(item){return String(item?.access_type||"free").toLowerCase()==="paid"||Number(item?.price||0)>0}
@@ -2680,8 +2684,8 @@ async function startBuy(kind,item){
  }
  const type=targetType(kind);
  const q=u?.id
-   ? await window.PasTeleDB.rpc("buy_market_item",{p_type:type,p_id:item.id})
-   : await window.PasTeleDB.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
+   ? await window.sb.rpc("buy_market_item",{p_type:type,p_id:item.id})
+   : await window.sb.rpc("buy_market_item_guest",{p_type:type,p_id:item.id,p_guest_token:tok});
  if(q.error)throw q.error;
  const result=q.data?.data && !q.data?.order_id ? q.data.data : q.data;
  if(result?.already_owned || result?.can_access || result?.membership_access){
@@ -2696,7 +2700,7 @@ async function loadSocial(kind,item){
  const client=window.sb, tid=item.id, tt=targetType(kind);
  const [likes,comments,shares,u]=await Promise.all([
    client.from("content_likes").select("id,actor_id,guest_token").eq("target_id",tid).eq("target_type",tt),
-   window.PasTeleDB.rpc("get_content_comments",{p_target_id:tid,p_target_type:tt,p_limit:100}),
+   client.rpc("get_content_comments",{p_target_id:tid,p_target_type:tt,p_limit:100}),
    client.from("analytics_events").select("id",{count:"exact",head:true}).eq("target_id",tid).eq("target_type",tt).eq("event_type","share"),
    user()
  ]);
@@ -2712,21 +2716,21 @@ async function loadSocial(kind,item){
  if(list)list.innerHTML=comments.error?"":(comments.data?.length?comments.data.map(c=>`<article class="comment"><div class="avatar"><i class="fa-solid fa-user"></i></div><div><strong>${esc(c.display_name||(c.user_id?"User":"Guest"))}</strong><time>${new Date(c.created_at).toLocaleString("id-ID")}</time><p>${esc(c.body)}</p></div></article>`).join(""):'<div class="empty">Belum ada komentar.</div>');
  $("likeBtn")?.addEventListener("click",async()=>{
    const p=await user();let q;
-   if(p?.id)q=await window.PasTeleDB.rpc("toggle_content_like",{p_target_id:tid,p_target_type:tt,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
-   else q=await window.PasTeleDB.rpc("toggle_content_like_guest",{p_target_id:tid,p_target_type:tt,p_guest_token:guestToken()});
-   if(q.error)return toast(q.error.message||"Gagal menyukai.","error"); await loadSocial(kind,item); try{await window.PasTeleDB.rpc("record_quest_event",{p_event_type:"like"})}catch{}
+   if(p?.id)q=await client.rpc("toggle_content_like",{p_target_id:tid,p_target_type:tt,p_owner:item.owner_id||item.creator_id||item.seller_id||null});
+   else q=await client.rpc("toggle_content_like_guest",{p_target_id:tid,p_target_type:tt,p_guest_token:guestToken()});
+   if(q.error)return toast(q.error.message||"Gagal menyukai.","error"); await loadSocial(kind,item); try{await client.rpc("record_quest_event",{p_event_type:"like"})}catch{}
  });
  $("shareBtn")?.addEventListener("click",async()=>{
    const url=location.href;try{if(navigator.share)await navigator.share({title:item.title||"PasTele",url});else await navigator.clipboard.writeText(url)}catch(e){if(e?.name==="AbortError")return}
-   try{await window.PasTeleDB.rpc("track_analytics",{p_event_type:"share",p_target_type:tt,p_target_id:tid,p_owner:item.owner_id||item.creator_id||item.seller_id||null})}catch{}
-   try{await window.PasTeleDB.rpc("record_quest_event",{p_event_type:"share"})}catch{}; const n=Number($("shareCount")?.textContent||0)+1;if($("shareCount"))$("shareCount").textContent=String(n);
+   try{await client.rpc("track_analytics",{p_event_type:"share",p_target_type:tt,p_target_id:tid,p_owner:item.owner_id||item.creator_id||item.seller_id||null})}catch{}
+   try{await client.rpc("record_quest_event",{p_event_type:"share"})}catch{}; const n=Number($("shareCount")?.textContent||0)+1;if($("shareCount"))$("shareCount").textContent=String(n);
  });
  const form=$("commentForm"),text=$("commentText"),submit=$("commentSubmit");
  if(form)form.onsubmit=async e=>{
    e.preventDefault();const body=String(text?.value||"").trim();if(!body||body.length>2000)return;
    submit.disabled=true;
    const p=await user();
-   const q=await window.PasTeleDB.rpc("add_content_comment",{p_target_id:tid,p_target_type:tt,p_body:body,p_guest_token:p?null:guestToken(),p_display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null});
+   const q=await client.rpc("add_content_comment",{p_target_id:tid,p_target_type:tt,p_body:body,p_guest_token:p?null:guestToken(),p_display_name:p?.user_metadata?.username||p?.email?.split("@")[0]||null});
    if(q.error)toast(q.error.message||"Komentar gagal dikirim.","error");else{text.value="";toast("Komentar berhasil dikirim.","success");await loadSocial(kind,item)}
    submit.disabled=false;
  };
@@ -2738,7 +2742,7 @@ function shell(kind,item,access,content){
  return `<header class="view-head"><div class="view-icon"><i class="fa-solid ${icons[kind]}"></i></div><div><span class="badge ${paid?"paid":"free"}"><i class="fa-solid ${paid?"fa-lock":"fa-unlock"}"></i>${paid?"Paid":"Free"}</span><h1>${esc(title)}</h1><p class="view-desc">${esc(item.description||"")}</p></div></header><div class="view-meta"><span class="meta"><i class="fa-solid fa-eye"></i><strong>${Number(item.views||0).toLocaleString("id-ID")}</strong> dilihat</span><span class="meta"><i class="fa-solid fa-cart-shopping"></i><strong>${Number(item.sales_count||0).toLocaleString("id-ID")}</strong> terbeli</span><span class="meta"><i class="fa-solid fa-heart"></i><strong id="likeCountMeta">0</strong> suka</span><span class="meta"><i class="fa-solid fa-share-nodes"></i><strong id="shareCountMeta">0</strong> share</span><span class="meta"><i class="fa-solid fa-comments"></i><strong id="commentCountMeta">0</strong> komentar</span></div><div class="view-body">${content}</div><div class="engage"><div class="social"><button id="viewFollowBtn" type="button"><i class="fa-solid fa-user-plus"></i> <span>Ikuti Creator</span></button><button id="likeBtn" aria-pressed="false"><i id="likeIcon" class="fa-regular fa-heart"></i> <span id="likeLabel">Suka</span> <span id="likeCount">0</span></button><button id="shareBtn"><i class="fa-solid fa-share-nodes"></i> Bagikan <span id="shareCount">0</span></button></div><div class="comments"><h3>Komentar</h3><form class="comment-form" id="commentForm"><textarea id="commentText" maxlength="2000" placeholder="Tulis komentar..."></textarea><button class="btn primary" id="commentSubmit"><i class="fa-solid fa-paper-plane"></i> Kirim</button></form><div id="commentList"></div></div></div>`;
 }
 async function trackView(kind,item){
- try{await window.PasTeleDB.rpc("record_content_view",{p_owner:item.owner_id||item.creator_id||item.seller_id||null,p_target_type:targetType(kind),p_target_id:item.id})}catch{}
+ try{await window.sb.rpc("record_content_view",{p_owner:item.owner_id||item.creator_id||item.seller_id||null,p_target_type:targetType(kind),p_target_id:item.id})}catch{}
 }
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
@@ -2759,41 +2763,107 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
   function sanitize(input){
     const box=document.createElement("div");
     box.innerHTML=String(input??"");
-    const allowed=new Set(["B","STRONG","I","EM","U","S","DEL","MARK","BLOCKQUOTE","BR","P","DIV","SPAN","A","UL","OL","LI","PRE","CODE","H1","H2","H3","H4","H5","H6"]);
-    const classes=new Set(["pt-bold","pt-italic","pt-underline","pt-spoiler","pt-quote","revealed"]);
-    const walker=document.createTreeWalker(box,NodeFilter.SHOW_ELEMENT),nodes=[];
-    while(walker.nextNode())nodes.push(walker.currentNode);
+
+    const allowed=new Set([
+      "B","STRONG","I","EM","U","S","DEL","MARK","BLOCKQUOTE","BR",
+      "P","DIV","SPAN","A","UL","OL","LI","PRE","CODE","H1","H2","H3","H4","H5","H6",
+      "IMG","VIDEO","SOURCE","HR"
+    ]);
+
+    const classMap=(el)=>{
+      const raw=(el.getAttribute("class")||"").toLowerCase();
+      const data=(el.getAttribute("data-format")||el.getAttribute("data-style")||"").toLowerCase();
+      const combined=raw+" "+data;
+      const out=[];
+      if(/\b(?:bold|strong)\b/.test(combined)) out.push("pt-bold");
+      if(/\b(?:italic|italics|em)\b/.test(combined)) out.push("pt-italic");
+      if(/\b(?:underline|underlined)\b/.test(combined)) out.push("pt-underline");
+      if(/\b(?:spoiler|tg-spoiler)\b/.test(combined)) out.push("pt-spoiler");
+      if(/\b(?:quote|blockquote)\b/.test(combined)) out.push("pt-quote");
+      return out;
+    };
+
+    const styleMap=(el)=>{
+      const s=(el.getAttribute("style")||"").toLowerCase();
+      const out=[];
+      if(/font-weight\s*:\s*(?:bold|[6-9]00)/.test(s)) out.push("pt-bold");
+      if(/font-style\s*:\s*italic/.test(s)) out.push("pt-italic");
+      if(/text-decoration(?:-line)?\s*:\s*[^;]*(?:underline)/.test(s)) out.push("pt-underline");
+      if(/(?:filter\s*:[^;]*(?:blur|brightness)|opacity\s*:\s*0(?:\.0*)?\b)/.test(s)) out.push("pt-spoiler");
+      if(/border-left\s*:[^;]*|border-left-width\s*:/.test(s) && /padding/.test(s)) out.push("pt-quote");
+      return out;
+    };
+
+    const unwrap=(el)=>{
+      const frag=document.createDocumentFragment();
+      while(el.firstChild) frag.appendChild(el.firstChild);
+      el.replaceWith(frag);
+    };
+
+    const nodes=[...box.querySelectorAll("*")];
     for(const el of nodes){
-      if(!allowed.has(el.tagName)){el.replaceWith(document.createTextNode(el.textContent||""));continue;}
-      for(const attr of [...el.attributes]){
-        const n=attr.name.toLowerCase();
-        if(el.tagName==="A"&&n==="href")continue;
-        if(n==="class"){
-          const kept=String(attr.value||"").split(/\s+/).filter(c=>classes.has(c));
-          kept.length?el.setAttribute("class",kept.join(" ")):el.removeAttribute("class");
-        }else el.removeAttribute(attr.name);
+      const tag=el.tagName;
+      if(!allowed.has(tag)){
+        unwrap(el);
+        continue;
       }
-      if(el.tagName==="A"){
-        const u=href(el.getAttribute("href"));
-        if(!u){el.replaceWith(document.createTextNode(el.textContent||""));continue;}
-        el.setAttribute("href",u);el.setAttribute("target","_blank");el.setAttribute("rel","noopener noreferrer nofollow");
+
+      const classes=[...new Set([...classMap(el),...styleMap(el)])];
+      for(const a of [...el.attributes]) el.removeAttribute(a.name);
+      if(classes.length) el.setAttribute("class",classes.join(" "));
+
+      if(tag==="A"){
+        const u=href(el.getAttribute("href")||"");
+        if(!u){ unwrap(el); continue; }
+        el.setAttribute("href",u);
+        el.setAttribute("target","_blank");
+        el.setAttribute("rel","noopener noreferrer nofollow");
       }
-      if(el.classList.contains("pt-spoiler")){el.setAttribute("role","button");el.setAttribute("tabindex","0");}
+
+      if(tag==="IMG"){
+        const src=href(el.getAttribute("src")||"");
+        if(!src){ el.remove(); continue; }
+        el.setAttribute("src",src);
+        el.setAttribute("loading","lazy");
+        el.setAttribute("decoding","async");
+        el.setAttribute("referrerpolicy","no-referrer");
+        el.setAttribute("alt","");
+      }
+
+      if(tag==="VIDEO"){
+        const src=href(el.getAttribute("src")||"");
+        if(src) {
+          el.setAttribute("src",src);
+          el.setAttribute("controls","");
+          el.setAttribute("playsinline","");
+        }
+      }
+
+      if(tag==="SOURCE"){
+        const src=href(el.getAttribute("src")||"");
+        if(src) el.setAttribute("src",src); else el.remove();
+      }
     }
+
+    // Convert editor-created plain newline text inside blocks into readable breaks.
     return box.innerHTML;
   }
+
   function autoLink(text){
     const s=esc(text), re=/((?:https?:\/\/|www\.)[^\s<]+)/gi;
     return s.replace(re,full=>{
       let x=full,tail="";
       while(/[),.!?;:'"\]]$/.test(x)){tail=x.slice(-1)+tail;x=x.slice(0,-1);}
-      const u=href(x); return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${x}</a>${tail}`:full;
+      const u=href(x);
+      return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${x}</a>${tail}`:full;
     }).replace(/\r?\n/g,"<br>");
   }
+
   function render(raw){
     const s=String(raw??"");
     return /<[a-z][\s\S]*>/i.test(s)?sanitize(s):autoLink(s);
   }
+
   async function sha(v){
     const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(v??"")));
     return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join("");
@@ -2813,7 +2883,7 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
       <button class="btn primary password-submit" type="submit"><i class="fa-solid fa-unlock"></i> Buka Konten</button>
     </form>
   </div>`;}
-  function has(item){return item?.has_password===true || item?.password_required===true;}
+  function has(item){return !!String(item?.password_hash||"").trim();}
   async function unlock(item,root,open){
     const f=root.querySelector("#passwordForm"),i=root.querySelector("#pastePassword"),e=root.querySelector("#passwordError");
     root.querySelector("#togglePastePassword")?.addEventListener("click",()=>{
@@ -2824,11 +2894,7 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
       ev.preventDefault(); if(!i.value)return;
       const b=f.querySelector("button[type=submit]");b.disabled=true;e.hidden=true;
       try{
-        const result=await window.PasTeleDB.rpc("verify_pastelink_password",{
-          p_pastelink_id:item.id,
-          p_password:i.value
-        });
-        const ok=result===true || result?.data===true;
+        const ok=(await sha(i.value)).toLowerCase()===String(item.password_hash).toLowerCase();
         if(!ok){e.textContent="Password salah. Silakan coba lagi.";e.hidden=false;i.select();return;}
         sessionStorage.setItem("pastele-unlocked-"+item.id,"1");open();
       }catch{e.textContent="Verifikasi password gagal. Coba lagi.";e.hidden=false;}
@@ -2836,35 +2902,67 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
     });
   }
   window.PasTelePasteView={renderContent:render,hasPassword:has,passwordForm:form,unlock};
+  document.addEventListener("click",(ev)=>{
+    const el=ev.target?.closest?.(".content-box.rich .pt-spoiler");
+    if(!el) return;
+    el.classList.toggle("revealed");
+    el.classList.toggle("is-revealed",el.classList.contains("revealed"));
+  });
+
 })();
 
 document.addEventListener("DOMContentLoaded",async()=>{
-  const V=window.PasTeleView,root=V.$("viewRoot");
-  const renderRich=value=>{
-    try{return window.PasTelePasteView.renderContent(value)}
-    catch(e){console.error("[PasTele] rich render:",e);return V.esc(String(value??""))}
-  };
-  const bindSpoilers=()=>{
-    root.querySelectorAll(".content-box.rich .pt-spoiler").forEach(sp=>{
-      const toggle=()=>sp.classList.toggle("revealed");
-      sp.addEventListener("click",toggle);
-      sp.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
-    });
-  };
+  const V=window.PasTeleView;
+  const R=window.PasTelePasteView;
+  const root=V.$("viewRoot");
+
   try{
     let item=await V.resolve("pastelink");
-    if(!item?.found)throw Error("PasteLink tidak ditemukan atau sudah tidak tersedia.");
+    if(!item?.found) throw Error("PasteLink tidak ditemukan atau sudah tidak tersedia.");
     item=await V.refreshItem("pastelink",item);
+
     const access=await V.accessState("pastelink",item);
-    let body;
+    let body="";
+
+    const renderContent=()=>{
+      const raw=item.content_html ?? item.content ?? "";
+      return `<div class="content-box rich">${R.renderContent(raw)}</div>`;
+    };
+
+    const unlocked=sessionStorage.getItem("pastele-unlocked-"+item.id)==="1";
+
     if(!access.ok){
-      body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli konten Paid. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar &amp; Buka Konten</button></div>`;
+      if(R.hasPassword(item) && unlocked){
+        body=renderContent();
+      }else if(R.hasPassword(item)){
+        body=R.passwordForm();
+      }else{
+        body=`<div class="locked">
+          <div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli konten Paid. Login/daftar disarankan agar pembelian tersimpan permanen di akun.</div>
+          <div class="price">${V.money(item.price)}</div>
+          <button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Konten</button>
+        </div>`;
+      }
     }else{
-      body=`<div class="content-box rich">${renderRich(item.content_html??item.content??"")}</div>`;
+      body=renderContent();
     }
+
     root.innerHTML=V.shell("pastelink",item,access,body);
-    bindSpoilers();
-    V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("pastelink",item)}catch(e){V.toast?.(e.message||"Checkout gagal","error")}});
+
+    // shell() contains the body area; if a password gate was selected,
+    // initialize it after the shell is mounted.
+    if(!access.ok && R.hasPassword(item) && !unlocked){
+      await R.unlock(item,root,()=>{
+        const holder=root.querySelector(".view-body");
+        if(holder) holder.innerHTML=renderContent();
+      });
+    }
+
+    V.$("buyBtn")?.addEventListener("click",async()=>{
+      try{ await V.startBuy("pastelink",item); }
+      catch(e){ V.toast?.(e.message||"Checkout gagal","error"); }
+    });
+
     await V.trackView("pastelink",item);
     await V.loadSocial("pastelink",item);
   }catch(e){
@@ -2887,7 +2985,7 @@ document.documentElement.classList.add("pastele-ready");
   window.__PASTELE_CHAT_BOOTED__ = true;
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $ = s => document.querySelector(s);
-  const sb = () => window.sb || window.sb || null;
+  const sb = () => window.sb || window.supabaseClient || null;
   let group=null, me=null, messages=[], replyId=null, channel=null;
   const getUser = async()=>{
     try{ if(window.TC?.user) return await window.TC.user(); }catch{}
@@ -2918,8 +3016,8 @@ document.documentElement.classList.add("pastele-ready");
     me=await getUser(); $('#ptChatLogin').classList.toggle('hidden',!!me);
     const q=await client.from('chat_groups').select('id,name,slug,description,is_public').eq('slug','pastele-community').maybeSingle();
     if(q.error||!q.data){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty">Community belum tersedia. Jalankan database.sql terbaru.</div>';return}
-    group=q.data; let chatReason=''; try{const sr=await window.PasTeleDB.rpc("get_public_site_settings"); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
-    if(me){try{await window.PasTeleDB.rpc("join_public_chat",{p_group_id:group.id});await window.PasTeleDB.rpc("set_chat_presence",{p_group_id:group.id,p_online:true});}catch{}}
+    group=q.data; let chatReason=''; try{const sr=await client.rpc('get_public_site_settings'); chatReason=String(sr?.data?.forum_chat?.reason||'').trim()}catch{} $('#ptChatTitle').textContent=group.name; $('#ptChatStatus').textContent=group.is_public===false ? ('Ditutup oleh admin'+(chatReason?' · '+chatReason:'')) : (group.description||'Forum & Group Chat'); if(group.is_public===false){$('#ptChatMessages').innerHTML='<div class="pt-chat-empty"><i class="fa-solid fa-lock"></i><br>Forum Group Chat sedang ditutup oleh admin.'+(chatReason?'<br><small>'+esc(chatReason)+'</small>':'')+'</div>'; $('#ptChatSend')?.setAttribute('disabled','disabled'); return;}
+    if(me){try{await client.rpc('join_public_chat',{p_group_id:group.id});await client.rpc('set_chat_presence',{p_group_id:group.id,p_online:true});}catch{}}
     await loadMessages(); subscribe();
   }
   async function loadMessages(){
