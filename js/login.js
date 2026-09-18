@@ -64,7 +64,6 @@
       auth:{persistSession:true,autoRefreshToken:true,storageKey:"pastele-auth"}
     });
     window.sb=sb;
-    window.sb=sb;
     return sb;
   }
 

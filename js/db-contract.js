@@ -1,6 +1,4 @@
-/* PasTele DB contract — generated from the project SQL master.
-   Keep browser credentials limited to Supabase anon/publishable key.
-   All privileged mutations must remain RPC/security-definer operations. */
+/* PasTele DB contract — compatibility-safe RPC wrapper */
 (()=>{"use strict";
   const client=()=>window.sb||window.supabaseClient||window.PasTeleSession?.client?.();
   const unwrap=(data)=>{
@@ -11,14 +9,27 @@
     if(!error) return null;
     return new Error(error.message||error.details||error.hint||"Database request failed");
   };
+  function attachCompat(value){
+    if(value!==null && typeof value==="object"){
+      try{
+        if(!Object.prototype.hasOwnProperty.call(value,"data")){
+          Object.defineProperty(value,"data",{value,enumerable:false,configurable:true});
+        }
+        if(!Object.prototype.hasOwnProperty.call(value,"error")){
+          Object.defineProperty(value,"error",{value:null,enumerable:false,configurable:true});
+        }
+      }catch(_){}
+    }
+    return value;
+  }
   async function rpc(name,args={}){
     const sb=client();
     if(!sb) throw new Error("Supabase client belum siap.");
     const {data,error}=await sb.rpc(name,args);
     if(error) throw dbError(error);
-    return unwrap(data);
+    return attachCompat(unwrap(data));
   }
-  async function query(table, builder){
+  async function query(table,builder){
     const sb=client();
     if(!sb) throw new Error("Supabase client belum siap.");
     return builder(sb.from(table));
