@@ -2771,25 +2771,118 @@ function sanitizeContentHTML(input){
 }
 async function hashPassword(password){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(password));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function initPasteLinkEditor(){
- const ed=document.getElementById("content");if(!ed||ed.dataset.ready)return;ed.dataset.ready="1";
- const range=()=>{const s=getSelection();if(!s?.rangeCount)return null;const r=s.getRangeAt(0);return ed.contains(r.commonAncestorContainer)?r.cloneRange():null};
- const restore=r=>{if(!r)return;const s=getSelection();s.removeAllRanges();s.addRange(r)};
- const linkify=()=>{const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),ns=[];let n;while(n=w.nextNode())if(!n.parentElement?.closest("a"))ns.push(n);
-  for(const node of ns){const t=node.nodeValue||"",re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;let m,last=0,hit=false;const f=document.createDocumentFragment();
-   while(m=re.exec(t)){hit=true;f.append(document.createTextNode(t.slice(last,m.index)));let raw=m[0],trail="";while(/[),.!?;:'\]]$/.test(raw)){trail=raw.slice(-1)+trail;raw=raw.slice(0,-1)}const a=document.createElement("a");a.href=/^www\./i.test(raw)?"https://"+raw:raw;a.textContent=raw;a.target="_blank";a.rel="noopener noreferrer nofollow";f.append(a);if(trail)f.append(document.createTextNode(trail));last=m.index+m[0].length}
-   if(hit){f.append(document.createTextNode(t.slice(last)));node.replaceWith(f)}
-  }
+ const ed=document.getElementById("content");
+ if(!ed||ed.dataset.ready)return;
+ ed.dataset.ready="1";
+
+ let savedRange=null;
+ const getRange=()=>{
+   const sel=window.getSelection();
+   if(!sel||!sel.rangeCount)return null;
+   const r=sel.getRangeAt(0);
+   return ed.contains(r.commonAncestorContainer)?r.cloneRange():null;
  };
- const apply=cmd=>{ed.focus();if(cmd==="blockquote")document.execCommand("formatBlock",false,"blockquote");else if(cmd==="spoiler"){const r=range();if(!r||r.collapsed){TC.toast("Pilih teks dulu untuk spoiler.","info");return}const s=document.createElement("span");s.className="spoiler";try{r.surroundContents(s)}catch{s.textContent=r.toString();r.deleteContents();r.insertNode(s)}restore(r)}else if(cmd==="link"){const r=range(),sel=r?.toString()?.trim()||"",v=prompt("Masukkan URL:",/^https?:\/\//i.test(sel)?sel:"https://");if(!v)return;let u=v.trim();if(/^www\./i.test(u))u="https://"+u;if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return}restore(r);document.execCommand("createLink",false,u)}else document.execCommand(cmd,false,null);linkify();document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)};
- ed.addEventListener("input",()=>{linkify();document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)});
- ed.addEventListener("paste",()=>setTimeout(()=>{linkify();document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)},0));
- ed.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();apply("link")}});
- document.querySelectorAll("#contentEditor .pt-tool").forEach(b=>{b.addEventListener("mousedown",e=>e.preventDefault());b.addEventListener("click",()=>apply(b.dataset.cmd))});
+ const saveRange=()=>{ const r=getRange(); if(r)savedRange=r; return r; };
+ const restoreRange=()=>{
+   if(!savedRange)return false;
+   const sel=window.getSelection();
+   sel.removeAllRanges();sel.addRange(savedRange);
+   ed.focus();return true;
+ };
+ const syncHTML=()=>{document.getElementById("contentHtml").value=sanitizeContentHTML(ed.innerHTML)};
+
+ const linkify=()=>{
+   const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT),nodes=[];let n;
+   while(n=w.nextNode()){
+     if(n.parentElement?.closest("a,.spoiler"))continue;
+     if(n.parentElement?.closest("script,style"))continue;
+     nodes.push(n);
+   }
+   for(const node of nodes){
+     const text=node.nodeValue||"";
+     const re=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+     let m,last=0,hit=false;
+     const frag=document.createDocumentFragment();
+     while((m=re.exec(text))){
+       hit=true;
+       frag.append(document.createTextNode(text.slice(last,m.index)));
+       let raw=m[0],trail="";
+       while(/[),.!?;:'\]]$/.test(raw)){trail=raw.slice(-1)+trail;raw=raw.slice(0,-1)}
+       const a=document.createElement("a");
+       a.href=/^www\./i.test(raw)?"https://"+raw:raw;
+       a.textContent=raw;a.target="_blank";a.rel="noopener noreferrer nofollow";
+       frag.append(a);
+       if(trail)frag.append(document.createTextNode(trail));
+       last=m.index+m[0].length;
+     }
+     if(hit){frag.append(document.createTextNode(text.slice(last)));node.replaceWith(frag)}
+   }
+ };
+
+ const wrapSelection=(tag,attrs={})=>{
+   if(!restoreRange())return false;
+   const sel=window.getSelection();
+   if(!sel||!sel.rangeCount)return false;
+   const r=sel.getRangeAt(0);
+   if(r.collapsed)return false;
+   const el=document.createElement(tag);
+   Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+   try{
+     el.appendChild(r.extractContents());
+     r.insertNode(el);
+     const nr=document.createRange();nr.selectNodeContents(el);
+     sel.removeAllRanges();sel.addRange(nr);savedRange=nr.cloneRange();
+   }catch{
+     return false;
+   }
+   return true;
+ };
+
+ const apply=cmd=>{
+   saveRange();
+   if(cmd==="spoiler"){
+     if(!savedRange||savedRange.collapsed){toast("Pilih teks dulu untuk spoiler.","info");return}
+     wrapSelection("span",{class:"spoiler"});
+   }else if(cmd==="link"){
+     if(!savedRange||savedRange.collapsed){toast("Pilih teks yang ingin dijadikan tautan.","info");return}
+     const selected=savedRange.toString().trim();
+     let u=window.prompt("Masukkan URL:",/^https?:\/\//i.test(selected)?selected:"https://");
+     if(!u)return;
+     u=u.trim();if(/^www\./i.test(u))u="https://"+u;
+     if(!/^https?:\/\//i.test(u)){toast("URL harus http:// atau https://.","error");return}
+     if(!wrapSelection("a",{href:u,target:"_blank",rel:"noopener noreferrer nofollow"}))toast("Tautan gagal dibuat.","error");
+   }else if(cmd==="blockquote"){
+     restoreRange();
+     try{document.execCommand("formatBlock",false,"blockquote")}catch{}
+   }else{
+     restoreRange();
+     try{document.execCommand(cmd,false,null)}catch{}
+   }
+   syncHTML();
+ };
+
+ ed.addEventListener("input",()=>{linkify();syncHTML()});
+ ed.addEventListener("paste",()=>setTimeout(()=>{linkify();syncHTML()},0));
+ ed.addEventListener("mouseup",saveRange);
+ ed.addEventListener("keyup",saveRange);
+ ed.addEventListener("blur",saveRange);
+ ed.addEventListener("keydown",e=>{
+   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
+     e.preventDefault();saveRange();apply("link");
+   }
+ });
+ document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
+   btn.addEventListener("mousedown",e=>{e.preventDefault();saveRange()});
+   btn.addEventListener("touchstart",e=>{e.preventDefault();saveRange()},{passive:false});
+   btn.addEventListener("click",e=>{e.preventDefault();apply(btn.dataset.cmd)});
+ });
+
  const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
  cb?.addEventListener("change",()=>{box.hidden=!cb.checked;if(!cb.checked)pw.value=""});
  document.getElementById("togglePassword")?.addEventListener("click",()=>{pw.type=pw.type==="password"?"text":"password"});
+ syncHTML();
 }
-document.addEventListener("DOMContentLoaded",initPasteLinkEditor);
+initPasteLinkEditor();
 
 function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
 const title=$("title").value.trim(),content=sanitizeContentHTML(getEditorHTML()),plainContent=getEditorText(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!plainContent)return toast("Content wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<2000||price>100000||price%1000))return toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.","error"),null;let exp=null;if($("hasExpiry").checked){const rawExp=$("expiresAt").value;if(!rawExp)return toast("Isi tanggal expired.","error"),null;const d=new Date(rawExp);if(Number.isNaN(d.getTime())||d.getTime()<=Date.now())return toast("Tanggal expired harus di masa depan.","error"),null;exp=d.toISOString()}return{title,content,a,price,exp,tags:String($("tags").value||"").split(",").map(x=>x.trim().replace(/^#/g,"")).filter(Boolean).slice(0,20),desc:$("description").value.trim()}}
