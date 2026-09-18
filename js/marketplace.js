@@ -3368,6 +3368,78 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderRankingPager(element, id, totalPages);
   }
 
+  function mainListRow(item, globalIndex) {
+    const type = typeOf(item);
+    const href = productUrl(item);
+    const access = accessType(item);
+    const title = item?.title || "Untitled";
+    const ctaLabel = access === "paid" ? "Beli Sekarang" : "Ambil Sekarang";
+    return `
+      <div class="market-list-item market-main-list-item" data-share-id="${esc(item?.id || "")}" data-share-type="${esc(type)}" data-share-owner="${esc(item?.owner_id || "")}" data-share-access="${esc(access)}" data-share-url="${esc(href)}">
+        ${rankIcon(globalIndex)}
+        <a class="market-list-main market-list-link" href="${esc(href)}" aria-label="Buka ${esc(title)}">
+          <strong class="market-list-title">${esc(title)}</strong>
+          <div class="market-list-price-row">
+            <strong class="market-list-price ${access === "free" ? "free" : ""}">${priceText(item)}</strong>
+            <span class="market-list-type"><i class="fa-solid ${icon(type)}" aria-hidden="true"></i>${esc(typeLabel(type))}</span>
+          </div>
+          <div class="market-list-stats" aria-label="Statistik">${rankingStats(item)}</div>
+        </a>
+        <button type="button" class="market-list-cta ${access === "free" ? "free" : ""}" data-market-buy data-product-id="${esc(item?.id || "")}" data-product-type="${esc(type)}" data-access-type="${esc(access)}" aria-label="${esc(ctaLabel)} ${esc(title)}">
+          <i class="fa-solid ${access === "paid" ? "fa-cart-shopping" : "fa-unlock"}" aria-hidden="true"></i>
+          <span>${ctaLabel}</span>
+        </button>
+      </div>`;
+  }
+
+  function renderMainList(filtered) {
+    if (!market) return;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    page = Math.min(page, totalPages);
+    const start = (page - 1) * pageSize;
+    const pageItems = filtered.slice(start, start + pageSize);
+    if (pageItems.length) {
+      market.innerHTML = pageItems.map((item, i) => mainListRow(item, start + i)).join("");
+    } else {
+      const hasSearch = Boolean(q?.value?.trim());
+      const hasFilter = filter !== "all";
+      market.innerHTML = `<div class="market-empty"><span><i class="fa-solid ${hasSearch || hasFilter ? "fa-magnifying-glass" : "fa-box-open"}"></i></span><div><strong>${hasSearch || hasFilter ? "Konten tidak ditemukan" : "Belum ada konten"}</strong><small>${hasSearch || hasFilter ? "Coba ubah pencarian atau filter." : "Konten yang dipublikasikan akan muncul di sini."}</small></div></div>`;
+    }
+    renderPager(totalPages);
+  }
+
+  function renderCreatorTop() {
+    const element = $("topCreator");
+    if (!element) return;
+    const map = new Map();
+    for (const item of items) {
+      const username = String(item?.creator_username || "").trim().replace(/^@/, "");
+      const name = String(item?.creator_name || "").trim();
+      const key = username ? `u:${username.toLowerCase()}` : (name ? `n:${name.toLowerCase()}` : "");
+      if (!key) continue;
+      const row = map.get(key) || { username, name, sales: 0, shares: 0, value: 0 };
+      const sales = number(item?.sales_count);
+      row.sales += sales;
+      row.shares += number(item?.shares_count);
+      row.value += sales * Math.max(0, number(item?.price));
+      map.set(key, row);
+    }
+    const rows = Array.from(map.values()).sort((a,b) => (b.value-a.value) || (b.shares-a.shares) || (b.sales-a.sales)).slice(0,10);
+    if (!rows.length) {
+      element.innerHTML = `<div class="market-empty"><span><i class="fa-solid fa-user"></i></span><div><strong>Belum ada kreator</strong><small>Belum ada data penjualan atau share.</small></div></div>`;
+      return;
+    }
+    element.innerHTML = rows.map((row,index) => `
+      <div class="market-list-item creator-list-item">
+        ${rankIcon(index)}
+        <div class="market-list-main">
+          <strong class="market-list-title">${esc(row.username ? "@"+row.username : row.name || "Kreator")}</strong>
+          <div class="market-list-meta creator-meta"><span><i class="fa-solid fa-cart-shopping"></i>${formatNumber(row.sales)} penjualan</span><span><i class="fa-solid fa-share-nodes"></i>${formatNumber(row.shares)} share</span></div>
+          <div class="creator-revenue">Nilai penjualan <strong>${formatMoney(row.value)}</strong></div>
+        </div>
+      </div>`).join("");
+  }
+
   /* =======================================================
      TOP LISTS
      ======================================================= */
@@ -3685,8 +3757,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // FREE: everyone can enter directly, including guest users.
       if (access === "free") {
-        const card = trigger.closest(".product-card");
-        const link = card?.querySelector(".product-card-link");
+        const card = trigger.closest(".product-card, .market-main-list-item");
+        const link = card?.querySelector(".product-card-link, .market-list-link");
         if (link?.href) window.location.assign(link.href);
         return;
       }
@@ -3697,11 +3769,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           window.TC?.user?.() ||
           window.sb?.auth?.getUser?.().then(r => r?.data?.user || null)
         );
-        const card = trigger.closest(".product-card");
+        const card = trigger.closest(".product-card, .market-main-list-item");
         const ownerId = String(card?.dataset?.shareOwner || "").trim();
 
         if (currentUser?.id && ownerId && String(currentUser.id) === ownerId) {
-          const link = card?.querySelector(".product-card-link");
+          const link = card?.querySelector(".product-card-link, .market-list-link");
           if (link?.href) window.location.assign(link.href);
           return;
         }
@@ -3737,8 +3809,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const order = unwrapCheckoutOrder(result?.data);
         const alreadyOwned = Boolean(order?.already_owned || order?.can_access || order?.membership_access);
         if (alreadyOwned && !order?.order_id && !order?.id) {
-          const card = trigger.closest(".product-card");
-          const link = card?.querySelector(".product-card-link");
+          const card = trigger.closest(".product-card, .market-main-list-item");
+          const link = card?.querySelector(".product-card-link, .market-list-link");
           if (link?.href) { window.location.assign(link.href); return; }
         }
 
@@ -3773,11 +3845,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       const link = event.target.closest(".product-card-link");
       if (!link) return;
 
-      const card = link.closest(".product-card");
+      const card = link.closest(".product-card, .market-main-list-item");
       if (!card) return;
 
       const access = String(
-        card.querySelector(".product-access")?.classList.contains("paid") ? "paid" : "free"
+        card.dataset.shareAccess ||
+        (card.querySelector(".product-access")?.classList.contains("paid") ? "paid" : "free")
       ).toLowerCase();
 
       if (access !== "paid") return;
@@ -3857,113 +3930,14 @@ bindMarketplaceBuyButtons();
   }
 
   function render() {
-    if (!market) {
-      return;
-    }
-    const filtered =
-      filteredItems()
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(
-              b?.created_at ||
-              0
-            ) -
-            new Date(
-              a?.created_at ||
-              0
-            )
-        );
-    updateResult(
-      filtered.length
-    );
-    const totalPages =
-      Math.max(
-        1,
-        Math.ceil(
-          filtered.length /
-          pageSize
-        )
-      );
-    page =
-      Math.min(
-        page,
-        totalPages
-      );
-    const start =
-      (page - 1) *
-      pageSize;
-    const pageItems =
-      filtered.slice(
-        start,
-        start + pageSize
-      );
-    if (
-      pageItems.length
-    ) {
-      // Render every item in the current page as a direct child.
-      // Do not use a single-card fallback or width inherited from an
-      // individual product. The layout CSS below handles 2/4 columns.
-      const cardsHtml = pageItems.map((item) => card(item)).join("");
-      market.innerHTML = cardsHtml;
-      // Defensive runtime layout: this prevents any legacy global CSS from
-      // collapsing the marketplace into one vertical card.
-      market.style.display = "grid";
-      market.style.width = "100%";
-      market.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
-      market.style.gap = "12px";
-      market.style.alignItems = "stretch";
-      market.querySelectorAll(":scope > .product-card").forEach((el) => {
-        el.style.width = "auto";
-        el.style.maxWidth = "none";
-        el.style.minWidth = "0";
-        el.style.margin = "0";
-      });
-    } else {
-      const hasSearch =
-        Boolean(
-          q?.value?.trim()
-        );
-      const hasFilter =
-        filter !== "all";
-      market.innerHTML = `
-        <div class="market-empty">
-          <span>
-            <i
-              class="fa-solid ${
-                hasSearch ||
-                hasFilter
-                  ? "fa-magnifying-glass"
-                  : "fa-box-open"
-              }"
-              aria-hidden="true"
-            ></i>
-          </span>
-          <div>
-            <strong>
-              ${
-                hasSearch ||
-                hasFilter
-                  ? "Konten tidak ditemukan"
-                  : "Belum ada konten"
-              }
-            </strong>
-            <small>
-              ${
-                hasSearch ||
-                hasFilter
-                  ? "Coba ubah pencarian atau filter."
-                  : "Konten yang dipublikasikan akan muncul di sini."
-              }
-            </small>
-          </div>
-        </div>
-      `;
-    }
-    renderPager(
-      totalPages
-    );
+    if (!market) return;
+    const filtered = filteredItems().slice().sort((a,b) => new Date(b?.created_at || 0) - new Date(a?.created_at || 0));
+    updateResult(filtered.length);
+    const allTitle = $("allContentTitle");
+    if (allTitle) allTitle.textContent = q?.value?.trim() ? "Hasil pencarian" : (filter === "all" ? "Semua konten" : `Konten ${typeLabel(filter)}`);
+    renderMainList(filtered);
     renderTopLists();
+    renderCreatorTop();
   }
   /* =======================================================
      LOADING

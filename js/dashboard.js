@@ -5070,11 +5070,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
     }
     /*
-     * Dashboard "Pendapatan" mengikuti saldo yang masih
-     * menunggu settlement. Jadi angka yang tampil tidak
-     * boleh lebih besar dari saldo pending H+2.
-     * Statistik performa dan detail mengikuti angka pending yang sama.
+     * Dashboard "Pendapatan" mengikuti saldo pending H+2.
+     * Deklarasikan lebih awal karena dipakai oleh beberapa
+     * bagian dashboard di bawah.
      */
+    const dashboardPendingRevenue =
+      Math.max(
+        0,
+        Number(walletResult?.data?.pending_balance || 0)
+      );
+
     if ($('revenue')) {
       $('revenue').textContent =
         money(
@@ -5193,12 +5198,6 @@ document.addEventListener('DOMContentLoaded', async () => {
      * saldo pending H+2. Jadi semua kartu pendapatan
      * menggunakan satu sumber angka yang sama.
      */
-    const dashboardPendingRevenue =
-      Math.max(
-        0,
-        Number(wallet?.pending_balance || 0)
-      );
-
     const monthRevenue =
       dashboardPendingRevenue;
 
