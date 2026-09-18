@@ -2774,52 +2774,192 @@ function initPasteLinkEditor(){
   const ed=document.getElementById("content");
   if(!ed||ed.dataset.ready)return;
   ed.dataset.ready="1";
+
   let savedRange=null;
-  const inside=r=>!!r&&(r.commonAncestorContainer===ed||ed.contains(r.commonAncestorContainer));
-  const capture=()=>{const s=window.getSelection();if(!s||!s.rangeCount)return savedRange;const r=s.getRangeAt(0);if(inside(r)&&!r.collapsed)savedRange=r.cloneRange();return savedRange};
-  const restore=()=>{if(!savedRange||!inside(savedRange))return false;const s=window.getSelection();s.removeAllRanges();s.addRange(savedRange);return true};
-  const sync=()=>{const h=document.getElementById("contentHtml");if(h)h.value=sanitizeContentHTML(ed.innerHTML)};
-  const unwrap=el=>{if(!el||!ed.contains(el))return false;const p=el.parentNode;while(el.firstChild)p.insertBefore(el.firstChild,el);el.remove();return true};
-  const wrap=cls=>{if(!restore())return false;const s=window.getSelection(),r=s.getRangeAt(0);if(r.collapsed)return false;const el=document.createElement("span");el.className=cls;el.appendChild(r.extractContents());r.insertNode(el);const nr=document.createRange();nr.selectNodeContents(el);s.removeAllRanges();s.addRange(nr);savedRange=nr.cloneRange();return true};
-  const nearest=sel=>{if(!savedRange)return null;let n=savedRange.commonAncestorContainer;if(n.nodeType===3)n=n.parentElement;return n?.closest?.(sel)||null};
-  const apply=cmd=>{
-    if(!savedRange)capture();
-    if(!savedRange||savedRange.collapsed){TC.toast("Pilih teks terlebih dahulu.","info");return}
-    let ok=false;
-    if(cmd==="bold"){const x=nearest(".pt-bold,strong,b");ok=x?unwrap(x):wrap("pt-bold")}
-    else if(cmd==="italic"){const x=nearest(".pt-italic,em,i");ok=x?unwrap(x):wrap("pt-italic")}
-    else if(cmd==="underline"){const x=nearest(".pt-underline,u");ok=x?unwrap(x):wrap("pt-underline")}
-    else if(cmd==="spoiler"){const x=nearest(".pt-spoiler");ok=x?unwrap(x):wrap("pt-spoiler")}
-    else if(cmd==="blockquote"){const x=nearest(".pt-quote");ok=x?unwrap(x):wrap("pt-quote")}
-    else if(cmd==="link"){
-      const x=nearest("a");
-      if(x){
-        TC.toast("Teks ini sudah menjadi tautan. Tekan Tautan lagi hanya jika ingin mengganti URL.","info");return;
-      }
-      const current=savedRange.toString().trim();
-      let u=prompt("Masukkan URL tautan:",/^https?:\/\//i.test(current)?current:"https://");
-      if(u===null)return;
-      u=u.trim();if(/^www\./i.test(u))u="https://"+u;
-      if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return}
-      if(!restore())return;
-      const r=window.getSelection().getRangeAt(0),el=document.createElement("a");
-      el.href=u;el.target="_blank";el.rel="noopener noreferrer nofollow";el.appendChild(r.extractContents());r.insertNode(el);
-      const nr=document.createRange();nr.selectNodeContents(el);window.getSelection().removeAllRanges();window.getSelection().addRange(nr);savedRange=nr.cloneRange();ok=true;
+  let restoring=false;
+
+  const inside=r=>!!r && (r.commonAncestorContainer===ed || ed.contains(r.commonAncestorContainer));
+
+  const saveSelection=()=>{
+    if(restoring)return savedRange;
+    const sel=window.getSelection();
+    if(!sel || !sel.rangeCount)return savedRange;
+    const r=sel.getRangeAt(0);
+    if(inside(r) && !r.collapsed){
+      savedRange=r.cloneRange();
     }
-    if(!ok&&cmd!=="link")TC.toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");
-    sync();ed.focus();
+    return savedRange;
   };
-  document.addEventListener("selectionchange",capture);
-  ["mouseup","keyup","touchend","pointerup"].forEach(ev=>ed.addEventListener(ev,capture,{passive:true}));
-  ed.addEventListener("input",sync);
-  ed.addEventListener("paste",()=>setTimeout(sync,0));
-  ed.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();capture();apply("link")}});
-  document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
-    const run=e=>{e.preventDefault();e.stopPropagation();capture();apply(btn.dataset.cmd)};
-    if(window.PointerEvent) btn.addEventListener("pointerdown",run,{passive:false});
-    else if("ontouchstart" in window) btn.addEventListener("touchstart",run,{passive:false});
-    else btn.addEventListener("mousedown",run,{passive:false});
+
+  const restoreSelection=()=>{
+    if(!savedRange || !inside(savedRange))return false;
+    try{
+      const sel=window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange.cloneRange());
+      return true;
+    }catch(_){return false;}
+  };
+
+  const sync=()=>{
+    const h=document.getElementById("contentHtml");
+    if(h)h.value=sanitizeContentHTML(ed.innerHTML);
+  };
+
+  const closestInEditor=(selector)=>{
+    if(!savedRange)return null;
+    let n=savedRange.commonAncestorContainer;
+    if(n.nodeType===3)n=n.parentElement;
+    return n?.closest?.(selector) || null;
+  };
+
+  const unwrap=el=>{
+    if(!el || !ed.contains(el))return false;
+    const parent=el.parentNode;
+    if(!parent)return false;
+    while(el.firstChild)parent.insertBefore(el.firstChild,el.firstChild?el.firstChild:null);
+    el.remove();
+    return true;
+  };
+
+  const wrapSelection=(className)=>{
+    if(!restoreSelection())return false;
+    const sel=window.getSelection();
+    if(!sel || !sel.rangeCount)return false;
+    const r=sel.getRangeAt(0);
+    if(r.collapsed || !inside(r))return false;
+
+    const span=document.createElement("span");
+    span.className=className;
+    try{
+      span.appendChild(r.extractContents());
+      r.insertNode(span);
+      const nr=document.createRange();
+      nr.selectNodeContents(span);
+      sel.removeAllRanges();
+      sel.addRange(nr);
+      savedRange=nr.cloneRange();
+      return true;
+    }catch(_){return false;}
+  };
+
+  const editLink=()=>{
+    if(!restoreSelection()){
+      TC.toast("Pilih teks terlebih dahulu.","info");
+      return false;
+    }
+    const a=closestInEditor("a");
+    if(a){
+      const current=a.getAttribute("href")||"https://";
+      let u=prompt("Masukkan URL tautan:",current);
+      if(u===null)return false;
+      u=u.trim();
+      if(/^www\./i.test(u))u="https://"+u;
+      if(!/^https?:\/\//i.test(u)){
+        TC.toast("URL harus http:// atau https://.","error");
+        return false;
+      }
+      a.setAttribute("href",u);
+      a.target="_blank";
+      a.rel="noopener noreferrer nofollow";
+      sync();
+      return true;
+    }
+
+    const text=savedRange.toString().trim();
+    let u=prompt("Masukkan URL tautan:",/^https?:\/\//i.test(text)?text:"https://");
+    if(u===null)return false;
+    u=u.trim();
+    if(/^www\./i.test(u))u="https://"+u;
+    if(!/^https?:\/\//i.test(u)){
+      TC.toast("URL harus http:// atau https://.","error");
+      return false;
+    }
+    if(!restoreSelection())return false;
+    const sel=window.getSelection();
+    if(!sel || !sel.rangeCount)return false;
+    const r=sel.getRangeAt(0);
+    if(r.collapsed)return false;
+    const ael=document.createElement("a");
+    ael.href=u;
+    ael.target="_blank";
+    ael.rel="noopener noreferrer nofollow";
+    ael.appendChild(r.extractContents());
+    r.insertNode(ael);
+    const nr=document.createRange();
+    nr.selectNodeContents(ael);
+    sel.removeAllRanges();
+    sel.addRange(nr);
+    savedRange=nr.cloneRange();
+    sync();
+    return true;
+  };
+
+  const apply=cmd=>{
+    if(!savedRange || savedRange.collapsed){
+      TC.toast("Pilih teks terlebih dahulu.","info");
+      return;
+    }
+    let ok=false;
+    if(cmd==="bold"){
+      const x=closestInEditor(".pt-bold");
+      ok=x?unwrap(x):wrapSelection("pt-bold");
+    }else if(cmd==="italic"){
+      const x=closestInEditor(".pt-italic");
+      ok=x?unwrap(x):wrapSelection("pt-italic");
+    }else if(cmd==="underline"){
+      const x=closestInEditor(".pt-underline");
+      ok=x?unwrap(x):wrapSelection("pt-underline");
+    }else if(cmd==="spoiler"){
+      const x=closestInEditor(".pt-spoiler");
+      ok=x?unwrap(x):wrapSelection("pt-spoiler");
+    }else if(cmd==="blockquote"){
+      const x=closestInEditor(".pt-quote");
+      ok=x?unwrap(x):wrapSelection("pt-quote");
+    }else if(cmd==="link"){
+      ok=editLink();
+    }
+    if(!ok && cmd!=="link")TC.toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");
+    sync();
+    try{ed.focus({preventScroll:true});}catch(_){ed.focus();}
+  };
+
+  document.addEventListener("selectionchange",()=>{
+    saveSelection();
   });
+  ["mouseup","keyup","touchend","pointerup","focusout"].forEach(ev=>{
+    ed.addEventListener(ev,()=>setTimeout(saveSelection,0),{passive:true});
+  });
+  ed.addEventListener("input",()=>{saveSelection();sync();});
+  ed.addEventListener("paste",()=>setTimeout(sync,0));
+
+  ed.addEventListener("keydown",e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
+      e.preventDefault();
+      saveSelection();
+      apply("link");
+    }
+  });
+
+  const buttons=document.querySelectorAll("#contentEditor .pt-tool");
+  buttons.forEach(btn=>{
+    const run=e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      // IMPORTANT: never recapture here. Safari/iOS may replace the text selection
+      // with the toolbar selection. Always use the last range saved from the editor.
+      apply(btn.dataset.cmd);
+      return false;
+    };
+    if(window.PointerEvent){
+      btn.addEventListener("pointerdown",run,{passive:false});
+    }else if("ontouchstart" in window){
+      btn.addEventListener("touchstart",run,{passive:false});
+    }else{
+      btn.addEventListener("mousedown",run,{passive:false});
+    }
+  });
+
   const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
   cb?.addEventListener("change",()=>{if(box)box.hidden=!cb.checked;if(!cb.checked&&pw)pw.value=""});
   document.getElementById("togglePassword")?.addEventListener("click",()=>{if(pw)pw.type=pw.type==="password"?"text":"password"});
