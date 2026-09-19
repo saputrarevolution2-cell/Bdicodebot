@@ -2,33 +2,21 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>View Code — PasTele</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-
-<link rel="stylesheet" href="css/view-code.css">
-    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="/css/view-code.css?v=20260919-paste-style">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/favicon.svg">
 <script>window.PASTELE_PUBLIC_PAGE=true;</script>
-<script src="js/db-contract.js?v=20260918-db-contract"></script>
-<script src="js/rpc-contract.js?v=20260918-rpc-contract"></script>
-</head><body class="app-page dashboard-page public-view-page">
+<script src="/js/db-contract.js?v=20260918-db-contract"></script>
+<script src="/js/rpc-contract.js?v=20260918-rpc-contract"></script>
+</head><body class="app-page public-view-page">
 <div id="navbar"></div>
 <main class="view-wrap">
-<div class="view-ticker" id="viewGuestTicker" role="note">
-  <div class="view-ticker-icon"><i class="fa-solid fa-sparkles"></i></div>
-  <div class="view-ticker-text">
-    <strong>Simpan pembelian Paid secara permanen</strong>
-    <span>Login atau daftar terlebih dahulu. Guest tetap bisa membeli.</span>
-  </div>
-  <div class="view-ticker-actions">
-    <a class="ticker-login" href="/login.html"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-    <a class="ticker-register" href="/register.html"><i class="fa-solid fa-user-plus"></i> Daftar</a>
-  </div>
-</div>
+<div class="view-ticker guest-only" id="viewGuestTicker" hidden><a href="/register.html"><i class="fa-solid fa-sparkles"></i><span>Login/Daftar untuk menyimpan pembelian Paid secara permanen. Guest tetap bisa membeli.</span><i class="fa-solid fa-arrow-right"></i></a></div>
 <section class="view-card" id="viewRoot"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><br>Memuat konten...</div></section>
 </main>
 <div id="toast"></div>
-<script src="/js/view-code.js"></script>
-<script src="js/global-notifications.js?v=20260918-toast"></script>
-<script src="js/pastele-data-contract.js"></script>
+<script src="/js/view-code.js?v=20260919-paste-style"></script>
+<script src="/js/global-notifications.js?v=20260918-toast"></script>
+<script src="/js/pastele-data-contract.js"></script>
 </body></html>
