@@ -1,4 +1,3 @@
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 :root{--bg:#f6f8fc;--surface:#fff;--surface2:#f8fafc;--surface3:#eef3f8;--text:#101828;--muted:#667085;--line:#e4e7ec;--primary:#229ed9;--primary2:#635bff;--cyan:#06b6d4;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--radius:18px;--shadow:0 8px 28px rgba(16,24,40,.07);--shadow2:0 18px 45px rgba(16,24,40,.12);--max:1180px;color-scheme:light}
 html[data-theme="dark"]{--bg:#0b111a;--surface:#121a25;--surface2:#172231;--surface3:#1e2a3a;--text:#f8fafc;--muted:#98a6b8;--line:rgba(255,255,255,.1);--shadow:0 10px 30px rgba(0,0,0,.24);--shadow2:0 20px 55px rgba(0,0,0,.35);color-scheme:dark}
@@ -151,3 +150,159 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
 .btn{transition:transform .16s ease,box-shadow .16s ease}.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 @media(max-width:780px){.view-wrap{width:calc(100% - 20px);padding-top:16px}.view-head{padding:20px 18px}.view-meta{padding:11px 18px}.view-body{padding:18px}.engage{padding:0 18px 18px}}
 @media(max-width:520px){.view-wrap{width:calc(100% - 12px);padding-top:10px}.view-ticker a{min-height:40px;padding:8px 11px;font-size:11px}.view-head{gap:11px;padding:18px 15px}.view-icon{width:46px;height:46px;flex-basis:46px;border-radius:14px;font-size:18px}.view-head h1{font-size:22px}.view-meta{gap:6px;padding:10px 15px}.meta{font-size:10px;padding:5px 7px}.view-body{padding:15px}.engage{padding:0 15px 15px}.content-box.rich{padding:16px}.tg-card{align-items:stretch;flex-direction:column;gap:12px}.tg-card .btn{width:100%}.comment-form{flex-direction:column;align-items:stretch}.comment-form .btn{width:100%}.actions{flex-direction:column}.actions .btn{width:100%}}
+
+/* =========================================================
+   PasteLink View — Rich Content / Clickable URL / Password
+   ========================================================= */
+.view-card{overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.view-head{display:flex;gap:14px;align-items:flex-start;padding:24px;border-bottom:1px solid var(--line)}
+.view-icon{width:52px;height:52px;display:grid;place-items:center;flex:0 0 52px;border-radius:15px;background:linear-gradient(135deg,rgba(34,158,217,.13),rgba(99,91,255,.12));color:var(--primary)}
+.view-head h1{margin:0;font-size:26px;line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere}
+.view-head-main{min-width:0;flex:1}.view-desc{margin:6px 0 0;color:var(--muted);font-size:12px}
+.view-meta{display:flex;gap:10px;flex-wrap:wrap;padding:12px 24px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px}
+.view-body{padding:24px}
+.content-box.rich{font-size:15px;line-height:1.75;overflow-wrap:anywhere;word-break:break-word}
+.content-box.rich p,.content-box.rich div{margin:0 0 .8em}.content-box.rich strong,.content-box.rich b{font-weight:800}
+.content-box.rich em,.content-box.rich i{font-style:italic}.content-box.rich u{text-decoration:underline;text-underline-offset:2px}
+.content-box.rich a{color:var(--primary);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.content-box.rich a:hover{color:var(--primary2)}
+.content-box.rich blockquote{margin:14px 0;padding:11px 15px;border-left:4px solid var(--primary);border-radius:0 12px 12px 0;background:rgba(34,158,217,.07)}
+.content-box.rich pre{white-space:pre-wrap;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);overflow:auto}
+.content-box.rich code{padding:2px 5px;border-radius:6px;background:var(--surface2)}
+.content-box.rich ul,.content-box.rich ol{padding-left:24px}.content-box.rich li{margin:4px 0}
+.password-gate{max-width:520px;margin:4px auto;padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--surface2);text-align:center}
+.password-gate-icon{width:58px;height:58px;margin:0 auto 14px;display:grid;place-items:center;border-radius:17px;background:rgba(34,158,217,.1);color:var(--primary);font-size:21px}
+.password-eyebrow{display:block;color:var(--primary);font-size:9px;font-weight:900;letter-spacing:.13em}
+.password-gate h3{margin:5px 0;font-size:20px}.password-gate>p{margin:0 auto 18px;color:var(--muted);font-size:12px;max-width:420px}
+.password-form{text-align:left}.password-form label{display:block;margin-bottom:7px;font-size:11px;font-weight:800}
+.password-input-wrap{position:relative}.password-input-wrap>i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.password-input-wrap input{width:100%;height:46px;padding:0 45px 0 40px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);outline:none}
+.password-input-wrap input:focus{border-color:var(--primary)!important;box-shadow:0 0 0 4px rgba(34,158,217,.09)}
+.password-toggle{position:absolute;right:6px;top:6px;width:34px;height:34px;border:0;border-radius:9px;background:var(--surface2);color:var(--muted)}
+.password-submit{width:100%;margin-top:10px}.password-error{margin-top:9px;padding:9px 11px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#d92d20;font-size:11px}
+.locked{padding:24px}.locked .notice{margin-bottom:14px;padding:12px 14px;border:1px solid rgba(34,158,217,.18);border-radius:12px;background:rgba(34,158,217,.06);color:var(--muted);font-size:12px}
+.locked .price{font-size:24px;font-weight:900;color:var(--primary);margin:8px 0 14px}
+@media(max-width:520px){.view-head{padding:18px 15px}.view-meta{padding:10px 15px}.view-body{padding:15px}.view-head h1{font-size:22px}.content-box.rich{font-size:14px}.password-gate{padding:20px 15px}}
+
+
+/* =========================================================
+   PasTele PasteLink — FINAL RICH CONTENT OVERRIDES
+   Formatting comes from the editor without leaking editor UI.
+   ========================================================= */
+.content-box.rich{
+  color:var(--text);
+  background:var(--surface2);
+  padding:22px;
+  line-height:1.75;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.content-box.rich > :first-child{margin-top:0!important}
+.content-box.rich > :last-child{margin-bottom:0!important}
+.content-box.rich p{margin:.75em 0}
+.content-box.rich div{margin:.35em 0}
+.content-box.rich .pt-bold,
+.content-box.rich strong,
+.content-box.rich b{font-weight:800}
+.content-box.rich .pt-italic,
+.content-box.rich em,
+.content-box.rich i{font-style:italic}
+.content-box.rich .pt-underline,
+.content-box.rich u{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+
+/* Quote width follows the actual text/content instead of stretching full card. */
+.content-box.rich .pt-quote,
+.content-box.rich blockquote{
+  display:table;
+  width:auto;
+  max-width:100%;
+  margin:14px 0;
+  padding:10px 14px;
+  border:0;
+  border-left:4px solid var(--primary);
+  border-radius:0 11px 11px 0;
+  background:rgba(34,158,217,.07);
+  box-sizing:border-box;
+  white-space:normal;
+}
+.content-box.rich .pt-quote > :first-child,
+.content-box.rich blockquote > :first-child{margin-top:0}
+.content-box.rich .pt-quote > :last-child,
+.content-box.rich blockquote > :last-child{margin-bottom:0}
+
+/* Spoiler is only the hidden text — never render a "spoiler" label. */
+.content-box.rich .pt-spoiler{
+  display:inline;
+  color:transparent!important;
+  background:#111827;
+  border-radius:5px;
+  padding:0 4px;
+  cursor:pointer;
+  -webkit-user-select:none;
+  user-select:none;
+  transition:color .15s ease,filter .15s ease;
+}
+.content-box.rich .pt-spoiler.revealed,
+.content-box.rich .pt-spoiler.is-revealed{
+  color:inherit!important;
+  background:rgba(148,163,184,.16);
+  filter:none!important;
+}
+.content-box.rich .pt-spoiler *{color:inherit}
+.content-box.rich a{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+.content-box.rich img,
+.content-box.rich video{
+  display:block;
+  max-width:100%;
+  height:auto;
+  border-radius:12px;
+  margin:12px 0;
+}
+.content-box.rich iframe{max-width:100%;border:0;border-radius:12px}
+.content-box.rich hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.content-box.rich ul,.content-box.rich ol{padding-left:1.5rem;margin:.75em 0}
+.content-box.rich li{margin:.25em 0}
+.content-box.rich pre{
+  max-width:100%;
+  overflow:auto;
+  white-space:pre-wrap;
+  word-break:break-word;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+}
+.content-box.rich code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+@media(max-width:520px){
+  .content-box.rich{padding:15px;font-size:14px}
+  .content-box.rich .pt-quote,
+  .content-box.rich blockquote{max-width:100%;padding:9px 11px}
+}
+
+/* Shared public-view guest banner */
+#guestLoginTicker[hidden]{display:none!important}
+
+
+/* =========================================================
+   PasTele View Telegram — content-specific styles
+   Shared shell/layout is intentionally inherited from View PasteLink.
+   ========================================================= */
+.tg-card{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:18px;border:1px solid var(--line);border-radius:15px;
+  background:var(--surface2);
+}
+.tg-card>div{min-width:0}
+.tg-card strong{display:block;font-size:15px;overflow-wrap:anywhere}
+.tg-card .view-desc{margin-top:3px}
+.tg-card .btn{flex:0 0 auto}
+.status{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.bot-line{
+  margin-bottom:12px;padding:11px 13px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface2);color:var(--muted);
+}
+.bot-line strong{color:var(--text)}
+@media(max-width:700px){
+  .tg-card{align-items:flex-start;flex-direction:column;gap:12px}
+  .tg-card .btn{width:100%}
+}
