@@ -1176,7 +1176,7 @@ window.PASTELE_CONFIG = Object.freeze({
      * attempt later.
      */
     if (!user) {
-      /* Guest navbar: public pages tetap punya navigasi Login/Daftar. */
+      /* Guest navbar: public pages tetap punya navigasi yang benar-benar interaktif. */
       host.innerHTML = `
         <header class="pt-nav pt-nav-guest">
           <div class="pt-nav-inner">
@@ -1190,19 +1190,63 @@ window.PASTELE_CONFIG = Object.freeze({
             </a>
             <span class="pt-spacer"></span>
             <nav class="pt-guest-actions" aria-label="Akun">
-              <a class="pt-guest-login" href="/login.html">
-                <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-                <span>Login</span>
-              </a>
-              <a class="pt-guest-register" href="/register.html">
-                <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
-                <span>Daftar</span>
-              </a>
+              <a class="pt-guest-login" href="/login.html"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Login</span></a>
+              <a class="pt-guest-register" href="/register.html"><i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Daftar</span></a>
             </nav>
           </div>
         </header>
+        <div class="pt-backdrop" id="ptBackdropGuest" aria-hidden="true"></div>
+        <aside class="pt-drawer" id="ptDrawerGuest" aria-hidden="true">
+          <div class="pt-drawer-head">
+            <div class="pt-drawer-title"><span>MENU</span><strong>PasTele</strong></div>
+            <button class="pt-close-btn" id="ptCloseGuest" type="button" aria-label="Tutup menu">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <nav class="pt-menu-scroll" aria-label="Menu utama">
+            <section class="pt-group">
+              <h3>Explore</h3>
+              <a class="pt-link" href="${base}index.html"><span class="pt-link-icon"><i class="fa-solid fa-house"></i></span><span class="pt-link-label">Home</span><i class="fa-solid fa-chevron-right pt-link-arrow"></i></a>
+              <a class="pt-link" href="${base}marketplace.html"><span class="pt-link-icon"><i class="fa-solid fa-store"></i></span><span class="pt-link-label">Marketplace</span><i class="fa-solid fa-chevron-right pt-link-arrow"></i></a>
+            </section>
+            <section class="pt-group">
+              <h3>Account</h3>
+              <a class="pt-link" href="${base}login.html"><span class="pt-link-icon"><i class="fa-solid fa-right-to-bracket"></i></span><span class="pt-link-label">Login</span><i class="fa-solid fa-chevron-right pt-link-arrow"></i></a>
+              <a class="pt-link" href="${base}register.html"><span class="pt-link-icon"><i class="fa-solid fa-user-plus"></i></span><span class="pt-link-label">Daftar</span><i class="fa-solid fa-chevron-right pt-link-arrow"></i></a>
+            </section>
+          </nav>
+        </aside>
       `;
-      host.dataset.ready = '1';
+
+      const guestMenu = document.getElementById('ptMenuGuest');
+      const guestDrawer = document.getElementById('ptDrawerGuest');
+      const guestBackdrop = document.getElementById('ptBackdropGuest');
+      const guestClose = document.getElementById('ptCloseGuest');
+      const closeGuestDrawer = () => {
+        guestDrawer?.classList.remove('open');
+        guestBackdrop?.classList.remove('open');
+        guestMenu?.setAttribute('aria-expanded', 'false');
+        guestDrawer?.setAttribute('aria-hidden', 'true');
+        guestBackdrop?.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('pt-nav-lock');
+      };
+      const openGuestDrawer = (event) => {
+        event?.preventDefault();
+        event?.stopPropagation();
+        guestDrawer?.classList.add('open');
+        guestBackdrop?.classList.add('open');
+        guestMenu?.setAttribute('aria-expanded', 'true');
+        guestDrawer?.setAttribute('aria-hidden', 'false');
+        guestBackdrop?.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('pt-nav-lock');
+      };
+      guestMenu?.addEventListener('click', openGuestDrawer);
+      guestClose?.addEventListener('click', closeGuestDrawer);
+      guestBackdrop?.addEventListener('click', closeGuestDrawer);
+      guestDrawer?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeGuestDrawer));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeGuestDrawer();
+      });
       return;
     }
     /* ========================================================
