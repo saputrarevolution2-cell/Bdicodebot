@@ -565,3 +565,11 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
   background:var(--surface3)!important;
 }
 .pt-editor-content a{color:var(--primary)!important;text-decoration:underline!important}
+
+/* ===== FINAL PASSWORD + RICH TEXT OVERRIDES ===== */
+#createForm #passwordBox[hidden]{display:none!important;visibility:hidden!important}
+#createForm #passwordBox:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important}
+#createForm #passwordBox .password-input{display:flex!important}
+#createForm #contentEditor .pt-bold{font-weight:800!important}
+#createForm #contentEditor .pt-italic{font-style:italic!important}
+#createForm #contentEditor .pt-underline{text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:2px!important}
