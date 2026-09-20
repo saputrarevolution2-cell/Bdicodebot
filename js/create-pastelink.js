@@ -2765,6 +2765,44 @@ function sanitizeContentHTML(input){
   if(el.tagName==="A"){let h=(el.getAttribute("href")||"").trim();if(/^www\./i.test(h))h="https://"+h;if(!/^https?:\/\//i.test(h))el.removeAttribute("href");else{el.href=h;el.target="_blank";el.rel="noopener noreferrer nofollow"}}
  });return box.innerHTML.trim()
 }
+function setupPasswordControl(){
+  const cb=document.getElementById("hasPassword");
+  const box=document.getElementById("passwordBox");
+  const pw=document.getElementById("contentPassword");
+  if(!cb||!box)return;
+  const syncPasswordBox=()=>{
+    const enabled=cb.checked===true;
+    box.hidden=!enabled;
+    box.setAttribute("aria-hidden",String(!enabled));
+    box.style.display=enabled ? "block" : "none";
+    if(pw){
+      pw.disabled=!enabled;
+      pw.required=enabled;
+      if(!enabled){pw.value="";pw.type="password";}
+    }
+    if(enabled) window.setTimeout(()=>{
+      try{pw?.focus({preventScroll:true})}catch(_){pw?.focus()}
+    },30);
+  };
+  if(cb.dataset.passwordBound!=="1"){
+    cb.dataset.passwordBound="1";
+    cb.addEventListener("change",syncPasswordBox);
+    cb.addEventListener("input",syncPasswordBox);
+  }
+  const toggle=document.getElementById("togglePassword");
+  if(toggle && toggle.dataset.passwordBound!=="1"){
+    toggle.dataset.passwordBound="1";
+    toggle.addEventListener("click",e=>{
+      e.preventDefault();
+      if(pw){
+        pw.type=pw.type==="password"?"text":"password";
+        try{pw.focus({preventScroll:true})}catch(_){pw.focus()}
+      }
+    });
+  }
+  syncPasswordBox();
+}
+
 function initPasteLinkEditor(){
   const ed=document.getElementById("content");
   if(!ed||ed.dataset.ready)return;
@@ -2847,23 +2885,23 @@ function initPasteLinkEditor(){
     const r=sel.getRangeAt(0);
     if(r.collapsed||!inside(r))return false;
 
-    /*
-     * Use the browser's native contenteditable command for inline formatting.
-     * It handles selections spanning text nodes much more reliably than
-     * manually extracting Range fragments, especially on iOS/Safari.
-     */
-    try{
-      ed.focus({preventScroll:true});
-      if(!restoreSelection())return false;
-      const command =
-        cmd==="bold" ? "bold" :
-        cmd==="italic" ? "italic" :
-        cmd==="underline" ? "underline" : null;
-      if(!command)return false;
-      const ok=document.execCommand(command,false,null);
-      normalizeFormatting();
+    const existing=closestFormat("." + className);
+    if(existing && existing.contains(r.startContainer) && existing.contains(r.endContainer)){
+      unwrap(existing);
       sync();
-      return ok!==false;
+      return true;
+    }
+
+    try{
+      const wrapper=document.createElement("span");
+      wrapper.className=className;
+      const frag=r.extractContents();
+      if(!frag.textContent?.trim())return false;
+      wrapper.appendChild(frag);
+      r.insertNode(wrapper);
+      selectNodeContents(wrapper);
+      sync();
+      return true;
     }catch(_){
       return false;
     }
@@ -2975,36 +3013,17 @@ function initPasteLinkEditor(){
       if(e.key==="Enter"||e.key===" "){run(e);}
     });
   });
-  const cb=document.getElementById("hasPassword"),box=document.getElementById("passwordBox"),pw=document.getElementById("contentPassword");
-  const syncPasswordBox=()=>{
-    if(!cb||!box)return;
-    const enabled=cb.checked===true;
-    box.hidden=!enabled;
-    box.style.display=enabled?"block":"none";
-    box.setAttribute("aria-hidden",String(!enabled));
-    if(pw){
-      pw.disabled=!enabled;
-      pw.required=enabled;
-      if(!enabled){pw.value="";pw.type="password";}
-    }
-    if(enabled) setTimeout(()=>pw?.focus({preventScroll:true}),0);
-  };
-  cb?.addEventListener("change",syncPasswordBox);
-  document.getElementById("togglePassword")?.addEventListener("click",e=>{
-    e.preventDefault();
-    if(pw)pw.type=pw.type==="password"?"text":"password";
-  });
-  syncPasswordBox();
+  setupPasswordControl();
   sync();
 }
 
-document.addEventListener("DOMContentLoaded",initPasteLinkEditor);
+document.addEventListener("DOMContentLoaded",()=>{setupPasswordControl();initPasteLinkEditor();});
 
 function validate(){if(passwordEnabled()&&getPassword().length<4)return TC.toast("Password minimal 4 karakter.","error"),null;
 const title=$("title").value.trim(),content=sanitizeContentHTML(getEditorHTML()),plainContent=getEditorText(),a=access(),price=a==="paid"?Number($("price").value||0):0;if(title.length<2||title.length>120)return toast("Judul harus 2–120 karakter.","error"),null;if(!plainContent)return toast("Content wajib diisi.","error"),null;if(a==="paid"&&(!Number.isInteger(price)||price<2000||price>100000||price%1000))return toast("Harga Paid harus Rp2.000–Rp100.000 dan kelipatan Rp1.000.","error"),null;let exp=null;if($("hasExpiry").checked){const rawExp=$("expiresAt").value;if(!rawExp)return toast("Isi tanggal expired.","error"),null;const d=new Date(rawExp);if(Number.isNaN(d.getTime())||d.getTime()<=Date.now())return toast("Tanggal expired harus di masa depan.","error"),null;exp=d.toISOString()}return{title,content,a,price,exp,tags:String($("tags").value||"").split(",").map(x=>x.trim().replace(/^#/g,"")).filter(Boolean).slice(0,20),desc:$("description").value.trim()}}
 function finish(v,slug){const url=`${location.origin}/p${v.a==="paid"?"p":"f"}/${encodeURIComponent(slug)}`,r=$("result");r.hidden=false;r.innerHTML=`<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div><h2>PasteLink berhasil dibuat</h2><p><b>${esc(v.title)}</b> siap dibagikan.</p><div class="result-url"><input readonly value="${esc(url)}"><button id="copyUrl" type="button"><i class="fa-regular fa-copy"></i></button></div><div class="result-actions"><a class="btn primary" href="${esc(url)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka PasteLink</a><a class="btn secondary" href="my-products.html"><i class="fa-solid fa-box"></i> Konten Saya</a></div>`;$("copyUrl").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("Link berhasil disalin.","success")}catch{toast("Gagal menyalin link.","error")}};r.scrollIntoView({behavior:"smooth",block:"center"})}
 $("hasExpiry")?.addEventListener("change",()=>$("expiryBox").hidden=!$("hasExpiry").checked);document.querySelectorAll('input[name="access"]').forEach(x=>x.addEventListener("change",sync));$("description")?.addEventListener("input",()=>$("counter").textContent=$("description").value.length);
-$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp,p_password:(passwordEnabled() ? getPassword() : null)});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();sync();syncPasswordBox?.();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){
+$("createForm")?.addEventListener("submit",async e=>{e.preventDefault();if($("submitBtn").disabled)return;const v=validate();if(!v)return;setLoading(true);try{requireClient();if(v.a==="paid"&&!(await window.TC?.user?.())){toast("Konten Paid hanya bisa dibuat setelah login atau daftar akun.","error");const next=`${location.pathname}${location.search}${location.hash}`;const loginUrl=`login.html?next=${encodeURIComponent(next)}&reason=paid-create`;setLoading(false);window.setTimeout(()=>window.location.assign(loginUrl),450);return;}const slug=await createUniqueShortCode(sb());const {data,error}=await sb().rpc("create_pastelink_content",{p_title:v.title,p_content:v.content,p_slug:slug,p_access_type:v.a,p_price:v.price,p_description:v.desc,p_tags:v.tags,p_expires_at:v.exp,p_password:(passwordEnabled() ? getPassword() : null)});if(error)throw error;if(!data?.ok)throw new Error("Database tidak mengonfirmasi pembuatan PasteLink.");finish(v,data.slug||slug);$("createForm").reset();setupPasswordControl();sync();$("expiryBox").hidden=true;$("counter").textContent="0";toast("PasteLink berhasil dipublikasikan.","success")}catch(e){
   console.error("[PasteLink] create_pastelink_content failed:",e);
   const code=String(e?.code||"");
   const msg=String(e?.message||e||"").trim();
