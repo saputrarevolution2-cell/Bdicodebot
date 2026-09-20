@@ -100,12 +100,13 @@ button:disabled{cursor:not-allowed;opacity:.55}.hidden{display:none!important}
 .field label em{font-style:normal;color:var(--red)}
 .field label span{margin-left:3px;color:var(--muted);font-size:10px;font-weight:600}
 .field>small{display:block;margin-top:7px;color:var(--muted);font-size:10px;line-height:1.5}
-.field input[type="text"],.field input[type="number"],.field textarea,.field select{
+.field input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]),.field textarea,.field select{
   width:100%;border:1px solid var(--line);border-radius:13px;
   background:var(--surface2);color:var(--text);outline:none;
   transition:border-color .18s,box-shadow .18s,background .18s;
+  -webkit-appearance:none;appearance:none;
 }
-.field input[type="text"],.field input[type="number"],.field select{height:48px;padding:0 14px}
+.field input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]),.field select{height:48px;padding:0 14px}
 .field textarea{display:block;min-height:110px;padding:13px 14px;resize:vertical;line-height:1.65}
 .field textarea#content{min-height:330px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px}
 .field input:focus,.field textarea:focus,.field select:focus{
@@ -457,3 +458,110 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
 .password-input input{flex:1;min-width:0;height:100%;padding:0 12px;border:0!important;outline:0!important;background:transparent!important;color:var(--text)}
 .password-toggle{width:44px;height:100%;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted)}
 .password-toggle:hover{color:var(--primary)}
+
+
+/* =========================================================
+   PasteLink FINAL EDITOR + FORM FIX 2026-09-21
+   ========================================================= */
+
+/* Title / Tag / every normal form control must use the same
+   PasTele surface instead of browser-default black styling. */
+.create-card .field > input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]),
+.create-card .field > textarea,
+.create-card .field > select{
+  width:100%!important;
+  min-height:48px;
+  border:1px solid var(--line)!important;
+  border-radius:13px!important;
+  background:var(--surface2)!important;
+  color:var(--text)!important;
+  -webkit-text-fill-color:var(--text)!important;
+  outline:none!important;
+  box-shadow:none;
+}
+.create-card .field > input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]):focus,
+.create-card .field > textarea:focus,
+.create-card .field > select:focus{
+  border-color:var(--primary)!important;
+  background:var(--surface)!important;
+  box-shadow:0 0 0 4px rgba(34,158,217,.1)!important;
+}
+.create-card .field > input::placeholder,
+.create-card .field > textarea::placeholder{
+  color:var(--muted)!important;
+  opacity:1;
+}
+
+/* Password container is hidden only when the checkbox is off. */
+.password-box[hidden]{display:none!important}
+.password-box:not([hidden]){display:block!important}
+.password-input{
+  width:100%;
+  display:flex!important;
+  align-items:center;
+  min-height:48px;
+  border:1px solid var(--line)!important;
+  border-radius:13px!important;
+  background:var(--surface2)!important;
+  overflow:hidden;
+}
+.password-input:focus-within{
+  border-color:var(--primary)!important;
+  background:var(--surface)!important;
+  box-shadow:0 0 0 4px rgba(34,158,217,.1)!important;
+}
+.password-input input{
+  min-width:0;
+  flex:1;
+  height:46px!important;
+  color:var(--text)!important;
+  -webkit-text-fill-color:var(--text)!important;
+}
+.password-toggle{flex:0 0 44px!important}
+
+/* Rich editor */
+.pt-editor{border:1px solid var(--line)!important;background:var(--surface2)!important}
+.pt-editor-toolbar{background:var(--surface3)!important}
+.pt-tool{color:var(--text)!important}
+.pt-tool.is-active{background:rgba(34,158,217,.14)!important;color:var(--primary)!important}
+.pt-editor-content{
+  background:var(--surface2)!important;
+  color:var(--text)!important;
+  -webkit-text-fill-color:var(--text)!important;
+}
+.pt-editor-content:focus{background:var(--surface)!important}
+
+/* Stable PasTele formatting classes saved into content_html. */
+.pt-editor-content .pt-bold,
+.pt-editor-content strong,
+.pt-editor-content b{font-weight:800!important}
+.pt-editor-content .pt-italic,
+.pt-editor-content em,
+.pt-editor-content i{font-style:italic!important}
+.pt-editor-content .pt-underline,
+.pt-editor-content u{text-decoration:underline!important;text-underline-offset:2px}
+.pt-editor-content .pt-quote,
+.pt-editor-content blockquote{
+  display:block;
+  margin:10px 0!important;
+  padding:8px 12px!important;
+  border-left:3px solid var(--primary)!important;
+  background:rgba(34,158,217,.07)!important;
+  border-radius:7px!important;
+}
+.pt-editor-content .pt-spoiler,
+.pt-editor-content .spoiler{
+  background:#334155!important;
+  color:transparent!important;
+  border-radius:5px!important;
+  padding:0 4px!important;
+  cursor:pointer;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.pt-editor-content .pt-spoiler.revealed,
+.pt-editor-content .spoiler.revealed{
+  color:var(--text)!important;
+  background:var(--surface3)!important;
+}
+.pt-editor-content a{color:var(--primary)!important;text-decoration:underline!important}
