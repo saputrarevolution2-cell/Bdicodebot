@@ -32,75 +32,48 @@
     });
   }
   async function isAdmin(){
-    // Always validate the actual Supabase Auth session first.
-    let s=null;
-    try{
-      const u=await sb.auth.getUser();
-      if(u?.error) throw u.error;
-      if(u?.data?.user) s=(await sb.auth.getSession())?.data?.session || null;
-      if(!s?.user && u?.data?.user){
-        s={user:u.data.user};
-      }
-    }catch(e){
-      return {ok:false,reason:'login',error:e};
-    }
+    const s=await waitForSession();
     if(!s?.user) return {ok:false,reason:'login'};
-
-    const uid=String(s.user.id||'');
-    const email=String(s.user.email||'').trim().toLowerCase();
     let lastError=null;
 
-    // One canonical SECURITY DEFINER RPC. It validates auth.uid(), username=admin,
-    // admin flag/role and ban status inside Postgres, so the browser never grants access.
+    // Canonical admin check: authenticated session + profile username=admin + admin role/flag + not banned.
     try{
       const r=await sb.rpc("admin_access_check");
-      if(!r.error){
+      if(!r.error && r.data){
         const d=Array.isArray(r.data)?r.data[0]:r.data;
         if(d?.ok===true){
-          return {ok:true,user:s.user,profile:d,source:'admin_access_check'};
+          return {ok:true,user:s.user,profile:d,source:'admin_username_rpc'};
         }
-        return {ok:false,reason:'not_admin',profile:d||null,user:s.user};
+        if(d) return {ok:false,reason:'not_admin',profile:d,user:s.user};
       }
-      lastError=r.error;
+      if(r.error) lastError=r.error;
     }catch(e){ lastError=e; }
 
-    // Compatibility fallback for databases where the new RPC has not yet been installed.
+    // Compatibility fallback for databases where the helper RPC has not been installed yet.
     try{
       const r=await sb.rpc("is_current_user_admin");
-      if(!r.error){
-        const v=Array.isArray(r.data)?r.data[0]:r.data;
-        if(v===true || v?.is_admin===true || String(v?.is_admin).toLowerCase()==='true'){
-          return {ok:true,user:s.user,source:'is_current_user_admin'};
-        }
-      }else lastError=lastError||r.error;
+      if(!r.error && (r.data===true || r.data?.is_admin===true || String(r.data?.is_admin).toLowerCase()==='true')){
+        return {ok:true,user:s.user,source:'rpc'};
+      }
+      if(r.error) lastError=lastError||r.error;
     }catch(e){ lastError=lastError||e; }
 
-    // Final read-only compatibility fallback. Never trusts username alone.
     try{
       const q=await sb.from('profiles')
         .select('id,username,auth_email,is_admin,role,is_banned')
-        .eq('id',uid)
-        .maybeSingle();
+        .eq('id',s.user.id).maybeSingle();
       if(!q.error){
         const p=q.data;
         const usernameOk=String(p?.username||'').trim().toLowerCase()==='admin';
-        const emailOk=!email || !p?.auth_email || String(p.auth_email).trim().toLowerCase()===email;
-        const roleOk=p?.is_admin===true || ['admin','owner'].includes(String(p?.role||'').trim().toLowerCase());
-        if(p && usernameOk && emailOk && p?.is_banned!==true && roleOk){
+        const roleOk=p?.is_admin===true || ['admin','owner'].includes(String(p?.role||'').toLowerCase());
+        if(p && usernameOk && p.is_banned!==true && roleOk){
           return {ok:true,user:s.user,profile:p,source:'profile'};
         }
-        return {ok:false,reason:'not_admin',profile:p||null,user:s.user};
-      }
-      lastError=lastError||q.error;
+        if(p) return {ok:false,reason:'not_admin',profile:p,user:s.user,error:lastError};
+      }else lastError=lastError||q.error;
     }catch(e){ lastError=lastError||e; }
 
-    return {
-      ok:false,
-      reason:lastError?'rpc':'not_admin',
-      error:lastError,
-      user:s.user,
-      diagnostic:{user_id:uid,email,rpc_failed:!!lastError}
-    };
+    return {ok:false,reason:lastError?'rpc':'not_admin',error:lastError,user:s.user};
   }
   async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
   function denied(reason, detail){
@@ -115,7 +88,7 @@
       <h1>${reason==='login'?'Login diperlukan':'Akses ditolak'}</h1>
       <p>${esc(msg)}</p>
       ${email?`<small>Login: ${esc(email)}</small>`:''}
-      <br><br><a href="../login.html?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
+      <br><br><a href="/admin/login/?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
     </main>`;
   }
   async function rpc(name,args={}){const r=await sb.rpc(name,args);if(r.error)throw r.error;return rows(r.data);}
