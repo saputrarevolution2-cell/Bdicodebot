@@ -32,14 +32,39 @@
     });
   }
   async function isAdmin(){
-    const s=await waitForSession();
+    // Always validate the actual Supabase Auth session first.
+    let s=null;
+    try{
+      const u=await sb.auth.getUser();
+      if(u?.error) throw u.error;
+      if(u?.data?.user) s=(await sb.auth.getSession())?.data?.session || null;
+      if(!s?.user && u?.data?.user){
+        s={user:u.data.user};
+      }
+    }catch(e){
+      return {ok:false,reason:'login',error:e};
+    }
     if(!s?.user) return {ok:false,reason:'login'};
 
     const uid=String(s.user.id||'');
     const email=String(s.user.email||'').trim().toLowerCase();
     let lastError=null;
 
-    // 1) Canonical server-side check. This is the authoritative check.
+    // One canonical SECURITY DEFINER RPC. It validates auth.uid(), username=admin,
+    // admin flag/role and ban status inside Postgres, so the browser never grants access.
+    try{
+      const r=await sb.rpc("admin_access_check");
+      if(!r.error){
+        const d=Array.isArray(r.data)?r.data[0]:r.data;
+        if(d?.ok===true){
+          return {ok:true,user:s.user,profile:d,source:'admin_access_check'};
+        }
+        return {ok:false,reason:'not_admin',profile:d||null,user:s.user};
+      }
+      lastError=r.error;
+    }catch(e){ lastError=e; }
+
+    // Compatibility fallback for databases where the new RPC has not yet been installed.
     try{
       const r=await sb.rpc("is_current_user_admin");
       if(!r.error){
@@ -47,64 +72,34 @@
         if(v===true || v?.is_admin===true || String(v?.is_admin).toLowerCase()==='true'){
           return {ok:true,user:s.user,source:'is_current_user_admin'};
         }
-      }else{
-        lastError=r.error;
-      }
-    }catch(e){ lastError=e; }
-
-    // 2) Dedicated username=admin server-side check.
-    // The SQL function must still require auth.uid(), admin role/flag and not-banned.
-    try{
-      const r=await sb.rpc("check_admin_username");
-      if(!r.error){
-        const d=Array.isArray(r.data)?r.data[0]:r.data;
-        if(d?.ok===true){
-          return {ok:true,user:s.user,profile:d,source:'check_admin_username'};
-        }
-        if(d && d.ok===false){
-          return {ok:false,reason:'not_admin',profile:d,user:s.user};
-        }
-      }else{
-        lastError=lastError||r.error;
-      }
+      }else lastError=lastError||r.error;
     }catch(e){ lastError=lastError||e; }
 
-    // 3) Read-only profile fallback. It never grants admin on username alone.
+    // Final read-only compatibility fallback. Never trusts username alone.
     try{
       const q=await sb.from('profiles')
         .select('id,username,auth_email,is_admin,role,is_banned')
         .eq('id',uid)
         .maybeSingle();
-
       if(!q.error){
         const p=q.data;
         const usernameOk=String(p?.username||'').trim().toLowerCase()==='admin';
         const emailOk=!email || !p?.auth_email || String(p.auth_email).trim().toLowerCase()===email;
         const roleOk=p?.is_admin===true || ['admin','owner'].includes(String(p?.role||'').trim().toLowerCase());
-        const banned=p?.is_banned===true;
-
-        if(p && usernameOk && emailOk && !banned && roleOk){
+        if(p && usernameOk && emailOk && p?.is_banned!==true && roleOk){
           return {ok:true,user:s.user,profile:p,source:'profile'};
         }
-        if(p){
-          return {ok:false,reason:'not_admin',profile:p,user:s.user};
-        }
-      }else{
-        lastError=lastError||q.error;
+        return {ok:false,reason:'not_admin',profile:p||null,user:s.user};
       }
+      lastError=lastError||q.error;
     }catch(e){ lastError=lastError||e; }
 
-    // Surface the actual Supabase error instead of the generic "Pengecekan admin gagal".
     return {
       ok:false,
       reason:lastError?'rpc':'not_admin',
       error:lastError,
       user:s.user,
-      diagnostic:{
-        user_id:uid,
-        email,
-        rpc_failed:!!lastError
-      }
+      diagnostic:{user_id:uid,email,rpc_failed:!!lastError}
     };
   }
   async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
