@@ -306,3 +306,20 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
   .tg-card{align-items:flex-start;flex-direction:column;gap:12px}
   .tg-card .btn{width:100%}
 }
+
+/* PasTele — clickable links inside Telegram view content */
+.view-body a.content-link,
+.view-desc a.content-link,
+.tg-card a.content-link{
+  color:var(--primary)!important;
+  text-decoration:underline!important;
+  text-underline-offset:2px;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+  word-break:break-word;
+}
+.view-body a.content-link:hover,
+.view-desc a.content-link:hover,
+.tg-card a.content-link:hover{
+  opacity:.82;
+}
