@@ -615,3 +615,14 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
   width:100%!important;
   min-height:48px!important;
 }
+
+/* Password eye — final clickable control */
+#createForm #togglePassword{
+  position:relative!important;
+  z-index:20!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  user-select:none!important;
+}
+#createForm #togglePassword i{pointer-events:none!important}
