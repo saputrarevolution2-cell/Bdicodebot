@@ -2761,9 +2761,25 @@ function getPassword(){return String(document.getElementById("contentPassword")?
 function sanitizeContentHTML(input){
  const box=document.createElement("div");box.innerHTML=String(input||"");
  box.querySelectorAll("script,style,iframe,object,embed,form").forEach(n=>n.remove());
- box.querySelectorAll("*").forEach(el=>{[...el.attributes].forEach(a=>{if(/^on/i.test(a.name))el.removeAttribute(a.name)});
-  if(el.tagName==="A"){let h=(el.getAttribute("href")||"").trim();if(/^www\./i.test(h))h="https://"+h;if(!/^https?:\/\//i.test(h))el.removeAttribute("href");else{el.href=h;el.target="_blank";el.rel="noopener noreferrer nofollow"}}
- });return box.innerHTML.trim()
+ box.querySelectorAll("*").forEach(el=>{
+   [...el.attributes].forEach(a=>{if(/^on/i.test(a.name))el.removeAttribute(a.name)});
+   if(el.tagName==="A"){
+     let h=(el.getAttribute("href")||"").trim();
+     if(/^www\./i.test(h))h="https://"+h;
+     if(!/^https?:\/\//i.test(h)){
+       el.replaceWith(document.createTextNode(el.textContent||""));
+     }else{
+       el.href=h;el.target="_blank";el.rel="noopener noreferrer nofollow";
+       [...el.attributes].forEach(a=>{if(!["href","target","rel"].includes(a.name.toLowerCase()))el.removeAttribute(a.name)});
+     }
+   }else if(!["DIV","P","BR","UL","OL","LI"].includes(el.tagName)){
+     const parent=el.parentNode;
+     if(parent){while(el.firstChild)parent.insertBefore(el.firstChild,el);el.remove();}
+   }else{
+     [...el.attributes].forEach(a=>el.removeAttribute(a.name));
+   }
+ });
+ return box.innerHTML.trim();
 }
 function setupPasswordControl(){
   const cb=document.getElementById("hasPassword");
@@ -2807,121 +2823,70 @@ function initPasteLinkEditor(){
   const ed=document.getElementById("content");
   if(!ed||ed.dataset.ready)return;
   ed.dataset.ready="1";
-
-  function sync(){
+  const sync=()=>{
     const h=document.getElementById("contentHtml");
     if(h)h.value=sanitizeContentHTML(ed.innerHTML);
-  }
-
-  // Hanya fitur link yang dipertahankan.
-  // Teks seperti https://example.com atau www.example.com:
-  // klik/ketuk 2x pada teks tersebut => otomatis menjadi <a>.
-  const LINK_TOKEN_RE=/^(?:(?:https?:\/\/|www\.)[^\s<>"'`]+)$/i;
-
-  function normalizeUrl(raw){
-    let u=String(raw||"").trim();
-    // Buang tanda baca yang biasanya ikut terseleksi di ujung URL.
-    u=u.replace(/[),.;!?]+$/g,"");
-    if(/^www\./i.test(u))u="https://"+u;
-    return /^https?:\/\//i.test(u) ? u : null;
-  }
-
-  function textNodeAtPoint(root,x,y){
-    let node=null;
-    if(document.caretRangeFromPoint){
-      try{node=document.caretRangeFromPoint(x,y)?.startContainer||null}catch(_){}
-    }else if(document.caretPositionFromPoint){
-      try{node=document.caretPositionFromPoint(x,y)?.offsetNode||null}catch(_){}
-    }
-    if(node?.nodeType===3)return node;
-    return null;
-  }
-
-  function linkifyToken(textNode, offset){
-    if(!textNode||textNode.nodeType!==3||!ed.contains(textNode))return false;
-    const text=textNode.nodeValue||"";
-    if(offset<0||offset>text.length)return false;
-
-    let left=offset, right=offset;
-    while(left>0 && !/\s/.test(text[left-1]))left--;
-    while(right<text.length && !/\s/.test(text[right]))right++;
-
-    const token=text.slice(left,right);
-    const url=normalizeUrl(token);
-    if(!url||!LINK_TOKEN_RE.test(token))return false;
-
-    // Jangan membuat link di dalam link.
-    const parent=textNode.parentElement;
-    if(parent?.closest("a"))return false;
-
-    // Jika URL mengandung tanda baca akhir, sisakan tanda baca di luar link.
-    const clean=url.replace(/^https?:\/\//i,"");
-    let tokenEnd=right;
-    while(tokenEnd>left && /[),.;!?]+$/.test(text.slice(left,tokenEnd)))tokenEnd--;
-
-    const range=document.createRange();
-    range.setStart(textNode,left);
-    range.setEnd(textNode,tokenEnd);
-    const a=document.createElement("a");
-    a.href=url;
-    a.target="_blank";
-    a.rel="noopener noreferrer nofollow";
-    a.className="pt-auto-link";
-    a.appendChild(range.extractContents());
-    range.insertNode(a);
-    sync();
-    return true;
-  }
-
-  function linkifyFromEvent(e){
-    let n=textNodeAtPoint(ed,e.clientX,e.clientY);
-    if(!n){
-      const t=e.target?.nodeType===3?e.target:e.target?.firstChild;
-      if(t?.nodeType===3)n=t;
-    }
-    if(!n)return false;
-
-    let offset=0;
+  };
+  function urlAtPoint(x,y){
+    let range=null;
     try{
-      if(document.caretRangeFromPoint){
-        const r=document.caretRangeFromPoint(e.clientX,e.clientY);
-        if(r?.startContainer===n)offset=r.startOffset;
-      }else if(document.caretPositionFromPoint){
-        const p=document.caretPositionFromPoint(e.clientX,e.clientY);
-        if(p?.offsetNode===n)offset=p.offset;
+      if(document.caretRangeFromPoint) range=document.caretRangeFromPoint(x,y);
+      else if(document.caretPositionFromPoint){
+        const p=document.caretPositionFromPoint(x,y);
+        if(p){range=document.createRange();range.setStart(p.offsetNode,p.offset);range.collapse(true);}
       }
-    }catch(_){}
-    if(!offset){
-      // Jika browser tidak memberi offset, gunakan tengah token sebagai fallback.
-      const txt=n.nodeValue||"";
-      offset=Math.max(1,Math.floor(txt.length/2));
+    }catch(_){return false}
+    if(!range||!ed.contains(range.startContainer)||range.startContainer.nodeType!==3)return false;
+    const node=range.startContainer;
+    if(node.parentElement?.closest("a"))return false;
+    const text=node.nodeValue||"", pos=range.startOffset;
+    const re=/(?:https?:\/\/|www\.)[^\s<]+/gi;
+    let m;
+    while((m=re.exec(text))){
+      const start=m.index,end=start+m[0].length;
+      if(pos<start||pos>end)continue;
+      let raw=m[0];
+      while(/[),.!?;:'"\]]$/.test(raw))raw=raw.slice(0,-1);
+      let url=raw;
+      if(/^www\./i.test(url))url="https://"+url;
+      try{const u=new URL(url);if(!/^https?:$/.test(u.protocol))return false;url=u.href}catch(_){return false}
+      const r=document.createRange();r.setStart(node,start);r.setEnd(node,start+raw.length);
+      const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer nofollow";
+      a.appendChild(r.extractContents());r.insertNode(a);sync();
+      return true;
     }
-    return linkifyToken(n,offset);
+    return false;
   }
-
-  // Desktop: double-click.
+  function selectedUrl(){
+    const sel=window.getSelection();
+    if(!sel||!sel.rangeCount||sel.isCollapsed)return false;
+    const r=sel.getRangeAt(0);
+    if(!ed.contains(r.commonAncestorContainer))return false;
+    const text=sel.toString().trim();
+    if(!/^(?:https?:\/\/|www\.)[^\s<]+$/i.test(text))return false;
+    let url=text.replace(/[),.!?;:'"\]]+$/,'');
+    if(/^www\./i.test(url))url="https://"+url;
+    try{const u=new URL(url);if(!/^https?:$/.test(u.protocol))return false;url=u.href}catch(_){return false}
+    if(r.commonAncestorContainer.parentElement?.closest("a"))return false;
+    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer nofollow";
+    a.appendChild(r.extractContents());r.insertNode(a);sync();return true;
+  }
+  let lastTap=0,lastX=0,lastY=0;
+  const activate=(x,y)=>urlAtPoint(x,y)||selectedUrl();
+  ed.addEventListener("input",sync);
   ed.addEventListener("dblclick",e=>{
     if(e.target.closest?.("a"))return;
-    linkifyFromEvent(e);
+    if(activate(e.clientX,e.clientY))e.preventDefault();
   });
-
-  // Mobile: dua tap cepat pada area URL.
-  let lastTap=0;
-  let lastX=0,lastY=0;
   ed.addEventListener("touchend",e=>{
-    if(e.changedTouches.length!==1)return;
-    const t=e.changedTouches[0],now=Date.now();
-    const close=now-lastTap<420 && Math.abs(t.clientX-lastX)<35 && Math.abs(t.clientY-lastY)<35;
-    lastTap=now;lastX=t.clientX;lastY=t.clientY;
-    if(close){
-      e.preventDefault();
-      linkifyFromEvent(t);
+    const t=e.changedTouches?.[0];if(!t)return;
+    const now=Date.now(),dx=Math.abs(t.clientX-lastX),dy=Math.abs(t.clientY-lastY);
+    if(now-lastTap<500&&dx<32&&dy<32){
+      if(activate(t.clientX,t.clientY))e.preventDefault();
       lastTap=0;
-    }
+    }else{lastTap=now;lastX=t.clientX;lastY=t.clientY;}
   },{passive:false});
-
-  ed.addEventListener("input",sync);
-  ed.addEventListener("paste",()=>setTimeout(sync,0));
+  setupPasswordControl();
   sync();
 }
 
