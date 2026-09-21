@@ -2804,6 +2804,8 @@ window.PasTelePasswordToggle = function(enabled){
 function setupPasswordControl(){
   const cb=document.getElementById("hasPassword");
   const box=document.getElementById("passwordBox");
+  const pw=document.getElementById("contentPassword");
+  const toggle=document.getElementById("togglePassword");
   if(!cb||!box)return;
   const sync=()=>window.PasTelePasswordToggle(cb.checked);
   if(cb.dataset.passwordBound!=="1"){
@@ -2811,21 +2813,41 @@ function setupPasswordControl(){
     cb.addEventListener("change",sync);
     cb.addEventListener("input",sync);
   }
-  const toggle=document.getElementById("togglePassword");
-  const pw=document.getElementById("contentPassword");
+  // The eye button is handled with event delegation as a fallback too.
+  // This prevents the toggle from breaking if another editor handler re-renders the field.
   if(toggle && toggle.dataset.passwordBound!=="1"){
     toggle.dataset.passwordBound="1";
-    toggle.addEventListener("click",e=>{
-      e.preventDefault();
-      if(!pw)return;
-      pw.type=pw.type==="password"?"text":"password";
-      const icon=toggle.querySelector("i");
-      if(icon)icon.className=pw.type==="password"?"fa-solid fa-eye":"fa-solid fa-eye-slash";
-      pw.focus();
-    });
+    toggle.addEventListener("pointerup",e=>{
+      if(e.pointerType!=="mouse") togglePasswordVisibility(e);
+    },{passive:false});
   }
   sync();
 }
+
+function togglePasswordVisibility(e){
+  if(e){e.preventDefault();e.stopPropagation();}
+  const pw=document.getElementById("contentPassword");
+  const toggle=document.getElementById("togglePassword");
+  if(!pw)return false;
+  const show=pw.type==="password";
+  pw.type=show?"text":"password";
+  pw.setAttribute("aria-label",show?"Sembunyikan password":"Tampilkan password");
+  pw.setAttribute("autocomplete","new-password");
+  const icon=toggle?.querySelector("i");
+  if(icon){
+    icon.className=show?"fa-solid fa-eye-slash":"fa-solid fa-eye";
+  }
+  try{pw.focus({preventScroll:true});}catch(_){try{pw.focus();}catch(__){}}
+  return false;
+}
+
+// Final delegated fallback: works even when the form is replaced/re-rendered.
+document.addEventListener("click",e=>{
+  const btn=e.target?.closest?.("#togglePassword");
+  if(btn){
+    togglePasswordVisibility(e);
+  }
+},true);
 
 function initPasteLinkEditor(){
   const ed=document.getElementById("content");
