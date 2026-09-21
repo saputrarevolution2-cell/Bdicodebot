@@ -8,7 +8,7 @@
 
 
   
-  <link rel="stylesheet" href="css/create-pastelink.css?v=20260921-pastelink-link-final2">
+  <link rel="stylesheet" href="css/create-pastelink.css?v=20260921-password-eye-final">
     
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -31,8 +31,8 @@
  <label class="switch-row"><input id="hasPassword" type="checkbox" onchange="window.PasTelePasswordToggle && window.PasTelePasswordToggle(this.checked)"><span class="switch-ui"></span><span><b>Aktifkan Password</b><small>Jika diaktifkan, form password akan langsung muncul dan pengunjung wajib memasukkannya.</small></span></label>
 </div>
 <div id="passwordBox" class="field password-box is-hidden" aria-hidden="true">
- <label for="contentPassword">Password <em>*</em></label>
- <div class="password-input"><i class="fa-solid fa-key"></i><input id="contentPassword" type="password" minlength="4" maxlength="128" autocomplete="new-password" placeholder="Masukkan password"><button type="button" id="togglePassword" class="password-toggle"><i class="fa-solid fa-eye"></i></button></div>
+ <label for="contentPassword">Password <span>Opsional</span></label>
+ <div class="password-input"><i class="fa-solid fa-key"></i><input id="contentPassword" type="password" minlength="4" maxlength="128" autocomplete="new-password" placeholder="Masukkan password"><button type="button" id="togglePassword" class="password-toggle" aria-label="Tampilkan password" title="Tampilkan password"><i class="fa-solid fa-eye"></i></button></div>
  <small>Minimal 4 karakter. Password disimpan sebagai hash dan tidak ditampilkan di Marketplace.</small>
 </div>
 <div class="field"><label for="tags">Tag <span>Opsional</span></label><input id="tags" maxlength="500" placeholder="bot, telegram, tutorial"><small>Pisahkan beberapa tag dengan koma.</small></div>
@@ -42,7 +42,7 @@
 <div id="expiryBox" class="field price-box" hidden><label for="expiresAt">Expired Pada <em>*</em></label><input id="expiresAt" type="datetime-local"><small>Setelah waktu ini, PasteLink dianggap expired.</small></div>
 <div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" maxlength="3000" rows="4" placeholder="Ringkasan singkat PasteLink..."></textarea><small><span id="counter">0</span>/3000</small></div>
 <div class="create-actions"><a href="my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-link"></i>Publikasikan PasteLink</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
-</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260921-password-definitive3"></script>
+</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260921-password-eye-final"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
 
 <script src="js/pastele-data-contract.js"></script>
