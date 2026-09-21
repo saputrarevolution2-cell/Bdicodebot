@@ -8,7 +8,7 @@
 
 
   
-  <link rel="stylesheet" href="css/create-pastelink.css?v=20260921-pastelink-final3">
+  <link rel="stylesheet" href="css/create-pastelink.css?v=20260921-link-doubletap">
     
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -22,18 +22,10 @@
 <div class="field">
 <label for="content">Isi Konten <em>*</em></label>
 <div class="pt-editor" id="contentEditor">
- <div class="pt-editor-toolbar">
-  <button type="button" class="pt-tool" data-cmd="bold" title="Tebal"><i class="fa-solid fa-bold"></i></button>
-  <button type="button" class="pt-tool" data-cmd="italic" title="Miring"><i class="fa-solid fa-italic"></i></button>
-  <button type="button" class="pt-tool" data-cmd="underline" title="Garis bawah"><i class="fa-solid fa-underline"></i></button>
-  <button type="button" class="pt-tool" data-cmd="blockquote" title="Kutip"><i class="fa-solid fa-quote-left"></i></button>
-  <button type="button" class="pt-tool" data-cmd="spoiler" title="Spoiler"><i class="fa-solid fa-eye-slash"></i></button>
-  <button type="button" class="pt-tool" data-cmd="link" title="Tautan"><i class="fa-solid fa-link"></i></button>
- </div>
  <div id="content" class="pt-editor-content" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Tulis isi PasteLink di sini..."></div>
  <input type="hidden" id="contentHtml">
 </div>
-<small>Gunakan toolbar untuk mengubah teks menjadi tebal, miring, garis bawah, kutipan, spoiler, atau tautan. Perubahan akan langsung terlihat di editor.</small>
+<small>Tulis teks biasa. Jika ada teks seperti https://... atau www...., ketuk/klik dua kali teks tersebut untuk menjadikannya tautan.</small>
 </div>
 <div class="field">
  <label class="switch-row"><input id="hasPassword" type="checkbox"><span class="switch-ui"></span><span><b>Aktifkan Password</b><small>Jika diaktifkan, form password akan langsung muncul dan pengunjung wajib memasukkannya.</small></span></label>
@@ -50,7 +42,7 @@
 <div id="expiryBox" class="field price-box" hidden><label for="expiresAt">Expired Pada <em>*</em></label><input id="expiresAt" type="datetime-local"><small>Setelah waktu ini, PasteLink dianggap expired.</small></div>
 <div class="field"><label for="description">Deskripsi <span>Opsional</span></label><textarea id="description" maxlength="3000" rows="4" placeholder="Ringkasan singkat PasteLink..."></textarea><small><span id="counter">0</span>/3000</small></div>
 <div class="create-actions"><a href="my-products.html" class="btn secondary"><i class="fa-solid fa-xmark"></i>Batal</a><button id="submitBtn" class="btn primary" type="submit"><span class="normal"><i class="fa-solid fa-link"></i>Publikasikan PasteLink</span><span class="loading" hidden><i class="fa-solid fa-spinner fa-spin"></i>Menyimpan...</span></button></div>
-</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260921-pastelink-final3"></script>
+</form><section id="result" class="create-result" hidden></section></main><div id="toast"></div><script src="js/create-pastelink.js?v=20260921-link-doubletap"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
 
 <script src="js/pastele-data-contract.js"></script>
