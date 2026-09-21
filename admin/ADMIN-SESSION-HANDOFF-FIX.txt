@@ -1,0 +1,1 @@
+Admin login/panel use pastele-admin-auth plus a sessionStorage handoff key pastele-admin-session-v1. Deploy the entire admin folder. No SQL change is required; existing admin_access_check() is the database authority.
