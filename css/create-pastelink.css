@@ -589,3 +589,29 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
   text-underline-offset:2px!important;
   cursor:pointer!important;
 }
+
+/* ===== DEFINITIVE PASSWORD TOGGLE ===== */
+#createForm #passwordBox{
+  width:100%!important;
+  margin:0!important;
+}
+#createForm #passwordBox.is-hidden{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  height:0!important;
+  overflow:hidden!important;
+}
+#createForm #passwordBox:not(.is-hidden){
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  height:auto!important;
+  overflow:visible!important;
+  margin-top:12px!important;
+}
+#createForm #passwordBox .password-input{
+  display:flex!important;
+  width:100%!important;
+  min-height:48px!important;
+}
