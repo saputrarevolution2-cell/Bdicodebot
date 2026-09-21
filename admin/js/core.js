@@ -32,49 +32,32 @@
     });
   }
   async function isAdmin(){
-    const s=await waitForSession();
+    const s=await waitForSession(8000);
     if(!s?.user) return {ok:false,reason:'login'};
     let lastError=null;
 
-    // Canonical admin check: authenticated session + profile username=admin + admin role/flag + not banned.
+    // Single canonical server-side check. It is deliberately independent
+    // from the profiles SELECT RLS policy to avoid recursive RLS checks.
     try{
       const r=await sb.rpc("admin_access_check");
-      if(!r.error && r.data){
+      if(!r.error){
         const d=Array.isArray(r.data)?r.data[0]:r.data;
-        if(d?.ok===true){
-          return {ok:true,user:s.user,profile:d,source:'admin_username_rpc'};
-        }
-        if(d) return {ok:false,reason:'not_admin',profile:d,user:s.user};
+        if(d?.ok===true) return {ok:true,user:s.user,profile:d,source:'admin_access_check'};
+        return {ok:false,reason:'not_admin',profile:d||null,user:s.user};
       }
-      if(r.error) lastError=r.error;
+      lastError=r.error;
     }catch(e){ lastError=e; }
 
-    // Compatibility fallback for databases where the helper RPC has not been installed yet.
+    // Compatibility fallback for an older database.
     try{
       const r=await sb.rpc("is_current_user_admin");
-      if(!r.error && (r.data===true || r.data?.is_admin===true || String(r.data?.is_admin).toLowerCase()==='true')){
-        return {ok:true,user:s.user,source:'rpc'};
-      }
+      if(!r.error && r.data===true) return {ok:true,user:s.user,source:'legacy_rpc'};
       if(r.error) lastError=lastError||r.error;
-    }catch(e){ lastError=lastError||e; }
-
-    try{
-      const q=await sb.from('profiles')
-        .select('id,username,auth_email,is_admin,role,is_banned')
-        .eq('id',s.user.id).maybeSingle();
-      if(!q.error){
-        const p=q.data;
-        const usernameOk=String(p?.username||'').trim().toLowerCase()==='admin';
-        const roleOk=p?.is_admin===true || ['admin','owner'].includes(String(p?.role||'').toLowerCase());
-        if(p && usernameOk && p.is_banned!==true && roleOk){
-          return {ok:true,user:s.user,profile:p,source:'profile'};
-        }
-        if(p) return {ok:false,reason:'not_admin',profile:p,user:s.user,error:lastError};
-      }else lastError=lastError||q.error;
     }catch(e){ lastError=lastError||e; }
 
     return {ok:false,reason:lastError?'rpc':'not_admin',error:lastError,user:s.user};
   }
+
   async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
   function denied(reason, detail){
     const email=window.PasTeleAdmin?.__lastEmail||window.PasTeleAdmin?.__sessionEmail||'';
@@ -88,7 +71,7 @@
       <h1>${reason==='login'?'Login diperlukan':'Akses ditolak'}</h1>
       <p>${esc(msg)}</p>
       ${email?`<small>Login: ${esc(email)}</small>`:''}
-      <br><br><a href="/admin/login/?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
+      <br><br><a href="../login.html?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
     </main>`;
   }
   async function rpc(name,args={}){const r=await sb.rpc(name,args);if(r.error)throw r.error;return rows(r.data);}
