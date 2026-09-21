@@ -88,6 +88,37 @@ window.PASTELE_CONFIG = Object.freeze({
 
   window.__PASTELE_RUNTIME__.clientReady = !!window.sb;
 
+  /* PasTele — self-contained RPC bridge.
+     view-pastelink.js uses the {data,error} Supabase RPC contract,
+     so this page must not depend on db-contract.js being loaded first. */
+  window.PasTeleDB = window.PasTeleDB || {};
+  window.PasTeleDB.client = () => window.sb || null;
+  window.PasTeleDB.unwrap = value => {
+    if (Array.isArray(value)) return value.length === 1 ? value[0] : value;
+    return value;
+  };
+  window.PasTeleDB.rpc = async (name, args = {}) => {
+    const client = window.sb || window.supabaseClient;
+    if (!client?.rpc) {
+      const error = new Error("Supabase client belum siap.");
+      console.error("[PasTele][DB RPC]", name, error);
+      return { data: null, error };
+    }
+    try {
+      const result = await client.rpc(name, args || {});
+      if (result?.error) {
+        console.error("[PasTele][RPC ERROR]", name, result.error);
+      }
+      return {
+        data: result?.data ?? null,
+        error: result?.error ?? null
+      };
+    } catch (error) {
+      console.error("[PasTele][RPC EXCEPTION]", name, error);
+      return { data: null, error };
+    }
+  };
+
   window.TC = {
     configured: () => !!window.sb,
 
