@@ -13,3 +13,135 @@
 @media(max-width:900px){.admin-control-shell{grid-template-columns:1fr}.admin-side{position:relative;top:auto}}
 
 .admin-denied{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center;background:linear-gradient(180deg,#f7faff,#eef3f9)}.admin-denied>div{max-width:520px;width:100%;padding:34px 28px;border:1px solid #e3eaf3;border-radius:22px;background:#fff;box-shadow:0 18px 50px rgba(15,23,42,.09)}.admin-denied .denied-icon{width:58px;height:58px;margin:0 auto 16px;border-radius:18px;display:grid;place-items:center;background:#eff6ff;color:#2563eb;font-size:24px}.admin-denied h1{margin:0 0 8px}.admin-denied p{color:#64748b;line-height:1.6}
+
+/* ===== PasTele Admin UI Polish — 2026-09-22 ===== */
+html{scroll-behavior:smooth}
+body.admin-page{
+  min-width:320px;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+.admin-main{
+  width:100%;
+  max-width:1440px;
+  margin:0 auto;
+}
+.admin-control-shell,.admin-layout{
+  max-width:1280px;
+  margin:0 auto;
+}
+.admin-side{
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.admin-brand{
+  min-height:54px;
+}
+.admin-brand-icon{
+  box-shadow:0 8px 18px rgba(99,91,255,.22);
+}
+.admin-nav a{
+  min-height:42px;
+  border:1px solid transparent;
+}
+.admin-nav a.active{
+  border-color:rgba(99,91,255,.14);
+}
+.admin-hero{
+  padding:22px 24px;
+}
+.admin-hero .badge,.admin-title .badge{
+  margin-bottom:2px;
+}
+.admin-stats-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.admin-stat{
+  min-height:92px;
+}
+.admin-stat .stat-icon{
+  box-shadow:0 7px 16px rgba(99,91,255,.14);
+}
+.control-grid,.module-grid,.quick-action-grid{
+  gap:16px;
+}
+.control-card,.module-card,.quick-action,.admin-card,.admin-table-card{
+  overflow:hidden;
+}
+.control-card{
+  min-height:150px;
+}
+.admin-card,.admin-table-card{
+  box-shadow:0 10px 30px rgba(15,23,42,.055);
+}
+.table-wrap{
+  background:var(--surface);
+}
+table tbody tr{
+  transition:background .15s ease;
+}
+table tbody tr:hover{
+  background:rgba(99,91,255,.035);
+}
+th{
+  white-space:nowrap;
+}
+td{
+  line-height:1.45;
+}
+.admin-input,.admin-select,.admin-textarea,
+input.admin-input,select.admin-input,textarea.admin-input{
+  min-height:42px;
+}
+.btn{
+  min-height:40px;
+}
+.btn.primary{
+  box-shadow:0 8px 18px rgba(99,91,255,.18);
+}
+.btn.primary:hover{
+  box-shadow:0 11px 24px rgba(99,91,255,.24);
+}
+.form-grid{
+  gap:14px;
+}
+.admin-toolbar{
+  padding:2px 0;
+}
+.toolbar-tools{
+  flex-wrap:wrap;
+}
+.admin-alert{
+  border:1px solid rgba(239,68,68,.16);
+}
+.empty{
+  padding:34px 20px;
+}
+@media (max-width:1100px){
+  .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .admin-main{padding:16px 10px 30px}
+  .admin-control-shell,.admin-layout{gap:12px}
+  .admin-hero{padding:18px}
+  .admin-hero h1,.admin-title h1{font-size:25px}
+  .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .admin-stat{min-height:82px;padding:12px}
+  .admin-side{border-radius:15px}
+  .admin-nav{padding-bottom:2px}
+  .admin-nav a{min-height:40px}
+}
+@media (max-width:480px){
+  .admin-main{padding-left:8px;padding-right:8px}
+  .admin-hero,.admin-title{margin-bottom:14px}
+  .admin-stats-grid{grid-template-columns:1fr 1fr}
+  .admin-stat strong{font-size:18px}
+  .admin-stat small{font-size:10px}
+  .admin-card,.admin-table-card{padding:10px}
+  .toolbar-tools,.toolbar-tools .btn{width:100%}
+  .toolbar-tools .admin-input{width:100%;max-width:none}
+  .admin-nav a span{display:none}
+  .admin-nav a{justify-content:center;padding:9px 11px}
+  .admin-nav{gap:4px}
+}
