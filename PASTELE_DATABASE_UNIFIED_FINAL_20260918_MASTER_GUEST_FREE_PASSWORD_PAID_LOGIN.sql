@@ -55,7 +55,7 @@ SUPABASE MASTER FULL FIX — IDEMPOTENT
 
 BEGIN;
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
 -- ============================================================
 -- DROP APPLICATION FUNCTIONS
@@ -997,70 +997,70 @@ RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public
 AS $$ SELECT coalesce((SELECT row_to_json(s)::jsonb FROM public.site_stats s WHERE id=1 AND public.is_current_user_admin()),'{}'::jsonb); $$;
 
 CREATE OR REPLACE FUNCTION public.admin_users(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(p) FROM public.profiles p
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_products(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(p) FROM public.products p
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_orders(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(o) FROM public.orders o
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_payments(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(p) FROM public.payments p
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_transactions(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(t) FROM public.transactions t
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_withdrawals(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(w) FROM public.withdrawals w
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_pastes(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(p) FROM public.pastes p
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_bots(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(b) FROM public.approved_bots b
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_logs(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(l) FROM public.admin_logs l
  WHERE public.is_current_user_admin()
  ORDER BY created_at DESC LIMIT greatest(1,least(p_limit,200)) OFFSET greatest(0,p_offset);
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_content(p_limit integer DEFAULT 50,p_offset integer DEFAULT 0)
-RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT to_jsonb(x) FROM (
    SELECT p.id,p.title,p.slug,p.price,p.status,p.description,p.views,p.sales_count,p.creator_id,p.seller_id,
           NULL::uuid AS owner_id,NULL::uuid AS user_id,'products'::text AS source,p.type,p.thumbnail_url,p.created_at,p.updated_at
@@ -1086,13 +1086,13 @@ RETURNS SETOF jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_payment_methods(p_user uuid)
-RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=public, extensions AS $$
  SELECT coalesce(jsonb_agg(to_jsonb(m) ORDER BY m.created_at DESC),'[]'::jsonb)
  FROM public.payment_methods m WHERE m.user_id=p_user AND public.is_current_user_admin();
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_set_user(p_user uuid,p_banned boolean,p_admin boolean)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r public.profiles;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -1115,7 +1115,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.admin_adjust_balance(
  p_user uuid,p_amount numeric,p_reason text
 )
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
 
@@ -1138,14 +1138,14 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_delete_product(p_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
  DELETE FROM public.products WHERE id=p_id;
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_paste(p_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
  DELETE FROM public.pastes WHERE id=p_id;
@@ -1154,7 +1154,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_bot_active(p_bot_id uuid,p_active boolean)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r public.approved_bots;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -1168,7 +1168,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_cancel_order(p_order_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE o public.orders;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -1218,7 +1218,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.admin_publish_announcement(
  p_title text,p_body text,p_image_url text
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r public.announcements;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -1229,7 +1229,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_save_socials(p_socials jsonb)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
  UPDATE public.site_settings
@@ -1242,7 +1242,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_delete_content(p_id uuid,p_source text DEFAULT 'products')
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
  CASE lower(coalesce(p_source,'products'))
@@ -1704,7 +1704,7 @@ CHECK ((access_type='free' AND price=0) OR (access_type='paid' AND price BETWEEN
 CREATE OR REPLACE FUNCTION public.admin_mark_order_paid(
  p_order_id uuid,p_payment_reference text
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE
  o public.orders;
  payload jsonb;
@@ -1735,7 +1735,7 @@ COMMIT;
 BEGIN;
 
 CREATE OR REPLACE FUNCTION public.admin_update_product(p_id uuid,p_status text,p_price numeric)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r public.products;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -1781,7 +1781,7 @@ CREATE INDEX IF NOT EXISTS idx_pastelinks_access ON public.pastelinks(access_typ
 
 -- Normalize notification creation for publication, views, purchases and withdrawals.
 CREATE OR REPLACE FUNCTION public.notify_user_once(p_user_id uuid,p_title text,p_body text)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   IF p_user_id IS NULL THEN RETURN; END IF;
   INSERT INTO public.notifications(user_id,title,body)
@@ -1813,7 +1813,7 @@ CREATE TRIGGER trg_notify_content_view AFTER INSERT ON public.analytics_events F
 WHEN (NEW.event_type='view') EXECUTE FUNCTION public.trg_notify_view();
 
 CREATE OR REPLACE FUNCTION public.trg_notify_withdrawal()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE a uuid;
 BEGIN
   FOR a IN SELECT id FROM public.profiles WHERE is_admin=true OR lower(role) IN ('admin','owner') LOOP
@@ -1855,7 +1855,7 @@ CREATE OR REPLACE FUNCTION public.admin_update_content(
  p_id uuid,p_status text DEFAULT NULL,p_title text DEFAULT NULL,p_description text DEFAULT NULL,
  p_source text DEFAULT 'products',p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r jsonb; src text:=lower(coalesce(p_source,'products')); new_price numeric;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -2687,7 +2687,7 @@ BEGIN;
 
 -- Never delete a bot master while Codes still depend on it.
 CREATE OR REPLACE FUNCTION public.admin_delete_bot(p_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
   IF EXISTS(SELECT 1 FROM public.telegram_products WHERE approved_bot_id=p_id) THEN
@@ -2786,7 +2786,7 @@ CREATE OR REPLACE FUNCTION public.create_code_content(
   p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,
   p_description text DEFAULT '',p_approved_bot_id uuid DEFAULT NULL
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); b public.approved_bots; r public.telegram_products;
 BEGIN
  IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
@@ -2807,7 +2807,7 @@ CREATE OR REPLACE FUNCTION public.create_telegram_content(
   p_description text DEFAULT '',p_username text DEFAULT NULL,p_invite_url text DEFAULT NULL,
   p_telegram_channel_id text DEFAULT NULL
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); k text:=CASE WHEN lower(coalesce(p_type,''))='group' THEN 'group' ELSE 'channel' END; r public.telegram_channels;
 BEGIN
  IF btrim(coalesce(p_name,''))='' THEN RAISE EXCEPTION 'TITLE_REQUIRED'; END IF;
@@ -2865,7 +2865,7 @@ CREATE OR REPLACE FUNCTION public.create_pastelink_content(
   p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',
   p_price numeric DEFAULT 0,p_description text DEFAULT '',p_tags text[] DEFAULT '{}',
   p_expires_at timestamptz DEFAULT NULL
-) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); r public.pastelinks;
 BEGIN
  IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
@@ -2879,7 +2879,7 @@ END $$;
 
 CREATE OR REPLACE FUNCTION public.create_code_content(
  p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,p_description text DEFAULT '',p_approved_bot_id uuid DEFAULT NULL
-) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); b public.approved_bots; r public.telegram_products;
 BEGIN
  IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
@@ -2896,7 +2896,7 @@ END $$;
 
 CREATE OR REPLACE FUNCTION public.create_telegram_content(
  p_name text,p_slug text,p_type text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,p_description text DEFAULT '',p_username text DEFAULT NULL,p_invite_url text DEFAULT NULL,p_telegram_channel_id text DEFAULT NULL
-) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); k text:=CASE WHEN lower(coalesce(p_type,''))='group' THEN 'group' ELSE 'channel' END; r public.telegram_channels;
 BEGIN
  IF btrim(coalesce(p_name,''))='' THEN RAISE EXCEPTION 'TITLE_REQUIRED'; END IF;
@@ -2910,7 +2910,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION public.get_order_for_payment(p_order_id uuid,p_guest_token text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+CREATE OR REPLACE FUNCTION public.get_order_for_payment(p_order_id uuid,p_guest_token text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE o public.orders; uid uuid:=auth.uid(); tok text:=btrim(coalesce(p_guest_token,''));
 BEGIN
  SELECT * INTO o FROM public.orders WHERE id=p_order_id;
@@ -2953,7 +2953,7 @@ CREATE OR REPLACE FUNCTION public.notify_user_once(
   p_target_type text DEFAULT NULL,
   p_target_id uuid DEFAULT NULL
 )
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   IF p_user_id IS NULL THEN RETURN; END IF;
   INSERT INTO public.notifications(user_id,title,body,notification_type,link_url,target_type,target_id)
@@ -2961,7 +2961,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.trg_notify_market_publication()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE
   nr jsonb := to_jsonb(NEW);
   orow jsonb := CASE WHEN TG_OP='UPDATE' THEN to_jsonb(OLD) ELSE '{}'::jsonb END;
@@ -3025,7 +3025,7 @@ DROP TRIGGER IF EXISTS trg_notify_telegram_channel_publish ON public.telegram_ch
 CREATE TRIGGER trg_notify_telegram_channel_publish AFTER INSERT OR UPDATE OF status ON public.telegram_channels FOR EACH ROW WHEN (NEW.status='published') EXECUTE FUNCTION public.trg_notify_market_publication();
 
 CREATE OR REPLACE FUNCTION public.trg_notify_purchase()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE seller uuid; target text; kind text:=lower(coalesce(NEW.item_type,'product')); title text:=coalesce(NEW.item_title,'Produk');
 BEGIN
   SELECT seller_id INTO seller FROM public.orders WHERE id=NEW.order_id;
@@ -3180,7 +3180,7 @@ BEGIN;
 
 -- Keep public FREE content readable through the secure RPC even when RLS is enabled.
 CREATE OR REPLACE FUNCTION public.get_pastelink_by_slug(p_slug text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE pid uuid;
 BEGIN
   SELECT id INTO pid FROM public.pastelinks WHERE lower(btrim(slug))=lower(btrim(coalesce(p_slug,''))) LIMIT 1;
@@ -3201,7 +3201,7 @@ COMMIT;
 BEGIN;
 
 CREATE OR REPLACE FUNCTION public.admin_resolve_profile(p_identifier text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r uuid; v text:=lower(btrim(coalesce(p_identifier,'')));
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3215,18 +3215,18 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_set_user_by_identifier(p_identifier text,p_banned boolean,p_admin boolean)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r jsonb; uid uuid:=public.admin_resolve_profile(p_identifier);
 BEGIN
  PERFORM public.admin_set_user(uid,p_banned,p_admin); SELECT to_jsonb(p) INTO r FROM public.profiles p WHERE p.id=uid; RETURN r;
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_adjust_balance_by_identifier(p_identifier text,p_amount numeric,p_reason text)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN PERFORM public.admin_adjust_balance(public.admin_resolve_profile(p_identifier),p_amount,p_reason); END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_resolve_product(p_identifier text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3238,14 +3238,14 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_update_product_by_identifier(p_identifier text,p_status text,p_price numeric)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN RETURN public.admin_update_product(public.admin_resolve_product(p_identifier),p_status,p_price); END $$;
 CREATE OR REPLACE FUNCTION public.admin_delete_product_by_identifier(p_identifier text)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN PERFORM public.admin_delete_product(public.admin_resolve_product(p_identifier)); END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_resolve_order(p_identifier text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3255,14 +3255,14 @@ BEGIN
  IF r IS NULL THEN RAISE EXCEPTION 'ORDER_NOT_FOUND'; END IF; RETURN r;
 END $$;
 CREATE OR REPLACE FUNCTION public.admin_mark_order_paid_by_identifier(p_identifier text,p_payment_reference text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN RETURN public.admin_mark_order_paid(public.admin_resolve_order(p_identifier),p_payment_reference); END $$;
 CREATE OR REPLACE FUNCTION public.admin_cancel_order_by_identifier(p_identifier text)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN PERFORM public.admin_cancel_order(public.admin_resolve_order(p_identifier)); END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_resolve_withdrawal(p_identifier text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3274,11 +3274,11 @@ BEGIN
  IF r IS NULL THEN RAISE EXCEPTION 'WITHDRAWAL_NOT_FOUND'; END IF; RETURN r;
 END $$;
 CREATE OR REPLACE FUNCTION public.admin_process_withdrawal_by_identifier(p_identifier text,p_status text,p_note text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN RETURN public.admin_process_withdrawal(public.admin_resolve_withdrawal(p_identifier),p_status,p_note); END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_set_bot_active_by_identifier(p_identifier text,p_active boolean)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r public.approved_bots; v text:=btrim(coalesce(p_identifier,'')); bid bigint;
 BEGIN
  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3300,7 +3300,7 @@ BEGIN;
 
 CREATE OR REPLACE FUNCTION public.admin_resolve_paste(p_identifier text)
 RETURNS uuid
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r uuid; v text:=btrim(coalesce(p_identifier,''));
 BEGIN
   IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3315,14 +3315,14 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_paste_by_identifier(p_identifier text)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   PERFORM public.admin_delete_paste(public.admin_resolve_paste(p_identifier));
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_resolve_content(p_identifier text,p_source text)
 RETURNS uuid
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r uuid; v text:=btrim(coalesce(p_identifier,'')); src text:=lower(btrim(coalesce(p_source,'products')));
 BEGIN
   IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
@@ -3359,13 +3359,13 @@ CREATE OR REPLACE FUNCTION public.admin_update_content_by_identifier(
   p_identifier text,p_source text DEFAULT 'products',p_status text DEFAULT NULL,p_title text DEFAULT NULL,
   p_description text DEFAULT NULL,p_slug text DEFAULT NULL,p_price numeric DEFAULT NULL
 )
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   RETURN public.admin_update_content(public.admin_resolve_content(p_identifier,p_source),p_status,p_title,p_description,p_source,p_slug,p_price);
 END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_content_by_identifier(p_identifier text,p_source text DEFAULT 'products')
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   PERFORM public.admin_delete_content(public.admin_resolve_content(p_identifier,p_source),p_source);
 END $$;
@@ -3704,7 +3704,7 @@ WHERE buyer_id IS NOT NULL AND product_id IS NOT NULL
 
 -- Guest paid checkout: public, but only for published/active content and never for free content.
 CREATE OR REPLACE FUNCTION public.buy_market_item_guest(p_type text,p_id uuid,p_guest_token text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE normalized text:=lower(btrim(coalesce(p_type,''))); tok text:=btrim(coalesce(p_guest_token,'')); seller uuid; title text; price numeric; oid uuid;
 BEGIN
  IF auth.uid() IS NOT NULL THEN RETURN public.buy_market_item(p_type,p_id); END IF;
@@ -3731,7 +3731,7 @@ END $$;
 
 -- Guest detail: free is public; paid content remains hidden until the matching guest purchase is paid.
 CREATE OR REPLACE FUNCTION public.get_market_item_detail_guest(p_type text,p_id uuid,p_guest_token text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE r record; normalized text:=lower(btrim(coalesce(p_type,''))); can_access boolean:=false; tok text:=btrim(coalesce(p_guest_token,'')); paid boolean:=false;
 BEGIN
  IF normalized IN ('product','link') THEN SELECT p.*,pr.username creator_username,pr.display_name creator_name,coalesce(p.creator_id,p.seller_id) owner_id INTO r FROM public.products p LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id) WHERE p.id=p_id AND p.status IN ('published','active');
@@ -3759,7 +3759,7 @@ CREATE POLICY comments_anon_insert ON public.content_comments FOR INSERT TO anon
 
 -- Notifications for successful purchases: buyer account only, seller/creator account only.
 CREATE OR REPLACE FUNCTION public.notify_purchase_success(p_order_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE o public.orders%ROWTYPE; seller_name text;
 BEGIN
  SELECT * INTO o FROM public.orders WHERE id=p_order_id;
@@ -3780,7 +3780,7 @@ END $$;
 -- Replace settlement so account/guest access, 70/30 ledger and counters are all finalized once.
 CREATE OR REPLACE FUNCTION public.settle_cashi_order(
  p_order_id uuid,p_invoice_id text,p_gateway_status text,p_final_amount numeric,p_gateway_payload jsonb DEFAULT '{}'::jsonb
-) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE o public.orders%ROWTYPE; seller_share numeric; platform_fee numeric; local_paid_at timestamp; v_available_at timestamptz; v_settlement_code text; v_balance_before numeric:=0; v_purchase_id uuid;
 BEGIN
  SELECT * INTO o FROM public.orders WHERE id=p_order_id FOR UPDATE;
@@ -3835,7 +3835,7 @@ COMMIT;
 
 -- PROFILE VISIT NOTIFICATION FINAL: do not spam the same owner more than once per hour per visitor.
 CREATE OR REPLACE FUNCTION public.notify_profile_visit(p_profile_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); visitor text;
 BEGIN
  IF uid IS NULL OR p_profile_id IS NULL OR uid=p_profile_id THEN RETURN; END IF;
@@ -3903,7 +3903,7 @@ ON public.content_likes(guest_token,target_id,target_type)
 WHERE guest_token IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.toggle_content_like_guest(p_target_id uuid,p_target_type text,p_guest_token text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE target text:=lower(btrim(coalesce(p_target_type,''))); owner uuid; existing uuid;
 BEGIN
  IF p_target_id IS NULL OR length(btrim(coalesce(p_guest_token,''))) < 16 THEN RAISE EXCEPTION 'INVALID_GUEST_LIKE'; END IF;
@@ -4187,7 +4187,7 @@ CREATE INDEX IF NOT EXISTS idx_content_comments_target ON public.content_comment
 CREATE INDEX IF NOT EXISTS idx_analytics_target_event ON public.analytics_events(target_id, target_type, event_type, created_at DESC);
 
 CREATE OR REPLACE FUNCTION public.toggle_creator_follow(p_creator_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid := auth.uid(); exists_follow boolean; follower_count bigint;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
@@ -4204,7 +4204,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.get_profile_social_stats(p_profile_id uuid)
-RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public, extensions AS $$
   SELECT jsonb_build_object(
     'followers',(SELECT count(*) FROM public.creator_followers WHERE creator_id=p_profile_id),
     'following',(SELECT count(*) FROM public.creator_followers WHERE follower_id=p_profile_id),
@@ -4214,7 +4214,7 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_follow_state(p_creator_id uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public, extensions AS $$
   SELECT EXISTS(SELECT 1 FROM public.creator_followers WHERE creator_id=p_creator_id AND follower_id=auth.uid());
 $$;
 
@@ -4266,7 +4266,7 @@ DROP POLICY IF EXISTS quest_progress_owner_read ON public.quest_progress;
 CREATE POLICY quest_progress_owner_read ON public.quest_progress FOR SELECT TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin());
 
 CREATE OR REPLACE FUNCTION public.record_quest_event(p_event_type text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); q record; p record; new_progress integer;
 BEGIN
   IF uid IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','LOGIN_REQUIRED'); END IF;
@@ -4383,7 +4383,7 @@ DROP POLICY IF EXISTS chat_presence_write ON public.chat_presence;
 CREATE POLICY chat_presence_write ON public.chat_presence FOR ALL TO authenticated USING(user_id=auth.uid() OR public.is_current_user_admin()) WITH CHECK(user_id=auth.uid() OR public.is_current_user_admin());
 
 CREATE OR REPLACE FUNCTION public.join_public_chat(p_group_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); g public.chat_groups%ROWTYPE;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
@@ -4396,7 +4396,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION public.toggle_chat_reaction(p_message_id uuid,p_reaction text DEFAULT '👍')
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); exists_reaction boolean;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
@@ -4407,7 +4407,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.mark_chat_read(p_group_id uuid)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   IF auth.uid() IS NULL THEN RETURN false; END IF;
   INSERT INTO public.chat_members(group_id,user_id,last_read_at) VALUES(p_group_id,auth.uid(),now())
@@ -4416,7 +4416,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.set_chat_presence(p_group_id uuid,p_online boolean)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   IF auth.uid() IS NULL THEN RETURN false; END IF;
   INSERT INTO public.chat_presence(group_id,user_id,is_online,last_seen_at) VALUES(p_group_id,auth.uid(),coalesce(p_online,false),now())
@@ -6767,7 +6767,7 @@ FOR INSERT TO authenticated WITH CHECK(
 CREATE OR REPLACE FUNCTION public.pastele_create_chat_room(
   p_name text,p_description text DEFAULT NULL,p_is_public boolean DEFAULT false
 )
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 DECLARE uid uuid:=auth.uid(); rid uuid;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
@@ -6782,7 +6782,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION public.pastele_join_chat_room(p_room_id uuid)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
   IF NOT EXISTS(SELECT 1 FROM public.pastele_chat_rooms WHERE id=p_room_id AND is_public=true)
@@ -7034,7 +7034,7 @@ CREATE OR REPLACE FUNCTION public.create_pastelink_content(
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path=public
+SET search_path=public, extensions
 AS $$
 DECLARE
   uid uuid := auth.uid();
@@ -7042,7 +7042,7 @@ DECLARE
   pr numeric := coalesce(p_price,0);
   ph text := CASE
     WHEN nullif(btrim(coalesce(p_password,'')),'') IS NULL THEN NULL
-    ELSE encode(digest(btrim(p_password), 'sha256'), 'hex')
+    ELSE encode(digest(convert_to(btrim(p_password), 'UTF8'), 'sha256'), 'hex')
   END;
   r public.pastelinks;
 BEGIN
@@ -7163,7 +7163,7 @@ create or replace function public.resolve_login_identifier(p_identifier text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v text := lower(btrim(coalesce(p_identifier,'')));
@@ -7210,7 +7210,7 @@ create or replace function public.verify_pastelink_password(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_hash text;
@@ -7229,7 +7229,7 @@ begin
     return true;
   end if;
 
-  v_input := encode(digest(p_password, 'sha256'), 'hex');
+  v_input := encode(digest(convert_to(p_password, 'UTF8'), 'sha256'), 'hex');
   return lower(v_input) = lower(v_hash);
 end;
 $$;
@@ -7239,7 +7239,7 @@ create or replace function public.get_my_account()
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   r record;
@@ -7280,7 +7280,7 @@ create or replace function public.mark_notification_read(p_notification_id uuid)
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 begin
   update public.notifications
@@ -7295,7 +7295,7 @@ create or replace function public.mark_all_notifications_read()
 returns integer
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare n integer;
 begin
@@ -7319,7 +7319,7 @@ create or replace function public.notify_user_once(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare v_id uuid;
 begin
@@ -7355,7 +7355,7 @@ returns text
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select case
     when p.is_premium then 'premium'
@@ -7372,7 +7372,7 @@ create or replace function public.get_withdrawal_limits()
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   tier text;
