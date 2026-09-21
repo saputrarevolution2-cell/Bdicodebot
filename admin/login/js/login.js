@@ -1,1 +1,26 @@
-(()=>{'use strict';const URL='https://jxrndamvelqwhbcromye.supabase.co';const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo';const sb=supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'pastele-auth'}});const f=document.querySelector('#form'),u=document.querySelector('#username'),p=document.querySelector('#password'),b=document.querySelector('#submit'),m=document.querySelector('#msg');function msg(t,c='error'){m.textContent=t;m.className='msg show '+c}async function adminCheck(){const r=await sb.rpc('admin_access_check');if(r.error)throw r.error;const d=Array.isArray(r.data)?r.data[0]:r.data;if(!d?.ok)throw new Error('Akun ini bukan administrator. Username harus admin.');return d}f.addEventListener('submit',async e=>{e.preventDefault();b.disabled=true;msg('Memverifikasi login...','ok');try{const name=String(u.value||'').trim().toLowerCase();if(name!=='admin')throw new Error('Gunakan username admin.');const q=await sb.rpc('resolve_username_login',{p_username:name});if(q.error)throw q.error;const row=Array.isArray(q.data)?q.data[0]:q.data;const email=String(row?.auth_email||row?.email||'').trim();if(!email)throw new Error('Username admin belum terhubung ke email autentikasi.');const login=await sb.auth.signInWithPassword({email,password:String(p.value||'')});if(login.error)throw login.error;await adminCheck();msg('Login admin berhasil. Membuka panel...','ok');setTimeout(()=>location.replace('/admin/'),350)}catch(e){console.error('[Admin Login]',e);try{await sb.auth.signOut()}catch(_){}msg(e?.message||'Login admin gagal.');b.disabled=false}})})();
+(()=>{'use strict';
+const URL='https://jxrndamvelqwhbcromye.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo';
+const STORAGE='pastele-admin-auth';
+const sb=supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:STORAGE,flowType:'pkce'}});
+const f=document.querySelector('#form'),u=document.querySelector('#username'),p=document.querySelector('#password'),b=document.querySelector('#submit'),m=document.querySelector('#msg');
+function msg(t,c='error'){m.textContent=t;m.className='msg show '+c}
+async function adminCheck(){const r=await sb.rpc('admin_access_check');if(r.error)throw r.error;const d=Array.isArray(r.data)?r.data[0]:r.data;if(!d?.ok)throw new Error('Akun admin tidak valid atau tidak memiliki hak administrator.');return d}
+f.addEventListener('submit',async e=>{e.preventDefault();b.disabled=true;msg('Memverifikasi akun admin...','ok');
+ try{
+  const name=String(u.value||'').trim().toLowerCase();
+  if(name!=='admin') throw new Error('Username admin harus admin.');
+  const q=await sb.rpc('admin_login_identity',{p_username:name});
+  if(q.error) throw q.error;
+  const row=Array.isArray(q.data)?q.data[0]:q.data;
+  const email=String(row?.auth_email||'').trim();
+  if(!email) throw new Error('Akun admin belum memiliki email autentikasi.');
+  const login=await sb.auth.signInWithPassword({email,password:String(p.value||'')});
+  if(login.error) throw login.error;
+  const checked=await adminCheck();
+  if(!checked?.ok) throw new Error('Pengecekan hak admin gagal.');
+  msg('Login admin berhasil. Membuka panel...','ok');
+  setTimeout(()=>location.replace('/admin/'),250);
+ }catch(e){console.error('[Admin Login]',e);try{await sb.auth.signOut()}catch(_){}msg(e?.message||'Login admin gagal.');b.disabled=false}
+});
+})();
