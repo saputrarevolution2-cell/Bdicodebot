@@ -35,59 +35,47 @@
     const s=await waitForSession();
     if(!s?.user) return {ok:false,reason:'login'};
 
-    let rpcError=null;
+    let lastError=null;
 
-    // Primary admin check through the database RPC.
     try{
       const r=await sb.rpc("is_current_user_admin");
-      if(
-        !r.error &&
-        (
-          r.data===true ||
-          r.data?.is_admin===true ||
-          String(r.data?.is_admin).toLowerCase()==='true'
-        )
-      ){
-        return {ok:true,user:s.user};
+      if(!r.error && (r.data===true || r.data?.is_admin===true || String(r.data?.is_admin).toLowerCase()==='true')){
+        return {ok:true,user:s.user,source:'rpc'};
       }
-      rpcError=r.error||null;
-    }catch(e){
-      rpcError=e;
-    }
+      if(r.error) lastError=r.error;
+    }catch(e){ lastError=e; }
 
-    // Fallback: use only columns that exist in public.profiles.
     try{
-      const q=await sb
-        .from('profiles')
-        .select('id,is_admin,role,is_banned')
+      const q=await sb.from('profiles')
+        .select('id,username,auth_email,is_admin,role,is_banned')
         .eq('id',s.user.id)
         .maybeSingle();
+      if(!q.error){
+        const p=q.data;
+        if(p && p.is_banned!==true && (p.is_admin===true || ['admin','owner'].includes(String(p.role||'').toLowerCase()))){
+          return {ok:true,user:s.user,profile:p,source:'profile'};
+        }
+        if(p) return {ok:false,reason:'not_admin',profile:p,user:s.user,error:lastError};
+      }else lastError=lastError||q.error;
+    }catch(e){ lastError=lastError||e; }
 
-      if(q.error) throw q.error;
-
-      const profile=q.data;
-
-      if(
-        profile &&
-        profile.is_banned!==true &&
-        (
-          profile.is_admin===true ||
-          ['admin','owner'].includes(
-            String(profile.role||'').toLowerCase()
-          )
-        )
-      ){
-        return {ok:true,user:s.user,profile};
-      }
-    }catch(e){
-      rpcError=rpcError||e;
-    }
-
-    return {ok:false,reason:rpcError?'rpc':'not_admin',error:rpcError};
+    return {ok:false,reason:lastError?'rpc':'not_admin',error:lastError,user:s.user};
   }
   async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
-  function denied(reason){
-    document.body.innerHTML=`<main class="admin-denied"><div class="denied-icon"><i class="fa-solid ${reason==='login'?'fa-right-to-bracket':'fa-lock'}"></i></div><h1>${reason==='login'?'Login diperlukan':'Akses ditolak'}</h1><p>${reason==='login'?'Sesi login tidak ditemukan. Login kembali dengan akun admin.':'Akun ini belum memiliki hak administrator.'}</p><a href="../login.html?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> ${reason==='login'?'Login':'Kembali'}</a></main>`;
+  function denied(reason, detail){
+    const email=window.PasTeleAdmin?.__lastEmail||'';
+    const msg=reason==='login'
+      ? 'Sesi login admin tidak ditemukan. Logout lalu login kembali.'
+      : reason==='rpc'
+        ? `Pengecekan admin gagal${detail?.message?`: ${detail.message}`:''}`
+        : 'Akun login ditemukan, tetapi belum lolos hak administrator.';
+    document.body.innerHTML=`<main class="admin-denied">
+      <div><div class="denied-icon"><i class="fa-solid ${reason==='login'?'fa-right-to-bracket':'fa-lock'}"></i></div>
+      <h1>${reason==='login'?'Login diperlukan':'Akses ditolak'}</h1>
+      <p>${esc(msg)}</p>
+      ${email?`<small>Login: ${esc(email)}</small>`:''}
+      <br><br><a href="../login.html?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
+    </main>`;
   }
   async function rpc(name,args={}){const r=await sb.rpc(name,args);if(r.error)throw r.error;return rows(r.data);}
   async function call(name,args={}){const r=await sb.rpc(name,args);if(r.error)throw r.error;return r.data;}
