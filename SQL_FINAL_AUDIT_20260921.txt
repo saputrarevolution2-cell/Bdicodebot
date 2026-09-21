@@ -1,9 +1,0 @@
-PasTele SQL final audit
-- JS syntax: all 84 JS files in source ZIP passed node --check.
-- Canonical PasteLink password RPC uses extensions.digest(convert_to(...), 'sha256').
-- Added CREATE SCHEMA IF NOT EXISTS extensions before pgcrypto.
-- Added hard reset of all public create_pastelink_content and verify_pastelink_password overloads before rebuilding canonical functions.
-- Removed the transient legacy 8-argument create_pastelink_content definition.
-- handle_new_user is defined before the final on_auth_user_created trigger.
-- Compatibility columns for purchases/orders are created before their validation block.
-- Added a post-migration verification SQL file.
