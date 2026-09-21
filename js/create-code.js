@@ -2776,21 +2776,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const bytes=new Uint32Array(4); crypto.getRandomValues(bytes);
     return Array.from(bytes, n => SHORT_ALPHABET[n % SHORT_ALPHABET.length]).join("");
   }
-  async function createUniqueShortCode(client){
-    for(let attempt=0;attempt<24;attempt++){
-      const key=randomShortCode();
-      const checks=await Promise.all([
-        window.PasTeleDB.rpc("get_code_by_slug",{p_slug:key}),
-        window.PasTeleDB.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"channel"}),
-        window.PasTeleDB.rpc("get_telegram_content_by_slug",{p_slug:key,p_type:"group"}),
-        window.PasTeleDB.rpc("get_pastelink_by_slug",{p_slug:key})
-      ]);
-      if(checks.every(q=>!q?.error && !((Array.isArray(q.data)?q.data[0]:q.data)?.found))) return key;
-    }
-    throw new Error("Gagal membuat kode publik unik. Silakan coba lagi.");
-  }
-
-  const slugify = (value) =>
+  async function createUniqueShortCode(){
+  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes=new Uint32Array(8);
+  crypto.getRandomValues(bytes);
+  let slug="";
+  for(let i=0;i<4;i++) slug+=alphabet[bytes[i]%alphabet.length];
+  return slug;
+}
+const slugify = (value) =>
     String(value || "")
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -3169,7 +3163,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("BOT_NOT_FOUND_OR_INACTIVE");
       }
 
-      const slug = await createUniqueShortCode(client);
+      const slug = await createUniqueShortCode();
 
       const { data, error } = await window.PasTeleDB.rpc("create_code_content", {
         p_title: values.title,
