@@ -1,5 +1,31 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
+
+-- ============================================================
+-- HARD RESET: remove stale PasteLink password RPC overloads.
+-- This prevents an older live function from retaining an
+-- unqualified digest(text, unknown) call.
+-- The canonical versions are recreated later in this script.
+-- ============================================================
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, p.proname,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public'
+      AND p.proname IN ('create_pastelink_content','verify_pastelink_password')
+  LOOP
+    EXECUTE format(
+      'DROP FUNCTION IF EXISTS %I.%I(%s) CASCADE',
+      r.nspname, r.proname, r.args
+    );
+  END LOOP;
+END $$;
+
+
 /*
 ====================================================================
 PasTele / TeleCod — DATABASE MASTER SINGLE SQL
@@ -57,6 +83,7 @@ SUPABASE MASTER FULL FIX — IDEMPOTENT
 
 BEGIN;
 
+CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
 -- ============================================================
@@ -2845,21 +2872,8 @@ USING (
   OR (visibility='public' AND lower(coalesce(access_type,'free'))='free')
 );
 
-CREATE OR REPLACE FUNCTION public.create_pastelink_content(
-  p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',
-  p_price numeric DEFAULT 0,p_description text DEFAULT '',p_tags text[] DEFAULT '{}',
-  p_expires_at timestamptz DEFAULT NULL
-) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public, extensions AS $$
-DECLARE uid uuid:=auth.uid(); a text:=lower(btrim(coalesce(p_access_type,'free'))); pr numeric:=coalesce(p_price,0); r public.pastelinks;
-BEGIN
- IF btrim(coalesce(p_title,''))='' OR btrim(coalesce(p_content,''))='' THEN RAISE EXCEPTION 'TITLE_AND_CONTENT_REQUIRED'; END IF;
- IF a NOT IN ('free','paid') THEN RAISE EXCEPTION 'INVALID_ACCESS_TYPE'; END IF;
- IF a='paid' AND uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED_FOR_PAID'; END IF;
- IF a='free' THEN pr:=0; ELSE IF pr<2000 OR pr>100000 OR mod(pr,1000)<>0 THEN RAISE EXCEPTION 'INVALID_PAID_PRICE'; END IF; END IF;
- INSERT INTO public.pastelinks(user_id,slug,title,content_html,visibility,password_hash,expires_at,description,tags,allow_comments,allow_download,show_raw,anonymous,views,access_type,price)
- VALUES(uid,btrim(p_slug),btrim(p_title),p_content,'public',NULL,p_expires_at,coalesce(p_description,''),coalesce(p_tags,'{}'),true,true,true,uid IS NULL,0,a,pr) RETURNING * INTO r;
- RETURN jsonb_build_object('ok',true,'id',r.id,'slug',r.slug,'access_type',r.access_type,'price',r.price);
-END $$;
+-- Legacy 8-argument PasteLink creator intentionally removed.
+-- Canonical 9-argument password-aware creator is defined in the final section.
 
 CREATE OR REPLACE FUNCTION public.create_code_content(
  p_title text,p_content text,p_slug text,p_access_type text DEFAULT 'free',p_price numeric DEFAULT 0,p_description text DEFAULT '',p_approved_bot_id uuid DEFAULT NULL
@@ -7438,5 +7452,28 @@ AFTER INSERT OR UPDATE OF status, paid_at
 ON public.orders
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_account_plan_after_payment();
+
+
+-- ============================================================
+-- FINAL PASSWORD HASH AUDIT
+-- Only the canonical PasteLink password functions may contain
+-- digest(). Both use extensions.digest(bytea,text).
+-- ============================================================
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, p.proname,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public'
+      AND pg_get_functiondef(p.oid) ~* '(^|[^.[:alnum:]_])digest[[:space:]]*\('
+  LOOP
+    RAISE NOTICE 'Unqualified digest reference remains in %.%(%)',
+      r.nspname, r.proname, r.args;
+  END LOOP;
+END $$;
+
 
 COMMIT;
