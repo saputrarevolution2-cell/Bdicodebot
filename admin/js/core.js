@@ -17,13 +17,31 @@
   const toast = (message, type='ok') => { const e=$('#toast'); if(!e)return; e.textContent=message; e.className='admin-toast '+type; clearTimeout(window.__ptToast); window.__ptToast=setTimeout(()=>e.className='admin-toast',3200); };
   const setLoading = (el,msg='Memuat data...') => { if(el) el.innerHTML=`<div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><span>${esc(msg)}</span></div>`; };
   const errText = e => e?.message || e?.details || e?.hint || 'Database error';
+  const ADMIN_SESSION_KEY='pastele-admin-session-v1';
+  async function restoreAdminSession(){
+    try{
+      const raw=sessionStorage.getItem(ADMIN_SESSION_KEY);
+      if(!raw) return null;
+      const saved=JSON.parse(raw);
+      if(!saved?.access_token || !saved?.refresh_token) return null;
+      const r=await sb.auth.setSession({access_token:saved.access_token,refresh_token:saved.refresh_token});
+      if(r?.error) throw r.error;
+      return r?.data?.session||null;
+    }catch(e){
+      try{sessionStorage.removeItem(ADMIN_SESSION_KEY)}catch(_){}
+      return null;
+    }
+  }
   async function session(){
     const r=await sb.auth.getSession();
     if(r.error) throw r.error;
-    return r.data?.session || null;
+    if(r.data?.session?.user) return r.data.session;
+    return await restoreAdminSession();
   }
-  async function waitForSession(timeout=5000){
+  async function waitForSession(timeout=8000){
     const direct=await session(); if(direct?.user) return direct;
+    const restored=await restoreAdminSession(); if(restored?.user) return restored;
+    try{ const rr=await sb.auth.refreshSession(); if(rr?.data?.session?.user) return rr.data.session; }catch(_){}
     return new Promise(resolve=>{
       let done=false; let sub=null;
       const finish=s=>{if(done)return;done=true;clearTimeout(timer);try{sub?.unsubscribe()}catch{}resolve(s||null)};
@@ -58,7 +76,7 @@
     return {ok:false,reason:lastError?'rpc':'not_admin',error:lastError,user:s.user};
   }
 
-  async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
+  async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason,g.error||g.profile);return null;} return g; }
   function denied(reason, detail){
     const email=window.PasTeleAdmin?.__lastEmail||window.PasTeleAdmin?.__sessionEmail||'';
     const msg=reason==='login'
@@ -71,7 +89,7 @@
       <h1>${reason==='login'?'Login diperlukan':'Akses ditolak'}</h1>
       <p>${esc(msg)}</p>
       ${email?`<small>Login: ${esc(email)}</small>`:''}
-      <br><br><a href="login/?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
+      <br><br><a href="/admin/login/?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
     </main>`;
   }
   async function rpc(name,args={}){const r=await sb.rpc(name,args);if(r.error)throw r.error;return rows(r.data);}
