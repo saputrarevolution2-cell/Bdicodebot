@@ -71,7 +71,7 @@
       <h1>${reason==='login'?'Login diperlukan':'Akses ditolak'}</h1>
       <p>${esc(msg)}</p>
       ${email?`<small>Login: ${esc(email)}</small>`:''}
-      <br><br><a href="../login.html?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
+      <br><br><a href="login/?redirect=${encodeURIComponent(location.pathname+location.search)}" class="btn primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login ulang</a></div>
     </main>`;
   }
   async function rpc(name,args={}){const r=await sb.rpc(name,args);if(r.error)throw r.error;return rows(r.data);}
