@@ -626,3 +626,7 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
   user-select:none!important;
 }
 #createForm #togglePassword i{pointer-events:none!important}
+
+
+/* Final publish-result visibility fix */
+.create-result:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important}
