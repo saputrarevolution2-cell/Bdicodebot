@@ -1,77 +1,23 @@
 (() => {
 'use strict';
-const A=window.PasTeleAdmin,$=A.$; let data=[];
-const sourceLabel=s=>({products:'Product',pastelinks:'PasteLink',telegram_products:'Code',telegram_channels:'Telegram'}[s]||s||'Content');
+const A=window.PasTeleAdmin,$=A.$;let data=[];
+const sourceLabel=s=>({products:'Product',pastelinks:'PasteLink',telegram_products:'Code',telegram_channels:'Telegram',pastes:'Paste'}[s]||s||'Content');
 const typeLabel=t=>({product:'Product',link:'Product',pastelink:'PasteLink',code:'Code',channel:'Channel',group:'Group',paste:'Paste'}[String(t||'').toLowerCase()]||t||'-');
-
-async function load(){
-  const box=$('#adminContent'); A.setLoading(box);
-  try{
-    if(!await A.requireAdmin())return;
-    data=await A.rpc('admin_content',{p_limit:500,p_offset:0});
-    render();
-  }catch(e){
-    box.innerHTML=`<div class="empty error-state"><strong>Gagal memuat marketplace content</strong><span>${A.esc(A.errText(e))}</span><button class="btn" id="retry">Coba lagi</button></div>`;
-    $('#retry')?.addEventListener('click',load);
-  }
-}
-function render(){
-  const box=$('#adminContent');
-  box.innerHTML=`<div class="admin-toolbar">
-    <div class="toolbar-title"><i class="fa-solid fa-boxes-stacked"></i><div><strong>Marketplace Products</strong><span id="count">${data.length} content</span></div></div>
-    <div class="toolbar-tools"><input id="search" class="admin-input" placeholder="Cari judul / slug / ID...">
-    <select id="source" class="admin-input"><option value="">Semua jenis</option><option value="products">Product</option><option value="pastelinks">PasteLink</option><option value="telegram_products">Code</option><option value="telegram_channels">Channel / Group</option></select>
-    <button class="btn" id="reload"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
-  </div><div id="adminTable"></div>`;
-  paint(data);
-  $('#search').addEventListener('input',filter);
-  $('#source').addEventListener('change',filter);
-  $('#reload').onclick=load;
-}
-function filter(){
-  const q=($('#search').value||'').toLowerCase(), src=$('#source').value;
-  paint(data.filter(r=>(!src||r.source===src)&&(!q||`${r.title||''} ${r.slug||''} ${r.id||''} ${r.owner_id||''}`.toLowerCase().includes(q))));
-}
-function paint(rows){
-  $('#count').textContent=`${rows.length} content`;
-  A.table($('#adminTable'),rows,[
-    {label:'Content',render:r=>`<strong>${A.esc(r.title||'-')}</strong><small>${A.esc(sourceLabel(r.source))} · ${A.esc(r.slug||r.id)}</small>`},
-    {label:'Type',render:r=>A.esc(typeLabel(r.type))},
-    {label:'Harga',render:r=>A.money(r.price)},
-    {label:'Status',render:r=>`<span class="status">${A.esc(r.status||'-')}</span>`},
-    {label:'Owner',render:r=>A.esc(r.owner_id||r.user_id||'-')},
-    {label:'Views / Sales',render:r=>`${Number(r.views||0).toLocaleString('id-ID')} / ${Number(r.sales_count||0).toLocaleString('id-ID')}`},
-    {label:'Created',render:r=>r.created_at?new Date(r.created_at).toLocaleString('id-ID'):'-'}
-  ],r=>`<button class="btn small" data-op="edit" data-id="${A.esc(r.id)}">Edit</button> <button class="btn small danger" data-op="delete" data-id="${A.esc(r.id)}">Hapus</button>`);
-}
-function edit(r){
-  const title=prompt('Judul:',r.title||''); if(title===null)return null;
-  const desc=prompt('Deskripsi:',r.description||''); if(desc===null)return null;
-  const priceRaw=prompt('Harga (0 = Free):',String(r.price??0)); if(priceRaw===null)return null;
-  const price=Number(priceRaw); if(!Number.isFinite(price)||price<0)throw Error('Harga tidak valid.');
-  const status=prompt('Status / visibility:',r.status||'published'); if(status===null)return null;
-  const slug=prompt('Slug (kosong = tetap):',r.slug||''); if(slug===null)return null;
-  return {title,desc,price,status,slug};
-}
-document.addEventListener('click',async e=>{
-  const b=e.target.closest('[data-op][data-id]'); if(!b)return;
-  const r=data.find(x=>String(x.id)===String(b.dataset.id)); if(!r)return;
-  try{
-    b.disabled=true;
-    if(b.dataset.op==='delete'){
-      if(!confirm(`Hapus ${sourceLabel(r.source)} "${r.title||r.id}"?`))return;
-      await A.call('admin_delete_content',{p_id:r.id,p_source:r.source||'products'});
-      A.toast('Content berhasil dihapus.');
-    }else{
-      const v=edit(r); if(!v)return;
-      await A.call('admin_update_content',{
-        p_id:r.id,p_status:v.status,p_title:v.title,p_description:v.desc,
-        p_source:r.source||'products',p_price:v.price,p_slug:v.slug
-      });
-      A.toast('Content berhasil diperbarui.');
-    }
-    await load();
-  }catch(x){A.toast(A.errText(x),'error')}finally{b.disabled=false}
-});
+function esc(v){return A.esc(v)}
+async function load(){const box=$('#adminContent');A.setLoading(box);try{if(!await A.requireAdmin())return;data=await A.rpc('admin_content',{p_limit:500,p_offset:0});render()}catch(e){box.innerHTML=`<div class="empty error-state"><i class="fa-solid fa-triangle-exclamation"></i><strong>Gagal memuat marketplace</strong><span>${esc(A.errText(e))}</span><button class="btn" id="retry">Coba lagi</button></div>`;$('#retry')?.addEventListener('click',load)}}
+function render(){const box=$('#adminContent');box.innerHTML=`<div class="admin-toolbar"><div class="toolbar-title"><i class="fa-solid fa-boxes-stacked"></i><div><strong>Products Marketplace</strong><span id="count">${data.length} content</span></div></div><div class="toolbar-tools"><input id="search" class="admin-input" placeholder="Cari judul / owner / username / slug / ID..."><select id="source" class="admin-input"><option value="">Semua</option><option value="products">Product</option><option value="pastelinks">PasteLink</option><option value="telegram_products">Code</option><option value="telegram_channels">Channel / Group</option><option value="pastes">Paste</option></select><button class="btn" id="reload"><i class="fa-solid fa-rotate"></i> Refresh</button></div></div><div id="adminTable"></div>`;paint(data);$('#search').oninput=filter;$('#source').onchange=filter;$('#reload').onclick=load}
+function filter(){const q=($('#search').value||'').toLowerCase(),src=$('#source').value;paint(data.filter(r=>(!src||r.source===src)&&(!q||`${r.title||''} ${r.slug||''} ${r.id||''} ${r.owner_username||''} ${r.owner_id||''}`.toLowerCase().includes(q))))}
+function paint(rows){$('#count').textContent=`${rows.length} content`;A.table($('#adminTable'),rows,[
+{label:'Content',render:r=>`<strong>${esc(r.title||'-')}</strong><small>${esc(sourceLabel(r.source))} · ${esc(r.slug||r.id)}</small>`},
+{label:'Owner',render:r=>`<strong>${esc(r.owner_username||'-')}</strong><small>${esc(r.owner_id||'-')}</small>`},
+{label:'Type',render:r=>esc(typeLabel(r.type))},
+{label:'Harga',render:r=>A.money(r.price)},
+{label:'Status',render:r=>`<span class="status ${['published','active','public'].includes(String(r.status).toLowerCase())?'success':''}">${esc(r.status||'-')}</span>`},
+{label:'Views / Sales',render:r=>`${Number(r.views||0).toLocaleString('id-ID')} / ${Number(r.sales_count||0).toLocaleString('id-ID')}`},
+{label:'Content',render:r=>`<button class="btn small" data-view="${esc(r.id)}" data-source="${esc(r.source||'')}"><i class="fa-solid fa-eye"></i> Lihat</button>`}
+],r=>`<button class="btn small primary" data-edit="${esc(r.id)}" data-source="${esc(r.source||'')}"><i class="fa-solid fa-pen"></i> Edit</button> <button class="btn small danger" data-delete="${esc(r.id)}" data-source="${esc(r.source||'')}"><i class="fa-solid fa-trash"></i> Hapus</button>`)}
+function edit(r){const title=prompt('Judul:',r.title||'');if(title===null)return;const price=prompt('Harga:',String(r.price??0));if(price===null)return;const content=prompt('Isi Content:',String(r.content_body??r.content??''));if(content===null)return;const desc=prompt('Deskripsi:',r.description||'');if(desc===null)return;const status=prompt('Status:',r.status||'published');if(status===null)return;return{title,price:Number(price),content,desc,status}}
+function showContent(r){const c=String(r.content_body??r.content??'').trim();alert(c||'Content kosong / tidak dikembalikan oleh RPC admin_content.')}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-edit],[data-delete],[data-view]');if(!b)return;const r=data.find(x=>String(x.id)===String(b.dataset.edit||b.dataset.delete||b.dataset.view)&&String(x.source||'')===String(b.dataset.source||''));if(!r)return;try{b.disabled=true;if(b.dataset.view){showContent(r);return}if(b.dataset.delete){if(!confirm(`Hapus ${sourceLabel(r.source)} "${r.title||r.id}"?`))return;await A.call('admin_delete_content',{p_id:r.id,p_source:r.source||'products'});A.toast('Content berhasil dihapus.')}else{const v=edit(r);if(!v)return;if(!Number.isFinite(v.price)||v.price<0)throw Error('Harga tidak valid.');await A.call('admin_update_content',{p_id:r.id,p_status:v.status,p_title:v.title,p_description:v.desc,p_source:r.source||'products',p_price:v.price,p_content:v.content});A.toast('Content berhasil diperbarui.')}await load()}catch(x){A.toast(A.errText(x),'error')}finally{b.disabled=false}});
 document.addEventListener('DOMContentLoaded',load);
 })();
