@@ -574,20 +574,18 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
 #createForm #contentEditor .pt-italic{font-style:italic!important}
 #createForm #contentEditor .pt-underline{text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:2px!important}
 
+
 /* PasteLink — plain text editor + double-tap URL link */
-#createForm .pt-editor-toolbar,
-#createForm .pt-tool{
-  display:none!important;
+.pt-editor-content{
+  -webkit-user-select:text!important;
+  user-select:text!important;
+  touch-action:manipulation;
+  -webkit-touch-callout:default;
 }
-#createForm #contentEditor .pt-editor-content{
-  font-weight:400!important;
-  font-style:normal!important;
-  text-decoration:none!important;
-}
-#createForm #contentEditor .pt-auto-link,
-#createForm #contentEditor a{
-  color:var(--primary,#2563eb)!important;
+.pt-editor-content a{
+  color:var(--primary)!important;
   text-decoration:underline!important;
+  text-decoration-thickness:1px!important;
   text-underline-offset:2px!important;
   cursor:pointer!important;
 }
