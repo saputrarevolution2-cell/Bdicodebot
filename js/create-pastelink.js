@@ -2808,212 +2808,120 @@ function initPasteLinkEditor(){
   if(!ed||ed.dataset.ready)return;
   ed.dataset.ready="1";
 
-  let savedRange=null;
-  let restoring=false;
-  const inside=r=>!!r && (r.commonAncestorContainer===ed || ed.contains(r.commonAncestorContainer));
-
-  function saveSelection(){
-    if(restoring)return savedRange;
-    const sel=window.getSelection();
-    if(!sel||!sel.rangeCount)return savedRange;
-    const r=sel.getRangeAt(0);
-    if(inside(r)) savedRange=r.cloneRange();
-    return savedRange;
-  }
-  function restoreSelection(){
-    if(!savedRange||!inside(savedRange))return false;
-    try{
-      restoring=true;
-      const sel=window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(savedRange.cloneRange());
-      return true;
-    }catch(_){return false}
-    finally{restoring=false}
-  }
   function sync(){
     const h=document.getElementById("contentHtml");
     if(h)h.value=sanitizeContentHTML(ed.innerHTML);
   }
-  function nodeFromRange(range){
-    let n=range?.commonAncestorContainer;
-    if(n?.nodeType===3)n=n.parentElement;
-    return n;
+
+  // Hanya fitur link yang dipertahankan.
+  // Teks seperti https://example.com atau www.example.com:
+  // klik/ketuk 2x pada teks tersebut => otomatis menjadi <a>.
+  const LINK_TOKEN_RE=/^(?:(?:https?:\/\/|www\.)[^\s<>"'`]+)$/i;
+
+  function normalizeUrl(raw){
+    let u=String(raw||"").trim();
+    // Buang tanda baca yang biasanya ikut terseleksi di ujung URL.
+    u=u.replace(/[),.;!?]+$/g,"");
+    if(/^www\./i.test(u))u="https://"+u;
+    return /^https?:\/\//i.test(u) ? u : null;
   }
-  function closestFormat(selector){
-    if(!savedRange)return null;
-    const n=nodeFromRange(savedRange);
-    const el=n?.closest?.(selector);
-    return el&&ed.contains(el)?el:null;
+
+  function textNodeAtPoint(root,x,y){
+    let node=null;
+    if(document.caretRangeFromPoint){
+      try{node=document.caretRangeFromPoint(x,y)?.startContainer||null}catch(_){}
+    }else if(document.caretPositionFromPoint){
+      try{node=document.caretPositionFromPoint(x,y)?.offsetNode||null}catch(_){}
+    }
+    if(node?.nodeType===3)return node;
+    return null;
   }
-  function unwrap(el){
-    if(!el||!ed.contains(el))return false;
-    const parent=el.parentNode;
-    if(!parent)return false;
-    while(el.firstChild) parent.insertBefore(el.firstChild,el);
-    el.remove();
+
+  function linkifyToken(textNode, offset){
+    if(!textNode||textNode.nodeType!==3||!ed.contains(textNode))return false;
+    const text=textNode.nodeValue||"";
+    if(offset<0||offset>text.length)return false;
+
+    let left=offset, right=offset;
+    while(left>0 && !/\s/.test(text[left-1]))left--;
+    while(right<text.length && !/\s/.test(text[right]))right++;
+
+    const token=text.slice(left,right);
+    const url=normalizeUrl(token);
+    if(!url||!LINK_TOKEN_RE.test(token))return false;
+
+    // Jangan membuat link di dalam link.
+    const parent=textNode.parentElement;
+    if(parent?.closest("a"))return false;
+
+    // Jika URL mengandung tanda baca akhir, sisakan tanda baca di luar link.
+    const clean=url.replace(/^https?:\/\//i,"");
+    let tokenEnd=right;
+    while(tokenEnd>left && /[),.;!?]+$/.test(text.slice(left,tokenEnd)))tokenEnd--;
+
+    const range=document.createRange();
+    range.setStart(textNode,left);
+    range.setEnd(textNode,tokenEnd);
+    const a=document.createElement("a");
+    a.href=url;
+    a.target="_blank";
+    a.rel="noopener noreferrer nofollow";
+    a.className="pt-auto-link";
+    a.appendChild(range.extractContents());
+    range.insertNode(a);
+    sync();
     return true;
   }
-  function selectNodeContents(el){
-    const sel=window.getSelection();
-    const r=document.createRange();
-    r.selectNodeContents(el);
-    sel.removeAllRanges();sel.addRange(r);
-    savedRange=r.cloneRange();
-  }
-  function wrapSelection(className,tag="span"){
-    if(!restoreSelection())return false;
-    const sel=window.getSelection();
-    if(!sel||!sel.rangeCount)return false;
-    const r=sel.getRangeAt(0);
-    if(r.collapsed||!inside(r))return false;
-    const el=document.createElement(tag);
-    el.className=className;
+
+  function linkifyFromEvent(e){
+    let n=textNodeAtPoint(ed,e.clientX,e.clientY);
+    if(!n){
+      const t=e.target?.nodeType===3?e.target:e.target?.firstChild;
+      if(t?.nodeType===3)n=t;
+    }
+    if(!n)return false;
+
+    let offset=0;
     try{
-      const frag=r.extractContents();
-      if(!frag.textContent?.trim())return false;
-      el.appendChild(frag);
-      r.insertNode(el);
-      selectNodeContents(el);
-      return true;
-    }catch(_){return false}
-  }
-  function formatInline(cmd,className){
-    if(!restoreSelection())return false;
-    const sel=window.getSelection();
-    if(!sel||!sel.rangeCount)return false;
-    const r=sel.getRangeAt(0);
-    if(r.collapsed||!inside(r))return false;
-
-    const existing=closestFormat("." + className);
-    if(existing && existing.contains(r.startContainer) && existing.contains(r.endContainer)){
-      unwrap(existing);
-      sync();
-      return true;
+      if(document.caretRangeFromPoint){
+        const r=document.caretRangeFromPoint(e.clientX,e.clientY);
+        if(r?.startContainer===n)offset=r.startOffset;
+      }else if(document.caretPositionFromPoint){
+        const p=document.caretPositionFromPoint(e.clientX,e.clientY);
+        if(p?.offsetNode===n)offset=p.offset;
+      }
+    }catch(_){}
+    if(!offset){
+      // Jika browser tidak memberi offset, gunakan tengah token sebagai fallback.
+      const txt=n.nodeValue||"";
+      offset=Math.max(1,Math.floor(txt.length/2));
     }
-
-    try{
-      const wrapper=document.createElement("span");
-      wrapper.className=className;
-      const frag=r.extractContents();
-      if(!frag.textContent?.trim())return false;
-      wrapper.appendChild(frag);
-      r.insertNode(wrapper);
-      selectNodeContents(wrapper);
-      sync();
-      return true;
-    }catch(_){
-      return false;
-    }
-  }
-  function toggleSpoiler(){
-    const existing=closestFormat(".pt-spoiler");
-    if(existing){
-      existing.classList.toggle("revealed");
-      selectNodeContents(existing);sync();return true;
-    }
-    return wrapSelection("pt-spoiler");
-  }
-  function toggleQuote(){
-    const existing=closestFormat(".pt-quote");
-    if(existing){unwrap(existing);sync();return true}
-    return wrapSelection("pt-quote");
-  }
-  function normalizeFormatting(){
-    // Convert browser-generated inline tags to stable PasTele classes.
-    ed.querySelectorAll("b,strong").forEach(el=>{
-      if(el.classList?.contains("pt-bold"))return;
-      const s=document.createElement("span");s.className="pt-bold";
-      while(el.firstChild)s.appendChild(el.firstChild);
-      el.replaceWith(s);
-    });
-    ed.querySelectorAll("i,em").forEach(el=>{
-      if(el.classList?.contains("pt-italic"))return;
-      const s=document.createElement("span");s.className="pt-italic";
-      while(el.firstChild)s.appendChild(el.firstChild);
-      el.replaceWith(s);
-    });
-    ed.querySelectorAll("u").forEach(el=>{
-      if(el.classList?.contains("pt-underline"))return;
-      const s=document.createElement("span");s.className="pt-underline";
-      while(el.firstChild)s.appendChild(el.firstChild);
-      el.replaceWith(s);
-    });
-    ed.querySelectorAll(".pt-bold .pt-bold,.pt-italic .pt-italic,.pt-underline .pt-underline").forEach(el=>{
-      const p=el.parentNode;
-      while(el.firstChild)p.insertBefore(el.firstChild,el);
-      el.remove();
-    });
-  }
-  function editLink(){
-    if(!restoreSelection()){TC.toast("Pilih teks terlebih dahulu.","info");return false}
-    const existing=closestFormat("a");
-    if(existing){
-      let u=prompt("Masukkan URL tautan:",existing.getAttribute("href")||"https://");
-      if(u===null)return false;
-      u=u.trim();if(/^www\./i.test(u))u="https://"+u;
-      if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return false}
-      existing.setAttribute("href",u);existing.target="_blank";existing.rel="noopener noreferrer nofollow";sync();return true;
-    }
-    const selected=savedRange.toString().trim();
-    let u=prompt("Masukkan URL tautan:",/^https?:\/\//i.test(selected)?selected:"https://");
-    if(u===null)return false;
-    u=u.trim();if(/^www\./i.test(u))u="https://"+u;
-    if(!/^https?:\/\//i.test(u)){TC.toast("URL harus http:// atau https://.","error");return false}
-    if(!restoreSelection())return false;
-    const sel=window.getSelection(),r=sel.getRangeAt(0);
-    if(r.collapsed)return false;
-    const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener noreferrer nofollow";
-    a.appendChild(r.extractContents());r.insertNode(a);selectNodeContents(a);sync();return true;
-  }
-  function apply(cmd){
-    if(cmd!=="link"&&(!savedRange||savedRange.collapsed)){
-      TC.toast("Pilih teks terlebih dahulu.","info");return;
-    }
-    let ok=false;
-    if(cmd==="bold")ok=formatInline("bold","pt-bold");
-    else if(cmd==="italic")ok=formatInline("italic","pt-italic");
-    else if(cmd==="underline")ok=formatInline("underline","pt-underline");
-    else if(cmd==="spoiler")ok=toggleSpoiler();
-    else if(cmd==="blockquote")ok=toggleQuote();
-    else if(cmd==="link")ok=editLink();
-    normalizeFormatting();sync();
-    try{ed.focus({preventScroll:true})}catch(_){ed.focus()}
-    if(!ok&&cmd!=="link")TC.toast("Format gagal diterapkan. Pilih teks yang ingin diformat.","error");
+    return linkifyToken(n,offset);
   }
 
-  document.addEventListener("selectionchange",()=>{
-    const sel=window.getSelection();
-    if(sel&&sel.rangeCount&&inside(sel.getRangeAt(0))&&!sel.getRangeAt(0).collapsed)saveSelection();
-  });
-  ["mouseup","keyup","touchend","pointerup"].forEach(ev=>ed.addEventListener(ev,()=>setTimeout(saveSelection,0),{passive:true}));
-  ed.addEventListener("focusout",()=>setTimeout(saveSelection,0));
-  ed.addEventListener("input",()=>{saveSelection();normalizeFormatting();sync()});
-  ed.addEventListener("paste",()=>setTimeout(()=>{normalizeFormatting();sync()},0));
-  ed.addEventListener("click",e=>{
-    const sp=e.target.closest?.(".pt-spoiler");
-    if(sp&&ed.contains(sp))sp.classList.toggle("revealed");
-  });
-  ed.addEventListener("keydown",e=>{
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
-      e.preventDefault();saveSelection();apply("link");
-    }
+  // Desktop: double-click.
+  ed.addEventListener("dblclick",e=>{
+    if(e.target.closest?.("a"))return;
+    linkifyFromEvent(e);
   });
 
-  document.querySelectorAll("#contentEditor .pt-tool").forEach(btn=>{
-    const run=e=>{
-      e.preventDefault();e.stopPropagation();
-      // Selection is restored from savedRange before the command runs.
-      apply(btn.dataset.cmd);
-      return false;
-    };
-    // pointerdown is enough on modern browsers and avoids a second command.
-    btn.addEventListener("pointerdown",run,{passive:false});
-    btn.addEventListener("keydown",e=>{
-      if(e.key==="Enter"||e.key===" "){run(e);}
-    });
-  });
-  setupPasswordControl();
+  // Mobile: dua tap cepat pada area URL.
+  let lastTap=0;
+  let lastX=0,lastY=0;
+  ed.addEventListener("touchend",e=>{
+    if(e.changedTouches.length!==1)return;
+    const t=e.changedTouches[0],now=Date.now();
+    const close=now-lastTap<420 && Math.abs(t.clientX-lastX)<35 && Math.abs(t.clientY-lastY)<35;
+    lastTap=now;lastX=t.clientX;lastY=t.clientY;
+    if(close){
+      e.preventDefault();
+      linkifyFromEvent(t);
+      lastTap=0;
+    }
+  },{passive:false});
+
+  ed.addEventListener("input",sync);
+  ed.addEventListener("paste",()=>setTimeout(sync,0));
   sync();
 }
 
