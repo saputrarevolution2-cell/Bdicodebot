@@ -16,7 +16,7 @@
     if(!sb) throw new Error("Supabase client belum siap.");
     const {data,error}=await sb.rpc(name,args);
     if(error) throw dbError(error);
-    return unwrap(data);
+    return {data: unwrap(data), error: null};
   }
   async function query(table, builder){
     const sb=client();
