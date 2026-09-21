@@ -34,46 +34,78 @@
   async function isAdmin(){
     const s=await waitForSession();
     if(!s?.user) return {ok:false,reason:'login'};
+
+    const uid=String(s.user.id||'');
+    const email=String(s.user.email||'').trim().toLowerCase();
     let lastError=null;
 
-    // Canonical admin check: authenticated session + profile username=admin + admin role/flag + not banned.
-    try{
-      const r=await sb.rpc("check_admin_username");
-      if(!r.error && r.data){
-        const d=Array.isArray(r.data)?r.data[0]:r.data;
-        if(d?.ok===true){
-          return {ok:true,user:s.user,profile:d,source:'admin_username_rpc'};
-        }
-        if(d) return {ok:false,reason:'not_admin',profile:d,user:s.user};
-      }
-      if(r.error) lastError=r.error;
-    }catch(e){ lastError=e; }
-
-    // Compatibility fallback for databases where the helper RPC has not been installed yet.
+    // 1) Canonical server-side check. This is the authoritative check.
     try{
       const r=await sb.rpc("is_current_user_admin");
-      if(!r.error && (r.data===true || r.data?.is_admin===true || String(r.data?.is_admin).toLowerCase()==='true')){
-        return {ok:true,user:s.user,source:'rpc'};
+      if(!r.error){
+        const v=Array.isArray(r.data)?r.data[0]:r.data;
+        if(v===true || v?.is_admin===true || String(v?.is_admin).toLowerCase()==='true'){
+          return {ok:true,user:s.user,source:'is_current_user_admin'};
+        }
+      }else{
+        lastError=r.error;
       }
-      if(r.error) lastError=lastError||r.error;
+    }catch(e){ lastError=e; }
+
+    // 2) Dedicated username=admin server-side check.
+    // The SQL function must still require auth.uid(), admin role/flag and not-banned.
+    try{
+      const r=await sb.rpc("check_admin_username");
+      if(!r.error){
+        const d=Array.isArray(r.data)?r.data[0]:r.data;
+        if(d?.ok===true){
+          return {ok:true,user:s.user,profile:d,source:'check_admin_username'};
+        }
+        if(d && d.ok===false){
+          return {ok:false,reason:'not_admin',profile:d,user:s.user};
+        }
+      }else{
+        lastError=lastError||r.error;
+      }
     }catch(e){ lastError=lastError||e; }
 
+    // 3) Read-only profile fallback. It never grants admin on username alone.
     try{
       const q=await sb.from('profiles')
         .select('id,username,auth_email,is_admin,role,is_banned')
-        .eq('id',s.user.id).maybeSingle();
+        .eq('id',uid)
+        .maybeSingle();
+
       if(!q.error){
         const p=q.data;
         const usernameOk=String(p?.username||'').trim().toLowerCase()==='admin';
-        const roleOk=p?.is_admin===true || ['admin','owner'].includes(String(p?.role||'').toLowerCase());
-        if(p && usernameOk && p.is_banned!==true && roleOk){
+        const emailOk=!email || !p?.auth_email || String(p.auth_email).trim().toLowerCase()===email;
+        const roleOk=p?.is_admin===true || ['admin','owner'].includes(String(p?.role||'').trim().toLowerCase());
+        const banned=p?.is_banned===true;
+
+        if(p && usernameOk && emailOk && !banned && roleOk){
           return {ok:true,user:s.user,profile:p,source:'profile'};
         }
-        if(p) return {ok:false,reason:'not_admin',profile:p,user:s.user,error:lastError};
-      }else lastError=lastError||q.error;
+        if(p){
+          return {ok:false,reason:'not_admin',profile:p,user:s.user};
+        }
+      }else{
+        lastError=lastError||q.error;
+      }
     }catch(e){ lastError=lastError||e; }
 
-    return {ok:false,reason:lastError?'rpc':'not_admin',error:lastError,user:s.user};
+    // Surface the actual Supabase error instead of the generic "Pengecekan admin gagal".
+    return {
+      ok:false,
+      reason:lastError?'rpc':'not_admin',
+      error:lastError,
+      user:s.user,
+      diagnostic:{
+        user_id:uid,
+        email,
+        rpc_failed:!!lastError
+      }
+    };
   }
   async function requireAdmin(){ const g=await isAdmin(); if(!g.ok){denied(g.reason);return null;} return g; }
   function denied(reason, detail){
