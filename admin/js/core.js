@@ -7,7 +7,7 @@
   };
   if (!window.supabase?.createClient) { console.error('[PasTele Admin] Supabase library missing'); return; }
   const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'pastele-auth' }
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'pastele-admin-auth' }
   });
   window.sb = sb;
   const $ = s => document.querySelector(s);
