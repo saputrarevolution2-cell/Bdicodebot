@@ -281,3 +281,28 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
 
 /* Guest login banner: visible only for users without an active session. */
 #guestLoginTicker[hidden]{display:none!important}
+
+
+/* =========================================================
+   PasteLink — clickable plain URLs
+   ========================================================= */
+.content-box.rich a.pt-content-link,
+.content-box a.pt-content-link{
+  color:var(--primary);
+  text-decoration:underline;
+  text-decoration-thickness:1.5px;
+  text-underline-offset:3px;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  cursor:pointer;
+  transition:color .15s ease,opacity .15s ease;
+}
+.content-box.rich a.pt-content-link:hover,
+.content-box a.pt-content-link:hover{
+  color:var(--primary2);
+  opacity:.9;
+}
+.content-box.rich{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
