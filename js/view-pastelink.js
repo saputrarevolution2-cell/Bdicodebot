@@ -218,7 +218,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         result.errors.push("profiles: " + (e?.message || e));
       }
       try {
-        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        const q = await window.sb.rpc("get_marketplace_public", {p_owner_id:null}).limit(1);
         if (q.error) throw q.error;
         result.marketplace = true;
       } catch (e) {

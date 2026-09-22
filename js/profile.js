@@ -187,7 +187,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         result.errors.push("profiles: " + (e?.message || e));
       }
       try {
-        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        const q = await window.sb.rpc("get_marketplace_public", {p_owner_id:null}).limit(1);
         if (q.error) throw q.error;
         result.marketplace = true;
       } catch (e) {
@@ -3977,15 +3977,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         ),
 
       sb
-        .from("marketplace_public")
-        .select("id", {
-          count: "exact",
-          head: true
+        .rpc("get_marketplace_public", {
+          p_owner_id: profile.id
         })
-        .eq(
-          "owner_id",
-          profile.id
-        )
     ]);
 
     const errors = [
@@ -4022,9 +4016,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
 
     const totalContent =
-      Number(
-        contentResult?.count || 0
-      );
+      Array.isArray(contentResult?.data)
+        ? contentResult.data.length
+        : Number(contentResult?.count || 0);
 
     setText(
       "followersCount",
@@ -4592,32 +4586,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
 
       const result =
-        await sb
-          .from("marketplace_public")
-          .select(`
-            id,
-            slug,
-            title,
-            type,
-            access_type,
-            price,
-            views,
-            sales_count,
-            created_at,
-            description,
-            owner_id
-          `)
-          .eq(
-            "owner_id",
-            profile.id
-          )
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          )
-          .limit(500);
+        await sb.rpc("get_marketplace_public", {
+          p_owner_id: profile.id
+        });
 
       if (result.error) {
         throw result.error;

@@ -187,7 +187,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         result.errors.push("profiles: " + (e?.message || e));
       }
       try {
-        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        const q = await window.sb.rpc("get_marketplace_public", {p_owner_id:null}).limit(1);
         if (q.error) throw q.error;
         result.marketplace = true;
       } catch (e) {
@@ -3195,14 +3195,14 @@ document.addEventListener(
                         }
                     }
                     if (t === "code") {
-                        const { data } = await client.from("telegram_products").select("slug,access_type,price").eq("id", id).maybeSingle();
+                        const { data } = await client.rpc("get_public_telegram_product_meta", {p_id:id}).maybeSingle();
                         if (data?.slug) {
                             const paid = String(data.access_type || "free").toLowerCase() === "paid" || Number(data.price || 0) > 0;
                             return appendGuest(`${location.origin}/c/${paid ? "p" : "f"}/${encodeURIComponent(data.slug)}`);
                         }
                     }
                     if (t === "channel" || t === "group") {
-                        const { data } = await client.from("telegram_channels").select("slug,type,access_type,price").eq("id", id).maybeSingle();
+                        const { data } = await client.rpc("get_public_telegram_channel_meta", {p_id:id}).maybeSingle();
                         if (data?.slug) {
                             const actual = String(data.type || t).toLowerCase() === "group" ? "group" : "channel";
                             const paid = String(data.access_type || "free").toLowerCase() === "paid" || Number(data.price || 0) > 0;

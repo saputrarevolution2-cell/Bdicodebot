@@ -187,7 +187,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         result.errors.push("profiles: " + (e?.message || e));
       }
       try {
-        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        const q = await window.sb.rpc("get_marketplace_public", {p_owner_id:null}).limit(1);
         if (q.error) throw q.error;
         result.marketplace = true;
       } catch (e) {
@@ -2885,17 +2885,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         return true;
       }
       console.warn("[PasTele] get_code_by_slug RPC failed; trying direct published lookup.", detailBySlug.error);
-      const legacy = await client
-        .from("telegram_products")
-        .select("id")
-        .ilike("slug", normalizedRequestedSlug)
-        .in("status", ["published", "active", "live"])
-        .maybeSingle();
-      if (legacy.error) throw detailBySlug.error;
-      if (!legacy.data?.id) return false;
+      const legacy = await client.rpc(
+        "resolve_telegram_product_slug",
+        { p_slug: normalizedRequestedSlug }
+      );
+      if (legacy.error) throw legacy.error;
+      if (!legacy.data) return false;
       const detail = await window.PasTeleDB.rpc("get_market_item_detail", {
         p_type: "telegram_product",
-        p_id: legacy.data.id
+        p_id: legacy.data
       });
       if (detail.error) throw detail.error;
       item = Array.isArray(detail.data) ? detail.data[0] : detail.data;

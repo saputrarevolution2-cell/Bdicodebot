@@ -4186,10 +4186,14 @@ bindMarketplaceBuyButtons();
 
       if (codeIds.length) {
         try {
-          const r = await client
-            .from("telegram_products")
-            .select("id,bot_username,product_type")
-            .in("id", codeIds);
+          const rows = [];
+          for (const id of codeIds) {
+            const rr = await client.rpc("get_public_telegram_product_meta", {p_id:id});
+            if (rr.error) throw rr.error;
+            const row = Array.isArray(rr.data) ? rr.data[0] : rr.data;
+            if (row) rows.push(row);
+          }
+          const r = {error:null,data:rows};
 
           if (!r.error) {
             const m = new Map(
@@ -4214,10 +4218,14 @@ bindMarketplaceBuyButtons();
 
       if (channelIds.length) {
         try {
-          const r = await client
-            .from("telegram_channels")
-            .select("id,username,name,type,description")
-            .in("id", channelIds);
+          const rows = [];
+          for (const id of channelIds) {
+            const rr = await client.rpc("get_public_telegram_channel_meta", {p_id:id});
+            if (rr.error) throw rr.error;
+            const row = Array.isArray(rr.data) ? rr.data[0] : rr.data;
+            if (row) rows.push(row);
+          }
+          const r = {error:null,data:rows};
 
           if (!r.error) {
             const m = new Map(

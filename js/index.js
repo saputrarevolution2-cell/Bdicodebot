@@ -222,15 +222,9 @@
        * Canonical public source from database.sql.
        * Required fields exist in marketplace_public.
        */
-      const { data, error } = await sb
-        .from("marketplace_public")
-        .select([
-          "id","slug","title","type","access_type","price","thumbnail_url",
-          "description","views","sales_count","category","created_at",
-          "creator_name","creator_username","owner_id"
-        ].join(","))
-        .order("created_at", { ascending:false })
-        .limit(500);
+      const { data, error } = await sb.rpc("get_marketplace_public", {
+        p_owner_id: null
+      });
 
       if (error) throw error;
 

@@ -187,7 +187,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         result.errors.push("profiles: " + (e?.message || e));
       }
       try {
-        const q = await window.sb.from("marketplace_public").select("id").limit(1);
+        const q = await window.sb.rpc("get_marketplace_public", {p_owner_id:null}).limit(1);
         if (q.error) throw q.error;
         result.marketplace = true;
       } catch (e) {
@@ -3046,14 +3046,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       profile = typeof TC.profile === "function" ? await TC.profile() : null;
       if(!profile?.id){ location.replace("login.html"); return; }
 
-      const [products,pastelinks,pastes,codes,channels] = await Promise.all([
-        supabase.from("products").select("id,seller_id,creator_id,title,slug,price,thumbnail_url,type,access_type,category,description,content,views,sales_count,status,created_at,updated_at").or(`creator_id.eq.${profile.id},seller_id.eq.${profile.id}`).order("created_at",{ascending:false}),
-        supabase.from("pastelinks").select("id,user_id,slug,title,description,content_html,access_type,price,visibility,expires_at,views,created_at,updated_at").eq("user_id",profile.id).order("created_at",{ascending:false}),
-        supabase.from("pastes").select("id,owner_id,title,slug,content,visibility,created_at,updated_at").eq("owner_id",profile.id).order("created_at",{ascending:false}),
-        supabase.from("telegram_products").select("id,owner_id,title,slug,type,product_type,access_type,bot_username,telegram_bot_id,price,description,content,thumbnail_url,category,status,views,sales_count,created_at,updated_at").eq("owner_id",profile.id).order("created_at",{ascending:false}),
-        supabase.from("telegram_channels").select("id,owner_id,username,name,type,access_type,telegram_channel_id,description,invite_url,price,category,status,views,sales_count,created_at,updated_at").eq("owner_id",profile.id).order("created_at",{ascending:false})
-      ]);
-      for(const q of [products,pastelinks,pastes,codes,channels]) if(q?.error) throw q.error;
+      const privateResult = await supabase.rpc("get_my_private_content");
+      if(privateResult?.error) throw privateResult.error;
+      const privateData = privateResult?.data || {};
+      const products = {data:Array.isArray(privateData.products) ? privateData.products : [], error:null};
+      const pastelinks = {data:Array.isArray(privateData.pastelinks) ? privateData.pastelinks : [], error:null};
+      const pastes = {data:Array.isArray(privateData.pastes) ? privateData.pastes : [], error:null};
+      const codes = {data:Array.isArray(privateData.codes) ? privateData.codes : [], error:null};
+      const channels = {data:Array.isArray(privateData.channels) ? privateData.channels : [], error:null};
 
       const productItems=(products.data||[]).map(x=>({...x,__type:"product"}));
       const pastelinkItems=(pastelinks.data||[]).map(x=>({...x,__type:"pastelink",status:x.visibility==="public"?"published":"draft"}));
