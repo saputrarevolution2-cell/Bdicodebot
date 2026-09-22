@@ -235,3 +235,36 @@ html[data-theme="dark"] .inline-status.is-selected{color:#6ee7b7}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
+
+/* ============================================================
+   BOT REQUEST — creator submits bot for admin approval
+   ============================================================ */
+.bot-request-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 13px;border:1px dashed var(--line);border-radius:13px;background:var(--surface2)}
+.bot-request-hint{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;font-weight:700}
+.bot-request-hint i{color:var(--primary)}
+.bot-request-btn{min-height:38px;white-space:nowrap}
+.bot-request-modal[hidden]{display:none!important}
+.bot-request-modal{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:18px}
+.bot-request-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.56);backdrop-filter:blur(5px)}
+.bot-request-dialog{position:relative;width:min(560px,100%);max-height:min(90vh,760px);overflow:auto;border:1px solid var(--line);border-radius:22px;background:var(--surface);box-shadow:0 28px 80px rgba(0,0,0,.25);padding:22px}
+.bot-request-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.bot-request-head h2{margin:5px 0 3px;font-size:23px;letter-spacing:-.03em}
+.bot-request-head p{margin:0;color:var(--muted);font-size:11px}
+.bot-request-close{width:38px;height:38px;flex:0 0 38px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);color:var(--text)}
+.bot-request-form .field{margin-bottom:14px}
+.bot-request-form input,.bot-request-form textarea{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--surface2);color:var(--text);outline:none;padding:11px 12px}
+.bot-request-form input{height:43px}
+.bot-request-form textarea{resize:vertical;min-height:100px}
+.bot-request-form input:focus,.bot-request-form textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(34,158,217,.1);background:var(--surface)}
+.bot-request-info{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid rgba(34,158,217,.18);border-radius:12px;background:rgba(34,158,217,.07);color:var(--muted);font-size:10px;line-height:1.55}
+.bot-request-info i{color:var(--primary);margin-top:2px}
+.bot-request-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+body.bot-request-open{overflow:hidden}
+@media(max-width:560px){
+  .bot-request-row{align-items:stretch;flex-direction:column}
+  .bot-request-btn{width:100%}
+  .bot-request-modal{padding:10px}
+  .bot-request-dialog{padding:17px;border-radius:18px}
+  .bot-request-actions{flex-direction:column-reverse}
+  .bot-request-actions .btn{width:100%}
+}
