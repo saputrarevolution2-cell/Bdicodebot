@@ -659,9 +659,13 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         );
       }
       if (typeof data === "boolean") return data;
+      if (data === 0 || data === 1) return Boolean(data);
       const row = unwrapRpcRow(data);
       if (typeof row === "boolean") return row;
+      if (row === 0 || row === 1) return Boolean(row);
       if (typeof row?.available === "boolean") return row.available;
+      if (typeof row?.available === "number" && (row.available === 0 || row.available === 1)) return Boolean(row.available);
+      if (typeof row?.check_email_available === "boolean") return row.check_email_available;
       throw new Error("Respons pengecekan email dari database tidak valid.");
     },
     /* =====================================================
@@ -761,20 +765,17 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
        * Bentuk return dapat berupa boolean
        * atau row { available: boolean }.
        */
-      if (typeof data === "boolean") {
-        return data;
+      if (typeof data === "boolean") return data;
+      if (data === 0 || data === 1) return Boolean(data);
+      const row = unwrapRpcRow(data);
+      if (typeof row === "boolean") return row;
+      if (row === 0 || row === 1) return Boolean(row);
+      if (typeof row?.available === "boolean") return row.available;
+      if (typeof row?.available === "number" && (row.available === 0 || row.available === 1)) {
+        return Boolean(row.available);
       }
-      const row =
-        unwrapRpcRow(data);
-      if (
-        typeof row === "boolean"
-      ) {
-        return row;
-      }
-      if (
-        typeof row?.available === "boolean"
-      ) {
-        return row.available;
+      if (typeof row?.check_username_available === "boolean") {
+        return row.check_username_available;
       }
       /*
        * Jika RPC tidak mengembalikan format

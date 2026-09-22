@@ -2907,7 +2907,15 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
       const email = String(user?.email || '').trim().toLowerCase();
       if (!email) throw new Error('Gmail dari Google tidak ditemukan.');
 
-      const profile = await getProfile(client, user);
+      let profile = await getProfile(client, user);
+      // Auth INSERT -> profile trigger is normally immediate. Retry briefly
+      // for providers/projects where the first profile read races the commit.
+      if (!profile) {
+        for (let attempt = 0; attempt < 4 && !profile; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 350));
+          profile = await getProfile(client, user);
+        }
+      }
       const isNew = looksNewGoogleAccount(user, profile);
 
       if (profile?.is_banned === true) {
