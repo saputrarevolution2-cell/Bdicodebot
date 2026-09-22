@@ -2756,18 +2756,34 @@ async function detailById(kind,id,allowGuestReceipt=false){
    : await window.PasTeleDB.rpc("get_market_item_detail",{p_type:type,p_id:id});
  if(q.error)throw q.error; return Array.isArray(q.data)?q.data[0]:q.data;
 }
+function extractContent(row){
+ const keys=[
+   "content","code","code_content","content_text","code_text",
+   "delivery","body","body_text","source_code","payload"
+ ];
+ for(const key of keys){
+   const value=row?.[key];
+   if(value!==undefined && value!==null && String(value).length>0) return String(value);
+ }
+ return "";
+}
+function normalizeCodeItem(item,detail){
+ const base={...(item||{}),...(detail||{})};
+ const detailContent=extractContent(detail);
+ const originalContent=extractContent(item);
+ if(detailContent) base.content=detailContent;
+ else if(originalContent) base.content=originalContent;
+ return base;
+}
+function isPaid(item){return String(item?.access_type||"free").toLowerCase()==="paid"||Number(item?.price||0)>0}
 async function refreshItem(kind,item){
  if(!item?.id)return item;
  try{
    const params=new URLSearchParams(location.search);
    const receipt=params.get("purchase_access")==="1" && !!String(params.get("guest_token")||"").trim();
-   return await detailById(kind,item.id,receipt);
+   const detail=await detailById(kind,item.id,receipt);
+   return kind==="code" ? normalizeCodeItem(item,detail) : {...item,...(detail||{})};
  }catch{return item}
-}
-function isPaid(item){return String(item?.access_type||"free").toLowerCase()==="paid"||Number(item?.price||0)>0}
-async function refreshItem(kind,item){
- if(!item?.id)return item;
- try{return await detailById(kind,item.id)}catch{return item}
 }
 async function accessState(kind,item){
  const paid=isPaid(item); if(!paid)return {ok:true,reason:"free"};
@@ -2958,21 +2974,41 @@ async function trackView(kind,item){
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
 
-document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{let item=await V.resolve("code");if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem("code",item);const access=await V.accessState("code",item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`}else{const code=String(item.content||"");const bot=String(item.bot_username||"").replace(/^@/,"");const botUrl=V.telegramUrl({bot_username:bot});body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i><span>Bot tujuan:</span>${botUrl?`<a class="bot-link" href="${V.esc(botUrl)}" target="_blank" rel="noopener noreferrer">@${V.esc(bot||"Telegram")}</a>`:`<strong>@${V.esc(bot||"Telegram")}</strong>`}</div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><button class="btn primary" id="sendBot"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</button></div>`}root.innerHTML=V.shell("code",item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});V.$("copyCode")?.addEventListener("click",async(e)=>{
- const b=e.currentTarget;b.disabled=true;
- try{await navigator.clipboard.writeText(String(item.content||""));V.toast("Code berhasil disalin.","success")}
- catch{V.toast("Gagal menyalin code.","error")}
- finally{b.disabled=false}
-});V.$("sendBot")?.addEventListener("click",async(e)=>{
- const b=e.currentTarget;b.disabled=true;
+document.addEventListener("DOMContentLoaded",async()=>{
+ const V=window.PasTeleView,root=V.$("viewRoot");
  try{
-   await navigator.clipboard.writeText(String(item.content||""));
-   const u=V.telegramUrl({bot_username:item.bot_username});
-   if(u)location.href=u;else V.toast("Bot tujuan belum tersedia.","error");
- }catch{V.toast("Gagal menyalin code.","error")}
- finally{b.disabled=false}
-});await V.trackView("code",item);await V.loadSocial("code",item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat Code.")}</div>`}});
-
+   let item=await V.resolve("code");
+   if(!item?.found)throw Error("Code tidak ditemukan atau sudah tidak tersedia.");
+   item=await V.refreshItem("code",item);
+   const access=await V.accessState("code",item);
+   let body;
+   if(!access.ok){
+     body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar pembelian Code tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka Code</button></div>`;
+   }else{
+     const code=String(item.content||item.code||item.code_content||item.content_text||item.delivery||item.body||"");
+     const bot=String(item.bot_username||item.username||item.bot||"").trim().replace(/^@/,"");
+     const botUrl=bot?`https://t.me/${encodeURIComponent(bot)}`:"";
+     body=`<div class="bot-line"><i class="fa-brands fa-telegram"></i><span>Bot tujuan:</span>${botUrl?`<a class="bot-link" href="${V.esc(botUrl)}" target="_blank" rel="noopener noreferrer">@${V.esc(bot)}</a>`:`<strong>Bot belum tersedia</strong>`}</div><div class="content-box code-block"><button class="btn secondary copy-btn" id="copyCode" type="button"><i class="fa-regular fa-copy"></i> Salin</button><pre id="codeText">${V.esc(code)}</pre></div><div class="actions"><a class="btn primary" id="sendBot" href="${V.esc(botUrl||"#")}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i> Salin & Kirim ke Bot</a></div>`;
+   }
+   root.innerHTML=V.shell("code",item,access,body);
+   V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy("code",item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});
+   const code=String(item.content||item.code||item.code_content||item.content_text||item.delivery||item.body||"");
+   V.$("copyCode")?.addEventListener("click",async(e)=>{
+     const b=e.currentTarget;b.disabled=true;
+     try{await navigator.clipboard.writeText(code);V.toast("Code berhasil disalin.","success")}
+     catch{V.toast("Gagal menyalin code.","error")}
+     finally{b.disabled=false}
+   });
+   V.$("sendBot")?.addEventListener("click",async(e)=>{
+     try{await navigator.clipboard.writeText(code);V.toast(botUrl?`Code disalin. Membuka @${bot}...`:"Bot tujuan belum tersedia.",botUrl?"success":"error"); if(!botUrl)e.preventDefault()}
+     catch{V.toast("Bot dibuka, tetapi Code gagal disalin otomatis.","info")}
+   });
+   await V.trackView("code",item);
+   await V.loadSocial("code",item);
+ }catch(e){
+   root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat Code.")}</div>`;
+ }
+});
 
 /* Page-ready marker */
 document.documentElement.classList.add("pastele-ready");
