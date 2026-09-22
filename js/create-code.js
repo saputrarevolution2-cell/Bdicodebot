@@ -3,7 +3,7 @@
  * Put ONLY the Supabase project URL and anon/publishable key here.
  * Never put service_role / secret keys in this browser file.
  */
-window.PASTELE_CONFIG = Object.freeze({
+window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
   SUPABASE_URL: 'https://jxrndamvelqwhbcromye.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cm5kYW12ZWxxd2hiY3JvbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODIzNTIsImV4cCI6MjEwNDQ1ODM1Mn0.M8bqTbSadCPLdWORE769BVBt7hr0VcYfrIWmjHpnfXo'
 });
@@ -2777,13 +2777,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return Array.from(bytes, n => SHORT_ALPHABET[n % SHORT_ALPHABET.length]).join("");
   }
   async function createUniqueShortCode(){
-  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes=new Uint32Array(8);
-  crypto.getRandomValues(bytes);
-  let slug="";
-  for(let i=0;i<4;i++) slug+=alphabet[bytes[i]%alphabet.length];
-  return slug;
-}
+    const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    const bytes=new Uint32Array(16);
+    crypto.getRandomValues(bytes);
+    let slug="";
+    for(let i=0;i<8;i++) slug+=alphabet[bytes[i]%alphabet.length];
+    return slug;
+  }
 const slugify = (value) =>
     String(value || "")
       .normalize("NFKD")
@@ -3263,23 +3263,35 @@ const slugify = (value) =>
         throw new Error("BOT_NOT_FOUND_OR_INACTIVE");
       }
 
-      const slug = await createUniqueShortCode();
+      let resultData = null;
+      let lastError = null;
 
-      const { data, error } = await window.PasTeleDB.rpc("create_code_content", {
-        p_title: values.title,
-        p_content: values.content,
-        p_slug: slug,
-        p_access_type: values.access,
-        p_price: values.price,
-        p_description: values.description,
-        p_approved_bot_id: values.botId
-      });
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const slug = await createUniqueShortCode();
+        const { data, error } = await window.PasTeleDB.rpc("create_code_content", {
+          p_title: values.title,
+          p_content: values.content,
+          p_slug: slug,
+          p_access_type: values.access,
+          p_price: values.price,
+          p_description: values.description,
+          p_approved_bot_id: values.botId
+        });
 
-      if (error) throw error;
+        if (!error) {
+          resultData = Array.isArray(data) ? (data[0] || {}) : (data || {});
+          if (resultData?.ok && resultData?.slug) break;
+          lastError = new Error("Database tidak mengonfirmasi pembuatan Code.");
+        } else {
+          lastError = error;
+          const raw = String(error?.message || error?.details || error || "");
+          const isSlugCollision = error?.code === "23505" || /duplicate key|slug/i.test(raw);
+          if (!isSlugCollision) throw error;
+        }
+      }
 
-      const resultData = Array.isArray(data) ? (data[0] || {}) : (data || {});
       if (!resultData?.ok || !resultData?.slug) {
-        throw new Error("Database tidak mengonfirmasi pembuatan Code.");
+        throw lastError || new Error("Database tidak mengonfirmasi pembuatan Code.");
       }
 
       renderResult({

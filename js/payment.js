@@ -3,7 +3,7 @@
  * Put ONLY the Supabase project URL and anon/publishable key here.
  * Never put service_role / secret keys in this browser file.
  */
-window.PASTELE_CONFIG = Object.freeze({
+window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
   SUPABASE_URL: 'https://jxrndamvelqwhbcromye.supabase.co',
   CASHI_CREATE_ORDER_URL: 'https://jxrndamvelqwhbcromye.supabase.co/functions/v1/cashi-create-order',
   CASHI_CHECK_STATUS_URL: 'https://jxrndamvelqwhbcromye.supabase.co/functions/v1/cashi-check-status',
