@@ -309,6 +309,9 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
       lower.includes("user already registered") ||
       lower.includes("already registered") ||
       lower.includes("user_already_exists") ||
+      lower.includes("email already registered") ||
+      lower.includes("email already exists") ||
+      lower.includes("email_exists") ||
       lower.includes("gmail tersebut sudah terdaftar")
     ) {
       return "Gmail tersebut sudah terdaftar. Silakan login.";
@@ -572,27 +575,19 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         );
       }
       /* ---------------------------------------------------
-         CEK USERNAME + EMAIL DI DATABASE
+         SIGN UP SUPABASE
+         Username/email availability is enforced server-side.
       --------------------------------------------------- */
-      const available =
-        await this.checkUsername(
-          cleanUsername
-        );
-      if (available !== true) {
-        throw new Error(
-          "Username sudah digunakan. Silakan pilih username lain."
-        );
-      }
-
-      const emailAvailable =
-        await this.checkEmail(
-          cleanEmail
-        );
-      if (emailAvailable !== true) {
-        throw new Error(
-          "Gmail tersebut sudah terdaftar. Silakan login atau gunakan Gmail lain."
-        );
-      }
+      /*
+       * Jangan melakukan pre-check username/email melalui RPC terpisah
+       * sebelum signUp. Pre-check lama membuat register bergantung pada
+       * function database check_username_available/check_email_available
+       * yang bisa berbeda nama/return type dari SQL production.
+       *
+       * Supabase Auth + constraint/profile trigger menjadi sumber kebenaran.
+       * Jika username sudah dipakai, error dari proses register ditangani
+       * oleh getErrorMessage().
+       */
       /* ---------------------------------------------------
          SIGN UP SUPABASE
       --------------------------------------------------- */
