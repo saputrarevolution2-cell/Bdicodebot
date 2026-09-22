@@ -300,6 +300,8 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
   border-bottom:1px dashed rgba(34,158,217,.4);
 }
 .bot-line .bot-link:hover{color:var(--primary2);border-color:var(--primary2)}
+.bot-line .bot-link:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.actions #sendBot{display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none}
 .content-box.code-block{
   padding:0!important;
   background:var(--surface2);
