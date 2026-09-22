@@ -1,5 +1,8 @@
 /* Generated RPC contract — names are taken from frontend calls and verified against the SQL master. */
 window.PasTeleRPC={
+  "admin_delete_announcement": true,
+  "admin_upsert_announcement": true,
+  "admin_announcements": true,
   "add_content_comment": true,
   "admin_bots": true,
   "admin_bot_requests": true,
