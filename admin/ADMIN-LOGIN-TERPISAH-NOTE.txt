@@ -1,8 +1,0 @@
-ADMIN LOGIN TERPISAH
-
-Login: /admin/login/
-Panel: /admin/
-
-Both use the same Supabase project and the isolated browser auth storage key: pastele-admin-auth.
-The database admin_access_check() and is_current_user_admin() functions are the authority.
-No new SQL is required if those functions already return ok:true/true for the admin session.
