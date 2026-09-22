@@ -5043,23 +5043,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
 
 
-                const {
-                    data,
-                    error
-                } =
-                    await window.PasTeleDB.rpc("get_pending_balance_detail"
+                /*
+                 * The canonical database does not expose a
+                 * get_pending_balance_detail RPC. Build the detail
+                 * directly from the existing wallet_transactions
+                 * columns returned by fetchWalletData().
+                 */
+                const rows = walletRows
+                    .filter(row =>
+                        String(row?.status || "pending").toLowerCase() === "pending"
+                        && row?.available_at
+                    )
+                    .sort((a, b) =>
+                        new Date(a.available_at).getTime() -
+                        new Date(b.available_at).getTime()
                     );
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                const rows =
-                    Array.isArray(data)
-                        ? data
-                        : [];
 
 
                 if (!rows.length) {
@@ -5102,8 +5100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
                                 const holdLabel =
-                                    row?.hold_label ||
-                                    "H1";
+                                    "H+2";
 
 
                                 return `
@@ -5224,10 +5221,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         <p class="muted">
 
-                            Penjualan 05:00–20:59 WIB masuk
-                            <b>H1</b>.
-                            Penjualan 21:00–04:59 WIB masuk
-                            <b>H2</b>.
+                            Saldo penjualan akan tersedia setelah settlement <b>H+2</b> selesai.
+                            Waktu tersedia mengikuti <b>available_at</b> dari database.
 
                         </p>
 
