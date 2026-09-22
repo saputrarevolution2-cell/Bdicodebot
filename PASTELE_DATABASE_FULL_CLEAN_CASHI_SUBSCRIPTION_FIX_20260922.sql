@@ -7968,3 +7968,116 @@ COMMIT;
 BEGIN;
 DROP VIEW IF EXISTS public.marketplace_public;
 COMMIT;
+
+
+/* ============================================================================
+   FINAL AUTH / REGISTER / GOOGLE OAUTH HARDENING
+   2026-09-22
+   - Explicit RPC grants for public username/email availability checks.
+   - Ensure every new Supabase Auth user gets a profile + wallet.
+   - Google OAuth users receive a collision-safe username when the Google
+     provider does not supply one.
+   - Existing manually-created usernames are never silently changed.
+   ============================================================================ */
+
+BEGIN;
+
+-- Browser registration calls these RPCs before auth.signUp().
+REVOKE ALL ON FUNCTION public.check_username_available(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_username_available(text) TO anon, authenticated;
+
+REVOKE ALL ON FUNCTION public.check_email_available(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_email_available(text) TO anon, authenticated;
+
+-- Rebuild the Auth user trigger so email/password and Google OAuth both
+-- create the required public profile and wallet.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public, extensions
+AS $$
+DECLARE
+  requested text;
+  fallback text;
+  candidate text;
+  suffix integer := 0;
+  has_requested_username boolean := false;
+BEGIN
+  requested := lower(btrim(coalesce(new.raw_user_meta_data->>'username','')));
+  requested := regexp_replace(requested,'[^a-z0-9_]','','g');
+  has_requested_username := requested <> '';
+
+  IF requested='' THEN
+    fallback := lower(split_part(coalesce(new.email,'user'),'@',1));
+    requested := regexp_replace(fallback,'[^a-z0-9_]','','g');
+  END IF;
+
+  IF requested='' THEN requested:='user'; END IF;
+  requested := left(requested,32);
+  candidate := requested;
+
+  -- Normal registration explicitly requests a username: do not silently
+  -- rename it; the frontend already checked availability.
+  IF has_requested_username THEN
+    IF EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE lower(btrim(coalesce(p.username,'')))=candidate
+        AND p.id<>new.id
+    ) THEN
+      RAISE EXCEPTION 'USERNAME_ALREADY_EXISTS';
+    END IF;
+  ELSE
+    -- Google/OAuth may derive the username from the Gmail local-part.
+    -- If that name is taken, make it unique instead of aborting OAuth.
+    WHILE EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE lower(btrim(coalesce(p.username,'')))=lower(candidate)
+        AND p.id<>new.id
+    ) LOOP
+      suffix := suffix + 1;
+      candidate := left(requested,greatest(1,32-length(suffix::text)-1))
+                   || '_' || suffix::text;
+    END LOOP;
+  END IF;
+
+  INSERT INTO public.profiles(
+    id,username,auth_email,display_name
+  )
+  VALUES(
+    new.id,
+    candidate,
+    lower(btrim(coalesce(new.email,''))),
+    coalesce(
+      nullif(btrim(coalesce(new.raw_user_meta_data->>'display_name','')),''),
+      nullif(btrim(coalesce(new.raw_user_meta_data->>'full_name','')),''),
+      candidate
+    )
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    auth_email=excluded.auth_email,
+    display_name=coalesce(nullif(public.profiles.display_name,''),excluded.display_name),
+    updated_at=now();
+
+  INSERT INTO public.wallets(
+    user_id,balance,available_balance,pending_balance
+  )
+  VALUES(new.id,0,0,0)
+  ON CONFLICT(user_id) DO NOTHING;
+
+  RETURN new;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user();
+
+-- Make sure the trigger function itself is not directly callable by browsers.
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC;
+
+COMMIT;
+
