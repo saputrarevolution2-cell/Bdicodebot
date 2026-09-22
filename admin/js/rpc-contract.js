@@ -2,6 +2,9 @@
 window.PasTeleRPC={
   "add_content_comment": true,
   "admin_bots": true,
+  "admin_bot_requests": true,
+  "admin_approve_bot_request": true,
+  "admin_reject_bot_request": true,
   "admin_content": true,
   "admin_logs": true,
   "admin_orders": true,
@@ -48,6 +51,7 @@ window.PasTeleRPC={
   "resolve_username_login": true,
   "send_chat_message": true,
   "set_chat_presence": true,
+  "submit_bot_request": true,
   "toggle_chat_reaction": true,
   "toggle_content_like": true,
   "toggle_content_like_guest": true,
