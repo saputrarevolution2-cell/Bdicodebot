@@ -6,3 +6,13 @@ html[data-theme=dark],html.theme-dark,body.theme-dark{--bg:#0b111a;--surface:#12
 
 /* ===== Page UI polish ===== */
 .admin-page .admin-content{min-width:0}.admin-page .table-wrap{max-width:100%}
+
+/* Bot request moderation */
+.bot-request-admin{margin-bottom:22px}
+.bot-approved-admin{margin-top:22px}
+.bot-request-admin .admin-toolbar,.bot-approved-admin .admin-toolbar{margin-bottom:10px}
+.bot-request-admin .empty{padding:22px;border:1px dashed var(--pt-border);border-radius:12px;color:var(--pt-muted);background:#fff}
+@media(max-width:700px){
+  .bot-request-admin,.bot-approved-admin{overflow-x:auto}
+  .bot-request-admin .admin-toolbar,.bot-approved-admin .admin-toolbar{min-width:620px}
+}
