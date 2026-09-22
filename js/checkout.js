@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
  const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n||0));
  const showError=m=>{if(state)state.hidden=true;if(content)content.hidden=true;if(error){error.hidden=false;error.textContent=m;}};
  try{
-   const sb=window.sb||window.PasTeleSession?.client?.();
+   const sb=window.sb;
    if(!sb) throw new Error("Supabase belum siap. Silakan refresh halaman.");
    if(!type||!id) throw new Error("Produk checkout tidak valid.");
    const {data,error:e}=await window.PasTeleDB.rpc("get_market_item_detail_guest",{p_type:type,p_id:id,p_guest_token:localStorage.getItem("pastele-guest-checkout-token")||null});
