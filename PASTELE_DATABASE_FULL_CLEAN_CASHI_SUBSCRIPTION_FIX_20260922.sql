@@ -7377,6 +7377,8 @@ CREATE POLICY profile_visits_owner_read ON public.profile_visits
 FOR SELECT TO authenticated
 USING (profile_id=auth.uid() OR visitor_id=auth.uid() OR public.is_current_user_admin());
 
+DROP FUNCTION IF EXISTS public.notify_profile_visit(uuid);
+
 CREATE OR REPLACE FUNCTION public.notify_profile_visit(p_profile_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
