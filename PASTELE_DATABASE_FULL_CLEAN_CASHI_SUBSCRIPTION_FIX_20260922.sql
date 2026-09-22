@@ -7716,3 +7716,255 @@ BEGIN
 END $$;
 
 -- End of the single canonical PasTele database + admin SQL.
+
+
+
+-- ============================================================================
+-- FINAL PRODUCTION SECURITY HARDENING — PUBLIC METADATA / PRIVATE PAYLOAD
+-- 2026-09-22
+--
+-- Direct SELECT on marketplace source tables is owner/admin only.
+-- Public marketplace metadata is exposed ONLY through SECURITY DEFINER RPCs
+-- that return metadata fields and never protected payloads.
+-- Paid content/invite URLs are therefore not obtainable through PostgREST
+-- table reads by anon/authenticated users.
+-- ============================================================================
+
+BEGIN;
+
+-- Public metadata RPC. It deliberately excludes products.content,
+-- telegram_products.content, telegram_channels.invite_url and private
+-- PasteLink payload fields.
+DROP FUNCTION IF EXISTS public.get_marketplace_public(uuid);
+CREATE OR REPLACE FUNCTION public.get_marketplace_public(p_owner_id uuid DEFAULT NULL)
+RETURNS TABLE(
+  id uuid,
+  slug text,
+  title text,
+  type text,
+  access_type text,
+  price numeric,
+  thumbnail_url text,
+  description text,
+  views bigint,
+  sales_count bigint,
+  category text,
+  created_at timestamptz,
+  creator_name text,
+  creator_username text,
+  owner_id uuid
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+  SELECT
+    p.id,p.slug,p.title,coalesce(p.type,'link'),
+    lower(coalesce(p.access_type,CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END)),
+    coalesce(p.price,0)::numeric,p.thumbnail_url,p.description,
+    coalesce(p.views,0)::bigint,coalesce(p.sales_count,0)::bigint,p.category,
+    p.created_at,pr.display_name,pr.username,coalesce(p.creator_id,p.seller_id)
+  FROM public.products p
+  LEFT JOIN public.profiles pr ON pr.id=coalesce(p.creator_id,p.seller_id)
+  WHERE p.status IN ('published','active')
+    AND coalesce(pr.is_banned,false)=false
+    AND (p_owner_id IS NULL OR coalesce(p.creator_id,p.seller_id)=p_owner_id)
+
+  UNION ALL
+
+  SELECT
+    p.id,p.slug,p.title,'code',
+    lower(coalesce(p.access_type,CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END)),
+    coalesce(p.price,0)::numeric,p.thumbnail_url,p.description,
+    coalesce(p.views,0)::bigint,coalesce(p.sales_count,0)::bigint,p.category,
+    p.created_at,pr.display_name,pr.username,p.owner_id
+  FROM public.telegram_products p
+  LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+  WHERE p.status IN ('published','active','live')
+    AND coalesce(pr.is_banned,false)=false
+    AND (p_owner_id IS NULL OR p.owner_id=p_owner_id)
+
+  UNION ALL
+
+  SELECT
+    p.id,p.slug,p.name,
+    CASE WHEN lower(coalesce(p.type,'channel'))='group' THEN 'group' ELSE 'channel' END,
+    lower(coalesce(p.access_type,CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END)),
+    coalesce(p.price,0)::numeric,NULL::text,p.description,
+    coalesce(p.views,0)::bigint,coalesce(p.sales_count,0)::bigint,p.category,
+    p.created_at,pr.display_name,pr.username,p.owner_id
+  FROM public.telegram_channels p
+  LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+  WHERE p.status IN ('published','active','live')
+    AND coalesce(pr.is_banned,false)=false
+    AND (p_owner_id IS NULL OR p.owner_id=p_owner_id)
+
+  UNION ALL
+
+  SELECT
+    p.id,p.slug,p.title,'pastelink',
+    lower(coalesce(p.access_type,CASE WHEN coalesce(p.price,0)>0 THEN 'paid' ELSE 'free' END)),
+    coalesce(p.price,0)::numeric,NULL::text,p.description,
+    coalesce(p.views,0)::bigint,0::bigint,'General'::text,p.created_at,
+    pr.display_name,pr.username,p.user_id
+  FROM public.pastelinks p
+  LEFT JOIN public.profiles pr ON pr.id=p.user_id
+  WHERE p.visibility='public'
+    AND (p.expires_at IS NULL OR p.expires_at>now())
+    AND coalesce(pr.is_banned,false)=false
+    AND (p_owner_id IS NULL OR p.user_id=p_owner_id)
+
+  UNION ALL
+
+  SELECT
+    p.id,p.slug,p.title,'paste','free'::text,0::numeric,NULL::text,
+    left(coalesce(p.content,''),180),
+    0::bigint,0::bigint,'General'::text,p.created_at,
+    pr.display_name,pr.username,p.owner_id
+  FROM public.pastes p
+  LEFT JOIN public.profiles pr ON pr.id=p.owner_id
+  WHERE p.visibility='public'
+    AND coalesce(pr.is_banned,false)=false
+    AND (p_owner_id IS NULL OR p.owner_id=p_owner_id)
+$$;
+
+REVOKE ALL ON FUNCTION public.get_marketplace_public(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_marketplace_public(uuid) TO anon,authenticated;
+
+DROP FUNCTION IF EXISTS public.get_public_telegram_product_meta(uuid);
+CREATE OR REPLACE FUNCTION public.get_public_telegram_product_meta(p_id uuid)
+RETURNS TABLE(id uuid,slug text,access_type text,price numeric,bot_username text,product_type text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,extensions
+AS $$
+  SELECT tp.id,tp.slug,tp.access_type,tp.price,tp.bot_username,tp.product_type
+  FROM public.telegram_products tp
+  JOIN public.profiles pr ON pr.id=tp.owner_id
+  WHERE tp.id=p_id
+    AND tp.status IN ('published','active','live')
+    AND coalesce(pr.is_banned,false)=false
+$$;
+REVOKE ALL ON FUNCTION public.get_public_telegram_product_meta(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_public_telegram_product_meta(uuid) TO anon,authenticated;
+
+DROP FUNCTION IF EXISTS public.get_public_telegram_channel_meta(uuid);
+CREATE OR REPLACE FUNCTION public.get_public_telegram_channel_meta(p_id uuid)
+RETURNS TABLE(id uuid,slug text,username text,name text,type text,description text,access_type text,price numeric)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,extensions
+AS $$
+  SELECT tc.id,tc.slug,tc.username,tc.name,tc.type,tc.description,tc.access_type,tc.price
+  FROM public.telegram_channels tc
+  JOIN public.profiles pr ON pr.id=tc.owner_id
+  WHERE tc.id=p_id
+    AND tc.status IN ('published','active','live')
+    AND coalesce(pr.is_banned,false)=false
+$$;
+REVOKE ALL ON FUNCTION public.get_public_telegram_channel_meta(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_public_telegram_channel_meta(uuid) TO anon,authenticated;
+
+DROP FUNCTION IF EXISTS public.resolve_telegram_product_slug(text);
+CREATE OR REPLACE FUNCTION public.resolve_telegram_product_slug(p_slug text)
+RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,extensions
+AS $$
+  SELECT tp.id
+  FROM public.telegram_products tp
+  JOIN public.profiles pr ON pr.id=tp.owner_id
+  WHERE lower(tp.slug)=lower(btrim(p_slug))
+    AND tp.status IN ('published','active','live')
+    AND coalesce(pr.is_banned,false)=false
+  LIMIT 1
+$$;
+REVOKE ALL ON FUNCTION public.resolve_telegram_product_slug(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.resolve_telegram_product_slug(text) TO anon,authenticated;
+
+DROP FUNCTION IF EXISTS public.get_my_private_content();
+CREATE OR REPLACE FUNCTION public.get_my_private_content()
+RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public,extensions
+AS $$
+DECLARE uid uuid:=auth.uid();
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+
+  RETURN jsonb_build_object(
+    'products', COALESCE((
+      SELECT jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC)
+      FROM (
+        SELECT id,seller_id,creator_id,title,slug,price,thumbnail_url,type,access_type,
+               category,description,content,views,sales_count,status,created_at,updated_at
+        FROM public.products
+        WHERE creator_id=uid OR seller_id=uid
+      ) x
+    ),'[]'::jsonb),
+    'pastelinks', COALESCE((
+      SELECT jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC)
+      FROM (
+        SELECT id,user_id,slug,title,description,content_html,access_type,price,
+               visibility,expires_at,views,created_at,updated_at
+        FROM public.pastelinks WHERE user_id=uid
+      ) x
+    ),'[]'::jsonb),
+    'pastes', COALESCE((
+      SELECT jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC)
+      FROM (
+        SELECT id,owner_id,title,slug,content,visibility,created_at,updated_at
+        FROM public.pastes WHERE owner_id=uid
+      ) x
+    ),'[]'::jsonb),
+    'codes', COALESCE((
+      SELECT jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC)
+      FROM (
+        SELECT id,owner_id,title,slug,type,product_type,access_type,bot_username,
+               telegram_bot_id,price,description,content,thumbnail_url,category,status,
+               views,sales_count,created_at,updated_at
+        FROM public.telegram_products WHERE owner_id=uid
+      ) x
+    ),'[]'::jsonb),
+    'channels', COALESCE((
+      SELECT jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC)
+      FROM (
+        SELECT id,owner_id,username,name,type,access_type,telegram_channel_id,
+               description,invite_url,price,category,status,views,sales_count,
+               created_at,updated_at
+        FROM public.telegram_channels WHERE owner_id=uid
+      ) x
+    ),'[]'::jsonb)
+  );
+END;
+$$;
+REVOKE ALL ON FUNCTION public.get_my_private_content() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_my_private_content() TO authenticated;
+
+-- Lock down direct table reads. Owners/admins keep direct access; public users
+-- must use the safe metadata RPCs or the existing secure detail/purchase RPCs.
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS products_public_read ON public.products;
+CREATE POLICY products_public_read ON public.products
+FOR SELECT TO anon,authenticated
+USING (
+  seller_id=auth.uid()
+  OR creator_id=auth.uid()
+  OR public.is_current_user_admin()
+);
+
+ALTER TABLE public.telegram_products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS telegram_products_public_read ON public.telegram_products;
+CREATE POLICY telegram_products_public_read ON public.telegram_products
+FOR SELECT TO anon,authenticated
+USING (
+  owner_id=auth.uid() OR public.is_current_user_admin()
+);
+
+ALTER TABLE public.telegram_channels ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS telegram_channels_public_read ON public.telegram_channels;
+CREATE POLICY telegram_channels_public_read ON public.telegram_channels
+FOR SELECT TO anon,authenticated
+USING (
+  owner_id=auth.uid() OR public.is_current_user_admin()
+);
+
+COMMIT;
+BEGIN;
+DROP VIEW IF EXISTS public.marketplace_public;
+COMMIT;
