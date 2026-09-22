@@ -2722,7 +2722,15 @@ function guestToken(){
 }
 async function user(){try{return await window.TC?.user?.()||null}catch{return null}}
 function targetType(kind){return kind==="code"?"telegram_product":kind==="channel"||kind==="group"?"channel":kind}
-function telegramUrl(item){let x=String(item?.invite_url||item?.username||item?.bot_username||item?.telegram_channel_id||"").trim();if(/^https?:\/\//i.test(x))return x;if(/^@/.test(x))return "https://t.me/"+x.slice(1);if(/^[A-Za-z0-9_]{5,32}$/.test(x))return "https://t.me/"+x;return ""}
+function telegramUrl(item){
+ const raw=String(item?.invite_url||item?.telegram_url||item?.channel_url||item?.group_url||item?.public_link||item?.link||item?.username||item?.bot_username||item?.telegram_channel_id||"").trim();
+ if(!raw)return "";
+ if(/^www\./i.test(raw))return "https://"+raw;
+ if(/^https?:\/\//i.test(raw))return raw;
+ if(/^@/.test(raw))return "https://t.me/"+raw.slice(1);
+ if(/^[A-Za-z0-9_]{5,32}$/.test(raw))return "https://t.me/"+raw;
+ return "";
+}
 function linkifyText(value){
  const escText=String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
  const re=/((?:https?:\/\/|www\.)[^\s<]+)/gi;
@@ -2935,7 +2943,12 @@ async function trackView(kind,item){
 window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegramUrl,resolve,refreshItem,accessState,startBuy,loadSocial,shell,trackView };
 })();
 
-document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{const kind=(new URLSearchParams(location.search).get("type")||"channel").toLowerCase()==="group"?"group":"channel";let item=await V.resolve(kind);if(!item?.found)throw Error((kind==="group"?"Group":"Channel")+" tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem(kind,item);const access=await V.accessState(kind,item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar akses tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka</button></div>`}else{const url=V.telegramUrl(item);body=`<div class="tg-card"><div><strong>${V.esc(item.name||item.title||"Telegram")}</strong><p class="view-desc">${linkifyText(item.username||item.telegram_channel_id||"")}</p></div>${url?`<a class="btn primary" href="${V.esc(url)}" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i> Buka Telegram</a>`:"<span class='status'>Link Telegram belum tersedia.</span>"}</div>`}root.innerHTML=V.shell(kind,item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy(kind,item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});await V.trackView(kind,item);await V.loadSocial(kind,item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat konten.")}</div>`}});
+document.addEventListener("DOMContentLoaded",async()=>{const V=window.PasTeleView,root=V.$("viewRoot");try{const kind=(new URLSearchParams(location.search).get("type")||"channel").toLowerCase()==="group"?"group":"channel";let item=await V.resolve(kind);if(!item?.found)throw Error((kind==="group"?"Group":"Channel")+" tidak ditemukan atau sudah tidak tersedia.");item=await V.refreshItem(kind,item);const access=await V.accessState(kind,item);let body;if(!access.ok){body=`<div class="locked"><div class="notice"><i class="fa-solid fa-circle-info"></i> Guest bisa membeli. Login/daftar disarankan agar akses tersimpan permanen di akun.</div><div class="price">${V.money(item.price)}</div><button class="btn primary" id="buyBtn"><i class="fa-solid fa-qrcode"></i> Bayar & Buka</button></div>`}else{
+ const url=V.telegramUrl(item);
+ const kindLabel=kind==="group"?"Group":"Channel";
+ const rawLink=String(item?.invite_url||item?.telegram_url||item?.channel_url||item?.group_url||item?.public_link||item?.link||item?.username||item?.telegram_channel_id||"").trim();
+ const displayLink=rawLink||url;
+ body=`<div class="tg-card"><div class="tg-info"><div class="tg-title-row"><span class="tg-type-badge"><i class="fa-brands fa-telegram"></i>${kindLabel}</span><strong>${V.esc(item.name||item.title||kindLabel)}</strong></div>${displayLink?`<a class="tg-link" href="${V.esc(url||displayLink)}" target="_blank" rel="noopener noreferrer nofollow"><i class="fa-solid fa-link"></i><span>${V.esc(displayLink)}</span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:`<span class="status"><i class="fa-solid fa-circle-exclamation"></i> Link ${kindLabel} belum tersedia.</span>`}</div>${url?`<a class="btn primary tg-open-btn" href="${V.esc(url)}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i> Buka ${kindLabel}</a>`:""}</div>`}root.innerHTML=V.shell(kind,item,access,body);V.$("buyBtn")?.addEventListener("click",async()=>{try{await V.startBuy(kind,item)}catch(e){V.toast(e.message||"Checkout gagal","error")}});await V.trackView(kind,item);await V.loadSocial(kind,item)}catch(e){root.innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><br>${V.esc(e.message||"Gagal memuat konten.")}</div>`}});
 
 
 /* Page-ready marker */
