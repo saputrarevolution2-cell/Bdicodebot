@@ -2800,6 +2800,94 @@ const slugify = (value) =>
 
   let bots = [];
   let saving = false;
+  let botRequestSaving = false;
+
+  function openBotRequestModal() {
+    const modal = $("botRequestModal");
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("bot-request-open");
+    window.setTimeout(() => $("requestBotUsername")?.focus(), 50);
+  }
+
+  function closeBotRequestModal() {
+    const modal = $("botRequestModal");
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("bot-request-open");
+  }
+
+  function setBotRequestLoading(on) {
+    botRequestSaving = !!on;
+    const button = $("submitBotRequest");
+    if (!button) return;
+    button.disabled = botRequestSaving;
+    button.querySelector(".normal")?.toggleAttribute("hidden", botRequestSaving);
+    button.querySelector(".loading")?.toggleAttribute("hidden", !botRequestSaving);
+  }
+
+  async function submitBotRequest() {
+    if (botRequestSaving) return;
+    const username = normalizeBotUsername($("requestBotUsername")?.value || "");
+    const botName = $("requestBotName")?.value.trim() || "";
+    const botIdRaw = $("requestBotId")?.value.trim() || "";
+    const note = $("requestBotNote")?.value.trim() || "";
+
+    if (!username || !/^[a-z0-9_]{5,32}$/i.test(username)) {
+      toast("Username bot tidak valid. Contoh: @TeleCodRobot.", "error");
+      $("requestBotUsername")?.focus();
+      return;
+    }
+    if (botIdRaw && (!/^\d+$/.test(botIdRaw) || Number(botIdRaw) <= 0)) {
+      toast("Bot ID tidak valid.", "error");
+      $("requestBotId")?.focus();
+      return;
+    }
+
+    setBotRequestLoading(true);
+    try {
+      const user = await getCurrentUser();
+      if (!user?.id) {
+        const next = `${location.pathname}${location.search}${location.hash}`;
+        const loginUrl = `login.html?next=${encodeURIComponent(next)}&reason=bot-request`;
+        toast("Login diperlukan untuk mengajukan bot.", "error");
+        window.setTimeout(() => window.location.assign(loginUrl), 450);
+        return;
+      }
+
+      const result = await window.PasTeleDB.rpc("submit_bot_request", {
+        p_username: username,
+        p_bot_id: botIdRaw ? Number(botIdRaw) : null,
+        p_bot_name: botName,
+        p_note: note
+      });
+      if (result?.error) throw result.error;
+
+      toast("Pengajuan bot berhasil dikirim ke admin.", "success");
+      $("botRequestForm")?.reset();
+      closeBotRequestModal();
+      await loadBots();
+    } catch (error) {
+      console.error("[PasTele][BotRequest]", error);
+      const raw = String(error?.message || error || "");
+      if (/BOT_ALREADY_APPROVED/i.test(raw)) {
+        toast("Bot tersebut sudah disetujui. Silakan pilih dari daftar bot.", "error");
+        await loadBots();
+      } else if (/BOT_REQUEST_PENDING/i.test(raw)) {
+        toast("Pengajuan bot tersebut masih menunggu persetujuan admin.", "error");
+      } else if (/LOGIN_REQUIRED/i.test(raw)) {
+        toast("Login diperlukan untuk mengajukan bot.", "error");
+      } else if (/INVALID_BOT_USERNAME/i.test(raw)) {
+        toast("Username bot tidak valid.", "error");
+      } else {
+        toast(raw || "Pengajuan bot gagal dikirim.", "error");
+      }
+    } finally {
+      setBotRequestLoading(false);
+    }
+  }
 
   function setLoading(on) {
     saving = !!on;
@@ -3115,6 +3203,18 @@ const slugify = (value) =>
           '</strong>.</span>'
         : '<i class="fa-solid fa-circle-check"></i><span>Silakan pilih bot aktif yang disetujui admin.</span>';
     }
+  });
+
+  $("requestBotBtn")?.addEventListener("click", openBotRequestModal);
+  document.querySelectorAll("[data-close-bot-request]").forEach((el) => {
+    el.addEventListener("click", closeBotRequestModal);
+  });
+  $("botRequestForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitBotRequest();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("botRequestModal")?.hidden) closeBotRequestModal();
   });
 
   $("createForm")?.addEventListener("submit", async (event) => {
