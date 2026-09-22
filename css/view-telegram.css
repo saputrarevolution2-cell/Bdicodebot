@@ -323,3 +323,17 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
 .tg-card a.content-link:hover{
   opacity:.82;
 }
+
+
+/* PasTele View Telegram — FINAL LINK CARD */
+.tg-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface2)}
+.tg-info{min-width:0;flex:1}
+.tg-title-row{display:flex;align-items:center;gap:9px;min-width:0;margin-bottom:9px}
+.tg-title-row strong{min-width:0;color:var(--text);font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.tg-type-badge{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(34,158,217,.1);color:var(--primary);font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.tg-link{width:100%;min-height:42px;display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid rgba(34,158,217,.18);border-radius:11px;background:var(--surface);color:var(--primary)!important;text-decoration:none!important;box-shadow:0 3px 10px rgba(16,24,40,.03);transition:border-color .16s ease,background .16s ease,transform .16s ease}
+.tg-link:hover{border-color:rgba(34,158,217,.4);background:rgba(34,158,217,.05);transform:translateY(-1px)}
+.tg-link span{min-width:0;flex:1;overflow-wrap:anywhere;word-break:break-word;text-decoration:underline;text-underline-offset:3px}
+.tg-link>i:last-child{flex:0 0 auto;font-size:10px;opacity:.7}
+.tg-open-btn{flex:0 0 auto;white-space:nowrap}
+@media(max-width:700px){.tg-card{align-items:stretch;flex-direction:column;gap:12px;padding:15px}.tg-open-btn{width:100%}}
