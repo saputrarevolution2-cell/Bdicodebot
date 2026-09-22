@@ -3539,35 +3539,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  /* Bio: render plain text safely and make URLs clickable. */
-  const renderBio = (value) => {
-    if (!bioEl) return;
-
-    const raw = String(value || "").trim() || "Creator PasTele";
-    const escaped = esc(raw).replace(/\r?\n/g, "<br>");
-    const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+|(?:t\.me|telegram\.me)\/[^\s<]+)/gi;
-
-    const linked = escaped.replace(urlPattern, (match) => {
-      let href = match;
-      let trailing = "";
-
-      while (/[.,!?;:)]$/.test(href)) {
-        trailing = href.slice(-1) + trailing;
-        href = href.slice(0, -1);
-      }
-
-      const normalized = /^https?:\/\//i.test(href)
-        ? href
-        : `https://${href}`;
-
-      return `<a class="profile-bio-link" href="${esc(normalized)}" target="_blank" rel="noopener noreferrer nofollow">${esc(href)}</a>${trailing}`;
-    });
-
-    bioEl.innerHTML = linked;
-    bioEl.classList.toggle("is-placeholder", !String(value || "").trim());
-  };
-
-  renderBio(profile.bio);
+  setText(
+    "bio",
+    profile.bio ||
+    "Creator PasTele"
+  );
 
   setText(
     "handle",
