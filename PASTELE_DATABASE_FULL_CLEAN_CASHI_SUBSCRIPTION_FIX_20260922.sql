@@ -6971,6 +6971,707 @@ GRANT EXECUTE ON FUNCTION public.admin_access_check() TO authenticated;
 
 COMMIT;
 
+
+/* ============================================================================
+   CANONICAL FINAL HARDENING PATCH — 2026-09-22
+   - Bot request/approval is part of the canonical master.
+   - Missing marketplace RPCs are restored.
+   - Profile visit notification is restored.
+   - Pending wallet detail contract is restored.
+   - RLS is enabled for user-owned data and public content.
+   - Owner/admin CRUD is enforced by PostgreSQL, not only by frontend filters.
+   ============================================================================ */
+
+BEGIN;
+
+-- --------------------------------------------------------------------------
+-- 1. Bot request / approval
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.bot_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  requester_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  bot_username text NOT NULL,
+  bot_name text,
+  bot_id bigint,
+  note text,
+  status text NOT NULL DEFAULT 'pending',
+  admin_note text,
+  approved_bot_id uuid REFERENCES public.approved_bots(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  reviewed_at timestamptz
+);
+
+ALTER TABLE public.bot_requests
+  ADD COLUMN IF NOT EXISTS bot_name text,
+  ADD COLUMN IF NOT EXISTS bot_id bigint,
+  ADD COLUMN IF NOT EXISTS note text,
+  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending',
+  ADD COLUMN IF NOT EXISTS admin_note text,
+  ADD COLUMN IF NOT EXISTS approved_bot_id uuid REFERENCES public.approved_bots(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS reviewed_at timestamptz;
+
+CREATE INDEX IF NOT EXISTS bot_requests_status_created_idx
+  ON public.bot_requests(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS bot_requests_requester_created_idx
+  ON public.bot_requests(requester_id, created_at DESC);
+
+ALTER TABLE public.bot_requests DROP CONSTRAINT IF EXISTS bot_requests_status_check;
+ALTER TABLE public.bot_requests
+  ADD CONSTRAINT bot_requests_status_check
+  CHECK (status IN ('pending','approved','rejected'));
+
+ALTER TABLE public.bot_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS bot_requests_owner_read ON public.bot_requests;
+CREATE POLICY bot_requests_owner_read ON public.bot_requests
+FOR SELECT TO authenticated
+USING (requester_id=auth.uid() OR public.is_current_user_admin());
+
+DROP POLICY IF EXISTS bot_requests_owner_insert ON public.bot_requests;
+CREATE POLICY bot_requests_owner_insert ON public.bot_requests
+FOR INSERT TO authenticated
+WITH CHECK (requester_id=auth.uid());
+
+DROP POLICY IF EXISTS bot_requests_admin_update ON public.bot_requests;
+CREATE POLICY bot_requests_admin_update ON public.bot_requests
+FOR UPDATE TO authenticated
+USING (public.is_current_user_admin())
+WITH CHECK (public.is_current_user_admin());
+
+CREATE OR REPLACE FUNCTION public.submit_bot_request(
+  p_username text,
+  p_bot_id bigint DEFAULT NULL,
+  p_bot_name text DEFAULT '',
+  p_note text DEFAULT ''
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+DECLARE
+  uid uuid:=auth.uid();
+  clean_username text:=lower(regexp_replace(btrim(coalesce(p_username,'')),'^@',''));
+  existing public.approved_bots;
+  pending public.bot_requests;
+  result public.bot_requests;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF clean_username !~ '^[a-z0-9_]{5,32}$' THEN
+    RAISE EXCEPTION 'INVALID_BOT_USERNAME';
+  END IF;
+
+  SELECT * INTO existing
+  FROM public.approved_bots
+  WHERE lower(bot_username)=clean_username
+     OR (p_bot_id IS NOT NULL AND bot_id=p_bot_id)
+  LIMIT 1;
+
+  IF existing.id IS NOT NULL AND existing.is_active THEN
+    RAISE EXCEPTION 'BOT_ALREADY_APPROVED';
+  END IF;
+
+  SELECT * INTO pending
+  FROM public.bot_requests
+  WHERE requester_id=uid
+    AND lower(bot_username)=clean_username
+    AND status='pending'
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  IF pending.id IS NOT NULL THEN RAISE EXCEPTION 'BOT_REQUEST_PENDING'; END IF;
+
+  INSERT INTO public.bot_requests(
+    requester_id,bot_username,bot_name,bot_id,note,status
+  )
+  VALUES(
+    uid,clean_username,
+    nullif(btrim(coalesce(p_bot_name,'')),''),
+    p_bot_id,
+    nullif(btrim(coalesce(p_note,'')),''),
+    'pending'
+  )
+  RETURNING * INTO result;
+
+  RETURN jsonb_build_object(
+    'ok',true,'id',result.id,'status',result.status,
+    'bot_username',result.bot_username
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_bot_requests(
+  p_limit integer DEFAULT 100,
+  p_offset integer DEFAULT 0
+)
+RETURNS SETOF jsonb
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+  SELECT jsonb_build_object(
+    'id',r.id,'requester_id',r.requester_id,
+    'username',p.username,'auth_email',p.auth_email,
+    'bot_username',r.bot_username,'bot_name',r.bot_name,'bot_id',r.bot_id,
+    'note',r.note,'status',r.status,'admin_note',r.admin_note,
+    'approved_bot_id',r.approved_bot_id,
+    'created_at',r.created_at,'reviewed_at',r.reviewed_at
+  )
+  FROM public.bot_requests r
+  LEFT JOIN public.profiles p ON p.id=r.requester_id
+  WHERE public.is_current_user_admin()
+  ORDER BY CASE WHEN r.status='pending' THEN 0 ELSE 1 END,r.created_at DESC
+  LIMIT greatest(1,least(coalesce(p_limit,100),500))
+  OFFSET greatest(coalesce(p_offset,0),0);
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_approve_bot_request(p_request_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+DECLARE
+  r public.bot_requests;
+  b public.approved_bots;
+BEGIN
+  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+
+  SELECT * INTO r FROM public.bot_requests WHERE id=p_request_id FOR UPDATE;
+  IF r.id IS NULL THEN RAISE EXCEPTION 'BOT_REQUEST_NOT_FOUND'; END IF;
+
+  IF r.status='approved' AND r.approved_bot_id IS NOT NULL THEN
+    RETURN jsonb_build_object(
+      'ok',true,'status','approved','approved_bot_id',r.approved_bot_id
+    );
+  END IF;
+
+  SELECT * INTO b
+  FROM public.approved_bots
+  WHERE lower(bot_username)=lower(r.bot_username)
+     OR (r.bot_id IS NOT NULL AND bot_id=r.bot_id)
+  ORDER BY CASE WHEN lower(bot_username)=lower(r.bot_username) THEN 0 ELSE 1 END
+  LIMIT 1;
+
+  IF b.id IS NULL THEN
+    INSERT INTO public.approved_bots(bot_username,bot_name,bot_id,is_active)
+    VALUES(r.bot_username,r.bot_name,r.bot_id,true)
+    RETURNING * INTO b;
+  ELSE
+    UPDATE public.approved_bots
+    SET bot_username=r.bot_username,
+        bot_name=coalesce(r.bot_name,bot_name),
+        bot_id=coalesce(r.bot_id,bot_id),
+        is_active=true,
+        updated_at=now()
+    WHERE id=b.id
+    RETURNING * INTO b;
+  END IF;
+
+  UPDATE public.bot_requests
+  SET status='approved',approved_bot_id=b.id,admin_note=NULL,reviewed_at=now()
+  WHERE id=r.id;
+
+  INSERT INTO public.notifications(user_id,title,body,is_read)
+  VALUES(
+    r.requester_id,'Bot disetujui',
+    'Bot @'||r.bot_username||
+    ' sudah disetujui admin dan sekarang tersedia di Create Code.',
+    false
+  );
+
+  RETURN jsonb_build_object(
+    'ok',true,'status','approved',
+    'approved_bot_id',b.id,'bot_username',b.bot_username
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_reject_bot_request(
+  p_request_id uuid,
+  p_reason text DEFAULT ''
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+DECLARE r public.bot_requests;
+BEGIN
+  IF NOT public.is_current_user_admin() THEN RAISE EXCEPTION 'ADMIN_REQUIRED'; END IF;
+
+  SELECT * INTO r FROM public.bot_requests WHERE id=p_request_id FOR UPDATE;
+  IF r.id IS NULL THEN RAISE EXCEPTION 'BOT_REQUEST_NOT_FOUND'; END IF;
+
+  UPDATE public.bot_requests
+  SET status='rejected',
+      admin_note=nullif(btrim(coalesce(p_reason,'')),''),
+      reviewed_at=now()
+  WHERE id=r.id;
+
+  INSERT INTO public.notifications(user_id,title,body,is_read)
+  VALUES(
+    r.requester_id,'Pengajuan bot ditolak',
+    'Pengajuan bot @'||r.bot_username||
+    CASE WHEN btrim(coalesce(p_reason,''))<>''
+         THEN ' ditolak. Alasan: '||btrim(p_reason)
+         ELSE ' ditolak oleh admin.' END,
+    false
+  );
+
+  RETURN jsonb_build_object('ok',true,'status','rejected');
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.submit_bot_request(text,bigint,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.submit_bot_request(text,bigint,text,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.admin_bot_requests(integer,integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_bot_requests(integer,integer) TO authenticated;
+REVOKE ALL ON FUNCTION public.admin_approve_bot_request(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_approve_bot_request(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.admin_reject_bot_request(uuid,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_reject_bot_request(uuid,text) TO authenticated;
+
+-- --------------------------------------------------------------------------
+-- 2. Authenticated marketplace checkout RPC.
+--    Permanent account purchase is reused; subscription/premium is respected.
+-- --------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.buy_market_item(
+  p_type text,
+  p_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+DECLARE
+  uid uuid:=auth.uid();
+  normalized text:=lower(btrim(coalesce(p_type,'')));
+  seller uuid;
+  title text;
+  price numeric;
+  access jsonb;
+  existing_order uuid;
+  existing_purchase uuid;
+  pid uuid:=p_id;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF pid IS NULL THEN RAISE EXCEPTION 'PRODUCT_ID_REQUIRED'; END IF;
+
+  IF normalized IN ('product','link') THEN
+    SELECT coalesce(p.creator_id,p.seller_id),p.title,p.price
+    INTO seller,title,price
+    FROM public.products p
+    WHERE p.id=pid AND p.status IN ('published','active','live');
+    normalized:='product';
+
+  ELSIF normalized IN ('code','telegram_product','telegram-product') THEN
+    SELECT p.owner_id,p.title,p.price
+    INTO seller,title,price
+    FROM public.telegram_products p
+    WHERE p.id=pid AND p.status IN ('published','active','live');
+    normalized:='telegram_product';
+
+  ELSIF normalized IN (
+    'channel','telegram_channel','telegram-channel',
+    'group','telegram_group','telegram-group'
+  ) THEN
+    SELECT p.owner_id,p.name,p.price
+    INTO seller,title,price
+    FROM public.telegram_channels p
+    WHERE p.id=pid AND p.status IN ('published','active','live');
+    normalized:='channel';
+
+  ELSIF normalized IN ('pastelink','paste-link','paste_link','paste') THEN
+    SELECT p.user_id,p.title,p.price
+    INTO seller,title,price
+    FROM public.pastelinks p
+    WHERE p.id=pid
+      AND p.visibility='public'
+      AND (p.expires_at IS NULL OR p.expires_at>now());
+    normalized:='pastelink';
+
+  ELSE
+    RAISE EXCEPTION 'UNSUPPORTED_PRODUCT_TYPE';
+  END IF;
+
+  IF seller IS NULL THEN RAISE EXCEPTION 'PRODUCT_NOT_FOUND'; END IF;
+  IF seller=uid THEN RAISE EXCEPTION 'CANNOT_BUY_OWN_PRODUCT'; END IF;
+  IF coalesce(price,0)<=0 THEN RAISE EXCEPTION 'PRODUCT_IS_FREE'; END IF;
+  IF price<2000 OR price>100000 OR mod(price,1000)<>0 THEN
+    RAISE EXCEPTION 'INVALID_PRICE';
+  END IF;
+
+  SELECT pu.id INTO existing_purchase
+  FROM public.purchases pu
+  WHERE pu.buyer_id=uid
+    AND pu.product_id=pid
+    AND lower(coalesce(pu.status,'')) IN ('completed','paid','success')
+  ORDER BY pu.created_at DESC
+  LIMIT 1;
+
+  IF existing_purchase IS NOT NULL THEN
+    RETURN jsonb_build_object(
+      'already_owned',true,
+      'can_access',true,
+      'purchase_id',existing_purchase,
+      'item_type',normalized,
+      'product_id',pid
+    );
+  END IF;
+
+  access:=public.paid_access_policy(uid);
+  IF coalesce((access->>'full_access')::boolean,false) THEN
+    RETURN jsonb_build_object(
+      'membership_access',true,'can_access',true,
+      'item_type',normalized,'product_id',pid
+    );
+  END IF;
+
+  SELECT o.id INTO existing_order
+  FROM public.orders o
+  WHERE o.buyer_id=uid
+    AND o.product_id=pid
+    AND lower(coalesce(o.item_type,''))=normalized
+    AND lower(coalesce(o.status,'')) IN ('pending','waiting','unpaid')
+  ORDER BY o.created_at DESC
+  LIMIT 1;
+
+  IF existing_order IS NULL THEN
+    INSERT INTO public.orders(
+      buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title
+    )
+    VALUES(
+      uid,seller,pid,price,'pending',normalized,pid::text,title
+    )
+    RETURNING id INTO existing_order;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'order_id',existing_order,'amount',price,
+    'item_title',title,'item_type',normalized,'product_id',pid
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.buy_market_item(text,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.buy_market_item(text,uuid) TO authenticated;
+
+-- --------------------------------------------------------------------------
+-- 3. Profile visits + notification.
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.profile_visits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  visitor_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  visited_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(profile_id,visitor_id)
+);
+
+ALTER TABLE public.profile_visits ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS profile_visits_owner_read ON public.profile_visits;
+CREATE POLICY profile_visits_owner_read ON public.profile_visits
+FOR SELECT TO authenticated
+USING (profile_id=auth.uid() OR visitor_id=auth.uid() OR public.is_current_user_admin());
+
+CREATE OR REPLACE FUNCTION public.notify_profile_visit(p_profile_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+DECLARE
+  uid uuid:=auth.uid();
+  target_name text;
+  inserted boolean:=false;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'LOGIN_REQUIRED'; END IF;
+  IF p_profile_id IS NULL OR p_profile_id=uid THEN
+    RETURN jsonb_build_object('ok',true,'notified',false);
+  END IF;
+
+  IF NOT EXISTS(
+    SELECT 1 FROM public.profiles
+    WHERE id=p_profile_id AND is_banned=false
+  ) THEN
+    RAISE EXCEPTION 'PROFILE_NOT_FOUND';
+  END IF;
+
+  INSERT INTO public.profile_visits(profile_id,visitor_id)
+  VALUES(p_profile_id,uid)
+  ON CONFLICT(profile_id,visitor_id)
+  DO UPDATE SET visited_at=now();
+
+  SELECT coalesce(display_name,username,'User')
+  INTO target_name
+  FROM public.profiles
+  WHERE id=uid;
+
+  -- One notification per visitor/profile per day.
+  IF NOT EXISTS(
+    SELECT 1
+    FROM public.notifications n
+    WHERE n.user_id=p_profile_id
+      AND n.title='Profil dikunjungi'
+      AND n.created_at>=date_trunc('day',now())
+      AND n.body LIKE '%'||coalesce(target_name,'User')||'%'
+  ) THEN
+    INSERT INTO public.notifications(user_id,title,body,is_read)
+    VALUES(
+      p_profile_id,
+      'Profil dikunjungi',
+      coalesce(target_name,'User')||' mengunjungi profil kamu.',
+      false
+    );
+    inserted:=true;
+  END IF;
+
+  RETURN jsonb_build_object('ok',true,'notified',inserted);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.notify_profile_visit(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.notify_profile_visit(uuid) TO authenticated;
+
+-- --------------------------------------------------------------------------
+-- 4. Wallet pending-detail RPC retained for contract compatibility.
+-- --------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_pending_balance_detail()
+RETURNS jsonb
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path=public,extensions
+AS $$
+  SELECT jsonb_build_object(
+    'ok',true,
+    'rows',coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.available_at ASC),'[]'::jsonb),
+    'total_pending',coalesce(sum(x.amount),0),
+    'count',count(*)
+  )
+  FROM (
+    SELECT wt.id,wt.type,wt.amount,wt.balance_before,wt.balance_after,
+           wt.reference,wt.status,wt.available_at,wt.settlement_code,wt.created_at
+    FROM public.wallet_transactions wt
+    WHERE wt.user_id=auth.uid()
+      AND lower(coalesce(wt.status,'pending'))='pending'
+      AND wt.available_at IS NOT NULL
+    ORDER BY wt.available_at ASC
+    LIMIT 100
+  ) x;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_pending_balance_detail() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_pending_balance_detail() TO authenticated;
+
+-- --------------------------------------------------------------------------
+-- 5. Public/owner RLS hardening.
+-- --------------------------------------------------------------------------
+ALTER TABLE public.approved_bots ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS approved_bots_active_public_read ON public.approved_bots;
+CREATE POLICY approved_bots_active_public_read ON public.approved_bots
+FOR SELECT TO anon,authenticated
+USING (is_active=true OR public.is_current_user_admin());
+
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS products_public_read ON public.products;
+CREATE POLICY products_public_read ON public.products
+FOR SELECT TO anon,authenticated
+USING (
+  seller_id=auth.uid()
+  OR creator_id=auth.uid()
+  OR public.is_current_user_admin()
+  OR status IN ('published','active','live')
+);
+DROP POLICY IF EXISTS products_owner_insert ON public.products;
+CREATE POLICY products_owner_insert ON public.products
+FOR INSERT TO authenticated
+WITH CHECK (seller_id=auth.uid() OR creator_id=auth.uid());
+DROP POLICY IF EXISTS products_owner_update ON public.products;
+CREATE POLICY products_owner_update ON public.products
+FOR UPDATE TO authenticated
+USING (seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS products_owner_delete ON public.products;
+CREATE POLICY products_owner_delete ON public.products
+FOR DELETE TO authenticated
+USING (seller_id=auth.uid() OR creator_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.telegram_products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS telegram_products_public_read ON public.telegram_products;
+CREATE POLICY telegram_products_public_read ON public.telegram_products
+FOR SELECT TO anon,authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin() OR status IN ('published','active','live'));
+DROP POLICY IF EXISTS telegram_products_owner_insert ON public.telegram_products;
+CREATE POLICY telegram_products_owner_insert ON public.telegram_products
+FOR INSERT TO authenticated
+WITH CHECK (owner_id=auth.uid());
+DROP POLICY IF EXISTS telegram_products_owner_update ON public.telegram_products;
+CREATE POLICY telegram_products_owner_update ON public.telegram_products
+FOR UPDATE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (owner_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS telegram_products_owner_delete ON public.telegram_products;
+CREATE POLICY telegram_products_owner_delete ON public.telegram_products
+FOR DELETE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.telegram_channels ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS telegram_channels_public_read ON public.telegram_channels;
+CREATE POLICY telegram_channels_public_read ON public.telegram_channels
+FOR SELECT TO anon,authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin() OR status IN ('published','active','live'));
+DROP POLICY IF EXISTS telegram_channels_owner_insert ON public.telegram_channels;
+CREATE POLICY telegram_channels_owner_insert ON public.telegram_channels
+FOR INSERT TO authenticated
+WITH CHECK (owner_id=auth.uid());
+DROP POLICY IF EXISTS telegram_channels_owner_update ON public.telegram_channels;
+CREATE POLICY telegram_channels_owner_update ON public.telegram_channels
+FOR UPDATE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (owner_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS telegram_channels_owner_delete ON public.telegram_channels;
+CREATE POLICY telegram_channels_owner_delete ON public.telegram_channels
+FOR DELETE TO authenticated
+USING (owner_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.pastelinks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS pastelinks_owner_or_public ON public.pastelinks;
+CREATE POLICY pastelinks_owner_or_public ON public.pastelinks
+FOR SELECT TO anon,authenticated
+USING (
+  user_id=auth.uid()
+  OR public.is_current_user_admin()
+  OR (visibility='public' AND lower(coalesce(access_type,'free'))='free')
+);
+DROP POLICY IF EXISTS pastelinks_owner_update ON public.pastelinks;
+CREATE POLICY pastelinks_owner_update ON public.pastelinks
+FOR UPDATE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS pastelinks_owner_delete ON public.pastelinks;
+CREATE POLICY pastelinks_owner_delete ON public.pastelinks
+FOR DELETE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+-- Social data can be read publicly; mutations remain RPC-controlled.
+ALTER TABLE public.content_likes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS content_likes_public_read ON public.content_likes;
+CREATE POLICY content_likes_public_read ON public.content_likes
+FOR SELECT TO anon,authenticated USING (true);
+
+ALTER TABLE public.creator_followers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS creator_followers_public_read ON public.creator_followers;
+CREATE POLICY creator_followers_public_read ON public.creator_followers
+FOR SELECT TO anon,authenticated USING (true);
+
+ALTER TABLE public.content_comments ENABLE ROW LEVEL SECURITY;DROP POLICY IF EXISTS comments_authenticated_insert ON public.content_comments;
+CREATE POLICY comments_authenticated_insert ON public.content_comments
+FOR INSERT TO authenticated
+WITH CHECK (
+  user_id=auth.uid()
+  AND length(btrim(coalesce(body,''))) BETWEEN 1 AND 2000
+);
+DROP POLICY IF EXISTS comments_owner_delete ON public.content_comments;
+CREATE POLICY comments_owner_delete ON public.content_comments
+FOR DELETE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+
+DROP POLICY IF EXISTS content_comments_public_read ON public.content_comments;
+CREATE POLICY content_comments_public_read ON public.content_comments
+FOR SELECT TO anon,authenticated USING (true);
+
+ALTER TABLE public.creator_followers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS creator_followers_owner_insert ON public.creator_followers;
+CREATE POLICY creator_followers_owner_insert ON public.creator_followers
+FOR INSERT TO authenticated
+WITH CHECK (follower_id=auth.uid() AND creator_id<>auth.uid());
+DROP POLICY IF EXISTS creator_followers_owner_delete ON public.creator_followers;
+CREATE POLICY creator_followers_owner_delete ON public.creator_followers
+FOR DELETE TO authenticated
+USING (follower_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS analytics_events_public_read ON public.analytics_events;
+CREATE POLICY analytics_events_public_read ON public.analytics_events
+FOR SELECT TO anon,authenticated USING (true);
+DROP POLICY IF EXISTS analytics_events_authenticated_insert ON public.analytics_events;
+CREATE POLICY analytics_events_authenticated_insert ON public.analytics_events
+FOR INSERT TO authenticated
+WITH CHECK (actor_id=auth.uid() OR actor_id IS NULL);
+DROP POLICY IF EXISTS analytics_events_anon_insert ON public.analytics_events;
+CREATE POLICY analytics_events_anon_insert ON public.analytics_events
+FOR INSERT TO anon
+WITH CHECK (actor_id IS NULL);
+
+-- Account-owned financial/read data.
+ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS wallets_owner_read ON public.wallets;
+CREATE POLICY wallets_owner_read ON public.wallets
+FOR SELECT TO authenticated USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS wallet_transactions_owner_read ON public.wallet_transactions;
+CREATE POLICY wallet_transactions_owner_read ON public.wallet_transactions
+FOR SELECT TO authenticated USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS transactions_owner_read ON public.transactions;
+CREATE POLICY transactions_owner_read ON public.transactions
+FOR SELECT TO authenticated USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.withdrawals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS withdrawals_owner_read ON public.withdrawals;
+CREATE POLICY withdrawals_owner_read ON public.withdrawals
+FOR SELECT TO authenticated USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS payment_methods_owner_all ON public.payment_methods;
+CREATE POLICY payment_methods_owner_all ON public.payment_methods
+FOR ALL TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS notifications_owner_read ON public.notifications;
+CREATE POLICY notifications_owner_read ON public.notifications
+FOR SELECT TO authenticated USING (user_id=auth.uid() OR public.is_current_user_admin());
+DROP POLICY IF EXISTS notifications_owner_update ON public.notifications;
+CREATE POLICY notifications_owner_update ON public.notifications
+FOR UPDATE TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin())
+WITH CHECK (user_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS orders_owner_read ON public.orders;
+CREATE POLICY orders_owner_read ON public.orders
+FOR SELECT TO authenticated
+USING (buyer_id=auth.uid() OR seller_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS purchases_owner_read ON public.purchases;
+CREATE POLICY purchases_owner_read ON public.purchases
+FOR SELECT TO authenticated
+USING (buyer_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.product_access ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS product_access_owner_read ON public.product_access;
+CREATE POLICY product_access_owner_read ON public.product_access
+FOR SELECT TO authenticated
+USING (buyer_id=auth.uid() OR public.is_current_user_admin());
+
+ALTER TABLE public.paid_access_usage ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS paid_access_usage_owner_read ON public.paid_access_usage;
+CREATE POLICY paid_access_usage_owner_read ON public.paid_access_usage
+FOR SELECT TO authenticated
+USING (user_id=auth.uid() OR public.is_current_user_admin());
+
+COMMIT;
+
+
 /* ============================================================================
    FINAL AUTOMATED CONTRACT CHECKS
    Fails the migration if a JS RPC required by the supplied project is absent.
