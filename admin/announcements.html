@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PasTele Admin — Pengumuman</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/admin-dashboard-theme.css?v=20260922-dashboard-ui-v1">
+<link rel="stylesheet" href="css/announcements.css?v=20260922-announcements-v1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/db-contract.js?v=20260921-admin-contract-v4"></script>
+<script src="js/rpc-contract.js?v=20260922-admin-announcements-v1"></script>
+</head>
+<body class="app-page admin-page">
+<main class="admin-main"><section class="section"><div class="container admin-layout">
+<aside class="card admin-side">
+<div class="admin-brand"><span class="admin-brand-icon"><i class="fa-solid fa-shield-halved"></i></span><div><strong>PasTele</strong><small>Control Center</small></div></div>
+<nav class="admin-nav">
+<a href="index.html"><i class="fa-solid fa-gauge-high"></i><span>Overview</span></a>
+<a href="users.html"><i class="fa-solid fa-users"></i><span>Users</span></a>
+<a href="products.html"><i class="fa-solid fa-box"></i><span>Products</span></a>
+<a href="content.html"><i class="fa-solid fa-layer-group"></i><span>Content</span></a>
+<a href="orders.html"><i class="fa-solid fa-receipt"></i><span>Orders</span></a>
+<a href="payments.html"><i class="fa-solid fa-credit-card"></i><span>Payments</span></a>
+<a href="withdrawals.html"><i class="fa-solid fa-money-bill-transfer"></i><span>Withdrawals</span></a>
+<a href="transactions.html"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Transactions</span></a>
+<a href="pastes.html"><i class="fa-solid fa-file-lines"></i><span>Pastes</span></a>
+<a href="bots.html"><i class="fa-solid fa-robot"></i><span>Bots</span></a>
+<a href="logs.html"><i class="fa-solid fa-list-check"></i><span>Logs</span></a>
+<a class="active" href="announcements.html"><i class="fa-solid fa-bullhorn"></i><span>Pengumuman</span></a>
+<a href="security.html"><i class="fa-solid fa-shield-halved"></i><span>Security</span></a>
+</nav></aside>
+<div class="admin-content">
+<header class="admin-hero"><div><span class="badge"><i class="fa-solid fa-bullhorn"></i> Admin Broadcast</span><h1>Pengumuman</h1><p>Buat, terbitkan, edit, atau hapus pengumuman untuk inbox pengguna.</p></div><button class="btn primary" id="newAnnouncement"><i class="fa-solid fa-plus"></i> Pengumuman Baru</button></header>
+<div class="announcement-grid">
+<section class="admin-card announcement-editor">
+<div class="editor-head"><div><strong id="editorTitle">Buat pengumuman</strong><span>Pengumuman yang diterbitkan akan masuk ke notifikasi pengguna.</span></div><span class="edit-status" id="editStatus">Baru</span></div>
+<form id="announcementForm">
+<input type="hidden" id="announcementId">
+<label>Judul<input id="announcementTitle" maxlength="180" required placeholder="Contoh: Maintenance PasTele malam ini"></label>
+<label>Isi pengumuman<textarea id="announcementBody" maxlength="5000" required placeholder="Tulis informasi yang ingin disampaikan kepada pengguna..."></textarea></label>
+<label>URL gambar <span class="muted">(opsional)</span><input id="announcementImage" type="url" maxlength="1000" placeholder="https://..."></label>
+<label class="publish-row"><input id="announcementPublished" type="checkbox" checked><span><strong>Terbitkan sekarang</strong><small>Jika aktif, pengumuman akan dikirim ke inbox pengguna.</small></span></label>
+<div class="form-actions"><button type="button" class="btn" id="cancelEdit">Reset</button><button type="submit" class="btn primary" id="saveAnnouncement"><i class="fa-solid fa-paper-plane"></i> Simpan Pengumuman</button></div>
+</form></section>
+<section class="admin-card announcement-list-card">
+<div class="editor-head"><div><strong>Riwayat Pengumuman</strong><span>Terbaru berada di atas.</span></div><button class="btn small" id="refreshAnnouncements"><i class="fa-solid fa-rotate"></i></button></div>
+<div id="announcementList"><div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat...</span></div></div>
+</section>
+</div></div></div></section></main>
+<div id="toast"></div>
+<script src="js/core.js?v=20260922-complete-v2"></script>
+<script src="js/announcements.js?v=20260922-admin-announcements-v1"></script>
+</body></html>
