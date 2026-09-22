@@ -3240,7 +3240,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const followBtn = $("followBtn");
   const settingsBtn = $("settingsBtn");
-  const adminBtn = $("adminBtn");
 
   const followersCountEl = $("followersCount");
   const followingCountEl = $("followingCount");
@@ -3540,11 +3539,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  setText(
-    "bio",
-    profile.bio ||
-    "Creator PasTele"
-  );
+  /* Bio: render plain text safely and make URLs clickable. */
+  const renderBio = (value) => {
+    if (!bioEl) return;
+
+    const raw = String(value || "").trim() || "Creator PasTele";
+    const escaped = esc(raw).replace(/\r?\n/g, "<br>");
+    const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+|(?:t\.me|telegram\.me)\/[^\s<]+)/gi;
+
+    const linked = escaped.replace(urlPattern, (match) => {
+      let href = match;
+      let trailing = "";
+
+      while (/[.,!?;:)]$/.test(href)) {
+        trailing = href.slice(-1) + trailing;
+        href = href.slice(0, -1);
+      }
+
+      const normalized = /^https?:\/\//i.test(href)
+        ? href
+        : `https://${href}`;
+
+      return `<a class="profile-bio-link" href="${esc(normalized)}" target="_blank" rel="noopener noreferrer nofollow">${esc(href)}</a>${trailing}`;
+    });
+
+    bioEl.innerHTML = linked;
+    bioEl.classList.toggle("is-placeholder", !String(value || "").trim());
+  };
+
+  renderBio(profile.bio);
 
   setText(
     "handle",
@@ -3642,22 +3665,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       true
     );
 
-    if (
-      profile.is_admin === true ||
-      profile.role === "admin" ||
-      profile.role === "owner"
-    ) {
-      setHidden(
-        "adminBtn",
-        false
-      );
-    } else {
-      setHidden(
-        "adminBtn",
-        true
-      );
-    }
-
     if (settingsBtn) {
       settingsBtn.removeAttribute("hidden");
     }
@@ -3674,11 +3681,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     setHidden(
       "settingsBtn",
-      true
-    );
-
-    setHidden(
-      "adminBtn",
       true
     );
 
