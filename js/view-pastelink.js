@@ -25,6 +25,31 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
   } catch (_) {}
 })();
 
+
+/* =========================================================
+   PasTele PasteLink — CLEAN CLICKABLE URL RENDERER
+   Converts plain http://, https:// and www. URLs to safe anchors.
+   Never injects raw user HTML.
+   ========================================================= */
+function ptLinkifyText(value){
+  const escaped = String(value ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+  const urlRe = /(^|[\s(])((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
+  return escaped.replace(urlRe, (all, lead, rawUrl) => {
+    let href = rawUrl;
+    let tail = "";
+    while (/[),.!?;:]+$/.test(href)) {
+      tail = href.slice(-1) + tail;
+      href = href.slice(0, -1);
+    }
+    const target = /^www\./i.test(href) ? "https://" + href : href;
+    const safe = /^(https?:\/\/)[^\s<>"']+$/i.test(target) ? target : "";
+    if (!safe) return all;
+    return `${lead}<a class="pt-content-link" href="${safe.replace(/"/g,"&quot;")}" target="_blank" rel="noopener noreferrer nofollow">${href}</a>${tail}`;
+  });
+}
+
 /* =========================================================
    PasTele — Supabase client
    ========================================================= */
@@ -3035,3 +3060,11 @@ document.documentElement.classList.add("pastele-ready");
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
+
+
+function renderPasteContentClean(value){
+  const text = String(value ?? "");
+  return ptLinkifyText(text)
+    .replace(/\r\n?/g,"\n")
+    .replace(/\n/g,"<br>");
+}
