@@ -7441,6 +7441,7 @@ GRANT EXECUTE ON FUNCTION public.notify_profile_visit(uuid) TO authenticated;
 -- --------------------------------------------------------------------------
 -- 4. Wallet pending-detail RPC retained for contract compatibility.
 -- --------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.get_pending_balance_detail();
 CREATE OR REPLACE FUNCTION public.get_pending_balance_detail()
 RETURNS jsonb
 LANGUAGE sql
