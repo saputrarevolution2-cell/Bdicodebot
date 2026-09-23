@@ -1,5 +1,22 @@
 (() => {'use strict';const A=window.PasTeleAdmin,$=A.$;let ctl={},armed={instant:false,manual:false};
-async function controls(){const s=await A.call('get_public_site_settings')||{};ctl={withdrawal_instant:{enabled:s.withdrawal_instant?.enabled!==false,reason:s.withdrawal_instant?.reason||''},withdrawal_manual:{enabled:s.withdrawal_manual?.enabled!==false,reason:s.withdrawal_manual?.reason||''}};for(const [id,k] of [['instant','withdrawal_instant'],['manual','withdrawal_manual']]){const c=ctl[k];$('#'+id+'Badge').textContent=c.enabled?'AKTIF':'DITUTUP';$('#'+id+'Badge').className='control-status '+(c.enabled?'on':'off');$('#'+id+'Text').textContent=c.enabled?'Permintaan WD tersedia.':(c.reason||'Ditutup admin.');$('#'+id+'Btn').textContent=c.enabled?'Tutup WD '+(id==='instant'?'Instan':'Manual'):'Buka WD '+(id==='instant'?'Instan':'Manual');$('#'+id+'Btn').className='btn '+(c.enabled?'danger':'success');$('#'+id+'Reason').value=c.reason;$('#'+id+'Reason').classList.toggle('hidden',c.enabled && !armed[id])}}
+async function controls(){
+  const s=await A.call('get_public_site_settings')||{};
+  ctl={
+    withdrawal_instant:{enabled:s.withdrawal_instant?.enabled!==false,reason:String(s.withdrawal_instant?.reason||'')},
+    withdrawal_manual:{enabled:s.withdrawal_manual?.enabled!==false,reason:String(s.withdrawal_manual?.reason||'')}
+  };
+  for(const [id,k] of [['instant','withdrawal_instant'],['manual','withdrawal_manual']]){
+    const c=ctl[k], field=$('#'+id+'Reason'), btn=$('#'+id+'Btn'), badge=$('#'+id+'Badge');
+    armed[id]=false;
+    badge.textContent=c.enabled?'AKTIF':'DITUTUP';
+    badge.className='control-status '+(c.enabled?'on':'off');
+    $('#'+id+'Text').textContent=c.enabled?'Permintaan WD tersedia.':(c.reason||'Ditutup admin.');
+    btn.textContent=c.enabled?'Tutup WD '+(id==='instant'?'Instan':'Manual'):'Buka WD '+(id==='instant'?'Instan':'Manual');
+    btn.className='btn '+(c.enabled?'danger':'success');
+    field.value=c.reason;
+    field.classList.add('hidden');
+  }
+}
 async function toggle(k,id){
 const c=ctl[k];
 let reason='';
