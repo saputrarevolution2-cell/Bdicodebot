@@ -2922,9 +2922,49 @@ window.PasTeleView={ $,esc,money,toast,guestToken,user,isPaid,targetType,telegra
       const u=href(x); return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${x}</a>${tail}`:full;
     }).replace(/\r?\n/g,"<br>");
   }
+  function linkifyHtmlTextNodes(html){
+    const box=document.createElement("div");
+    box.innerHTML=html;
+    const walker=document.createTreeWalker(box,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    for(const node of nodes){
+      if(node.parentElement?.closest("a,script,style,code,pre")) continue;
+      const text=node.nodeValue||"";
+      const re=/((?:https?:\/\/|www\.)[^\\s<]+)/gi;
+      let m,last=0,changed=false;
+      const frag=document.createDocumentFragment();
+      while((m=re.exec(text))){
+        let raw=m[1], clean=raw, tail="";
+        while(/[),.!?;:'"\\]]$/.test(clean)){
+          tail=clean.slice(-1)+tail;
+          clean=clean.slice(0,-1);
+        }
+        const u=href(clean);
+        if(!u) continue;
+        changed=true;
+        if(m.index>last) frag.appendChild(document.createTextNode(text.slice(last,m.index)));
+        const a=document.createElement("a");
+        a.className="pt-content-link";
+        a.href=u;
+        a.target="_blank";
+        a.rel="noopener noreferrer nofollow";
+        a.textContent=clean;
+        frag.appendChild(a);
+        if(tail) frag.appendChild(document.createTextNode(tail));
+        last=m.index+raw.length;
+      }
+      if(changed){
+        if(last<text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+        node.parentNode.replaceChild(frag,node);
+      }
+    }
+    return box.innerHTML;
+  }
   function render(raw){
     const s=String(raw??"");
-    return /<[a-z][\s\S]*>/i.test(s)?sanitize(s):autoLink(s);
+    if(/<[a-z][\s\S]*>/i.test(s)) return linkifyHtmlTextNodes(sanitize(s));
+    return autoLink(s);
   }
   async function sha(v){
     const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(v??"")));
