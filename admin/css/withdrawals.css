@@ -6,3 +6,22 @@ html[data-theme=dark],html.theme-dark,body.theme-dark{--bg:#0b111a;--surface:#12
 
 /* ===== Page UI polish ===== */
 .admin-page .admin-content{min-width:0}.admin-page .table-wrap{max-width:100%}
+
+/* ===== Withdrawal controls / reason UX ===== */
+.wd-control-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.wd-control{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.wd-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff}
+.wd-icon.instant{background:linear-gradient(135deg,#635bff,#229ed9)}
+.wd-icon.manual{background:linear-gradient(135deg,#10b981,#06b6d4)}
+.wd-control small{display:block;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.08em}
+.wd-control h3{margin:3px 0 4px;font-size:16px}
+.wd-control p{margin:0;color:var(--muted);font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.wd-control .control-status{justify-self:end}
+.wd-control .control-status.on{background:rgba(16,185,129,.1);color:var(--green)}
+.wd-control .control-status.off{background:rgba(239,68,68,.1);color:var(--red)}
+.wd-control .btn{grid-column:2/-1;width:max-content;justify-self:end}
+.wd-control .btn.danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.22);color:var(--red)}
+.wd-control .btn.success{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.22);color:var(--green)}
+.admin-reason{grid-column:1/-1;width:100%;min-height:78px;resize:vertical;border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:12px;padding:10px 12px;font:inherit;line-height:1.45;outline:none}
+.admin-reason:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,91,255,.1)}
+@media(max-width:760px){.wd-control-grid{grid-template-columns:1fr}.wd-control{grid-template-columns:auto 1fr}.wd-control .control-status{grid-column:2;justify-self:start}.wd-control .btn{grid-column:1/-1;width:100%}}
