@@ -2978,364 +2978,146 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
    published_at, created_at, updated_at
    ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
-    "use strict";
-    /* =======================================================
-       HELPERS
-       ======================================================= */
-    const $ = (selector) => document.querySelector(selector);
-    const content = $("#content");
-    if (!content) {
-        console.error("[Notifications] #content tidak ditemukan.");
-        return;
-    }
-    const escapeHtml = (value) => {
-        if (window.TC?.esc) {
-            return TC.esc(String(value ?? ""));
-        }
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    };
-    const formatDate = (value) => {
-        if (!value) return "-";
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) {
-            return "-";
-        }
-        return date.toLocaleString("id-ID", {
-            dateStyle: "medium",
-            timeStyle: "short"
-        });
-    };
-    const getClient = () => {
-        return (
-            window.sb ||
-            window.sb ||
-            window.supabase ||
-            null
-        );
-    };
-    /* =======================================================
-       AUTH
-       ======================================================= */
-    let user = null;
-    try {
-        if (!window.TC || typeof TC.user !== "function") {
-            console.error("[Notifications] TC.user() tidak tersedia.");
-            location.replace("login.html");
-            return;
-        }
-        user = await TC.user();
-    } catch (error) {
-        console.error("[Notifications] Gagal mengambil user:", error);
-        location.replace("login.html");
-        return;
-    }
-    if (!user?.id) {
-        location.replace("login.html");
-        return;
-    }
-    const client = getClient();
-    if (!client) {
-        content.innerHTML = `
-            <div class="empty">
-                Tidak dapat terhubung ke database.
-            </div>
-        `;
-        return;
-    }
-    /* =======================================================
-       LOAD NOTIFICATIONS
-       ======================================================= */
-    let notifications = [];
-    let announcements = [];
-    const [notificationResult, announcementResult] = await Promise.allSettled([
-        client
-            .from("notifications")
-            .select("id,user_id,title,body,is_read,created_at,notification_type,link_url,target_type,target_id")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-        client
-            .from("announcements")
-            .select(
-                "id,title,body,image_url,published,published_at,created_at,updated_at"
-            )
-            .eq("published", true)
-            .order("published_at", { ascending: false })
-    ]);
-    /* =======================================================
-       NOTIFICATIONS RESULT
-       ======================================================= */
-    if (notificationResult.status === "fulfilled") {
-        const result = notificationResult.value;
-        if (result.error) {
-            console.error(
-                "[Notifications] Query notifications gagal:",
-                result.error
-            );
-        } else {
-            notifications = Array.isArray(result.data)
-                ? result.data
-                : [];
-        }
-    } else {
-        console.error(
-            "[Notifications] Request notifications gagal:",
-            notificationResult.reason
-        );
-    }
-    /* =======================================================
-       ANNOUNCEMENTS RESULT
-       ======================================================= */
-    if (announcementResult.status === "fulfilled") {
-        const result = announcementResult.value;
-        if (result.error) {
-            console.error(
-                "[Notifications] Query announcements gagal:",
-                result.error
-            );
-        } else {
-            announcements = Array.isArray(result.data)
-                ? result.data
-                : [];
-        }
-    } else {
-        console.error(
-            "[Notifications] Request announcements gagal:",
-            announcementResult.reason
-        );
-    }
-    /* =======================================================
-       NORMALIZE DATA
-       ======================================================= */
-    const notificationRows = notifications.map((item) => ({
-        id: item.id,
-        source: "notification",
-        title: item.title || "Notifikasi",
-        body: item.body || "",
-        image_url: null,
-        created_at: item.created_at,
-        is_read: Boolean(item.is_read),
-        notification_id: item.id,
-        notification_type: item.notification_type || "system",
-        link_url: item.link_url || "",
-        target_type: item.target_type || null,
-        target_id: item.target_id || null
-    }));
-    const announcementRows = announcements.map((item) => ({
-        id: item.id,
-        source: "announcement",
-        title: item.title || "Pengumuman",
-        body: item.body || "",
-        image_url: item.image_url || null,
-        created_at:
-            item.published_at ||
-            item.created_at ||
-            null,
-        is_read: true,
-        notification_id: null
-    }));
-    // Avoid showing the same admin announcement twice: once from
-    // announcements and again from the all-user notification inbox.
-    const noticeKeys = new Set(
-        notificationRows.map(item => `${item.title}||${item.body}`)
-    );
-    const filteredAnnouncements = announcementRows.filter(
-        item => !noticeKeys.has(`${item.title}||${item.body}`)
-    );
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const content = $("#content"), announcementBox = $("#adminAnnouncements");
+  if (!content || !announcementBox) return;
+  const esc = v => window.TC?.esc ? TC.esc(String(v ?? "")) : String(v ?? "").replace(/[&<>\"]/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"' : "&quot;" }[m] || m));
+  const fmt = v => { if(!v) return "-"; const d=new Date(v); return Number.isNaN(d.getTime())?"-":d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}); };
+  const client = window.sb || window.supabase || null;
+  if (!window.TC?.user) { location.replace("login.html"); return; }
+  let user; try { user=await TC.user(); } catch { location.replace("login.html"); return; }
+  if (!user?.id || !client) { location.replace("login.html"); return; }
 
-    const rows = [
-        ...notificationRows,
-        ...filteredAnnouncements
-    ].sort((a, b) => {
-        const da = new Date(a.created_at || 0).getTime();
-        const db = new Date(b.created_at || 0).getTime();
-        return db - da;
-    });
-    /* =======================================================
-       EMPTY STATE
-       ======================================================= */
-    if (!rows.length) {
-        content.innerHTML = `
-            <div class="empty">
-                <i class="fa-regular fa-bell-slash"></i>
-                <div>Belum ada notifikasi.</div>
-            </div>
-        `;
-        return;
+  let notifications=[], announcements=[];
+
+  function summary(){
+    const total=$("#noticeTotal"), unread=$("#noticeUnread");
+    if(total) total.textContent=String(notifications.length+announcements.length);
+    if(unread) unread.textContent=String(notifications.filter(n=>!n.is_read).length);
+    const selected=document.querySelectorAll(".notification-select:checked").length;
+    const count=$("#notificationSelectedCount"); if(count) count.textContent=`${selected} dipilih`;
+    const del=$("#deleteSelectedBtn"); if(del) del.disabled=selected===0;
+  }
+
+  function renderAnnouncements(){
+    if(!announcements.length){
+      announcementBox.innerHTML='<div class="empty compact-empty"><i class="fa-regular fa-bell-slash"></i><span>Belum ada pengumuman admin.</span></div>';
+      return;
     }
-    /* =======================================================
-       RENDER
-       ======================================================= */
-    const totalEl = document.getElementById("noticeTotal");
-    const unreadEl = document.getElementById("noticeUnread");
-    const unreadCount = rows.filter(item => item.source === "notification" && !item.is_read).length;
-    if (totalEl) totalEl.textContent = String(rows.length);
-    if (unreadEl) unreadEl.textContent = String(unreadCount);
+    announcementBox.innerHTML=announcements.map(n=>{
+      const img=n.image_url?`<div class="announcement-media"><img src="${esc(n.image_url)}" alt="" loading="lazy" onerror="this.closest(\'.announcement-media\')?.remove()"></div>`:"";
+      return `<article class="announcement-card"><div class="announcement-icon"><i class="fa-solid fa-bullhorn"></i></div><div><div class="announcement-meta"><strong>Pengumuman Admin</strong><time>${esc(fmt(n.published_at||n.created_at))}</time></div><h3>${esc(n.title||"Pengumuman")}</h3><p class="announcement-body">${esc(n.body||"")}</p>${img}</div></article>`;
+    }).join("");
+  }
 
-    content.innerHTML = rows.map((item, index) => {
-        const isAnnouncement = item.source === "announcement";
-        const body = String(item.body || "").trim();
-        const isLong = body.length > 260;
-        const preview = isLong ? body.slice(0, 260).trimEnd() + "…" : body;
-        const unreadClass = !isAnnouncement && !item.is_read ? "unread" : "";
-        const typeLabel = isAnnouncement ? "Pengumuman" : "Notifikasi";
-        const typeIcon = isAnnouncement ? "fa-bullhorn" : "fa-bell";
-        const image = item.image_url ? `
-          <div class="notice-media">
-            <img class="notice-image" src="${escapeHtml(item.image_url)}" alt="" loading="lazy"
-                 onerror="this.closest('.notice-media')?.remove()">
-          </div>` : "";
-
-        return `
-          <article class="notice-card ${escapeHtml(item.source)} ${unreadClass}"
-                   data-index="${index}"
-                   data-notification-id="${escapeHtml(item.notification_id || "")}"
-                   ${item.link_url ? `data-link-url="${escapeHtml(item.link_url)}" tabindex="0" role="link"` : ""}>
-            ${image}
-            <div class="notice-inner">
-              <div class="notice-topline">
-                <div class="notice-source">
-                  <span class="notice-type-icon ${isAnnouncement ? "announcement" : "notification"}">
-                    <i class="fa-solid ${typeIcon}"></i>
-                  </span>
-                  <div>
-                    <strong>${typeLabel}</strong>
-                    <small>${formatDate(item.created_at)}</small>
-                  </div>
-                </div>
-                ${!isAnnouncement && !item.is_read
-                    ? `<span class="notice-unread"><i class="fa-solid fa-circle"></i> Baru</span>`
-                    : `<span class="notice-read"><i class="fa-solid fa-check"></i> Dibaca</span>`}
-              </div>
-
-              <h2>${escapeHtml(item.title)}</h2>
-
-              ${body ? `<div class="notice-short ${isLong ? "is-truncated" : "expanded"}">${escapeHtml(preview)}</div>` : ""}
-
-              <div class="notice-bottom">
-                ${isLong ? `
-                  <button type="button" class="notice-more" data-more="${index}">
-                    <span>Baca selengkapnya</span><i class="fa-solid fa-arrow-right"></i>
-                  </button>` : `<span></span>`}
-                ${item.link_url ? `
-                  <span class="notice-link-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</span>` : ""}
-              </div>
-            </div>
-          </article>
-        `;
+  function renderNotifications(){
+    if(!notifications.length){
+      content.innerHTML='<div class="empty"><i class="fa-regular fa-bell-slash"></i><div>Tidak ada notifikasi pengguna.</div></div>';
+      summary(); return;
+    }
+    content.innerHTML=notifications.map((n,i)=>{
+      const body=String(n.body||"").trim(), long=body.length>260, preview=long?body.slice(0,260).trimEnd()+"…":body;
+      const icon={withdrawal:"fa-wallet",purchase:"fa-bag-shopping",sale:"fa-circle-check",like:"fa-heart",comment:"fa-comment",follow:"fa-user-plus"}[n.notification_type]||"fa-bell";
+      const label={withdrawal:"Withdrawal",purchase:"Pembelian",sale:"Penjualan",like:"Like",comment:"Komentar",follow:"Follow"}[n.notification_type]||"Notifikasi";
+      return `<article class="notice-card ${n.is_read?"":"unread"}" data-notification-id="${esc(n.id)}" data-index="${i}">
+        <div class="notice-inner"><div class="notice-topline">
+          <div class="notice-source-wrap"><input class="notification-select" type="checkbox" aria-label="Pilih notifikasi" data-select="${esc(n.id)}">
+            <div class="notice-source"><span class="notice-type-icon notification"><i class="fa-solid ${icon}"></i></span><div><strong>${label}</strong><small>${esc(fmt(n.created_at))}</small></div></div>
+          </div>
+          <div class="notification-row-actions">
+            <button type="button" data-toggle-read="${esc(n.id)}"><i class="fa-solid ${n.is_read?"fa-envelope":"fa-envelope-open"}"></i> ${n.is_read?"Tandai":"Sudah dibaca"}</button>
+            <button type="button" class="delete-one" data-delete-one="${esc(n.id)}"><i class="fa-solid fa-trash"></i> Hapus</button>
+          </div>
+        </div>
+        <h2>${esc(n.title||"Notifikasi")}</h2>${body?`<div class="notice-short ${long?"is-truncated":"expanded"}">${esc(preview)}</div>`:""}
+        <div class="notice-bottom">${long?`<button type="button" class="notice-more" data-more="${i}"><span>Baca selengkapnya</span><i class="fa-solid fa-arrow-right"></i></button>`:"<span></span>"}${n.link_url?`<span class="notice-link-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</span>`:""}</div>
+        </div></article>`;
     }).join("");
 
-    rows.forEach((item, index) => {
-        if (!item.link_url) return;
-        const card = document.querySelector(`[data-index="${index}"]`);
-        if (!card) return;
-        card.classList.add("is-clickable");
-        const open = () => {
-            try { window.location.assign(new URL(item.link_url, window.location.origin + "/").href); }
-            catch (_) { window.location.assign(item.link_url); }
-        };
-        card.addEventListener("click", (e) => {
-            if (e.target.closest("button")) return;
-            open();
-        });
-        card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                open();
-            }
-        });
-    });
+    content.querySelectorAll("[data-select]").forEach(b=>b.addEventListener("change",()=>{b.closest(".notice-card")?.classList.toggle("is-selected",b.checked);summary();}));
+    content.querySelectorAll("[data-toggle-read]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleRead(b.dataset.toggleRead);}));
+    content.querySelectorAll("[data-delete-one]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();deleteOne(b.dataset.deleteOne);}));
+    content.querySelectorAll("[data-more]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();openDetail(notifications[+b.dataset.more]);}));
+    content.querySelectorAll("[data-index]").forEach(card=>{const n=notifications[+card.dataset.index];if(!n?.link_url)return;card.classList.add("is-clickable");card.addEventListener("click",e=>{if(e.target.closest("button,input"))return;try{location.assign(new URL(n.link_url,location.origin+"/").href)}catch{}});});
+    summary();
+  }
 
-    /* =======================================================
-       READ MORE MODAL
-       ======================================================= */
-    let noticeModal = document.getElementById("noticeDetailModal");
-    if (!noticeModal) {
-      noticeModal = document.createElement("div");
-      noticeModal.id = "noticeDetailModal";
-      noticeModal.className = "notice-detail-modal";
-      noticeModal.hidden = true;
-      noticeModal.innerHTML = `
-        <div class="notice-detail-backdrop" data-notice-close></div>
-        <section class="notice-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="noticeDetailTitle">
-          <header class="notice-detail-head"><div><span class="badge"><i class="fa-solid fa-bell"></i> DETAIL NOTIFIKASI</span><h2 id="noticeDetailTitle"></h2></div><button type="button" class="notice-detail-x" data-notice-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></header>
-          <div class="notice-detail-body" id="noticeDetailBody"></div>
-          <footer class="notice-detail-foot"><button type="button" class="btn" data-notice-close><i class="fa-solid fa-check-double"></i> Sudah baca</button><button type="button" class="btn primary" id="noticeDetailOpen" hidden><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</button></footer>
-        </section>`;
-      document.body.appendChild(noticeModal);
-    }
-    const detailTitle = document.getElementById("noticeDetailTitle");
-    const detailBody = document.getElementById("noticeDetailBody");
-    const detailOpen = document.getElementById("noticeDetailOpen");
-    let activeNotice = null;
-    const closeNoticeModal = () => { noticeModal.hidden = true; document.body.classList.remove("notice-modal-open"); activeNotice = null; };
-    noticeModal.querySelectorAll("[data-notice-close]").forEach(b => b.addEventListener("click", async (e) => { e.preventDefault(); await markOneRead(activeNotice); closeNoticeModal(); }));
-    const openNoticeModal = (item) => {
-      activeNotice = item;
-      if (detailTitle) detailTitle.textContent = String(item.title || "Notifikasi");
-      if (detailBody) {
-        const raw = String(item.body || "");
-        const safe = escapeHtml(raw);
-        detailBody.innerHTML = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-        detailBody.style.whiteSpace = "pre-wrap";
-      }
-      if (detailOpen) {
-        detailOpen.hidden = !item.link_url;
-        detailOpen.onclick = item.link_url ? () => window.location.assign(new URL(item.link_url, window.location.origin + "/").href) : null;
-      }
-      noticeModal.hidden = false; document.body.classList.add("notice-modal-open");
-    };
-    rows.forEach((item, index) => {
-      const button = document.querySelector(`[data-more="${index}"]`);
-      button?.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); openNoticeModal(item); });
-    });
-    document.addEventListener("keydown", e => { if (e.key === "Escape" && !noticeModal.hidden) closeNoticeModal(); });
-    /* =======================================================
-       READ STATE — only after explicit "Sudah baca"
-       ======================================================= */
-    const markOneRead = async (item) => {
-      if (!item?.notification_id || item.is_read) return;
-      try {
-        const { error } = await client.from("notifications").update({ is_read:true }).eq("user_id", user.id).eq("id", item.notification_id);
-        if (error) throw error;
-        item.is_read = true;
-        const card = document.querySelector(`[data-notification-id="${CSS.escape(item.notification_id)}"]`);
-        card?.classList.remove("unread"); card?.querySelector(".notice-unread")?.remove();
-      } catch(e){ console.error("[Notifications] markOneRead",e); }
-    };
-    /* =======================================================
-       OPTIONAL GLOBAL COUNTER REFRESH
-       -------------------------------------------------------
-       Jika navbar/sidebar memiliki fungsi refresh badge,
-       jalankan tanpa membuat halaman error.
-       ======================================================= */
-    try {
-        if (typeof window.refreshNotificationCount === "function") {
-            await window.refreshNotificationCount();
-        }
-    } catch (error) {
-        console.warn(
-            "[Notifications] refreshNotificationCount gagal:",
-            error
-        );
-    }
-    try {
-        if (typeof window.updateNotificationBadge === "function") {
-            await window.updateNotificationBadge();
-        }
-    } catch (error) {
-        console.warn(
-            "[Notifications] updateNotificationBadge gagal:",
-            error
-        );
-    }
+  async function load(){
+    announcementBox.innerHTML='<div class="empty compact-empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat pengumuman...</span></div>';
+    content.innerHTML='<div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat notifikasi...</span></div>';
+    const [nr,ar]=await Promise.all([
+      client.from("notifications").select("id,user_id,title,body,is_read,created_at,notification_type,link_url,target_type,target_id").eq("user_id",user.id).order("created_at",{ascending:false}),
+      client.from("announcements").select("id,title,body,image_url,published,published_at,created_at,updated_at").eq("published",true).order("published_at",{ascending:false})
+    ]);
+    if(nr.error) console.error("[Notifications]",nr.error);
+    if(ar.error) console.error("[Announcements]",ar.error);
+    notifications=Array.isArray(nr.data)?nr.data:[];
+    announcements=Array.isArray(ar.data)?ar.data:[];
+    renderAnnouncements(); renderNotifications();
+  }
+
+  async function toggleRead(id){
+    const n=notifications.find(x=>String(x.id)===String(id)); if(!n)return;
+    const next=!n.is_read;
+    const q=await client.from("notifications").update({is_read:next}).eq("id",id).eq("user_id",user.id);
+    if(q.error){TC.toast?.("Gagal mengubah status notifikasi.","error");return;}
+    n.is_read=next; renderNotifications(); TC.toast?.(next?"Ditandai sudah dibaca.":"Ditandai belum dibaca.","success");
+    try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}
+  }
+
+  async function markAllRead(){
+    const q=await client.from("notifications").update({is_read:true}).eq("user_id",user.id).eq("is_read",false);
+    if(q.error){TC.toast?.("Gagal menandai semua sudah dibaca.","error");return;}
+    notifications.forEach(n=>n.is_read=true);renderNotifications();TC.toast?.("Semua notifikasi sudah dibaca.","success");
+    try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}
+  }
+
+  async function deleteOne(id){
+    if(!confirm("Hapus notifikasi ini?"))return;
+    const q=await client.from("notifications").delete().eq("id",id).eq("user_id",user.id);
+    if(q.error){TC.toast?.("Notifikasi gagal dihapus.","error");return;}
+    notifications=notifications.filter(n=>String(n.id)!==String(id));renderNotifications();TC.toast?.("Notifikasi dihapus.","success");
+    try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}
+  }
+
+  async function deleteSelected(){
+    const ids=[...document.querySelectorAll(".notification-select:checked")].map(x=>x.dataset.select).filter(Boolean);if(!ids.length)return;
+    if(!confirm(`Hapus ${ids.length} notifikasi yang dipilih?`))return;
+    const q=await client.from("notifications").delete().eq("user_id",user.id).in("id",ids);
+    if(q.error){TC.toast?.("Notifikasi gagal dihapus.","error");return;}
+    const set=new Set(ids.map(String));notifications=notifications.filter(n=>!set.has(String(n.id)));renderNotifications();TC.toast?.("Notifikasi terpilih dihapus.","success");
+    try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}
+  }
+
+  async function deleteAll(){
+    if(!notifications.length)return;
+    if(!confirm("Hapus semua notifikasi kamu? Pengumuman admin tetap ada."))return;
+    const q=await client.from("notifications").delete().eq("user_id",user.id);
+    if(q.error){TC.toast?.("Semua notifikasi gagal dihapus.","error");return;}
+    notifications=[];renderNotifications();TC.toast?.("Semua notifikasi berhasil dihapus.","success");
+    try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}
+  }
+
+  let modal=document.getElementById("noticeDetailModal");
+  if(!modal){
+    modal=document.createElement("div");modal.id="noticeDetailModal";modal.className="notice-detail-modal";modal.hidden=true;
+    modal.innerHTML='<div class="notice-detail-backdrop" data-notice-close></div><section class="notice-detail-dialog" role="dialog" aria-modal="true"><header class="notice-detail-head"><div><span class="badge"><i class="fa-solid fa-bell"></i> DETAIL NOTIFIKASI</span><h2 id="noticeDetailTitle"></h2></div><button type="button" class="notice-detail-x" data-notice-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></header><div class="notice-detail-body" id="noticeDetailBody"></div><footer class="notice-detail-foot"><button type="button" class="btn" data-notice-close><i class="fa-solid fa-check-double"></i> Sudah baca</button></footer></section>';
+    document.body.appendChild(modal);
+  }
+  const closeModal=async()=>{const id=modal.dataset.notificationId;if(id){const n=notifications.find(x=>String(x.id)===String(id));if(n&&!n.is_read)await toggleRead(id);}modal.hidden=true;modal.dataset.notificationId="";document.body.classList.remove("notice-modal-open");};
+  modal.querySelectorAll("[data-notice-close]").forEach(b=>b.addEventListener("click",closeModal));
+  const openDetail=n=>{if(!n)return;modal.dataset.notificationId=String(n.id);$("#noticeDetailTitle").textContent=String(n.title||"Notifikasi");$("#noticeDetailBody").textContent=String(n.body||"");modal.hidden=false;document.body.classList.add("notice-modal-open");};
+
+  $("#markAllBtn")?.addEventListener("click",markAllRead);
+  $("#readAllBtn")?.addEventListener("click",markAllRead);
+  $("#deleteSelectedBtn")?.addEventListener("click",deleteSelected);
+  $("#deleteAllBtn")?.addEventListener("click",deleteAll);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modal&&!modal.hidden)closeModal();});
+
+  await load();
+  try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}
 });
-
-
 
 
 /* Page-ready marker */
