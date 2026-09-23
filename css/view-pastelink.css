@@ -306,3 +306,21 @@ body.public-view-page #navbar{position:sticky;top:0;z-index:2000}
   overflow-wrap:anywhere;
   word-break:break-word;
 }
+
+\n\n/* PasTele — clickable PasteLink URLs */
+.content-box.rich .pt-content-link,
+.view-body .pt-content-link{
+  color:var(--primary);
+  text-decoration:underline;
+  text-decoration-thickness:1.5px;
+  text-underline-offset:2px;
+  font-weight:650;
+  cursor:pointer;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.content-box.rich .pt-content-link:hover,
+.view-body .pt-content-link:hover{
+  color:var(--primary2);
+  text-decoration-thickness:2px;
+}
