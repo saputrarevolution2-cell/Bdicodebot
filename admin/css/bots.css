@@ -16,3 +16,46 @@ html[data-theme=dark],html.theme-dark,body.theme-dark{--bg:#0b111a;--surface:#12
   .bot-request-admin,.bot-approved-admin{overflow-x:auto}
   .bot-request-admin .admin-toolbar,.bot-approved-admin .admin-toolbar{min-width:620px}
 }
+
+
+/* ===== Bots page final fix ===== */
+.bot-request-admin,
+.bot-approved-admin{min-width:0}
+
+.bot-request-empty{
+  min-height:140px;
+  padding:22px;
+  border:1px dashed var(--line);
+  border-radius:14px;
+  background:var(--surface2);
+}
+
+.bot-request-empty span{
+  max-width:620px;
+  line-height:1.5;
+  color:var(--muted);
+}
+
+.status.danger{
+  background:rgba(239,68,68,.1);
+  color:var(--red);
+}
+
+.error-state{
+  gap:10px;
+  padding:28px;
+}
+
+.error-state strong{color:var(--text)}
+.error-state span{max-width:760px;line-height:1.5}
+
+@media(max-width:700px){
+  .bot-request-admin,
+  .bot-approved-admin{overflow-x:auto}
+
+  .bot-request-admin .admin-toolbar,
+  .bot-approved-admin .admin-toolbar{min-width:0}
+
+  .bot-request-admin .table-wrap,
+  .bot-approved-admin .table-wrap{min-width:680px}
+}
