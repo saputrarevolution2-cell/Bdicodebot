@@ -3007,9 +3007,11 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     const close = card.querySelector('.pt-live-close');
     close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); remove(card); });
     card.addEventListener('click', async () => {
-      if (target) window.location.assign(new URL(target, window.location.origin + "/").href);
       try { await window.sb?.from('notifications').update({is_read:true}).eq('id',n.id).eq('user_id',state.userId); } catch (_) {}
       remove(card);
+      if (target) {
+        try { window.location.assign(new URL(target, window.location.origin + "/").href); } catch (_) {}
+      }
     });
     root().prepend(card);
     requestAnimationFrame(() => card.classList.add('is-in'));
@@ -3022,6 +3024,9 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     try { u = (await window.sb.auth.getUser()).data?.user || null; } catch (_) { return false; }
     if (!u?.id) return false;
     state.userId = u.id;
+    // The notification center already renders the inbox; don't show duplicate
+    // live popups on this page.
+    if (document.body.classList.contains('notifications-page')) return true;
     ensureStyles(); root();
 
     const channelName = `pastele-live-notifications-${u.id}`;
@@ -3179,7 +3184,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     content.querySelectorAll("[data-toggle-read]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleRead(b.dataset.toggleRead);}));
     content.querySelectorAll("[data-delete-one]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();deleteOne(b.dataset.deleteOne);}));
     content.querySelectorAll("[data-more]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();openDetail(notifications[+b.dataset.more]);}));
-    content.querySelectorAll("[data-index]").forEach(card=>{const n=notifications[+card.dataset.index];if(!n?.link_url)return;card.classList.add("is-clickable");card.addEventListener("click",e=>{if(e.target.closest("button,input"))return;try{location.assign(new URL(n.link_url,location.origin+"/").href)}catch{}});});
+    content.querySelectorAll("[data-index]").forEach(card=>{const n=notifications[+card.dataset.index];if(!n)return;card.addEventListener("click",async e=>{if(e.target.closest("button,input"))return;try{if(!n.is_read){const q=await client.from("notifications").update({is_read:true}).eq("id",n.id).eq("user_id",user.id);if(!q.error){n.is_read=true;card.classList.remove("unread");}}}catch(_){} if(n.link_url){try{location.assign(new URL(n.link_url,location.origin+"/").href)}catch{}} else {openDetail(n);}});if(n.link_url)card.classList.add("is-clickable");});
     summary();
   }
 
@@ -3247,7 +3252,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const closeModal=async()=>{const id=modal.dataset.notificationId;if(id){const n=notifications.find(x=>String(x.id)===String(id));if(n&&!n.is_read)await toggleRead(id);}modal.hidden=true;modal.dataset.notificationId="";document.body.classList.remove("notice-modal-open");};
   modal.querySelectorAll("[data-notice-close]").forEach(b=>b.addEventListener("click",closeModal));
-  const openDetail=n=>{if(!n)return;modal.dataset.notificationId=String(n.id);$("#noticeDetailTitle").textContent=String(n.title||"Notifikasi");$("#noticeDetailBody").textContent=String(n.body||"");modal.hidden=false;document.body.classList.add("notice-modal-open");};
+  const openDetail=async n=>{if(!n)return;modal.dataset.notificationId=String(n.id);$("#noticeDetailTitle").textContent=String(n.title||"Notifikasi");$("#noticeDetailBody").textContent=String(n.body||"");modal.hidden=false;document.body.classList.add("notice-modal-open");if(!n.is_read){try{const q=await client.from("notifications").update({is_read:true}).eq("id",n.id).eq("user_id",user.id);if(!q.error){n.is_read=true;renderNotifications();}}catch(_){}try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}}};
 
   $("#markAllBtn")?.addEventListener("click",markAllRead);
   $("#readAllBtn")?.addEventListener("click",markAllRead);
