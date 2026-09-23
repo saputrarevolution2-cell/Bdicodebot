@@ -3237,6 +3237,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const planLabelEl = $("profilePlanLabel");
   const quickActionsEl = $("profileQuickActions");
   const loginSecuritySection = $("loginSecuritySection");
+  const accountActionsSection = $("profileAccountActions");
 
   const followBtn = $("followBtn");
   const settingsBtn = $("settingsBtn");
@@ -3633,6 +3634,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* =======================================================
      PROFILE ACTION VISIBILITY
      ======================================================= */
+  // Profil user lain harus benar-benar public/clean: jangan tampilkan
+  // pengaturan, quick actions, keamanan login, atau aksi akun pemilik.
+  if (!isOwn) {
+    settingsBtn?.setAttribute("hidden", "");
+    quickActionsEl?.setAttribute("hidden", "");
+    loginSecuritySection?.setAttribute("hidden", "");
+    accountActionsSection?.setAttribute("hidden", "");
+  }
+
 
   if (isOwn) {
 
