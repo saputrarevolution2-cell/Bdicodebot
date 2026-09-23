@@ -1701,6 +1701,23 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
                   </strong>
                 </button>
               </div>
+              <!-- NAVBAR NOTIFICATION CENTER -->
+              <section class="pt-navbar-notif" id="ptNavbarNotif" aria-label="Notifikasi terbaru">
+                <div class="pt-navbar-notif-head">
+                  <div>
+                    <strong><i class="fa-solid fa-bell"></i> Notifikasi</strong>
+                    <small id="ptNavbarNotifCount">0 belum dibaca</small>
+                  </div>
+                  <a href="${base}notifications.html" class="pt-navbar-notif-all">Lihat semua</a>
+                </div>
+                <div class="pt-navbar-notif-actions">
+                  <button type="button" id="ptNavbarMarkRead"><i class="fa-solid fa-check-double"></i> Sudah dibaca</button>
+                  <button type="button" id="ptNavbarDeleteAll"><i class="fa-solid fa-trash"></i> Hapus semua</button>
+                </div>
+                <div id="ptNavbarNotifList" class="pt-navbar-notif-list">
+                  <div class="pt-navbar-notif-empty"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
+                </div>
+              </section>
               <!-- USER SOCIAL -->
               <div
                 class="pt-socials"
@@ -2105,6 +2122,129 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
        * query is unavailable.
        */
     }
+    /* ========================================================
+       NAVBAR NOTIFICATION CENTER
+       Compact user notifications with read/delete actions.
+       ======================================================== */
+    const navbarNotifPanel = document.getElementById('ptNavbarNotif');
+    const navbarNotifList = document.getElementById('ptNavbarNotifList');
+    const navbarNotifCount = document.getElementById('ptNavbarNotifCount');
+    const navbarMarkRead = document.getElementById('ptNavbarMarkRead');
+    const navbarDeleteAllButton = document.getElementById('ptNavbarDeleteAll');
+
+    const navbarNotifEsc = value => String(value ?? '').replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[m]));
+
+    const navbarNotifIcon = type => ({
+      withdrawal:'fa-wallet', purchase:'fa-bag-shopping', sale:'fa-circle-check',
+      like:'fa-heart', comment:'fa-comment', follow:'fa-user-plus', publish:'fa-bullhorn'
+    }[String(type || '').toLowerCase()] || 'fa-bell');
+
+    const navbarNotifLabel = type => ({
+      withdrawal:'Withdrawal', purchase:'Pembelian', sale:'Penjualan',
+      like:'Like', comment:'Komentar', follow:'Follow', publish:'Pengumuman'
+    }[String(type || '').toLowerCase()] || 'Notifikasi');
+
+    const navbarNotifTime = value => {
+      try { return new Date(value).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+      catch (_) { return ''; }
+    };
+
+    async function refreshNavbarNotifications() {
+      if (!user?.id || !window.sb || !navbarNotifList) return;
+      try {
+        const q = await window.sb.from('notifications')
+          .select('id,user_id,title,body,is_read,created_at,notification_type,link_url')
+          .eq('user_id', user.id)
+          .order('created_at',{ascending:false})
+          .limit(8);
+        if (q.error) throw q.error;
+        const rows = Array.isArray(q.data) ? q.data : [];
+        const unread = rows.filter(n => !n.is_read).length;
+        if (navbarNotifCount) navbarNotifCount.textContent = unread + ' belum dibaca';
+        if (notificationElement) {
+          const countQ = await window.sb.from('notifications').select('id',{count:'exact',head:true})
+            .eq('user_id',user.id).eq('is_read',false);
+          if (!countQ.error) notificationElement.textContent = String(Number(countQ.count)||0);
+        }
+        if (!rows.length) {
+          navbarNotifList.innerHTML='<div class="pt-navbar-notif-empty"><i class="fa-regular fa-bell-slash"></i><span>Belum ada notifikasi.</span></div>';
+          return;
+        }
+        navbarNotifList.innerHTML = rows.map(n => `
+          <article class="pt-navbar-notif-item ${n.is_read?'':'unread'}" data-navbar-notif-id="${navbarNotifEsc(n.id)}">
+            <span class="pt-navbar-notif-icon"><i class="fa-solid ${navbarNotifIcon(n.notification_type)}"></i></span>
+            <div class="pt-navbar-notif-body">
+              <strong>${navbarNotifEsc(n.title || navbarNotifLabel(n.notification_type))}</strong>
+              <p>${navbarNotifEsc(String(n.body||'').slice(0,110))}${String(n.body||'').length>110?'…':''}</p>
+              <small>${navbarNotifTime(n.created_at)}</small>
+            </div>
+            <div class="pt-navbar-notif-item-actions">
+              ${n.is_read ? '' : `<button type="button" data-navbar-read="${navbarNotifEsc(n.id)}" title="Tandai sudah dibaca"><i class="fa-solid fa-check"></i></button>`}
+              <button type="button" data-navbar-delete="${navbarNotifEsc(n.id)}" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </article>`).join('');
+      } catch (e) {
+        console.warn('[PasTele] Navbar notifications gagal dimuat:', e);
+        navbarNotifList.innerHTML='<div class="pt-navbar-notif-empty"><i class="fa-solid fa-triangle-exclamation"></i><span>Notifikasi gagal dimuat.</span></div>';
+      }
+    }
+
+    async function navbarMarkAllRead() {
+      if (!user?.id || !window.sb) return;
+      try {
+        const q=await window.sb.from('notifications').update({is_read:true}).eq('user_id',user.id).eq('is_read',false);
+        if(q.error) throw q.error;
+        await refreshNavbarNotifications();
+        try { await window.refreshNotificationCount?.(); await window.updateNotificationBadge?.(); } catch (_) {}
+      } catch(e) { console.warn('[PasTele] mark all read:',e); }
+    }
+
+    async function navbarDeleteAll() {
+      if (!user?.id || !window.sb) return;
+      if (!window.confirm('Hapus semua notifikasi kamu? Tindakan ini tidak dapat dibatalkan.')) return;
+      try {
+        const q=await window.sb.from('notifications').delete().eq('user_id',user.id);
+        if(q.error) throw q.error;
+        await refreshNavbarNotifications();
+        try { await window.refreshNotificationCount?.(); await window.updateNotificationBadge?.(); } catch (_) {}
+      } catch(e) { console.warn('[PasTele] delete all notifications:',e); }
+    }
+
+    navbarMarkRead?.addEventListener('click', async e => { e.preventDefault(); e.stopPropagation(); await navbarMarkAllRead(); });
+    navbarDeleteAllButton?.addEventListener('click', async e => { e.preventDefault(); e.stopPropagation(); await navbarDeleteAll(); });
+    navbarNotifList?.addEventListener('click', async e => {
+      const readBtn=e.target.closest('[data-navbar-read]');
+      const delBtn=e.target.closest('[data-navbar-delete]');
+      const item=e.target.closest('[data-navbar-notif-id]');
+      if(readBtn){
+        e.preventDefault(); e.stopPropagation();
+        const id=readBtn.dataset.navbarRead;
+        const q=await window.sb.from('notifications').update({is_read:true}).eq('id',id).eq('user_id',user.id);
+        if(!q.error) await refreshNavbarNotifications();
+        return;
+      }
+      if(delBtn){
+        e.preventDefault(); e.stopPropagation();
+        const id=delBtn.dataset.navbarDelete;
+        const q=await window.sb.from('notifications').delete().eq('id',id).eq('user_id',user.id);
+        if(!q.error) await refreshNavbarNotifications();
+        return;
+      }
+      if(item){
+        const id=item.dataset.navbarNotifId;
+        const row=await window.sb.from('notifications').select('link_url,is_read').eq('id',id).eq('user_id',user.id).maybeSingle();
+        if(!row.error){
+          if(!row.data?.is_read) await window.sb.from('notifications').update({is_read:true}).eq('id',id).eq('user_id',user.id);
+          if(row.data?.link_url) window.location.assign(new URL(row.data.link_url,window.location.origin+'/').href);
+          else await refreshNavbarNotifications();
+        }
+      }
+    });
+
+    refreshNavbarNotifications();
+
     /* ========================================================
        THEME LABEL
        ======================================================== */
