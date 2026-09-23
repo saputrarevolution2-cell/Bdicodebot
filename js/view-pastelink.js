@@ -1167,7 +1167,7 @@ function ptLinkifyText(value){
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
      */
-    const base = isAdmin ? '../' : '';
+    const base = isAdmin ? '/admin/' : '/';
     /* ========================================================
        HELPERS
        ======================================================== */
@@ -1557,6 +1557,11 @@ function ptLinkifyText(value){
           ]
         ];
     /* ========================================================
+       ROOT-ABSOLUTE NAVIGATION
+       Public routes may be rewritten under /pf/.
+       Navbar destinations must never be relative to /pf/.
+       ======================================================== */
+/* ========================================================
        NAVIGATION LINKS
        ======================================================== */
     const renderLinks = (items) => {
@@ -1567,7 +1572,7 @@ function ptLinkifyText(value){
           return `
             <a
               class="pt-link${active ? ' active' : ''}"
-              href="${base}${esc(href)}"
+              href="${base}${esc(href).replace(/^\/+/, "")}"
               ${active
                 ? 'aria-current="page"'
                 : ''}
@@ -1639,7 +1644,7 @@ function ptLinkifyText(value){
           <!-- BRAND -->
           <a
             class="pt-brand"
-            href="${base}${isAdmin ? 'index.html' : 'dashboard.html'}"
+            href="${isAdmin ? '/admin/index.html' : '/dashboard.html'}"
             aria-label="PasTele"
           >
             <span class="pt-brand-mark">
@@ -1727,7 +1732,7 @@ function ptLinkifyText(value){
                 </div>
                 <a
                   class="pt-account-item"
-                  href="${base}notifications.html"
+                  href="${isAdmin ? '/admin/notifications.html' : '/notifications.html'}"
                 >
                   <i
                     class="fa-solid fa-bell"
@@ -1767,7 +1772,7 @@ function ptLinkifyText(value){
               <!-- PROFILE -->
               <a
                 class="pt-profile-link"
-                href="${base}${isAdmin ? 'index.html' : 'profile.html'}"
+                href="${isAdmin ? '/admin/index.html' : '/profile.html'}"
               >
                 <i
                   class="fa-solid fa-user-gear"
