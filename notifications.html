@@ -37,14 +37,41 @@
 
     <section class="notifications-feed">
       <div class="container">
-        <div class="feed-heading">
-          <div>
-            <span class="section-label"><i class="fa-solid fa-layer-group"></i> Inbox</span>
-            <h2>Aktivitas terbaru</h2>
+        <section class="admin-announcement-section" id="adminAnnouncementsSection">
+          <div class="notice-section-heading">
+            <div>
+              <span class="section-label admin-announcement-label"><i class="fa-solid fa-bullhorn"></i> Admin</span>
+              <h2>Pengumuman Admin</h2>
+              <p>Informasi resmi dari admin ditampilkan khusus di bagian atas.</p>
+            </div>
           </div>
-          <span class="feed-hint"><i class="fa-regular fa-clock"></i> Terbaru di atas</span>
-        </div>
-        <div id="content">
+          <div id="adminAnnouncements" class="announcement-list">
+            <div class="empty compact-empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat pengumuman...</span></div>
+          </div>
+        </section>
+
+        <section class="user-notifications-section">
+          <div class="feed-heading">
+            <div>
+              <span class="section-label"><i class="fa-solid fa-bell"></i> Notifikasi</span>
+              <h2>Notifikasi Kamu</h2>
+              <p>Notifikasi transaksi, akun, aktivitas, dan sistem.</p>
+            </div>
+            <span class="feed-hint"><i class="fa-regular fa-clock"></i> Terbaru di atas</span>
+          </div>
+          <div class="notification-toolbar" id="notificationToolbar">
+            <div class="notification-toolbar-info">
+              <strong id="notificationSelectedCount">0 dipilih</strong>
+              <span id="notificationToolbarHint">Kelola notifikasi dengan cepat.</span>
+            </div>
+            <div class="notification-toolbar-actions">
+              <button type="button" class="notice-action" id="markAllBtn"><i class="fa-solid fa-check-double"></i> Tandai semua</button>
+              <button type="button" class="notice-action primary" id="readAllBtn"><i class="fa-solid fa-envelope-open"></i> Tandai sudah dibaca</button>
+              <button type="button" class="notice-action danger" id="deleteSelectedBtn" disabled><i class="fa-solid fa-trash"></i> Hapus</button>
+              <button type="button" class="notice-action danger ghost" id="deleteAllBtn"><i class="fa-solid fa-trash-can"></i> Hapus semua</button>
+            </div>
+          </div>
+          <div id="content">
           <div class="empty">
             <i class="fa-solid fa-spinner fa-spin"></i>
             <span>Memuat notifikasi...</span>
@@ -55,7 +82,7 @@
   </main>
 
   <div id="toast"></div>
-  <script src="js/notifications.js"></script>
+  <script src="js/notifications.js?v=20260923-admin-inbox-final"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
 <script src="js/pastele-data-contract.js"></script>
 </body>
