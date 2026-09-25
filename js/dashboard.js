@@ -3016,14 +3016,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const username = String(profile?.username || user.user_metadata?.username || '').trim();
   const displayName = username || profile?.display_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
-  const avatar = profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
   $('helloName') && ($('helloName').textContent=displayName);
-  const avatarName=String(username || displayName || 'User').trim();
-  $('heroAvatar') && (avatar ? $('heroAvatar').innerHTML=`<img src="${esc(avatar)}" alt="Avatar ${esc(avatarName)}">` : ($('heroAvatar').textContent=avatarName.charAt(0).toUpperCase()||'U'));
-  $('heroAvatarLink') && ($('heroAvatarLink').href=`profile.html${username?`?username=${encodeURIComponent(username)}`:''}`, $('heroAvatarLink').title=`Buka profile @${avatarName}`);
+  $('heroAvatarLink') && ($('heroAvatarLink').href=`profile.html${username?`?username=${encodeURIComponent(username)}`:''}`, $('heroAvatarLink').title=`Buka profile @${username || displayName}`);
 
   const hasSubscription=!!(profile?.subscription_until && new Date(profile.subscription_until)>new Date());
   const plan=profile?.is_premium?'Premium':(hasSubscription?'Langganan':'Free');
+  // The large circle is a status indicator, not a fallback initial/avatar.
+  $('heroAvatar') && ($('heroAvatar').innerHTML=`<i class="fa-solid fa-circle-check hero-status-check ${plan==='Premium'?'premium':plan==='Langganan'?'subscribed':'free'}" aria-label="Status ${esc(plan)}"></i>`);
   $('planBadge') && ($('planBadge').textContent=plan);
   const planIcon=$('planStatusIcon');
   if(planIcon){
@@ -3240,17 +3239,64 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderLineChart(id,current,previous,{title}={}){
     const host=$(id); if(!host) return;
     const W=900,H=340;
-    const max=Math.max(1,...current.map(x=>x.revenue),...current.map(x=>x.transactions*1000000));
-    // Revenue and transaction series use separate visual normalization so both remain readable.
-    const maxRev=Math.max(1,...current.map(x=>x.revenue));
-    const maxTx=Math.max(1,...current.map(x=>x.transactions));
+    const maxRev=Math.max(1,...current.map(x=>Number(x.revenue||0)));
+    const maxTx=Math.max(1,...current.map(x=>Number(x.transactions||0)));
     const revPath=svgPath(current.map(x=>x.revenue),W,H,maxRev);
     const txPath=svgPath(current.map(x=>x.transactions),W,H,maxTx);
-    const prevRev=previous?.length?svgPath(previous.map(x=>x.revenue),W,H,Math.max(1,...previous.map(x=>x.revenue))):'';
-    const prevTx=previous?.length?svgPath(previous.map(x=>x.transactions),W,H,Math.max(1,...previous.map(x=>x.transactions))):'';
+    const prevRev=previous?.length?svgPath(previous.map(x=>x.revenue),W,H,Math.max(1,...previous.map(x=>Number(x.revenue||0)))):'';
+    const prevTx=previous?.length?svgPath(previous.map(x=>x.transactions),W,H,Math.max(1,...previous.map(x=>Number(x.transactions||0)))):'';
     const grid=[0,.25,.5,.75,1].map(r=>{const y=H-16-r*(H-32);return `<line x1="14" x2="886" y1="${y}" y2="${y}" class="chart-grid-line"/>`;}).join('');
-    const labels=current.map((item,i)=>{if(i%Math.max(1,Math.ceil(current.length/6))!==0 && i!==current.length-1)return '';const px=14+(current.length===1?436:(i/(current.length-1))*872);return `<text x="${px}" y="333" text-anchor="middle" class="chart-label">${esc(formatShort(item.date))}</text>`;}).join('');
-    host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(title||'Grafik')}">${grid}${previous?`<path d="${prevRev}" class="line-prev-revenue"/><path d="${prevTx}" class="line-prev-tx"/>`:''}<path d="${revPath}" class="line-revenue"/><path d="${txPath}" class="line-tx"/>${labels}</svg>`;
+    const step=Math.max(1,Math.ceil(current.length/6));
+    const labels=current.map((item,i)=>{
+      if(i%step!==0 && i!==current.length-1)return '';
+      const px=14+(current.length===1?436:(i/(current.length-1))*872);
+      return `<text x="${px}" y="333" text-anchor="middle" class="chart-label">${esc(formatShort(item.date))}</text>`;
+    }).join('');
+
+    // Every data point is an actual clickable target. A larger invisible hit area
+    // makes it easy to tap on mobile without changing the visual chart.
+    const pointX=(i)=>14+(current.length===1?436:(i/(current.length-1))*872);
+    const pointY=(value,max)=>H-16-(Number(value||0)/Math.max(1,max))*(H-32);
+    const points=current.map((item,i)=>{
+      const x=pointX(i);
+      const yr=pointY(item.revenue,maxRev);
+      const yt=pointY(item.transactions,maxTx);
+      return `
+        <g class="finance-point-group" data-finance-point="${i}" tabindex="0" role="button"
+           aria-label="Detail ${esc(formatShort(item.date))}">
+          <circle cx="${x}" cy="${yr}" r="14" class="finance-point-hit"/>
+          <circle cx="${x}" cy="${yr}" r="4.5" class="finance-point revenue-point"/>
+          <circle cx="${x}" cy="${yt}" r="14" class="finance-point-hit"/>
+          <circle cx="${x}" cy="${yt}" r="4.5" class="finance-point tx-point"/>
+        </g>`;
+    }).join('');
+
+    host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(title||'Grafik')}">
+      ${grid}
+      ${previous?`<path d="${prevRev}" class="line-prev-revenue"/><path d="${prevTx}" class="line-prev-tx"/>`:''}
+      <path d="${revPath}" class="line-revenue"/>
+      <path d="${txPath}" class="line-tx"/>
+      ${points}${labels}
+    </svg>`;
+
+    host.querySelectorAll('[data-finance-point]').forEach(point=>{
+      const select=()=>{
+        const index=Number(point.dataset.financePoint);
+        if(!Number.isInteger(index) || !current[index]) return;
+        financeDetailOpen=true;
+        $('financePanel')?.setAttribute('aria-expanded','true');
+        const detail=$('financeDetail');
+        if(detail) detail.hidden=false;
+        renderFinanceDetail(current,previous,index);
+        host.querySelectorAll('[data-finance-point]').forEach(x=>x.classList.remove('selected'));
+        point.classList.add('selected');
+        detail?.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+      };
+      point.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();select();});
+      point.addEventListener('keydown',e=>{
+        if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();select();}
+      });
+    });
   }
 
   function renderFollowers(total,profiles){
@@ -3322,7 +3368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function renderFinanceDetail(currentSeries, previousSeries){
+  function renderFinanceDetail(currentSeries, previousSeries, selectedIndex=null){
     const host=$('financeDetail'); if(!host)return;
     const successStates=new Set(['paid','success','completed','settled']);
     const viewEvents=new Set(['view','views','page_view','content_view']);
@@ -3343,12 +3389,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalViews=dayRows.reduce((s,x)=>s+x.views,0);
     const totalPaid=dayRows.reduce((s,x)=>s+x.paid,0);
     const totalRevenue=dayRows.reduce((s,x)=>s+x.revenue,0);
+    const selected=Number.isInteger(selectedIndex)?dayRows[selectedIndex]:null;
     const trendIcon=t=>t==='up'?'fa-arrow-trend-up':t==='down'?'fa-arrow-trend-down':'fa-minus';
     const trendText=(delta,t)=>t==='flat'?'—':`${delta>0?'+':''}${number(delta)}`;
 
+    const selectedNotice=selected?`
+      <div class="finance-point-detail">
+        <div class="finance-point-detail-title"><i class="fa-solid fa-calendar-day"></i><b>${esc(selected.date.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}))}</b><span>Detail titik grafik</span></div>
+        <div class="finance-point-detail-grid">
+          <span><i class="fa-solid fa-eye"></i><b>View</b><strong>${number(selected.views)}</strong><em class="${selected.viewTrend}">${trendText(selected.viewDelta,selected.viewTrend)}</em></span>
+          <span><i class="fa-solid fa-circle-check"></i><b>Paid</b><strong>${number(selected.paid)}</strong><em class="${selected.paidTrend}">${trendText(selected.paidDelta,selected.paidTrend)}</em></span>
+          <span><i class="fa-solid fa-wallet"></i><b>Net</b><strong>${esc(money(selected.revenue))}</strong></span>
+        </div>
+      </div>`:'';
+
     host.innerHTML=`
+      ${selectedNotice}
       <div class="finance-detail-head">
-        <div><b>Detail per hari</b><small>View & Paid menunjukkan alasan grafik naik / turun.</small></div>
+        <div><b>Detail per hari</b><small>Klik titik grafik untuk melihat View, Paid, Net, dan arah naik/turunnya.</small></div>
         <span class="finance-detail-badge"><i class="fa-solid fa-database"></i> Data DB</span>
       </div>
       <div class="finance-day-summary">
@@ -3357,15 +3415,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         <span><i class="fa-solid fa-wallet"></i> Net <b>${esc(money(totalRevenue))}</b></span>
       </div>
       <div class="finance-day-list">
-        ${dayRows.slice().reverse().map(row=>`
-          <div class="finance-day-row">
+        ${dayRows.slice().reverse().map((row,reverseIndex)=>{
+          const originalIndex=dayRows.length-1-reverseIndex;
+          return `<div class="finance-day-row ${originalIndex===selectedIndex?'selected':''}" data-finance-day="${originalIndex}">
             <div class="finance-day-date"><b>${esc(row.date.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}))}</b><small>${esc(row.date.toLocaleDateString('id-ID',{weekday:'short'}))}</small></div>
             <div class="finance-day-metric view"><i class="fa-solid fa-eye"></i><span>View</span><b>${number(row.views)}</b><em class="${row.viewTrend}"><i class="fa-solid ${trendIcon(row.viewTrend)}"></i>${trendText(row.viewDelta,row.viewTrend)}</em></div>
             <div class="finance-day-metric paid"><i class="fa-solid fa-circle-check"></i><span>Paid</span><b>${number(row.paid)}</b><em class="${row.paidTrend}"><i class="fa-solid ${trendIcon(row.paidTrend)}"></i>${trendText(row.paidDelta,row.paidTrend)}</em></div>
             <div class="finance-day-metric net"><i class="fa-solid fa-wallet"></i><span>Net</span><b>${esc(money(row.revenue))}</b></div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>`;
+
     host.hidden=false;
+    host.querySelectorAll('[data-finance-day]').forEach(row=>{
+      row.addEventListener('click',e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        const index=Number(row.dataset.financeDay);
+        if(Number.isInteger(index)){
+          financeDetailOpen=true;
+          $('financePanel')?.setAttribute('aria-expanded','true');
+          renderFinanceDetail(currentSeries,previousSeries,index);
+        }
+      });
+    });
   }
 
   document.querySelectorAll('[data-scope]').forEach(btn=>btn.addEventListener('click',async()=>{
