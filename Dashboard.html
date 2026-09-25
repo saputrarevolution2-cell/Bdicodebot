@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Dashboard — PasTele</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="css/dashboard.css?v=20260926-dashboard-final">
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <style>
+    /* The redesigned page CSS is loaded after the canonical shell CSS. */
+  </style>
+</head>
+<body class="app-page dashboard-page">
+  <div id="navbar"></div>
+  <main class="dashboard-fixed" id="dashboardMain">
+    <div class="dash-container">
+
+      <section class="dashboard-hero" aria-label="Ringkasan akun">
+        <div class="hero-top">
+          <div class="hero-title">
+            <small>Workspace</small>
+            <h1>Hai, <span id="helloName">User</span> 👋</h1>
+          </div>
+          <span class="hero-plan"><i class="fa-solid fa-star"></i><span id="planBadge">Free</span></span>
+          <div class="hero-avatar" id="heroAvatar" aria-label="Avatar user">U</div>
+        </div>
+        <div class="hero-balance">
+          <div class="hero-balance-label"><i class="fa-solid fa-wallet"></i> Saldo Bersih</div>
+          <strong id="heroBalance">Rp0</strong>
+          <div class="hero-balance-sub"><span>Saldo tersedia <b id="availableHero">Rp0</b></span><span id="heroFilterLabel">Semua konten</span></div>
+        </div>
+        <div class="hero-actions" role="tablist" aria-label="Filter konten">
+          <button class="hero-action active" type="button" data-scope="all" role="tab" aria-selected="true"><span class="action-icon"><i class="fa-solid fa-layer-group"></i></span><span>Semua</span></button>
+          <button class="hero-action" type="button" data-scope="paste" role="tab" aria-selected="false"><span class="action-icon"><i class="fa-solid fa-link"></i></span><span>Pastelink</span></button>
+          <button class="hero-action" type="button" data-scope="code" role="tab" aria-selected="false"><span class="action-icon"><i class="fa-solid fa-code"></i></span><span>Code</span></button>
+          <button class="hero-action" type="button" data-scope="channel" role="tab" aria-selected="false"><span class="action-icon"><i class="fa-solid fa-bullhorn"></i></span><span>Group/Channel</span></button>
+        </div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-wallet"></i> Pendapatan &amp; Saldo</span></div>
+      <section class="metric-panel" aria-label="Pendapatan dan saldo">
+        <div class="metric-grid">
+          <a class="metric-card" href="wallet.html"><span class="metric-icon"><i class="fa-solid fa-hourglass-half"></i></span><span><small>Saldo Pending</small><strong id="financePending">Rp0</strong><em>Menunggu settlement</em></span></a>
+          <a class="metric-card" href="wallet.html"><span class="metric-icon"><i class="fa-solid fa-wallet"></i></span><span><small>Saldo Tersedia</small><strong id="financeAvailable">Rp0</strong><em>Saldo bersih, siap digunakan / WD</em></span></a>
+          <a class="metric-card" href="wallet.html"><span class="metric-icon"><i class="fa-solid fa-calendar-day"></i></span><span><small>Pendapatan Hari Ini</small><strong id="financeToday">Rp0</strong><em>Setelah fee</em></span></a>
+          <a class="metric-card" href="wallet.html"><span class="metric-icon"><i class="fa-solid fa-calendar-days"></i></span><span><small>Pendapatan Bulan Ini</small><strong id="financeMonth">Rp0</strong><em>Setelah fee</em></span></a>
+        </div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-chart-pie"></i> Total Konten &amp; Status</span></div>
+      <section class="metric-panel" aria-label="Total konten dan status">
+        <div class="metric-grid">
+          <a class="metric-card" href="my-products.html"><span class="metric-icon"><i class="fa-solid fa-box"></i></span><span><small>Total Konten Bulan</small><strong id="monthContent">0</strong><em>Konten dibuat bulan ini</em></span></a>
+          <a class="metric-card" href="profile.html"><span class="metric-icon"><i class="fa-solid fa-users"></i></span><span><small>Total Pengikut</small><strong id="followerCount">0</strong><em>Pengikut creator</em></span></a>
+          <a class="metric-card" href="my-products.html"><span class="metric-icon"><i class="fa-solid fa-heart"></i></span><span><small>Total Like</small><strong id="likeCount">0</strong><em>Like semua konten</em></span></a>
+          <a class="metric-card" href="my-products.html"><span class="metric-icon"><i class="fa-solid fa-share-nodes"></i></span><span><small>Total Share</small><strong id="shareCount">0</strong><em>Share tercatat</em></span></a>
+        </div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-box-open"></i> Konten Saya</span></div>
+      <section class="content-panel" aria-label="Konten saya">
+        <div class="content-head"><div><h2>Konten</h2><p>Daftar konten mengikuti tombol di atas.</p></div><span class="content-filter-label" id="contentFilterLabel2">Semua konten</span></div>
+        <div class="content-list" id="contentList"><div class="empty large"><i class="fa-solid fa-spinner fa-spin"></i><b>Memuat konten...</b></div></div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-chart-line"></i> Finance</span></div>
+      <section class="chart-panel" aria-label="Finance">
+        <div class="chart-top"><div><span class="chart-kicker">Finance</span><h2 class="chart-title">Pendapatan &amp; transaksi</h2><p class="chart-subtitle">Perbandingan periode sekarang dengan periode sebelumnya.</p></div><div class="period-switch" role="tablist" aria-label="Periode Finance"><button type="button" data-period="7">7 Hari</button><button type="button" data-period="14" class="active">14 Hari</button><button type="button" data-period="30">30 Hari</button></div></div>
+        <div class="chart-stats"><div class="chart-stat revenue"><small>Pendapatan periode ini</small><strong id="financeRevenueTotal">Rp0</strong></div><div class="chart-stat tx"><small>Transaksi berhasil</small><strong id="financeTransactionTotal">0</strong></div></div>
+        <div class="chart-box" id="financeChart"></div>
+        <div class="chart-legend"><span class="legend-pill"><i class="legend-dot"></i>Pendapatan (Rp)</span><span class="legend-pill"><i class="legend-dot tx"></i>Jumlah transaksi</span><span class="legend-pill"><i class="legend-dot prev"></i>Periode sebelumnya</span></div>
+        <div class="comparison-pills"><span class="compare-pill" id="financeCurrentLabel">✓ Periode ini</span><span class="compare-pill" id="financePreviousLabel">✓ Periode sebelumnya</span></div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-chart-column"></i> Analytics</span></div>
+      <section class="chart-panel" aria-label="Analytics">
+        <div class="chart-top"><div><span class="chart-kicker">Analytics</span><h2 class="chart-title">Performa pendapatan</h2><p class="chart-subtitle">Pendapatan creator dan jumlah transaksi yang berhasil.</p></div></div>
+        <div class="chart-stats"><div class="chart-stat revenue"><small>Total pendapatan</small><strong id="analyticsRevenueTotal">Rp0</strong></div><div class="chart-stat tx"><small>Total transaksi</small><strong id="analyticsTransactionTotal">0</strong></div></div>
+        <div class="chart-box" id="analyticsChart"></div>
+        <div class="chart-legend"><span class="legend-pill"><i class="legend-dot"></i>Pendapatan (Rp)</span><span class="legend-pill"><i class="legend-dot tx"></i>Jumlah transaksi</span></div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-circle-half-stroke"></i> Status &amp; Metode</span></div>
+      <section class="status-panel full-panel" aria-label="Status transaksi dan metode pembayaran">
+        <div class="status-layout"><div class="status-donut" id="statusDonut"><div class="status-center"><strong id="statusTotal">0</strong><small>Transaksi</small></div></div><div><h2 class="chart-title">Status Transaksi</h2><p class="chart-subtitle">Distribusi status order milik kamu sebagai seller.</p><div class="status-list" id="statusList"></div><div class="method-row" id="paymentMethods"></div></div></div>
+      </section>
+
+      <div class="section-label"><span><i class="fa-solid fa-users"></i> Pengikut</span></div>
+      <section class="follower-panel full-panel" aria-label="Pengikut berdasarkan negara">
+        <div class="follower-layout"><div class="follower-donut" id="followerDonut"><div class="follower-center"><strong id="followerTotal">0</strong><small>Pengikut</small></div></div><div><h2 class="chart-title">Pengikut berdasarkan negara</h2><p class="chart-subtitle">Warna indikator mengikuti identitas warna negara.</p><div class="follower-country-list" id="followerCountries"><div class="empty">Memuat statistik pengikut...</div></div></div></div>
+      </section>
+
+      <div id="dashboardError" class="hidden" role="alert">Dashboard gagal memuat data.</div>
+    </div>
+  </main>
+  <div id="toast" role="alert" aria-live="polite" aria-atomic="true"></div>
+  <script src="js/dashboard.js?v=20260926-dashboard-final"></script>
+  <script src="js/global-notifications.js?v=20260918-toast"></script>
+  <script src="js/pastele-data-contract.js"></script>
+</body>
+</html>
