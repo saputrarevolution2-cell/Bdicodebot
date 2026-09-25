@@ -751,3 +751,42 @@ html[data-theme="dark"] .feature-note{color:#f4c45e}
   .finance-day-row{grid-template-columns:70px 1fr 1fr;gap:5px}
   .finance-day-metric.net{grid-column:2/-1}
 }
+
+
+/* Finance point interaction */
+.finance-interactive-panel .chart-box svg{overflow:visible;touch-action:manipulation}
+.finance-point-group{cursor:pointer;outline:none}
+.finance-point-hit{fill:transparent;stroke:transparent;pointer-events:all}
+.finance-point{pointer-events:none;transition:transform .15s ease,opacity .15s ease}
+.finance-point.revenue-point{fill:#4f91ff}
+.finance-point.tx-point{fill:#a855f7}
+.finance-point-group:hover .finance-point,
+.finance-point-group:focus .finance-point,
+.finance-point-group.selected .finance-point{transform:scale(1.35);opacity:1}
+.finance-point-detail{margin:0 0 9px;padding:10px;border:1px solid rgba(79,145,255,.45);border-radius:12px;background:linear-gradient(135deg,rgba(79,145,255,.12),rgba(168,85,247,.08))}
+.finance-point-detail-title{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.finance-point-detail-title>i{color:#4f91ff}
+.finance-point-detail-title span{margin-left:auto;font-size:10px;color:#8995a8}
+.finance-point-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.finance-point-detail-grid>span{display:grid;grid-template-columns:auto 1fr;column-gap:5px;align-items:center;padding:8px;border-radius:9px;background:rgba(0,0,0,.16);min-width:0}
+.finance-point-detail-grid>span>i{grid-row:1 / span 2}
+.finance-point-detail-grid>span:nth-child(1)>i{color:#4f91ff}
+.finance-point-detail-grid>span:nth-child(2)>i{color:#22c55e}
+.finance-point-detail-grid>span:nth-child(3)>i{color:#f4c45e}
+.finance-point-detail-grid b{font-size:9px;color:#9aa7ba}
+.finance-point-detail-grid strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.finance-point-detail-grid em{grid-column:2;font-size:9px;font-style:normal}
+.finance-point-detail-grid em.up{color:#22c55e}
+.finance-point-detail-grid em.down{color:#ef4444}
+.finance-point-detail-grid em.flat{color:#727a87}
+.finance-day-row{cursor:pointer}
+.finance-day-row.selected{border-color:rgba(79,145,255,.55);box-shadow:0 0 0 1px rgba(79,145,255,.12) inset}
+.hero-status-check{font-size:64px;line-height:1}
+.hero-status-check.free{color:#ff4d5f}
+.hero-status-check.subscribed{color:#22c55e}
+.hero-status-check.premium{color:#3b82f6}
+@media(max-width:640px){
+  .finance-point-detail-grid{grid-template-columns:1fr}
+  .finance-point-detail-title span{font-size:8px}
+  .hero-status-check{font-size:56px}
+}
