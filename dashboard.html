@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <title>Dashboard — PasTele</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/dashboard.css?v=20260926-content-first-final">
+  <link rel="stylesheet" href="css/dashboard.css?v=20260926-dashboard-v3">
   <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
   <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32x32.png">
@@ -30,8 +30,12 @@
             <small>Workspace</small>
             <h1>Hai, <span id="helloName">User</span> 👋</h1>
           </div>
-          <span class="hero-plan"><i class="fa-solid fa-star"></i><span id="planBadge">Free</span></span>
-          <div class="hero-avatar" id="heroAvatar" aria-label="Avatar user">U</div>
+          <a class="hero-plan hero-plan-link" href="subscription.html" title="Buka Langganan">
+            <i class="fa-solid fa-star"></i><span id="planBadge">Free</span><i class="fa-solid fa-chevron-right hero-plan-arrow"></i>
+          </a>
+          <a class="hero-avatar hero-avatar-link" id="heroAvatarLink" href="profile.html" aria-label="Buka profile">
+            <span id="heroAvatar">U</span>
+          </a>
         </div>
         <div class="hero-balance">
           <div class="hero-balance-label"><i class="fa-solid fa-wallet"></i> Saldo Bersih</div>
@@ -49,7 +53,9 @@
       <div class="section-label"><span><i class="fa-solid fa-box-open"></i> Konten Saya</span></div>
       <section class="content-panel content-panel-upgraded" aria-label="Konten saya">
         <div class="content-head">
-          <div><h2>Konten</h2><p>Pilih jenis konten di atas, lalu lihat ringkasan dan daftar konten langsung di bawahnya.</p></div>
+          <div><h2>Konten</h2><p>Pilih jenis konten di atas, lalu lihat ringkasan dan daftar konten langsung di bawahnya.</p>
+            <div class="feature-note"><i class="fa-solid fa-circle-info"></i><span>Klik kartu View/Terjual untuk membuka halaman konten yang kamu kelola.</span></div>
+          </div>
           <span class="content-filter-label" id="contentFilterLabel2">Semua konten</span>
         </div>
         <div class="content-summary-grid" aria-label="Ringkasan konten">
@@ -57,10 +63,12 @@
           <a class="content-kpi-card sales" href="my-products.html"><span class="content-kpi-icon"><i class="fa-solid fa-cart-shopping"></i></span><span class="content-kpi-copy"><small>Total Terjual</small><strong id="contentSalesTotal">0</strong><em>Penjualan berhasil</em></span><i class="fa-solid fa-arrow-up-right-from-square content-kpi-arrow"></i></a>
         </div>
         <div class="content-list" id="contentList"><div class="empty large"><i class="fa-solid fa-spinner fa-spin"></i><b>Memuat konten...</b></div></div>
+        <div class="content-pagination" id="contentPagination" aria-label="Pagination konten"></div>
       </section>
 
       <div class="section-label"><span><i class="fa-solid fa-wallet"></i> Pendapatan &amp; Saldo</span></div>
       <section class="metric-panel" aria-label="Pendapatan dan saldo">
+        <div class="feature-note feature-note-block"><i class="fa-solid fa-circle-info"></i><span>Saldo di bawah adalah nilai bersih dari database. Tidak ada potongan fee kedua kali.</span></div>
         <div class="metric-grid">
           <a class="metric-card" href="wallet.html"><span class="metric-icon"><i class="fa-solid fa-hourglass-half"></i></span><span><small>Saldo Pending</small><strong id="financePending">Rp0</strong><em>Menunggu settlement</em></span></a>
           <a class="metric-card" href="wallet.html"><span class="metric-icon"><i class="fa-solid fa-wallet"></i></span><span><small>Saldo Tersedia</small><strong id="financeAvailable">Rp0</strong><em>Saldo bersih, siap digunakan / WD</em></span></a>
@@ -70,16 +78,20 @@
       </section>
 
       <div class="section-label"><span><i class="fa-solid fa-chart-line"></i> Finance</span></div>
-      <section class="chart-panel" aria-label="Finance">
-        <div class="chart-top"><div><span class="chart-kicker">Finance</span><h2 class="chart-title">Pendapatan &amp; transaksi</h2><p class="chart-subtitle">Ringkasan pendapatan bersih dan transaksi berhasil berdasarkan periode.</p></div><div class="period-switch" role="tablist" aria-label="Periode Finance"><button type="button" data-period="7">7 Hari</button><button type="button" data-period="14" class="active">14 Hari</button><button type="button" data-period="30">30 Hari</button></div></div>
+      <section class="chart-panel finance-interactive-panel" id="financePanel" aria-label="Finance" tabindex="0" role="button" aria-expanded="false" title="Klik untuk melihat detail statistik Finance">
+        <div class="chart-top"><div><span class="chart-kicker">Finance</span><h2 class="chart-title">Pendapatan &amp; transaksi</h2><p class="chart-subtitle">Ringkasan pendapatan bersih dan transaksi berhasil berdasarkan periode.</p>
+          <div class="feature-note feature-note-dark"><i class="fa-solid fa-circle-info"></i><span>Klik panel ini untuk membuka detail statistik periode yang dipilih.</span></div>
+        </div><div class="period-switch" role="tablist" aria-label="Periode Finance"><button type="button" data-period="7">7 Hari</button><button type="button" data-period="14" class="active">14 Hari</button><button type="button" data-period="30">30 Hari</button></div></div>
         <div class="chart-stats"><div class="chart-stat revenue"><small>Pendapatan periode ini</small><strong id="financeRevenueTotal">Rp0</strong></div><div class="chart-stat tx"><small>Transaksi berhasil</small><strong id="financeTransactionTotal">0</strong></div></div>
         <div class="chart-box" id="financeChart"></div>
         <div class="chart-legend"><span class="legend-pill"><i class="legend-dot"></i>Pendapatan (Rp)</span><span class="legend-pill"><i class="legend-dot tx"></i>Jumlah transaksi</span><span class="legend-pill"><i class="legend-dot prev"></i>Periode sebelumnya</span></div>
         <div class="comparison-pills"><span class="compare-pill" id="financeCurrentLabel">✓ Periode ini</span><span class="compare-pill" id="financePreviousLabel">✓ Periode sebelumnya</span></div>
+        <div class="finance-detail" id="financeDetail" hidden aria-live="polite"></div>
       </section>
 
       <div class="section-label"><span><i class="fa-solid fa-chart-pie"></i> Total Konten &amp; Status</span></div>
       <section class="metric-panel" aria-label="Total konten dan status">
+        <div class="feature-note feature-note-block"><i class="fa-solid fa-circle-info"></i><span>Ringkasan ini mengikuti data konten, like, share, dan pengikut yang tersedia di akunmu.</span></div>
         <div class="metric-grid">
           <a class="metric-card" href="my-products.html"><span class="metric-icon"><i class="fa-solid fa-box"></i></span><span><small>Total Konten Bulan</small><strong id="monthContent">0</strong><em>Konten dibuat bulan ini</em></span></a>
           <a class="metric-card" href="profile.html"><span class="metric-icon"><i class="fa-solid fa-users"></i></span><span><small>Total Pengikut</small><strong id="followerCount">0</strong><em>Pengikut creator</em></span></a>
@@ -90,6 +102,7 @@
 
 <div class="section-label"><span><i class="fa-solid fa-users"></i> Pengikut</span></div>
       <section class="follower-panel full-panel" aria-label="Pengikut berdasarkan negara">
+        <div class="feature-note feature-note-block"><i class="fa-solid fa-circle-info"></i><span>Data negara berasal dari profil pengikut yang memiliki informasi negara.</span></div>
         <div class="follower-layout"><div class="follower-donut" id="followerDonut"><div class="follower-center"><strong id="followerTotal">0</strong><small>Pengikut</small></div></div><div><h2 class="chart-title">Pengikut berdasarkan negara</h2><p class="chart-subtitle">Warna indikator mengikuti identitas warna negara.</p><div class="follower-country-list" id="followerCountries"><div class="empty">Memuat statistik pengikut...</div></div></div></div>
       </section>
 
@@ -97,7 +110,7 @@
   </div>
 </main>
   <div id="toast" role="alert" aria-live="polite" aria-atomic="true"></div>
-  <script src="js/dashboard.js?v=20260926-content-first-final"></script>
+  <script src="js/dashboard.js?v=20260926-dashboard-v3"></script>
   <script src="js/global-notifications.js?v=20260918-toast"></script>
   <script src="js/pastele-data-contract.js"></script>
 </body>
