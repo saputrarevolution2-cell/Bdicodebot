@@ -3022,14 +3022,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('heroAvatar') && (avatar ? $('heroAvatar').innerHTML=`<img src="${esc(avatar)}" alt="Avatar ${esc(avatarName)}">` : ($('heroAvatar').textContent=avatarName.charAt(0).toUpperCase()||'U'));
   $('heroAvatarLink') && ($('heroAvatarLink').href=`profile.html${username?`?username=${encodeURIComponent(username)}`:''}`, $('heroAvatarLink').title=`Buka profile @${avatarName}`);
 
-  const plan = profile?.is_premium ? 'Premium' : (profile?.subscription_until && new Date(profile.subscription_until)>new Date() ? 'Subscribed' : 'Free');
+  const hasSubscription=!!(profile?.subscription_until && new Date(profile.subscription_until)>new Date());
+  const plan=profile?.is_premium?'Premium':(hasSubscription?'Langganan':'Free');
   $('planBadge') && ($('planBadge').textContent=plan);
+  const planIcon=$('planStatusIcon');
+  if(planIcon){
+    planIcon.className=`fa-solid fa-circle-check plan-status-icon ${plan==='Premium'?'premium':plan==='Langganan'?'subscribed':'free'}`;
+    planIcon.setAttribute('aria-label',`Status ${plan}`);
+  }
+  $('heroPlanLink') && ($('heroPlanLink').title=`Status akun: ${plan} · Buka Langganan`);
 
   let scope='all';
   let period=14;
   let contentPage=1;
   const contentPageSize=3;
   let financeDetailOpen=false;
+  let financeAnalyticsEvents=[];
+  let financeOrders=[];
   const now=startOfDay(new Date());
 
   const contentMatches = {
@@ -3087,6 +3096,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       supabase.from('wallets').select('balance,available_balance,pending_balance,updated_at').eq('user_id',user.id).maybeSingle()
     ]);
 
+    financeAnalyticsEvents=analyticsEvents;
+    financeOrders=orders;
     const wallet=walletResult?.data || {};
     const followerCount=Number(followsResult?.count||0);
     const likeCount=Number(likesResult?.count||0);
@@ -3275,10 +3286,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pager=$('contentPagination');
     if(!items.length){
       host.innerHTML=`<div class="empty large"><i class="fa-solid fa-box-open"></i><b>Belum ada konten</b><span>Konten yang kamu buat akan muncul di sini.</span></div>`;
-      if(pager) pager.innerHTML='';
+      if(pager)pager.innerHTML='';
       return;
     }
-
     const totalPages=Math.max(1,Math.ceil(items.length/contentPageSize));
     contentPage=Math.min(Math.max(1,contentPage),totalPages);
     const start=(contentPage-1)*contentPageSize;
@@ -3291,55 +3301,72 @@ document.addEventListener('DOMContentLoaded', async () => {
       const typeLabel=kind==='code'?'Code':kind==='paste'?'Pastelink':kind==='group'?'Group':'Channel';
       const paid=Number(item.price||0)>0;
       const href=kind==='paste'?(item.slug?`/p/${encodeURIComponent(item.slug)}`:''):(kind==='channel'&&item.slug?`/ch/${item.access_type||'free'}/${encodeURIComponent(item.slug)}`:kind==='group'&&item.slug?`/g/${item.access_type||'free'}/${encodeURIComponent(item.slug)}`:(item.id?`product.html?id=${encodeURIComponent(item.id)}&type=${encodeURIComponent(kind)}`:''));
-      const views=Number(item.views||0);
-      const sold=Number(item.salesCount||0);
-      return `<a class="content-card" href="${esc(href||'#')}" ${href?'':'aria-disabled="true"'}><span class="content-icon ${esc(kind)}"><i class="fa-solid ${icon}"></i></span><span class="content-main"><b>${esc(title)}</b><small>${typeLabel} · ${formatDate(item.created_at)}</small></span><span class="content-meta"><strong>${paid?esc(money(item.price)): 'Free'}</strong><small><i class="fa-solid fa-eye"></i> ${number(views)} · <i class="fa-solid fa-cart-shopping"></i> ${number(sold)} terjual</small></span><i class="fa-solid fa-chevron-right content-arrow"></i></a>`;
+      const views=Number(item.views||0), sold=Number(item.salesCount||0), safeTitle=String(title);
+      return `<a class="content-card" href="${esc(href||'#')}" ${href?'':'aria-disabled="true"'} title="${esc(safeTitle)}">
+        <span class="content-icon ${esc(kind)}"><i class="fa-solid ${icon}"></i></span>
+        <span class="content-main"><b title="${esc(safeTitle)}">${esc(safeTitle)}</b><small><span class="content-type-label">${typeLabel}</span><span class="content-date">${formatDate(item.created_at)}</span></small></span>
+        <span class="content-meta"><strong>${paid?esc(money(item.price)):'Free'}</strong><small><span><i class="fa-solid fa-eye"></i>${number(views)}</span><span><i class="fa-solid fa-cart-shopping"></i>${number(sold)}</span></small></span>
+        <i class="fa-solid fa-chevron-right content-arrow"></i>
+      </a>`;
     }).join('');
 
     if(pager){
-      const buttons=[];
-      buttons.push(`<button type="button" class="content-page-btn" data-page="${Math.max(1,contentPage-1)}" ${contentPage===1?'disabled':''} aria-label="Halaman sebelumnya"><i class="fa-solid fa-chevron-left"></i></button>`);
+      const buttons=[`<button type="button" class="content-page-btn" data-page="${Math.max(1,contentPage-1)}" ${contentPage===1?'disabled':''}><i class="fa-solid fa-chevron-left"></i></button>`];
       for(let p=1;p<=totalPages;p++){
-        if(totalPages>7 && p>2 && p<totalPages-1 && Math.abs(p-contentPage)>1){
-          if(p===3) buttons.push('<span class="content-page-dots">…</span>');
-          continue;
-        }
-        buttons.push(`<button type="button" class="content-page-btn ${p===contentPage?'active':''}" data-page="${p}" aria-current="${p===contentPage?'page':'false'}">${p}</button>`);
+        if(totalPages>7&&p>2&&p<totalPages-1&&Math.abs(p-contentPage)>1){if(p===3)buttons.push('<span class="content-page-dots">…</span>');continue;}
+        buttons.push(`<button type="button" class="content-page-btn ${p===contentPage?'active':''}" data-page="${p}">${p}</button>`);
       }
-      buttons.push(`<button type="button" class="content-page-btn" data-page="${Math.min(totalPages,contentPage+1)}" ${contentPage===totalPages?'disabled':''} aria-label="Halaman berikutnya"><i class="fa-solid fa-chevron-right"></i></button>`);
+      buttons.push(`<button type="button" class="content-page-btn" data-page="${Math.min(totalPages,contentPage+1)}" ${contentPage===totalPages?'disabled':''}><i class="fa-solid fa-chevron-right"></i></button>`);
       pager.innerHTML=`<div class="content-page-info">Halaman ${contentPage} dari ${totalPages} · ${number(items.length)} konten</div><div class="content-page-controls">${buttons.join('')}</div>`;
-      pager.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
-        if(btn.disabled)return;
-        contentPage=Number(btn.dataset.page)||1;
-        renderContent(items);
-      }));
+      pager.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{if(!btn.disabled){contentPage=Number(btn.dataset.page)||1;renderContent(items);}}));
     }
   }
 
   function renderFinanceDetail(currentSeries, previousSeries){
     const host=$('financeDetail'); if(!host)return;
-    const currentRevenue=currentSeries.reduce((s,x)=>s+Number(x.revenue||0),0);
-    const previousRevenue=previousSeries.reduce((s,x)=>s+Number(x.revenue||0),0);
-    const currentTx=currentSeries.reduce((s,x)=>s+Number(x.transactions||0),0);
-    const previousTx=previousSeries.reduce((s,x)=>s+Number(x.transactions||0),0);
-    const avgDay=currentSeries.length?currentRevenue/currentSeries.length:0;
-    const avgTx=currentSeries.length?currentTx/currentSeries.length:0;
-    const peak=currentSeries.reduce((best,x)=>Number(x.revenue||0)>Number(best?.revenue||0)?x:best,null);
-    const revDelta=previousRevenue?((currentRevenue-previousRevenue)/previousRevenue*100):null;
-    const txDelta=previousTx?((currentTx-previousTx)/previousTx*100):null;
-    const deltaText=v=>v===null?'—':`${v>=0?'+':''}${v.toFixed(1)}%`;
+    const successStates=new Set(['paid','success','completed','settled']);
+    const viewEvents=new Set(['view','views','page_view','content_view']);
+
+    const dayRows=currentSeries.map((x,i)=>{
+      const dayKey=x.key;
+      const views=financeAnalyticsEvents.filter(e=>dateKey(e.created_at)===dayKey && viewEvents.has(normalize(e.event_type))).length;
+      const paid=financeOrders.filter(o=>dateKey(o.paid_at||o.created_at)===dayKey && successStates.has(normalize(o.status))).length;
+      const revenue=Number(x.revenue||0);
+      const prev=currentSeries[i-1];
+      const prevViews=i>0?financeAnalyticsEvents.filter(e=>dateKey(e.created_at)===prev.key && viewEvents.has(normalize(e.event_type))).length:0;
+      const prevPaid=i>0?financeOrders.filter(o=>dateKey(o.paid_at||o.created_at)===prev.key && successStates.has(normalize(o.status))).length:0;
+      const viewDelta=views-prevViews, paidDelta=paid-prevPaid;
+      const trend=(v,hasPrev)=>!hasPrev?'flat':v>0?'up':v<0?'down':'flat';
+      return {date:x.date,key:dayKey,views,paid,revenue,viewDelta,paidDelta,viewTrend:trend(viewDelta,i>0),paidTrend:trend(paidDelta,i>0)};
+    });
+
+    const totalViews=dayRows.reduce((s,x)=>s+x.views,0);
+    const totalPaid=dayRows.reduce((s,x)=>s+x.paid,0);
+    const totalRevenue=dayRows.reduce((s,x)=>s+x.revenue,0);
+    const trendIcon=t=>t==='up'?'fa-arrow-trend-up':t==='down'?'fa-arrow-trend-down':'fa-minus';
+    const trendText=(delta,t)=>t==='flat'?'—':`${delta>0?'+':''}${number(delta)}`;
+
     host.innerHTML=`
-      <div class="finance-detail-head"><div><b>Detail statistik</b><small>Periode yang sedang dipilih</small></div><span class="finance-detail-badge"><i class="fa-solid fa-circle-info"></i> Database</span></div>
-      <div class="finance-detail-grid">
-        <div class="finance-detail-card"><small>Total pendapatan</small><strong>${esc(money(currentRevenue))}</strong><em>${deltaText(revDelta)} vs periode sebelumnya</em></div>
-        <div class="finance-detail-card"><small>Total transaksi</small><strong>${number(currentTx)}</strong><em>${deltaText(txDelta)} vs periode sebelumnya</em></div>
-        <div class="finance-detail-card"><small>Rata-rata / hari</small><strong>${esc(money(avgDay))}</strong><em>Pendapatan bersih</em></div>
-        <div class="finance-detail-card"><small>Transaksi / hari</small><strong>${avgTx.toFixed(1)}</strong><em>Rata-rata periode</em></div>
-        <div class="finance-detail-card finance-detail-wide"><small>Hari pendapatan tertinggi</small><strong>${peak?formatDate(peak.date):'-'}</strong><em>${peak?esc(money(peak.revenue)):'Belum ada pendapatan'} · ${peak?number(peak.transactions):0} transaksi</em></div>
+      <div class="finance-detail-head">
+        <div><b>Detail per hari</b><small>View & Paid menunjukkan alasan grafik naik / turun.</small></div>
+        <span class="finance-detail-badge"><i class="fa-solid fa-database"></i> Data DB</span>
+      </div>
+      <div class="finance-day-summary">
+        <span><i class="fa-solid fa-eye"></i> View <b>${number(totalViews)}</b></span>
+        <span><i class="fa-solid fa-circle-check"></i> Paid <b>${number(totalPaid)}</b></span>
+        <span><i class="fa-solid fa-wallet"></i> Net <b>${esc(money(totalRevenue))}</b></span>
+      </div>
+      <div class="finance-day-list">
+        ${dayRows.slice().reverse().map(row=>`
+          <div class="finance-day-row">
+            <div class="finance-day-date"><b>${esc(row.date.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}))}</b><small>${esc(row.date.toLocaleDateString('id-ID',{weekday:'short'}))}</small></div>
+            <div class="finance-day-metric view"><i class="fa-solid fa-eye"></i><span>View</span><b>${number(row.views)}</b><em class="${row.viewTrend}"><i class="fa-solid ${trendIcon(row.viewTrend)}"></i>${trendText(row.viewDelta,row.viewTrend)}</em></div>
+            <div class="finance-day-metric paid"><i class="fa-solid fa-circle-check"></i><span>Paid</span><b>${number(row.paid)}</b><em class="${row.paidTrend}"><i class="fa-solid ${trendIcon(row.paidTrend)}"></i>${trendText(row.paidDelta,row.paidTrend)}</em></div>
+            <div class="finance-day-metric net"><i class="fa-solid fa-wallet"></i><span>Net</span><b>${esc(money(row.revenue))}</b></div>
+          </div>`).join('')}
       </div>`;
     host.hidden=false;
   }
-
 
   document.querySelectorAll('[data-scope]').forEach(btn=>btn.addEventListener('click',async()=>{
     document.querySelectorAll('[data-scope]').forEach(x=>x.classList.remove('active'));
