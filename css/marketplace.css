@@ -172,9 +172,10 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
   white-space:nowrap;
 }
 .market-list-stats i{color:var(--primary)}
-.market-list-stats span:nth-child(2) i{color:#ef4444}
-.market-list-stats span:nth-child(3) i{color:var(--cyan)}
-.market-list-stats span:nth-child(4) i{color:var(--primary2)}
+.market-list-stats span:nth-child(2) i{color:var(--orange)}
+.market-list-stats span:nth-child(3) i{color:#ef4444}
+.market-list-stats span:nth-child(4) i{color:var(--cyan)}
+.market-list-stats span:nth-child(5) i{color:var(--primary2)}
 .market-ranking-pagination{
   display:flex;
   align-items:center;
@@ -414,4 +415,18 @@ button.pt-account-item{width:100%;text-align:left;cursor:pointer}
   outline:2px solid rgba(34,158,217,.28);
   outline-offset:2px;
   border-radius:5px;
+}
+
+/* Marketplace — total sold summary + ranking pagination */
+.market-result-summary{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.market-total-sold{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid rgba(245,158,11,.22);border-radius:10px;background:rgba(245,158,11,.08);color:var(--muted);font-size:10px;font-weight:750;white-space:nowrap}
+.market-total-sold i{color:var(--orange)}
+.market-total-sold b{color:var(--text);font-size:11px}
+.creator-list-item .market-list-title{letter-spacing:.01em}
+.creator-meta{margin-top:5px}
+.creator-revenue{margin-top:5px;color:var(--muted);font-size:9px}
+.creator-revenue strong{color:var(--text)}
+@media(max-width:520px){
+  .market-result-summary{width:100%;justify-content:flex-start}
+  .market-resultbar{align-items:flex-start;flex-wrap:wrap}
 }
