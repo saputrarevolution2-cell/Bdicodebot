@@ -2955,7 +2955,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
    ---------------------------------------------------------
    Data sources follow the supplied canonical SQL:
    profiles, wallets, products, pastes, pastelinks,
-   telegram_products, telegram_channels, orders, payments,
+   telegram_products, telegram_channels, orders,
    transactions, analytics_events, content_likes,
    creator_followers.
    ========================================================= */
@@ -3014,10 +3014,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let profile=null;
   try { profile=(await supabase.from('profiles').select('id,username,display_name,avatar_url,country,is_premium,subscription_until').eq('id',user.id).maybeSingle()).data || null; } catch {}
 
-  const displayName = profile?.display_name || profile?.username || user.user_metadata?.username || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+  const username = String(profile?.username || user.user_metadata?.username || '').trim();
+  const displayName = username || profile?.display_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
   const avatar = profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
   $('helloName') && ($('helloName').textContent=displayName);
-  $('heroAvatar') && (avatar ? $('heroAvatar').innerHTML=`<img src="${esc(avatar)}" alt="Avatar ${esc(displayName)}">` : ($('heroAvatar').textContent=String(displayName).trim().charAt(0).toUpperCase()||'U'));
+  $('heroAvatar') && (avatar ? $('heroAvatar').innerHTML=`<img src="${esc(avatar)}" alt="Avatar ${esc(username || displayName)}">` : ($('heroAvatar').textContent=String(username || displayName).trim().charAt(0).toUpperCase()||'U'));
 
   const plan = profile?.is_premium ? 'Premium' : (profile?.subscription_until && new Date(profile.subscription_until)>new Date() ? 'Subscribed' : 'Free');
   $('planBadge') && ($('planBadge').textContent=plan);
@@ -3086,14 +3087,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const likeCount=Number(likesResult?.count||0);
     const shareCount=analyticsEvents.filter(e=>['share','shared'].includes(normalize(e.event_type))).length;
 
-    // Payments are linked through seller orders, so fetch by order IDs after the order query.
-    let payments=[];
-    const orderIds=orders.map(o=>o.id).filter(Boolean);
-    if(orderIds.length){
-      try{
-        payments=await fetchAll(()=>supabase.from('payments').select('id,order_id,user_id,amount,method,reference,status,created_at,paid_at').in('order_id',orderIds));
-      }catch{}
-    }
+    // Per-content sales. Use canonical sales_count where the table provides it,
+    // and fall back to successful seller orders for content types without a sales_count column.
+    const successfulOrderStates=new Set(['paid','success','completed','settled']);
+    const salesByKey={};
+    orders.forEach(o=>{
+      if(!successfulOrderStates.has(normalize(o.status))) return;
+      const id=o.item_id || o.product_id;
+      if(!id) return;
+      const itemType=normalize(o.item_type || '');
+      const keys=[
+        String(id),
+        `${itemType}:${id}`,
+        `${normalize(o.product_id||'')}:${id}`
+      ];
+      keys.forEach(k=>{if(k && k!==':') salesByKey[k]=(salesByKey[k]||0)+1;});
+    });
+    const salesFor=(x)=>{
+      if(Number.isFinite(Number(x.sales_count))) return Number(x.sales_count);
+      const id=String(x.id||'');
+      const candidates=[
+        id,
+        `${normalize(x.kind||'')}:${id}`,
+        `${normalize(x.type||'')}:${id}`,
+        `${normalize(x.product_type||'')}:${id}`
+      ];
+      return candidates.reduce((n,k)=>Math.max(n,Number(salesByKey[k]||0)),0);
+    };
 
     const scopedProducts=products.filter(x=>contentMatches.product(x,scope));
     const scopedPastes=(scope==='all'||scope==='paste')?pastes:[];
@@ -3114,7 +3134,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       ...scopedPastelinks.map(x=>({...x,kind:'paste'})),
       ...scopedCodes.map(x=>({...x,kind:'code'})),
       ...scopedChannels.map(x=>({...x,kind:normalize(x.type)==='group'?'group':'channel'}))
-    ].sort((a,b)=>(safeDate(b.created_at)?.getTime()||0)-(safeDate(a.created_at)?.getTime()||0));
+    ].sort((a,b)=>(safeDate(b.created_at)?.getTime()||0)-(safeDate(a.created_at)?.getTime()||0))
+      .map(x=>({...x,salesCount:salesFor(x)}));
+    const filteredContentWithSales=filteredContent.map(x=>({...x,salesCount:salesFor(x)}));
 
     // Hero balance: always show the canonical NET available balance.
     // Fees are handled by the wallet/transaction layer; do NOT deduct again here.
@@ -3156,29 +3178,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentSeries=series(pd.current), previousSeries=series(pd.previous);
 
     renderLineChart('financeChart',currentSeries,previousSeries,{title:'Finance'});
-    renderLineChart('analyticsChart',currentSeries,null,{title:'Analytics'});
     const currentRevenue=currentSeries.reduce((s,x)=>s+x.revenue,0);
     const previousRevenue=previousSeries.reduce((s,x)=>s+x.revenue,0);
     const currentTx=currentSeries.reduce((s,x)=>s+x.transactions,0);
     const previousTx=previousSeries.reduce((s,x)=>s+x.transactions,0);
     $('financeRevenueTotal') && ($('financeRevenueTotal').textContent=money(currentRevenue));
     $('financeTransactionTotal') && ($('financeTransactionTotal').textContent=number(currentTx));
-    $('analyticsRevenueTotal') && ($('analyticsRevenueTotal').textContent=money(currentRevenue));
-    $('analyticsTransactionTotal') && ($('analyticsTransactionTotal').textContent=number(currentTx));
     $('financeCurrentLabel') && ($('financeCurrentLabel').textContent=`✓ ${formatShort(pd.currentStart)} – ${formatShort(now)}`);
     $('financePreviousLabel') && ($('financePreviousLabel').textContent=`✓ ${formatShort(pd.previousStart)} – ${formatShort(addDays(pd.previousStart,period-1))}`);
-
-    // Status donut: all seller orders, categorized from the canonical order status.
-    const statusCounts={success:0,pending:0,expired:0,cancelled:0};
-    orders.forEach(o=>{
-      const s=normalize(o.status);
-      if(successSet.has(s)) statusCounts.success++;
-      else if(['pending','waiting','unpaid','processing'].includes(s)) statusCounts.pending++;
-      else if(['expired','expire'].includes(s)) statusCounts.expired++;
-      else statusCounts.cancelled++;
-    });
-    renderStatusDonut(statusCounts);
-    renderPaymentMethods(payments);
 
     // Followers by country, using profiles.country as defined in the database.
     const followerRows=Array.isArray(followerRowsResult?.data)?followerRowsResult.data:[];
@@ -3190,12 +3197,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderFollowers(followerCount,followerProfiles);
 
     // Content cards.
-    renderContent(filteredContent);
+    renderContent(filteredContentWithSales);
 
     // Compatibility values for any shell/plugin code that still references the old IDs.
     $('created') && ($('created').textContent=number(filteredContent.length));
-    $('views') && ($('views').textContent=number(filteredContent.reduce((s,x)=>s+Number(x.views||0),0)));
-    $('sales') && ($('sales').textContent=number(filteredContent.reduce((s,x)=>s+Number(x.sales_count||0),0)));
+    $('views') && ($('views').textContent=number(filteredContentWithSales.reduce((s,x)=>s+Number(x.views||0),0)));
+    $('contentViewsTotal') && ($('contentViewsTotal').textContent=number(filteredContentWithSales.reduce((s,x)=>s+Number(x.views||0),0)));
+    $('contentSalesTotal') && ($('contentSalesTotal').textContent=number(filteredContentWithSales.reduce((s,x)=>s+Number(x.salesCount||0),0)));
+    $('sales') && ($('sales').textContent=number(filteredContentWithSales.reduce((s,x)=>s+Number(x.salesCount||0),0)));
     $('revenue') && ($('revenue').textContent=money(currentRevenue));
   }
 
@@ -3223,25 +3232,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const grid=[0,.25,.5,.75,1].map(r=>{const y=H-16-r*(H-32);return `<line x1="14" x2="886" y1="${y}" y2="${y}" class="chart-grid-line"/>`;}).join('');
     const labels=current.map((item,i)=>{if(i%Math.max(1,Math.ceil(current.length/6))!==0 && i!==current.length-1)return '';const px=14+(current.length===1?436:(i/(current.length-1))*872);return `<text x="${px}" y="333" text-anchor="middle" class="chart-label">${esc(formatShort(item.date))}</text>`;}).join('');
     host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(title||'Grafik')}">${grid}${previous?`<path d="${prevRev}" class="line-prev-revenue"/><path d="${prevTx}" class="line-prev-tx"/>`:''}<path d="${revPath}" class="line-revenue"/><path d="${txPath}" class="line-tx"/>${labels}</svg>`;
-  }
-
-  function renderStatusDonut(counts){
-    const total=Object.values(counts).reduce((a,b)=>a+b,0);
-    const meta=[['success','Sukses','#2dd4a3'],['pending','Pending','#f5b942'],['expired','Expired','#94a3b8'],['cancelled','Batal','#fb7185']];
-    let cursor=0;
-    const stops=meta.map(([k,,c])=>{const p=total?counts[k]/total*100:0;const from=cursor;cursor+=p;return `${c} ${from}% ${cursor}%`;}).join(',');
-    $('statusDonut') && ($('statusDonut').style.background=`conic-gradient(${stops||'#263241 0 100%'})`);
-    $('statusTotal') && ($('statusTotal').textContent=number(total));
-    const list=$('statusList'); if(!list) return;
-    list.innerHTML=meta.map(([k,label,color])=>{const count=counts[k]||0;const pct=total?count/total*100:0;return `<div class="status-row"><span class="status-dot" style="--status-color:${color}"></span><span>${label}</span><b>${number(count)}</b><small>${pct.toFixed(pct>=10?0:1)}%</small></div>`;}).join('');
-  }
-
-  function renderPaymentMethods(payments){
-    const host=$('paymentMethods'); if(!host) return;
-    const map={};
-    payments.forEach(p=>{const key=String(p.method||'Unknown').trim()||'Unknown';map[key]=(map[key]||0)+1;});
-    const rows=Object.entries(map).sort((a,b)=>b[1]-a[1]);
-    host.innerHTML=rows.length?rows.slice(0,8).map(([name,count])=>`<span class="method-pill"><i class="fa-solid fa-credit-card"></i>${esc(name)} <b>${number(count)}</b></span>`).join(''):`<span class="muted">Belum ada data metode pembayaran.</span>`;
   }
 
   function renderFollowers(total,profiles){
@@ -3281,7 +3271,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const typeLabel=kind==='code'?'Code':kind==='paste'?'Pastelink':kind==='group'?'Group':'Channel';
       const paid=Number(item.price||0)>0;
       const href=kind==='paste'?(item.slug?`/p/${encodeURIComponent(item.slug)}`:''):(kind==='channel'&&item.slug?`/ch/${item.access_type||'free'}/${encodeURIComponent(item.slug)}`:kind==='group'&&item.slug?`/g/${item.access_type||'free'}/${encodeURIComponent(item.slug)}`:(item.id?`product.html?id=${encodeURIComponent(item.id)}&type=${encodeURIComponent(kind)}`:''));
-      return `<a class="content-card" href="${esc(href||'#')}" ${href?'':'aria-disabled="true"'}><span class="content-icon ${esc(kind)}"><i class="fa-solid ${icon}"></i></span><span class="content-main"><b>${esc(title)}</b><small>${typeLabel} · ${formatDate(item.created_at)}</small></span><span class="content-meta"><strong>${paid?esc(money(item.price)): 'Free'}</strong><small>${number(item.views||0)} views</small></span><i class="fa-solid fa-chevron-right content-arrow"></i></a>`;
+      const views=Number(item.views||0);
+      const sold=Number(item.salesCount||0);
+      return `<a class="content-card" href="${esc(href||'#')}" ${href?'':'aria-disabled="true"'}><span class="content-icon ${esc(kind)}"><i class="fa-solid ${icon}"></i></span><span class="content-main"><b>${esc(title)}</b><small>${typeLabel} · ${formatDate(item.created_at)}</small></span><span class="content-meta"><strong>${paid?esc(money(item.price)): 'Free'}</strong><small><i class="fa-solid fa-eye"></i> ${number(views)} · <i class="fa-solid fa-cart-shopping"></i> ${number(sold)} terjual</small></span><i class="fa-solid fa-chevron-right content-arrow"></i></a>`;
     }).join('');
   }
 
