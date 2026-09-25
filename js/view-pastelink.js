@@ -1468,105 +1468,43 @@ function ptLinkifyText(value){
           [
             'Create',
             [
-              [
-                'create-pastelink.html',
-                'fa-link',
-                'PasteLink'
-              ],
-              [
-                'create-code.html',
-                'fa-code',
-                'Code'
-              ],
-              [
-                'create-telegram.html?type=channel',
-                'fa-users',
-                'Group / Channel'
-              ]
+              ['create-code.html', 'fa-code', 'Create Code'],
+              ['create-pastelink.html', 'fa-link', 'Create PasteLink'],
+              ['create-telegram.html?type=channel', 'fa-users', 'Create Group / Channel']
             ]
           ],
           [
             'Manage',
             [
-              [
-                'my-products.html',
-                'fa-box-open',
-                'My Product'
-              ],
-              [
-                'purchases.html',
-                'fa-bag-shopping',
-                'Purchases'
-              ]
+              ['my-products.html', 'fa-box-open', 'My Product'],
+              ['purchases.html', 'fa-bag-shopping', 'My purchases', 'Beta']
             ]
           ],
           [
             'Finance',
             [
-              [
-                'wallet.html',
-                'fa-wallet',
-                'Wallet'
-              ],
-              [
-                'withdrawals.html',
-                'fa-money-bill-transfer',
-                'Withdraw'
-              ],
-              [
-                'transactions.html',
-                'fa-arrow-right-arrow-left',
-                'Transaction'
-              ]
+              ['wallet.html', 'fa-wallet', 'Wallet'],
+              ['withdrawals.html', 'fa-money-bill-transfer', 'Withdraw'],
+              ['transactions.html', 'fa-arrow-right-arrow-left', 'Transaction']
             ]
           ],
           [
             'Account',
             [
-              [
-                'subscription.html',
-                'fa-crown',
-                'Langganan'
-              ],
-              [
-                'premium.html',
-                'fa-gem',
-                'Premium'
-              ],
-              [
-                'notifications.html',
-                'fa-bell',
-                'Notifikasi'
-              ],
-              [
-                'profile.html',
-                'fa-user',
-                'Profile'
-              ],
-              [
-                'settings.html',
-                'fa-gear',
-                'Setting'
-              ],
-              [
-                'about.html',
-                'fa-circle-info',
-                'About'
-              ]
+              ['subscription.html', 'fa-crown', 'Langganan', 'Trend'],
+              ['premium.html', 'fa-gem', 'Premium', 'New'],
+              ['notifications.html', 'fa-bell', 'Notifikasi', 'count'],
+              ['profile.html', 'fa-user', 'Profile'],
+              ['settings.html', 'fa-gear', 'Setting'],
+              ['about.html', 'fa-circle-info', 'About']
             ]
           ]
-        ];
-    /* ========================================================
-       ROOT-ABSOLUTE NAVIGATION
-       Public routes may be rewritten under /pf/.
-       Navbar destinations must never be relative to /pf/.
-       ======================================================== */
-/* ========================================================
+        ]/* ========================================================
        NAVIGATION LINKS
        ======================================================== */
     const renderLinks = (items) => {
       return items
-        .map(([href, icon, label]) => {
+        .map(([href, icon, label, badge]) => {
           const active =
             samePage(href);
           return `
@@ -1583,6 +1521,11 @@ function ptLinkifyText(value){
               <span class="pt-link-label">
                 ${esc(label)}
               </span>
+              ${badge === 'count'
+                ? '<span class="pt-menu-badge pt-menu-badge-count" id="ptMenuNotifBadge">0</span>'
+                : badge
+                  ? `<span class="pt-menu-badge">${esc(badge)}</span>`
+                  : ''}
               <i
                 class="fa-solid fa-chevron-right pt-link-arrow"
                 aria-hidden="true"
@@ -1830,14 +1773,23 @@ function ptLinkifyText(value){
           aria-label="Menu utama"
         >
           ${groups
-            .map(([title, items]) => `
+            .map(([title, items]) => title === 'Create'
+              ? `
+              <section class="pt-group pt-create-group">
+                <button class="pt-create-toggle" id="ptCreateToggle" type="button" aria-expanded="false" aria-controls="ptCreateItems">
+                  <span><i class="fa-solid fa-plus"></i> Create</span>
+                  <i class="fa-solid fa-chevron-down pt-create-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="pt-create-items" id="ptCreateItems" hidden>
+                  ${renderLinks(items)}
+                </div>
+              </section>`
+              : `
               <section class="pt-group">
-                <h3>
-                  ${esc(title)}
-                </h3>
+                <h3>${esc(title)}</h3>
                 ${renderLinks(items)}
-              </section>
-            `)
+              </section>`
+            )
             .join('')}
         </nav>
         <button class="pt-link pt-forum-trigger" id="ptForumTrigger" type="button">
@@ -1906,6 +1858,16 @@ function ptLinkifyText(value){
       document.getElementById('ptNotif');
     const themeText =
       document.getElementById('ptThemeText');
+    const createToggle = document.getElementById('ptCreateToggle');
+    const createItems = document.getElementById('ptCreateItems');
+    if (createToggle && createItems) {
+      createToggle.addEventListener('click', () => {
+        const open = createItems.hidden;
+        createItems.hidden = !open;
+        createToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        createToggle.classList.toggle('is-open', open);
+      });
+    }
     /* ========================================================
        DRAWER STATE
        ======================================================== */
@@ -2154,10 +2116,13 @@ function ptLinkifyText(value){
               false
             );
         if (!result?.error) {
-          notificationElement.textContent =
-            String(
-              Number(result?.count) || 0
-            );
+          const unreadCount = Number(result?.count) || 0;
+          notificationElement.textContent = String(unreadCount);
+          const menuBadge = document.getElementById('ptMenuNotifBadge');
+          if (menuBadge) {
+            menuBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+            menuBadge.hidden = unreadCount <= 0;
+          }
         }
       }
     } catch (_) {
