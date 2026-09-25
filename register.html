@@ -104,6 +104,28 @@
         <span class="google-icon">G</span><span>Daftar dengan Google</span>
       </button>
 
+      <section id="registerSuccessCard" class="register-success-card hidden" aria-live="polite" aria-labelledby="registerSuccessTitle">
+        <div class="register-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="register-success-heading">
+          <span class="register-success-kicker">Pendaftaran berhasil</span>
+          <h2 id="registerSuccessTitle">Akun PasTele berhasil dibuat 🎉</h2>
+          <p>Catat data login di bawah. <strong>Screenshot kartu ini</strong> sebagai pengingat agar tidak lupa.</p>
+        </div>
+        <div class="register-credential-list">
+          <div class="register-credential-row"><span><i class="fa-solid fa-user"></i> Username</span><strong id="successUsername">-</strong></div>
+          <div class="register-credential-row"><span><i class="fa-solid fa-envelope"></i> Email</span><strong id="successEmail">-</strong></div>
+          <div class="register-credential-row password-credential">
+            <span><i class="fa-solid fa-key"></i> Password</span>
+            <div class="success-password-value"><strong id="successPassword">-</strong><button id="toggleSuccessPassword" type="button" aria-label="Tampilkan password"><i class="fa-regular fa-eye"></i></button></div>
+          </div>
+        </div>
+        <div class="register-screenshot-note">
+          <i class="fa-solid fa-camera"></i>
+          <div><strong>Screenshot sekarang</strong><span>Simpan screenshot ini di tempat yang aman. Jangan kirim atau bagikan password kepada orang lain.</span></div>
+        </div>
+        <a class="btn primary register-success-login" href="login.html"><i class="fa-solid fa-right-to-bracket"></i><span>Masuk sekarang</span></a>
+      </section>
+
       <div class="auth-account-action">
         <p>Sudah punya akun?</p>
         <a class="btn secondary-action" href="login.html">
