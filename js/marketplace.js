@@ -2929,6 +2929,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     return name || "Creator";
   };
 
+  /* Public marketplace: mask creator identity while keeping it recognizable. */
+  const maskCreatorName = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return "Creator";
+    const prefix = raw.startsWith("@") ? "@" : "";
+    const body = raw.replace(/^@/, "");
+    if (body.length <= 2) return prefix + body[0] + "***";
+    if (body.length <= 4) return prefix + body[0] + "***";
+    return prefix + body.slice(0, 2) + "••••" + body.slice(-2);
+  };
+
   const creatorProfileUrl = (item) => {
     const id = item?.owner_id || item?.creator_id || item?.seller_id || item?.user_id || null;
     const username = String(item?.creator_username || "").trim().replace(/^@/, "");
@@ -3208,23 +3219,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid ${type === "code" ? "fa-robot" : type === "channel" ? "fa-broadcast-tower" : type === "group" ? "fa-users" : type === "pastelink" ? "fa-link" : "fa-user"}" aria-hidden="true"></i>
             ${
               creatorProfileUrl(item)
-                ? `<a class="product-creator-link" href="${esc(creatorProfileUrl(item))}" title="Kunjungi profil ${esc(creator)}" onclick="event.stopPropagation();">
+                ? `<a class="product-creator-link" href="${esc(creatorProfileUrl(item))}" title="Kunjungi profil ${esc(maskCreatorName(creator))}" onclick="event.stopPropagation();">
                     ${esc(
                       type === "code" && item?.bot_username
                         ? "Bot @" + String(item.bot_username).replace(/^@/, "") + " • " + creator
                         : (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username)
                           ? ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, "")) + " • " + creator)
                           : type === "pastelink"
-                            ? "PasteLink • " + creator
-                            : creator
+                            ? "PasteLink • " + maskCreatorName(creator)
+                            : maskCreatorName(creator)
                     )}
                   </a>`
                 : `<span>${esc(
                     type === "code" && item?.bot_username ? "Bot @" + String(item.bot_username).replace(/^@/, "") :
                     (type === "channel" || type === "group") && (item?.channel_name || item?.channel_username) ?
                       ((type === "group" ? "Group VIP / Chat" : "Channel") + " • " + (item.channel_name || "@" + String(item.channel_username).replace(/^@/, ""))) :
-                    type === "pastelink" ? "PasteLink • " + creator :
-                    creator
+                    type === "pastelink" ? "PasteLink • " + maskCreatorName(creator) :
+                    maskCreatorName(creator)
                   )}</span>`
             }
           </div>
@@ -3306,6 +3317,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function rankingStats(item) {
     return `
       <span title="Dilihat"><i class="fa-solid fa-eye" aria-hidden="true"></i>${viewsText(item)}</span>
+      <span title="Terjual"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>${salesText(item)}</span>
       <span title="Like"><i class="fa-solid fa-heart" aria-hidden="true"></i>${likesText(item)}</span>
       <span title="Share"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i>${sharesText(item)}</span>
       <span title="Komentar"><i class="fa-solid fa-comment" aria-hidden="true"></i>${commentsText(item)}</span>
@@ -3428,6 +3440,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderPager(totalPages);
   }
 
+  const creatorTopPages = Object.create(null);
+
+  function renderCreatorTopPager(element, totalPages) {
+    const pager = element.querySelector(".market-ranking-pagination");
+    if (!pager) return;
+    const current = Math.min(creatorTopPages.topCreator || 1, totalPages);
+    creatorTopPages.topCreator = current;
+    if (totalPages <= 1) { pager.innerHTML = ""; return; }
+    const buttons = [];
+    buttons.push(`<button type="button" data-creator-page="${current - 1}" ${current === 1 ? "disabled" : ""} aria-label="Halaman sebelumnya">‹</button>`);
+    for (let i = 1; i <= totalPages; i++) {
+      const show = totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - current) <= 1;
+      if (!show) {
+        if (i === 2 || i === totalPages - 1) buttons.push(`<span class="ranking-page-dots">…</span>`);
+        continue;
+      }
+      buttons.push(`<button type="button" class="${i === current ? "active" : ""}" data-creator-page="${i}" ${i === current ? 'aria-current="page"' : ""}>${i}</button>`);
+    }
+    buttons.push(`<button type="button" data-creator-page="${current + 1}" ${current === totalPages ? "disabled" : ""} aria-label="Halaman berikutnya">›</button>`);
+    pager.innerHTML = buttons.join("");
+    pager.querySelectorAll("button[data-creator-page]").forEach(button => {
+      button.addEventListener("click", () => {
+        const next = Number(button.dataset.creatorPage);
+        if (!Number.isFinite(next) || next < 1 || next > totalPages || next === current) return;
+        creatorTopPages.topCreator = next;
+        renderCreatorTop();
+      });
+    });
+  }
+
   function renderCreatorTop() {
     const element = $("topCreator");
     if (!element) return;
@@ -3444,20 +3486,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       row.value += sales * Math.max(0, number(item?.price));
       map.set(key, row);
     }
-    const rows = Array.from(map.values()).sort((a,b) => (b.value-a.value) || (b.shares-a.shares) || (b.sales-a.sales)).slice(0,10);
+    const allRows = Array.from(map.values()).sort((a,b) => (b.value-a.value) || (b.shares-a.shares) || (b.sales-a.sales));
+    const totalPages = Math.max(1, Math.ceil(allRows.length / 10));
+    const current = Math.min(creatorTopPages.topCreator || 1, totalPages);
+    creatorTopPages.topCreator = current;
+    const start = (current - 1) * 10;
+    const rows = allRows.slice(start, start + 10);
     if (!rows.length) {
-      element.innerHTML = `<div class="market-empty"><span><i class="fa-solid fa-user"></i></span><div><strong>Belum ada kreator</strong><small>Belum ada data penjualan atau share.</small></div></div>`;
+      element.innerHTML = `<div class="market-empty"><span><i class="fa-solid fa-user"></i></span><div><strong>Belum ada kreator</strong><small>Belum ada data penjualan atau share.</small></div></div><div class="market-ranking-pagination" aria-label="Halaman kreator"></div>`;
       return;
     }
-    element.innerHTML = rows.map((row,index) => `
+    element.innerHTML = rows.map((row,index) => {
+      const rawCreator = row.username ? "@" + row.username : (row.name || "Kreator");
+      const masked = maskCreatorName(rawCreator);
+      return `
       <div class="market-list-item creator-list-item">
-        ${rankIcon(index)}
+        ${rankIcon(start + index)}
         <div class="market-list-main">
-          <strong class="market-list-title">${esc(row.username ? "@"+row.username : row.name || "Kreator")}</strong>
+          <strong class="market-list-title" title="Creator disamarkan">${esc(masked)}</strong>
           <div class="market-list-meta creator-meta"><span><i class="fa-solid fa-cart-shopping"></i>${formatNumber(row.sales)} penjualan</span><span><i class="fa-solid fa-share-nodes"></i>${formatNumber(row.shares)} share</span></div>
           <div class="creator-revenue">Nilai penjualan <strong>${formatMoney(row.value)}</strong></div>
         </div>
-      </div>`).join("");
+      </div>`;
+    }).join("") + `<div class="market-ranking-pagination" aria-label="Halaman kreator"></div>`;
+    renderCreatorTopPager(element, totalPages);
   }
 
   /* =======================================================
@@ -3574,6 +3626,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (resultCount) {
       resultCount.textContent =
         `${count} konten`;
+    }
+    const totalSoldEl = $("totalSold");
+    if (totalSoldEl) {
+      const totalSold = items.reduce((sum, item) => sum + Math.max(0, number(item?.sales_count)), 0);
+      totalSoldEl.textContent = formatNumber(totalSold);
     }
     if (reset) {
       reset.hidden =
