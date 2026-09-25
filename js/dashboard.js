@@ -2979,14 +2979,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const formatDateTime = value => { const d=safeDate(value); return d?d.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'-'; };
 
   async function fetchAll(buildQuery, pageSize=1000){
-    const all=[]; let from=0;
+    const all=[];
+    let from=0;
     while(true){
-      const q=await buildQuery().range(from,from+pageSize-1);
-      if(q.error) throw q.error;
-      const rows=Array.isArray(q.data)?q.data:[];
-      all.push(...rows);
-      if(rows.length<pageSize) break;
-      from += pageSize;
+      try{
+        const q=await buildQuery().range(from,from+pageSize-1);
+        if(q?.error){
+          console.error('[PasTele Dashboard] query failed:', q.error);
+          return all;
+        }
+        const rows=Array.isArray(q.data)?q.data:[];
+        all.push(...rows);
+        if(rows.length<pageSize) break;
+        from += pageSize;
+      }catch(error){
+        console.error('[PasTele Dashboard] query exception:', error);
+        return all;
+      }
     }
     return all;
   }
