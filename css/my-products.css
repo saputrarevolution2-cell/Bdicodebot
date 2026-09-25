@@ -796,3 +796,14 @@ body.modal-open .pastele-footer{
 
 /* Marketplace consistency: no browser-style link underline */
 body.my-products-page a,body.my-products-page a:hover,body.my-products-page a:focus,body.my-products-page a:active{ text-decoration:none; }
+
+/* CONTENT EDIT FIX — edit the actual content, keep public slug/link stable */
+.pt-edit-form .edit-content{
+  min-height:220px;
+  line-height:1.7;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.pt-edit-form .edit-help{
+  line-height:1.6;
+}
