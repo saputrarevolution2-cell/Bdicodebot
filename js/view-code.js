@@ -1113,7 +1113,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
      * Admin pages normally live one directory deeper.
      * User pages stay at root.
      */
-    const base = isAdmin ? '../' : '';
+    const base = isAdmin ? '/admin/' : '/';
     /* ========================================================
        HELPERS
        ======================================================== */
@@ -1583,7 +1583,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
           return `
             <a
               class="pt-link${active ? ' active' : ''}"
-              href="${base}${esc(href)}"
+              href="${base}${esc(href).replace(/^\/+/, "")}"
               ${active
                 ? 'aria-current="page"'
                 : ''}
