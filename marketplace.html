@@ -8,7 +8,7 @@
   <title>Marketplace — PasTele</title>
   <!-- PasTele canonical UI stack -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/marketplace.css?v=20260919-RANKING-MODE-v1">
+  <link rel="stylesheet" href="css/marketplace.css?v=20260925-sold-pagination-mask-final">
     
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
@@ -125,6 +125,9 @@
           <div>
             <strong id="resultTitle">Semua konten</strong>
             <span id="resultCount">Memuat...</span>
+          </div>
+          <div class="market-result-summary" aria-label="Ringkasan marketplace">
+            <span class="market-total-sold"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> <b id="totalSold">—</b> terjual</span>
           </div>
           <button
             type="button"
@@ -264,7 +267,7 @@
       </div>
     </section>
   </main>
-  <div id="toast"></div><script src="js/marketplace.js?v=20260919-RANKING-MODE-v1"></script>
+  <div id="toast"></div><script src="js/marketplace.js?v=20260925-sold-pagination-mask-final"></script>
 <script src="js/global-notifications.js?v=20260918-toast"></script>
 <script src="js/pastele-data-contract.js"></script>
 </body>
