@@ -2613,6 +2613,37 @@ document.documentElement.classList.add("pastele-ready");
     }catch(e){console.warn('[PasTele] Turnstile:',e);if(status)status.textContent='Verifikasi keamanan tidak tersedia.';setButton();}
   }
   if(document.readyState==='loading') window.addEventListener('load',initTurnstile,{once:true}); else setTimeout(initTurnstile,100);
+  function showSuccessCard(username,email,password,hasSession){
+    const card=$('registerSuccessCard');
+    if(!card)return;
+    const set=(id,value)=>{const el=$(id);if(el)el.textContent=String(value??'');};
+    set('successUsername',username);
+    set('successEmail',email);
+    set('successPassword',password);
+    card.classList.remove('hidden');
+    form.classList.add('hidden');
+    document.querySelector('.auth-divider')?.classList.add('hidden');
+    $('google')?.classList.add('hidden');
+    document.querySelector('.auth-account-action')?.classList.add('hidden');
+    document.querySelector('.auth-trust')?.classList.add('hidden');
+    document.querySelector('.back-home')?.classList.add('hidden');
+    card.scrollIntoView({behavior:'smooth',block:'center'});
+    notify('Pendaftaran berhasil. Screenshot data akun ini untuk pengingat.','success');
+    if(hasSession){
+      const login=card.querySelector('.register-success-login');
+      if(login) login.setAttribute('href','dashboard.html');
+    }
+  }
+  $('toggleSuccessPassword')?.addEventListener('click',()=>{
+    const el=$('successPassword'), btn=$('toggleSuccessPassword');
+    if(!el||!btn)return;
+    const hidden=el.dataset.revealed!=='1';
+    if(!el.dataset.real) el.dataset.real=el.textContent||'';
+    el.textContent=hidden?el.dataset.real:'•'.repeat(Math.min(18,Math.max(8,String(el.dataset.real||'').length)));
+    el.dataset.revealed=hidden?'1':'0';
+    const icon=btn.querySelector('i');
+    if(icon)icon.className=hidden?'fa-solid fa-eye-slash':'fa-regular fa-eye';
+  });
   form.addEventListener('submit',async ev=>{
     ev.preventDefault();if(busy)return;clear();
     const u=String($('username')?.value||'').trim().toLowerCase(), e=String($('email')?.value||'').trim().toLowerCase(), p=String($('password')?.value||''), c=String($('confirm')?.value||'');
@@ -2625,8 +2656,16 @@ document.documentElement.classList.add("pastele-ready");
       if(!window.Auth?.register)throw new Error('Modul register belum siap. Muat ulang halaman.');
       const result=await window.Auth.register(u,e,p,captchaToken);
       const notice=$('authNotice');
-      if(result?.session){notify('Akun berhasil dibuat. Selamat datang di PasTele.','success');if(notice){notice.textContent='Akun berhasil dibuat. Mengalihkan...';notice.classList.remove('hidden');}setTimeout(()=>window.location.replace('dashboard.html'),500);}
-      else {notify('Akun berhasil dibuat. Cek email untuk verifikasi akun.','success');if(notice){notice.textContent='Pendaftaran berhasil. Silakan cek inbox/spam email kamu, lalu login. ';notice.classList.remove('hidden');}form.reset();captchaToken='';setButton();}
+      if(result?.session){
+        if(notice){notice.textContent='Akun berhasil dibuat. Simpan data login di bawah.';notice.classList.remove('hidden');}
+        showSuccessCard(u,e,p,true);
+        form.reset();captchaToken='';
+      }
+      else {
+        if(notice){notice.textContent='Pendaftaran berhasil. Silakan cek inbox/spam email kamu, lalu simpan data login di bawah.';notice.classList.remove('hidden');}
+        showSuccessCard(u,e,p,false);
+        form.reset();captchaToken='';
+      }
     }catch(e){error(e?.message||'Pendaftaran gagal. Silakan coba lagi.');}
     finally{busy=false;setBusy(b,false);setButton();}
   });
