@@ -2681,3 +2681,96 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
+
+/* =========================================================
+   RESET PASSWORD UI — FINAL
+   - Clean recovery form
+   - Password visibility toggles
+   - Strong validation
+   - Success confirmation + screenshot reminder
+   ========================================================= */
+(() => {
+  'use strict';
+  const initResetPassword = () => {
+    const form = document.getElementById('reset');
+    const p1 = document.getElementById('p1');
+    const p2 = document.getElementById('p2');
+    const msg = document.getElementById('msg');
+    const successPanel = document.getElementById('successPanel');
+    if (!form || !p1 || !p2) return;
+
+    const setMessage = (text, type = '') => {
+      if (!msg) return;
+      msg.textContent = String(text || '');
+      msg.className = `auth-message ${type}`.trim();
+    };
+
+    document.querySelectorAll('.toggle-password').forEach((button) => {
+      button.addEventListener('click', () => {
+        const input = document.getElementById(button.dataset.target);
+        if (!input) return;
+        const visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        button.innerHTML = `<i class="fa-regular ${visible ? 'fa-eye' : 'fa-eye-slash'}"></i>`;
+        button.setAttribute('aria-label', visible ? 'Tampilkan password' : 'Sembunyikan password');
+      });
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setMessage('');
+      const button = form.querySelector('button[type="submit"]');
+      const buttonText = button?.querySelector('span');
+      const password = String(p1.value || '');
+      const confirm = String(p2.value || '');
+
+      if (password.length < 8) {
+        setMessage('Password minimal 8 karakter.', 'error');
+        p1.focus();
+        return;
+      }
+      if (password !== confirm) {
+        setMessage('Konfirmasi password tidak sama.', 'error');
+        p2.focus();
+        return;
+      }
+
+      if (!window.sb?.auth) {
+        setMessage('Koneksi keamanan belum siap. Silakan refresh halaman dan coba lagi.', 'error');
+        return;
+      }
+
+      if (button) button.disabled = true;
+      if (buttonText) buttonText.textContent = 'Menyimpan...';
+
+      try {
+        const { error } = await window.sb.auth.updateUser({ password });
+        if (error) throw error;
+
+        form.hidden = true;
+        document.querySelectorAll('.recovery-form + .password-hint').forEach((x) => x.remove());
+        if (successPanel) successPanel.hidden = false;
+        setMessage('Password berhasil diperbarui.', 'success');
+
+        try {
+          window.TC?.toast?.('Password berhasil diubah. Screenshot notifikasi ini sebagai pengingat.', 'success');
+        } catch (_) {}
+      } catch (error) {
+        const raw = String(error?.message || error || '');
+        const message = /session|jwt|auth|expired|not authenticated/i.test(raw)
+          ? 'Sesi reset password sudah tidak berlaku. Silakan minta link reset password baru.'
+          : raw || 'Password gagal diubah. Silakan coba lagi.';
+        setMessage(message, 'error');
+      } finally {
+        if (button) button.disabled = false;
+        if (buttonText) buttonText.textContent = 'Simpan password';
+      }
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initResetPassword, { once: true });
+  } else {
+    initResetPassword();
+  }
+})();
