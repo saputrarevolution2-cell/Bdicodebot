@@ -2002,3 +2002,13 @@ html[data-theme="dark"] .withdraw-security{
   }
 }
 
+
+
+/* PasTele NAV MENU — Create dropdown + menu badges */
+.pt-create-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 6px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;font-size:12px;font-weight:850;cursor:pointer;transition:.18s ease}
+.pt-create-toggle span{display:flex;align-items:center;gap:8px}.pt-create-toggle span i{color:var(--primary)}
+.pt-create-toggle:hover,.pt-create-toggle.is-open{border-color:rgba(34,158,217,.28);background:rgba(34,158,217,.06);color:var(--primary)}
+.pt-create-chevron{font-size:10px;color:var(--muted);transition:transform .18s ease}.pt-create-toggle.is-open .pt-create-chevron{transform:rotate(180deg)}
+.pt-create-items{padding-left:7px;border-left:1px solid rgba(34,158,217,.16);margin-left:8px}.pt-create-items[hidden]{display:none!important}
+.pt-menu-badge{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;min-width:31px;height:19px;padding:0 7px;border-radius:999px;background:rgba(99,91,255,.10);border:1px solid rgba(99,91,255,.18);color:#635bff;font-size:9px;font-weight:900;line-height:1;white-space:nowrap}
+.pt-menu-badge-count{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.18);color:#ef4444}.pt-menu-badge-count[hidden]{display:none!important}
