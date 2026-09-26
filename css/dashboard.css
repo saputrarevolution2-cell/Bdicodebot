@@ -790,3 +790,346 @@ html[data-theme="dark"] .feature-note{color:#f4c45e}
   .finance-point-detail-title span{font-size:8px}
   .hero-status-check{font-size:56px}
 }
+
+
+/* =========================================================
+   PasTele Dashboard V8 — Light/Dark theme + mobile polish
+   ========================================================= */
+
+/* Finance / Status / Followers must inherit the active theme. */
+.dashboard-page .chart-panel,
+.dashboard-page .status-panel,
+.dashboard-page .follower-panel{
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--line);
+  box-shadow:var(--shadow2);
+}
+.dashboard-page .chart-kicker,
+.dashboard-page .chart-subtitle,
+.dashboard-page .status-center small,
+.dashboard-page .follower-center small{
+  color:var(--muted);
+}
+.dashboard-page .chart-title{
+  color:var(--text);
+}
+.dashboard-page .period-switch{
+  border-color:var(--line);
+  background:var(--surface2);
+}
+.dashboard-page .period-switch button{
+  color:var(--muted);
+}
+.dashboard-page .period-switch button.active{
+  color:#fff;
+}
+.dashboard-page .chart-stat{
+  border-color:var(--line);
+  background:var(--surface2);
+}
+.dashboard-page .chart-stat small{
+  color:var(--muted);
+}
+.dashboard-page .chart-grid-line{
+  stroke:color-mix(in srgb,var(--line) 80%,transparent);
+}
+.dashboard-page .chart-label{
+  fill:var(--muted);
+}
+.dashboard-page .legend-pill,
+.dashboard-page .compare-pill{
+  background:var(--surface2);
+  border-color:var(--line);
+  color:var(--text);
+}
+.dashboard-page .finance-detail{
+  border-top-color:var(--line);
+}
+.dashboard-page .finance-detail-head small,
+.dashboard-page .finance-day-date small,
+.dashboard-page .finance-day-metric span{
+  color:var(--muted);
+}
+.dashboard-page .finance-day-summary>span,
+.dashboard-page .finance-day-row,
+.dashboard-page .finance-detail-card{
+  background:var(--surface2);
+  border-color:var(--line);
+}
+.dashboard-page .finance-day-summary>span{
+  color:var(--muted);
+}
+.dashboard-page .finance-day-summary>span b,
+.dashboard-page .finance-day-row b,
+.dashboard-page .finance-detail-card strong,
+.dashboard-page .finance-detail-head b{
+  color:var(--text);
+}
+.dashboard-page .finance-day-row.selected{
+  border-color:rgba(34,158,217,.48);
+  background:color-mix(in srgb,var(--primary) 7%,var(--surface2));
+  box-shadow:0 0 0 1px rgba(34,158,217,.08);
+}
+.dashboard-page .finance-point-detail{
+  border:1px solid rgba(34,158,217,.25);
+  background:color-mix(in srgb,var(--primary) 7%,var(--surface2));
+  color:var(--text);
+  border-radius:14px;
+  padding:10px;
+  margin-bottom:10px;
+}
+.dashboard-page .finance-point-detail-title{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+.dashboard-page .finance-point-detail-title i{color:var(--primary)}
+.dashboard-page .finance-point-detail-title span{
+  margin-left:auto;
+  color:var(--muted);
+  font-size:8px;
+}
+.dashboard-page .finance-point-detail-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  margin-top:8px;
+}
+.dashboard-page .finance-point-detail-grid>span{
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:4px 6px;
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+}
+.dashboard-page .finance-point-detail-grid>span>i{color:var(--primary);font-size:9px}
+.dashboard-page .finance-point-detail-grid b{font-size:8px;color:var(--muted)}
+.dashboard-page .finance-point-detail-grid strong{
+  grid-column:1/-1;
+  font-size:12px;
+  color:var(--text);
+}
+.dashboard-page .finance-point-detail-grid em{
+  grid-column:1/-1;
+  font-size:8px;
+  font-style:normal;
+}
+.dashboard-page .finance-point-detail-grid em.up{color:var(--green)}
+.dashboard-page .finance-point-detail-grid em.down{color:var(--red)}
+.dashboard-page .finance-point-detail-grid em.flat{color:var(--muted)}
+
+/* Followers */
+.dashboard-page .follower-donut::after{
+  background:var(--surface);
+}
+.dashboard-page .follower-center strong{
+  color:var(--text);
+}
+.dashboard-page .country-pill{
+  color:var(--text);
+  border-color:color-mix(in srgb,var(--pill-color) 35%,var(--line));
+  background:color-mix(in srgb,var(--pill-color) 9%,var(--surface2));
+}
+.dashboard-page .country-pill em{
+  color:var(--muted);
+}
+.dashboard-page .country-pill:hover,
+.dashboard-page .country-pill.active{
+  background:color-mix(in srgb,var(--pill-color) 14%,var(--surface2));
+}
+
+/* Content header: never let the filter badge escape the card. */
+.dashboard-page .content-head>div{
+  min-width:0;
+  flex:1 1 auto;
+}
+.dashboard-page .content-filter-label{
+  flex:0 0 auto;
+  max-width:45%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.dashboard-page .content-panel-upgraded{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+}
+.dashboard-page .content-list{
+  min-width:0;
+  overflow:hidden;
+}
+.dashboard-page .content-card{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  border-color:transparent;
+  background:var(--surface2);
+}
+.dashboard-page .content-main,
+.dashboard-page .content-meta{
+  min-width:0;
+}
+.dashboard-page .content-main b{
+  color:var(--text);
+}
+.dashboard-page .content-meta strong{
+  color:var(--text);
+}
+.dashboard-page .content-meta small{
+  color:var(--muted);
+}
+
+/* Compact, clean phone cards. */
+@media(max-width:640px){
+  .dashboard-page .content-head{
+    display:block;
+    padding:14px;
+  }
+  .dashboard-page .content-head p{
+    font-size:9px;
+    line-height:1.55;
+  }
+  .dashboard-page .content-filter-label{
+    display:inline-flex;
+    max-width:100%;
+    margin-top:8px;
+  }
+  .dashboard-page .content-summary-grid{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:10px 10px 3px;
+  }
+  .dashboard-page .content-kpi-card{
+    grid-template-columns:34px minmax(0,1fr) 10px;
+    gap:7px;
+    padding:10px;
+    border-radius:14px;
+  }
+  .dashboard-page .content-kpi-icon{
+    width:34px;height:34px;border-radius:10px;font-size:13px;
+  }
+  .dashboard-page .content-kpi-copy small{font-size:8px}
+  .dashboard-page .content-kpi-copy strong{font-size:18px}
+  .dashboard-page .content-kpi-copy em{font-size:7px}
+  .dashboard-page .content-list{
+    padding:9px;
+    gap:7px;
+  }
+  .dashboard-page .content-card{
+    grid-template-columns:38px minmax(0,1fr) 10px;
+    grid-template-rows:auto auto;
+    gap:4px 9px;
+    padding:10px;
+    border-radius:15px;
+  }
+  .dashboard-page .content-icon{
+    width:38px;height:38px;
+    grid-row:1 / span 2;
+    align-self:start;
+    border-radius:11px;
+  }
+  .dashboard-page .content-main{
+    grid-column:2;
+    grid-row:1;
+  }
+  .dashboard-page .content-main b{
+    font-size:11px;
+    line-height:1.25;
+  }
+  .dashboard-page .content-main small{
+    margin-top:3px;
+    font-size:8px;
+  }
+  .dashboard-page .content-meta{
+    grid-column:2;
+    grid-row:2;
+    width:100%;
+    min-width:0;
+    max-width:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    text-align:left;
+  }
+  .dashboard-page .content-meta strong{
+    min-width:0;
+    max-width:48%;
+    font-size:9px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .dashboard-page .content-meta small{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    margin:0;
+    font-size:8px;
+    white-space:nowrap;
+  }
+  .dashboard-page .content-arrow{
+    grid-column:3;
+    grid-row:1 / span 2;
+    align-self:center;
+    display:block;
+    font-size:8px;
+  }
+
+  .dashboard-page .finance-point-detail-grid{
+    grid-template-columns:1fr 1fr;
+  }
+  .dashboard-page .finance-point-detail-grid>span:last-child{
+    grid-column:1/-1;
+  }
+  .dashboard-page .finance-point-detail-title span{
+    display:none;
+  }
+  .dashboard-page .finance-day-row{
+    grid-template-columns:68px 1fr 1fr;
+  }
+  .dashboard-page .finance-day-metric.net{
+    grid-column:2/-1;
+  }
+  .dashboard-page .follower-layout{
+    grid-template-columns:1fr;
+  }
+  .dashboard-page .follower-donut{
+    width:min(190px,62vw);
+  }
+  .dashboard-page .follower-country-list{
+    gap:7px;
+  }
+  .dashboard-page .country-pill{
+    padding:7px 9px;
+  }
+}
+
+@media(max-width:380px){
+  .dashboard-page .content-summary-grid{
+    grid-template-columns:1fr;
+  }
+  .dashboard-page .content-card{
+    grid-template-columns:36px minmax(0,1fr) 9px;
+  }
+}
+
+/* Keep hard-coded dark rules dark-only. */
+html[data-theme="dark"] .dashboard-page .chart-panel,
+html[data-theme="dark"] .dashboard-page .status-panel,
+html[data-theme="dark"] .dashboard-page .follower-panel{
+  background:var(--surface);
+}
+html[data-theme="dark"] .dashboard-page .chart-stat,
+html[data-theme="dark"] .dashboard-page .finance-day-row,
+html[data-theme="dark"] .dashboard-page .finance-day-summary>span{
+  background:var(--surface2);
+}
