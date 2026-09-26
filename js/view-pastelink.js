@@ -2111,7 +2111,7 @@ function ptLinkifyText(value){
               'user_id',
               user.id
             )
-            .eq(
+            .neq('notification_type','view').eq(
               'is_read',
               false
             );

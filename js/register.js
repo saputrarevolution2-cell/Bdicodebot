@@ -2037,7 +2037,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
               'user_id',
               user.id
             )
-            .eq(
+            .neq('notification_type','view').eq(
               'is_read',
               false
             );

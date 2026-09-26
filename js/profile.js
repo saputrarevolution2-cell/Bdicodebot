@@ -2055,7 +2055,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
               'user_id',
               user.id
             )
-            .eq(
+            .neq('notification_type','view').eq(
               'is_read',
               false
             );
@@ -2827,6 +2827,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
   }
 
   function show(n) {
+    if (String(n?.notification_type||'').toLowerCase()==='view' || String(n?.title||'').toLowerCase()==='konten dibuka') return;
     if (!n?.id || state.seen.has(n.id)) return;
     state.seen.add(n.id);
     const target = '';
@@ -2865,7 +2866,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     let last = new Date().toISOString();
     state.poll = setInterval(async () => {
       try {
-        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at').eq('user_id',u.id).neq('notification_type','view').gt('created_at',last).order('created_at',{ascending:true}).limit(20);
         if (r.error) return;
         for (const n of (r.data || [])) show(n);
         if (r.data?.length) last = r.data[r.data.length - 1].created_at;

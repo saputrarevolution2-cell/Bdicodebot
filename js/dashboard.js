@@ -2050,7 +2050,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
               'user_id',
               user.id
             )
-            .eq(
+            .neq('notification_type','view').eq(
               'is_read',
               false
             );
@@ -2822,6 +2822,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
   }
 
   function show(n) {
+    if (String(n?.notification_type||'').toLowerCase()==='view' || String(n?.title||'').toLowerCase()==='konten dibuka') return;
     if (!n?.id || state.seen.has(n.id)) return;
     state.seen.add(n.id);
     const target = '';
@@ -2860,7 +2861,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     let last = new Date().toISOString();
     state.poll = setInterval(async () => {
       try {
-        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at').eq('user_id',u.id).neq('notification_type','view').gt('created_at',last).order('created_at',{ascending:true}).limit(20);
         if (r.error) return;
         for (const n of (r.data || [])) show(n);
         if (r.data?.length) last = r.data[r.data.length - 1].created_at;
@@ -3083,11 +3084,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const [products,pastes,pastelinks,telegramProducts,telegramChannels,orders,transactions,analyticsEvents,likesResult,followsResult,followerRowsResult,walletResult] = await Promise.all([
       fetchAll(()=>supabase.from('products').select('id,seller_id,creator_id,title,slug,type,access_type,category,views,sales_count,price,status,thumbnail_url,created_at').or(`creator_id.eq.${user.id},seller_id.eq.${user.id}`).order('created_at',{ascending:false})),
       fetchAll(()=>supabase.from('pastes').select('id,owner_id,title,slug,visibility,created_at').eq('owner_id',user.id).order('created_at',{ascending:false})),
-      fetchAll(()=>supabase.from('pastelinks').select('id,user_id,slug,title,views,created_at,access_type,price').eq('user_id',user.id).order('created_at',{ascending:false})),
+      fetchAll(()=>supabase.from('pastelinks').select('id,user_id,slug,title,views,created_at,access_type,price').eq('user_id',user.id).neq('notification_type','view').order('created_at',{ascending:false})),
       fetchAll(()=>supabase.from('telegram_products').select('id,owner_id,title,slug,type,product_type,access_type,price,status,views,sales_count,thumbnail_url,created_at').eq('owner_id',user.id).order('created_at',{ascending:false})),
       fetchAll(()=>supabase.from('telegram_channels').select('id,owner_id,username,name,type,access_type,price,status,views,sales_count,created_at').eq('owner_id',user.id).order('created_at',{ascending:false})),
       fetchAll(()=>supabase.from('orders').select('id,buyer_id,seller_id,product_id,amount,status,item_type,item_id,item_title,payment_reference,paid_at,created_at').eq('seller_id',user.id).order('created_at',{ascending:false})),
-      fetchAll(()=>supabase.from('transactions').select('id,user_id,amount,fee,net_amount,type,status,reference,description,created_at').eq('user_id',user.id).order('created_at',{ascending:false})),
+      fetchAll(()=>supabase.from('transactions').select('id,user_id,amount,fee,net_amount,type,status,reference,description,created_at').eq('user_id',user.id).neq('notification_type','view').order('created_at',{ascending:false})),
       fetchAll(()=>supabase.from('analytics_events').select('id,owner_id,actor_id,event_type,target_type,target_id,created_at').eq('owner_id',user.id).gte('created_at',pd.queryStart).lt('created_at',pd.queryEnd).order('created_at',{ascending:false})),
       supabase.from('content_likes').select('id',{count:'exact',head:true}).eq('content_owner_id',user.id),
       supabase.from('creator_followers').select('id',{count:'exact',head:true}).eq('creator_id',user.id),

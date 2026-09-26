@@ -2072,7 +2072,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
               'user_id',
               user.id
             )
-            .eq(
+            .neq('notification_type','view').eq(
               'is_read',
               false
             );
@@ -2127,6 +2127,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         const q = await window.sb.from('notifications')
           .select('id,user_id,title,body,is_read,created_at,notification_type,link_url')
           .eq('user_id', user.id)
+          .neq('notification_type','view')
           .order('created_at',{ascending:false})
           .limit(8);
         if (q.error) throw q.error;
@@ -2135,7 +2136,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
         if (navbarNotifCount) navbarNotifCount.textContent = unread + ' belum dibaca';
         if (notificationElement) {
           const countQ = await window.sb.from('notifications').select('id',{count:'exact',head:true})
-            .eq('user_id',user.id).eq('is_read',false);
+            .eq('user_id',user.id).neq('notification_type','view').eq('is_read',false);
           if (!countQ.error) notificationElement.textContent = String(Number(countQ.count)||0);
         }
         if (!rows.length) {
@@ -2164,7 +2165,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     async function navbarMarkAllRead() {
       if (!user?.id || !window.sb) return;
       try {
-        const q=await window.sb.from('notifications').update({is_read:true}).eq('user_id',user.id).eq('is_read',false);
+        const q=await window.sb.from('notifications').update({is_read:true}).eq('user_id',user.id).neq('notification_type','view').eq('is_read',false);
         if(q.error) throw q.error;
         await refreshNavbarNotifications();
         try { await window.refreshNotificationCount?.(); await window.updateNotificationBadge?.(); } catch (_) {}
@@ -2967,6 +2968,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
   }
 
   function show(n) {
+    if (String(n?.notification_type||'').toLowerCase()==='view' || String(n?.title||'').toLowerCase()==='konten dibuka') return;
     if (!n?.id || state.seen.has(n.id)) return;
     state.seen.add(n.id);
     const target = String(n.link_url || '').trim();
@@ -3010,7 +3012,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     let last = new Date().toISOString();
     state.poll = setInterval(async () => {
       try {
-        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).gt('created_at',last).order('created_at',{ascending:true}).limit(20);
+        const r = await window.sb.from('notifications').select('id,user_id,title,body,is_read,created_at,notification_type,link_url').eq('user_id',u.id).neq('notification_type','view').gt('created_at',last).order('created_at',{ascending:true}).limit(20);
         if (r.error) return;
         for (const n of (r.data || [])) show(n);
         if (r.data?.length) last = r.data[r.data.length - 1].created_at;
@@ -3162,12 +3164,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     announcementBox.innerHTML='<div class="empty compact-empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat pengumuman...</span></div>';
     content.innerHTML='<div class="empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Memuat notifikasi...</span></div>';
     const [nr,ar]=await Promise.all([
-      client.from("notifications").select("id,user_id,title,body,is_read,created_at,notification_type,link_url,target_type,target_id").eq("user_id",user.id).order("created_at",{ascending:false}),
+      client.from("notifications").select("id,user_id,title,body,is_read,created_at,notification_type,link_url,target_type,target_id").eq("user_id",user.id).neq('notification_type','view').order("created_at",{ascending:false}),
       client.from("announcements").select("id,title,body,image_url,published,published_at,created_at,updated_at").eq("published",true).order("published_at",{ascending:false})
     ]);
     if(nr.error) console.error("[Notifications]",nr.error);
     if(ar.error) console.error("[Announcements]",ar.error);
-    notifications=Array.isArray(nr.data)?nr.data:[];
+    notifications=(Array.isArray(nr.data)?nr.data:[]).filter(n=>String(n?.notification_type||'').toLowerCase()!=='view' && String(n?.title||'').toLowerCase()!=='konten dibuka');
     announcements=Array.isArray(ar.data)?ar.data:[];
     renderAnnouncements(); renderNotifications();
   }
@@ -3182,7 +3184,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function markAllRead(){
-    const q=await client.from("notifications").update({is_read:true}).eq("user_id",user.id).eq("is_read",false);
+    const q=await client.from("notifications").update({is_read:true}).eq("user_id",user.id).neq('notification_type','view').eq("is_read",false);
     if(q.error){TC.toast?.("Gagal menandai semua sudah dibaca.","error");return;}
     notifications.forEach(n=>n.is_read=true);renderNotifications();TC.toast?.("Semua notifikasi sudah dibaca.","success");
     try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}

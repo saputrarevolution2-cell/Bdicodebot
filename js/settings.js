@@ -2066,7 +2066,7 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
               'user_id',
               user.id
             )
-            .eq(
+            .neq('notification_type','view').eq(
               'is_read',
               false
             );
@@ -3078,7 +3078,7 @@ window.ptNotify = window.ptNotify || function(message, type="info", title="PasTe
         const { data: remaining } = await withTimeout(
           sb.from("payment_methods")
             .select("id")
-            .eq("user_id", user.id)
+            .eq("user_id", user.id).neq('notification_type','view')
             .order("created_at", { ascending: true })
             .limit(1)
         );
