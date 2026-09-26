@@ -7,13 +7,13 @@
   <title>Admin · Content · PasTele</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   
-<link rel="stylesheet" href="css/content.css?v=20260922-complete-v2">
+<link rel="stylesheet" href="css/content.css?v=20260926-admin-v3">
 
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/favicon.svg">
 <script src="js/db-contract.js?v=20260921-admin-contract-v4"></script>
 <script src="js/rpc-contract.js?v=20260921-admin-rpc-v4"></script>
-<link rel="stylesheet" href="/admin/css/admin-unified.css?v=20260926-admin-ui-final-v1"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></head>
+<link rel="stylesheet" href="/admin/css/admin-unified.css?v=20260926-admin-v3"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></head>
 <body class="app-page admin-page">
   <div id="navbar"></div>
   <main class="admin-main">
@@ -100,7 +100,11 @@
           <label>Harga<input id="editPrice" class="input" type="number" min="0" step="100" inputmode="numeric"></label>
           <label>Status<select id="editStatus" class="select"><option value="published">Published</option><option value="draft">Draft</option><option value="rejected">Rejected</option><option value="hidden">Hidden</option></select></label>
         </div>
-        <label>Deskripsi<textarea id="editDescription" class="textarea" rows="5" maxlength="5000"></textarea></label>
+        <label>Deskripsi<textarea id="editDescription" class="textarea" rows="4" maxlength="5000"></textarea></label>
+        <label id="editContentWrap" class="edit-content-wrap">
+          <span>Isi Konten</span>
+          <textarea id="editContent" class="textarea edit-content-area" rows="12" spellcheck="false"></textarea>
+        </label>
         <div class="content-editor-note" id="editNote"></div>
         <div class="content-modal-actions">
           <button class="btn danger" id="deleteContent" type="button"><i class="fa-solid fa-trash"></i> Hapus</button>
@@ -114,7 +118,7 @@
 
   <div id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="js/core.js?v=20260922-complete-v2"></script>
-<script src="js/content.js?v=20260922-admin-complete-v5"></script>
+<script src="js/core.js?v=20260926-admin-v3"></script>
+<script src="js/content.js?v=20260926-admin-v4"></script>
 </body>
 </html>
