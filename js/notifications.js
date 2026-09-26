@@ -3115,15 +3115,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   let user; try { user=await TC.user(); } catch { location.replace("login.html"); return; }
   if (!user?.id || !client) { location.replace("login.html"); return; }
 
-  try {
-    const pr = await client.from("profiles").select("is_admin").eq("id",user.id).maybeSingle();
-    isAdmin = !!pr?.data?.is_admin;
-  } catch (_) { isAdmin=false; }
-
+  // State must be declared before the admin profile query.
+  // Declaring isAdmin after assigning it causes a TDZ ReferenceError,
+  // which leaves both sections stuck on "Memuat...".
   let notifications=[], announcements=[];
   let announcementReactions=new Map();
   let announcementReads=new Set();
   let isAdmin=false;
+
+  try {
+    const pr = await client.from("profiles").select("is_admin").eq("id",user.id).maybeSingle();
+    isAdmin = !!pr?.data?.is_admin;
+  } catch (_) { isAdmin=false; }
 
   function summary(){
     const total=$("#noticeTotal"), unread=$("#noticeUnread");
