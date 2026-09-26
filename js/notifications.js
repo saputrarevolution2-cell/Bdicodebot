@@ -3115,18 +3115,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   let user; try { user=await TC.user(); } catch { location.replace("login.html"); return; }
   if (!user?.id || !client) { location.replace("login.html"); return; }
 
-  // State must be declared before the admin profile query.
-  // Declaring isAdmin after assigning it causes a TDZ ReferenceError,
-  // which leaves both sections stuck on "Memuat...".
   let notifications=[], announcements=[];
   let announcementReactions=new Map();
   let announcementReads=new Set();
-  let isAdmin=false;
-
-  try {
-    const pr = await client.from("profiles").select("is_admin").eq("id",user.id).maybeSingle();
-    isAdmin = !!pr?.data?.is_admin;
-  } catch (_) { isAdmin=false; }
 
   function summary(){
     const total=$("#noticeTotal"), unread=$("#noticeUnread");
@@ -3138,23 +3129,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderAnnouncements(){
-    const formWrap=$("#adminAnnouncementFormWrap");
-    if(formWrap){
-      formWrap.classList.toggle("hidden",!isAdmin);
-      if(isAdmin && !formWrap.dataset.ready){
-        formWrap.dataset.ready="1";
-        formWrap.innerHTML=`<form class="announcement-form" id="announcementForm">
-          <div class="announcement-form-head"><div><strong><i class="fa-solid fa-bullhorn"></i> Buat Pengumuman</strong><small>Publikasikan informasi resmi untuk semua pengguna.</small></div></div>
-          <input id="announcementTitle" maxlength="180" required placeholder="Judul pengumuman">
-          <textarea id="announcementBody" maxlength="12000" required rows="6" placeholder="Tulis isi pengumuman... https://contoh.com atau www.contoh.com akan otomatis menjadi link."></textarea>
-          <input id="announcementImage" type="url" maxlength="1000" placeholder="URL gambar (opsional)">
-          <label class="announcement-publish-check"><input id="announcementPublished" type="checkbox" checked> Publikasikan sekarang</label>
-          <button type="submit" class="notice-action primary"><i class="fa-solid fa-paper-plane"></i> Publikasikan</button>
-          <div id="announcementFormStatus" class="announcement-form-status"></div>
-        </form>`;
-        $("#announcementForm").addEventListener("submit",publishAnnouncement);
-      }
-    }
     if(!announcements.length){
       announcementBox.innerHTML='<div class="empty compact-empty"><i class="fa-regular fa-bell-slash"></i><span>Belum ada pengumuman admin.</span></div>';
       return;
@@ -3214,25 +3188,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       await loadAnnouncementReactions(); renderAnnouncements();
     }catch(e){TC.toast?.("Reaksi belum tersedia. Jalankan migration notifikasi terbaru.","error");}
-  }
-
-  async function publishAnnouncement(e){
-    e.preventDefault();
-    const title=String($("#announcementTitle")?.value||"").trim();
-    const body=String($("#announcementBody")?.value||"").trim();
-    const image=String($("#announcementImage")?.value||"").trim();
-    const published=!!$("#announcementPublished")?.checked;
-    const status=$("#announcementFormStatus");
-    if(!title||!body)return;
-    if(status)status.textContent="Mempublikasikan...";
-    try{
-      const q=await client.from("announcements").insert({title,body,image_url:image||null,published,published_at:published?new Date().toISOString():null}).select("id,title,body,image_url,published,published_at,created_at,updated_at").single();
-      if(q.error)throw q.error;
-      announcements=[q.data,...announcements];
-      $("#announcementForm").reset(); $("#announcementPublished").checked=true;
-      if(status)status.textContent="Pengumuman berhasil dipublikasikan.";
-      await loadAnnouncementReactions(); renderAnnouncements();
-    }catch(e){if(status)status.textContent=e?.message||"Gagal membuat pengumuman.";}
   }
 
   let announcementModal=null;
