@@ -2107,12 +2107,12 @@ window.PASTELE_CONFIG = window.PASTELE_CONFIG || Object.freeze({
     }[m]));
 
     const navbarNotifIcon = type => ({
-      withdrawal:'fa-wallet', purchase:'fa-bag-shopping', sale:'fa-circle-check',
+      withdrawal:'fa-wallet', purchase:'fa-bag-shopping', sale:'fa-circle-check', sale_success:'fa-circle-check',
       like:'fa-heart', comment:'fa-comment', follow:'fa-user-plus', publish:'fa-bullhorn'
     }[String(type || '').toLowerCase()] || 'fa-bell');
 
     const navbarNotifLabel = type => ({
-      withdrawal:'Withdrawal', purchase:'Pembelian', sale:'Penjualan',
+      withdrawal:'Withdrawal', purchase:'💳 Paid berhasil', sale:'💳 Paid berhasil', sale_success:'💳 Paid berhasil',
       like:'Like', comment:'Komentar', follow:'Follow', publish:'Pengumuman'
     }[String(type || '').toLowerCase()] || 'Notifikasi');
 
@@ -3101,12 +3101,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!content || !announcementBox) return;
   const esc = v => window.TC?.esc ? TC.esc(String(v ?? "")) : String(v ?? "").replace(/[&<>\"]/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"' : "&quot;" }[m] || m));
   const fmt = v => { if(!v) return "-"; const d=new Date(v); return Number.isNaN(d.getTime())?"-":d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}); };
+  const linkify = v => {
+    const safe = esc(String(v ?? ""));
+    return safe.replace(/(^|[\s(])((?:https?:\/\/|www\.)[^\s<]+)/gi, (m,p,url) => {
+      const clean = url.replace(/[.,!?;:]+$/g, "");
+      const href = /^www\\./i.test(clean) ? "https://" + clean : clean;
+      const tail = url.slice(clean.length);
+      return `${p}<a class="notice-inline-link" href="${href}" target="_blank" rel="noopener noreferrer">${clean}</a>${tail}`;
+    }).replace(/\\n/g,"<br>");
+  };
   const client = window.sb || window.supabase || null;
   if (!window.TC?.user) { location.replace("login.html"); return; }
   let user; try { user=await TC.user(); } catch { location.replace("login.html"); return; }
   if (!user?.id || !client) { location.replace("login.html"); return; }
 
+  try {
+    const pr = await client.from("profiles").select("is_admin").eq("id",user.id).maybeSingle();
+    isAdmin = !!pr?.data?.is_admin;
+  } catch (_) { isAdmin=false; }
+
   let notifications=[], announcements=[];
+  let announcementReactions=new Map();
+  let announcementReads=new Set();
+  let isAdmin=false;
 
   function summary(){
     const total=$("#noticeTotal"), unread=$("#noticeUnread");
@@ -3118,14 +3135,116 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderAnnouncements(){
+    const formWrap=$("#adminAnnouncementFormWrap");
+    if(formWrap){
+      formWrap.classList.toggle("hidden",!isAdmin);
+      if(isAdmin && !formWrap.dataset.ready){
+        formWrap.dataset.ready="1";
+        formWrap.innerHTML=`<form class="announcement-form" id="announcementForm">
+          <div class="announcement-form-head"><div><strong><i class="fa-solid fa-bullhorn"></i> Buat Pengumuman</strong><small>Publikasikan informasi resmi untuk semua pengguna.</small></div></div>
+          <input id="announcementTitle" maxlength="180" required placeholder="Judul pengumuman">
+          <textarea id="announcementBody" maxlength="12000" required rows="6" placeholder="Tulis isi pengumuman... https://contoh.com atau www.contoh.com akan otomatis menjadi link."></textarea>
+          <input id="announcementImage" type="url" maxlength="1000" placeholder="URL gambar (opsional)">
+          <label class="announcement-publish-check"><input id="announcementPublished" type="checkbox" checked> Publikasikan sekarang</label>
+          <button type="submit" class="notice-action primary"><i class="fa-solid fa-paper-plane"></i> Publikasikan</button>
+          <div id="announcementFormStatus" class="announcement-form-status"></div>
+        </form>`;
+        $("#announcementForm").addEventListener("submit",publishAnnouncement);
+      }
+    }
     if(!announcements.length){
       announcementBox.innerHTML='<div class="empty compact-empty"><i class="fa-regular fa-bell-slash"></i><span>Belum ada pengumuman admin.</span></div>';
       return;
     }
-    announcementBox.innerHTML=announcements.map(n=>{
-      const img=n.image_url?`<div class="announcement-media"><img src="${esc(n.image_url)}" alt="" loading="lazy" onerror="this.closest(\'.announcement-media\')?.remove()"></div>`:"";
-      return `<article class="announcement-card"><div class="announcement-icon"><i class="fa-solid fa-bullhorn"></i></div><div><div class="announcement-meta"><strong>Pengumuman Admin</strong><time>${esc(fmt(n.published_at||n.created_at))}</time></div><h3>${esc(n.title||"Pengumuman")}</h3><p class="announcement-body">${esc(n.body||"")}</p>${img}</div></article>`;
+    announcementBox.innerHTML=announcements.map((n,i)=>{
+      const img=n.image_url?`<div class="announcement-media"><img src="${esc(n.image_url)}" alt="" loading="lazy" onerror="this.closest('.announcement-media')?.remove()"></div>`:"";
+      const body=String(n.body||"").trim(), long=body.length>320, preview=long?body.slice(0,320).trimEnd()+"…":body;
+      const react=announcementReactions.get(String(n.id))||{like:0,hate:0,my:null};
+      return `<article class="announcement-card" data-announcement-id="${esc(n.id)}">
+        <div class="announcement-icon"><i class="fa-solid fa-bullhorn"></i></div>
+        <div class="announcement-card-main">
+          <div class="announcement-meta"><strong>Pengumuman Admin</strong><time>${esc(fmt(n.published_at||n.created_at))}</time></div>
+          <h3>${esc(n.title||"Pengumuman")}</h3>
+          <div class="announcement-body">${linkify(long?preview:body)}</div>
+          <div class="announcement-actions">
+            ${long?`<button type="button" class="announcement-more" data-announcement-more="${i}"><i class="fa-solid fa-book-open"></i> Baca selengkapnya</button>`:""}
+            <div class="announcement-reactions">
+              <button type="button" class="announcement-react ${react.my==="like"?"active like":""}" data-ann-react="like" data-ann-id="${esc(n.id)}"><i class="fa-solid fa-thumbs-up"></i><span>${react.like}</span></button>
+              <button type="button" class="announcement-react ${react.my==="hate"?"active hate":""}" data-ann-react="hate" data-ann-id="${esc(n.id)}"><i class="fa-solid fa-thumbs-down"></i><span>${react.hate}</span></button>
+            </div>
+          </div>
+        </div>
+      </article>`;
     }).join("");
+    announcementBox.querySelectorAll("[data-announcement-more]").forEach(b=>b.addEventListener("click",()=>openAnnouncementDetail(announcements[+b.dataset.announcementMore])));
+    announcementBox.querySelectorAll("[data-ann-react]").forEach(b=>b.addEventListener("click",()=>reactAnnouncement(b.dataset.annId,b.dataset.annReact)));
+  }
+
+  async function loadAnnouncementReactions(){
+    announcementReactions=new Map();
+    if(!announcements.length)return;
+    const ids=announcements.map(x=>x.id);
+    try{
+      const q=await client.from("announcement_reactions").select("announcement_id,user_id,reaction_type").in("announcement_id",ids);
+      if(q.error) return;
+      const map=new Map();
+      (q.data||[]).forEach(r=>{
+        const k=String(r.announcement_id); const x=map.get(k)||{like:0,hate:0,my:null};
+        if(r.reaction_type==="like")x.like++; else if(r.reaction_type==="hate")x.hate++;
+        if(String(r.user_id)===String(user.id))x.my=r.reaction_type;
+        map.set(k,x);
+      });
+      announcementReactions=map;
+    }catch(_){}
+  }
+
+  async function reactAnnouncement(id,type){
+    if(!user?.id)return;
+    try{
+      const current=announcementReactions.get(String(id))?.my||null;
+      if(current===type){
+        const q=await client.from("announcement_reactions").delete().eq("announcement_id",id).eq("user_id",user.id);
+        if(q.error)throw q.error;
+      }else{
+        const q=await client.from("announcement_reactions").upsert({announcement_id:id,user_id:user.id,reaction_type:type},{onConflict:"announcement_id,user_id"});
+        if(q.error)throw q.error;
+      }
+      await loadAnnouncementReactions(); renderAnnouncements();
+    }catch(e){TC.toast?.("Reaksi belum tersedia. Jalankan migration notifikasi terbaru.","error");}
+  }
+
+  async function publishAnnouncement(e){
+    e.preventDefault();
+    const title=String($("#announcementTitle")?.value||"").trim();
+    const body=String($("#announcementBody")?.value||"").trim();
+    const image=String($("#announcementImage")?.value||"").trim();
+    const published=!!$("#announcementPublished")?.checked;
+    const status=$("#announcementFormStatus");
+    if(!title||!body)return;
+    if(status)status.textContent="Mempublikasikan...";
+    try{
+      const q=await client.from("announcements").insert({title,body,image_url:image||null,published,published_at:published?new Date().toISOString():null}).select("id,title,body,image_url,published,published_at,created_at,updated_at").single();
+      if(q.error)throw q.error;
+      announcements=[q.data,...announcements];
+      $("#announcementForm").reset(); $("#announcementPublished").checked=true;
+      if(status)status.textContent="Pengumuman berhasil dipublikasikan.";
+      await loadAnnouncementReactions(); renderAnnouncements();
+    }catch(e){if(status)status.textContent=e?.message||"Gagal membuat pengumuman.";}
+  }
+
+  let announcementModal=null;
+  function ensureAnnouncementModal(){
+    if(announcementModal)return;
+    announcementModal=document.createElement("div"); announcementModal.className="notice-detail-modal"; announcementModal.hidden=true; announcementModal.id="announcementDetailModal";
+    announcementModal.innerHTML='<div class="notice-detail-backdrop" data-ann-close></div><section class="notice-detail-dialog" role="dialog" aria-modal="true"><header class="notice-detail-head"><div><span class="badge"><i class="fa-solid fa-bullhorn"></i> PENGUMUMAN ADMIN</span><h2 id="announcementDetailTitle"></h2></div><button type="button" class="notice-detail-x" data-ann-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></header><div class="notice-detail-body" id="announcementDetailBody"></div><footer class="notice-detail-foot"><button type="button" class="btn primary" data-ann-close><i class="fa-solid fa-check-double"></i> Sudah baca</button></footer></section>';
+    document.body.appendChild(announcementModal);
+    announcementModal.querySelectorAll("[data-ann-close]").forEach(b=>b.addEventListener("click",()=>{announcementModal.hidden=true;document.body.classList.remove("notice-modal-open");}));
+  }
+  function openAnnouncementDetail(n){
+    ensureAnnouncementModal();
+    $("#announcementDetailTitle").textContent=String(n?.title||"Pengumuman");
+    $("#announcementDetailBody").innerHTML=linkify(n?.body||"");
+    announcementModal.hidden=false;document.body.classList.add("notice-modal-open");
   }
 
   function renderNotifications(){
@@ -3135,8 +3254,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     content.innerHTML=notifications.map((n,i)=>{
       const body=String(n.body||"").trim(), long=body.length>260, preview=long?body.slice(0,260).trimEnd()+"…":body;
-      const icon={withdrawal:"fa-wallet",purchase:"fa-bag-shopping",sale:"fa-circle-check",like:"fa-heart",comment:"fa-comment",follow:"fa-user-plus"}[n.notification_type]||"fa-bell";
-      const label={withdrawal:"Withdrawal",purchase:"Pembelian",sale:"Penjualan",like:"Like",comment:"Komentar",follow:"Follow"}[n.notification_type]||"Notifikasi";
+      const normalizedType=String(n.notification_type||"").toLowerCase(); const icon={withdrawal:"fa-wallet",purchase:"fa-bag-shopping",sale:"fa-circle-check",sale_success:"fa-circle-check",like:"fa-heart",comment:"fa-comment",follow:"fa-user-plus"}[normalizedType]||"fa-bell";
+      const label={withdrawal:"Withdrawal",purchase:"💳 Paid berhasil",sale:"💳 Paid berhasil",sale_success:"💳 Paid berhasil",like:"Like",comment:"Komentar",follow:"Follow"}[normalizedType]||"Notifikasi";
       return `<article class="notice-card ${n.is_read?"":"unread"}" data-notification-id="${esc(n.id)}" data-index="${i}">
         <div class="notice-inner"><div class="notice-topline">
           <div class="notice-source-wrap"><input class="notification-select" type="checkbox" aria-label="Pilih notifikasi" data-select="${esc(n.id)}">
@@ -3147,7 +3266,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <button type="button" class="delete-one" data-delete-one="${esc(n.id)}"><i class="fa-solid fa-trash"></i> Hapus</button>
           </div>
         </div>
-        <h2>${esc(n.title||"Notifikasi")}</h2>${body?`<div class="notice-short ${long?"is-truncated":"expanded"}">${esc(preview)}</div>`:""}
+        <h2>${esc(n.title||"Notifikasi")}</h2>${body?`<div class="notice-short ${long?"is-truncated":"expanded"}">${linkify(preview)}</div>`:""}
         <div class="notice-bottom">${long?`<button type="button" class="notice-more" data-more="${i}"><span>Baca selengkapnya</span><i class="fa-solid fa-arrow-right"></i></button>`:"<span></span>"}${n.link_url?`<span class="notice-link-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</span>`:""}</div>
         </div></article>`;
     }).join("");
@@ -3171,6 +3290,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if(ar.error) console.error("[Announcements]",ar.error);
     notifications=(Array.isArray(nr.data)?nr.data:[]).filter(n=>String(n?.notification_type||'').toLowerCase()!=='view' && String(n?.title||'').toLowerCase()!=='konten dibuka');
     announcements=Array.isArray(ar.data)?ar.data:[];
+    await loadAnnouncementReactions();
     renderAnnouncements(); renderNotifications();
   }
 
@@ -3224,7 +3344,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const closeModal=async()=>{const id=modal.dataset.notificationId;if(id){const n=notifications.find(x=>String(x.id)===String(id));if(n&&!n.is_read)await toggleRead(id);}modal.hidden=true;modal.dataset.notificationId="";document.body.classList.remove("notice-modal-open");};
   modal.querySelectorAll("[data-notice-close]").forEach(b=>b.addEventListener("click",closeModal));
-  const openDetail=async n=>{if(!n)return;modal.dataset.notificationId=String(n.id);$("#noticeDetailTitle").textContent=String(n.title||"Notifikasi");$("#noticeDetailBody").textContent=String(n.body||"");modal.hidden=false;document.body.classList.add("notice-modal-open");if(!n.is_read){try{const q=await client.from("notifications").update({is_read:true}).eq("id",n.id).eq("user_id",user.id);if(!q.error){n.is_read=true;renderNotifications();}}catch(_){}try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}}};
+  const openDetail=async n=>{if(!n)return;modal.dataset.notificationId=String(n.id);$("#noticeDetailTitle").textContent=String(n.title||"Notifikasi");$("#noticeDetailBody").innerHTML=linkify(n.body||"");modal.hidden=false;document.body.classList.add("notice-modal-open");if(!n.is_read){try{const q=await client.from("notifications").update({is_read:true}).eq("id",n.id).eq("user_id",user.id);if(!q.error){n.is_read=true;renderNotifications();}}catch(_){}try{await window.refreshNotificationCount?.();await window.updateNotificationBadge?.();}catch{}}};
 
   $("#markAllBtn")?.addEventListener("click",markAllRead);
   $("#readAllBtn")?.addEventListener("click",markAllRead);
