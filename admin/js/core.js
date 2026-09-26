@@ -99,5 +99,16 @@
     if(!data.length){container.innerHTML='<div class="empty"><i class="fa-solid fa-inbox"></i><strong>Tidak ada data</strong><span>Belum ada data untuk ditampilkan.</span></div>';return;}
     container.innerHTML=`<div class="table-wrap"><table><thead><tr>${columns.map(c=>`<th>${esc(c.label)}</th>`).join('')}${actions?'<th>Aksi</th>':''}</tr></thead><tbody>${data.map((r,i)=>`<tr>${columns.map(c=>`<td>${c.render?c.render(r):esc(r[c.key])}</td>`).join('')}${actions?`<td class="row-actions">${actions(r,i)}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
   }
-  window.PasTeleAdmin={CONFIG,sb,$,esc,money,rows,toast,setLoading,errText,session,waitForSession,isAdmin,requireAdmin,denied,rpc,call,table};
+  function markActiveNav(){
+    const current=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+    document.querySelectorAll('.admin-nav a[href]').forEach(a=>{
+      try{
+        const target=(new URL(a.getAttribute('href'),location.href).pathname.split('/').pop()||'index.html').toLowerCase();
+        a.classList.toggle('active',target===current);
+      }catch(_){ }
+    });
+  }
+  function resetLoading(el,msg='Memuat data...'){ if(el){el.innerHTML=`<div class="empty admin-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>${esc(msg)}</span></div>`;} }
+  window.PasTeleAdmin={CONFIG,sb,$,esc,money,rows,toast,setLoading,resetLoading,errText,session,waitForSession,isAdmin,requireAdmin,denied,rpc,call,table,markActiveNav};
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',markActiveNav); else markActiveNav();
 })();
