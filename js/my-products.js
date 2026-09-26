@@ -2924,7 +2924,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console[type === "error" ? "error" : "log"](message);
   };
   const money = value => new Intl.NumberFormat("id-ID", {style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(value)||0);
-  const titleOf = item => String(item?.title || item?.name || item?.slug || "Untitled").trim();
+  const titleOf = item => String(item?.title || item?.name || "Untitled").trim();
   const descriptionOf = item => String(item?.description || "").trim();
   const plainTextOf = value => {
     const raw = String(value ?? "");
@@ -2954,6 +2954,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   const formatPrice = price => Number(price) > 0 ? money(price) : null;
 
+  // Real content code only. Never use slug as the displayed Code value.
+  const contentCodeOf = item => {
+    const candidates = [
+      item?.code,
+      item?.content_code,
+      item?.code_value,
+      item?.telegram_code,
+      item?.file_code,
+      item?.access_code,
+      item?.code_text
+    ];
+    for (const value of candidates) {
+      const v = String(value ?? "").trim();
+      if (v) return v;
+    }
+    return "";
+  };
+
   /*
    * Public/display URL rules:
    * - PasteLink and Code use the real PasTele public URL format.
@@ -2973,8 +2991,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         : "#";
     }
     if (t === "code") {
-      return item?.slug
-        ? `${location.origin}/c/${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(item.slug)}`
+      const code = contentCodeOf(item);
+      const routeCode = code || String(item?.slug || "").trim();
+      return routeCode
+        ? `${location.origin}/c/${Number(item?.price||0)>0?'p':'f'}/${encodeURIComponent(routeCode)}`
         : "#";
     }
     if (t === "channel") {
@@ -3051,7 +3071,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function getFilteredGroups(){
     const search=normalize(searchInput?.value), selectedType=typeFilter?.value||"all", selectedStatus=statusFilter?.value||"all";
     return groups.map(group=>({...group,items:group.items.filter(item=>{
-      const hay=[titleOf(item),item?.slug,item?.description,item?.name,item?.bot_username,item?.username,item?.invite_url,group.key].map(normalize).join(" ");
+      const hay=[titleOf(item),contentCodeOf(item),item?.description,item?.name,item?.bot_username,item?.username,item?.invite_url,group.key].map(normalize).join(" ");
       const typeMatch=selectedType==="all"||group.key===selectedType;
       const statusMatch=selectedStatus==="all"||statusOf(item).value===selectedStatus;
       return (!search||hay.includes(search))&&typeMatch&&statusMatch;
@@ -3085,7 +3105,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const title=titleOf(item), st=statusOf(item), price=formatPrice(item?.price), slug=String(item?.slug||"").trim(), href=hrefFor(item,group.key), views=Number(item?.views||0), sales=Number(item?.sales_count||0);
       let secondary="";
       let displayLabel=labelFor(group.key);
-      if(group.key==="code") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-robot"></i><span>Bot</span><strong>${esc(item?.bot_username?'@'+String(item.bot_username).replace(/^@/,""):"Belum diatur")}</strong></div><div class="detail-chip"><i class="fa-solid fa-key"></i><span>Code</span><strong>${esc(slug||"Belum ada")}</strong></div></div>`;
+      if(group.key==="code") {
+        const realCode=contentCodeOf(item);
+        secondary=`<div class="my-row-detail-grid">
+          <div class="detail-chip"><i class="fa-solid fa-robot"></i><span>Bot</span><strong>${esc(item?.bot_username?'@'+String(item.bot_username).replace(/^@/,""):"Belum diatur")}</strong></div>
+          <div class="detail-chip detail-code-chip"><i class="fa-solid fa-key"></i><span>Kode Konten</span><strong class="detail-content-code">${esc(realCode||"Kode tidak tersedia dari database")}</strong></div>
+        </div>`;
+      }
       else if(group.key==="pastelink") {
         const exp=item?.expires_at?new Date(item.expires_at):null;
         const expLabel=exp&&!Number.isNaN(exp.getTime())?exp.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"Tidak expired";
@@ -3097,8 +3123,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         displayLabel=isGroup ? "Group" : "Channel";
         secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-at"></i><span>Username</span><strong>${esc(item?.username?'@'+String(item.username).replace(/^@/,""):"Belum diatur")}</strong></div><div class="detail-chip"><i class="fa-solid fa-tower-broadcast"></i><span>Jenis</span><strong>${isGroup?'Group':'Channel'}</strong></div></div>`;
       }
-      else if(group.key==="product") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-link"></i><span>Slug</span><strong>${esc(slug||"Belum ada")}</strong></div><div class="detail-chip"><i class="fa-solid fa-layer-group"></i><span>Kategori</span><strong>${esc(item?.category||"General")}</strong></div></div>`;
-      return `<article class="my-row is-collapsed" data-product-type="${esc(group.key)}"><button class="my-row-toggle" type="button" aria-expanded="false"><span class="my-row-toggle-title" title="${esc(title)}">${esc(title)}</span><span class="my-row-toggle-status status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span><span class="my-row-toggle-chevron"><i class="fa-solid fa-chevron-down"></i></span></button><div class="my-row-details" hidden><div class="my-row-head"><span class="my-icon"><i class="fa-solid ${iconFor(group.key)}"></i></span><div class="my-row-main"><div class="my-row-title-wrap"><h3 class="my-row-title">${esc(title)}</h3><span class="status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span></div><div class="my-row-meta"><span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(displayLabel)}</span><span class="meta-dot">•</span><span>${esc(dateOf(item))}</span>${price?`<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>`:""}</div>${descriptionOf(item)?`<div class="my-row-description">${esc(descriptionOf(item))}</div>`:""}${secondary}${href!=="#"?`<div class="my-row-url-box"><div class="my-row-url-label"><i class="fa-solid ${group.key==="channel"?'fa-paper-plane':'fa-globe'}"></i><span>Link lengkap</span></div><a class="my-row-url" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a></div>`:""}</div></div><div class="my-row-footer"><div class="my-row-stats"><span><i class="fa-solid fa-eye"></i>${views} dilihat</span><span><i class="fa-solid fa-bag-shopping"></i>${sales} terjual</span></div><div class="my-row-actions"><button class="btn detail-btn" data-action="detail" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-circle-info"></i><span>Detail</span></button><button class="btn" data-action="open" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span></button><button class="btn" data-action="copy" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-copy"></i><span>Salin</span></button><button class="btn primary" data-action="edit" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-pen"></i><span>Edit</span></button><button class="btn danger" data-action="delete" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-trash"></i><span>Hapus</span></button></div></div></div></article>`;
+      else if(group.key==="product") secondary=`<div class="my-row-detail-grid"><div class="detail-chip"><i class="fa-solid fa-fingerprint"></i><span>ID Konten</span><strong>${esc(item?.id||"Tidak tersedia")}</strong></div><div class="detail-chip"><i class="fa-solid fa-layer-group"></i><span>Kategori</span><strong>${esc(item?.category||"General")}</strong></div></div>`;
+      return `<article class="my-row is-collapsed" data-product-type="${esc(group.key)}"><button class="my-row-toggle" type="button" aria-expanded="false"><span class="my-row-toggle-title" title="${esc(title)}">${esc(title)}</span><span class="my-row-toggle-status status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span><span class="my-row-toggle-chevron"><i class="fa-solid fa-chevron-down"></i></span></button><div class="my-row-details" hidden><div class="my-row-head"><span class="my-icon"><i class="fa-solid ${iconFor(group.key)}"></i></span><div class="my-row-main"><div class="my-row-title-wrap"><h3 class="my-row-title">${esc(title)}</h3><span class="status-badge status-${esc(st.value)}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</span></div><div class="my-row-meta"><span class="meta-type"><i class="fa-solid ${iconFor(group.key)}"></i> ${esc(displayLabel)}</span><span class="meta-dot">•</span><span>${esc(dateOf(item))}</span>${price?`<span class="meta-dot">•</span><span class="meta-price">${esc(price)}</span>`:""}</div>${descriptionOf(item)?`<div class="my-row-description">${esc(descriptionOf(item))}</div>`:""}${secondary}${href!=="#"?`<div class="my-row-url-box"><div class="my-row-url-label"><i class="fa-solid ${group.key==="channel"?'fa-paper-plane':'fa-globe'}"></i><span>Link lengkap</span></div><a class="my-row-url" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a></div>`:""}</div></div><div class="my-row-footer"><div class="my-row-stats"><span><i class="fa-solid fa-eye"></i>${views} dilihat</span><span><i class="fa-solid fa-bag-shopping"></i>${sales} terjual</span></div><div class="my-row-actions"><button class="btn detail-btn" data-action="detail" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button" title="Lihat detail konten" aria-label="Lihat detail konten"><i class="fa-solid fa-circle-info"></i><span>Detail</span></button><button class="btn" data-action="open" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Buka</span></button><button class="btn" data-action="copy" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-copy"></i><span>Salin</span></button><button class="btn primary" data-action="edit" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-pen"></i><span>Edit</span></button><button class="btn danger" data-action="delete" data-id="${esc(item.id)}" data-type="${esc(group.key)}" type="button"><i class="fa-solid fa-trash"></i><span>Hapus</span></button></div></div></div></article>`;
     }).join("")}</div>${pagination}</section>`;
   }
 
