@@ -2954,22 +2954,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   const formatPrice = price => Number(price) > 0 ? money(price) : null;
 
-  // Real content code only. Never use slug as the displayed Code value.
+  // For Code Telegram, the actual long code/content is stored in telegram_products.content.
+  // slug is only the short public identifier used by the /c/... route.
   const contentCodeOf = item => {
-    const candidates = [
-      item?.code,
-      item?.content_code,
-      item?.code_value,
-      item?.telegram_code,
-      item?.file_code,
-      item?.access_code,
-      item?.code_text
-    ];
-    for (const value of candidates) {
-      const v = String(value ?? "").trim();
-      if (v) return v;
-    }
-    return "";
+    const value = String(item?.content ?? "").trim();
+    return value;
   };
 
   /*
@@ -3109,7 +3098,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const realCode=contentCodeOf(item);
         secondary=`<div class="my-row-detail-grid">
           <div class="detail-chip"><i class="fa-solid fa-robot"></i><span>Bot</span><strong>${esc(item?.bot_username?'@'+String(item.bot_username).replace(/^@/,""):"Belum diatur")}</strong></div>
-          <div class="detail-chip detail-code-chip"><i class="fa-solid fa-key"></i><span>Kode Konten</span><strong class="detail-content-code">${esc(realCode||"Kode tidak tersedia dari database")}</strong></div>
+          <div class="detail-chip detail-code-chip"><i class="fa-solid fa-key"></i><span>Konten Code</span><strong class="detail-content-code">${esc(realCode||"Konten tidak tersedia di database")}</strong></div>
         </div>`;
       }
       else if(group.key==="pastelink") {
@@ -3138,7 +3127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function bindExpanders(){content.querySelectorAll(".my-row-toggle").forEach(btn=>btn.addEventListener("click",()=>{const row=btn.closest(".my-row"),details=row?.querySelector(".my-row-details");if(!row||!details)return;const open=!row.classList.contains("is-expanded");row.classList.toggle("is-expanded",open);row.classList.toggle("is-collapsed",!open);btn.setAttribute("aria-expanded",String(open));details.hidden=!open;}));}
-  function bindActions(){content.querySelectorAll("[data-action]").forEach(btn=>btn.addEventListener("click",async e=>{e.preventDefault();e.stopPropagation();if(btn.disabled)return;const item=findItem(btn.dataset.id,btn.dataset.type);if(!item)return showToast("Data tidak ditemukan. Silakan refresh.");btn.disabled=true;try{if(btn.dataset.action==="detail"){const row=btn.closest(".my-row"),toggle=row?.querySelector(".my-row-toggle");if(toggle)toggle.click();return;}else if(btn.dataset.action==="open")openItem(item,btn.dataset.type);else if(btn.dataset.action==="copy")await copyItem(item,btn.dataset.type);else if(btn.dataset.action==="edit")await editItem(item,btn.dataset.type);else if(btn.dataset.action==="delete")await deleteItem(item,btn.dataset.type);}catch(err){showToast(err?.message||"Action gagal.");}finally{if(document.body.contains(btn))btn.disabled=false;}}));}
+  function bindActions(){content.querySelectorAll("[data-action]").forEach(btn=>btn.addEventListener("click",async e=>{e.preventDefault();e.stopPropagation();if(btn.disabled)return;const item=findItem(btn.dataset.id,btn.dataset.type);if(!item)return showToast("Data tidak ditemukan. Silakan refresh.");btn.disabled=true;try{if(btn.dataset.action==="detail"){const row=btn.closest(".my-row"),toggle=row?.querySelector(".my-row-toggle");if(toggle)toggle.click();return;}else if(btn.dataset.action==="detail"){const row=btn.closest(".my-row"),details=row?.querySelector(".my-row-details"),toggle=row?.querySelector(".my-row-toggle");if(row&&details){const open=!row.classList.contains("is-expanded");row.classList.toggle("is-expanded",open);row.classList.toggle("is-collapsed",!open);details.hidden=!open;toggle?.setAttribute("aria-expanded",String(open));if(open)details.scrollIntoView({behavior:"smooth",block:"nearest"});}}else if(btn.dataset.action==="open")openItem(item,btn.dataset.type);else if(btn.dataset.action==="copy")await copyItem(item,btn.dataset.type);else if(btn.dataset.action==="edit")await editItem(item,btn.dataset.type);else if(btn.dataset.action==="delete")await deleteItem(item,btn.dataset.type);}catch(err){showToast(err?.message||"Action gagal.");}finally{if(document.body.contains(btn))btn.disabled=false;}}));}
   function openItem(item,type){const href=hrefFor(item,type);if(href==="#")return showToast("Link untuk konten ini tidak tersedia.");window.open(href,"_blank","noopener,noreferrer");}
   async function copyItem(item,type){const href=hrefFor(item,type);if(href==="#")return showToast("Link untuk konten ini tidak tersedia.");try{await navigator.clipboard.writeText(href);showToast("Link berhasil disalin.","success");}catch{const ta=document.createElement("textarea");ta.value=href;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();showToast("Link berhasil disalin.","success");}}
 
